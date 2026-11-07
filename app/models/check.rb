@@ -163,11 +163,6 @@ class Check < ApplicationRecord
     !refunded_at.present? && voided_at && voided_at + 1.day < DateTime.now && !deposited?
   end
 
-  # Void requested & check deposited before it could go through
-  def failed_void?
-    approved? && voided_at.present? && t_transactions.size == 3 && t_transactions.sum(&:amount) < 0
-  end
-
   def admin_dropdown_description
     "#{check_number.presence || 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
   end
@@ -197,12 +192,6 @@ class Check < ApplicationRecord
 
   def recipient_name
     lob_address.name
-  end
-
-  private
-
-  def send_date_must_be_in_future
-    self.errors.add(:send_date, "must be at least 24 hours in the future") if send_date.nil? || send_date <= (Time.now.utc + 24.hours)
   end
 
 end

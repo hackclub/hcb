@@ -63,17 +63,6 @@ module Admin
       ]
     end
 
-    def section_names
-      [
-        "Spending",
-        "Ledger",
-        "Incoming Money",
-        "Organizations",
-        "Payroll",
-        "Misc"
-      ]
-    end
-
     memo_wise(:sections)
 
     def active_section
@@ -125,6 +114,11 @@ module Admin
             name: "Wires",
             path: wires_admin_index_path,
             count: ->{ Wire.pending.count }
+          ),
+          make_item(
+            name: "Wire Lookup",
+            path: wire_lookup_admin_index_path,
+            count: ->{ 0 }
           ),
           make_item(
             name: "Wise Transfers",

@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import csrf from '../common/csrf'
 
 export default class extends Controller {
-  static targets = ['transaction', 'tagger']
+  static targets = ['tagger']
   static values = { selected: Array }
 
   select(event) {
