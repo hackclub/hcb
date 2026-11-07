@@ -9,10 +9,12 @@ RSpec.describe Credentials::Doppler do
     around do |example|
       keys = %w[http_proxy HTTP_PROXY https_proxy HTTPS_PROXY no_proxy NO_PROXY]
       saved = keys.index_with { |k| ENV.fetch(k, nil) }
-      keys.each { |k| ENV.delete(k) }
-      example.run
-    ensure
-      saved.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+      begin
+        keys.each { |k| ENV.delete(k) }
+        example.run
+      ensure
+        saved.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+      end
     end
 
     it "routes the request through https_proxy" do
