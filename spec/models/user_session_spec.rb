@@ -220,6 +220,35 @@ RSpec.describe User::Session, type: :model do
   end
 
   describe "#update_session_timestamps" do
+    [true, false].each do |with_user|
+      it "gives #{with_user ? 'unverified' : 'anonymous'} sessions an hourly grace period capped at one day" do
+        freeze_time do
+          user = create(:user, verified: false, session_validity_preference: 2.weeks.to_i) if with_user
+          session = create(:user_session, user:, verified: false, created_at: 7.days.ago, expiration_at: 30.minutes.from_now)
+
+          session.update_session_timestamps
+          expect(session.reload.expiration_at).to eq(1.hour.from_now)
+
+          24.times do
+            travel(59.minutes)
+            session.update_session_timestamps
+          end
+          expect(session.reload.expiration_at).to eq(session.created_at + 8.days)
+        end
+      end
+    end
+
+    it "does not renew impersonated sessions" do
+      freeze_time do
+        user = create(:user)
+        session = create(:user_session, user:, impersonated_by: create(:user), expiration_at: 30.minutes.from_now)
+
+        session.update_session_timestamps
+
+        expect(session.reload.expiration_at).to eq(30.minutes.from_now)
+      end
+    end
+
     it "honors the underlying user's session_validity_preference even when the session is unverified" do
       preference_seconds = SessionsHelper::SESSION_DURATION_OPTIONS.fetch("15 minutes")
       user = create(
