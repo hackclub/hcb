@@ -58,6 +58,17 @@
   <% end %>
 <% end %>
 
+<% if @card_grant.comments.any? && @pre_authorization.draft? %>
+  <%= render "callout", title: "Feedback from Organizer", type: "warning", class: "mb-4" do %>
+    <p class="m-0">
+      <strong>An organizer has requested changes to your pre-authorization.</strong>
+    </p>
+    <p class="m-0 mt-2 muted">
+      Please review the feedback below, make the necessary changes, and resubmit your pre-authorization.
+    </p>
+  <% end %>
+<% end %>
+
 <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @pre_authorization, link_to_pre_authorization: false } %>
 
 <%= form_with model: @pre_authorization, id: "pre_authorization_form", url: card_grant_pre_authorizations_path(@card_grant), method: :patch, class: "flex flex-col", data: { turbo: true } do |form| %>
@@ -102,4 +113,11 @@
   <input type="submit" class="btn" value="Submit for review" form="pre_authorization_form">
 <% elsif @pre_authorization.submitted? %>
   <input type="submit" class="btn bg-warning" value="Submitted..." form="pre_authorization_form" disabled>
+<% end %>
+
+<% if @card_grant.comments.any? %>
+  <h3 class="mt-4">Comments</h3>
+  <% @comments = @card_grant.comments %>
+  <% @commentable = @card_grant %>
+  <%= render "comments/comments" %>
 <% end %>
