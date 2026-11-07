@@ -326,7 +326,10 @@ module Reimbursement
     end
 
     def reviewer_selectable?
-      !event.reviewer_selection_disabled?
+      return false if event.reviewer_selection_disabled?
+      return true if card_grant_id.nil?
+
+      event.card_grant_setting&.reviewer_selection_enabled?
     end
 
     def assigned_reviewer_required?

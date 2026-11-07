@@ -161,6 +161,51 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe "#reviewer_selectable?" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    it "follows the organization setting for ordinary reports" do
+      event = create(:event, reimbursement_reviewer_selection: :optional)
+      report = create(:reimbursement_report, event:)
+
+      expect(report.reviewer_selectable?).to be(true)
+
+      event.update!(reimbursement_reviewer_selection: :disabled)
+
+      expect(report.reload.reviewer_selectable?).to be(false)
+    end
+
+    it "is off by default for card grant reports" do
+      user = create(:user)
+      card_grant = create(:card_grant, user:, sent_by: user)
+      report = create(:reimbursement_report, user:, event: card_grant.event, card_grant:)
+
+      expect(report.reviewer_selectable?).to be(false)
+    end
+
+    it "follows the card grant setting for card grant reports" do
+      user = create(:user)
+      card_grant = create(:card_grant, user:, sent_by: user)
+      card_grant.event.update!(reimbursement_reviewer_selection: :optional)
+      card_grant.event.card_grant_setting.update!(reviewer_selection_enabled: true)
+      report = create(:reimbursement_report, user:, event: card_grant.event, card_grant:)
+
+      expect(report.reviewer_selectable?).to be(true)
+    end
+
+    it "stays off for card grant reports when the organization disables reviewer selection" do
+      user = create(:user)
+      card_grant = create(:card_grant, user:, sent_by: user)
+      card_grant.event.update!(reimbursement_reviewer_selection: :disabled)
+      card_grant.event.card_grant_setting.update!(reviewer_selection_enabled: true)
+      report = create(:reimbursement_report, user:, event: card_grant.event, card_grant:)
+
+      expect(report.reviewer_selectable?).to be(false)
+    end
+  end
+
   describe "the invitation email" do
     it "is sent when somebody else invited the user" do
       inviter = create(:user)
