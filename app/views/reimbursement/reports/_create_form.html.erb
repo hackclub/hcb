@@ -52,7 +52,7 @@
         </div>
         <div class="field">
           <%= form.label :email, "Contributor’s email", class: "hidden bold" %>
-          <%= form.email_field :email, class: "hidden", placeholder: "contributor@gmail.com", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: @current_user.email %>
+          <%= form.email_field :email, class: "hidden", placeholder: "contributor@gmail.com", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: Current.user.email %>
         </div>
         <%= form.hidden_field :event_id, value: @event.id %>
         <div id="reimbursement_report_maximum_amount_wrapper" class="field">

@@ -28,7 +28,7 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.json do
         events =
-          @current_user
+          Current.user
           .events
           .with_attached_logo
           .preload(:config, :plan)
@@ -39,7 +39,7 @@ class EventsController < ApplicationController
         if auditor_signed_in?
           events.concat(
             Event
-              .excluding(@current_user.events)
+              .excluding(Current.user.events)
               .with_attached_logo
               .preload(:config, :plan)
               .strict_loading
