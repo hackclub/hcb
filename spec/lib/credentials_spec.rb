@@ -27,6 +27,16 @@ RSpec.describe Credentials::Doppler do
       described_class.fetch_secrets
     end
 
+    it "decodes percent-encoded proxy credentials" do
+      ENV["https_proxy"] = "http://us%40er:p%3Ass%2Fword@proxy.internal:8080"
+
+      expect(Net::HTTP).to receive(:start)
+        .with("api.doppler.com", 443, "proxy.internal", 8080, "us@er", "p:ss/word", use_ssl: true)
+        .and_return(response)
+
+      described_class.fetch_secrets
+    end
+
     it "connects directly when no proxy is configured" do
       expect(Net::HTTP).to receive(:start)
         .with("api.doppler.com", 443, nil, nil, nil, nil, use_ssl: true)
