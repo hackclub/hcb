@@ -2,24 +2,9 @@
 
 module Api
   module Models
-    # Card Charges are not an actual linked object within the transaction
-    # engine. It's pretty messy. In the TX engine, they're represented with:
-    # - RawPendingStripeTransaction
-    # - RawStripeTransaction
-    #
-    # and accessed via HcbCode using:
-    # - CanonicalTransaction
-    # - CanonicalPendingTransaction
-    #
-    # There isn't a great Model for representing Card Charges. However, since
-    # HcbCodes have easy access to all the card charge data, we'll be using
-    # HcbCodes to represent Card Charges in the API.
-    #
-    # This class is an ActiveRecord model and inherits from HcbCode. This
-    # definitely feels pretty hacky, but it seems to be the simplest way to give
-    # card charges their own public ID and to have "stricter" types. I've tried
-    # my best to prevent database modifications by this CardCharge model.
-    # ~ @garyhtou
+    # Keep the existing HcbCode-derived chg_ IDs and associations for v3 clients.
+    # Card-charge details come from the new engine's Ledger::Item and CardCharge,
+    # rather than reconstructing the charge from legacy canonical transactions.
     class CardCharge < HcbCode
       # Changes the Public ID Prefix to `chg` (instead of `txn` set by HcbCode).
       set_public_id_prefix :chg
@@ -30,6 +15,24 @@ module Api
 
       # Set the default scope to HCB-600-* hcb codes (card charges).
       default_scope { where("hcb_code LIKE 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-%'") }
+
+      scope :with_details, -> {
+        preload(ledger_item: { linked_object: [:raw_pending_stripe_transaction, :raw_stripe_transactions] })
+      }
+
+      def status
+        ledger_item&.status
+      end
+
+      def ledger_card_charge
+        ledger_item&.linked_object if ledger_item&.linked_object_type == "CardCharge"
+      end
+
+      def merchant_data
+        ledger_card_charge&.stripe_merchant_data
+      end
+
+      delegate :authorization_method, :decline_reason, to: :ledger_card_charge, allow_nil: true
 
       # Only allow modification from HcbCode.
       def readonly?
