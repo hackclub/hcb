@@ -150,7 +150,7 @@ class WiseTransfer < ApplicationRecord
     end
 
     event :mark_failed do
-p-k      transitions from: [:pending, :approved, :sent, :deposited], to: :failed
+      transitions from: [:pending, :approved, :sent, :deposited], to: :failed
       after do |reason = nil|
         if reimbursement_payout_holding.present?
           reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.may_mark_failed?
