@@ -1,5 +1,5 @@
-We're writing to let you know your Wise payout for "<%= link_to @report.name, @report %>" was rejected and failed to send.<% if @reason.present? %> Here's the explanation given by Wise / the receiving bank:
+We're writing to let you know your Wise payout for "<%= link_to @report.name, @report %>" was returned and failed to send.<% if @reason.present? %> Here's the reason we were given:
 
 <pre><%= @reason %></pre><% end %>
 
-Please update your payout details <%= link_to "here", settings_payouts_url %>; afterwards, we'll reattempt the transfer.
+<%= @cancelled ? "We've cancelled this reimbursement report" : "This reimbursement report will be cancelled" %>, and the funds returned to <%= @report.event.name %>. If you still need to be reimbursed, please check your payout details <%= link_to "here", settings_payouts_url %> and submit a new report.

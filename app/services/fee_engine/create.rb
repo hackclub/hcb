@@ -41,6 +41,7 @@ module FeeEngine
 
       reason = :transfer_returned if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
       reason = :transfer_returned if canonical_transaction.local_hcb_code.wire? # outgoing wires are sometimes returned to the account upon failure
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.wise_transfer? # Wise returns transfers to the account upon failure
       reason = :transfer_returned if canonical_transaction.local_hcb_code.reimbursement_payout_holding? # payout holdings are sometimes returned to the account upon failure
       reason = :transfer_returned if canonical_transaction.local_hcb_code.reimbursement_expense_payout? # expense payouts are sometimes returned to the account upon failure
 

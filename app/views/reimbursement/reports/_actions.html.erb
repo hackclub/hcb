@@ -137,7 +137,11 @@
               </div>
             </div>
           <% end %>
-          <% if report.payout_holding&.failed? %>
+          <% if report.payout_holding&.failed? && report.payout_holding.wise_transfer.present? %>
+            <% button_hint = capture do %>
+              <span class="bold">Warning:</span> <%= user == current_user ? "your" : "#{user.first_name}'s" %> Wise payout was returned, so this report is being cancelled and the funds returned to <%= report.event.name %>. To be reimbursed, check the payout settings and submit a new report.
+            <% end %>
+          <% elsif report.payout_holding&.failed? %>
             <% if user == current_user %>
               <% button_hint = capture do %>
                 <span class="bold">Warning:</span> your <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.

@@ -322,6 +322,11 @@ module Reimbursement
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
       payout_holding.with_lock do
+        unless payout_holding.awaiting_wise_transfer?
+          flash[:error] = payout_holding.failed? ? "This report's Wise transfer failed, so the report should be cancelled after the Wise refund arrives." : "A Wise transfer has already been sent for this report."
+          return redirect_to @report
+        end
+
         unless payout_holding.settled?
           payout_holding.expense_payouts.pending.each do |expense_payout|
             Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run

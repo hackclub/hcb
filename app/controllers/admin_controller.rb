@@ -5,6 +5,8 @@ class AdminController < Admin::BaseController
   include Admin::TransferApprovable
   include ComboboxSearchable
 
+  WISE_REFUND_MEMO_REGEX = /(\d{4})\s*REFUND\b/i
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -45,12 +47,29 @@ class AdminController < Admin::BaseController
     @canonical_pending_transactions = CanonicalPendingTransaction.unmapped.where(amount_cents: @canonical_transaction.amount_cents)
     @ahoy_events = Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int = ?", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], @canonical_transaction.id).order("time desc")
 
-    if @canonical_transaction.memo.include?("WISE INC") || @canonical_transaction.memo.include?("WISE LTD") || @canonical_transaction.memo.include?("WISE US")
+    likely_wise = @canonical_transaction.memo.include?("WISE INC") || @canonical_transaction.memo.include?("WISE LTD") || @canonical_transaction.memo.include?("WISE US")
+
+    if likely_wise && @canonical_transaction.amount_cents.negative?
       potential_wise_transfers = WiseTransfer.sent.where(usd_amount_cents: -@canonical_transaction.amount_cents)
 
       if potential_wise_transfers.one?
         @suggested_wise_mapping = potential_wise_transfers.first
       end
+    end
+
+    # Wise refunds end with the last 4 digits of the transfer's Wise ID, e.g.
+    # "WISE INC 1679REFUND" or "THE HACK FOUNDAT 7568REFUND". Only suggest a
+    # transfer when the memo names one; otherwise ops search for it below.
+    wise_id_last4 = @canonical_transaction.memo[WISE_REFUND_MEMO_REGEX, 1]
+
+    already_mapped_to_wise = @canonical_transaction.local_hcb_code&.wise_transfer?
+
+    if @canonical_transaction.amount_cents.positive? && wise_id_last4 && !already_mapped_to_wise
+      amount = @canonical_transaction.amount_cents
+      by_wise_id = returnable_wise_transfers(amount_cents: amount).where("wise_transfers.wise_id LIKE ?", "%#{wise_id_last4}")
+      narrowed = by_wise_id.one? ? by_wise_id : by_wise_id.where(usd_amount_cents: wise_return_amount_range(amount))
+
+      @suggested_wise_return = narrowed.first if narrowed.one?
     end
 
     # Mapping confirm message
@@ -445,6 +464,34 @@ class AdminController < Admin::BaseController
     # A nameless user is already labelled by their email.
     render json: users.map { |user|
       { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email if user.full_name.present?), badge: helpers.combobox_badge(user) }
+    }
+  end
+
+  # With no query, it lists only the recommended transfers; a query searches
+  # every deposited or failed transfer by ID, Wise ID, recipient, or org.
+  def wise_transfer_return_search
+    @q = params[:q].presence&.strip&.delete_prefix("#")
+    canonical_transaction = CanonicalTransaction.find(params[:canonical_transaction_id])
+
+    wise_transfers = if @q.present?
+                       like = "%#{WiseTransfer.sanitize_sql_like(@q)}%"
+                       returnable_wise_transfers(amount_cents: canonical_transaction.amount_cents).left_joins(:event).where(
+                         "wise_transfers.id::text = :q OR wise_transfers.wise_id ILIKE :like OR " \
+                         "wise_transfers.recipient_name ILIKE :like OR wise_transfers.recipient_email ILIKE :like OR " \
+                         "events.name ILIKE :like",
+                         q: @q, like:
+                       )
+                     else
+                       recommended_wise_returns(canonical_transaction)
+                     end
+
+    render json: combobox_page(wise_transfers).map { |wise_transfer|
+      {
+        value: wise_transfer.id.to_s,
+        label: helpers.combobox_display(wise_transfer),
+        sublabel: wise_transfer.combobox_sublabel,
+        badge: helpers.combobox_badge(wise_transfer)
+      }
     }
   end
 
@@ -1415,6 +1462,44 @@ class AdminController < Admin::BaseController
     redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
   end
 
+  def set_wise_transfer_return
+    ActiveRecord::Base.transaction do
+      wise_transfer = WiseTransfer.find(params[:wise_transfer_id])
+      canonical_transaction = CanonicalTransaction.find(params[:id])
+      ledger_item = wise_transfer.settled_ledger_item
+
+      raise ArgumentError, "Only incoming transactions can be mapped as a Wise return." unless canonical_transaction.amount_cents.positive?
+      raise ArgumentError, "Map the outgoing transaction to Wise transfer ##{wise_transfer.id} first." unless wise_transfer.deposited? || wise_transfer.failed?
+      raise ArgumentError, "Wise transfer ##{wise_transfer.id} has no ledger item." if ledger_item.nil?
+      raise ArgumentError, "Enter a failure reason." if wise_transfer.may_mark_failed? && params[:reason].blank?
+
+      canonical_transaction.update!(
+        hcb_code: wise_transfer.hcb_code,
+        transaction_source_type: "WiseTransfer",
+        transaction_source_id: wise_transfer.id,
+        ledger_item:
+      )
+
+      CanonicalTransactionService::SetEvent.new(
+        canonical_transaction_id: canonical_transaction.id,
+        event_id: wise_transfer.event.id,
+        user: current_user
+      ).run
+
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: current_user)
+      end
+
+      wise_transfer.mark_failed!(params[:reason].presence) if wise_transfer.may_mark_failed?
+
+      redirect_to transaction_admin_path(canonical_transaction)
+    end
+  rescue => e
+    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
+  end
+
   def audit
     @topups = StripeService::Topup.list[:data]
   end
@@ -1697,6 +1782,32 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def returnable_wise_transfers(amount_cents: nil)
+    wise_transfers = WiseTransfer.where(aasm_state: [:deposited, :failed]).where.not(usd_amount_cents: nil).includes(:event)
+    wise_transfers = wise_transfers.order(Arel.sql("ABS(wise_transfers.usd_amount_cents - #{amount_cents.to_i})")) if amount_cents
+    wise_transfers.order(sent_at: :desc, id: :desc)
+  end
+
+  def recommended_wise_returns(canonical_transaction)
+    amount = canonical_transaction.amount_cents
+    wise_id_last4 = canonical_transaction.memo[WISE_REFUND_MEMO_REGEX, 1]
+    by_amount = WiseTransfer.where(sent_at: 6.months.ago..).where(usd_amount_cents: wise_return_amount_range(amount))
+
+    recommended = returnable_wise_transfers(amount_cents: amount)
+    if wise_id_last4
+      by_wise_id = WiseTransfer.where("wise_transfers.wise_id LIKE ?", "%#{wise_id_last4}")
+      recommended.merge(by_wise_id.or(by_amount))
+                 .reorder(Arel.sql(WiseTransfer.sanitize_sql_array(["CASE WHEN wise_transfers.wise_id LIKE ? THEN 0 ELSE 1 END", "%#{wise_id_last4}"])))
+                 .order(Arel.sql("ABS(wise_transfers.usd_amount_cents - #{amount.to_i})"), sent_at: :desc, id: :desc)
+    else
+      recommended.merge(by_amount)
+    end
+  end
+
+  def wise_return_amount_range(amount_cents)
+    (amount_cents * 0.85).floor..(amount_cents * 1.15).ceil
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])

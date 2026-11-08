@@ -277,7 +277,7 @@
         <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
-            <%= form.text_area :reason, class: "w-[400px]", placeholder: "(Markdown supported)" %>
+            <%= form.text_area :reason, class: "w-[400px]", placeholder: "Failure reason (Markdown supported)", required: true %>
           </div>
           <%= form.submit "Mark failed", data: { turbo_confirm: "Mark as failed?", turbo_confirm_danger: true } %>
         <% end %>

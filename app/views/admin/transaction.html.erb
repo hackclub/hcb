@@ -71,12 +71,27 @@
   </div>
 <% end %>
 
+<% if @suggested_wise_return %>
+  <div class="border-[#9FE870] border-solid border-1 p-5 my-6">
+    <h3 class="mt-0 pt-0 mb-4">Suggested Wise return</h3>
+
+    <p class="flex flex-row items-center gap-2">
+      <%= badge_for(@suggested_wise_return.state_text, class: "ml-0 bg-#{@suggested_wise_return.status_color}") %>
+      <%= @suggested_wise_return.admin_dropdown_description %>
+    </p>
+
+    <p>Sent at <%= format_datetime @suggested_wise_return.sent_at %></p>
+
+    <%= render "admin/wise_transfer_return_form", canonical_transaction: @canonical_transaction, wise_transfer: @suggested_wise_return %>
+  </div>
+<% end %>
+
 <table>
   <thead>
     <tr>
       <th>Map to an Event</th>
       <th>Map to a Wire</th>
-      <th>Map to a Wise transfer</th>
+      <th><%= @canonical_transaction.amount_cents.positive? ? "Map to a Wise transfer return" : "Map to a Wise transfer" %></th>
     </tr>
   </thead>
   <tbody>
@@ -101,9 +116,13 @@
         <% end %>
       </td>
       <td>
-        <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.collection_select(:wise_transfer_id, WiseTransfer.sent + [@canonical_transaction.wise_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wise_transfer&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+        <% if @canonical_transaction.amount_cents.positive? %>
+          <%= render "admin/wise_transfer_return_form", canonical_transaction: @canonical_transaction, wise_transfer: nil %>
+        <% else %>
+          <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), method: :post do |form| %>
+            <%= form.collection_select(:wise_transfer_id, WiseTransfer.sent + [@canonical_transaction.wise_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wise_transfer&.id }, { style: "width: 300px;" }) %>
+            <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+          <% end %>
         <% end %>
       </td>
     </tr>
