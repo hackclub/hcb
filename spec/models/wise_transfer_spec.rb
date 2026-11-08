@@ -93,36 +93,74 @@ RSpec.describe WiseTransfer do
 
     let!(:system_user) { create(:user, id: User::SYSTEM_USER_ID) }
 
-    it "cancels the reimbursement report of a deposited transfer, returning the funds" do
+    it "keeps the payout holding in the clearinghouse without cancelling the report until a refund arrives" do
       transfer = create_deposited_transfer
       payout_holding = attach_payout_holding(transfer)
-      reversed = []
-      allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!) { |holding| reversed << holding.id }
+      expect_any_instance_of(Reimbursement::PayoutHolding).not_to receive(:reverse!)
 
       expect {
         transfer.mark_failed!("Account closed")
       }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
-        .with(params: a_hash_including(reason: "Account closed", cancelled: true), args: [])
+        .with(params: a_hash_including(reason: "Account closed", cancelled: false), args: [])
 
       expect(transfer.reload).to be_failed
       expect(transfer.return_reason).to eq("Account closed")
       expect(transfer.canonical_pending_transaction.reload).not_to be_declined
-      expect(reversed).to eq([payout_holding.id])
+      expect(payout_holding.reload).to be_failed
+      expect(payout_holding.report.comments).to be_empty
+    end
 
-      report = payout_holding.report
-      comment = report.comments.sole
-      expect(comment.user).to eq(system_user)
-      expect(comment.content).to include("cancelled because the transfer was returned: Account closed")
-      expect(comment.content).to include("returned to #{report.event.name} within 1 business day")
+    it "doesn't email about the failure when a refund is being mapped, since the cancellation emails instead" do
+      transfer = create_deposited_transfer
+      attach_payout_holding(transfer)
+
+      expect {
+        transfer.mark_failed!("Account closed", refunded: true)
+      }.not_to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+
+      expect(transfer.reload).to be_failed
+      expect(transfer.return_reason).to eq("Account closed")
+    end
+
+    describe "#cancel_reimbursement_for_refund" do
+      it "cancels the reimbursement report, returning the funds" do
+        transfer = create_deposited_transfer
+        payout_holding = attach_payout_holding(transfer)
+        transfer.mark_failed!("Account closed", refunded: true)
+        reversed = []
+        allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!) { |holding| reversed << holding.id }
+
+        expect {
+          transfer.cancel_reimbursement_for_refund("Account closed")
+        }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+          .with(params: a_hash_including(reason: "Account closed", cancelled: true), args: [])
+
+        expect(reversed).to eq([payout_holding.id])
+
+        report = payout_holding.report
+        comment = report.comments.sole
+        expect(comment.user).to eq(system_user)
+        expect(comment.content).to include("cancelled because the transfer was returned: Account closed")
+        expect(comment.content).to include("returned to #{report.event.name} within 1 business day")
+      end
+
+      it "does nothing for a transfer that isn't a reimbursement" do
+        transfer = create_deposited_transfer
+
+        expect {
+          transfer.cancel_reimbursement_for_refund("Account closed")
+        }.not_to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+      end
     end
 
     it "leaves the payout failed for ops to cancel when it can't be cancelled yet, and never retries it" do
       transfer = create_deposited_transfer
       payout_holding = attach_payout_holding(transfer)
+      transfer.mark_failed!("Account closed", refunded: true)
       allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!).and_raise(ArgumentError, "must have settled expense payouts")
 
       expect {
-        transfer.mark_failed!("Account closed")
+        transfer.cancel_reimbursement_for_refund("Account closed")
       }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
         .with(params: a_hash_including(cancelled: false), args: [])
 
@@ -233,7 +271,7 @@ RSpec.describe WiseTransfer do
 
         expect { wise_transfer.mark_failed!("The recipient's account details were invalid") }
           .to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
-          # This report was never reimbursed, so it can't be cancelled automatically.
+          # Marking it failed never cancels the report; only a mapped refund does.
           .with(params: { reimbursement_payout_holding: payout_holding, reason: "The recipient's account details were invalid", cancelled: false }, args: [])
           .once
 

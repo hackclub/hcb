@@ -1492,7 +1492,9 @@ class AdminController < Admin::BaseController
         Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: current_user)
       end
 
-      wise_transfer.mark_failed!(params[:reason].presence) if wise_transfer.may_mark_failed?
+      wise_transfer.mark_failed!(params[:reason].presence, refunded: true) if wise_transfer.may_mark_failed?
+
+      wise_transfer.cancel_reimbursement_for_refund(wise_transfer.return_reason)
 
       redirect_to transaction_admin_path(canonical_transaction)
     end

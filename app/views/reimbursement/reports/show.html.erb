@@ -209,8 +209,13 @@
   <% admin_tool("mt-4") do %>
     <h3 class="mt-0">Wise reimbursement failed</h3>
     <p class="mb-0">
-      <%= link_to "Wise transfer ##{failed_wise_transfer.id}", wise_transfer_process_admin_path(failed_wise_transfer) %> was returned<%= ": #{failed_wise_transfer.return_reason}" if failed_wise_transfer.return_reason.present? %>.
-      This report couldn't be cancelled automatically, usually because its expense payouts haven't settled yet. Once they have, cancel it with the button at the top to return the funds to <%= @report.event.name %>.
+      <%= link_to "Wise transfer ##{failed_wise_transfer.id}", wise_transfer_process_admin_path(failed_wise_transfer) %> failed<%= ": #{failed_wise_transfer.return_reason}" if failed_wise_transfer.return_reason.present? %>.
+      <% if failed_wise_transfer.refund_received? %>
+        Wise's refund has been mapped, but this report couldn't be cancelled automatically, usually because its expense payouts haven't settled yet. Once they have, cancel it to return the funds to <%= @report.event.name %>.
+      <% else %>
+        Please do not cancel this report unless we have received a refund from Wise, or you would like to return the reimbursement payout holding back to <%= @report.event.name %>.
+        Mapping Wise's refund to the transfer cancels this report automatically.
+      <% end %>
     </p>
   <% end %>
 <% end %>

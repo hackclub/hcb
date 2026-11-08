@@ -274,12 +274,21 @@
     <% if @wise_transfer.may_mark_failed? %>
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Fail</legend>
+        <% failed_report_warning = nil %>
+        <% if @wise_transfer.reimbursement_payout_holding.present? %>
+          <% failed_report_warning = "Please do not cancel the associated reimbursement report unless we have received a refund from Wise, or you would like to return the reimbursement payout holding back to the organization." %>
+          <p class="mt-0">
+            <strong>Warning:</strong> <%= failed_report_warning %>
+            Mapping Wise's refund to this transfer cancels
+            <%= link_to "the report", reimbursement_report_path(@wise_transfer.reimbursement_payout_holding.report), target: "_blank" %> automatically.
+          </p>
+        <% end %>
         <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
             <%= form.text_area :reason, class: "w-[400px]", placeholder: "Failure reason (Markdown supported)", required: true %>
           </div>
-          <%= form.submit "Mark failed", data: { turbo_confirm: "Mark as failed?", turbo_confirm_danger: true } %>
+          <%= form.submit "Mark failed", data: { turbo_confirm: ["Mark as failed?", failed_report_warning].compact.join(" "), turbo_confirm_danger: true } %>
         <% end %>
       </fieldset>
     <% end %>

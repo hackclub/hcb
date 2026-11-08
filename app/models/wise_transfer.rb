@@ -151,10 +151,16 @@ class WiseTransfer < ApplicationRecord
 
     event :mark_failed do
       transitions from: [:pending, :approved, :sent, :deposited], to: :failed
-      after do |reason = nil|
+      # A failed reimbursement transfer leaves its payout holding failed in the
+      # clearinghouse: the report is only cancelled once Wise's refund is mapped
+      # back to this transfer (see #cancel_reimbursement_for_refund). Pass
+      # `refunded: true` when that's about to happen, so the user gets a single
+      # email about the cancellation.
+      # (AASM passes `refunded:` through as a positional hash, not a keyword.)
+      after do |reason = nil, options = {}|
         if reimbursement_payout_holding.present?
           reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.may_mark_failed?
-          cancel_reimbursement_after_commit(reason)
+          ReimbursementMailer.with(reimbursement_payout_holding:, reason:, cancelled: false).wise_transfer_failed.deliver_later unless options[:refunded]
         elsif payment_attempt&.may_mark_failed?
           payment_attempt.mark_failed!(reason:)
         else
@@ -292,6 +298,10 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
   end
 
+  def refund_received?
+    local_hcb_code.canonical_transactions.where("canonical_transactions.amount_cents > 0").exists?
+  end
+
   def settled_ledger_item
     canonical_pending_transaction&.ledger_item || local_hcb_code&.ledger_item
   end
@@ -304,11 +314,9 @@ class WiseTransfer < ApplicationRecord
     mark_rejected!
   end
 
-  private
-
-  # Cancel all failed Wise reimbursement reports
-  def cancel_reimbursement_after_commit(reason)
+  def cancel_reimbursement_for_refund(reason)
     payout_holding = reimbursement_payout_holding
+    return if payout_holding.nil?
 
     ActiveRecord.after_all_transactions_commit do
       cancelled = payout_holding.reload.cancel_failed_payout
@@ -327,6 +335,8 @@ class WiseTransfer < ApplicationRecord
       ReimbursementMailer.with(reimbursement_payout_holding: payout_holding, reason:, cancelled:).wise_transfer_failed.deliver_later
     end
   end
+
+  private
 
   WISE_ID_REGEXPS = [
     /wise\.com\/transactions\/activities\/by-resource\/transfer\/(\d+)/i,

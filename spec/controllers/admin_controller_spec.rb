@@ -286,6 +286,67 @@ RSpec.describe AdminController do
       expect(wise_transfer.return_reason).to eq("Recipient bank rejected it")
     end
 
+    context "when the transfer paid out a reimbursement" do
+      include ActiveJob::TestHelper
+
+      let!(:system_user) { create(:user, id: User::SYSTEM_USER_ID) }
+
+      # Payout holdings create a pending transaction on the clearinghouse event
+      # on create, so insert one directly, as other specs do.
+      def attach_payout_holding(wise_transfer)
+        report = create(:reimbursement_report, aasm_state: :reimbursed)
+        Reimbursement::PayoutHolding.insert_all([{
+                                                  reimbursement_reports_id: report.id, amount_cents: 130_00, wise_transfer_id: wise_transfer.id,
+                                                  aasm_state: "sent", created_at: Time.current, updated_at: Time.current
+                                                }])
+        Reimbursement::PayoutHolding.find_by!(wise_transfer_id: wise_transfer.id)
+      end
+
+      it "cancels the reimbursement report once the refund is mapped, emailing the user once" do
+        admin = create(:user, :make_admin)
+        wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+        create_session(admin, verified: true)
+        map_outgoing!(wise_transfer)
+        payout_holding = attach_payout_holding(wise_transfer)
+        reversed = []
+        allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!) { |holding| reversed << holding.id }
+        returned = create(:canonical_transaction, amount_cents: 127_50)
+
+        expect {
+          post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
+        }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+          .with(params: a_hash_including(reason: "Account closed", cancelled: true), args: [])
+
+        # Only the cancellation email, not also a "will be cancelled" one.
+        mails = enqueued_jobs.select { |job| job["arguments"][0..1] == ["ReimbursementMailer", "wise_transfer_failed"] }
+        expect(mails.size).to eq(1)
+        expect(flash[:error]).to be_nil
+        expect(wise_transfer.reload).to be_failed
+        expect(reversed).to eq([payout_holding.id])
+      end
+
+      it "cancels the report when the refund arrives after ops marked the transfer failed" do
+        admin = create(:user, :make_admin)
+        wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+        create_session(admin, verified: true)
+        map_outgoing!(wise_transfer)
+        payout_holding = attach_payout_holding(wise_transfer)
+        reversed = []
+        allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!) { |holding| reversed << holding.id }
+
+        wise_transfer.mark_failed!("Recipient bank rejected it")
+        expect(reversed).to be_empty # marking it failed alone keeps the holding in the clearinghouse
+
+        returned = create(:canonical_transaction, amount_cents: 127_50)
+        expect {
+          post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id }
+        }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+          .with(params: a_hash_including(reason: "Recipient bank rejected it", cancelled: true), args: [])
+
+        expect(reversed).to eq([payout_holding.id])
+      end
+    end
+
     it "refuses to map an outgoing transaction as a return" do
       admin = create(:user, :make_admin)
       event = create(:event)
