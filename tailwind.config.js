@@ -106,6 +106,8 @@ module.exports = {
   darkMode: ['selector', '[data-dark="true"]'],
   plugins: [
     // Turbo sets aria-busy on a form while its submission is in flight
-    plugin(({ addVariant }) => addVariant('form-busy', 'form[aria-busy] &')),
+    plugin(({ addVariant }) =>
+      addVariant('form-busy', 'form[aria-busy="true"] &')
+    ),
   ],
 }
