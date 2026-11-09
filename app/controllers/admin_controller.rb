@@ -486,13 +486,17 @@ class AdminController < Admin::BaseController
                      end
 
     render json: combobox_page(wise_transfers).map { |wise_transfer|
+      duplicate_refund_warning = wise_transfer.duplicate_refund_warning
+
       {
         value: wise_transfer.id.to_s,
         label: helpers.combobox_display(wise_transfer),
-        sublabel: wise_transfer.combobox_sublabel,
+        sublabel: [wise_transfer.combobox_sublabel, ("⚠️ refund already mapped" if duplicate_refund_warning)].compact.join(" · "),
         badge: helpers.combobox_badge(wise_transfer),
         # Prefills the failure reason when ops already marked the transfer failed.
-        return_reason: wise_transfer.return_reason
+        return_reason: wise_transfer.return_reason,
+        # Added to the submit confirmation client-side.
+        duplicate_refund_warning:
       }
     }
   end

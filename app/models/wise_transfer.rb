@@ -298,8 +298,19 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
   end
 
+  def mapped_refunds
+    local_hcb_code.canonical_transactions.where("canonical_transactions.amount_cents > 0")
+  end
+
   def refund_received?
-    local_hcb_code.canonical_transactions.where("canonical_transactions.amount_cents > 0").exists?
+    mapped_refunds.exists?
+  end
+
+  def duplicate_refund_warning
+    refunds = mapped_refunds.to_a
+    return nil if refunds.empty?
+
+    "⚠️ Wise transfer ##{id} already has a refund mapped: #{refunds.map { |ct| "#{Money.from_cents(ct.amount_cents).format} (transaction ##{ct.id})" }.join(", ")}. Mapping this one too will count the return twice."
   end
 
   def settled_ledger_item

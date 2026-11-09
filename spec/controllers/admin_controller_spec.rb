@@ -140,6 +140,21 @@ RSpec.describe AdminController do
       expect(response.body).to include('value="Account closed"')
     end
 
+    it "warns in the confirmation when the suggested transfer already has a refund mapped" do
+      admin = create(:user, :make_admin)
+      wise_transfer = deposited_wise_transfer(wise_id: "987567568")
+      first_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+      create_session(admin, verified: true)
+      post :set_wise_transfer_return, params: { id: first_refund.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
+      second_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+
+      get :transaction, params: { id: second_refund.id }
+
+      expect(response.body).to include("Map as return of Wise transfer ##{wise_transfer.id}")
+      expect(response.body).to include("already has a refund mapped")
+      expect(response.body).to include("transaction ##{first_refund.id}")
+    end
+
     it "offers outgoing Wise transfers, not returns, for an outgoing transaction" do
       admin = create(:user, :make_admin)
       outgoing = create(:canonical_transaction, amount_cents: -130_00, transaction_source: create(:raw_plaid_transaction))
@@ -233,6 +248,21 @@ RSpec.describe AdminController do
 
       option = JSON.parse(response.body).find { |o| o["value"] == failed.id.to_s }
       expect(option["return_reason"]).to eq("Account closed")
+      expect(option["duplicate_refund_warning"]).to be_nil
+    end
+
+    it "flags transfers that already have a refund mapped" do
+      wise_transfer = deposited_wise_transfer(wise_id: "44444101", usd_amount_cents: 130_00)
+      first_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+      create_session(create(:user, :make_admin), verified: true)
+      post :set_wise_transfer_return, params: { id: first_refund.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
+      second_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+
+      get :wise_transfer_return_search, params: { canonical_transaction_id: second_refund.id }, format: :json
+
+      option = JSON.parse(response.body).find { |o| o["value"] == wise_transfer.id.to_s }
+      expect(option["sublabel"]).to include("refund already mapped")
+      expect(option["duplicate_refund_warning"]).to include("transaction ##{first_refund.id}")
     end
 
     it "searches every deposited or failed transfer by ID, Wise ID, or recipient" do

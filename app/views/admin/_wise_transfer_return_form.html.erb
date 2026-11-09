@@ -8,6 +8,8 @@
                              "If it paid out a reimbursement, the associated reimbursement report will also be cancelled and its payout holding returned to the organization."
                            end %>
 <% confirm = ["Map this transaction as funds returned from #{wise_transfer ? "Wise transfer ##{wise_transfer.id}" : "the selected Wise transfer"} and mark it as failed?", reimbursement_warning].compact.join(" ") %>
+<%# For the combobox path the warning is added client-side from the picked option (see wise_return_controller.js). %>
+<% confirm = [confirm, wise_transfer&.duplicate_refund_warning].compact.join("\n\n") %>
 
 <%= form_with model: false, local: true, url: set_wise_transfer_return_path(canonical_transaction), method: :post, class: "mb-0" do |form| %>
   <% if wise_transfer %>
@@ -19,16 +21,16 @@
       <%= link_to "View report", reimbursement_report_path(report), class: "ml-2", target: "_blank" if report %>
     </div>
   <% else %>
-    <div data-controller="return-reason" data-action="combobox:change->return-reason#fill">
+    <div data-controller="wise-return" data-action="combobox:change->wise-return#pick">
       <div class="flex flex-row items-center gap-2">
         <%= combobox_tag :wise_transfer_id,
                          wise_transfer_return_search_admin_index_path(canonical_transaction_id: canonical_transaction.id),
                          id: "#{form_id}-wise-transfer-id",
                          placeholder: "Search Wise transfers",
                          class: "!w-[300px] !max-w-full" %>
-        <%= form.submit "Set", class: "!my-0", data: { "turbo-confirm": confirm } %>
+        <%= form.submit "Set", class: "!my-0", data: { "turbo-confirm": confirm, wise_return_target: "submit" } %>
       </div>
-      <%= form.text_field :reason, id: "#{form_id}-reason", placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full mt-2", data: { return_reason_target: "input" } %>
+      <%= form.text_field :reason, id: "#{form_id}-reason", placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full mt-2", data: { wise_return_target: "input" } %>
     </div>
   <% end %>
 <% end %>
