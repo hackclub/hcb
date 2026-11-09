@@ -1076,7 +1076,6 @@ DEPENDENCIES
   redis (~> 5.4)
   relaxed-rubocop
   reverse_markdown
-  rinku
   rotp
   rqrcode
   rspec-rails (~> 7.1.1)
