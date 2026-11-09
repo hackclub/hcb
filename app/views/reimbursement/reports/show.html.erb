@@ -205,7 +205,22 @@
   <% end %>
 <% end %>
 
-<% if @report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
+<% if @report.payout_holding&.failed? && (failed_wise_transfer = @report.payout_holding.wise_transfer)&.failed? %>
+  <% admin_tool("mt-4") do %>
+    <h3 class="mt-0">Wise reimbursement failed</h3>
+    <p class="mb-0">
+      <%= link_to "Wise transfer ##{failed_wise_transfer.id}", wise_transfer_process_admin_path(failed_wise_transfer) %> failed<%= ": #{failed_wise_transfer.return_reason}" if failed_wise_transfer.return_reason.present? %>.
+      <% if failed_wise_transfer.refund_received? %>
+        Wise's refund has been mapped, but this report couldn't be cancelled automatically, usually because its expense payouts haven't settled yet. Once they have, cancel it to return the funds to <%= @report.event.name %>.
+      <% else %>
+        Please do not cancel this report unless we have received a refund from Wise, or you would like to return the reimbursement payout holding back to <%= @report.event.name %>.
+        Mapping Wise's refund to the transfer cancels this report automatically.
+      <% end %>
+    </p>
+  <% end %>
+<% end %>
+
+<% if @report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding&.awaiting_wise_transfer? %>
   <% admin_tool("mt-4") do %>
     <h3 class="mt-0">Process Wise reimbursement</h3>
 
@@ -240,7 +255,8 @@
       <div>
         <% locked_usd_amount = render_money @report.payout_holding.amount_cents %>
         <h4 class="mt-0">⚠️ Transaction failed? Here's what to do!</h4>
-        <p>Reach out to the user to request new information from them (for example an updated account number or address). Inform them that the USD amount of this report has been locked at <%= locked_usd_amount %> and that after we receive the updated information from them, we will send the <%= @report.currency %> equivalent of <%= locked_usd_amount %>.</p>
+        <p>If Wise returns the funds after the transfer was sent, map the returned transaction back to the original Wise transfer using "Map to a Wise transfer return" on its admin transaction page. That fails the transfer, cancels this report, returns the funds to <%= @report.event.name %>, and emails the user.</p>
+        <p>If it fails while you're sending it, reach out to the user to request new information from them (for example an updated account number or address). Inform them that the USD amount of this report has been locked at <%= locked_usd_amount %> and that after we receive the updated information from them, we will send the <%= @report.currency %> equivalent of <%= locked_usd_amount %>.</p>
         <p><strong>Upon resending the new information, send a Wise transfer with the updated information with a USD value of <%= locked_usd_amount %>.</strong></p>
         <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Cancelling a report is a destructive action and the report can not be resubmitted afterwards.</p>
       </div>

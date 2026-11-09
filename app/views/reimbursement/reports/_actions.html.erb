@@ -85,7 +85,13 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% wise_payout_returned = report.payout_holding&.failed? && report.payout_holding.wise_transfer.present? %>
+        <% if wise_payout_returned %>
+          <%# A returned Wise payout isn't retried, so editing payout details wouldn't help: the report is cancelled once the refund is mapped. %>
+          <% button_hint = capture do %>
+            <span class="bold">Warning:</span> <%= user == current_user ? "your" : "#{user.first_name}'s" %> payout via Wise transfer was returned, so this report is being cancelled and the funds returned to <%= report.event.name %>. To be reimbursed, check the payout settings and submit a new report.
+          <% end %>
+        <% elsif !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>

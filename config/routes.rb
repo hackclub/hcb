@@ -274,6 +274,7 @@ Rails.application.routes.draw do
       get "ledger_items", to: "admin#ledger_items"
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
+      get "wise_transfer_return_search", to: "admin#wise_transfer_return_search"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
@@ -388,6 +389,7 @@ Rails.application.routes.draw do
   post "set_event/:id", to: "admin#set_event", as: :set_event
   post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
+  post "set_wise_transfer_return/:id", to: "admin#set_wise_transfer_return", as: :set_wise_transfer_return
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
     post "accept"

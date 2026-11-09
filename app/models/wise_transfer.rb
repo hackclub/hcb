@@ -150,19 +150,25 @@ class WiseTransfer < ApplicationRecord
     end
 
     event :mark_failed do
-      transitions from: [:pending, :approved, :sent, :approved], to: :failed
-      after do |reason = nil|
+      transitions from: [:pending, :approved, :sent, :deposited], to: :failed
+      # A failed reimbursement transfer leaves its payout holding failed in the
+      # clearinghouse: the report is only cancelled once Wise's refund is mapped
+      # back to this transfer (see #cancel_reimbursement_for_refund). Pass
+      # `refunded: true` when that's about to happen, so the user gets a single
+      # email about the cancellation.
+      # (AASM passes `refunded:` through as a positional hash, not a keyword.)
+      after do |reason = nil, options = {}|
         if reimbursement_payout_holding.present?
-          ReimbursementMailer.with(reimbursement_payout_holding:, reason:).wise_transfer_failed.deliver_later
-          reimbursement_payout_holding.mark_failed!
-        elsif payment_attempt.present?
+          reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.may_mark_failed?
+          ReimbursementMailer.with(reimbursement_payout_holding:, reason:, cancelled: false).wise_transfer_failed.deliver_later unless options[:refunded]
+        elsif payment_attempt&.may_mark_failed?
           payment_attempt.mark_failed!(reason:)
         else
           WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
         end
 
         update(return_reason: reason)
-        canonical_pending_transaction.decline!
+        canonical_pending_transaction.decline! unless canonical_pending_transaction.settled?
       end
     end
   end
@@ -181,6 +187,15 @@ class WiseTransfer < ApplicationRecord
 
   def admin_dropdown_description
     "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"
+  end
+
+  def to_combobox_display
+    "#{recipient_name} · #{Money.from_cents(usd_amount_cents_or_quoted).format}"
+  end
+
+  def combobox_sublabel
+    sent = sent_at && "sent #{sent_at.strftime(sent_at.year == Time.current.year ? "%b %-d" : "%b %-d, %Y")}"
+    ["Wise ID #{wise_id}", event.name, state_text, sent].compact.join(" · ")
   end
 
   def status_color
@@ -283,12 +298,53 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
   end
 
+  def mapped_refunds
+    local_hcb_code.canonical_transactions.where("canonical_transactions.amount_cents > 0")
+  end
+
+  def refund_received?
+    mapped_refunds.exists?
+  end
+
+  def duplicate_refund_warning
+    refunds = mapped_refunds.to_a
+    return nil if refunds.empty?
+
+    "⚠️ Wise transfer ##{id} already has a refund mapped: #{refunds.map { |ct| "#{Money.from_cents(ct.amount_cents).format} (transaction ##{ct.id})" }.join(", ")}. Mapping this one too will count the return twice."
+  end
+
+  def settled_ledger_item
+    canonical_pending_transaction&.ledger_item || local_hcb_code&.ledger_item
+  end
+
   def can_cancel?
     pending?
   end
 
   def cancel!
     mark_rejected!
+  end
+
+  def cancel_reimbursement_for_refund(reason)
+    payout_holding = reimbursement_payout_holding
+    return if payout_holding.nil?
+
+    ActiveRecord.after_all_transactions_commit do
+      cancelled = payout_holding.reload.cancel_failed_payout
+
+      if cancelled
+        report = payout_holding.report
+        Rails.error.handle do
+          report.comments.create!(
+            user: User.system_user,
+            content: "This reimbursement report via a Wise transfer was cancelled because the transfer was returned: #{reason}\n\n" \
+                     "The funds will be returned to #{report.event.name} within 1 business day. To reimburse these expenses again please create a new reimbursement report."
+          )
+        end
+      end
+
+      ReimbursementMailer.with(reimbursement_payout_holding: payout_holding, reason:, cancelled:).wise_transfer_failed.deliver_later
+    end
   end
 
   private

@@ -59,8 +59,15 @@ class ReimbursementMailer < ApplicationMailer
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report
     @reason = params[:reason]
+    @cancelled = params[:cancelled]
 
-    mail subject: "[Reimbursements] Wise transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+    subject = if @cancelled
+                "[Reimbursements] #{@report.name} was cancelled"
+              else
+                "[Reimbursements] Wise transfer for #{@report.name} failed to send"
+              end
+
+    mail subject:, to: @report.user.email_address_with_name
   end
 
   def paypal_transfer_failed

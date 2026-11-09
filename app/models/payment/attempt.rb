@@ -81,7 +81,7 @@ class Payment
       event :mark_failed do
         transitions from: [:pending, :sent], to: :failed
         after do |reason: nil|
-          Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
+          Payment::AttemptMailer.with(attempt: self, reason:).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
         end
       end

@@ -42,6 +42,8 @@ module TransactionEngine
 
           return wire if wire
 
+          return wise_transfer if wise_transfer
+
           return card_charge if card_charge
 
           nil
@@ -179,6 +181,10 @@ module TransactionEngine
 
       def wire
         @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
+      end
+
+      def wise_transfer
+        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == WiseTransfer.name
       end
 
       def card_charge
