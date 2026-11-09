@@ -331,10 +331,6 @@ class User < ApplicationRecord
     admin!
   end
 
-  def remove_admin!
-    user!
-  end
-
   def first_name(legal: false)
     @first_name ||= (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
   end

@@ -135,10 +135,6 @@ class Payment < ApplicationRecord
     Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
   end
 
-  def estimate_usd_amount_cents
-    MoneyService.convert_to_usd(amount_cents, currency)
-  end
-
   # Idempotent: safe to call any number of times, from any code path that
   # touches the associated legal entity (tax form completion, payout method
   # creation, payee reassignment). Only ever creates a payment attempt —
