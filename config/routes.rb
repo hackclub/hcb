@@ -386,7 +386,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
