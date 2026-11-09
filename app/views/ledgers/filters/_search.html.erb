@@ -1,16 +1,17 @@
 <%# locals: (form: nil, param: :q) %>
 
-<div class="input input-group max-w-none h-[36px]" tabindex="0" data-controller="search-submit">
+<div class="input input-group max-w-none h-[36px]" tabindex="0" data-controller="search-submit" data-action="turbo:before-cache@document->search-submit#unmarkBusy">
   <%= inline_icon "search" %>
   <%= form.text_field :q, placeholder: "Type / to search...", class: "bg-transparent", data: { behavior: "search", search_submit_target: "input", action: "input->search-submit#toggle" }, value: params[:q] %>
   <% if params[:q].present? %>
-    <%= link_to upsert_query_params(q: nil), class: "pop muted w-7 h-7 tooltipped tooltipped--s", "aria-label": "Clear search" do %>
+    <%= link_to upsert_query_params(q: nil), class: "pop muted w-7 h-7 tooltipped tooltipped--s form-busy:hidden", "aria-label": "Clear search", data: { action: "turbo:click->search-submit#markBusy" } do %>
       <%= inline_icon "view-close", size: 24 %>
     <% end %>
   <% end %>
-  <button type="submit" class="pop muted w-7 h-7 tooltipped tooltipped--s display-none -mr-1" aria-label="Search" data-search-submit-target="button">
+  <button type="submit" class="pop muted w-7 h-7 tooltipped tooltipped--s display-none -mr-1 form-busy:hidden" aria-label="Search" data-search-submit-target="button">
     <%= inline_icon "enter", size: 24 %>
   </button>
+  <%= inline_icon "loading", size: 28, class: "hidden form-busy:block p-1 -mr-1 !text-inherit" %>
   <% if form.nil? %>
     <% params.except(:q, :controller, :action).each do |key, value| %>
       <%= hidden_field_tag key, value %>
