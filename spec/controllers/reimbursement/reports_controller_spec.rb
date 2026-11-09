@@ -771,7 +771,7 @@ RSpec.describe Reimbursement::ReportsController do
       post(:retry, params: { report_id: report.id })
 
       expect(payout_holding.reload).to be_failed
-      expect(flash[:error]).to match(/failed payouts/i)
+      expect(flash[:error]).to match(/wise/i)
     end
 
     it "settles a failed payout whose payout method is supported" do

@@ -475,7 +475,7 @@ module Reimbursement
       return false unless payout_holding&.failed?
       return false if payout_method.blank? || payout_method.unsupported?
 
-      !payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+      true
     end
 
     private

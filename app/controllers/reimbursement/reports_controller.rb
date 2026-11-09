@@ -403,12 +403,18 @@ module Reimbursement
       authorize @report
       return unless enforce_sudo_mode
 
-      if @report.retryable?
-        @report.payout_holding.mark_settled!
-        flash[:success] = "Retried the payout; it will be sent again on the next payout run."
-      else
+      unless @report.retryable?
         flash[:error] = "Retry is only available for failed payouts."
+        return redirect_to @report
       end
+
+      if @report.payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+        flash[:error] = "Wise payouts are retried through the Wise transfer flow; use admin_send_wise_transfer instead."
+        return redirect_to @report
+      end
+
+      @report.payout_holding.mark_settled!
+      flash[:success] = "Retried the payout; it will be sent again on the next payout run."
 
       redirect_to @report
     end
