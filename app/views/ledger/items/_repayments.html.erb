@@ -6,7 +6,7 @@
 <% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
 <% repays = disbursement ? disbursement.repaid_ledger_items : [ledger_item.repaying_repayment&.repaid_ledger_item].compact %>
 <%# Repayments marked between two transactions on this ledger can be undone; transfers are undone by rejecting them. %>
-<% marked = ledger_item.repaying_repayment || ledger_item.repayments.where.not(repaying_ledger_item_id: nil).first %>
+<% marked = ledger_item.marked_repayment %>
 <% unmarkable = marked.present? && policy(ledger_item).unmark_repayment? %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>

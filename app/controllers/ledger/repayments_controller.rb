@@ -34,7 +34,7 @@ class Ledger
     def destroy
       authorize @item, :unmark_repayment?
 
-      repayment = @item.repaying_repayment || @item.repayments.where.not(repaying_ledger_item_id: nil).first
+      repayment = @item.marked_repayment
 
       if repayment
         RepaymentService::Unmark.new(repayment:).run

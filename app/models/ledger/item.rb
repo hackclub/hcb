@@ -165,6 +165,11 @@ class Ledger
       ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
     end
 
+    # The repayment marked between this and another transaction, as opposed to a repayment transfer.
+    def marked_repayment
+      repaying_repayment || repayments.find(&:repaying_ledger_item_id)
+    end
+
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
       self[:receipt_required]
