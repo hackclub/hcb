@@ -17,6 +17,20 @@ RSpec.describe RepaymentService::Unmark do
     expect(income.reload.category).to be_nil
   end
 
+  it "does nothing when the repayment was already unmarked" do
+    user = create(:user)
+    repayment = RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+    described_class.new(repayment:).run
+
+    other_income = create(:canonical_transaction, event:, amount_cents: 100_00)
+    RepaymentService::Mark.new(ledger_item: other_income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+
+    described_class.new(repayment:).run
+
+    expect(expense.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
+    expect(expense.ledger_item.reload.repayments.count).to eq(1)
+  end
+
   it "leaves repayment transfers to be undone by rejecting them" do
     repayment = Repayment.new(disbursement: create(:disbursement, event:), repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
     repayment.save!(validate: false)

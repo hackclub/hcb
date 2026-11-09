@@ -13,8 +13,13 @@ module RepaymentService
       raise ArgumentError, "only repayments by a ledger item can be unmarked" if @repayment.repaying_ledger_item.nil?
 
       ActiveRecord::Base.transaction do
-        @repayment.revert_categories!
-        @repayment.destroy!
+        # Re-read under a lock, so a double click can't revert the categories
+        # of a repayment marked again in between.
+        repayment = Repayment.lock.find_by(id: @repayment.id)
+        next if repayment.nil?
+
+        repayment.revert_categories!
+        repayment.destroy!
       end
     end
 
