@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ComboboxHelper
-  INPUT_ACTIONS = "input->combobox#onInput focus->combobox#onFocus " \
+  INPUT_ACTIONS = "input->combobox#onInput focus->combobox#onFocus click->combobox#onClick " \
                   "keydown->combobox#onKeydown blur->combobox#onBlur"
   private_constant :INPUT_ACTIONS
 
@@ -10,7 +10,7 @@ module ComboboxHelper
     input_id = input_options.delete(:id) || name.to_s.gsub(/\W+/, "_").delete_suffix("_")
 
     listbox_id = "#{input_id}_listbox"
-    value, label = combobox_selection(selected)
+    value, label, badge = combobox_selection(selected)
 
     input = tag.input(
       type: "text", id: input_id, role: "combobox", class: "combobox__input",
@@ -25,16 +25,20 @@ module ComboboxHelper
       combobox_url_value: src,
       combobox_selected_value: value,
       combobox_label_value: label,
+      combobox_badge_value: badge,
       **data.except(:controller)
     }
 
+    field_data = { action: "mousedown->combobox#onFieldMousedown" }
+    listbox_data = { combobox_target: "listbox", action: "scroll->combobox#onScroll mousedown->combobox#onListboxMousedown" }
+
     tag.div class: token_list("combobox", wrapper_class), data: wrapper_data do
       safe_join [
-        tag.div(input + tag.div(class: "combobox__handle"), class: "combobox__field"),
+        tag.div(input + tag.code(class: "combobox__badge", data: { combobox_target: "badge" }) +
+                tag.div(class: "combobox__handle"), class: "combobox__field", data: field_data),
         hidden_field_tag(name, value, id: nil, data: { combobox_target: "hidden" }),
         tag.ul(nil, role: "listbox", id: listbox_id, class: "combobox__listbox",
-                    aria: { label: "Suggestions" }, hidden: true,
-                    data: { combobox_target: "listbox", action: "scroll->combobox#onScroll" }),
+                    aria: { label: "Suggestions" }, hidden: true, data: listbox_data),
         tag.div(nil, class: "combobox__announcer", role: "status",
                      aria: { live: "polite" }, data: { combobox_target: "status" })
       ]
@@ -42,7 +46,11 @@ module ComboboxHelper
   end
 
   def combobox_display(record)
-    record.to_combobox_display(admin: admin_signed_in?)
+    record.to_combobox_display
+  end
+
+  def combobox_badge(record)
+    "ID: #{record.id}" if admin_signed_in?
   end
 
   private
@@ -50,8 +58,8 @@ module ComboboxHelper
   def combobox_selection(selected)
     case selected
     when nil then []
-    when Hash then selected.symbolize_keys.values_at(:value, :label)
-    else [selected.id, combobox_display(selected)]
+    when Hash then selected.symbolize_keys.values_at(:value, :label, :badge)
+    else [selected.id, combobox_display(selected), combobox_badge(selected)]
     end
   end
 end

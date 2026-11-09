@@ -43,12 +43,14 @@ class Repayment < ApplicationRecord
 
   # Settled expenses on the organization's ledger. Pending ones can still
   # change amount or drop off, so they can't be repaid yet. Transfers between
-  # organizations can't be repaid.
+  # organizations can't be repaid, nor can account-verification micro-deposits,
+  # whose amounts are redacted from transparent ledgers.
   def self.repayable_ledger_items(event)
     event.ledger.items
          .where(status: :settled)
          .where("ledger_items.amount_cents < 0")
          .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", ["Disbursement::Outgoing", "Disbursement::Incoming"])
+         .not_likely_account_verification_related
   end
 
   # Repayable items that no live repayment covers yet.

@@ -105,19 +105,6 @@ class EventsController < ApplicationController
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def money_movement
-    authorize @event
-
-    pending_transactions = _show_pending_transactions
-    canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-    all_transactions = [*pending_transactions, *canonical_transactions]
-
-    @money_in = all_transactions.reject { |t| t.amount_cents <= 0 }.first(3)
-    @money_out = all_transactions.reject { |t| t.amount_cents >= 0 }.first(3)
-
-    render partial: "events/home/money_movement", locals: { heatmap: @heatmap, event: @event }
-  end
-
   def team_stats
     authorize @event
 
@@ -378,7 +365,17 @@ class EventsController < ApplicationController
     fixed_event_params.delete(:plan)
 
     begin
-      if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
+      # One transaction, so reviewer toggles are rolled back if the rest of the form doesn't save
+      updated = Event.transaction do
+        if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)) && !@event.update_reimbursement_reviewers(reviewer_position_ids)
+          @settings_tab = "reimbursements"
+          raise ActiveRecord::Rollback
+        end
+
+        @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params) || raise(ActiveRecord::Rollback)
+      end
+
+      if updated
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
@@ -527,12 +524,6 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
-  end
-
-  def documentation
-    @event_name = @event.name
-
-    authorize @event
   end
 
   def async_balance
@@ -897,6 +888,7 @@ class EventsController < ApplicationController
     @active_teenagers_count = @event.users.active_teenager.count
 
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+    @member_perks_available = OrganizerPosition.role_at_least?(current_user, @event, :member) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
     @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)
@@ -1499,6 +1491,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1569,6 +1562,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,

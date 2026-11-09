@@ -43,10 +43,6 @@ class WiseTransferPolicy < ApplicationPolicy
     user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
-  def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?
   end

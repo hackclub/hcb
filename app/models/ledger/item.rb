@@ -146,6 +146,12 @@ class Ledger
     # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
     ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
 
+    # SQL counterpart of #likely_account_verification_related?
+    scope :not_likely_account_verification_related, -> {
+      where.not("ABS(ledger_items.amount_cents) < 100 AND ledger_items.linked_object_type IS NULL AND ledger_items.memo ILIKE ANY (ARRAY[?])",
+                ACCOUNT_VERIFICATION_MEMO_MATCHES.map { |s| "%#{sanitize_sql_like(s)}%" })
+    }
+
     # Account-verification micro-deposit amounts prove ownership of a linked
     # external account, so they're redacted from non-organizer (transparency)
     # viewers, matching the legacy transactions page. These arrive as raw bank
@@ -265,6 +271,8 @@ class Ledger
         "Fiscal sponsorship fee"
       when "FeeRevenue"
         "Fee revenue"
+      when "FeeReimbursementGroup"
+        "Stripe fee reimbursements"
       when "Reimbursement::PayoutHolding"
         "Reimbursement payout holding"
       when "Reimbursement::ExpensePayout"
@@ -277,7 +285,7 @@ class Ledger
     end
 
     def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee", "FeeReimbursementGroup"].include?(linked_object_type) ? "of" : "for"
 
       amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
 
@@ -326,6 +334,8 @@ class Ledger
         "bank-icon"
       when "FeeRevenue"
         "bank-icon"
+      when "FeeReimbursementGroup"
+        "cash"
       when "Reimbursement::PayoutHolding"
         "reimbursement"
       when "Reimbursement::ExpensePayout"
@@ -430,7 +440,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
     end
 
     def calculate_status
@@ -538,6 +548,8 @@ class Ledger
         end
       when "FeeRevenue"
         "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "FeeReimbursementGroup"
+        linked_object.memo
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"

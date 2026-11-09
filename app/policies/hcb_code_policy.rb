@@ -5,10 +5,6 @@ class HcbCodePolicy < ApplicationPolicy
     user&.auditor? || present_in_events? || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
   end
 
-  def memo_frame?
-    user&.admin?
-  end
-
   def edit?
     gte_member_in_events?
   end
@@ -34,10 +30,6 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def toggle_tag?
-    gte_member_in_events?
-  end
-
-  def link_receipt_modal?
     gte_member_in_events?
   end
 

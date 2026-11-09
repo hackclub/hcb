@@ -262,6 +262,18 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
 
+      # Receipt and comment changes stream fresh counts into this element
+      it "wraps each row's badges in an element that streams can target" do
+        hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+        create(:comment, commentable: hcb_code)
+
+        get(:ledger, params: { event_id: event.slug })
+
+        badges = Nokogiri::HTML5(response.body).at_css("tr.transaction ##{ActionView::RecordIdentifier.dom_id(hcb_code.ledger_item, :badges)}")
+        expect(badges).to be_present
+        expect(badges.at_css(".list-badge[aria-label='1 comment']")).to be_present
+      end
+
       # The maximum_amount filter used to compile to a malformed `$and` query
       # that raised Ledger::Query::Error inside the action (only Pundit was
       # rescued), 500ing the page. Amount-range filtering itself is covered in
@@ -300,6 +312,41 @@ RSpec.describe EventsController do
 
         expect(response.body).to include("Declined but moved money")
         expect(response.body).not_to include("Declined with no amount")
+      end
+
+      context "receipt drag and drop" do
+        let!(:hcb_code) { create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code }
+
+        def ledger_row
+          Nokogiri::HTML5(response.body).at_css("tr.transaction")
+        end
+
+        it "makes ledger rows a drop target for receipts on the item's HCB code" do
+          get(:ledger, params: { event_id: event.slug })
+
+          row = ledger_row
+          expect(row["data-controller"]).to eq("file-drop")
+          expect(row["data-file-drop-receiptable-value"]).to eq("HcbCode:#{hcb_code.id}")
+
+          form = row.at_css("form[data-file-drop-target='form']")
+          expect(form["action"]).to eq(receipts_path)
+          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
+          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(hcb_code.id.to_s)
+        end
+
+        it "doesn't make ledger rows a drop target for users who can't upload receipts" do
+          reader = create(:user)
+          create(:organizer_position, event:, user: reader, role: :reader)
+          Flipper.enable_actor(:new_ledger_2026_07_17, reader)
+          create_session(reader, verified: true)
+
+          get(:ledger, params: { event_id: event.slug })
+
+          row = ledger_row
+          expect(row).to be_present
+          expect(row["data-controller"]).to be_nil
+          expect(row.at_css("form[data-file-drop-target='form']")).to be_nil
+        end
       end
     end
   end
@@ -350,6 +397,57 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
+
+    it "lists managers as reimbursement reviewers, letting parent organization managers be opted in" do
+      manager = create(:user, full_name: "Morgan Manager")
+      other_manager = create(:user, full_name: "Avery Lee")
+      parent_manager = create(:user, full_name: "Parker Parent")
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
+
+      reviewer_boxes = lambda do
+        get(:edit, params: { id: event.slug, tab: "reimbursements" })
+        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+          [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+        end
+      end
+
+      create_session(manager, verified: true)
+
+      expect(reviewer_boxes.call).to eq(
+        manager_position.id       => { checked: true, disabled: false },
+        other_manager_position.id => { checked: true, disabled: false },
+        parent_position.id        => { checked: false, disabled: false }
+      )
+
+      manager_position.reimbursement_reviewer_opt_ins.destroy_all
+
+      expect(reviewer_boxes.call[manager_position.id]).to eq(checked: false, disabled: false)
+    end
+
+    it "groups reimbursement reviewers by organization" do
+      parent = create(:event, name: "Parent Org")
+      event = create(:event, parent:, name: "Sub Org")
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "reimbursements" })
+
+      headings = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options h4").map(&:text)
+      expect(headings).to eq(["Managers of Sub Org", "Managers of Parent Org"])
+
+      boxes = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+        [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+      end
+      expect(boxes).to eq(
+        manager_position.id => { checked: true, disabled: false },
+        parent_position.id  => { checked: false, disabled: false }
+      )
+    end
   end
 
   describe "#update" do
@@ -364,6 +462,97 @@ RSpec.describe EventsController do
             })
 
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+
+    it "opts managers out of reimbursement reviews when switched off and keeps new managers opted in" do
+      manager = create(:user)
+      other_manager = create(:user)
+      member = create(:user)
+      parent_manager = create(:user)
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
+      member_position = create(:organizer_position, user: member, event:, role: :member)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
+      create_session(manager, verified: true)
+
+      # Members never review
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id, member_position.id, parent_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager, parent_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: [""] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      new_manager = create(:user)
+      create(:organizer_position, user: new_manager, event:, role: :manager)
+
+      expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
+      expect(manager_position.reimbursement_reviewer_opt_ins.reload).to be_empty
+    end
+
+    it "rolls back reimbursement reviewer toggles when the rest of the form doesn't save" do
+      manager = create(:user)
+      other_manager = create(:user)
+      event = create(:event)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { slug: "12345", reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager, other_manager)
+    end
+
+    it "lets a parent organization manager opt in to reviewing a sub-organization's reimbursements" do
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id, parent_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user, parent_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
+    end
+  end
+
+  describe "#reimbursements" do
+    render_views
+
+    it "only asks for a reviewer if the organization lets submitters pick one" do
+      manager = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).not_to include("reimbursement_report_reviewer_wrapper")
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      get(:reimbursements, params: { event_id: event.slug })
+
+      select = Nokogiri::HTML5(response.body).at_css("#reimbursement_report_reviewer_wrapper select")
+      expect(select).to be_present
+      expect(select["disabled"]).to be_nil
+      expect(select.at_css("option[selected]")).to be_nil
+      expect(select["data-invite-default"]).to eq(manager.public_id)
     end
   end
 

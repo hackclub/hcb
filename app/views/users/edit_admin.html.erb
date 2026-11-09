@@ -41,27 +41,13 @@
 
         <% if admin_signed_in? %>
           <p>
-            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
+            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post, turbo_frame: "_top" } unless current_session&.impersonated? %>
           </p>
 
-          <% if @user.locked? %>
-            <div class="field field--checkbox">
-              <%= form.label :locked, "Lock user from signing into HCB" %>
-              <%= form.check_box :locked, checked: true, disabled: !admin_signed_in? %>
-            </div>
-          <% else %>
-            <div x-data="{ locking: false }">
-              <div class="field field--checkbox">
-                <%= form.label :locked, "Lock user from signing into HCB" %>
-                <%= form.check_box :locked, checked: false, disabled: !admin_signed_in?, "x-model": "locking" %>
-              </div>
-
-              <div class="pl-5 field field--checkbox" x-show="locking" x-cloak>
-                <%= form.label :freeze_cards, "Also freeze all active cards" %>
-                <%= form.check_box :freeze_cards, checked: false %>
-              </div>
-            </div>
-          <% end %>
+          <div class="field field--checkbox">
+            <%= form.label :locked, "Lock user from signing into HCB (also freezes all of their active cards)" %>
+            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
+          </div>
 
           <div class="field field--checkbox">
             <%= form.label :running_balance_enabled, "Show running balance?" %>
@@ -156,6 +142,12 @@
   <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
     <% admin_tool "p-3" do %>
       <p>Loading user details</p>
+    <% end %>
+  <% end %>
+
+  <%= turbo_frame_tag :admin_details_emails, src: admin_details_emails_user_path(@user), loading: :lazy do %>
+    <% admin_tool "p-3" do %>
+      <p>Loading emails sent to user</p>
     <% end %>
   <% end %>
 
