@@ -19,7 +19,7 @@
             Fiscal sponsorship
           </div>
 
-          <%= render layout: "ledger/items/mobile_subtitle", locals: { date: } do %>
+          <%= render layout: "ledger/items/mobile_subtitle", locals: { datetime: Time.current } do %>
             <%= badge_for "Pending", class: badge_class %>
           <% end %>
         </div>

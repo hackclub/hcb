@@ -38,7 +38,7 @@
           </div>
         </div>
 
-        <%= render layout: "ledger/items/mobile_subtitle", locals: { date: } do %>
+        <%= render layout: "ledger/items/mobile_subtitle", locals: { datetime: item.datetime, author: (item.author if show_author) } do %>
           <%= render "ledger/items/status", ledger_item: item %>
         <% end %>
 
