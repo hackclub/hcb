@@ -3,6 +3,11 @@
 require "rails_helper"
 
 RSpec.describe HcbCode, type: :model do
+  def stub_payment_legal_entity(payment)
+    legal_entity = double("LegalEntity", payable?: false, default_payout_method: nil).as_null_object
+    allow(payment).to receive(:legal_entity).and_return(legal_entity)
+  end
+
   describe "disbursement integration" do
     describe "#outgoing_disbursement?" do
       it "returns true for HCB-500-* codes" do
@@ -342,7 +347,7 @@ RSpec.describe HcbCode, type: :model do
         let(:payee) { create(:payee, event:) }
         let(:payment) do
           p = build(:payment, payee:)
-          stub_legal_entity(p, payable: false, payout_method: nil)
+          stub_payment_legal_entity(p)
           p.save!
           p
         end

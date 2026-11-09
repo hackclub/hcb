@@ -93,7 +93,8 @@ class WiseTransfersController < ApplicationController
 
     @wise_transfer.mark_rejected!
 
-    @wise_transfer.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    wise_transfer_commentable = @wise_transfer.payment || @wise_transfer.local_hcb_code
+    wise_transfer_commentable.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_back_or_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Wire has been canceled." }
   end

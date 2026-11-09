@@ -143,11 +143,11 @@ RSpec.describe CommentPolicy, type: :policy do
         expect(policy.show?).to eq(true)
       end
 
-      it "allows the payee to view comments on the payout hcb_code" do
+      it "does not allow the payee to view comments on the payout hcb_code" do
         comment = create(:comment, commentable: wire.local_hcb_code, admin_only: false)
         policy = described_class.new(payee_user, comment)
 
-        expect(policy.show?).to eq(true)
+        expect(policy.show?).to eq(false)
       end
 
       it "hides admin_only comments from the payee" do

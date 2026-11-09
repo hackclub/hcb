@@ -51,7 +51,7 @@ RSpec.describe PaymentsController do
       stub_request(:get, /api\.column\.com\/institutions/).to_return_json(status: 200, body: { country_code: "DE" })
       create(:legal_entity_user, legal_entity:, user: payee_user)
       create(:payment_attempt, :wire, payment:, payout: wire, aasm_state: "rejected", payout_method: create(:legal_entity_payout_method_wire, details: build(:wire_payout_method_details, account_number: "DE89370400440532013000", bic_code: "DEUTDEDB", recipient_country: :DE, address_city: "Berlin", address_postal_code: "10115", address_state: "Berlin")))
-      wire.local_hcb_code.comments.create!(content: rejection_comment, user: create(:user), action: :rejected_transfer)
+      wire.payment.comments.create!(content: rejection_comment, user: create(:user), action: :rejected_transfer)
       create_session(payee_user, verified: true)
     end
 
@@ -60,6 +60,15 @@ RSpec.describe PaymentsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(rejection_comment)
+    end
+
+    it "does not show comments attached to the payout hcb_code" do
+      wire.local_hcb_code.comments.create!(content: "wire hcb code comment", user: create(:user))
+
+      get :show, params: { id: payment.hashid }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("wire hcb code comment")
     end
   end
 end

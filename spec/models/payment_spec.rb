@@ -270,20 +270,21 @@ RSpec.describe Payment, type: :model do
       wire.local_hcb_code
     end
 
-    it "includes comments on an attempt's payout hcb_code" do
+    it "excludes comments on an attempt's payout hcb_code" do
       rejection = create(:comment, commentable: attempt_with_wire, user:, content: "wire rejected", action: :rejected_transfer)
 
-      expect(payment.all_comments).to include(rejection)
+      expect(payment.all_comments).not_to include(rejection)
     end
 
-    it "includes comments from every attempt" do
+    it "includes only comments on the payment" do
       first_attempt_code = attempt_with_wire
       first_comment = create(:comment, commentable: first_attempt_code, user:)
       second_attempt_code = attempt_with_wire
       second_comment = create(:comment, commentable: second_attempt_code, user:)
       payment_comment = create(:comment, commentable: payment, user:)
 
-      expect(payment.all_comments).to contain_exactly(first_comment, second_comment, payment_comment)
+      expect(payment.all_comments).to contain_exactly(payment_comment)
+      expect(payment.all_comments).not_to include(first_comment, second_comment)
     end
 
     it "excludes comments on unrelated hcb_codes" do
@@ -295,7 +296,8 @@ RSpec.describe Payment, type: :model do
 
     it "orders comments by created_at" do
       newer = create(:comment, commentable: payment, user:, created_at: 1.minute.ago)
-      older = create(:comment, commentable: attempt_with_wire, user:, created_at: 1.hour.ago)
+      older = create(:comment, commentable: payment, user:, created_at: 1.hour.ago)
+      create(:comment, commentable: attempt_with_wire, user:, created_at: 2.hours.ago)
 
       expect(payment.all_comments.to_a).to eq([older, newer])
     end

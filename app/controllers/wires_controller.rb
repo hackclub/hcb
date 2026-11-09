@@ -97,7 +97,8 @@ class WiresController < ApplicationController
 
     @wire.mark_rejected!
 
-    @wire.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    wire_commentable = @wire.payment || @wire.local_hcb_code
+    wire_commentable.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_back_or_to wire_process_admin_path(@wire), flash: { success: "Wire has been canceled." }
   end
