@@ -403,6 +403,14 @@ RSpec.describe AdminController do
 
         expect(wise_transfer.reload.return_reason).to eq("Account closed")
         expect(payout_holding.report.comments.sole.content).to include("returned: Account closed")
+
+        perform_enqueued_jobs
+        delivered = ActionMailer::Base.deliveries.last
+        expect(delivered.to).to eq([payout_holding.report.user.email])
+        expect(delivered.subject).to include("was cancelled")
+        body = delivered.html_part.body.to_s
+        expect(body).to include("Account closed")
+        expect(body).not_to include("Recipient bank rejected it")
       end
     end
 
