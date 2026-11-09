@@ -403,8 +403,18 @@ module Reimbursement
       authorize @report
       return unless enforce_sudo_mode
 
-      unless @report.retryable?
+      unless @report.payout_holding&.failed?
         flash[:error] = "Retry is only available for failed payouts."
+        return redirect_to @report
+      end
+
+      if @report.payout_method.blank?
+        flash[:error] = "Retry is unavailable because there is no payout method on file."
+        return redirect_to @report
+      end
+
+      if @report.payout_method.unsupported?
+        flash[:error] = "Retry is unavailable because the payout method is unsupported; the payout information must be updated."
         return redirect_to @report
       end
 
