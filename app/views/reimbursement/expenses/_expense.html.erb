@@ -104,11 +104,7 @@
     <div class="field event-select-target">
       <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
       <%= form.select(:reimbursement_report_id,
-            admin_signed_in? ?
-              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
-            current_user == expense.report.user ?
-              current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
-              expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
+            movable_reimbursement_report_options(expense.report),
             { prompt: "Select a report…", required: false, include_blank: "Select a report..." }, "x-model": "reportId") %>
       <% unless admin_signed_in? %>
         <span class="muted mt1">You can transfer an expense to any report of yours.</span>
@@ -118,7 +114,7 @@
       <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
       <%= form.select(
             :event_id,
-            current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
+            current_user.events.not_hidden.filter_demo_mode(false).pluck(:name, :id),
             { prompt: "Select an event…", required: false }, "x-model": "eventId"
           ) %>
       <% unless admin_signed_in? %>
