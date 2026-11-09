@@ -136,10 +136,6 @@ module Reimbursement
       turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
     end
 
-    def delete_expense_turbo_stream
-      turbo_stream.remove(@expense)
-    end
-
     def on_create_streams
       [actions_turbo_stream, new_expense_turbo_stream, blankslate_turbo_stream]
     end

@@ -378,10 +378,6 @@ summary {
   background-color: map-get($palette, primary);
 }
 
-html[data-ai-loading='true'] > .turbo-progress-bar {
-  background-color: map-get($palette, ai);
-}
-
 #HW_badge_cont {
   position: absolute;
   top: -5px;
