@@ -126,6 +126,20 @@ RSpec.describe AdminController do
       expect(response.body).to include(wise_transfer_return_search_admin_index_path(canonical_transaction_id: returned.id))
     end
 
+    it "prefills the failure reason when ops already marked the suggested transfer failed" do
+      admin = create(:user, :make_admin)
+      wise_transfer = deposited_wise_transfer(wise_id: "987567568")
+      wise_transfer.mark_failed!("Account closed")
+      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+
+      create_session(admin, verified: true)
+
+      get :transaction, params: { id: returned.id }
+
+      expect(response.body).to include("Map as return of Wise transfer ##{wise_transfer.id}")
+      expect(response.body).to include('value="Account closed"')
+    end
+
     it "offers outgoing Wise transfers, not returns, for an outgoing transaction" do
       admin = create(:user, :make_admin)
       outgoing = create(:canonical_transaction, amount_cents: -130_00, transaction_source: create(:raw_plaid_transaction))
@@ -209,6 +223,18 @@ RSpec.describe AdminController do
       expect(search(memo: "WISE INC REFUND")).to eq([closer.id, close.id])
     end
 
+    it "includes the failure reason of transfers ops already marked failed, so the form can prefill it" do
+      failed = deposited_wise_transfer(wise_id: "33334101", usd_amount_cents: 130_00)
+      failed.mark_failed!("Account closed")
+      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :wise_transfer_return_search, params: { canonical_transaction_id: returned.id }, format: :json
+
+      option = JSON.parse(response.body).find { |o| o["value"] == failed.id.to_s }
+      expect(option["return_reason"]).to eq("Account closed")
+    end
+
     it "searches every deposited or failed transfer by ID, Wise ID, or recipient" do
       old = deposited_wise_transfer(wise_id: "99887766", usd_amount_cents: 900_00).tap { |t| t.update!(sent_at: 2.years.ago) }
       other = deposited_wise_transfer(wise_id: "1111111", usd_amount_cents: 900_00)
@@ -286,6 +312,20 @@ RSpec.describe AdminController do
       expect(wise_transfer.return_reason).to eq("Recipient bank rejected it")
     end
 
+    it "replaces an earlier failure reason with the one entered on the return" do
+      admin = create(:user, :make_admin)
+      wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+      create_session(admin, verified: true)
+      map_outgoing!(wise_transfer)
+      wise_transfer.mark_failed!("Recipient bank rejected it")
+      returned = create(:canonical_transaction, amount_cents: 127_50)
+
+      post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
+
+      expect(flash[:error]).to be_nil
+      expect(wise_transfer.reload.return_reason).to eq("Account closed")
+    end
+
     context "when the transfer paid out a reimbursement" do
       include ActiveJob::TestHelper
 
@@ -344,6 +384,25 @@ RSpec.describe AdminController do
           .with(params: a_hash_including(reason: "Recipient bank rejected it", cancelled: true), args: [])
 
         expect(reversed).to eq([payout_holding.id])
+      end
+
+      it "uses the reason entered on the return, not the earlier one, in the cancellation comment and email" do
+        admin = create(:user, :make_admin)
+        wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+        create_session(admin, verified: true)
+        map_outgoing!(wise_transfer)
+        payout_holding = attach_payout_holding(wise_transfer)
+        allow_any_instance_of(Reimbursement::PayoutHolding).to receive(:reverse!)
+        wise_transfer.mark_failed!("Recipient bank rejected it")
+
+        returned = create(:canonical_transaction, amount_cents: 127_50)
+        expect {
+          post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
+        }.to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+          .with(params: a_hash_including(reason: "Account closed", cancelled: true), args: [])
+
+        expect(wise_transfer.reload.return_reason).to eq("Account closed")
+        expect(payout_holding.report.comments.sole.content).to include("returned: Account closed")
       end
     end
 

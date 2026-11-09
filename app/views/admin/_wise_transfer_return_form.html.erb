@@ -12,21 +12,23 @@
 <%= form_with model: false, local: true, url: set_wise_transfer_return_path(canonical_transaction), method: :post, class: "mb-0" do |form| %>
   <% if wise_transfer %>
     <%= form.hidden_field :wise_transfer_id, value: wise_transfer.id %>
-    <%= form.text_field :reason, id: "#{form_id}-reason", placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full" %>
+    <%= form.text_field :reason, id: "#{form_id}-reason", value: wise_transfer.return_reason, placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full" %>
     <div class="mt-3">
       <%= form.submit "Map as return of Wise transfer ##{wise_transfer.id}", class: "!mb-0", data: { "turbo-confirm": confirm } %>
       <%= link_to "View Wise transfer ##{wise_transfer.id}", wise_transfer_process_admin_path(wise_transfer), class: "ml-2", target: "_blank" %>
       <%= link_to "View report", reimbursement_report_path(report), class: "ml-2", target: "_blank" if report %>
     </div>
   <% else %>
-    <div class="flex flex-row items-center gap-2">
-      <%= combobox_tag :wise_transfer_id,
-                       wise_transfer_return_search_admin_index_path(canonical_transaction_id: canonical_transaction.id),
-                       id: "#{form_id}-wise-transfer-id",
-                       placeholder: "Search Wise transfers",
-                       class: "!w-[300px] !max-w-full" %>
-      <%= form.submit "Set", class: "!my-0", data: { "turbo-confirm": confirm } %>
+    <div data-controller="return-reason" data-action="combobox:change->return-reason#fill">
+      <div class="flex flex-row items-center gap-2">
+        <%= combobox_tag :wise_transfer_id,
+                         wise_transfer_return_search_admin_index_path(canonical_transaction_id: canonical_transaction.id),
+                         id: "#{form_id}-wise-transfer-id",
+                         placeholder: "Search Wise transfers",
+                         class: "!w-[300px] !max-w-full" %>
+        <%= form.submit "Set", class: "!my-0", data: { "turbo-confirm": confirm } %>
+      </div>
+      <%= form.text_field :reason, id: "#{form_id}-reason", placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full mt-2", data: { return_reason_target: "input" } %>
     </div>
-    <%= form.text_field :reason, id: "#{form_id}-reason", placeholder: "Failure reason", required: true, style: "width: 300px;", class: "!max-w-full mt-2" %>
   <% end %>
 <% end %>

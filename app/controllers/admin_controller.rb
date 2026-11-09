@@ -490,7 +490,9 @@ class AdminController < Admin::BaseController
         value: wise_transfer.id.to_s,
         label: helpers.combobox_display(wise_transfer),
         sublabel: wise_transfer.combobox_sublabel,
-        badge: helpers.combobox_badge(wise_transfer)
+        badge: helpers.combobox_badge(wise_transfer),
+        # Prefills the failure reason when ops already marked the transfer failed.
+        return_reason: wise_transfer.return_reason
       }
     }
   end
@@ -1492,9 +1494,16 @@ class AdminController < Admin::BaseController
         Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: current_user)
       end
 
-      wise_transfer.mark_failed!(params[:reason].presence, refunded: true) if wise_transfer.may_mark_failed?
+      # The reason entered here wins over one ops gave when marking the
+      # transfer failed earlier, so the report comment and email reflect it.
+      reason = params[:reason].presence || wise_transfer.return_reason
+      if wise_transfer.may_mark_failed?
+        wise_transfer.mark_failed!(reason, refunded: true)
+      elsif reason != wise_transfer.return_reason
+        wise_transfer.update!(return_reason: reason)
+      end
 
-      wise_transfer.cancel_reimbursement_for_refund(wise_transfer.return_reason)
+      wise_transfer.cancel_reimbursement_for_refund(reason)
 
       redirect_to transaction_admin_path(canonical_transaction)
     end
