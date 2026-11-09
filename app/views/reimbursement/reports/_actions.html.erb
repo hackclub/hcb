@@ -85,7 +85,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && !report.payout_method.ready_for_payout?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
@@ -97,6 +97,8 @@
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
                   <% if report.payout_method.present? && report.payout_method.unsupported? %>
                     update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
+                  <% elsif report.payout_method.present? && report.payout_method.incomplete? %>
+                    complete your payout information. <%= report.payout_method.incomplete_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
                   <% end %>
@@ -120,7 +122,9 @@
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
                 <% if report.payout_method.present? && report.payout_method.unsupported? %>
-                  update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
+                  update their payout information. <%= report.payout_method.unsupported_details[:reason] %>
+                <% elsif report.payout_method.present? && report.payout_method.incomplete? %>
+                  add the <%= report.payout_method.missing_required_field_labels.to_sentence %> to their payout method.
                 <% else %>
                   add their payout information.
                 <% end %>
@@ -133,6 +137,16 @@
                 Submit & request review
                 <% button_hint = capture do %>
                   <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to add their payout information.
+                <% end %>
+              </div>
+            </div>
+          <% elsif !report.payout_method.ready_for_payout? %>
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> needs to update their payout information.">
+              <div class="btn bg-info disabled whitespace-nowrap">
+                <%= inline_icon "clock" %>
+                Waiting on <%= user.first_name %>
+                <% button_hint = capture do %>
+                  <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to update their payout information.
                 <% end %>
               </div>
             </div>

@@ -230,6 +230,62 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
     end
   end
 
+  describe "incomplete methods" do
+    let(:payout_method) { create(:legal_entity_payout_method, legal_entity:, default: true, details: create(:wise_transfer_payout_method_details)) }
+
+    before do
+      payout_method.details.update!(recipient_birthday: nil)
+      payout_method.details.reload
+    end
+
+    it "is incomplete and not ready for payout" do
+      expect(payout_method).to be_incomplete
+      expect(payout_method).not_to be_unsupported
+      expect(payout_method).not_to be_ready_for_payout
+      expect(payout_method.incomplete_details).to include(status_badge: "Incomplete")
+      expect(payout_method.incomplete_details[:reason]).to include("recipient's date of birth")
+    end
+
+    it "is ready for payout once complete" do
+      expect(create(:legal_entity_payout_method, legal_entity: create(:legal_entity))).to be_ready_for_payout
+    end
+
+    describe "#complete_details!" do
+      it "fills in the missing fields in place" do
+        expect { payout_method.complete_details!({ "recipient_birthday" => "01/15/1990" }) }
+          .not_to(change { LegalEntity::PayoutMethod.count })
+
+        expect(payout_method.details.reload.recipient_birthday).to eq("01/15/1990")
+        expect(payout_method.reload).to be_ready_for_payout
+      end
+
+      it "ignores fields that aren't missing" do
+        payout_method.complete_details!({ "recipient_birthday" => "01/15/1990", "address_line1" => "999 Elsewhere" })
+        expect(payout_method.details.reload.address_line1).to eq("123 Main St")
+      end
+
+      it "rejects an invalid value" do
+        expect { payout_method.complete_details!({ "recipient_birthday" => "" }) }.to raise_error(ActiveRecord::RecordInvalid)
+      end
+
+      it "releases held payments" do
+        expect(legal_entity).to receive(:refresh_pending_contractors_payments!)
+        payout_method.complete_details!({ "recipient_birthday" => "01/15/1990" })
+      end
+    end
+  end
+
+  describe "refreshing pending payments" do
+    it "runs when a method becomes the default" do
+      first = legal_entity.payout_methods.create!(details: build_ach, default: true)
+      second = legal_entity.payout_methods.create!(details: build_check)
+
+      expect(legal_entity).to receive(:refresh_pending_contractors_payments!)
+      second.update!(default: true)
+      expect(first.reload).not_to be_default
+    end
+  end
+
   describe "#locked_by_processing_reimbursement_report?" do
     let(:user) { create(:user) }
 

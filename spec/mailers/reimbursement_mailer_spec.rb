@@ -36,6 +36,7 @@ RSpec.describe ReimbursementMailer do
           recipient_country: "CA",
           address_postal_code: "G0X1L0",
           currency: "CAD",
+          recipient_birthday: "01/15/1990",
         )
       )
       event = create(:event, name: "Daydream")

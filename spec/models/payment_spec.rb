@@ -15,7 +15,7 @@ RSpec.describe Payment, type: :model do
   end
 
   def stub_legal_entity(payment, payable:, payout_method:)
-    legal_entity = double("LegalEntity", payable?: payable, default_payout_method: payout_method).as_null_object
+    legal_entity = double("LegalEntity", payable?: payable, default_payout_method: payout_method, default_payout_method_ready?: payout_method&.ready_for_payout? || false).as_null_object
     # Stub directly on payment so the stub survives with_lock's reload (which
     # resets association caches). has_one :through issues SQL, not a Ruby
     # delegation, so stubbing payee.legal_entity won't intercept it.
@@ -79,6 +79,18 @@ RSpec.describe Payment, type: :model do
       it "does not send any mailer" do
         expect(PaymentMailer).not_to receive(:with)
         create_payment_with_legal_entity(payable: true, payout_method:)
+      end
+    end
+
+    context "when the legal entity is payable but its default payout method is incomplete" do
+      let(:payout_method) { create(:legal_entity_payout_method) }
+
+      before { allow(payout_method).to receive(:incomplete?).and_return(true) }
+
+      it "holds the payment without creating an attempt" do
+        payment = create_payment_with_legal_entity(payable: true, payout_method:)
+        expect(payment.attempts).to be_empty
+        expect(payment).to be_pending_legal_entity
       end
     end
 
@@ -311,7 +323,7 @@ RSpec.describe Payment, type: :model do
       end
 
       it "raises ArgumentError" do
-        expect { payment.retry! }.to raise_error(ArgumentError, /no default payout method/)
+        expect { payment.retry! }.to raise_error(ArgumentError, /default payout method is missing/)
       end
     end
   end
