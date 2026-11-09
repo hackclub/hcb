@@ -923,6 +923,12 @@ class AdminController < Admin::BaseController
     @uetr = params[:uetr].presence
     return if @uetr.blank?
 
+    unless Wire::UETR.valid?(@uetr)
+      flash.now[:error] = "That isn't a valid UETR or Column transfer ID."
+      @uetr = nil
+      return
+    end
+
     @wire = Wire.find_by(uetr: @uetr)
     @tracking = Wire::UETR::Tracking.new(Wire::UETR.lookup(@uetr))
 
