@@ -78,7 +78,7 @@ class LegalEntity
       def repoint_failed_and_draft_reports
         reports = Reimbursement::Report.where(user: @legal_entity.users)
 
-        # A failed Wise payout isn't retried; its report is cancelled instead
+        # A failed payout via Wise transfer isn't retried; its report is cancelled instead
         failed = reports.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed, wise_transfer_id: nil })
         draft = reports.where(aasm_state: :draft)
 
