@@ -49,8 +49,8 @@
         <thead>
         <tr>
           <% @table_columns.each do |column| %>
-            <th>
-              <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
+            <th class="<%= "text-right" if column[:right] %>">
+              <%= render "events/sort_table_header", sort: column[:key], columns: @table_columns, display: column[:display], right: column[:right] %>
             </th>
           <% end %>
         </tr>
@@ -75,10 +75,10 @@
                 <%= user_mention report.user %>
               </td>
               <td class="text-right">
-                <%= format_date report.created_at %>
+                <%= report.amount.format(with_currency: @format_reports_with_currency) %>
               </td>
               <td class="text-right">
-                <%= report.amount.format(with_currency: @format_reports_with_currency) %>
+                <%= format_date report.created_at %>
               </td>
             </tr>
           <% end %>

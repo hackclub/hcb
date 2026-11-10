@@ -84,7 +84,6 @@ module Reimbursement
     monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true, integer_column: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
-    has_many :non_fee_expenses, -> { to_sum }, class_name: "Reimbursement::Expense", foreign_key: "reimbursement_report_id", inverse_of: :report
     has_one :payout_holding, inverse_of: :report
     alias_attribute :report_name, :name
 
@@ -95,12 +94,26 @@ module Reimbursement
     scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR u2.email ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
     scope :to_calculate_total, -> { where.not(aasm_state: ["rejected"]) }
+    # Mirrors #amount_cents in SQL. Amounts in different currencies can't be
+    # compared directly, so USD reports come first, then each other currency
+    # grouped together, sorted by amount within each currency.
     scope :order_by_amount, ->(direction) do
-      left_joins(:non_fee_expenses)
-        .group(:id)
-        .order(Reimbursement::Expense.arel_table[:amount_cents].sum.public_send(direction))
+      direction = direction.to_s.casecmp?("asc") ? "ASC" : "DESC"
+      order(
+        Arel.sql("CASE WHEN reimbursement_reports.currency = 'USD' THEN 0 ELSE 1 END"),
+        :currency,
+        Arel.sql("(#{amount_cents_sql}) #{direction}")
+      )
     end
-    scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
+    # Sorts by workflow order (draft → submitted → … → reversed) rather than alphabetically.
+    scope :order_by_status, ->(direction) do
+      direction = direction.to_s.casecmp?("asc") ? "ASC" : "DESC"
+      states = aasm.states.map { |state| state.name.to_s }
+      order(Arel.sql(sanitize_sql_array(["array_position(ARRAY[?]::text[], reimbursement_reports.aasm_state::text) #{direction}", states])))
+    end
+    # Uses the table name (not the association name) so the join isn't aliased as "user",
+    # which would break ordering/filtering on "users" columns.
+    scope :visible, -> { joins(:user).where.not(users: { full_name: nil }, invited_by_id: nil) }
     # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
     include AASM
@@ -278,8 +291,31 @@ module Reimbursement
       reimbursement_approved? || reimbursed? || rejected? || reversed?
     end
 
+    AMOUNT_TO_REIMBURSE_STATES = %w[reimbursement_requested reimbursement_approved reimbursed].freeze
+
+    # SQL equivalent of #amount_cents, for ordering. Keep the two in sync.
+    def self.amount_cents_sql
+      expenses = Reimbursement::Expense.to_sum.where("reimbursement_expenses.reimbursement_report_id = reimbursement_reports.id")
+      total = expenses.select("COALESCE(SUM(reimbursement_expenses.amount_cents), 0)").to_sql
+      approved = expenses.approved.select("COALESCE(SUM(reimbursement_expenses.amount_cents), 0)").to_sql
+
+      states = AMOUNT_TO_REIMBURSE_STATES.map { |state| connection.quote(state) }.join(", ")
+
+      <<~SQL.squish
+        CASE
+          WHEN reimbursement_reports.aasm_state IN (#{states}) THEN
+            CASE
+              WHEN reimbursement_reports.maximum_amount_cents IS NOT NULL AND reimbursement_reports.currency = 'USD'
+                THEN LEAST((#{approved}), reimbursement_reports.maximum_amount_cents)
+              ELSE (#{approved})
+            END
+          ELSE (#{total})
+        END
+      SQL
+    end
+
     def amount_cents
-      return amount_to_reimburse_cents if reimbursement_requested? || reimbursement_approved? || reimbursed?
+      return amount_to_reimburse_cents if AMOUNT_TO_REIMBURSE_STATES.include?(aasm_state)
 
       expenses.to_sum.sum(:amount_cents)
     end

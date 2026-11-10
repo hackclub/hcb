@@ -554,6 +554,75 @@ RSpec.describe EventsController do
       expect(select.at_css("option[selected]")).to be_nil
       expect(select["data-invite-default"]).to eq(manager.public_id)
     end
+
+    describe "sorting" do
+      let(:event) { create(:event) }
+
+      def report_names(body)
+        Nokogiri::HTML5(body).css("tbody tr.clickable td:nth-child(2) .muted").map { |node| node.text.strip }
+      end
+
+      def create_report(name:, cents: [], **attrs)
+        create(:reimbursement_report, event:, name:, **attrs).tap do |report|
+          cents.each { |amount| create(:reimbursement_expense, report:, value: amount / 100.0) }
+        end
+      end
+
+      before { sign_in_organizer_of(event) }
+
+      %w[aasm_state name user_name amount created_at].product(%w[asc desc]).each do |sort, direction|
+        it "renders when sorting by #{sort} #{direction}" do
+          create_report(name: "A", cents: [100])
+          create_report(name: "B")
+
+          get(:reimbursements, params: { event_id: event.slug, sort:, direction:, q: "a" })
+
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      it "sorts by the reporter's name" do
+        create_report(name: "Zed's report", user: create(:user, full_name: "Zed Zed"))
+        create_report(name: "Amy's report", user: create(:user, full_name: "Amy Amy"))
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "user_name", direction: "asc" })
+
+        expect(report_names(response.body)).to eq(["Amy's report", "Zed's report"])
+      end
+
+      it "sorts by amount, treating reports with no expenses as zero" do
+        create_report(name: "Empty")
+        create_report(name: "Small", cents: [500])
+        create_report(name: "Large", cents: [1_000, 2_000])
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "amount", direction: "desc" })
+        expect(report_names(response.body)).to eq(%w[Large Small Empty])
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "amount", direction: "asc" })
+        expect(report_names(response.body)).to eq(%w[Empty Small Large])
+      end
+
+      it "sorts by status in workflow order" do
+        create_report(name: "Rejected", aasm_state: "rejected")
+        create_report(name: "Draft", aasm_state: "draft")
+        create_report(name: "Submitted", aasm_state: "submitted")
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "aasm_state", direction: "asc" })
+
+        expect(report_names(response.body)).to eq(%w[Draft Submitted Rejected])
+      end
+
+      it "falls back to newest first for unknown sort params" do
+        create_report(name: "Older", created_at: 2.days.ago)
+        create_report(name: "Newer", created_at: 1.day.ago)
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "deleted_at; DROP TABLE users", direction: "sideways" })
+
+        expect(response).to have_http_status(:ok)
+        expect(report_names(response.body)).to eq(%w[Newer Older])
+        expect(Nokogiri::HTML5(response.body).at_css(".sort-button--active").text).to include("Created")
+      end
+    end
   end
 
   describe "#payments" do

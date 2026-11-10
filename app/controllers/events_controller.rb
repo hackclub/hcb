@@ -1389,16 +1389,11 @@ class EventsController < ApplicationController
   private
 
   REIMBURSEMENT_COLUMNS = [
-    { key: "aasm_state", display: "Status" },
+    { key: "aasm_state", display: "Status", order: ->(relation, direction) { relation.order_by_status(direction) } },
     { key: "name", display: "Report" },
     { key: "user_name", display: "From", column: "users.full_name", join: :user },
+    { key: "amount", display: "Amount", right: true, order: ->(relation, direction) { relation.order_by_amount(direction) } },
     { key: "created_at", default: true, display: "Created", right: true },
-    {
-      key: "amount",
-      display: "Amount",
-      right: true,
-      order: ->(relation, direction) { relation.order_by_amount(direction) },
-    },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
 

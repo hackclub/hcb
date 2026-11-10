@@ -37,20 +37,31 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
-  def sorted_relation(relation, columns, sort:, default_direction: :desc)
+  # Resolves the requested sort against the allowed columns, falling back to
+  # the default column/direction for anything unknown. Returns [column, direction].
+  def current_sort(columns, sort: [params[:sort], params[:direction]], default_direction: :desc)
     default_column = columns.find { |c| c[:default] } || columns.first
 
-    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : [default_column[:key], default_direction]
+    sort_key, sort_direction = organizer_signed_in? && sort&.first.present? ? sort : [default_column[:key], default_direction]
 
-    sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
+    sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction.to_s : default_direction.to_s
     column_def = columns.find { |c| c[:key] == sort_key.to_s } || default_column
+
+    [column_def, sort_direction]
+  end
+
+  def sorted_relation(relation, columns, sort:, default_direction: :desc)
+    column_def, sort_direction = current_sort(columns, sort:, default_direction:)
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
 
-    if column_def[:order]
-      column_def[:order].call(relation, sort_direction.to_sym)
-    else
-      relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
-    end
+    relation = if column_def[:order]
+                 column_def[:order].call(relation, sort_direction.to_sym)
+               else
+                 relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+               end
+
+    # Tiebreak on the primary key so pagination is stable when sort values repeat.
+    relation.order(relation.klass.primary_key => sort_direction)
   end
 
   def render_money(amount, opts = {})
