@@ -44,6 +44,24 @@ RSpec.describe Api::V4::EventsController do
       expect(response.body).not_to include("Zebulon", "Quixley")
     end
 
+    it "shows another organizer without a preferred name by first name and last initial only" do
+      current_user = create(:user)
+      other_user   = create(:user, legal_first_name: "Zebulon Xavier", legal_last_name: "Quixley")
+      event = create(:event)
+      create(:organizer_position, user: current_user, event:)
+      create(:organizer_position, user: other_user, event:)
+
+      token = create(:api_token, user: current_user)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+
+      get :show, params: { id: event.friendly_id, expand: "users" }, as: :json
+
+      other_user_data = response.parsed_body["users"].find { |u| u["id"] == other_user.public_id }
+      expect(other_user_data).to include("name" => "Zebulon Q")
+      expect(other_user_data).not_to include("first_name", "last_name")
+      expect(response.body).not_to include("Xavier", "Quixley")
+    end
+
     it "exposes the current user's own email and legal name" do
       current_user = create(:user, email: "me@example.com", legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi")
       event = create(:event)

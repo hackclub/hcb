@@ -36,11 +36,11 @@ RSpec.describe Maintenance::BackfillUserLegalNamesTask do
 
   it "does not overwrite a name the user saved after the task loaded them" do
     stale = legacy_user("Jane Elder")
-    User.find(stale.id).update!(legal_first_name: "Mary Ann", legal_last_name: nil)
+    User.find(stale.id).update!(legal_first_name: "Janet", legal_last_name: "Smith")
 
     described_class.process(stale)
 
-    expect(stale.reload).to have_attributes(legal_first_name: "Mary Ann", legal_last_name: nil, full_name: "Mary Ann")
+    expect(stale.reload).to have_attributes(legal_first_name: "Janet", legal_last_name: "Smith", full_name: "Janet Smith")
   end
 
   it "does not apply a stale parse when the legacy name changed after the task loaded the user" do

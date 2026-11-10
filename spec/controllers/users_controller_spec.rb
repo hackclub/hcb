@@ -486,6 +486,7 @@ RSpec.describe UsersController do
 
       expect(response).to redirect_to(edit_user_path(user))
       expect(flash[:error]).to eq("A legal last name is required to issue cards. Please add it in your account settings.")
+      expect(user.reload.full_name).to eq("Madonna Louise")
     end
 
     it "ignores the legacy full_name parameter" do

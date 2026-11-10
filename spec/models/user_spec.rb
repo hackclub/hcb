@@ -118,7 +118,12 @@ RSpec.describe User, type: :model do
       expect(user.first_name(legal: true)).to eq("Mary Ann")
       expect(user.last_name(legal: true)).to be_nil
       expect(user.last_name).to be_nil
-      expect(user.initial_name).to eq("Mary Ann")
+    end
+
+    it "shows others only the first word when there is no last name" do
+      user = create(:user, legal_first_name: "Mary Jane Smith", legal_last_name: nil)
+
+      expect(user.initial_name).to eq("Mary")
     end
 
     it "initials the surname, not its lowercase particle" do
@@ -230,6 +235,37 @@ RSpec.describe User, type: :model do
         user.update(legal_first_name: "", legal_last_name: "")
 
         expect(user.reload.full_name).to eq("Jane Elder")
+        expect(user.first_name(legal: true)).to eq("Jane")
+        expect(user.last_name(legal: true)).to eq("Elder")
+      end
+
+      it "keeps the surname when only the first name is edited" do
+        user.update!(legal_first_name: "Janet")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Janet", legal_last_name: "Elder", full_name: "Janet Elder")
+      end
+
+      it "keeps the first name when only the surname is edited" do
+        user.update!(legal_last_name: "Smith")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Smith", full_name: "Jane Smith")
+      end
+
+      it "does not let a cardholder drop their surname by blanking it" do
+        create(:stripe_cardholder, user:)
+
+        user.update(legal_first_name: "Jane", legal_last_name: "")
+
+        expect(user.reload.full_name).to eq("Jane Elder")
+        expect(StripeCardholder.last_name(user)).to eq("Elder")
+      end
+
+      it "keeps a title in full_name when the parsed name is saved back unchanged" do
+        user.update_columns(full_name: "Dr. Juan de la Cruz")
+
+        user.reload.update!(legal_first_name: "Juan", legal_last_name: "de la Cruz", phone_number: "+18556254225")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Juan", legal_last_name: "de la Cruz", full_name: "Dr. Juan de la Cruz")
       end
 
       it "backfills the columns once the name is edited" do

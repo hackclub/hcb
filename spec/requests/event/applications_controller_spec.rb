@@ -40,6 +40,7 @@ RSpec.describe Event::ApplicationsController, type: :request do
 
       patch application_path(application), params: { event_application: { full_name: "Someone Else" }, return_to: application_path(application) }
 
+      expect(response).to redirect_to(application_path(application))
       expect(user.reload).to have_attributes(legal_first_name: "Fiona", legal_last_name: "Hackworth", full_name: "Fiona Hackworth")
     end
 
@@ -66,6 +67,8 @@ RSpec.describe Event::ApplicationsController, type: :request do
 
       patch application_path(application), params: { event_application: { legal_first_name: "Mallory", legal_last_name: "Attacker" } }
 
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(user.reload).to have_attributes(legal_first_name: "Fiona", legal_last_name: "Hackworth", full_name: "Fiona Hackworth")
     end
   end

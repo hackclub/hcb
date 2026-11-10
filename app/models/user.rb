@@ -206,8 +206,9 @@ class User < ApplicationRecord
 
   before_create :format_number
   # The legal name columns are the source of truth; `full_name` is kept in sync with them.
+  before_validation :fill_legacy_legal_name, if: -> { awaiting_legal_name_backfill? && legal_name_parts_changed? && !full_name_changed? }
   before_validation :split_full_name, if: -> { full_name_changed? && !legal_name_parts_changed? }
-  before_validation :sync_full_name, if: :legal_name_parts_changed?
+  before_validation :sync_full_name, if: :legal_name_edited?
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
@@ -363,7 +364,8 @@ class User < ApplicationRecord
   def initial_name
     first = first_name
     last = last_name
-    return name if first.blank? || last.blank?
+    # Only the first word, so a full name typed into the first name field stays private.
+    return first || name if last.blank?
 
     # Initial of the surname itself, skipping lowercase particles ("de la Cruz" -> "C").
     "#{first[0..20]} #{last[/[[:upper:]]/] || last[0]}"
@@ -782,6 +784,23 @@ class User < ApplicationRecord
 
   def legal_name_parts_changed?
     legal_first_name_changed? || legal_last_name_changed?
+  end
+
+  def awaiting_legal_name_backfill?
+    legal_first_name_in_database.blank? && full_name_in_database.present?
+  end
+
+  # A blank part keeps its legacy value, so a partial edit can't drop half of the name.
+  def fill_legacy_legal_name
+    self.legal_first_name ||= legacy_parsed_name.first_name
+    self.legal_last_name ||= legacy_parsed_name.last_name
+  end
+
+  # Saving a legacy name back unchanged only backfills it, leaving `full_name` (and any title) as is.
+  def legal_name_edited?
+    return false unless legal_name_parts_changed?
+
+    !awaiting_legal_name_backfill? || [legal_first_name, legal_last_name] != legacy_parsed_name.to_a
   end
 
   # Only checked when the name is edited, so rows awaiting backfill can still save unrelated updates.
