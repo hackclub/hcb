@@ -30,7 +30,24 @@ RSpec.describe "OAuth applications", type: :request do
     create_application(owner_email: "nobody@example.com")
 
     expect(Doorkeeper::Application.count).to eq(0)
-    expect(response.body).to include("is-invalid")
+    expect(response.body).to include("Must be the email of an existing user.")
+  end
+
+  it "keeps the point of contact when updating without an email" do
+    application = Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: poc)
+
+    patch "/api/v4/oauth/applications/#{application.id}", params: { doorkeeper_application: { name: "Renamed" } }
+
+    expect(application.reload).to have_attributes(name: "Renamed", owner: poc)
+  end
+
+  it "shows the point of contact" do
+    application = Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: poc)
+
+    get "/api/v4/oauth/applications/#{application.id}"
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(poc.email)
   end
 
   it "lists the point of contact" do

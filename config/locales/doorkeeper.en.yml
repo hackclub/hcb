@@ -9,6 +9,8 @@ en:
       models:
         doorkeeper/application:
           attributes:
+            owner:
+              blank: 'must be the email of an existing user.'
             redirect_uri:
               fragment_present: 'cannot contain a fragment.'
               invalid_uri: 'must be a valid URI.'
