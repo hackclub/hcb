@@ -37,11 +37,11 @@
           <div class="md:flex gap-2">
             <div class="field flex-1">
               <%= form.label :first_name, "First name" %>
-              <%= form.text_field :first_name, placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name" %>
+              <%= form.text_field :first_name, value: @user.first_name(legal: true), placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name" %>
             </div>
             <div class="field flex-1">
               <%= form.label :last_name, "Last name" %>
-              <%= form.text_field :last_name, placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name" %>
+              <%= form.text_field :last_name, value: @user.last_name(legal: true), placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name" %>
             </div>
           </div>
           <div class="field mb-0">

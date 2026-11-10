@@ -16,9 +16,10 @@ RSpec.describe UserService::ParseName do
     expect(parse("Donald Ervin Knuth")).to eq(["Donald Ervin", "Knuth"])
   end
 
-  it "keeps particles with the first name" do
-    expect(parse("Wernher von Braun")).to eq(["Wernher von", "Braun"])
-    expect(parse("Jean-Claude Van Damme")).to eq(["Jean-Claude Van", "Damme"])
+  it "keeps particles with the last name" do
+    expect(parse("Wernher von Braun")).to eq(["Wernher", "von Braun"])
+    expect(parse("Juan de la Cruz")).to eq(["Juan", "de la Cruz"])
+    expect(parse("Jean-Claude Van Damme")).to eq(["Jean-Claude", "Van Damme"])
   end
 
   it "keeps suffixes with the last name" do
@@ -41,8 +42,11 @@ RSpec.describe UserService::ParseName do
     expect(parse("O'Brien")).to eq(["O'Brien", nil])
   end
 
+  # Namae reads leading lowercase words as particles and finds no given name.
   it "handles lowercase names" do
     expect(parse("ann marie")).to eq(["ann", "marie"])
+    expect(parse("fiona rose hackworth")).to eq(["fiona rose", "hackworth"])
+    expect(parse("john Smith")).to eq(["john", "Smith"])
   end
 
   it "normalizes whitespace" do

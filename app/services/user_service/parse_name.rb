@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "namae"
-
 module UserService
   # Splits a single-field full name into the first and last name stored on
   # `users.first_name` / `users.last_name`.
@@ -13,8 +11,9 @@ module UserService
   # Namae handles comma forms ("Doe, John"), particles ("Wernher von Braun")
   # and suffixes ("King Jr."). It also keeps a list of honorifics, and a
   # surname that collides with one ("Jane Elder", "Mary Lord") makes it either
-  # give up entirely or treat the surname as a title. In those cases we fall
-  # back to a positional split so a real surname is never lost.
+  # give up entirely or treat the surname as a title. In those cases, and for
+  # all-lowercase names it can't read, we fall back to a positional split so a
+  # real surname is never lost.
   class ParseName
     Result = Struct.new(:first_name, :last_name, keyword_init: true)
 
@@ -26,10 +25,11 @@ module UserService
       return Result.new(first_name: nil, last_name: nil) if @full_name.blank?
 
       parsed = Namae.parse(@full_name).first
-      return positional_split if parsed.nil? || trailing_word_taken_as_title?(parsed)
+      return positional_split if parsed.nil? || trailing_word_taken_as_title?(parsed) || given_name_taken_as_particle?(parsed)
 
-      first = [parsed.given, parsed.particle].compact_blank.join(" ").presence
-      last = [parsed.family, parsed.suffix].compact_blank.join(" ").presence
+      # Particles belong to the surname: "Juan de la Cruz" is "Juan" + "de la Cruz".
+      first = parsed.given.presence
+      last = [parsed.particle, parsed.family, parsed.suffix].compact_blank.join(" ").presence
 
       # "Madonna" parses as given-only; "Mr. Smith" parses as family-only.
       # Either way the one word we have belongs in first_name.
@@ -44,6 +44,12 @@ module UserService
     # An honorific at the very end of a name is a surname, not a title.
     def trailing_word_taken_as_title?(parsed)
       parsed.title.present? && @full_name.downcase.end_with?(parsed.title.downcase)
+    end
+
+    # Namae reads leading lowercase words as particles, so "john smith" comes
+    # back with no given name and "john" as a particle.
+    def given_name_taken_as_particle?(parsed)
+      parsed.given.blank? && parsed.particle.present?
     end
 
     def positional_split

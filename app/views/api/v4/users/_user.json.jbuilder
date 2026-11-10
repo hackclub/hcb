@@ -12,11 +12,13 @@ object_shape(json, user, created_at: false) do
   # those which we'd like to expose less of:
   expand_pii(override_if: user == current_user || local_assigns[:show_email]) do
     json.email user.email
-    json.first_name user.first_name(legal: true)
-    json.last_name user.last_name(legal: true)
   end
 
+  # Legal names stay with the user (or admins with the `pii` scope): org
+  # members see `name`, which respects the preferred name.
   expand_pii(override_if: user == current_user) do
+    json.first_name user.first_name(legal: true)
+    json.last_name user.last_name(legal: true)
     json.birthday user.birthday
     if expand?(:shipping_address)
       json.shipping_address do

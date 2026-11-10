@@ -27,8 +27,25 @@ RSpec.describe Api::V4::EventsController do
       expect(other_user_data).to include("email" => "other@example.com")
     end
 
-    it "exposes the current user's own email" do
-      current_user = create(:user, email: "me@example.com")
+    it "does not expose another organizer's legal name over their preferred name" do
+      current_user = create(:user)
+      other_user   = create(:user, first_name: "Zebulon", last_name: "Quixley", preferred_name: "Zeb Q")
+      event = create(:event)
+      create(:organizer_position, user: current_user, event:)
+      create(:organizer_position, user: other_user, event:)
+
+      token = create(:api_token, user: current_user)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+
+      get :show, params: { id: event.friendly_id, expand: "users" }, as: :json
+
+      other_user_data = response.parsed_body["users"].find { |u| u["id"] == other_user.public_id }
+      expect(other_user_data).not_to include("first_name", "last_name")
+      expect(response.body).not_to include("Zebulon", "Quixley")
+    end
+
+    it "exposes the current user's own email and legal name" do
+      current_user = create(:user, email: "me@example.com", first_name: "Fiona", last_name: "Hackworth", preferred_name: "FiFi")
       event = create(:event)
       create(:organizer_position, user: current_user, event:)
 
@@ -39,7 +56,7 @@ RSpec.describe Api::V4::EventsController do
 
       expect(response).to have_http_status(:ok)
       me = response.parsed_body["users"].find { |u| u["id"] == current_user.public_id }
-      expect(me).to include("email" => "me@example.com")
+      expect(me).to include("email" => "me@example.com", "first_name" => "Fiona", "last_name" => "Hackworth")
     end
 
     it "exposes email of another organizer on the same sub event" do

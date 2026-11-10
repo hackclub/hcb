@@ -112,11 +112,38 @@ RSpec.describe User, type: :model do
       expect(user.last_name).to be_nil
     end
 
+    it "does not derive a last name from a multi-word first name" do
+      user = create(:user, first_name: "Mary Ann", last_name: nil).reload
+
+      expect(user.first_name(legal: true)).to eq("Mary Ann")
+      expect(user.last_name(legal: true)).to be_nil
+      expect(user.last_name).to be_nil
+      expect(user.initial_name).to eq("Mary Ann")
+    end
+
+    it "initials the surname, not its lowercase particle" do
+      user = create(:user, first_name: "Juan", last_name: "de la Cruz")
+
+      expect(user.initial_name).to eq("Juan C")
+      expect(user.first_name).to eq("Juan")
+    end
+
+    it "does not refill a first name that was just cleared" do
+      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+
+      expect(user.update(first_name: "")).to be(false)
+      expect(user.first_name(legal: true)).to be_nil
+    end
+
+    it "returns a nil display first name for a blank new user instead of raising" do
+      expect(User.new.first_name).to be_nil
+    end
+
     it "splits a full_name assigned by a legacy writer" do
       user = create(:user, full_name: "Martin Luther King Jr.")
 
-      expect(user.first_name).to eq("Martin Luther")
-      expect(user.last_name).to eq("King Jr.")
+      expect(user.first_name(legal: true)).to eq("Martin Luther")
+      expect(user.last_name(legal: true)).to eq("King Jr.")
       expect(user.full_name).to eq("Martin Luther King Jr.")
     end
 
@@ -145,7 +172,9 @@ RSpec.describe User, type: :model do
     it "trims and collapses whitespace" do
       user = create(:user, first_name: "  Fiona  Rose ", last_name: " Hackworth ")
 
-      expect(user).to have_attributes(first_name: "Fiona Rose", last_name: "Hackworth", full_name: "Fiona Rose Hackworth")
+      expect(user.first_name(legal: true)).to eq("Fiona Rose")
+      expect(user.last_name(legal: true)).to eq("Hackworth")
+      expect(user.full_name).to eq("Fiona Rose Hackworth")
     end
 
     it "treats a blank last name as no last name" do
@@ -233,6 +262,22 @@ RSpec.describe User, type: :model do
       expect(user.reload.full_name).to eq("Fiona")
     end
 
+    it "does not allow a cardholder to remove their last name" do
+      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+      create(:stripe_cardholder, user:)
+
+      expect(user.update(last_name: "")).to be(false)
+      expect(user.errors[:last_name]).to include("is required for HCB cards")
+      expect(user.reload.full_name).to eq("Fiona Hackworth")
+    end
+
+    it "lets a cardholder with no last name on file update other details" do
+      user = create(:user, first_name: "Madonna", last_name: nil)
+      create(:stripe_cardholder, user:)
+
+      expect(user.reload.update(first_name: "Madonna Louise")).to be(true)
+    end
+
     it "accepts accented letters and name punctuation" do
       user = build(:user, first_name: "María-José", last_name: "O'Brien, Jr.")
 
@@ -295,19 +340,19 @@ RSpec.describe User, type: :model do
   end
 
   describe "#first_name and #last_name" do
-    it "return the stored names" do
+    it "return the stored names, with only the first word for display" do
       user = create(:user, first_name: "Donald Ervin", last_name: "Knuth")
 
-      expect(user.first_name).to eql("Donald Ervin")
+      expect(user.first_name).to eql("Donald")
       expect(user.last_name).to eql("Knuth")
       expect(user.first_name(legal: true)).to eql("Donald Ervin")
       expect(user.last_name(legal: true)).to eql("Knuth")
     end
 
-    it "return nil for a user without a name" do
-      user = create(:user, first_name: nil, last_name: nil)
+    it "return nil for a user without a name, except the display first name" do
+      user = create(:user, email: "fiona.h@example.com", first_name: nil, last_name: nil)
 
-      expect(user.first_name).to be_nil
+      expect(user.first_name).to eq("fiona.h")
       expect(user.last_name).to be_nil
       expect(user.first_name(legal: true)).to be_nil
       expect(user.last_name(legal: true)).to be_nil

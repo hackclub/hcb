@@ -269,6 +269,17 @@ RSpec.describe UsersController do
       expect(response.body).to include('name="user[first_name]"').and include('value="Fiona"')
       expect(response.body).to include('name="user[last_name]"').and include('value="Hackworth"')
     end
+
+    it "leaves the last name blank for a user with a multi-word first name and no last name" do
+      user = create(:user, first_name: "Mary Ann", last_name: nil, phone_number: "+18556254225")
+      create_session(user, verified: true)
+
+      get(:edit, params: { id: user.id })
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("input[name='user[first_name]']")["value"]).to eq("Mary Ann")
+      expect(page.at_css("input[name='user[last_name]']")["value"]).to be_blank
+    end
   end
 
   describe "#update" do

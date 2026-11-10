@@ -235,6 +235,9 @@ class User < ApplicationRecord
   # so a first name is only required once there is a last name to go with it
   # or once a name has been set (it can be changed, but not removed).
   validates :first_name, presence: true, if: -> { self[:last_name].present? || clearing_existing_name? }
+  # Stripe Issuing needs a last name, and cardholder names are synced to Stripe
+  # on every profile update.
+  validates :last_name, presence: { message: "is required for HCB cards" }, if: -> { last_name_changed? && stripe_cardholder.present? }
   validates :first_name, format: { with: NAME_CHARACTERS_REGEX, message: NAME_CHARACTERS_MESSAGE, allow_blank: true }
   validates :last_name, format: { with: NAME_CHARACTERS_REGEX, message: NAME_CHARACTERS_MESSAGE, allow_blank: true }
 
@@ -353,25 +356,29 @@ class User < ApplicationRecord
     admin!
   end
 
-  # The user's first name as stored, which may include middle names and
-  # particles ("Donald Ervin", "Wernher von").
+  # With `legal: true`, the first name as stored, which may include middle
+  # names ("Donald Ervin"). Use it for anything that must match the user's
+  # legal name (Stripe, forms).
   #
-  # Without `legal: true` a preferred name takes precedence, so greetings and
-  # other display uses call people what they asked to be called. Pass
-  # `legal: true` for anything that must match the user's legal name (Stripe).
+  # Otherwise, the first word of what we call the user in greetings and other
+  # display uses ("Hey Donald,"): their preferred name if set, then their legal
+  # first name, then their email handle if they haven't added a name yet.
   def first_name(legal: false)
-    return preferred_name_parts.first if !legal && preferred_name.present?
+    stored = name_split? ? self[:first_name] : legacy_parsed_name.first_name
+    return stored if legal
 
-    self[:first_name] || legacy_parsed_name.first_name
+    display_name = preferred_name.presence || stored.presence || (email_handle if email.present?)
+    display_name&.split(" ")&.first
   end
 
-  # The user's last name as stored, which may include a suffix ("King Jr.").
+  # The user's last name as stored, which may include particles and a suffix
+  # ("de la Cruz", "King Jr.").
   # Returns nil for users who only have a first name, and for single-word
   # preferred names when `legal` is false.
   def last_name(legal: false)
     return preferred_name_parts.last if !legal && preferred_name.present?
 
-    self[:last_name] || legacy_parsed_name.last_name
+    name_split? ? self[:last_name] : legacy_parsed_name.last_name
   end
 
   # "Fiona H" — what we show to other users.
@@ -380,7 +387,8 @@ class User < ApplicationRecord
     last = last_name
     return name if first.blank? || last.blank?
 
-    "#{first.split(" ").first[0..20]} #{last[0]}"
+    # Initial of the surname itself, skipping lowercase particles ("de la Cruz" -> "C").
+    "#{first[0..20]} #{last[/[[:upper:]]/] || last[0]}"
   end
 
   def safe_name
@@ -808,6 +816,15 @@ class User < ApplicationRecord
     return [words.first, nil] if words.one?
 
     [words[0..-2].join(" "), words.last]
+  end
+
+  # Whether `first_name` / `last_name` hold this user's name. Only rows that
+  # predate the split columns and haven't been backfilled (or edited) yet fall
+  # back to parsing `full_name`. A blank `last_name` on a split row means the
+  # user has a single name, and must not be re-derived from `full_name`
+  # ("Mary Ann" would otherwise come back as last name "Ann").
+  def name_split?
+    first_name_in_database.present? || first_name_changed? || last_name_changed?
   end
 
   # Rows written before the split columns existed and not yet backfilled.
