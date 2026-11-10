@@ -888,6 +888,7 @@ class EventsController < ApplicationController
     @active_teenagers_count = @event.users.active_teenager.count
 
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+    @member_perks_available = OrganizerPosition.role_at_least?(current_user, @event, :member) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
     @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)

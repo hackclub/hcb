@@ -258,14 +258,6 @@ module Payroll
       days.select { |day| day < days_remaining }
     end
 
-    def tax_info_needed?
-      !payee.legal_entity&.payable?
-    end
-
-    def payout_method_needed?
-      payee.legal_entity&.default_payout_method.blank?
-    end
-
     def refresh_onboarding_state!
       mark_onboarded! if onboarding? && may_mark_onboarded?
     end

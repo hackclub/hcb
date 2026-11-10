@@ -46,6 +46,14 @@ RSpec.describe Ledger::AssertLinkedObjectsMatchHcbCodeJob do
     expect(anomalies).to contain_exactly(a_string_including("Ledger::Item #{item.hashid}"))
   end
 
+  it "reports nothing for a fee reimbursement group's ledger item" do
+    # The group's ledger item is mapped to the Hack Club Bank event.
+    create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+    create(:fee_reimbursement_group)
+
+    expect(anomalies).to be_empty
+  end
+
   it "ignores items with no linked object" do
     item = create(:ledger_item)
     hcb_code_for(item, "HCB-700-#{bank_fee.id}")

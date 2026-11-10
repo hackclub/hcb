@@ -168,6 +168,7 @@ Rails.application.routes.draw do
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
       get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emails", to: "users#admin_details_emails"
       get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
       get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
       get "admin_details_invoices", to: "users#admin_details_invoices"
@@ -285,6 +286,7 @@ Rails.application.routes.draw do
       get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
+      get "wire_lookup", to: "admin#wire_lookup"
       get "wise_transfers", to: "admin#wise_transfers"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
@@ -384,7 +386,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
