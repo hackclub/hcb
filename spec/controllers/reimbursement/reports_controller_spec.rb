@@ -102,7 +102,9 @@ RSpec.describe Reimbursement::ReportsController do
 
       event.update!(reimbursement_reviewer_selection: :optional)
       get(:show, params: { id: report.id })
-      expect(Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')).to be_empty
+      body = Nokogiri::HTML5(response.body)
+      expect(body.css('select[name="reviewer_id"]')).to be_empty
+      expect(body.css('select[name="reimbursement_report[reviewer_id]"]')).not_to be_empty
 
       event.update!(reimbursement_reviewer_selection: :required)
       get(:show, params: { id: report.id })
@@ -413,6 +415,44 @@ RSpec.describe Reimbursement::ReportsController do
                 reimbursement_report: { reviewer_id: manager.id }
               })
 
+        expect(report.reload.reviewer_id).to be_nil
+      end
+
+      it "lets a card grant recipient assign a reviewer from the settings menu" do
+        event = create(:event, :card_grant_event, :with_positive_balance)
+        recipient = create(:user)
+        reviewer = create(:user)
+        create(:organizer_position, user: reviewer, event:)
+        card_grant = create(:card_grant, event:, user: recipient)
+        report = create(:reimbursement_report, user: recipient, event:, card_grant:)
+
+        event.update!(reimbursement_reviewer_selection: :optional)
+        create_session(recipient, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { report_name: report.name, reviewer_id: reviewer.id }
+              })
+
+        expect(report.reload.reviewer_id).to eq(reviewer.id)
+      end
+
+      it "rejects an ineligible reviewer from a card grant recipient" do
+        event = create(:event, :card_grant_event, :with_positive_balance)
+        recipient = create(:user)
+        outsider = create(:user)
+        card_grant = create(:card_grant, event:, user: recipient)
+        report = create(:reimbursement_report, user: recipient, event:, card_grant:)
+
+        event.update!(reimbursement_reviewer_selection: :optional)
+        create_session(recipient, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { report_name: report.name, reviewer_id: outsider.id }
+              })
+
+        expect(response).to have_http_status(:unprocessable_content)
         expect(report.reload.reviewer_id).to be_nil
       end
 

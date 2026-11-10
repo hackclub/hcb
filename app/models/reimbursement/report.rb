@@ -329,6 +329,10 @@ module Reimbursement
       card_grant.blank? && !event.reviewer_selection_disabled?
     end
 
+    def reviewer_assignable_by_creator?
+      card_grant.present? && !event.reviewer_selection_disabled?
+    end
+
     def assigned_reviewer_required?
       event.reviewer_selection_required?
     end
