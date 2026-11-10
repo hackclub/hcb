@@ -1,20 +1,6 @@
-/*
-  A lightweight, self-contained autocomplete combobox. Rendered by
-  `ComboboxHelper#combobox_tag`.
-
-  It loads its options asynchronously from `urlValue` — an endpoint called as
-  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel, badge,
-  disabled }]`, ordered by relevance, where `value` and `label` are required and
-  a page with fewer than PAGE_SIZE rows is the last one. The user filters by
-  typing, and the chosen option's `value` is mirrored into a hidden form field
-  so the surrounding form submits it. Only options returned by the endpoint can
-  be selected — free text is reverted on blur.
-
-  The dropdown renders inline at every width. This deliberately drops the
-  full-screen `<dialog>` picker the `hotwire_combobox` gem switched to below
-  640px: the inline list is usable on a phone and one code path is worth more
-  here than the extra mode.
-*/
+// Autocomplete combobox rendered by `ComboboxHelper#combobox_tag`. Searches
+// `urlValue` (`?q=&page=`, returning `[{ value, label, sublabel, badge, disabled }]`
+// in relevance order) and mirrors the chosen value into a hidden field.
 
 import { Controller } from '@hotwired/stimulus'
 
@@ -32,18 +18,18 @@ export default class extends Controller {
 
   initialize() {
     this.searchToken = 0
+    this.requestId = 0
   }
 
   connect() {
     this.options = []
     this.activeIndex = -1
-    this.deletion = false
+    this.noFill = false
     this.page = 1
     this.hasMore = false
     this.loading = false
     this.currentQuery = ''
 
-    // Restore any preselected value (e.g. when editing or prefilled).
     if (this.selectedValue) {
       this.selectedLabel = this.labelValue
       this.selectedOption = {
@@ -58,18 +44,165 @@ export default class extends Controller {
       this.selectedOption = null
     }
     this.renderBadge()
+
+    // Capture phase so it runs before Turbo serializes the form.
+    this.form = this.element.closest('form')
+    this.onFormSubmit = () => this.finalize()
+    this.form?.addEventListener('submit', this.onFormSubmit, true)
+
+    this.onBeforeCache = () => this.hide()
+    document.addEventListener('turbo:before-cache', this.onBeforeCache)
   }
 
   disconnect() {
+    this.form?.removeEventListener('submit', this.onFormSubmit, true)
+    document.removeEventListener('turbo:before-cache', this.onBeforeCache)
     clearTimeout(this.debounce)
     clearTimeout(this.blurTimeout)
-    this.searchToken++ // abandon any search still in flight
+    this.debounce = null
+    this.pending = false
+    this.afterSearch = null
+    this.searchToken++
   }
 
   onFocus() {
     if (this.inputTarget.disabled) return
-    // With an untouched selection, just show that one option (selected). The
-    // full list loads once the user starts typing.
+    clearTimeout(this.blurTimeout)
+    this.afterSearch = null
+    this.open()
+  }
+
+  // Already-focused fields don't get `focus` again.
+  onClick() {
+    if (!this.inputTarget.disabled && !this.isOpen) this.open()
+  }
+
+  // The chevron and padding sit outside the <input>.
+  onFieldMousedown(e) {
+    if (e.target === this.inputTarget || this.inputTarget.disabled) return
+    e.preventDefault()
+    if (document.activeElement !== this.inputTarget) {
+      this.inputTarget.focus()
+    } else if (this.isOpen) {
+      this.hide()
+    } else {
+      this.open()
+    }
+  }
+
+  // Keep focus in the input when pressing rows or the scrollbar.
+  onListboxMousedown(e) {
+    e.preventDefault()
+  }
+
+  onInput(e) {
+    this.noFill =
+      e.isComposing ||
+      e.inputType === 'insertCompositionText' ||
+      Boolean(e.inputType?.startsWith('delete'))
+    this.renderBadge()
+    this.dismissed = false
+    this.pending = true
+    this.hiddenTarget.value =
+      this.query === this.selectedLabel ? this.selectedValue : ''
+    this.filterShown()
+    clearTimeout(this.debounce)
+    this.debounce = setTimeout(() => {
+      this.debounce = null
+      this.search(this.query)
+    }, 150)
+  }
+
+  onKeydown(e) {
+    if (e.isComposing || e.keyCode === 229) return
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        if (this.isOpen) this.move(1)
+        else this.open()
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        if (this.isOpen) this.move(-1)
+        break
+      case 'Enter':
+        if (this.pending) {
+          e.preventDefault()
+          this.afterSearch = 'enter'
+        } else if (this.isOpen) {
+          e.preventDefault()
+          this.resolve('enter')
+        } else {
+          this.finalize()
+        }
+        break
+      case 'Escape':
+        if (this.isOpen) {
+          e.preventDefault()
+          this.hide()
+        }
+        break
+      case 'Tab':
+        if (this.pending) this.afterSearch = 'tab'
+        else this.resolve('tab')
+        break
+    }
+  }
+
+  onBlur() {
+    clearTimeout(this.blurTimeout)
+    this.blurTimeout = setTimeout(() => {
+      if (this.element.contains(document.activeElement)) return
+      if (this.pending) {
+        this.afterSearch ||= 'blur'
+        // Not `hide()`: that drops the row a deferred Tab will pick.
+        this.listboxTarget.setAttribute('hidden', '')
+        this.inputTarget.setAttribute('aria-expanded', 'false')
+        return
+      }
+      this.resolve('blur')
+      this.hide()
+    }, 150)
+  }
+
+  onOptionClick(e) {
+    const index = this.optionIndexFrom(e)
+    if (index >= 0) this.commit(this.options[index])
+  }
+
+  // Ignore the `mouseover` browsers fire when rows scroll under a still pointer.
+  onOptionHover(e) {
+    const moved = e.clientX !== this.pointerX || e.clientY !== this.pointerY
+    this.pointerX = e.clientX
+    this.pointerY = e.clientY
+    if (!moved) return
+    const index = this.optionIndexFrom(e)
+    if (index < 0 || index === this.activeIndex) return
+    this.activeIndex = index
+    this.highlight({ scroll: false })
+  }
+
+  onScroll() {
+    const el = this.listboxTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
+  }
+
+  get query() {
+    return this.inputTarget.value.trim()
+  }
+
+  get isOpen() {
+    return !this.listboxTarget.hasAttribute('hidden')
+  }
+
+  optionIndexFrom(e) {
+    const li = e.target.closest('[role="option"]')
+    if (!li || li.getAttribute('aria-disabled') === 'true') return -1
+    return Number(li.dataset.index)
+  }
+
+  open() {
+    this.dismissed = false
     if (this.query === this.selectedLabel && this.selectedOption) {
       this.inputTarget.select()
       this.options = [this.selectedOption]
@@ -82,118 +215,68 @@ export default class extends Controller {
     }
   }
 
-  onInput(e) {
-    this.deletion = e.inputType && e.inputType.startsWith('delete')
-    this.renderBadge()
-    clearTimeout(this.debounce)
-    this.debounce = setTimeout(() => this.search(this.query), 150)
-  }
-
-  onKeydown(e) {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        if (this.isOpen) this.move(1)
-        else this.search(this.query)
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        if (this.isOpen) this.move(-1)
-        break
-      case 'Enter':
-        if (this.isOpen && this.activeIndex >= 0) {
-          e.preventDefault()
-          this.commit(this.options[this.activeIndex])
-        }
-        break
-      case 'Escape':
-        if (this.isOpen) {
-          e.preventDefault()
-          this.hide()
-        }
-        break
-      case 'Tab':
-        this.finalize()
-        break
-    }
-  }
-
-  onBlur() {
-    // Delay so a click on an option registers before we tear down.
-    clearTimeout(this.blurTimeout)
-    this.blurTimeout = setTimeout(() => {
-      if (!this.element.contains(document.activeElement)) {
-        this.finalize()
-        this.hide()
-      }
-    }, 150)
-  }
-
-  onOptionClick(e) {
-    const index = this.optionIndexFrom(e)
-    if (index >= 0) this.commit(this.options[index])
-  }
-
-  // Keep the keyboard cursor under the pointer, so clicking always commits the
-  // row the user sees highlighted.
-  onOptionHover(e) {
-    const index = this.optionIndexFrom(e)
-    if (index < 0 || index === this.activeIndex) return
-    this.activeIndex = index
-    this.highlight({ scroll: false })
-  }
-
-  // Fetch more results and append when the user scrolls near the bottom.
-  onScroll() {
-    const el = this.listboxTarget
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
-  }
-
-  // --- internals ---
-
-  get query() {
-    return this.inputTarget.value.trim()
-  }
-
-  get isOpen() {
-    return !this.listboxTarget.hasAttribute('hidden')
-  }
-
-  // Index of the selectable option an event landed on, or -1.
-  optionIndexFrom(e) {
-    const li = e.target.closest('[role="option"]')
-    if (!li || li.getAttribute('aria-disabled') === 'true') return -1
-    return Number(li.dataset.index)
-  }
-
   async search(query) {
     const token = ++this.searchToken
     this.currentQuery = query
     this.page = 1
-    this.renderStatus('Loading…')
-    this.show()
+    this.hasMore = false
+    if (this.isOpen && this.listboxTarget.childElementCount > 0) {
+      this.listboxTarget.setAttribute('aria-busy', 'true')
+    } else {
+      this.renderStatus('Loading…')
+      if (!this.dismissed) this.show()
+    }
 
     const result = await this.fetchPage(query, 1, token)
-    if (!result) return // a newer search superseded us
-    if (result.error) return this.renderStatus('Search failed. Try again.')
+    if (!result) return
+    this.listboxTarget.removeAttribute('aria-busy')
+    if (!this.debounce) this.pending = false
 
-    this.options = this.withSelected(result.options)
-    this.hasMore = result.options.length >= PAGE_SIZE
-    this.activeIndex = -1
-    this.render()
-    this.show()
-    if (!this.deletion) this.autocomplete(query)
+    if (result.error) {
+      this.renderStatus('Search failed. Try again.')
+    } else {
+      this.options = this.withSelected(result.options)
+      this.hasMore = result.options.length >= PAGE_SIZE
+      this.activeIndex = -1
+      this.render()
+      if (!query) {
+        this.activeIndex = -1
+        this.highlight()
+      }
+      if (!this.dismissed) this.autocomplete(query, result.options)
+    }
+    if (document.activeElement === this.inputTarget && !this.dismissed)
+      this.show()
+    if (!this.pending) this.runAfterSearch()
+  }
+
+  runAfterSearch() {
+    const how = this.afterSearch
+    this.afterSearch = null
+    if (!how) return
+    this.resolve(how)
+    if (document.activeElement !== this.inputTarget) this.hide()
+  }
+
+  resolve(how) {
+    const active = this.options[this.activeIndex]
+    const pickable = active && !active.disabled
+    if (how === 'enter') {
+      if (pickable) this.commit(active)
+    } else if (how === 'tab' && pickable && this.query) {
+      this.commit(active)
+    } else {
+      this.finalize()
+    }
   }
 
   async loadMore() {
-    if (this.loading || !this.hasMore) return
+    if (this.loading || this.pending || !this.hasMore) return
     const result = await this.fetchPage(
       this.currentQuery,
       this.page + 1,
       this.searchToken
     )
-    // On failure keep the rows already on screen rather than replacing them
-    // with an error; scrolling again retries.
     if (!result || result.error) return
 
     this.page += 1
@@ -205,10 +288,11 @@ export default class extends Controller {
     this.appendOptions(start)
   }
 
-  // Resolves to `{ options }` on success, `{ error }` on failure, or `null` if
-  // a newer search superseded this one. Distinguishing the first two matters:
-  // an empty list and a failed request must not look alike to the user.
+  // `null` means a newer search superseded this one.
   async fetchPage(query, page, token) {
+    // Only the latest request may clear `loading`, so a superseded one finishing
+    // late can't unblock `loadMore` mid-flight and skip a page.
+    const request = ++this.requestId
     this.loading = true
     try {
       const res = await fetch(this.buildUrl(query, page), {
@@ -221,7 +305,7 @@ export default class extends Controller {
     } catch (error) {
       return token === this.searchToken ? { error } : null
     } finally {
-      this.loading = false
+      if (request === this.requestId) this.loading = false
     }
   }
 
@@ -230,27 +314,34 @@ export default class extends Controller {
     return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}&page=${page}`
   }
 
-  // Inline autocomplete: extend the typed text with the first match and select
-  // the added portion, so continued typing replaces it.
-  autocomplete(query) {
+  // Only ever completes to the top result, so the text matches the highlighted
+  // row (e.g. "hq" mustn't complete to "HQ Gas Fund" when "Hack Club HQ" ranks first).
+  autocomplete(query, results) {
     if (!query) return
-    if (this.inputTarget.value.trim().toLowerCase() !== query.toLowerCase())
-      return
-    const q = query.toLowerCase()
-    const match = this.options.find(
-      o => !o.disabled && o.label.toLowerCase().startsWith(q)
-    )
-    if (!match || match.label.toLowerCase() === q) return
+    if (this.query.toLowerCase() !== query.toLowerCase()) return
+    const top = results.find(o => !o.disabled)
+    if (!top) return
 
-    this.inputTarget.value = query + match.label.slice(query.length)
-    this.inputTarget.setSelectionRange(query.length, match.label.length)
-    this.activeIndex = this.options.indexOf(match)
+    this.activeIndex = this.options.findIndex(o => o.value === top.value)
     this.highlight()
+
+    const { value, selectionStart, selectionEnd } = this.inputTarget
+    if (this.noFill) return
+    if (selectionStart !== value.length || selectionEnd !== value.length) return
+    const label = top.label
+    if (!label.toLowerCase().startsWith(value.toLowerCase())) return
+    if (label.length === value.length) return
+    // Also runs before a deferred blur resolves, matching what a slower click
+    // away would see: the completed text, committed if it's an exact match.
+    this.inputTarget.value = label
+    if (document.activeElement === this.inputTarget)
+      this.inputTarget.setSelectionRange(value.length, label.length)
   }
 
   move(delta) {
+    const rows = this.listboxTarget.querySelectorAll('[role="option"]')
     const selectable = this.options
-      .map((o, i) => (o.disabled ? -1 : i))
+      .map((o, i) => (o.disabled || rows[i]?.hidden ? -1 : i))
       .filter(i => i >= 0)
     if (selectable.length === 0) return
 
@@ -266,8 +357,6 @@ export default class extends Controller {
     this.highlight()
   }
 
-  // Keep the committed selection in the option list so it's shown (and marked)
-  // when the list re-opens, even if the current results don't include it.
   withSelected(options) {
     if (!this.selectedValue || !this.selectedOption) return options
     if (options.some(o => o.value === this.selectedValue)) return options
@@ -287,19 +376,20 @@ export default class extends Controller {
     this.dispatch('change', { detail: { option } })
   }
 
-  // Resolve the field to a valid state when focus leaves:
-  //  - an untouched committed selection is left as-is, even if its label isn't unique,
-  //  - an exact match is committed,
-  //  - anything else (e.g. edited/backspaced text) is cleared.
   finalize() {
     const current = this.query
     if (current === '') return this.clear()
-    if (current === this.selectedLabel) return
+    if (current === this.selectedLabel) {
+      this.hiddenTarget.value = this.selectedValue
+      this.inputTarget.value = this.selectedLabel
+      return
+    }
 
-    const match = (this.options || []).find(
+    // Org names aren't unique, so only commit an unambiguous match.
+    const matches = (this.options || []).filter(
       o => !o.disabled && o.label.toLowerCase() === current.toLowerCase()
     )
-    if (match) return this.commit(match)
+    if (matches.length === 1) return this.commit(matches[0])
 
     this.clear()
   }
@@ -314,11 +404,6 @@ export default class extends Controller {
     this.dispatch('change', { detail: { option: null } })
   }
 
-  // Loading/empty/error messages are not choices. Dropping `options` keeps
-  // arrow keys from walking (and Enter from committing) the previous search's
-  // results while one of these is on screen, and `role="presentation"` keeps
-  // screen readers from announcing them as a one-item list — the text goes to
-  // the live region instead.
   renderStatus(message) {
     this.options = []
     this.activeIndex = -1
@@ -337,8 +422,8 @@ export default class extends Controller {
 
   optionHtml(o, i) {
     const disabled = o.disabled ? ' aria-disabled="true"' : ''
-    const isSelected = o.value === this.selectedValue
-    const selected = isSelected ? ' combobox__option--selected' : ''
+    const selected =
+      o.value === this.selectedValue ? ' combobox__option--selected' : ''
     const sublabel = o.sublabel
       ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
       : ''
@@ -347,9 +432,9 @@ export default class extends Controller {
       : ''
     return `
       <li role="option" id="${this.optionId(i)}" data-index="${i}"${disabled}
-          aria-selected="${isSelected}"
+          aria-selected="false"
           class="combobox__option${selected}"
-          data-action="mousedown->combobox#onOptionClick mouseover->combobox#onOptionHover">
+          data-action="click->combobox#onOptionClick mouseover->combobox#onOptionHover">
         <div class="flex flex-col w-full">
           <div class="flex items-baseline justify-between gap-2">
             <span>${escape(o.label)}</span>
@@ -360,7 +445,6 @@ export default class extends Controller {
       </li>`
   }
 
-  // Append a page of results without rebuilding the list, preserving scroll.
   appendOptions(start) {
     const html = this.options
       .slice(start)
@@ -376,7 +460,6 @@ export default class extends Controller {
       .map((o, i) => this.optionHtml(o, i))
       .join('')
 
-    // Put the keyboard cursor on the current selection so it's visible.
     const selIdx = this.options.findIndex(
       o => o.value === this.selectedValue && !o.disabled
     )
@@ -387,13 +470,12 @@ export default class extends Controller {
     )
   }
 
-  // `aria-selected` marks the committed choice and is set once in `optionHtml`;
-  // the keyboard cursor is exposed separately, via `aria-activedescendant`.
   highlight({ scroll = true } = {}) {
     this.listboxTarget.querySelectorAll('[role="option"]').forEach((li, i) => {
       const navigated = i === this.activeIndex
       li.classList.toggle('combobox__option--navigated', navigated)
-      if (navigated && scroll) li.scrollIntoView({ block: 'nearest' })
+      li.setAttribute('aria-selected', String(navigated))
+      if (navigated && scroll) this.scrollToRow(li)
     })
 
     if (this.activeIndex >= 0 && this.options[this.activeIndex]) {
@@ -406,22 +488,72 @@ export default class extends Controller {
     }
   }
 
+  scrollToRow(li) {
+    const list = this.listboxTarget
+    const top = li.offsetTop
+    const bottom = top + li.offsetHeight
+    if (top < list.scrollTop) list.scrollTop = top
+    else if (bottom > list.scrollTop + list.clientHeight)
+      list.scrollTop = bottom - list.clientHeight
+  }
+
+  filterShown() {
+    if (!this.isOpen || this.options.length === 0) return
+    const words = this.query.toLowerCase().split(/\s+/).filter(Boolean)
+    const rows = this.listboxTarget.querySelectorAll('[role="option"]')
+    let first = -1
+    rows.forEach((li, i) => {
+      const o = this.options[i]
+      const text = `${o.label} ${o.sublabel ?? ''}`.toLowerCase()
+      li.hidden = !words.every(w => text.includes(w))
+      if (!li.hidden && !o.disabled && first < 0) first = i
+    })
+    if (![...rows].some(li => !li.hidden)) return this.renderStatus('Loading…')
+    this.activeIndex = words.length ? first : -1
+    this.highlight()
+  }
+
   announce(message) {
     if (this.hasStatusTarget) this.statusTarget.textContent = message
   }
 
-  // Only show the badge while the field still reads as the selection it belongs to.
   renderBadge() {
     const intact = this.inputTarget.value === this.selectedLabel
     this.badgeTarget.textContent = (intact && this.selectedOption?.badge) || ''
   }
 
   show() {
+    if (!this.isOpen) this.place()
     this.listboxTarget.removeAttribute('hidden')
     this.inputTarget.setAttribute('aria-expanded', 'true')
   }
 
+  place() {
+    const list = this.listboxTarget
+    const gap = 8
+    const maxHeight =
+      parseFloat(
+        getComputedStyle(this.element).getPropertyValue(
+          '--combobox-listbox-max-height'
+        )
+      ) || 250
+    const field = this.element.getBoundingClientRect()
+    const viewport = window.visualViewport
+    const viewTop = viewport ? viewport.offsetTop : 0
+    const viewBottom = viewport
+      ? viewport.offsetTop + viewport.height
+      : window.innerHeight
+    const below = viewBottom - field.bottom - gap
+    const above = field.top - viewTop - gap
+
+    const up = below < maxHeight && above > below
+    list.classList.toggle('combobox__listbox--up', up)
+    const room = Math.floor(up ? above : below)
+    list.style.maxHeight = `${Math.max(Math.min(maxHeight, room), 96)}px`
+  }
+
   hide() {
+    this.dismissed = true
     this.listboxTarget.setAttribute('hidden', '')
     this.inputTarget.setAttribute('aria-expanded', 'false')
     this.inputTarget.removeAttribute('aria-activedescendant')

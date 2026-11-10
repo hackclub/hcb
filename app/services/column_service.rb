@@ -28,11 +28,22 @@ class ColumnService
     end
   end
 
+  # Paths are built by interpolating ids, so only allow plain segments. This
+  # stops a caller-supplied value from traversing (`../`) to another endpoint
+  # or smuggling in a query string. Query params belong in `params`.
+  PATH_FORMAT = /\A(\/[A-Za-z0-9_-]+)+\z/
+
+  def self.validate_path!(url)
+    raise ArgumentError, "invalid Column path: #{url.inspect}" unless url.is_a?(String) && url.match?(PATH_FORMAT)
+  end
+
   def self.get(url, params = {})
+    validate_path!(url)
     conn.get(url, params).body
   end
 
   def self.post(url, params = {})
+    validate_path!(url)
     raise ArgumentError, "missing idempotency_key: #{url}" if params[:idempotency_key].nil?
 
     idempotency_key = params.delete(:idempotency_key)

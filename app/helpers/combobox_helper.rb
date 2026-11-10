@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ComboboxHelper
-  INPUT_ACTIONS = "input->combobox#onInput focus->combobox#onFocus " \
+  INPUT_ACTIONS = "input->combobox#onInput focus->combobox#onFocus click->combobox#onClick " \
                   "keydown->combobox#onKeydown blur->combobox#onBlur"
   private_constant :INPUT_ACTIONS
 
@@ -29,14 +29,16 @@ module ComboboxHelper
       **data.except(:controller)
     }
 
+    field_data = { action: "mousedown->combobox#onFieldMousedown" }
+    listbox_data = { combobox_target: "listbox", action: "scroll->combobox#onScroll mousedown->combobox#onListboxMousedown" }
+
     tag.div class: token_list("combobox", wrapper_class), data: wrapper_data do
       safe_join [
         tag.div(input + tag.code(class: "combobox__badge", data: { combobox_target: "badge" }) +
-                tag.div(class: "combobox__handle"), class: "combobox__field"),
+                tag.div(class: "combobox__handle"), class: "combobox__field", data: field_data),
         hidden_field_tag(name, value, id: nil, data: { combobox_target: "hidden" }),
         tag.ul(nil, role: "listbox", id: listbox_id, class: "combobox__listbox",
-                    aria: { label: "Suggestions" }, hidden: true,
-                    data: { combobox_target: "listbox", action: "scroll->combobox#onScroll" }),
+                    aria: { label: "Suggestions" }, hidden: true, data: listbox_data),
         tag.div(nil, class: "combobox__announcer", role: "status",
                      aria: { live: "polite" }, data: { combobox_target: "status" })
       ]

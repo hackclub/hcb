@@ -8,8 +8,10 @@ module HasWireRecipient
     has_country_enum(field: :recipient_country)
     validates_length_of :remittance_info, maximum: 140
 
+    normalizes :bic_code, with: ->(bic_code) { bic_code.strip.upcase }
+
     validate do
-      unless bic_code.to_s.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
+      unless valid_bic_code?
         errors.add(:bic_code, "is not a valid SWIFT / BIC code")
       end
     end
@@ -401,7 +403,15 @@ module HasWireRecipient
     }
   }.freeze
 
+  BIC_CODE_FORMAT = /\A[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?\z/ # https://www.johndcook.com/blog/2024/01/29/swift/
+
+  def valid_bic_code?
+    bic_code.to_s.match?(BIC_CODE_FORMAT)
+  end
+
   def bank_country
+    return recipient_country unless valid_bic_code?
+
     ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
   end
 
