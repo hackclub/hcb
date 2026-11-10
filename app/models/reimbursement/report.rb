@@ -326,7 +326,7 @@ module Reimbursement
     end
 
     def reviewer_selectable?
-      !event.reviewer_selection_disabled?
+      card_grant.blank? && !event.reviewer_selection_disabled?
     end
 
     def assigned_reviewer_required?

@@ -92,6 +92,23 @@ RSpec.describe Reimbursement::ReportsController do
       expect(selects.map { |select| select["required"] }).to all(eq("required"))
     end
 
+    it "never asks card grant submitters for a reviewer" do
+      event = create(:event, :card_grant_event, :with_positive_balance)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:, user: member)
+      report = create(:reimbursement_report, user: member, event:, card_grant:)
+      create_session(member, verified: true)
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      get(:show, params: { id: report.id })
+      expect(Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')).to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      get(:show, params: { id: report.id })
+      expect(Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')).to be_empty
+    end
+
     it "shows the status badge when no reviewer is assigned" do
       creator = create(:user)
       event = create(:event)
