@@ -13,10 +13,10 @@
 #  comment_notifications              :integer          default(0), not null
 #  creation_method                    :integer
 #  email                              :text             not null
-#  first_name                         :string
 #  full_name                          :string
 #  joined_as_teenager                 :boolean
-#  last_name                          :string
+#  legal_first_name                   :string
+#  legal_last_name                    :string
 #  locked_at                          :datetime
 #  monthly_donation_summary           :boolean          default(TRUE)
 #  monthly_follower_summary           :boolean          default(TRUE)
@@ -50,8 +50,7 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
-  # Latin letters (including common accented ones) plus the punctuation that
-  # legitimately appears in names. Stripe Issuing only accepts latin names.
+  # Stripe Issuing only accepts latin names.
   NAME_CHARACTERS_REGEX = /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/
   NAME_CHARACTERS_MESSAGE = "may only contain letters, spaces, hyphens, apostrophes, periods, and commas."
 
@@ -206,11 +205,10 @@ class User < ApplicationRecord
   before_save :clear_pretend_is_not_admin, if: -> { pretend_is_not_admin? && !admin_override_pretend? }
 
   before_create :format_number
-  # `first_name` / `last_name` are the source of truth and `full_name` is kept
-  # in sync from them. Legacy writers that assign `full_name` directly (older
-  # clients, scripts) have it split into the two columns instead.
-  before_validation :split_full_name, if: -> { full_name_changed? && !first_name_changed? && !last_name_changed? }
-  before_validation :sync_full_name, if: -> { first_name_changed? || last_name_changed? }
+  # The legal name columns are the source of truth; `full_name` is kept in sync with them.
+  before_validation :fill_legacy_legal_name, if: -> { awaiting_legal_name_backfill? && legal_name_parts_changed? && !full_name_changed? }
+  before_validation :split_full_name, if: -> { full_name_changed? && !legal_name_parts_changed? }
+  before_validation :sync_full_name, if: :legal_name_edited?
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
@@ -231,24 +229,13 @@ class User < ApplicationRecord
 
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
-  # Users are created with just an email and add their name during onboarding,
-  # so a first name is only required once there is a last name to go with it
-  # or once a name has been set (it can be changed, but not removed).
-  validates :first_name, presence: true, if: -> { self[:last_name].present? || clearing_existing_name? }
-  # Stripe Issuing needs a last name, and cardholder names are synced to Stripe
-  # on every profile update.
-  validates :last_name, presence: { message: "is required for HCB cards" }, if: -> { last_name_changed? && stripe_cardholder.present? }
-  validates :first_name, format: { with: NAME_CHARACTERS_REGEX, message: NAME_CHARACTERS_MESSAGE, allow_blank: true }
-  validates :last_name, format: { with: NAME_CHARACTERS_REGEX, message: NAME_CHARACTERS_MESSAGE, allow_blank: true }
+  # Names are added during onboarding, and can then be changed but not removed.
+  validates :legal_first_name, presence: true, if: -> { legal_last_name.present? || clearing_existing_name? }
+  # Stripe Issuing requires a last name.
+  validates :legal_last_name, presence: { message: "is required for HCB cards" }, if: -> { legal_last_name_changed? && stripe_cardholder.present? }
+  validates :legal_first_name, :legal_last_name, format: { with: NAME_CHARACTERS_REGEX, message: NAME_CHARACTERS_MESSAGE, allow_blank: true }
 
-  normalizes :first_name, with: ->(name) { name.squish.presence }
-  normalizes :last_name, with: ->(name) { name.squish.presence }
-
-  # Validate the stored columns, not the `first_name` / `last_name` readers
-  # below (which favor the preferred name and fall back to `full_name`).
-  def read_attribute_for_validation(attribute)
-    attribute.to_s.in?(%w[first_name last_name]) ? self[attribute] : super
-  end
+  normalizes :legal_first_name, :legal_last_name, with: ->(name) { name.squish.presence }
 
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
@@ -263,7 +250,7 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
   validates :preferred_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
+    with: NAME_CHARACTERS_REGEX,
     message: "must only contain characters in the latin alphabet.", allow_blank: true,
   }, if: :preferred_name_changed?
 
@@ -356,36 +343,29 @@ class User < ApplicationRecord
     admin!
   end
 
-  # With `legal: true`, the first name as stored, which may include middle
-  # names ("Donald Ervin"). Use it for anything that must match the user's
-  # legal name (Stripe, forms).
-  #
-  # Otherwise, the first word of what we call the user in greetings and other
-  # display uses ("Hey Donald,"): their preferred name if set, then their legal
-  # first name, then their email handle if they haven't added a name yet.
+  # The legal first name may include middle names ("Donald Ervin").
+  # Otherwise, the first word of the name we greet the user by ("Hey Donald,").
   def first_name(legal: false)
-    stored = name_split? ? self[:first_name] : legacy_parsed_name.first_name
+    stored = legal_name_split? ? legal_first_name : legacy_parsed_name.first_name
     return stored if legal
 
     display_name = preferred_name.presence || stored.presence || (email_handle if email.present?)
     display_name&.split(" ")&.first
   end
 
-  # The user's last name as stored, which may include particles and a suffix
-  # ("de la Cruz", "King Jr.").
-  # Returns nil for users who only have a first name, and for single-word
-  # preferred names when `legal` is false.
+  # The legal last name may include particles and a suffix ("de la Cruz", "King Jr.").
   def last_name(legal: false)
     return preferred_name_parts.last if !legal && preferred_name.present?
 
-    name_split? ? self[:last_name] : legacy_parsed_name.last_name
+    legal_name_split? ? legal_last_name : legacy_parsed_name.last_name
   end
 
-  # "Fiona H" — what we show to other users.
+  # "Fiona H", shown to other users.
   def initial_name
     first = first_name
     last = last_name
-    return name if first.blank? || last.blank?
+    # Only the first word, so a full name typed into the first name field stays private.
+    return first || name if last.blank?
 
     # Initial of the surname itself, skipping lowercase particles ("de la Cruz" -> "C").
     "#{first[0..20]} #{last[/[[:upper:]]/] || last[0]}"
@@ -396,7 +376,7 @@ class User < ApplicationRecord
     return name unless name.length > 24
     return full_name if full_name.present? && full_name.length <= 24
 
-    initial_name
+    initial_name.first(24)
   end
 
   def name
@@ -794,23 +774,41 @@ class User < ApplicationRecord
 
   def split_full_name
     parsed = UserService::ParseName.new(full_name:).run
-    self.first_name = parsed.first_name
-    self.last_name = parsed.last_name
+    self.legal_first_name = parsed.first_name
+    self.legal_last_name = parsed.last_name
   end
 
   def sync_full_name
-    self.full_name = [self[:first_name], self[:last_name]].compact_blank.join(" ").presence
+    self.full_name = [legal_first_name, legal_last_name].compact_blank.join(" ").presence
   end
 
-  # A name can be changed but not removed once set. Rows that haven't been
-  # backfilled yet (`full_name` set, `first_name` nil) are only held to this
-  # when the name itself is being edited, so unrelated updates still save.
+  def legal_name_parts_changed?
+    legal_first_name_changed? || legal_last_name_changed?
+  end
+
+  def awaiting_legal_name_backfill?
+    legal_first_name_in_database.blank? && full_name_in_database.present?
+  end
+
+  # A blank part keeps its legacy value, so a partial edit can't drop half of the name.
+  def fill_legacy_legal_name
+    self.legal_first_name ||= legacy_parsed_name.first_name
+    self.legal_last_name ||= legacy_parsed_name.last_name
+  end
+
+  # Saving a legacy name back unchanged only backfills it, leaving `full_name` (and any title) as is.
+  def legal_name_edited?
+    return false unless legal_name_parts_changed?
+
+    !awaiting_legal_name_backfill? || [legal_first_name, legal_last_name] != legacy_parsed_name.to_a
+  end
+
+  # Only checked when the name is edited, so rows awaiting backfill can still save unrelated updates.
   def clearing_existing_name?
-    full_name_in_database.present? && (first_name_changed? || last_name_changed? || full_name_changed?)
+    full_name_in_database.present? && (legal_name_parts_changed? || full_name_changed?)
   end
 
-  # Preferred names are free-form ("FiFi", "FiFi Hacks"), so split them
-  # positionally: everything but the last word is the first name.
+  # Preferred names are free-form, so everything but the last word is the first name.
   def preferred_name_parts
     words = preferred_name.squish.split(" ")
     return [words.first, nil] if words.one?
@@ -818,16 +816,11 @@ class User < ApplicationRecord
     [words[0..-2].join(" "), words.last]
   end
 
-  # Whether `first_name` / `last_name` hold this user's name. Only rows that
-  # predate the split columns and haven't been backfilled (or edited) yet fall
-  # back to parsing `full_name`. A blank `last_name` on a split row means the
-  # user has a single name, and must not be re-derived from `full_name`
-  # ("Mary Ann" would otherwise come back as last name "Ann").
-  def name_split?
-    first_name_in_database.present? || first_name_changed? || last_name_changed?
+  # False only for rows awaiting backfill, whose names are still parsed from `full_name`.
+  def legal_name_split?
+    legal_first_name_in_database.present? || legal_name_parts_changed?
   end
 
-  # Rows written before the split columns existed and not yet backfilled.
   def legacy_parsed_name
     UserService::ParseName.new(full_name:).run
   end

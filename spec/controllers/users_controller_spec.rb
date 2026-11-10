@@ -248,37 +248,37 @@ RSpec.describe UsersController do
     render_views
 
     it "asks a new user for their first and last name during onboarding" do
-      user = create(:user, first_name: nil, last_name: nil)
+      user = create(:user, legal_first_name: nil, legal_last_name: nil)
       create_session(user, verified: true)
 
       get(:edit, params: { id: user.id })
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Create your account")
-      expect(response.body).to include('name="user[first_name]"')
-      expect(response.body).to include('name="user[last_name]"')
+      expect(response.body).to include('name="user[legal_first_name]"')
+      expect(response.body).to include('name="user[legal_last_name]"')
       expect(response.body).not_to include('name="user[full_name]"')
     end
 
     it "shows the stored legal name in settings, not the preferred name" do
-      user = create(:user, first_name: "Fiona", last_name: "Hackworth", preferred_name: "FiFi")
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi")
       create_session(user, verified: true)
 
       get(:edit, params: { id: user.id })
 
-      expect(response.body).to include('name="user[first_name]"').and include('value="Fiona"')
-      expect(response.body).to include('name="user[last_name]"').and include('value="Hackworth"')
+      expect(response.body).to include('name="user[legal_first_name]"').and include('value="Fiona"')
+      expect(response.body).to include('name="user[legal_last_name]"').and include('value="Hackworth"')
     end
 
     it "leaves the last name blank for a user with a multi-word first name and no last name" do
-      user = create(:user, first_name: "Mary Ann", last_name: nil, phone_number: "+18556254225")
+      user = create(:user, legal_first_name: "Mary Ann", legal_last_name: nil, phone_number: "+18556254225")
       create_session(user, verified: true)
 
       get(:edit, params: { id: user.id })
 
       page = Nokogiri::HTML(response.body)
-      expect(page.at_css("input[name='user[first_name]']")["value"]).to eq("Mary Ann")
-      expect(page.at_css("input[name='user[last_name]']")["value"]).to be_blank
+      expect(page.at_css("input[name='user[legal_first_name]']")["value"]).to eq("Mary Ann")
+      expect(page.at_css("input[name='user[legal_last_name]']")["value"]).to be_blank
     end
   end
 
@@ -410,43 +410,43 @@ RSpec.describe UsersController do
     end
 
     it "completes onboarding once the user enters their name" do
-      user = create(:user, first_name: nil, last_name: nil)
+      user = create(:user, legal_first_name: nil, legal_last_name: nil)
       create_session(user, verified: true)
 
-      patch(:update, params: { id: user.id, user: { first_name: "Fiona", last_name: "Hackworth", preferred_name: "FiFi" } })
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi" } })
 
       expect(response).to redirect_to(root_path)
       expect(flash[:success]).to eq("Profile created!")
-      expect(user.reload.attributes).to include("first_name" => "Fiona", "last_name" => "Hackworth", "full_name" => "Fiona Hackworth", "preferred_name" => "FiFi")
+      expect(user.reload.attributes).to include("legal_first_name" => "Fiona", "legal_last_name" => "Hackworth", "full_name" => "Fiona Hackworth", "preferred_name" => "FiFi")
       expect(user).not_to be_onboarding
     end
 
     it "lets a user go by a first name only" do
-      user = create(:user, first_name: nil, last_name: nil)
+      user = create(:user, legal_first_name: nil, legal_last_name: nil)
       create_session(user, verified: true)
 
-      patch(:update, params: { id: user.id, user: { first_name: "Madonna", last_name: "" } })
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Madonna", legal_last_name: "" } })
 
       expect(response).to redirect_to(root_path)
-      expect(user.reload).to have_attributes(first_name: "Madonna", last_name: nil, full_name: "Madonna")
+      expect(user.reload).to have_attributes(legal_first_name: "Madonna", legal_last_name: nil, full_name: "Madonna")
     end
 
     it "updates the user's name" do
-      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
       create_session(user, verified: true)
 
-      patch(:update, params: { id: user.id, user: { first_name: "Jane", last_name: "Elder" } })
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Jane", legal_last_name: "Elder" } })
 
       expect(response).to redirect_to(edit_user_path(user))
       expect(flash[:success]).to eq("Updated your profile!")
-      expect(user.reload).to have_attributes(first_name: "Jane", last_name: "Elder", full_name: "Jane Elder")
+      expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Elder", full_name: "Jane Elder")
     end
 
     it "does not let the first name be removed" do
-      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
       create_session(user, verified: true)
 
-      patch(:update, params: { id: user.id, user: { first_name: "", last_name: "Hackworth" } })
+      patch(:update, params: { id: user.id, user: { legal_first_name: "", legal_last_name: "Hackworth" } })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Legal first name can&#39;t be blank")
@@ -454,24 +454,49 @@ RSpec.describe UsersController do
     end
 
     it "rejects names with unsupported characters" do
-      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
       create_session(user, verified: true)
 
-      patch(:update, params: { id: user.id, user: { first_name: "Fiona", last_name: "Hackworth [Dev]" } })
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Fiona", legal_last_name: "Hackworth [Dev]" } })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Legal last name may only contain letters")
       expect(user.reload.last_name).to eq("Hackworth")
     end
 
+    it "does not let a cardholder remove their last name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+      create(:stripe_cardholder, user:)
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Fiona", legal_last_name: "" } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Legal last name is required for HCB cards")
+      expect(user.reload.full_name).to eq("Fiona Hackworth")
+    end
+
+    it "explains the missing last name instead of erroring when a cardholder has none" do
+      user = create(:user, legal_first_name: "Madonna", legal_last_name: nil, phone_number: "+18556254225")
+      create(:stripe_cardholder, user:)
+      create_session(user, verified: true)
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      patch(:update, params: { id: user.id, user: { legal_first_name: "Madonna Louise", legal_last_name: "" } })
+
+      expect(response).to redirect_to(edit_user_path(user))
+      expect(flash[:error]).to eq("A legal last name is required to issue cards. Please add it in your account settings.")
+      expect(user.reload.full_name).to eq("Madonna Louise")
+    end
+
     it "ignores the legacy full_name parameter" do
-      user = create(:user, first_name: "Fiona", last_name: "Hackworth")
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
       create_session(user, verified: true)
 
       patch(:update, params: { id: user.id, user: { full_name: "Someone Else" } })
 
       expect(response).to have_http_status(:found)
-      expect(user.reload).to have_attributes(first_name: "Fiona", last_name: "Hackworth", full_name: "Fiona Hackworth")
+      expect(user.reload).to have_attributes(legal_first_name: "Fiona", legal_last_name: "Hackworth", full_name: "Fiona Hackworth")
     end
 
     it "lets an admin bypass phone number verification for a user" do

@@ -37,6 +37,18 @@ RSpec.describe UserService::ParseName do
     expect(parse("Sir Elton John")).to eq(["Elton", "John"])
   end
 
+  it "drops trailing credentials instead of treating them as the surname" do
+    expect(parse("Jane Smith PhD")).to eq(["Jane", "Smith"])
+    expect(parse("Jane Smith, Ph.D.")).to eq(["Jane", "Smith"])
+    expect(parse("John Smith MD")).to eq(["John", "Smith"])
+    expect(parse("John Smith, M.D.")).to eq(["John", "Smith"])
+  end
+
+  it "never drops words when the name holds several people" do
+    expect(parse("John and Jane Doe")).to eq(["John and Jane", "Doe"])
+    expect(parse("John Doe and Jane Roe")).to eq(["John Doe and Jane", "Roe"])
+  end
+
   it "puts a single name in first_name" do
     expect(parse("Madonna")).to eq(["Madonna", nil])
     expect(parse("O'Brien")).to eq(["O'Brien", nil])
