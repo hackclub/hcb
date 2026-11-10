@@ -117,7 +117,6 @@ class User < ApplicationRecord
   has_many :mailbox_addresses
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
-  has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
   has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
@@ -155,7 +154,6 @@ class User < ApplicationRecord
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
-  has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
   has_many :jobs, as: :entity, class_name: "Employee"
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
@@ -353,10 +351,6 @@ class User < ApplicationRecord
 
   def make_admin!
     admin!
-  end
-
-  def remove_admin!
-    user!
   end
 
   # The user's first name as stored, which may include middle names and
