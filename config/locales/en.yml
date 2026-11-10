@@ -39,8 +39,6 @@ en:
         slug: "URL"
       user:
         full_name: "Legal name"
-        first_name: "Legal first name"
-        last_name: "Legal last name"
     errors:
       models:
         donation:
