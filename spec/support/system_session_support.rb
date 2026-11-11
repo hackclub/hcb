@@ -16,7 +16,9 @@ module SystemSessionSupport
 
     # The browser only accepts cookies for a host it has already visited.
     visit auth_users_path
-    page.driver.set_cookie("session_token", jar[:session_token])
+    # Escape it the way a Set-Cookie header would: Rack unescapes cookie values,
+    # so a raw `+` in the base64 payload would come back as a space.
+    page.driver.set_cookie("session_token", Rack::Utils.escape(jar[:session_token]))
 
     user_session
   end
