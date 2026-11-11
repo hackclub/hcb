@@ -153,6 +153,13 @@
             </tr>
           <% end %>
         <% end %>
+        <% if policy(@wise_transfer).edit? %>
+          <tr>
+            <td colspan="2">
+              <%= button_to "✏️ Edit Wise transfer", edit_wise_transfer_path(@wise_transfer), method: :get %>
+            </td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
   </div>

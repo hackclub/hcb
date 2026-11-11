@@ -1,9 +1,9 @@
 // The quote lookup needs `fetch`, `Number` and a template literal, none of which
 // the CSP build will evaluate from a directive, so it all lives here.
-export default ({ currency }) => ({
+export default ({ currency, account_type = null }) => ({
   currency,
   amount: null,
-  account_type: null,
+  account_type,
   usd_quote: null,
   use_same_email_for_interac: false,
   email: null,
