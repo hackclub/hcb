@@ -40,7 +40,7 @@ trap 'rm -rf "$tmpdir"' EXIT
 files=()
 while IFS= read -r -d '' f; do
   files+=("$f")
-done < <(find app/views -name "*.html*.erb" -print0)
+done < <(find app/views \( -name "*.html*.erb" -o -name "*.html*.herb" \) -print0)
 
 pids=()
 for ((i=0; i<ERB_JOBS; i++)); do

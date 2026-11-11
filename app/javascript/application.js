@@ -45,6 +45,16 @@ import './confirm'
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
 
+// Runs the `data-herb-*` actions and state in our `.html.herb` views. It
+// follows Turbo visits, frames and streams on its own.
+//
+// Started here rather than left to start itself on the next microtask: Stimulus
+// connects controllers on a microtask too, and a controller calling `useState`
+// before the runtime is up gets a state that never reads or writes anything.
+// These are the options the automatic start would have used.
+import { Runtime } from 'reactionview'
+Runtime.start({ state: { debounce: 150 } })
+
 import persist from '@alpinejs/persist'
 import Alpine from './alpine'
 import registerData from './datas'

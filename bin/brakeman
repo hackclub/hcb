@@ -5,5 +5,7 @@ require "rubygems"
 require "bundler/setup"
 
 ARGV.unshift("--ensure-latest")
+# Scans our `.html.herb` views too. See config/brakeman/herb_views.rb.
+ARGV.unshift("--add-checks-path", File.expand_path("../config/brakeman", __dir__))
 
 load Gem.bin_path("brakeman", "brakeman")

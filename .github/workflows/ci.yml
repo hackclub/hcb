@@ -266,4 +266,4 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-ruby
       - name: Run Brakeman
-        run: bundle exec brakeman -q
+        run: bundle exec brakeman -q --add-checks-path config/brakeman # config/brakeman scans our .html.herb views too

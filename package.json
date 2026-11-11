@@ -58,6 +58,7 @@
     "react-dom": "^18.3.1",
     "react-snowfall": "^1.2.1",
     "react_ujs": "^3.2.1",
+    "reactionview": "0.6.1",
     "recharts": "^2.15.4",
     "rich-textarea": "^0.26.5",
     "stimulus-use": "^0.52.3",
@@ -69,7 +70,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
-    "@herb-tools/linter": "^0.11.0",
+    "@herb-tools/linter": "^0.11.2",
     "concurrently": "^9.2.1",
     "eslint": "9.x",
     "eslint-plugin-react": "^7.37.5",

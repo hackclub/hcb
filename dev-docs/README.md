@@ -10,6 +10,7 @@ HCB is a tool for hackers to hack on the real world, like GitHub, but for buildi
   - [Card transactions](./guides/card_transactions.md)
   - [Fiscal sponsorship fees](./guides/fees.md)
   - [Fronted transactions](./guides/fronted_transactions.md)
+  - [Herb views (reactive templates)](./guides/herb_views.md)
   - [Reimbursements in the transaction engine](./guides/reimbursements_transaction_engine.md)
   - [Stripe payouts & fee reimbursements](./guides/stripe_payouts.md)
   - [Stripe service fees](./guides/stripe_service_fees.md)

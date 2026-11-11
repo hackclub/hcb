@@ -1,4 +1,8 @@
-<%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member' }" }) do |form| %>
+<%# locals: (invite:) %>
+<%# herb:slots client %>
+<%# herb:state (selected_role: "member") %>
+
+<%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug)) do |form| %>
   <%= form_errors invite, "user" %>
 
   <h3 class="mb-2 flex items-center justify-between">
@@ -18,10 +22,10 @@
       </div>
     </div>
 
-    <%= render "organizer_position_invites/role_and_control_form", form: form %>
-    <div x-show="role === 'manager'" x-cloak x-transition.duration.500ms>
+    <%= render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role } %>
+    <div hidden="<%= selected_role != "manager" %>">
       <% admin_tool("rounded-t-none rounded-b-xl p-3") do %>
-        <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
+        <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: "false" %>
       <% end %>
     </div>
   </div>

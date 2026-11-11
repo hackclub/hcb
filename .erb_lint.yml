@@ -1,4 +1,6 @@
 EnableDefaultLinters: true
+# `.html.herb` views (ReActionView) are HTML+ERB too.
+glob: "**/*.html{+*,}.{erb,herb}"
 exclude:
   - app/views/grants/_activate_form.html.erb
   - app/views/ach_transfers/_form.html.erb # erb-lint _really_ doesn't like Alpine
