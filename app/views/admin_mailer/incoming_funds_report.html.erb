@@ -1,0 +1,14 @@
+HQ organizations received the following incoming funds of <%= render_money AdminMailer::INCOMING_FUNDS_THRESHOLD_CENTS %> or more between <%= @starting_at.strftime("%B %-d, %Y") %> and <%= @ending_at.strftime("%B %-d, %Y") %>:
+
+<ul>
+  <% @ledger_items.each do |item| %>
+    <li style="margin-top: 8px;">
+      <strong><%= render_money item.amount_cents %></strong>
+      to <%= link_to item.primary_ledger.event.name, event_url(item.primary_ledger.event) %>:
+      <%= link_to item.memo, ledger_item_url(item) %>
+      (<%= item.humanized_type %>, <%= item.datetime.strftime("%B %-d, %Y") %><%= ", pending" if item.pending? %>)
+    </li>
+  <% end %>
+</ul>
+
+<p>Total: <strong><%= render_money @ledger_items.sum(&:amount_cents) %></strong></p>
