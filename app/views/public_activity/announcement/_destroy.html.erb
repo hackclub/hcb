@@ -1,0 +1,11 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
+  deleted the announcement
+  <% if activity.parameters[:title].present? %>
+    <i><%= activity.parameters[:title] %></i>
+  <% end %>
+  <% if activity.recipient.present? %>
+    on <%= link_to activity.recipient.name, activity.recipient %>
+  <% end %>
+<% end %>
