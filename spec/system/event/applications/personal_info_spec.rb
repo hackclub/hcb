@@ -8,27 +8,12 @@ RSpec.describe "Application personal info", type: :system do
   let(:restriction_notice) { "This is because of regulatory restrictions" }
 
   before do
-    # The page loads intl-tel-input from a CDN, which the system spec driver
-    # blocks; stand in for it so phone_input.js doesn't throw on load.
-    page.driver.browser.evaluate_on_new_document(<<~JS)
-      window.intlTelInput = () => ({ getNumber: () => "" })
-    JS
-
+    stub_intl_tel_input
     sign_in(user)
   end
 
-  def sign_in(user)
-    user_session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
-
-    jar = ActionDispatch::Request.new(Rails.application.env_config).cookie_jar
-    jar.encrypted[:session_token] = user_session.session_token
-
-    visit auth_users_path
-    page.driver.set_cookie("session_token", jar[:session_token])
-  end
-
-  def country_validation_message
-    page.evaluate_script("document.getElementById('#{country_field}').validationMessage")
+  def country_validity(property)
+    page.evaluate_script("document.getElementById('#{country_field}').#{property}")
   end
 
   it "warns about and rejects a disallowed country until another is picked" do
@@ -40,11 +25,11 @@ RSpec.describe "Application personal info", type: :system do
 
     select "India", from: country_field
     expect(page).to have_text("HCB is not supported in India. #{restriction_notice}")
-    expect(country_validation_message).to eq("HCB is not supported in this country")
+    expect(country_validity("validationMessage")).to eq("HCB is not supported in this country")
 
     select "Canada", from: country_field
     expect(page).to have_no_text(restriction_notice)
-    expect(country_validation_message).to be_empty
+    expect(country_validity("validationMessage")).to be_empty
   end
 
   it "shows the warning on load for a saved disallowed country" do
@@ -52,7 +37,7 @@ RSpec.describe "Application personal info", type: :system do
     visit personal_info_application_path(application)
 
     expect(page).to have_text("HCB is not supported in Russia")
-    expect(country_validation_message).to eq("HCB is not supported in this country")
+    expect(country_validity("validationMessage")).to eq("HCB is not supported in this country")
   end
 
   it "still requires a country after clearing the selection" do
@@ -61,6 +46,6 @@ RSpec.describe "Application personal info", type: :system do
 
     select "Select a country", from: country_field
 
-    expect(page.evaluate_script("document.getElementById('#{country_field}').validity.valueMissing")).to be(true)
+    expect(country_validity("validity.valueMissing")).to be(true)
   end
 end
