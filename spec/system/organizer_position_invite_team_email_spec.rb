@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "Team email warning on the invite form", type: :system do
   let(:user) { create(:user) }
   let(:event) { create(:event) }
-  let(:warning) { "we discourage team emails on HCB" }
+  let(:warning) { "we discourage shared emails on HCB" }
 
   before do
     create(:organizer_position, user:, event:, role: :manager)
