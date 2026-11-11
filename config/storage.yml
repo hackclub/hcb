@@ -6,9 +6,18 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# Falls back to the S3-compatible variables Laravel Cloud injects when an
+# Object Storage (Cloudflare R2) bucket is attached as the default disk.
 amazon:
   service: S3
-  access_key_id: <%= Credentials.fetch(:S3, :ACCESS_KEY_ID) %>
-  secret_access_key: <%= Credentials.fetch(:S3, :SECRET_ACCESS_KEY) %>
-  region: <%= Credentials.fetch(:S3, :REGION) %>
-  bucket: <%= Credentials.fetch(:S3, :BUCKET) %>
+  access_key_id: <%= Credentials.fetch(:S3, :ACCESS_KEY_ID, fallback: ENV["AWS_ACCESS_KEY_ID"]) %>
+  secret_access_key: <%= Credentials.fetch(:S3, :SECRET_ACCESS_KEY, fallback: ENV["AWS_SECRET_ACCESS_KEY"]) %>
+  region: <%= Credentials.fetch(:S3, :REGION, fallback: ENV["AWS_REGION"]) %>
+  bucket: <%= Credentials.fetch(:S3, :BUCKET, fallback: ENV["AWS_BUCKET"]) %>
+<% if (endpoint = Credentials.fetch(:S3, :ENDPOINT, fallback: ENV["AWS_ENDPOINT_URL"])).present? %>
+  endpoint: <%= endpoint %>
+  force_path_style: true
+  # R2 doesn't support the SDK's default CRC checksums on every operation.
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
+<% end %>
