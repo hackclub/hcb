@@ -21,7 +21,7 @@ Rails.application.routes.draw do
     mount SchemaEndpoint.instance => "/schema"
   end
   get "/sidekiq", to: redirect("users/auth") # fallback if adminconstraint fails, meaning user is not signed in
-  if Rails.env.development?
+  if Rails.env.development? || Rails.env.staging?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
 
