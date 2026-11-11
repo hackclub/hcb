@@ -72,7 +72,7 @@ gem "monetize", "~> 2.0.0"
 gem "business_time"
 
 
-gem "poppler" # PDF parsing
+gem "pdf-reader" # PDF text extraction (pure Ruby; no GLib/cairo native deps)
 gem "wicked_pdf" # HTML to PDF conversion
 
 gem "write_xlsx" # Export Excel files

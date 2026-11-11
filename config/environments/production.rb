@@ -78,7 +78,7 @@ Rails.application.configure do
   config.force_ssl = true
 
   # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
   # This is an old Rails 7.0 default, but leaving it in because we depend on it below
