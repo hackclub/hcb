@@ -207,7 +207,20 @@ class DonationsController < ApplicationController
     authorize @donation
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
-    if @donation.update_donor_details(params.require(:donation).permit(:anonymous, :name))
+    permitted = [:anonymous, :name]
+    permitted << :email if policy(@donation).update_email?
+
+    if @donation.update_donor_details(params.require(:donation).permit(*permitted))
+      if params[:resend_receipt] == "1" && policy(@donation).resend_receipt?
+        if @donation.receipt_resendable?
+          @donation.send_receipt!
+          redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details and resent their receipt to #{@donation.email}." }
+        else
+          redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "Edited the donor's details, but this donation's receipt can't be resent." }
+        end
+        return
+      end
+
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
     else
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }

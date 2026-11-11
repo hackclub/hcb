@@ -37,6 +37,14 @@ class DonationPolicy < ApplicationPolicy
     OrganizerPosition.role_at_least?(user, record.event, :manager) || user&.admin?
   end
 
+  def update_email?
+    user&.admin?
+  end
+
+  def resend_receipt?
+    user&.admin?
+  end
+
   def refund?
     user&.admin?
   end
