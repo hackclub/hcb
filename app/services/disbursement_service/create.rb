@@ -63,14 +63,16 @@ module DisbursementService
         end
 
         ActiveRecord::Base.transaction do
-          disbursement = Disbursement.create!(attrs)
+          # Two transfers repaying the same transaction at once would both
+          # pass the "already repaid" check without this.
+          @repaid_ledger_item&.lock!
 
+          disbursement = Disbursement.new(attrs)
           if @repaid_ledger_item
-            # Two transfers repaying the same transaction at once would both
-            # pass the "already repaid" check without this.
-            @repaid_ledger_item.lock!
-            disbursement.repayments.create!(repaid_ledger_item: @repaid_ledger_item, amount_cents:).apply_categories!
+            disbursement.build_repayment.allocations.build(repaid_ledger_item: @repaid_ledger_item, amount_cents:)
           end
+          disbursement.save!
+          disbursement.repayment&.allocations&.each(&:apply_categories!)
 
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
@@ -164,7 +166,7 @@ module DisbursementService
       case @transfer_type
       when "transfer" then "internal-transfer"
       # The source takes on the expense, so it gets the expense's category.
-      when "repayment" then Repayment.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
+      when "repayment" then Repayment::Allocation.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
       end
     end
 
