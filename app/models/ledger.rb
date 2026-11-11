@@ -81,12 +81,6 @@ class Ledger < ApplicationRecord
     event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
   end
 
-  def refresh_all!
-    items.find_each do |item|
-      item.refresh!
-    end
-  end
-
   def fronted_fee_balance_cents
     return 0 if event.nil?
 
