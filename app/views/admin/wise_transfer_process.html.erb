@@ -203,7 +203,12 @@
             <%= form.text_field(
                   :wise_recipient_id,
                   class: "w-[400px]",
-                  placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                  data: {
+                    controller: "strip-prefix",
+                    action: "paste->strip-prefix#paste",
+                    strip_prefix_prefix_value: "https://wise.com/recipients/"
+                  }
                 ) %>
           </div>
 
