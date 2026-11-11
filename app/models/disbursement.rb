@@ -89,7 +89,7 @@ class Disbursement < ApplicationRecord
     event :mark_errored do
       after do
         canonical_pending_transactions.each { |cpt| cpt.decline! }
-        repayments.each(&:revert_categories!)
+        repayment&.revert_categories!
       end
       transitions from: [:pending, :in_transit], to: :errored
     end
@@ -98,7 +98,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
-        repayments.each(&:revert_categories!)
+        repayment&.revert_categories!
         create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
       transitions from: [:scheduled, :reviewing, :pending], to: :rejected
@@ -124,8 +124,9 @@ class Disbursement < ApplicationRecord
   def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
-  has_many :repayments, dependent: :destroy
-  has_many :repaid_ledger_items, through: :repayments
+  has_one :repayment, dependent: :destroy, autosave: true, inverse_of: :disbursement
+  has_many :repayment_allocations, through: :repayment, source: :allocations
+  has_many :repaid_ledger_items, through: :repayment
 
   # What the transfer is for. Decides how each side is categorized. Nil only
   # on transfers made before types existed.
@@ -138,6 +139,7 @@ class Disbursement < ApplicationRecord
                         :name
 
   validates :amount, numericality: { greater_than: 0 }
+  validate :repayment_allocations_match_amount, if: :transfer_type_repayment?
   validate :events_are_different
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
@@ -285,6 +287,12 @@ class Disbursement < ApplicationRecord
   end
 
   private
+
+  def repayment_allocations_match_amount
+    unless repayment && repayment.allocations.reject(&:marked_for_destruction?).sum { |allocation| allocation.amount_cents.to_i } == amount
+      errors.add(:amount, "must match the selected transaction total. Review your selection and try again.")
+    end
+  end
 
   def events_are_different
     self.errors.add(:event, "must be different than source event") if event_id == source_event_id && destination_subledger_id == source_subledger_id
