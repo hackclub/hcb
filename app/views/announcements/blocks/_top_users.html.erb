@@ -7,7 +7,7 @@
     <% if is_email %>
       <ol>
         <% users.each do |user| %>
-          <li><strong><%= user[:name] %></strong>: <%= render_money user[:value] * 100 %></p>
+          <li><strong><%= user[:name] %></strong>: <%= render_money user[:value] * 100 %></li>
         <% end %>
       </ol>
     <% else %>
