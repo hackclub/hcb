@@ -16,6 +16,7 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    Ascii85 (2.0.1)
     aasm (5.5.0)
       concurrent-ruby (~> 1.0)
     action_text-trix (2.1.19)
@@ -114,6 +115,7 @@ GEM
       prism
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
+    afm (1.0.1)
     after_commit_everywhere (1.6.0)
       activerecord (>= 4.2)
       activesupport
@@ -205,12 +207,6 @@ GEM
       activesupport (>= 3.2.0)
       tzinfo
     byebug (12.0.0)
-    cairo (1.18.5)
-      pkg-config (>= 1.2.2)
-      red-colors
-    cairo-gobject (4.3.6)
-      cairo (>= 1.16.2)
-      glib2 (= 4.3.6)
     capybara (3.40.0)
       addressable
       matrix
@@ -387,16 +383,8 @@ GEM
     geocoder (1.8.5)
       base64 (>= 0.1.0)
       csv (>= 3.0.0)
-    gio2 (4.3.6)
-      fiddle
-      gobject-introspection (= 4.3.6)
-    glib2 (4.3.6)
-      native-package-installer (>= 1.0.3)
-      pkg-config (>= 1.3.5)
     globalid (1.3.0)
       activesupport (>= 6.1)
-    gobject-introspection (4.3.6)
-      glib2 (= 4.3.6)
     google-apis-admin_directory_v1 (0.67.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-apis-core (0.18.0)
@@ -444,6 +432,7 @@ GEM
       grape-entity (~> 1)
       grape-swagger (~> 2)
     hashdiff (1.2.0)
+    hashery (2.1.2)
     hashid-rails (1.4.1)
       activerecord (>= 4.0)
       hashids (~> 1.0)
@@ -580,7 +569,6 @@ GEM
     mutex_m (0.3.0)
     namae (1.2.0)
       racc (~> 1.7)
-    native-package-installer (1.1.9)
     net-http-persistent (4.0.2)
       connection_pool (~> 2.2)
     net-imap (0.6.4.1)
@@ -616,6 +604,11 @@ GEM
     parser (3.3.12.0)
       ast (~> 2.4.1)
       racc
+    pdf-reader (2.16.0)
+      Ascii85 (>= 1.0, < 3.0, != 2.0.0)
+      afm (>= 0.2.1, < 2)
+      hashery (~> 2.0)
+      ttfunk
     pg (1.5.9)
     pg_query (6.1.0)
       google-protobuf (>= 3.25.3)
@@ -625,14 +618,9 @@ GEM
     pghero (3.7.0)
       activerecord (>= 7.1)
     phonelib (0.10.11)
-    pkg-config (1.6.5)
     plaid (44.0.0)
       faraday (>= 1.0.1, < 3.0)
       faraday-multipart (>= 1.0.1, < 2.0)
-    poppler (4.3.6)
-      cairo-gobject (= 4.3.6)
-      gio2 (= 4.3.6)
-      rake
     pp (0.6.4)
       prettyprint
     premailer (1.23.0)
@@ -735,9 +723,6 @@ GEM
       execjs
       railties (>= 3.2)
       tilt
-    red-colors (0.4.0)
-      json
-      matrix
     redcarpet (3.6.0)
     redis (5.4.1)
       redis-client (>= 0.22.0)
@@ -894,6 +879,7 @@ GEM
       openssl-signature_algorithm (~> 1.0)
     trailblazer-option (0.1.2)
     tsort (0.2.0)
+    ttfunk (1.7.0)
     turbo-rails (2.0.17)
       actionpack (>= 7.1.0)
       railties (>= 7.1.0)
@@ -1051,13 +1037,13 @@ DEPENDENCIES
   namae
   nondisposable
   paper_trail (~> 17.0.0)
+  pdf-reader
   pg (>= 0.18, < 2.0)
   pg_query (>= 2)
   pg_search
   pghero (~> 3.7)
   phonelib
   plaid (~> 44.0)
-  poppler
   premailer-rails
   prosemirror_to_html
   pry-byebug

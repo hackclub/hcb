@@ -19,12 +19,6 @@ RUN apt-get update -qq && \
       libjemalloc2 \
       # Postgres
       postgresql \
-      # Poppler gem (https://github.com/ruby-gnome/ruby-gnome/tree/main/poppler)
-      gir1.2-freedesktop \
-      gir1.2-glib-2.0 \
-      libcairo-gobject2 \
-      libgirepository-1.0-1 \
-      libpoppler-glib-dev \
       # OCR
       tesseract-ocr && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
@@ -52,10 +46,6 @@ RUN apt-get update -qq && \
       python-is-python3 \
       # Postgres
       libpq-dev \
-      # Poppler gem
-      libcairo2-dev \
-      libgirepository1.0-dev \
-      libglib2.0-dev \
     && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

@@ -48,4 +48,38 @@ RSpec.describe Receipt, type: :model do
         .not_to have_enqueued_job(User::UpdateCardLockingJob)
     end
   end
+
+  describe "#extract_textual_content" do
+    def create_receipt_with(fixture:, content_type:)
+      described_class.new(user: create(:user), upload_method: :api).tap do |receipt|
+        receipt.file.attach(
+          io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files", fixture))),
+          filename: fixture,
+          content_type:
+        )
+        receipt.save!
+      end
+    end
+
+    it "extracts text from a PDF with pdf-reader" do
+      receipt = create_receipt_with(fixture: "receipt.pdf", content_type: "application/pdf")
+
+      result = receipt.extract_textual_content
+
+      expect(result[:textual_content_source]).to eq(:pdf_text)
+      expect(result[:text]).to include("HCB Test Merchant")
+      expect(result[:text]).to include("Order #48213")
+      expect(result[:text]).to include("Total: $12.34")
+    end
+
+    it "skips image OCR without reporting an error when tesseract is not installed" do
+      allow(described_class).to receive(:tesseract_available?).and_return(false)
+      receipt = create_receipt_with(fixture: "receipt.png", content_type: "image/png")
+
+      expect(Rails.error).not_to receive(:report)
+      expect(RTesseract).not_to receive(:new)
+
+      expect(receipt.extract_textual_content).to eq(text: "", textual_content_source: :tesseract_ocr_text)
+    end
+  end
 end

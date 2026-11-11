@@ -5,6 +5,7 @@ require_relative "boot"
 require "rails/all"
 require_relative "../app/lib/credentials"
 require_relative "../lib/active_storage/previewer/document_previewer"
+require_relative "../lib/active_storage/previewer/vips_pdf_previewer"
 require_relative "../app/middleware/set_current_request_ip"
 require_relative "../app/middleware/opt_out_csp_for_mounted_engines"
 
@@ -126,6 +127,10 @@ module Bank
 
     # CSV previews
     config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
+
+    # PDF previews via libvips (no pdftoppm/mutool needed). Checked before the
+    # built-in Poppler/MuPDF previewers, which remain as fallbacks.
+    config.active_storage.previewers.unshift ActiveStorage::Previewer::VipsPdfPreviewer
 
     config.active_support.deprecation = :notify
 
