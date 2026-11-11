@@ -8,5 +8,6 @@
 <% elsif Rails.env.staging? %>
   <div class="!shadow-none shrink-0 p-4 my-7 border border-1 border-purple card">
     You're in <strong class="text-purple">staging</strong>
+    <%= pop_icon_to "email", letter_opener_web_path, class: "m-0 tooltipped tooltipped--w", "aria-label": "View email outbox", target: "_blank" %>
   </div>
 <% end %>
