@@ -17,7 +17,7 @@
 
   <%= render "application/callout", type: any_expired ? "error" : "warning", title: do %>
     <p class="mt-0">
-      Order a replacement card to keep spending. Your new card will come with a new expiration date and CVC but will keep the oringial card number.
+      Order a replacement card to keep spending. Your new card will come with a new expiration date and CVC but will keep the original card number.
       <% if stripe_cards.any? { |card| card.physical? && !card.expired? } %>
         Physical cards take can take 5-7 business days to arrive.
       <% end %>

@@ -36,9 +36,9 @@
     <input type="checkbox" id="<%= flow.dom_id(:confirmation) %>" data-action="form-disable#run" data-form-disable-target="radioButton">
     <label for="<%= flow.dom_id(:confirmation) %>">
       <% if cancels_now %>
-        I understand that my card ending in <%= stripe_card.last4 %> will be canceled immediately, and this can't be undone.
+        I understand that my previous card ending in <%= stripe_card.last4 %> will be canceled immediately, and this can't be undone.
       <% else %>
-        I understand that my card ending in <%= stripe_card.last4 %> will be canceled when I activate my new card, and this can't be undone.
+        I understand that my previous card ending in <%= stripe_card.last4 %> will be canceled when I activate my new card, and this can't be undone.
       <% end %>
     </label>
   </div>

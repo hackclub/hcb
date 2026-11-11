@@ -6,8 +6,3 @@
   We recommend replacing your card ending in <%= stripe_card.last4 %>, which cancels it and gives you a new card number.
   Once it's replaced, we'll take you to the dispute form.
 </p>
-
-<%= link_to dispute_hcb_code_path(flow.dispute), class: "btn bg-muted", data: { turbo: false } do %>
-  <%= inline_icon "flag-fill" %>
-  No, just dispute the transaction
-<% end %>
