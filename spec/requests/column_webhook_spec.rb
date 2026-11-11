@@ -29,6 +29,37 @@ RSpec.describe "Column Webhook", type: :request do
       end
     end
 
+    context "with a check deposit event" do
+      let(:check_deposit) { create(:check_deposit, :submitted) }
+
+      def post_check_deposit_event(type)
+        body = { type:, data: { id: check_deposit.column_id } }.to_json
+
+        post "/webhooks/column",
+             params: body,
+             headers: { "Column-Signature" => column_signature(body), "Content-Type" => "application/json" }
+      end
+
+      it "rejects the deposit on check.outgoing_debit.rejected" do
+        post_check_deposit_event("check.outgoing_debit.rejected")
+
+        expect(response).to have_http_status(:ok)
+        expect(check_deposit.reload).to be_rejected
+      end
+
+      it "marks the deposit deposited on check.outgoing_debit.settled" do
+        post_check_deposit_event("check.outgoing_debit.settled")
+
+        expect(check_deposit.reload).to be_deposited
+      end
+
+      it "ignores events for checks that are still in flight" do
+        post_check_deposit_event("check.outgoing_debit.deposited")
+
+        expect(check_deposit.reload).to be_submitted
+      end
+    end
+
     context "with an invalid Column signature" do
       it "returns 400 and does not process the webhook" do
         expect(Column::WebhooksController.method_defined?(:webhook)).to be(true)
