@@ -4,6 +4,8 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
+require_relative "../lib/laravel_cloud_redis_env"
+LaravelCloudRedisEnv.apply!
 require_relative "../lib/active_storage/previewer/document_previewer"
 require_relative "../lib/active_storage/previewer/vips_pdf_previewer"
 require_relative "../app/middleware/set_current_request_ip"
