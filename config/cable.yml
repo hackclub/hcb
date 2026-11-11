@@ -4,9 +4,13 @@ development:
 test:
   adapter: test
 
-production:
+production: &production
   adapter: redis
   url: <%= ENV.fetch("REDIS_CACHE_URL") { "redis://localhost:6379/1" } %>
   ssl_params:
     verify_mode: <%= OpenSSL::SSL::VERIFY_NONE %>
   channel_prefix: bank_production
+
+staging:
+  <<: *production
+  channel_prefix: bank_staging
