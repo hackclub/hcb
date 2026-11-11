@@ -2,6 +2,7 @@
 
 require "active_support/core_ext/integer/time"
 require_relative "../../app/lib/credentials"
+require_relative "../../lib/log_mail_delivery"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -82,8 +83,9 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "bank_production"
 
 
-  # Set ACTION_MAILER_DELIVERY_METHOD=test to skip sending; with debug logging,
-  # each email (e.g. login codes) is written to the log instead.
+  # Set ACTION_MAILER_DELIVERY_METHOD=log to write emails (e.g. login codes) to
+  # the log instead of sending them; see lib/log_mail_delivery.rb.
+  ActiveSupport.on_load(:action_mailer) { add_delivery_method :log, LogMailDelivery }
   config.action_mailer.delivery_method = ENV.fetch("ACTION_MAILER_DELIVERY_METHOD", "smtp").to_sym
 
   # Ignore bad email addresses and do not raise email delivery errors.
