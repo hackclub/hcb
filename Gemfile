@@ -176,8 +176,6 @@ group :development do
   gem "listen", "~> 3.9"
   gem "web-console", ">= 3.3.0"
 
-  gem "letter_opener_web" # preview emails
-
   # Ruby language server
   gem "solargraph", require: false
   gem "solargraph-rails", "~> 1.2.0", require: false
@@ -187,6 +185,10 @@ group :development do
   gem "foreman"
 
   gem "bullet"
+end
+
+group :development, :staging do
+  gem "letter_opener_web" # preview emails
 end
 
 gem "jbuilder", "~> 2.13"
