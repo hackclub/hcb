@@ -85,6 +85,10 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
+    # Outside production, show the code on the page so signing in doesn't
+    # depend on email delivery (see logins/_environment_banner).
+    @login_code = resp[:login_code]&.pretty if Rails.env.development? || Rails.env.staging?
+
     render status: :unprocessable_content
   end
 

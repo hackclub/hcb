@@ -125,6 +125,27 @@ RSpec.describe LoginsController do
       expect(response.body).to include("We just sent a login code")
     end
 
+    it "shows the login code on the page in staging" do
+      allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("staging"))
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      post(:email, params: { id: login.hashid })
+
+      expect(response.body).to include("Your login code is")
+      expect(response.body).to include(user.login_codes.last.pretty)
+    end
+
+    it "never shows the login code on the page outside development and staging" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      post(:email, params: { id: login.hashid })
+
+      expect(response.body).not_to include("Your login code is")
+      expect(response.body).not_to include(user.login_codes.last.pretty)
+    end
+
     it "resends the login code when the user requests it" do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:)
