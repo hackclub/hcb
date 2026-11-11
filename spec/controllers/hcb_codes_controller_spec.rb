@@ -116,7 +116,9 @@ RSpec.describe HcbCodesController, type: :controller do
 
       it "is hidden once the expense has been repaid" do
         disbursement = create(:disbursement, event:)
-        Repayment.new(disbursement:, repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+        repayment = disbursement.build_repayment
+        repayment.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
+        repayment.save!(validate: false)
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
