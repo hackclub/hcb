@@ -40,6 +40,20 @@ RSpec.describe "Application project info", type: :system do
       expect(required?("political_description_field")).to be(false)
     end
 
+    # Unlike the website URL, the description is kept when hidden, so switching
+    # back to Yes doesn't lose what the applicant wrote.
+    it "keeps the political description when toggled off and back on" do
+      visit path
+
+      select "Yes", from: "event_application_has_political"
+      fill_in "political_description_field", with: "Lobbying"
+      select "No", from: "event_application_has_political"
+      expect(find_field("political_description_field", visible: :all).value).to eq("Lobbying")
+
+      select "Yes", from: "event_application_has_political"
+      expect(page).to have_field("political_description_field", with: "Lobbying")
+    end
+
     # The fields' initial visibility is rendered by the server, so make sure it
     # agrees with the selects and that the toggles still work from that state.
     it "shows prefilled answers and hides them again when switched to No" do
@@ -50,6 +64,10 @@ RSpec.describe "Application project info", type: :system do
       expect(page).to have_field("website_url_field", with: "https://hackclub.com")
       expect(page).to have_select("event_application_has_political", selected: "Yes")
       expect(page).to have_field("political_description_field", with: "Lobbying")
+
+      # Required from page load, not only after the select changes
+      expect(required?("website_url_field")).to be(true)
+      expect(required?("political_description_field")).to be(true)
 
       select "No", from: "event_application_has_website"
       select "No", from: "event_application_has_political"

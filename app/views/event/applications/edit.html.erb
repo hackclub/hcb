@@ -8,7 +8,7 @@
            committed: @application.committed_amount.to_s,
            teenager: @application.teen_led? ? "true" : "false"
          } %>
-      <div class="card card--outline" x-data="application_edit_project_info(<%= project_info.to_json %>)" data-controller="website-political-fields">
+      <div class="card card--outline" x-data="application_edit_project_info(<%= project_info.to_json %>)">
         <h3 class="text-2xl my-0 mb-6">Project Information</h3>
 
         <div class="field">
@@ -31,33 +31,37 @@
           <%= form.text_area :description, class: "w-full max-w-full", required: true %>
         </div>
 
-        <div class="field">
-          <%= form.label :has_website do %>
-            Do you have a website? <span class="text-primary">*</span>
-          <% end %>
-          <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, data: { action: "website-political-fields#toggleWebsite" } } %>
+        <div data-controller="conditional-field" data-conditional-field-show-when-value="true" data-conditional-field-clear-on-hide-value="true">
+          <div class="field">
+            <%= form.label :has_website do %>
+              Do you have a website? <span class="text-primary">*</span>
+            <% end %>
+            <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, data: { conditional_field_target: "trigger", action: "conditional-field#toggle" } } %>
+          </div>
+
+          <div class="field" data-conditional-field-target="section" <%= "hidden" if @application.website_url.blank? %>>
+            <%= form.label :website_url do %>
+              Website URL <span class="text-primary">*</span>
+            <% end %>
+            <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur", conditional_field_target: "field" } %>
+          </div>
         </div>
 
-        <div class="field" data-website-political-fields-target="website" <%= "hidden" unless @application.website_url.present? %>>
-          <%= form.label :website_url do %>
-            Website URL <span class="text-primary">*</span>
-          <% end %>
-          <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur", website_political_fields_target: "websiteField" } %>
-        </div>
+        <div data-controller="conditional-field" data-conditional-field-show-when-value="true">
+          <div class="field">
+            <%= form.label :has_political do %>
+              Is your project involved with political activity? <span class="text-primary">*</span>
+            <% end %>
+            <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
+            <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, data: { conditional_field_target: "trigger", action: "conditional-field#toggle" } } %>
+          </div>
 
-        <div class="field">
-          <%= form.label :has_political do %>
-            Is your project involved with political activity? <span class="text-primary">*</span>
-          <% end %>
-          <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-          <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, data: { action: "website-political-fields#togglePolitical" } } %>
-        </div>
-
-        <div class="field" data-website-political-fields-target="political" <%= "hidden" unless @application.political_description.present? %>>
-          <%= form.label :political_description do %>
-             Please describe the political activity your project is involved in <span class="text-primary">*</span>
-          <% end %>
-          <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", data: { website_political_fields_target: "politicalField" } %>
+          <div class="field" data-conditional-field-target="section" <%= "hidden" if @application.political_description.blank? %>>
+            <%= form.label :political_description do %>
+              Please describe the political activity your project is involved in <span class="text-primary">*</span>
+            <% end %>
+            <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", data: { conditional_field_target: "field" } %>
+          </div>
         </div>
 
         <div class="field" x-show="!(<%= @application.teen_led? %>)">
