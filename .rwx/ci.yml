@@ -1,0 +1,408 @@
+on:
+  cli:
+    init:
+      commit-sha: ${{ event.git.sha }}
+  cache-rebuild:
+    init:
+      commit-sha: ${{ event.git.sha }}
+
+base:
+  image: ubuntu:24.04
+  config: rwx/base 1.2.1
+
+tool-cache:
+  vault: dylan-test
+
+aliases:
+  rails-test-env: &rails-test-env
+    RAILS_ENV: test
+    CI: "true"
+    DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+    REDIS_URL: redis://localhost:6379
+
+  postgres: &postgres
+    key: postgres
+    run: |
+      /usr/lib/postgresql/15/bin/initdb -D /tmp/pgdata -U postgres --auth=trust > /dev/null
+      exec /usr/lib/postgresql/15/bin/postgres -D /tmp/pgdata -c unix_socket_directories=/tmp
+    ready-check: pg_isready -h localhost -U postgres
+
+  redis: &redis
+    key: redis
+    run: redis-server --save "" --appendonly no
+    ready-check: redis-cli ping
+
+tasks:
+  - key: code
+    call: git/clone 2.4.1
+    with:
+      repository: https://github.com/hackclub/hcb.git
+      ref: ${{ init.commit-sha }}
+
+  - key: system-packages
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y libpoppler-glib-dev libpq-dev postgresql-client
+      sudo apt-get clean
+
+  - key: services
+    use: system-packages
+    run: |
+      sudo install -d /usr/share/postgresql-common/pgdg
+      sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+      echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+      sudo apt-get update
+      sudo apt-get install -y postgresql-15 redis-server
+      sudo apt-get clean
+
+  - key: chrome
+    call: google/install-chrome 2.2.1
+    with:
+      chrome-version: stable
+
+  - key: captain
+    call: rwx/install-captain 1.2.0
+
+  - key: ruby
+    use: code
+    call: ruby/install 2.0.2
+    with:
+      ruby-version-file: .ruby-version
+    filter: [.ruby-version]
+
+  - key: node
+    use: code
+    call: nodejs/install 1.2.1
+    with:
+      node-version-file: .node-version
+    filter: [.node-version]
+
+  - key: bundle-install
+    use: [system-packages, code, ruby]
+    tool-cache: ci-bundle-install-v2
+    run: bundle install
+    env:
+      BUNDLE_FROZEN: "true"
+      BUNDLE_JOBS: "4"
+    filter:
+      - .ruby-version
+      - Gemfile
+      - Gemfile.lock
+    outputs:
+      filesystem:
+        filter:
+          system:
+            - "!/home/ubuntu/.rubies/*/lib/ruby/gems/*/cache/*.gem"
+            - "!/home/ubuntu/.bundle/cache"
+
+  - key: yarn-install
+    use: [code, node]
+    tool-cache: ci-yarn-install-v2
+    run: |
+      corepack enable
+      yarn install --frozen-lockfile
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    filter:
+      - node_modules
+      - package.json
+      - yarn.lock
+    outputs:
+      filesystem:
+        filter:
+          system:
+            - "!/home/ubuntu/.cache/yarn"
+
+  - key: eslint
+    use: yarn-install
+    filter:
+      - app/javascript
+      - eslint.config.mjs
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn lint
+    outputs:
+      filesystem: false
+
+  - key: prettier
+    use: yarn-install
+    filter:
+      - app/javascript
+      - app/assets/stylesheets
+      - .prettierrc
+      - .gitignore
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn format:check
+    outputs:
+      filesystem: false
+
+  - key: herb
+    use: yarn-install
+    filter:
+      - "**/*.erb"
+      - "**/*.html"
+      - "**/*.herb"
+      - "**/*.rhtml"
+      - .herb.yml
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn lint:herb
+    outputs:
+      filesystem: false
+
+  - key: rubocop
+    use: bundle-install
+    filter:
+      - "**/*.rb"
+      - "**/*.rake"
+      - "**/*.jbuilder"
+      - "**/*.ru"
+      - "**/*.builder"
+      - .simplecov
+      - bin
+      - Gemfile
+      - Gemfile.lock
+      - Rakefile
+      - .rubocop.yml
+      - .rubocop_todo.yml
+      - .ruby-version
+    tool-cache: ci-rubocop
+    run: bundle exec rubocop
+    outputs:
+      filesystem:
+        filter:
+          workspace: []
+          system: [/home/ubuntu/.cache/rubocop_cache]
+
+  - key: erblint
+    use: bundle-install
+    filter:
+      - app/views
+      - lib/rubocop
+      - bin/erb_lint
+      - .erb_lint.yml
+      - .rubocop.yml
+      - .rubocop_todo.yml
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+    run: bin/erb_lint
+    outputs:
+      filesystem: false
+
+  - key: brakeman
+    use: bundle-install
+    filter:
+      - app
+      - "!app/javascript"
+      - config
+      - db
+      - lib
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+    run: bundle exec brakeman -q
+    outputs:
+      filesystem: false
+
+  - key: zeitwerk
+    use: [bundle-install, yarn-install]
+    filter:
+      - app
+      - "!app/javascript"
+      - bin
+      - config
+      - db
+      - lib
+      - public
+      - vendor
+      - config.ru
+      - Rakefile
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+      - package.json
+      - node_modules
+    run: bundle exec rails zeitwerk:check
+    env:
+      RAILS_ENV: test
+      CI: "true"
+    outputs:
+      filesystem: false
+
+  - key: assets
+    use: yarn-install
+    filter:
+      - app/javascript
+      - app/assets
+      - app/views
+      - app/helpers
+      - package.json
+      - yarn.lock
+      - node_modules
+      - webpack.config.js
+      - postcss.config.js
+      - tailwind.config.js
+    run: yarn build && yarn build:css
+    outputs:
+      filesystem:
+        filter:
+          workspace: [app/assets/builds]
+          system: []
+
+  - key: db-schema
+    use: [bundle-install, services]
+    filter:
+      - app
+      - "!app/javascript"
+      - bin
+      - config
+      - db
+      - lib
+      - public
+      - vendor
+      - config.ru
+      - Rakefile
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+    background-processes:
+      - *postgres
+    run: |
+      export PATH=/usr/lib/postgresql/15/bin:$PATH
+      bundle exec rails db:create db:schema:load
+      mkdir -p tmp
+      pg_dump -h localhost -U postgres --no-owner --no-privileges --no-comments bank_test > tmp/schema.sql
+    env: *rails-test-env
+    outputs:
+      filesystem:
+        filter:
+          workspace: [tmp/schema.sql]
+          system: []
+
+  - key: annotate
+    use: db-schema
+    filter:
+      - app
+      - "!app/javascript"
+      - bin
+      - config
+      - db
+      - lib
+      - public
+      - vendor
+      - config.ru
+      - Rakefile
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+      - .annotaterb.yml
+      - tmp/schema.sql
+    background-processes:
+      - *postgres
+    run: |
+      export PATH=/usr/lib/postgresql/15/bin:$PATH
+      createdb -h localhost -U postgres bank_test
+      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+      bundle exec annotaterb models --frozen
+    env: *rails-test-env
+    outputs:
+      filesystem: false
+
+  - key: rspec
+    use: [db-schema, assets, chrome, captain]
+    filter:
+      - "**"
+      - "!.github"
+      - "!.devcontainer"
+      - "!.vscode"
+      - "!docs"
+      - "!dev-docs"
+      - "!runbooks"
+      - "!*.md"
+      - "!LICENSE"
+      - "!hcb_laser.gif"
+    parallel: 8
+    timeout: 15m
+    background-processes:
+      - *postgres
+      - *redis
+    run: |
+      export PATH=/usr/lib/postgresql/15/bin:$PATH
+      createdb -h localhost -U postgres bank_test
+      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+      captain run hcb-rspec \
+        --command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress" \
+        --partition-command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ testFiles }}" \
+        --partition-globs 'spec/**/*_spec.rb' \
+        --test-results tmp/rspec.json \
+        --print-summary
+    env:
+      <<: *rails-test-env
+      CC_TEST_REPORTER_ID: "1"
+    outputs:
+      filesystem: false
+      artifacts:
+        - key: coverage
+          path: coverage/coverage.json
+
+  - key: new-migrations
+    use: code
+    filter: [db/migrate]
+    run: |
+      git clone --quiet --depth 1 --filter=blob:none --no-checkout https://github.com/hackclub/hcb.git /tmp/main
+      git -C /tmp/main ls-tree -r --name-only HEAD db/migrate | sort > /tmp/on-main
+      ls db/migrate/*.rb | sort > /tmp/here
+      versions=$(comm -13 /tmp/on-main /tmp/here | sed -E 's#.*/([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
+      echo "New migrations: ${versions:-none}"
+      printf '%s' "${versions:-none}" > "$RWX_VALUES/versions"
+    outputs:
+      filesystem: false
+
+  - key: reversible-migrations
+    use: db-schema
+    filter:
+      - app
+      - "!app/javascript"
+      - bin
+      - config
+      - db
+      - lib
+      - public
+      - vendor
+      - config.ru
+      - Rakefile
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+      - tmp/schema.sql
+    if: ${{ tasks.new-migrations.values.versions != 'none' }}
+    background-processes:
+      - *postgres
+    run: |
+      export PATH=/usr/lib/postgresql/15/bin:$PATH
+      createdb -h localhost -U postgres bank_test
+      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+
+      echo "Applying all migrations to get to latest state..."
+      bundle exec rails db:migrate
+
+      OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+      ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+      ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
+
+      echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
+      bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
+
+      echo "Re-applying all migrations..."
+      bundle exec rails db:migrate
+      echo "All migrations are reversible!"
+    env:
+      <<: *rails-test-env
+      VERSIONS: ${{ tasks.new-migrations.values.versions }}
+    outputs:
+      filesystem: false
