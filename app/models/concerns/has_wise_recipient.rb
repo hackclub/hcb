@@ -7,6 +7,9 @@ module HasWiseRecipient
     include CountryEnumable
     has_country_enum(field: :recipient_country)
 
+    before_validation(:normalize_wise_recipient_id)
+    validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
+
     validate do
       if POSTAL_CODE_FORMATS[recipient_country&.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
         errors.add(:address_postal_code, "does not meet the required format for this country")
@@ -147,6 +150,28 @@ module HasWiseRecipient
     HasWiseRecipient.unsupported_account_type_reason(account_type)
   end
 
+  def wise_recipient_url
+    return nil unless wise_recipient_id.present?
+
+    "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
+  end
+
+  # Admins paste the recipient's Wise URL (e.g. https://wise.com/recipients/<uuid>?new=undefined),
+  # so keep only the UUID
+  def normalize_wise_recipient_id
+    return unless wise_recipient_id_changed?
+
+    normalized = wise_recipient_id&.strip.presence
+
+    if normalized.nil? || normalized.match?(WISE_RECIPIENT_ID_FORMAT)
+      self.wise_recipient_id = normalized
+      return
+    end
+
+    match = WISE_RECIPIENT_ID_REGEXP.match(normalized)
+    self.wise_recipient_id = match[1] if match
+  end
+
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   POSTAL_CODE_FORMATS = {
@@ -176,6 +201,9 @@ module HasWiseRecipient
   end
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
+
+  WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
+  WISE_RECIPIENT_ID_REGEXP = /wise\.com\/recipients\/([\h-]{36})/
 
   AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
 

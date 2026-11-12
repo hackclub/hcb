@@ -3,6 +3,27 @@
 require "rails_helper"
 
 RSpec.describe Wire, type: :model do
+  describe "bic_code" do
+    it "normalizes whitespace and case" do
+      expect(Wire.new(bic_code: " deutdedb ").bic_code).to eq("DEUTDEDB")
+    end
+
+    it "rejects a BIC with a prefix and never asks Column about it" do
+      expect(ColumnService).not_to receive(:get)
+
+      wire = build(:wire, event: create(:event), bic_code: "../../entities/ABCDDE11")
+
+      expect(wire).not_to be_valid
+      expect(wire.errors[:bic_code]).to include("is not a valid SWIFT / BIC code")
+    end
+
+    it "looks up the bank country for a valid BIC" do
+      expect(ColumnService).to receive(:get).with("/institutions/DEUTDEDB").at_least(:once).and_return("country_code" => "DE")
+
+      expect(build(:wire, bic_code: "DEUTDEDB").bank_country).to eq("DE")
+    end
+  end
+
   describe "#beneficiary_phone" do
     # Column rejects E.164 and space-separated numbers; it wants `+CC-...`.
     def beneficiary_phone_for(country, phone)
