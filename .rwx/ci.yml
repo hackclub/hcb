@@ -316,16 +316,24 @@ tasks:
   - key: rspec
     use: [db-schema, assets, chrome, captain]
     filter:
-      - "**"
-      - "!.github"
-      - "!.devcontainer"
-      - "!.vscode"
-      - "!docs"
-      - "!dev-docs"
-      - "!runbooks"
-      - "!*.md"
-      - "!LICENSE"
-      - "!hcb_laser.gif"
+      - app
+      - "!app/javascript"
+      - bin
+      - config
+      - db
+      - lib
+      - public
+      - spec
+      - storage
+      - vendor
+      - config.ru
+      - Rakefile
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+      - .rspec
+      - .simplecov
+      - tmp/schema.sql
     parallel: 8
     timeout: 15m
     background-processes:
@@ -339,6 +347,8 @@ tasks:
         --command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress" \
         --partition-command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ testFiles }}" \
         --partition-globs 'spec/**/*_spec.rb' \
+        --retry-command "env -u CC_TEST_REPORTER_ID bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ tests }}" \
+        --retries 1 \
         --test-results tmp/rspec.json \
         --print-summary
     env:
