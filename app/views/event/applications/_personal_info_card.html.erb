@@ -115,6 +115,8 @@
       Parent email <span class="text-primary">*</span>
     <% end %>
     <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
-    <input type="email" name="<%= form.field_name(:cosigner_email) %>" id="<%= form.field_id(:cosigner_email) %>" value="<%= application.cosigner_email %>" class="w-full !max-w-full" placeholder="orpheus@hackclub.com" required="<%= minor %>" data-controller="cosigner-email" data-cosigner-email-applicant-value="<%= application.user.email %>" data-action="cosigner-email#check">
+    <%# A parent can't cosign with the applicant's own email: the pattern matches anything but it. %>
+    <% own_email = application.user.email.gsub(%r{[\^$\\.*+?()\[\]{}|/]}) { |char| "\\#{char}" } %>
+    <input type="email" name="<%= form.field_name(:cosigner_email) %>" id="<%= form.field_id(:cosigner_email) %>" value="<%= application.cosigner_email %>" class="w-full !max-w-full" placeholder="orpheus@hackclub.com" required="<%= minor %>" pattern="(?!<%= own_email %>$).*" title="You cannot use your own email">
   </div>
 </div>
