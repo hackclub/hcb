@@ -1,0 +1,14 @@
+Your <%= @card_grant.amount.format %> grant from <%= @card_grant.event.name %><% if @card_grant.purpose.present? %> for <%= @card_grant.purpose %><% end %> is still waiting to be accepted!
+
+<br>
+<br>
+
+Accept your grant by <%= @card_grant.expiration_at.strftime("%B %-d, %Y") %> to start spending.
+
+<br>
+<br>
+<br>
+
+<%= link_to "Accept your grant", card_grant_url(@card_grant, email: @card_grant.user.email), style: "display: inline-block; background-color: #ec3750; color: white; padding: 1rem; border-radius: 0.75rem; margin: 0 auto 2rem 0; text-decoration: none" %>
+
+<br>
