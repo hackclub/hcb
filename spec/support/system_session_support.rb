@@ -9,12 +9,16 @@ module SystemSessionSupport
   def sign_in(user, verified: true)
     user_session = create(:user_session, user:, expiration_at: 1.day.from_now, verified:)
 
-    jar = ActionDispatch::Request.new(Rails.application.env_config).cookie_jar
+    # `env_config` is memoized and merged into every request's env, so building
+    # the jar on it directly would leak this cookie into later specs.
+    jar = ActionDispatch::Request.new(Rails.application.env_config.dup).cookie_jar
     jar.encrypted[:session_token] = user_session.session_token
 
     # The browser only accepts cookies for a host it has already visited.
     visit auth_users_path
-    page.driver.set_cookie("session_token", jar[:session_token])
+    # Escape it the way a Set-Cookie header would: Rack unescapes cookie values,
+    # so a raw `+` in the base64 payload would come back as a space.
+    page.driver.set_cookie("session_token", Rack::Utils.escape(jar[:session_token]))
 
     user_session
   end
