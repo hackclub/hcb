@@ -1,6 +1,6 @@
-<%# locals: (event:, payee: nil, position: nil, initial_file: position&.persisted? && position.file.attached? ? position.file.filename.to_s : "") %>
+<%# locals: (event:, payee: nil, position: nil, initial_file: position&.persisted? && position.file.attached? ? position.file.filename.to_s : "", initial_rate_type: position&.fixed_rate? ? "fixed" : "recurring") %>
 <%# herb:slots client %>
-<%# herb:state (selected_file: initial_file) %>
+<%# herb:state (selected_file: initial_file, selected_rate_type: initial_rate_type) %>
 
 <% if payee && params[:edit_payee].present? && policy(payee).update? %>
   <%= render "payees/edit_section", event:, payee:, destination: "contractors", selected: params[:selected] %>
@@ -58,7 +58,7 @@
 
             <div class="menu__divider my-0"></div>
 
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4" data-controller="rate-type" data-rate-type-fixed-unit-value="<%= Payroll::Position::FIXED_RATE_UNIT %>">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div class="pr-2">
                 <%= form.label :rate, "Rate" %>
                 <span class="muted block">How the contractor is paid</span>
@@ -66,10 +66,10 @@
 
               <div class="flex flex-col items-end gap-2">
                 <div class="inline-flex gap-0.5 p-0.5 rounded-lg bg-black/5 dark:bg-white/10">
-                  <%= radio_button_tag "rate_type", "recurring", !position&.fixed_rate?, disabled:, class: "peer/recurring hidden", data: { action: "change->rate-type#update" } %>
+                  <%= radio_button_tag "rate_type", "recurring", !position&.fixed_rate?, disabled:, class: "peer/recurring hidden", data: { herb_set: "selected_rate_type=$value" } %>
                   <%= label_tag "rate_type_recurring", "Recurring", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors hover:muted peer-checked/recurring:bg-blue peer-checked/recurring:text-white peer-checked/recurring:shadow-sm" %>
 
-                  <%= radio_button_tag "rate_type", "fixed", position&.fixed_rate?, disabled:, class: "peer/fixed hidden", data: { action: "change->rate-type#update" } %>
+                  <%= radio_button_tag "rate_type", "fixed", position&.fixed_rate?, disabled:, class: "peer/fixed hidden", data: { herb_set: "selected_rate_type=$value" } %>
                   <%= label_tag "rate_type_fixed", "Fixed", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors peer-checked/fixed:bg-blue peer-checked/fixed:text-white peer-checked/fixed:shadow-sm" %>
                 </div>
 
@@ -79,16 +79,18 @@
                     <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
                   </div>
 
-                  <span class="flex items-center gap-2" data-rate-type-target="recurring">
+                  <%# A fixed rate is stored as the unit "contract". The typed unit stays in its disabled field, so switching back restores it. %>
+                  <fieldset class="flex items-center gap-2" hidden="<%= selected_rate_type == "fixed" %>" disabled="<%= selected_rate_type == "fixed" %>">
                     <span class="bold muted">per</span>
-                    <%= form.text_field :rate_unit, value: (position&.fixed_rate? ? nil : position&.rate_unit.presence) || "hour", placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", aria: { label: "Rate unit" }, data: { "rate-type-target": "unitField" }, class: "!max-w-[95px]" %>
+                    <%= form.text_field :rate_unit, value: (position&.fixed_rate? ? nil : position&.rate_unit.presence) || "hour", placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", aria: { label: "Rate unit" }, class: "!max-w-[95px]" %>
                     <datalist id="contractor_rate_units">
                       <option value="hour">Paid per hour worked</option>
                       <option value="week">Paid per week worked</option>
                       <option value="month">Paid per month worked</option>
                     </datalist>
-                  </span>
-                  <span class="muted whitespace-nowrap" data-rate-type-target="fixed" hidden>/ whole contract</span>
+                  </fieldset>
+                  <input type="hidden" name="<%= form.field_name(:rate_unit) %>" value="<%= Payroll::Position::FIXED_RATE_UNIT %>" disabled="<%= selected_rate_type != "fixed" %>">
+                  <span class="muted whitespace-nowrap" hidden="<%= selected_rate_type != "fixed" %>">/ whole contract</span>
                 </div>
               </div>
             </div>

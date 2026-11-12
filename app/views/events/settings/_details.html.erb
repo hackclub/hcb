@@ -244,13 +244,14 @@
       </li>
     </ul>
     <%= form.label :slug, "Organization URL" %>
-    <div class="input flex mt1" data-controller="focus" data-action="click->focus#focus" tabindex="0" style="gap: 0.15rem">
+    <%# A label, so clicking anywhere in the box (the prefix too) focuses the field. %>
+    <label class="input flex mt1 font-normal" style="gap: 0.15rem">
       <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate", focus_target: "element" }, disabled: %>
-    </div>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+    </label>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
       <%= form.submit "Update", disabled: %>
