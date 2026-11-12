@@ -20,8 +20,28 @@ aliases:
     DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
     REDIS_URL: redis://localhost:6379
 
+  rails-app: &rails-app
+    - app
+    - "!app/javascript"
+    - bin
+    - config
+    - db
+    - lib
+    - public
+    - vendor
+    - config.ru
+    - Rakefile
+    - Gemfile
+    - Gemfile.lock
+    - .ruby-version
+
+  restore-schema: &restore-schema |
+    createdb -h localhost -U postgres bank_test
+    psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+
   postgres: &postgres
     key: postgres
+    terminate-grace-period-seconds: 0
     run: |
       /usr/lib/postgresql/15/bin/initdb -D /tmp/pgdata -U postgres --auth=trust > /dev/null
       exec /usr/lib/postgresql/15/bin/postgres -D /tmp/pgdata -c unix_socket_directories=/tmp
@@ -29,6 +49,7 @@ aliases:
 
   redis: &redis
     key: redis
+    terminate-grace-period-seconds: 0
     run: redis-server --save "" --appendonly no
     ready-check: redis-cli ping
 
@@ -42,7 +63,7 @@ tasks:
   - key: system-packages
     run: |
       sudo apt-get update
-      sudo apt-get install -y libpoppler-glib-dev libpq-dev postgresql-client
+      sudo apt-get install -y libpoppler-glib-dev libpq-dev
       sudo apt-get clean
 
   - key: services
@@ -54,6 +75,7 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y postgresql-15 redis-server
       sudo apt-get clean
+      echo /usr/lib/postgresql/15/bin > $RWX_ENV/PATH
 
   - key: chrome
     call: google/install-chrome 2.2.1
@@ -81,9 +103,10 @@ tasks:
     use: [system-packages, code, ruby]
     tool-cache: ci-bundle-install-v2
     run: bundle install
+    runner:
+      tmpfs: true
     env:
       BUNDLE_FROZEN: "true"
-      BUNDLE_JOBS: "4"
     filter:
       - .ruby-version
       - Gemfile
@@ -101,6 +124,8 @@ tasks:
     run: |
       corepack enable
       yarn install --frozen-lockfile
+    runner:
+      tmpfs: true
     env:
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
     filter:
@@ -210,23 +235,8 @@ tasks:
       filesystem: false
 
   - key: zeitwerk
-    use: [bundle-install, yarn-install]
-    filter:
-      - app
-      - "!app/javascript"
-      - bin
-      - config
-      - db
-      - lib
-      - public
-      - vendor
-      - config.ru
-      - Rakefile
-      - Gemfile
-      - Gemfile.lock
-      - .ruby-version
-      - package.json
-      - node_modules
+    use: bundle-install
+    filter: *rails-app
     run: bundle exec rails zeitwerk:check
     env:
       RAILS_ENV: test
@@ -256,24 +266,10 @@ tasks:
 
   - key: db-schema
     use: [bundle-install, services]
-    filter:
-      - app
-      - "!app/javascript"
-      - bin
-      - config
-      - db
-      - lib
-      - public
-      - vendor
-      - config.ru
-      - Rakefile
-      - Gemfile
-      - Gemfile.lock
-      - .ruby-version
+    filter: *rails-app
     background-processes:
       - *postgres
     run: |
-      export PATH=/usr/lib/postgresql/15/bin:$PATH
       bundle exec rails db:create db:schema:load
       mkdir -p tmp
       pg_dump -h localhost -U postgres --no-owner --no-privileges --no-comments bank_test > tmp/schema.sql
@@ -287,28 +283,14 @@ tasks:
   - key: annotate
     use: db-schema
     filter:
-      - app
-      - "!app/javascript"
-      - bin
-      - config
-      - db
-      - lib
-      - public
-      - vendor
-      - config.ru
-      - Rakefile
-      - Gemfile
-      - Gemfile.lock
-      - .ruby-version
+      - *rails-app
       - .annotaterb.yml
       - tmp/schema.sql
     background-processes:
       - *postgres
-    run: |
-      export PATH=/usr/lib/postgresql/15/bin:$PATH
-      createdb -h localhost -U postgres bank_test
-      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
-      bundle exec annotaterb models --frozen
+    run:
+      - *restore-schema
+      - bundle exec annotaterb models --frozen
     env: *rails-test-env
     outputs:
       filesystem: false
@@ -316,41 +298,27 @@ tasks:
   - key: rspec
     use: [db-schema, assets, chrome, captain]
     filter:
-      - app
-      - "!app/javascript"
-      - bin
-      - config
-      - db
-      - lib
-      - public
+      - *rails-app
       - spec
       - storage
-      - vendor
-      - config.ru
-      - Rakefile
-      - Gemfile
-      - Gemfile.lock
-      - .ruby-version
       - .rspec
       - .simplecov
       - tmp/schema.sql
     parallel: 8
-    timeout: 15m
     background-processes:
       - *postgres
       - *redis
-    run: |
-      export PATH=/usr/lib/postgresql/15/bin:$PATH
-      createdb -h localhost -U postgres bank_test
-      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
-      captain run hcb-rspec \
-        --command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress" \
-        --partition-command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ testFiles }}" \
-        --partition-globs 'spec/**/*_spec.rb' \
-        --retry-command "env -u CC_TEST_REPORTER_ID bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ tests }}" \
-        --retries 1 \
-        --test-results tmp/rspec.json \
-        --print-summary
+    run:
+      - *restore-schema
+      - |
+        captain run hcb-rspec \
+          --command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress" \
+          --partition-command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ testFiles }}" \
+          --partition-globs 'spec/**/*_spec.rb' \
+          --retry-command "env -u CC_TEST_REPORTER_ID bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ tests }}" \
+          --retries 1 \
+          --test-results tmp/rspec.json \
+          --print-summary
     env:
       <<: *rails-test-env
       CC_TEST_REPORTER_ID: "1"
@@ -376,41 +344,27 @@ tasks:
   - key: reversible-migrations
     use: db-schema
     filter:
-      - app
-      - "!app/javascript"
-      - bin
-      - config
-      - db
-      - lib
-      - public
-      - vendor
-      - config.ru
-      - Rakefile
-      - Gemfile
-      - Gemfile.lock
-      - .ruby-version
+      - *rails-app
       - tmp/schema.sql
     if: ${{ tasks.new-migrations.values.versions != 'none' }}
     background-processes:
       - *postgres
-    run: |
-      export PATH=/usr/lib/postgresql/15/bin:$PATH
-      createdb -h localhost -U postgres bank_test
-      psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+    run:
+      - *restore-schema
+      - |
+        echo "Applying all migrations to get to latest state..."
+        bundle exec rails db:migrate
 
-      echo "Applying all migrations to get to latest state..."
-      bundle exec rails db:migrate
+        OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+        ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+        ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
 
-      OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
-      ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
-      ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
+        echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
+        bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
 
-      echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
-      bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
-
-      echo "Re-applying all migrations..."
-      bundle exec rails db:migrate
-      echo "All migrations are reversible!"
+        echo "Re-applying all migrations..."
+        bundle exec rails db:migrate
+        echo "All migrations are reversible!"
     env:
       <<: *rails-test-env
       VERSIONS: ${{ tasks.new-migrations.values.versions }}
