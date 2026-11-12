@@ -14,6 +14,10 @@ const clearElement = id => {
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
+  if (!popover.dispatchEvent(new CustomEvent('hcb:before-discard', {
+    bubbles: true,
+    cancelable: true
+  }))) return false
 
   const title = trigger.dataset.popoverTitle || ''
   const src = trigger.dataset.popoverSrc || ''
@@ -68,7 +72,7 @@ const openPopoverFromUrl = () => {
   )
   if (!trigger) return false
 
-  populateSharedPopover(trigger)
+  if (populateSharedPopover(trigger) === false) return true
   BK.s('modal', '#shared_popover').modal({
     fadeDuration: 200,
     fadeDelay: 0.75,
@@ -152,7 +156,7 @@ const loadModals = element => {
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
-      populateSharedPopover(this)
+      if (populateSharedPopover(this) === false) return
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
@@ -946,7 +950,14 @@ window.addEventListener('popstate', e => {
   if (e.state?.modal) {
     openPopoverFromUrl()
   } else {
-    $.modal.close()
+    if ($.modal.close() === false) {
+      // Do not let Turbo restore the page underneath a draft the user kept.
+      e.stopImmediatePropagation()
+      const modal = $.modal.getCurrent().$elm[0]
+      const url = new URL(location.href)
+      url.searchParams.set('popover', modal.dataset.stateUrl)
+      window.history.pushState({ modal: modal.id }, '', url)
+    }
   }
 })
 

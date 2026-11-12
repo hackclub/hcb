@@ -1,4 +1,18 @@
-<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: { turbo_frame: turbo_frame_request_id } do |form| %>
+<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: {
+      turbo_frame: turbo_frame_request_id,
+      controller: "comment-draft",
+      comment_draft_saved_content_value: @comment&.content_in_database,
+      action: %w[
+        input->comment-draft#changed
+        beforeunload@window->comment-draft#beforeUnload
+        turbo:before-visit@document->comment-draft#leave
+        turbo:before-render@document->comment-draft#leave
+        turbo:before-frame-render@document->comment-draft#leave
+        hcb:before-discard@document->comment-draft#leave
+        turbo:submit-start->comment-draft#submitStart
+        turbo:submit-end->comment-draft#submitEnd
+      ].join(" ")
+    } do |form| %>
   <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 
@@ -10,7 +24,7 @@
   </div>
 
   <text-expander keys="@">
-    <%= form.text_area :content, class: "card overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea", "data-controller": "markdown-textarea", "data-action": "paste->markdown-textarea#paste" %>
+    <%= form.text_area :content, class: "card overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea", "data-controller": "markdown-textarea", "data-action": "paste->markdown-textarea#paste", "data-comment-draft-target": "content" %>
   </text-expander>
 
   <ul role="listbox" class="mention-suggestions card" hidden popover>
