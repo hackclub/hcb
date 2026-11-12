@@ -87,9 +87,9 @@
       <% if card.nil? %>
         Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
       <% elsif card.initially_activated? %>
-        You can defrost your card at any time <%= link_to "here", stripe_card_url(card) %>.
+        You can <%= link_to "defrost your card", stripe_card_url(card) %> at any time.
       <% else %>
-        Activate your new card <%= link_to "here", stripe_card_url(card) %> before using it.
+        <%= link_to "Activate your new card", stripe_card_url(card) %> before using it.
       <% end %>
     <% elsif stripe_decline_reason == :card_canceled %>
       <% if card&.replacement %>

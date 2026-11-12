@@ -12,7 +12,7 @@
   </p>
 <% end %>
 
-<p><%= link_to "Click here", contract_party_url(@party) %> to sign a new agreement<%= @message.present? ? ", addressing the above issue" : "" %>.</p>
+<p><%= link_to "Sign a new agreement", contract_party_url(@party) %><%= @message.present? ? ", addressing the above issue" : "" %>.</p>
 
 <p>
   Best,<br>
