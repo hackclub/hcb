@@ -571,6 +571,8 @@ Rails.application.routes.draw do
     end
   end
 
+  get "r/:id/:token", to: "hcb_codes#receipt_link", as: :short_receipt_link, constraints: { token: /[^\/]+/ }
+
   scope module: "hcb_code" do
     namespace :tag do
       resources :suggestions, only: [] do
