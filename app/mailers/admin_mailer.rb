@@ -2,12 +2,7 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  default to: -> do
-    [
-      Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
-      User.find_by_public_id("usr_MVtap3")&.email_address_with_name # Lucy
-    ].compact
-  end
+  default to: -> { operations_team }
 
   def cash_withdrawal_notification
     @hcb_code = params[:hcb_code]
@@ -82,7 +77,13 @@ class AdminMailer < ApplicationMailer
 
     return if @tasks.none?
 
-    mail subject: "24 Hour Reminders for the Operations Team"
+    mail(
+      to: [
+        *operations_team,
+        User.find_by_public_id("usr_gvt01n")&.email_address_with_name # Daamin
+      ].compact,
+      subject: "24 Hour Reminders for the Operations Team"
+    )
   end
 
   def blocked_authorization
@@ -108,6 +109,13 @@ class AdminMailer < ApplicationMailer
   end
 
   private
+
+  def operations_team
+    [
+      Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
+      User.find_by_public_id("usr_MVtap3")&.email_address_with_name # Lucy
+    ].compact
+  end
 
   def engineers
     User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)

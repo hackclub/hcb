@@ -168,6 +168,7 @@ Rails.application.routes.draw do
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
       get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emails", to: "users#admin_details_emails"
       get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
       get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
       get "admin_details_invoices", to: "users#admin_details_invoices"
@@ -216,7 +217,6 @@ Rails.application.routes.draw do
         post "verify_email", to: "first#verify_email"
         post "request_org_invite", to: "first#request_org_invite"
         delete "sign_out", to: "first#sign_out"
-        get "macbook_qr_code"
       end
     end
 
@@ -286,6 +286,7 @@ Rails.application.routes.draw do
       get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
+      get "wire_lookup", to: "admin#wire_lookup"
       get "wise_transfers", to: "admin#wise_transfers"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
@@ -385,8 +386,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_paypal_transfer/:id", to: "admin#set_paypal_transfer", as: :set_paypal_transfer
-  post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
@@ -453,7 +452,6 @@ Rails.application.routes.draw do
     post "unarchive"
     post "void"
     get "hosted"
-    get "pdf"
     member do
       post "refund"
     end
@@ -530,7 +528,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
+  resources :disbursements, only: [:new, :create, :show], concerns: :commentable do
     collection do
       get :event_search
       get :repayable_transactions
@@ -559,7 +557,6 @@ Rails.application.routes.draw do
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
       get "attach_receipt"
-      get "memo_frame"
       get "dispute"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
@@ -593,7 +590,6 @@ Rails.application.routes.draw do
     member do
       post "waive_fee"
       post "unwaive_fee"
-      post "mark_bank_fee"
       post "set_category"
     end
   end
@@ -855,8 +851,6 @@ Rails.application.routes.draw do
   post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
-  post "extract/invoice", to: "extraction#invoice"
-
   get "negative_events", to: "admin#negative_events"
 
   get "admin_task_size", to: "admin#task_size"
@@ -997,7 +991,6 @@ Rails.application.routes.draw do
     get :team_stats
     get :recent_activity
     get :balance_transactions
-    get :money_movement
     get :merchants_chart
     get :categories_chart
     get :tags_chart
@@ -1030,7 +1023,6 @@ Rails.application.routes.draw do
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
-    get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
@@ -1090,7 +1082,6 @@ Rails.application.routes.draw do
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
     resources :fees, only: [:create]
-    resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :wise_transfers, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
@@ -1162,7 +1153,7 @@ Rails.application.routes.draw do
       scope module: "organizer_position" do
         namespace :spending do
           resources :controls, only: [:index, :create, :destroy] do
-            resources :allowances, only: [:new, :create], controller: "control/allowances"
+            resources :allowances, only: [:create], controller: "control/allowances"
           end
         end
       end

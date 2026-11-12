@@ -1,9 +1,0 @@
-<%= turbo_frame_tag "#{@hcb_code.hashid}:memo_frame" do %>
-  <% if @hcb_code.canonical_pending_transactions.any?(&:declined?) %>
-    DECLINED:
-  <% elsif @hcb_code.canonical_transactions.empty? %>
-    PENDING:
-  <% end %>
-
-  <%= @hcb_code.memo %>
-<% end %>

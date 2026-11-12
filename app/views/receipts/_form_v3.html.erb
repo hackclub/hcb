@@ -92,8 +92,10 @@
           <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, data: { action: "panel-swap#showForm" } %>
           <h2 class="h1 mt0 mb0 pb0 border-none">Select receipt</h2>
         </header>
-        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
-          <strong>Loading...</strong>
+        <% if ReceiptablePolicy.new(current_user, receiptable).link_modal? %>
+          <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
+            <strong>Loading...</strong>
+          <% end %>
         <% end %>
       </section>
     <% end %>
@@ -113,8 +115,10 @@
   <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
     <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
       <%= modal_header "Select receipt" %>
-      <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
-        <strong>Loading...</strong>
+      <% if ReceiptablePolicy.new(current_user, receiptable).link_modal? %>
+        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
+          <strong>Loading...</strong>
+        <% end %>
       <% end %>
     </section>
   <% end %>

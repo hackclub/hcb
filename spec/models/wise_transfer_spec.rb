@@ -53,6 +53,11 @@ RSpec.describe WiseTransfer do
       instance.validate
       expect(instance.errors[:wise_id]).to be_empty
       expect(instance.wise_id).to eq("0987654321")
+
+      instance.wise_id = "https://wise.com/transactions/activities/by-resource/TRANSFER/1122334455?origin=activity-list"
+      instance.validate
+      expect(instance.errors[:wise_id]).to be_empty
+      expect(instance.wise_id).to eq("1122334455")
     end
   end
 
