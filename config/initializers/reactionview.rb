@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "herb/engine/runtime/middleware"
-
 # ReActionView (https://reactionview.dev) compiles our HTML views with Herb
 # instead of Rails' default ERB handler (Rails 8.2 does this by default). Herb
 # parses the HTML and the Ruby together, so a view with mismatched tags or
@@ -28,7 +26,19 @@ ReActionView.configure do |config|
   config.instrumentation.enabled = false
 end
 
-# Reactive views record the state the browser runtime needs while they render;
-# this middleware adds it to the page. ReActionView only installs it alongside
-# `slots`, the debug tools or validation overlays, none of which we use.
-Rails.application.config.middleware.use Herb::Engine::Runtime::Middleware
+# A reactive view ships a manifest of its states that the browser runtime
+# reads. ReActionView collects these and has a middleware add them to the end of
+# <body>, which a Turbo Stream or frame response doesn't have, so a reactive
+# partial streamed onto a page that never rendered it before (the first expense
+# on a report) wouldn't react. Herb can instead write each manifest inline, once
+# per response, next to the view's first rendering; ReActionView just doesn't
+# expose the option.
+module InlineHerbManifests
+  private
+
+  def slot_visitors(template, source, mark: true)
+    super.map { |visitor| visitor.tap { _1.instance_variable_set(:@deliver, :inline) } }
+  end
+end
+
+ReActionView::Template::Handlers::Herb.prepend(InlineHerbManifests)
