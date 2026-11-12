@@ -1,14 +1,6 @@
 .carousel {
   position: relative;
   z-index: 200;
-
-  .carousel__item {
-    display: none;
-
-    &.carousel__item--active {
-      display: block;
-    }
-  }
 }
 
 .carousel__button {
@@ -54,36 +46,6 @@
 
   html[data-dark='true'] & svg {
     fill: $white;
-  }
-}
-
-.carousel__wrapper:has(.carousel__items > *:last-child.carousel__item--active)
-  .carousel__button--right {
-  cursor: default;
-  display: none;
-
-  &:hover,
-  &:focus {
-    transform: translate(100%, -50%);
-  }
-
-  svg {
-    fill: $muted;
-  }
-}
-
-.carousel__wrapper:has(.carousel__items > *:first-child.carousel__item--active)
-  .carousel__button--left {
-  cursor: default;
-  display: none;
-
-  &:hover,
-  &:focus {
-    transform: translate(-100%, -50%);
-  }
-
-  svg {
-    fill: $muted;
   }
 }
 

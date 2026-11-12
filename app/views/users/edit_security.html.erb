@@ -69,9 +69,11 @@
                 Disable TOTP
               <% end %>
             <% end %>
-            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post, controller: "element", action: "click->element#hide" }, disabled: do %>
-              <%= inline_icon "plus", size: home_action_size %>
-              <%= @user.totp.present? ? "Reset secret" : "Set up" %>
+            <%= render layout: "application/hide_on_click" do %>
+              <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, disabled: do %>
+                <%= inline_icon "plus", size: home_action_size %>
+                <%= @user.totp.present? ? "Reset secret" : "Set up" %>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -127,9 +129,11 @@
             Disable backup codes
           <% end %>
         <% end %>
-        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card, controller: "element", action: "click->element#hide" }, disabled: do %>
-          <%= inline_icon "plus", size: home_action_size %>
-          <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
+        <%= render layout: "application/hide_on_click" do %>
+          <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, disabled: do %>
+            <%= inline_icon "plus", size: home_action_size %>
+            <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
+          <% end %>
         <% end %>
       </div>
     </div>

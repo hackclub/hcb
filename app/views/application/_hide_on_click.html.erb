@@ -1,0 +1,5 @@
+<%# locals: () %>
+<%# herb:slots client %>
+<%# Wraps a button that should go away once clicked, so it can't be clicked twice. %>
+<%# herb:state (clicked: false) %>
+<div class="contents" hidden="<%= clicked %>" data-herb-set="clicked=true"><%= yield %></div>

@@ -1,0 +1,6 @@
+<%# locals: (pairing:, i:, position:) %>
+<%# herb:slots client %>
+<%# herb:state (slide: 1, slide_position: position) %>
+<div class="carousel__item" hidden="<%= slide != slide_position %>">
+  <%= render "static_pages/suggested_pairing", pairing:, i: %>
+</div>
