@@ -16,6 +16,9 @@
         <% if payout_method.default? %>
           <span class="badge bg-success" style="font-size: 11px;">Default</span>
         <% end %>
+        <% if payout_method.unsupported? %>
+          <span class="badge bg-warning tooltipped tooltipped--n" style="font-size: 11px;" aria-label="<%= payout_method.unsupported_details[:reason] %>"><%= payout_method.unsupported_details[:status_badge] %></span>
+        <% end %>
       </div>
       <div class="muted" style="font-size: 13px; margin-top: 2px;">
         <%= payout_method.name.present? ? "#{payout_method.title_kind} · #{payout_method.detail_summary}" : payout_method.detail_summary %>

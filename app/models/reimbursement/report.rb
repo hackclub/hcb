@@ -359,6 +359,13 @@ module Reimbursement
       payout_method.present? && currency != payout_method.currency
     end
 
+    # A payout method that has become unsupported (e.g. a Wise currency we no
+    # longer send to) only blocks reports that haven't been submitted yet.
+    # Reports already in flight keep moving so they can still be paid out.
+    def unsupported_payout_method?
+      draft? && payout_method.present? && payout_method.unsupported?
+    end
+
     def convert_report_currency!(new_currency)
       old_currency = currency
 
@@ -437,6 +444,9 @@ module Reimbursement
           bank_name: payout_method.bank_name,
           recipient_country: payout_method.recipient_country,
           recipient_information: payout_method.recipient_information,
+          # The report was already approved by the organization, so let it go
+          # through even if the payout method has since become unsupported.
+          allow_unsupported_recipient: true,
         )
 
         comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
@@ -499,7 +509,7 @@ module Reimbursement
     end
 
     def payout_method_allowed?
-      payout_method.present? && !payout_method.unsupported?
+      payout_method.present? && !unsupported_payout_method?
     end
 
     def invalidate_cached_data

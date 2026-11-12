@@ -353,6 +353,10 @@ module Reimbursement
           wise_recipient_id: params[:wise_recipient_id],
           sent_at: Time.now,
           recipient_phone_number: @report.user.phone_number,
+          # This records a transfer ops has already sent through Wise for an
+          # approved report, so don't block it on currencies/rails that have
+          # since become unsupported.
+          allow_unsupported_recipient: true,
         )
         wise_transfer.mark_approved!
         wise_transfer.mark_sent!
