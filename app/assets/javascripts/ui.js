@@ -14,6 +14,10 @@ const clearElement = id => {
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
+  if (!popover.dispatchEvent(new CustomEvent('hcb:before-discard', {
+    bubbles: true,
+    cancelable: true
+  }))) return false
 
   const title = trigger.dataset.popoverTitle || ''
   const src = trigger.dataset.popoverSrc || ''
@@ -93,7 +97,7 @@ const openSharedPopover = (trigger, modalClass) => {
     // going back to it: swap the content in place. Reopening it would close it
     // first, and the close handler empties the body we just filled.
     window.unexpandReceipt()
-    populateSharedPopover(trigger)
+    if (populateSharedPopover(trigger) === false) return
     loadSharedPopoverFrame()
     const popover = document.getElementById('shared_popover')
     popover.scrollTop = 0
@@ -101,7 +105,7 @@ const openSharedPopover = (trigger, modalClass) => {
     return
   }
 
-  populateSharedPopover(trigger)
+  if (populateSharedPopover(trigger) === false) return
   BK.s('modal', '#shared_popover').modal({
     fadeDuration: 200,
     fadeDelay: 0.75,
