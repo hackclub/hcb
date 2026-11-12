@@ -26,7 +26,7 @@
     <section class="details-horiz my-6 overflow-visible !mx-0">
       <p>
         <strong>Account number</strong>
-        <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.account_number, tooltip_direction: :s %></span>
+        <span class="h2"><%= render "events/account_number_reveal", frame_id: "account_number_modal_reveal", tooltip_direction: :s %></span>
       </p>
       <p>
         <strong class="tooltipped tooltipped--s" aria-label="Used to receive ACH transfers and wires within the US">Routing number<sup class="muted help leading-[0]"> ?</sup></strong>

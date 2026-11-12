@@ -1169,6 +1169,7 @@ Rails.application.routes.draw do
 
     member do
       get "account-number", to: "events#account_number"
+      get "account-number/reveal", to: "events#reveal_account_number", as: :reveal_account_number
       post "toggle_event_tag/:event_tag_id", to: "events#toggle_event_tag", as: :toggle_event_tag
       get "audit_log"
       post "validate_slug"
