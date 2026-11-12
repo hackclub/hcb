@@ -8,11 +8,9 @@ framework: actionview
 linter:
   enabled: true
 
-  # Herb's defaults skip views like `.pdf.erb` and bare `.erb`. `.html.herb`
-  # views are rendered by ReActionView (see config/initializers/reactionview.rb).
+  # Herb's defaults skip views like `.pdf.erb` and bare `.erb`.
   include:
     - "app/views/**/*.erb"
-    - "app/views/**/*.herb"
 
   rules:
     all:
@@ -26,7 +24,7 @@ linter:
       enabled: true
       severity: error
 
-    # Reactive templates (`herb:slots`, `herb:state`, `data-herb-*` actions).
+    # Reactive views (`herb:slots`, `herb:state`, `data-herb-*` actions).
     # These catch what would otherwise only fail in the browser: an action
     # naming an undeclared state, a read the client can't evaluate, a state
     # nothing reads, a `state:` binding the partial doesn't declare.
