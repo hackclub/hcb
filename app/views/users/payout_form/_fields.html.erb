@@ -111,8 +111,7 @@
 
     <div class="field">
       <%= form.label :currency, "Currency" %>
-      <% currency_options = LegalEntity::PayoutMethod::WiseTransfer.currency_select_options(selected: form.object.currency) %>
-      <%= form.select :currency, currency_options[:choices], { disabled: currency_options[:disabled] }, { "@change" => "currency = $event.target.value;" } %>
+      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys - [form.object.currency] }, { "@change" => "currency = $event.target.value;" } %>
     </div>
 
     <%= form.hidden_field :wise_recipient_id, value: "" %>

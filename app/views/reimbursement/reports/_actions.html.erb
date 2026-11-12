@@ -120,7 +120,7 @@
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
                 <% if report.unsupported_payout_method? %>
-                  update their payout information. <%= report.payout_method.unsupported_details[:reason] %>
+                  update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
                 <% end %>

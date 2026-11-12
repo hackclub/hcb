@@ -110,8 +110,7 @@ class LegalEntity
     end
 
     # A method is unsupported either because the whole method is deprecated, or
-    # because it pays out over a rail (e.g. Interac) or in a currency (e.g. CNY)
-    # our processor has suspended.
+    # because it pays out over a rail (e.g. Interac) or currency (e.g. CNY) our processor has suspended.
     def unsupported?
       self.class.unsupported?(details.class) || details.try(:unsupported_recipient?) || false
     end

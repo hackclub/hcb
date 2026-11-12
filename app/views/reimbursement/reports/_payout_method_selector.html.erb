@@ -27,9 +27,6 @@
               class: "flex items-center#{" bold" if pm == current}", data: { turbo_method: :post } do %>
           <%= inline_icon pm.icon, size: 24 %>
           <%= pm.name.presence || pm.short_label %>
-          <% if pm.unsupported? %>
-            <span class="muted ml-1">(<%= pm.unsupported_details[:status_badge].downcase %>)</span>
-          <% end %>
         <% end %>
       <% end %>
 

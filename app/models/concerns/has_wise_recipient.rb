@@ -22,14 +22,10 @@ module HasWiseRecipient
       end
     end
 
-    # Ops can set this to finish a transfer that was already in flight (e.g. a
-    # reimbursement approved before its currency or rail became unsupported).
+    # Lets ops finish a transfer that was already in flight before its rail/currency was disabled
     attr_accessor :allow_unsupported_recipient
 
-    # Block *new* recipients on rails/currencies Wise can't currently pay out
-    # to (e.g. Interac, Duitnow, CNY). This only runs on create, so existing
-    # transfers and payout methods stay valid and can keep moving through
-    # their state machines.
+    # Disable unsupported Wise methods temporarily (Interac / Duitnow / CNY)
     validate on: :create, unless: :allow_unsupported_recipient do
       if unsupported_recipient?
         errors.add(:base, unsupported_recipient_reason)
@@ -145,18 +141,7 @@ module HasWiseRecipient
 
   class_methods do
     def unsupported_currencies_supported_by_wire
-      @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - SUPPORTED_CURRENCIES).sort
-    end
-
-    # Every currency we've ever sent via Wise, so existing records still render,
-    # but with the ones we no longer support labeled and disabled. The current
-    # value is left enabled so an existing record's select still submits it.
-    def currency_select_options(selected: nil)
-      choices = AVAILABLE_CURRENCIES.map do |currency|
-        HasWiseRecipient.unsupported_currency?(currency) ? ["#{currency} (unavailable)", currency] : currency
-      end
-
-      { choices:, disabled: UNSUPPORTED_CURRENCIES.keys - [selected] }
+      @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - (AVAILABLE_CURRENCIES - UNSUPPORTED_CURRENCIES.keys)).sort
     end
   end
 
@@ -168,22 +153,12 @@ module HasWiseRecipient
     HasWiseRecipient.unsupported_account_type_reason(account_type)
   end
 
-  def unsupported_currency?
-    HasWiseRecipient.unsupported_currency?(currency)
-  end
-
-  def unsupported_currency_reason
-    HasWiseRecipient.unsupported_currency_reason(currency)
-  end
-
-  # Whether new Wise transfers can be sent to this recipient, either because
-  # its currency or its payment rail (account type) is unsupported.
   def unsupported_recipient?
-    unsupported_currency? || unsupported_account_type?
+    UNSUPPORTED_CURRENCIES.key?(currency) || unsupported_account_type?
   end
 
   def unsupported_recipient_reason
-    unsupported_currency_reason || unsupported_account_type_reason
+    UNSUPPORTED_CURRENCIES[currency] || unsupported_account_type_reason
   end
 
   def wise_recipient_url
@@ -234,23 +209,10 @@ module HasWiseRecipient
     "Wise transfers via #{rail} are currently not supported due to technical difficulties on Wise's side. We recommend using a local bank transfer via Wise instead. If that isn't possible, please send an international wire."
   end
 
-  # Currencies Wise can no longer pay out to. These stay in
-  # AVAILABLE_CURRENCIES so existing transfers and payout methods remain valid
-  # (and keep their `recipient_information` accessors); only new ones are
-  # rejected.
+  # Kept in AVAILABLE_CURRENCIES so existing transfers and payout methods stay valid; only new ones are blocked.
   UNSUPPORTED_CURRENCIES = {
-    # Wise can't fund transfers to overseas mobile wallets (AliPay) via ACH
-    # debit, and UnionPay is the only other CNY rail we offer.
     "CNY" => "Wise transfers in CNY are currently not supported. Please send an international wire instead."
   }.freeze
-
-  def self.unsupported_currency?(currency)
-    UNSUPPORTED_CURRENCIES.key?(currency)
-  end
-
-  def self.unsupported_currency_reason(currency)
-    UNSUPPORTED_CURRENCIES[currency]
-  end
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
@@ -258,7 +220,5 @@ module HasWiseRecipient
   WISE_RECIPIENT_ID_REGEXP = /wise\.com\/recipients\/([\h-]{36})/
 
   AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
-  # Currencies new Wise transfers and payout methods can be created in
-  SUPPORTED_CURRENCIES = (AVAILABLE_CURRENCIES - UNSUPPORTED_CURRENCIES.keys).freeze
 
 end

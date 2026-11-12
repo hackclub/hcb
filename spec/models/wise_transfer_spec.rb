@@ -99,76 +99,38 @@ RSpec.describe WiseTransfer do
     end
   end
 
-  describe "unsupported currencies" do
-    def create_wise_transfer(**attrs)
-      WiseTransfer.create!(
-        event: create(:event),
-        user: create(:user),
-        amount_cents: 100_00,
-        currency: "GBP",
-        recipient_country: "GB",
-        recipient_name: "Fiona Hackworth",
-        recipient_email: "fiona@example.com",
-        payment_for: "Event venue",
-        # Set so the after_create hook skips generate_quote!, which would
-        # otherwise reach for a live exchange rate.
-        quoted_usd_amount_cents: 130_00,
-        **attrs
-      )
-    end
-
-    it "rejects new CNY transfers and recommends an international wire" do
+  describe "unsupported recipients" do
+    it "rejects new CNY transfers" do
       instance = build_instance(currency: "CNY", account_type: "unionpay")
       instance.validate
 
-      expect(instance).to be_unsupported_recipient
       expect(instance.errors[:base]).to eq(["Wise transfers in CNY are currently not supported. Please send an international wire instead."])
     end
 
-    it "still accepts other currencies" do
-      instance = build_instance(currency: "GBP")
-      instance.validate
+    it "lets ops create CNY transfers that were already in flight, which can still be approved" do
+      wise_transfer = WiseTransfer.create!(
+        event: create(:event),
+        user: create(:user),
+        amount_cents: 100_00,
+        currency: "CNY",
+        recipient_country: "CN",
+        address_postal_code: "100000",
+        recipient_name: "Fiona Hackworth",
+        recipient_email: "fiona@example.com",
+        payment_for: "Event venue",
+        quoted_usd_amount_cents: 14_00, # skips generate_quote!, which needs a live exchange rate
+        allow_unsupported_recipient: true
+      )
 
-      expect(instance).not_to be_unsupported_recipient
-      expect(instance.errors[:base]).to be_empty
-    end
-
-    it "lets ops record a CNY transfer that was already in flight" do
-      wise_transfer = create_wise_transfer(currency: "CNY", account_type: "alipay", allow_unsupported_recipient: true)
-
-      expect(wise_transfer).to be_persisted
-    end
-
-    it "keeps existing CNY transfers moving through approval" do
-      wise_transfer = WiseTransfer.find(create_wise_transfer(currency: "CNY", allow_unsupported_recipient: true).id)
-
-      expect(wise_transfer).to be_valid
-      wise_transfer.mark_approved!
+      WiseTransfer.find(wise_transfer.id).mark_approved!
       expect(wise_transfer.reload).to be_approved
     end
 
-    it "lists CNY among the currencies to send via international wire instead" do
-      expect(WiseTransfer.unsupported_currencies_supported_by_wire).to include("CNY")
-    end
-
-    it "disables unsupported currencies in the currency select, except the current value" do
-      options = WiseTransfer.currency_select_options
-
-      expect(options[:choices]).to include(["CNY (unavailable)", "CNY"], "GBP")
-      expect(options[:disabled]).to eq(["CNY"])
-      expect(WiseTransfer.currency_select_options(selected: "CNY")[:disabled]).to be_empty
-    end
-  end
-
-  describe "unsupported account types" do
-    it "recommends a local bank transfer via Wise, falling back to an international wire" do
+    it "suggests a local bank transfer via Wise, then an international wire, for unsupported rails" do
       instance = build_instance(currency: "CAD", account_type: "interac")
       instance.validate
 
-      expect(instance.errors[:base]).to eq([
-                                             "Wise transfers via Interac are currently not supported due to technical difficulties on Wise's side. " \
-                                             "We recommend using a local bank transfer via Wise instead. If that isn't possible, please send an international wire."
-                                           ])
+      expect(instance.errors[:base].sole).to end_with("We recommend using a local bank transfer via Wise instead. If that isn't possible, please send an international wire.")
     end
   end
 

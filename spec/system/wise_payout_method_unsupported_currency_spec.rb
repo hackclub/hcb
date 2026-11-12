@@ -23,7 +23,7 @@ RSpec.describe "Wise payout method in an unsupported currency", type: :system do
 
     row.click_on "Edit"
 
-    expect(row).to have_select("user[payout_method_wise_transfer][currency]", selected: "CNY (unavailable)")
+    expect(row).to have_select("user[payout_method_wise_transfer][currency]", selected: "CNY")
     expect(row).to have_text(reason)
   end
 end

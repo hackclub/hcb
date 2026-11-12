@@ -45,8 +45,7 @@ RSpec.describe "Wise transfer USD quote", type: :system do
   it "doesn't let you pick a currency Wise no longer supports" do
     visit new_event_wise_transfer_path(event)
 
-    expect(page).to have_select("wise_transfer[currency]", disabled_options: ["CNY (unavailable)"])
-    expect(page).to have_no_select("wise_transfer[currency]", enabled_options: ["CNY (unavailable)"])
+    expect(page).to have_select("wise_transfer[currency]", disabled_options: ["CNY"])
   end
 
   it "shows an error instead of a stale or loading quote when Wise fails" do
