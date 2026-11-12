@@ -47,7 +47,7 @@ A state's default can be one of the view's strict locals, so state that starts f
 <%# herb:state (selected_type: initial_type) %>
 ```
 
-A partial's states are its own unless the caller binds one to its own: `render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role }`. Use the partial's full path.
+A partial's states are its own unless the caller binds one to its own: `render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role }`. Use the partial's full path. A partial rendered with a block can't be bound, so pass what the block held as a local instead.
 
 ## When JavaScript is still needed
 
