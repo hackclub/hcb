@@ -1,110 +1,93 @@
-<%# locals: (affiliation:, form:) %>
+<%# locals: (affiliation:, url:, method: :post, html: {}, initial_type: affiliation.name.to_s, initial_size: affiliation.size.to_s, actions_disabled: !policy(affiliation).update?) %>
+<%# herb:slots client %>
+<%# herb:state (selected_type: initial_type, selected_size: initial_size) %>
 
 <% disabled = !policy(affiliation).update? %>
 
-<fieldset class="field">
-  <legend class="font-medium">Type</legend>
-  <p class="h5 muted mt-0 mb-3">
-    Which organization are you affiliated with, if any? Leave blank if none of these apply.
-  </p>
-  <div class="field field--options field--green trio mb-0">
-    <%= form.radio_button :type, :first, disabled:, "x-model": "type" %>
-    <%= form.label :type, value: :first do %>
-      <%= inline_icon "sam", size: 28 %>
-      <strong>FIRST Robotics</strong>
-    <% end %>
-    <%= form.radio_button :type, :vex, disabled:, "x-model": "type" %>
-    <%= form.label :type, value: :vex do %>
-      <%= inline_icon "sam", size: 32 %>
-      <strong>VEX Robotics</strong>
-    <% end %>
-    <%= form.radio_button :type, :hack_club, disabled:, "x-model": "type" %>
-    <%= form.label :type, value: :hack_club do %>
-      <%= inline_icon "clubs-fill", size: 28 %>
-      <strong>Hack Club</strong>
-    <% end %>
-  </div>
-</fieldset>
+<%# Saved affiliations each render this form in an edit modal on the same page as the new one, so their ids are namespaced to keep labels pointing at their own fields. %>
+<%= form_with(url:, method:, local: true, namespace: ("affiliation_#{affiliation.id}" if affiliation.persisted?), html:) do |form| %>
+  <%= tag.fieldset class: "field", disabled: do %>
+    <legend class="font-medium">Type</legend>
+    <p class="h5 muted mt-0 mb-3">
+      Which organization are you affiliated with, if any? Leave blank if none of these apply.
+    </p>
+    <div class="field field--options field--green trio mb-0">
+      <input type="radio" name="<%= form.field_name(:type) %>" id="<%= form.field_id(:type, :first) %>" value="first" checked="<%= selected_type == "first" %>" data-herb-set="selected_type=$value">
+      <%= form.label :type, value: :first do %>
+        <%= inline_icon "sam", size: 28 %>
+        <strong>FIRST Robotics</strong>
+      <% end %>
+      <input type="radio" name="<%= form.field_name(:type) %>" id="<%= form.field_id(:type, :vex) %>" value="vex" checked="<%= selected_type == "vex" %>" data-herb-set="selected_type=$value">
+      <%= form.label :type, value: :vex do %>
+        <%= inline_icon "sam", size: 32 %>
+        <strong>VEX Robotics</strong>
+      <% end %>
+      <input type="radio" name="<%= form.field_name(:type) %>" id="<%= form.field_id(:type, :hack_club) %>" value="hack_club" checked="<%= selected_type == "hack_club" %>" data-herb-set="selected_type=$value">
+      <%= form.label :type, value: :hack_club do %>
+        <%= inline_icon "clubs-fill", size: 28 %>
+        <strong>Hack Club</strong>
+      <% end %>
+    </div>
+  <% end %>
 
-<template x-if="type == 'first'">
-  <div class="field">
-    <%= form.label :league, "League" %>
-    <%= form.select :league, [["FRC", "frc"], ["FTC", "ftc"], ["FLL", "fll"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, disabled: %>
-  </div>
-</template>
-<template x-if="type == 'first'">
-  <div class="field">
-    <%= form.label :team_number, "Team number" %>
-    <%= form.text_field :team_number, { required: true, placeholder: "9101", value: affiliation.team_number, disabled: } %>
-  </div>
-</template>
-<template x-if="type == 'first'">
-  <div class="field">
-    <%= form.label :size, "Size" %>
-    <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
-      <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
-        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
+  <%# Each type has its own fields, some with the same names. Only the picked type's fieldset is enabled, so only its fields are submitted and validated. %>
+  <fieldset class="contents" hidden="<%= selected_type != "first" %>" disabled="<%= selected_type != "first" %>">
+    <div class="field">
+      <%= form.label :first_league, "League" %>
+      <%= form.select :league, [["FRC", "frc"], ["FTC", "ftc"], ["FLL", "fll"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, { id: "first_league", disabled: } %>
+    </div>
+    <div class="field">
+      <%= form.label :first_team_number, "Team number" %>
+      <%= form.text_field :team_number, { required: true, placeholder: "9101", value: affiliation.team_number, id: "first_team_number", disabled: } %>
+    </div>
+  </fieldset>
+
+  <fieldset class="contents" hidden="<%= selected_type != "vex" %>" disabled="<%= selected_type != "vex" %>">
+    <div class="field">
+      <%= form.label :vex_league, "League" %>
+      <%= form.select :league, [["123", "123"], ["GO", "go"], ["AIM", "aim"], ["IQ", "iq"], ["EXP", "exp"], ["V5", "v5"], ["CTE", "cte"], ["AIR", "air"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, { id: "vex_league", disabled: } %>
+    </div>
+    <div class="field">
+      <%= form.label :vex_team_number, "Team number" %>
+      <%= form.text_field :team_number, { required: true, placeholder: "11981B", value: affiliation.team_number, id: "vex_team_number", disabled: } %>
+    </div>
+  </fieldset>
+
+  <fieldset class="contents" hidden="<%= selected_type != "hack_club" %>" disabled="<%= selected_type != "hack_club" %>">
+    <p class="p-0 text-sm">
+      Select this only if you're a local Hack Club chapter.
+      <% if affiliation.affiliable.is_a?(Event::Application) %>
+        If you're running an official project for Hack Club HQ, don't use this application form.
+      <% end %>
+    </p>
+    <div class="field">
+      <%= form.label :venue_name, "Venue name" %>
+      <%= form.text_field :venue_name, { required: true, placeholder: "Pierson Library", value: affiliation.venue_name, disabled: } %>
+    </div>
+  </fieldset>
+
+  <%# Every type asks for a size last. %>
+  <fieldset class="contents" hidden="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" %>" disabled="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" %>">
+    <div class="field">
+      <%= form.label :size, "Size" %>
+      <div class="flex items-center">
+        <div class="input flex gap-2 items-center justify-between py-0">
+          <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, value: affiliation.size, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, data: { herb_set: "selected_size=$value" } %>
+          <span class="bold muted"><% if selected_size == "1" %>person<% else %>people<% end %></span>
+        </div>
       </div>
     </div>
-  </div>
-</template>
+  </fieldset>
 
-<template x-if="type == 'vex'">
-  <div class="field">
-    <%= form.label :league, "League" %>
-    <%= form.select :league, [["123", "123"], ["GO", "go"], ["AIM", "aim"], ["IQ", "iq"], ["EXP", "exp"], ["V5", "v5"], ["CTE", "cte"], ["AIR", "air"]], { required: true, include_blank: "Select a league", selected: affiliation.league }, disabled: %>
-  </div>
-</template>
-<template x-if="type == 'vex'">
-  <div class="field">
-    <%= form.label :team_number, "Team number" %>
-    <%= form.text_field :team_number, { required: true, placeholder: "11981B", value: affiliation.team_number, disabled: } %>
-  </div>
-</template>
-<template x-if="type == 'vex'">
-  <div class="field">
-    <%= form.label :size, "Size" %>
-    <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
-      <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
-        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
-      </div>
+  <%# `actions_disabled` is the caller's: an edit modal locks with its affiliable's policy, like the button that opens it. %>
+  <% if affiliation.new_record? %>
+    <div class="flex flex-row items-center justify-between" hidden="<%= selected_type == "" %>">
+      <%= form.submit "Save affiliation", disabled: actions_disabled %>
+      <%= tag.button "Cancel", type: "button", class: "btn btn-secondary", disabled: actions_disabled, data: { herb_set: "selected_type=''", action: "unsaved-affiliation#clear" } %>
     </div>
-  </div>
-</template>
-
-<template x-if="type == 'hack_club'">
-  <p class="p-0 text-sm">
-    Select this only if you're a local Hack Club chapter.
-    <% if affiliation.affiliable.is_a?(Event::Application) %>
-      If you're running an official project for Hack Club HQ, don't use this application form.
-    <% end %>
-  </p>
-</template>
-<template x-if="type == 'hack_club'">
-  <div class="field">
-    <%= form.label :venue_name, "Venue name" %>
-    <%= form.text_field :venue_name, { required: true, placeholder: "Pierson Library", value: affiliation.venue_name, disabled: } %>
-  </div>
-</template>
-<template x-if="type == 'hack_club'">
-  <div class="field">
-    <%= form.label :size, "Size" %>
-    <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
-      <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
-        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
-      </div>
-    </div>
-  </div>
-</template>
-
-<% if affiliation.new_record? %>
-  <div class="flex flex-row items-center justify-between" x-show="type !== ''">
-    <%= form.submit "Save affiliation", "x-bind:disabled": "disabled" %>
-    <button type="button" class="btn btn-secondary" x-bind:disabled="disabled" x-on:click="type = ''" data-action="unsaved-affiliation#clear">Cancel</button>
-  </div>
-<% else %>
-  <%= form.submit "Update", "x-bind:disabled": "disabled || type === ''" %>
+  <% elsif actions_disabled %>
+    <%= form.submit "Update", disabled: true %>
+  <% else %>
+    <input type="submit" name="commit" value="Update" data-disable-with="Update" disabled="<%= selected_type == "" %>">
+  <% end %>
 <% end %>

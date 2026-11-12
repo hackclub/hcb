@@ -34,6 +34,8 @@ The [state](https://herb-tools.dev/language/state) and [actions](https://herb-to
 - **Swap groups of fields with a `<fieldset class="contents">` that is both `hidden` and `disabled`** under the same condition. Hidden fields are still submitted and still `required`; disabled ones are neither.
 - **Never read a state inside a helper call** (`selected: selected_role`). Only the server could recompute it.
 - **Name a state that mirrors a field `selected_<field>`.** The `herb-state-valid-reads` lint rule matches state names anywhere in an output tag, so a state called `role` trips on `form.label :role`.
+- **In a reactive view, pass `tag.*`, `content_tag` and `link_to` only literal hashes.** Herb compiles those helpers itself there and mishandles anything else: `data: some_hash` becomes one `data="{...}"` attribute, `**options` is dropped and a `nil` value prints `"null"`. Form builder methods and non-reactive views aren't affected, so move dynamic markup into a plain partial.
+- **Give a state a literal default when an action sets it to a literal.** `data-herb-set="flag=false"` on a Boolean seeded from a strict local writes the String `"false"`, which is truthy.
 
 ## Starting from a record, and sharing with a partial
 

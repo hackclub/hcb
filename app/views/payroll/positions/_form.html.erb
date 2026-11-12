@@ -1,4 +1,6 @@
-<%# locals: (event:, payee: nil, position: nil) %>
+<%# locals: (event:, payee: nil, position: nil, initial_file: position&.persisted? && position.file.attached? ? position.file.filename.to_s : "") %>
+<%# herb:slots client %>
+<%# herb:state (selected_file: initial_file) %>
 
 <% if payee && params[:edit_payee].present? && policy(payee).update? %>
   <%= render "payees/edit_section", event:, payee:, destination: "contractors", selected: params[:selected] %>
@@ -39,8 +41,7 @@
       <% end %>
 
       <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
-      <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee),
-            html: { "x-data": "{ hasAttachment: #{editing && position.file.attached? ? "true" : "false"} }" }) do |form| %>
+      <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
         <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
@@ -137,12 +138,16 @@
               </p>
             <% end %>
 
+            <%# Picking a file shows the combine option and clearing it hides it again. The
+                actions are named outside the render call: herb-lint reads a state's name in
+                a render argument as a computed read, even inside an action string. %>
+            <% attachment_input_html = { data: { herb_set: "change->selected_file=$value" } } %>
+            <% attachment_clear_html = { data: { herb_set: "selected_file=''" } } %>
             <%= render "events/transfers/attach_receipt", form:, disabled:, required: false, accept: ".pdf,application/pdf",
                   label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)",
-                  input_html: { "x-on:change": "hasAttachment = $event.target.files.length > 0" },
-                  clear_html: { "x-on:click": "hasAttachment = false" } %>
+                  input_html: attachment_input_html, clear_html: attachment_clear_html %>
 
-            <div x-show="hasAttachment" x-transition x-cloak>
+            <div hidden="<%= selected_file.blank? %>">
               <%= form.label :combine_contract_attachment do %>
                 <%= form.check_box :combine_contract_attachment, checked: editing ? position.combine_contract_attachment : true %>
                 Combine attachment with
@@ -155,7 +160,7 @@
           </div>
         </div>
 
-        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
           <% if editing %>
             Save changes
             <%= inline_icon "checkmark" %>

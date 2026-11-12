@@ -1,36 +1,59 @@
-<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
+<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer, initial_currency: form.object.currency.to_s, initial_account_type: "") %>
+<%# herb:slots client %>
+<%# herb:state (selected_currency: initial_currency, selected_account_type: initial_account_type) %>
 
-<% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
-  <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
-    <div>
-      <% model.information_required_for(currency.nil? ? nil : currency).each do |field| %>
-        <% unless (field[:key]).in?(excluded_fields) %>
-        <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>" x-on:change="<%= field[:key] %> = <%= field[:type] == :check_box ? "$event.target.checked" : "$event.target.value" %>" <% if field[:conditional] %> x-show="<%= field[:conditional] %>" <% end %>>
-          <%= form.label field[:key], field[:label], (field[:label_options] || {}) %>
-          <% if field[:type] == :select %>
-            <%= form.select field[:key], options_for_select(field[:options].to_a), disabled:, prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
-          <% else %>
-            <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}") %>
+<%# Each currency's fields, and fields only some account types ask for, are shown and enabled by the state-switch controller. %>
+<div data-controller="state-switch">
+  <% WiseTransfer::AVAILABLE_CURRENCIES.each do |currency| %>
+    <%= tag.fieldset class: "contents", hidden: currency != initial_currency, disabled: currency != initial_currency,
+                     data: { state_switch_target: "case", state_switch_name: "selected_currency", state_switch_when: currency } do %>
+      <div>
+        <% model.information_required_for(currency).each do |field| %>
+          <% next if field[:key].in?(excluded_fields) %>
+          <% id = form.field_id(field[:key], currency.downcase) %>
+          <% shown_for = field[:show_for_account_types] %>
+          <% hidden_for = field[:hide_for_account_types] %>
+          <% shown = shown_for ? initial_account_type.in?(shown_for) : !initial_account_type.in?(hidden_for.to_a) %>
+          <%# A field asked for by only some account types sits in a case fieldset. It's opened and closed under the same `if`, since Herb's `tag` drops computed attributes. %>
+          <% if shown_for %>
+            <fieldset class="contents" <% unless shown %> hidden disabled <% end %> data-state-switch-target="case" data-state-switch-name="selected_account_type" data-state-switch-when="<%= shown_for.join(" ") %>">
           <% end %>
-          <% if field[:description].present? || field[:refer_to].present? %>
-            <div class=" muted mt1 ">
-              <%= field[:description] %>
-              <% if field[:refer_to] %>
-                <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
+          <% if hidden_for %>
+            <fieldset class="contents" <% unless shown %> hidden disabled <% end %> data-state-switch-target="case" data-state-switch-name="selected_account_type" data-state-switch-unless="<%= hidden_for.join(" ") %>">
+          <% end %>
+            <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>">
+              <%= form.label field[:key], field[:label], (field[:label_options] || {}).merge(for: id) %>
+              <% if field[:type] == :select %>
+                <%= form.select field[:key], options_for_select(field[:options].to_a), { disabled:, prompt: "Select one..." },
+                                { id:, data: ({ herb_set: "selected_account_type=$value" } if field[:key] == "account_type") } %>
+              <% else %>
+                <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, required: field[:required] != false, id:) %>
+              <% end %>
+              <% if field[:description].present? || field[:refer_to].present? %>
+                <div class=" muted mt1 ">
+                  <%= field[:description] %>
+                  <% if field[:refer_to] %>
+                    <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
+                  <% end %>
+                </div>
               <% end %>
             </div>
+          <% if hidden_for %>
+            </fieldset>
           <% end %>
-        </div>
+          <% if shown_for %>
+            </fieldset>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
-  </template>
-<% end %>
+      </div>
+    <% end %>
+  <% end %>
 
-<% unsupported_account_type_reasons = HasWiseRecipient::UNSUPPORTED_ACCOUNT_TYPES.keys.index_with { |type| HasWiseRecipient.unsupported_account_type_reason(type) } %>
-<template x-if="<%= unsupported_account_type_reasons.keys.to_json %>.includes(account_type)">
-  <div class="flex items-start gap-1 warning mb2">
-    <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
-    <span x-text="<%= unsupported_account_type_reasons.to_json %>[account_type]"></span>
-  </div>
-</template>
+  <% HasWiseRecipient::UNSUPPORTED_ACCOUNT_TYPES.keys.group_by { |type| HasWiseRecipient.unsupported_account_type_reason(type) }.each do |reason, types| %>
+    <%= tag.div class: "flex items-start gap-1 warning mb2", hidden: !initial_account_type.in?(types),
+                data: { state_switch_target: "case", state_switch_name: "selected_account_type", state_switch_when: types.join(" ") } do %>
+      <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
+      <span><%= reason %></span>
+    <% end %>
+  <% end %>
+</div>

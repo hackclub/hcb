@@ -1,27 +1,22 @@
-<%# locals: (ach_transfer:) %>
+<%# locals: (ach_transfer:, recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event) || {}, initial_recipient_id: recipient[:id].to_s, initial_editing: ach_transfer.account_number.present?, initial_email: recipient[:email].to_s, initial_bank_name: recipient[:bank_name].to_s, initial_routing_number: recipient[:routing_number].to_s, initial_masked_account_number: recipient[:masked_account_number].to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_payment_recipient_id: initial_recipient_id, selected_editing: initial_editing, selected_email: initial_email, selected_bank_name: initial_bank_name, selected_routing_number: initial_routing_number, selected_masked_account_number: initial_masked_account_number) %>
 
 <% disabled = !policy(ach_transfer.event).create_transfer? %>
-<% selected_recipient = ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event %>
 
-<%= form_with(
-  model: ach_transfer,
-  local: true,
-  url: event_ach_transfers_path(ach_transfer.event),
-  data: { controller: "input payment-recipient" },
-  html: {
-    "x-data" => "ach(#{{
-      payment_recipient: selected_recipient,
-      editing: ach_transfer.account_number.present?,
-      }.to_json})",
-    "@payment-recipient:change" => "payment_recipient = $event.detail",
-  }) do |form| %>
+<%= form_with(model: ach_transfer, local: true, url: event_ach_transfers_path(ach_transfer.event), data: {
+                controller: "input payment-recipient",
+                payment_recipient_scope_value: "ach_transfer",
+                payment_recipient_recipient_value: recipient.to_json,
+                payment_recipient_shown_value: %w[email bank_name routing_number masked_account_number].to_json,
+              }) do |form| %>
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
+  <input type="hidden" name="<%= form.field_name(:payment_recipient_id) %>" id="<%= form.field_id(:payment_recipient_id) %>" value="<%= selected_payment_recipient_id %>" autocomplete="off">
 
   <% if Rails.env.development? %>
-    <pre data-payment-recipient-target="debug" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"><%= "Debug info:\n\n#{JSON.pretty_generate(selected_recipient || {})}" %></pre>
+    <pre data-payment-recipient-target="debug" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"><%= "Debug info:\n\n#{JSON.pretty_generate(recipient)}" %></pre>
   <% end %>
 
   <div data-scroll-seek-target="section">
@@ -48,12 +43,13 @@
                               input->payment-recipient#clear
                             ",
                             menu_target: "toggle",
-                          },
-                          "x-ref" => "name_input" %>
+                            payment_recipient_target: "name",
+                          } %>
 
-      <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
+      <% saved_recipients = ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer") %>
+      <% if organizer_signed_in? && saved_recipients.any? %>
         <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-          <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
+          <% saved_recipients.each do |payment_recipient| %>
             <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.hashid %>">
               <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close payment-recipient#select" data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                 <span class="truncate"><%= payment_recipient.name %></span>
@@ -74,26 +70,25 @@
       <%= form.text_field :payment_for, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled:, data: { input_target: "input" } %>
     </div>
 
-    <template x-if="!payment_recipient || editing">
+    <%# Not submitted while a saved recipient is picked, so the server fills them in from it. %>
+    <fieldset class="contents" data-payment-recipient-target="editable" hidden="<%= selected_payment_recipient_id.present? && !selected_editing %>" disabled="<%= selected_payment_recipient_id.present? && !selected_editing %>">
       <div>
         <%= form.label :recipient_email, class: "mb-1" %>
         <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
       </div>
-    </template>
+    </fieldset>
 
-    <template x-if="payment_recipient && !editing">
-      <div class="flex items-center">
-        <label>Recipient email</label>
-        <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.email">
-      </div>
-    </template>
+    <div class="flex items-center" hidden="<%= selected_payment_recipient_id.empty? || selected_editing %>">
+      <label>Recipient email</label>
+      <input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_email %>">
+    </div>
   </div>
   </div>
 
   <div data-scroll-seek-target="section">
   <h3 class="mb-2">Payment details</h3>
   <div class="card mb-4 relative">
-    <template x-if="!payment_recipient || editing">
+    <fieldset class="contents" data-payment-recipient-target="editable" hidden="<%= selected_payment_recipient_id.present? && !selected_editing %>" disabled="<%= selected_payment_recipient_id.present? && !selected_editing %>">
       <div class="flex flex-col gap-3">
         <div class="sm:flex items-center justify-between">
           <%= form.label :bank_name %>
@@ -115,19 +110,17 @@
           <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask !max-w-[250px]" %>
         </div>
       </div>
-    </template>
+    </fieldset>
 
-    <template x-if="payment_recipient && !editing">
-      <div>
-        <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
-          <%= inline_icon "pen", size: 18 %>
-        </button>
+    <div hidden="<%= selected_payment_recipient_id.empty? || selected_editing %>">
+      <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" data-action="payment-recipient#edit" data-payment-recipient-focus-param="ach_transfer_bank_name">
+        <%= inline_icon "pen", size: 18 %>
+      </button>
 
-        <div class="sm:flex items-center"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
-        <div class="sm:flex items-center"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.routing_number"></div>
-        <div class="sm:flex items-center"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
-      </div>
-    </template>
+      <div class="sm:flex items-center"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_bank_name %>"></div>
+      <div class="sm:flex items-center"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_routing_number %>"></div>
+      <div class="sm:flex items-center"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_masked_account_number %>"></div>
+    </div>
   </div>
 
   <div class="card mb-4 relative flex flex-col gap-3">
@@ -168,8 +161,8 @@
     </div>
   <% end %>
 
-  <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+  <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", disabled: do %>
     Send transfer
     <%= inline_icon "send" %>
-  </button>
+  <% end %>
 <% end %>
