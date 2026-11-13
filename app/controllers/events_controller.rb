@@ -955,7 +955,8 @@ class EventsController < ApplicationController
     @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
 
     can_review = Payroll::PositionPolicy.new(current_user, @event).review?
-    @pending_invoice_counts = can_review ? @event.payroll_invoices.submitted.group(:payroll_position_id).count : {}
+    @invoices_to_review = can_review ? @event.payroll_invoices.submitted.includes(payroll_position: :payee).order(:created_at).select { |invoice| policy(invoice).approve? } : []
+    @pending_invoice_counts = @invoices_to_review.map(&:payroll_position_id).tally
 
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {

@@ -64,4 +64,29 @@ RSpec.describe Payroll::Invoice, type: :model do
       expect { expect(stale_copy.approve(reviewed_by: approver)).to eq(false) }.not_to change(Payment, :count)
     end
   end
+
+  describe "#status_text" do
+    def approved_invoice(payment_state)
+      build_invoice(aasm_state: :approved, payment: create(:payment, payee:, aasm_state: payment_state))
+    end
+
+    # An invoice HCB refused to pay must never keep reading as a clean approval.
+    it "surfaces a payment HCB rejected or that was canceled", :aggregate_failures do
+      expect(approved_invoice(:rejected)).to have_attributes(status_text: "Payment rejected", state_color: "error")
+      expect(approved_invoice(:canceled)).to have_attributes(status_text: "Payment canceled", state_color: "muted")
+    end
+
+    it "only reads as paid once the payment succeeds", :aggregate_failures do
+      %i[pending_legal_entity under_review sent].each do |state|
+        expect(approved_invoice(state)).to have_attributes(status_text: "Approved", state_color: "success")
+      end
+      expect(approved_invoice(:successful)).to have_attributes(status_text: "Paid", state_color: "success")
+    end
+
+    it "falls back to the review state without a payment", :aggregate_failures do
+      expect(build_invoice).to have_attributes(status_text: "Submitted", state_color: "warning")
+      expect(build_invoice(aasm_state: :rejected)).to have_attributes(status_text: "Rejected", state_color: "error")
+      expect(build_invoice(aasm_state: :approved)).to have_attributes(status_text: "Approved", state_color: "success")
+    end
+  end
 end

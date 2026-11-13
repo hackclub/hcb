@@ -71,12 +71,24 @@ module Payroll
       end
     end
 
-    def state_color
-      case aasm_state.to_sym
-      when :approved then "success"
-      when :rejected then "error"
-      else "warning"
+    # An approved invoice takes on the outcome of its payment, e.g. when HCB rejects it.
+    def status_text
+      return aasm_state.humanize unless approved?
+
+      case payment&.aasm_state&.to_sym
+      when :successful then "Paid"
+      when :rejected then "Payment rejected"
+      when :canceled then "Payment canceled"
+      else "Approved"
       end
+    end
+
+    def state_color
+      return "error" if rejected? || payment&.rejected?
+      return "muted" if payment&.canceled?
+      return "success" if approved?
+
+      "warning"
     end
 
     # Returns false if the invoice was already reviewed or the event can't cover it.

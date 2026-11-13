@@ -743,6 +743,64 @@ RSpec.describe EventsController do
         expect(rows.first.text).to include("Casey Contractor")
       end
     end
+
+    context "with invoices awaiting review" do
+      let(:legal_entity) { create(:legal_entity) }
+      let(:position) { create(:payroll_position, payee: create(:payee, event:, legal_entity:), aasm_state: :onboarded) }
+
+      before do
+        position.invoices.create!(name: "Pending design work", amount_cents: 50_00, currency: position.currency)
+        position.invoices.create!(name: "Already rejected work", amount_cents: 50_00, currency: position.currency, aasm_state: :rejected)
+
+        other_position = create(:payroll_position, payee: create(:payee, event: create(:event)), aasm_state: :onboarded)
+        other_position.invoices.create!(name: "Another organization's work", amount_cents: 50_00, currency: other_position.currency)
+      end
+
+      def review_forms(body)
+        Nokogiri::HTML5(body).css("form[action*='/payroll_invoices/']")
+      end
+
+      it "lets a manager review only their organization's pending invoices", :aggregate_failures do
+        sign_in_organizer_of(event)
+
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response.body).to include("Invoices awaiting your review", "Pending design work")
+        expect(response.body).not_to include("Already rejected work")
+        expect(response.body).not_to include("Another organization's work")
+        expect(review_forms(response.body).size).to eq(2)
+      end
+
+      it "hides invoices from signed out visitors" do
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response.body).not_to include("Pending design work")
+      end
+
+      it "hides invoices from organizers who can't review them", :aggregate_failures do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response.body).not_to include("Pending design work")
+        expect(review_forms(response.body)).to be_empty
+      end
+
+      # A manager who is also the contractor must not be offered their own invoice.
+      it "hides a manager's own invoice from them", :aggregate_failures do
+        organizer = create(:user)
+        create(:organizer_position, user: organizer, event:)
+        create(:legal_entity_user, legal_entity:, user: organizer)
+        create_session(organizer, verified: true)
+
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response.body).not_to include("Pending design work")
+        expect(review_forms(response.body)).to be_empty
+      end
+    end
   end
 
   describe "#sub_organizations" do

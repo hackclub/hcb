@@ -63,6 +63,47 @@
     </div>
   </div>
 
+  <% if @invoices_to_review.any? %>
+    <h3 class="mt-0 mb-2 flex items-center">
+      Invoices awaiting your review
+      <%= badge_for @invoices_to_review.size, class: "bg-warning" %>
+    </h3>
+    <article class="table-container mb-4">
+      <table>
+        <thead>
+          <tr>
+            <th>Submitted</th>
+            <th>Contractor</th>
+            <th>Description</th>
+            <th>Attachment</th>
+            <th class="text-right">Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices_to_review.each do |invoice| %>
+            <tr>
+              <td class="nowrap"><%= format_date invoice.created_at %></td>
+              <td>
+                <%= link_to invoice.payroll_position.payee.display_name, event_payroll_position_path(event_id: @event.slug, id: invoice.payroll_position, anchor: dom_id(invoice)) %>
+              </td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
+                <%= invoice.name %>
+              </td>
+              <td>
+                <div class="receipts_list flex gap-2">
+                  <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                </div>
+              </td>
+              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+              <td class="text-right"><%= render "payroll/invoices/review_actions", invoice: %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% end %>
+
   <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/filters/search", form: %>

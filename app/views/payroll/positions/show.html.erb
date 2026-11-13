@@ -138,22 +138,25 @@
         <thead>
           <tr>
             <th>Status</th>
+            <th>Submitted</th>
             <th>Reviewed by</th>
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
-            <% if @can_review %><th></th><% end %>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <tr>
+            <tr id="<%= dom_id(invoice) %>">
               <td>
-                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <span class="badge ml-0 nowrap bg-<%= invoice.state_color %>"><%= invoice.status_text %></span>
               </td>
+              <td class="nowrap"><%= format_date invoice.created_at %></td>
               <td>
                 <% if invoice.reviewed_by.present? %>
                   <%= invoice.reviewed_by.name %>
+                  <span class="muted block nowrap"><%= format_date(invoice.approved_at || invoice.rejected_at) %></span>
                 <% else %>
                   <span class="muted">&mdash;</span>
                 <% end %>
@@ -171,16 +174,13 @@
                 <% end %>
               </td>
               <td class="text-right"><%= render_money invoice.amount_cents %></td>
-              <% if @can_review %>
-                <td class="text-right">
-                  <% if invoice.submitted? %>
-                    <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-                    </div>
-                  <% end %>
-                </td>
-              <% end %>
+              <td class="text-right nowrap">
+                <% if invoice.submitted? && @can_review %>
+                  <%= render "payroll/invoices/review_actions", invoice: %>
+                <% elsif invoice.payment.present? && organizer_signed_in? %>
+                  <%= link_to "View payment", payment_path(invoice.payment), data: payment_popover_data(invoice.payment) %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>

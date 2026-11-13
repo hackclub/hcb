@@ -187,5 +187,17 @@ RSpec.describe Payroll::InvoicesController do
       expect(invoice.reload).to be_rejected
       expect(invoice.reviewed_by).to eq(organizer)
     end
+
+    it "returns to the page it was reviewed from, but never to another site", :aggregate_failures do
+      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
+
+      request.headers["Referer"] = "https://evil.example/phish"
+      post :reject, params: { event_id: event.slug, id: invoice.id }
+      expect(response).to redirect_to(event_payroll_position_path(event_id: event.slug, id: position))
+
+      request.headers["Referer"] = event_contractors_url(event_id: event.slug)
+      post :reject, params: { event_id: event.slug, id: invoice.id }
+      expect(response).to redirect_to(event_contractors_url(event_id: event.slug))
+    end
   end
 end

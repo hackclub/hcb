@@ -72,7 +72,7 @@ module Payroll
         flash[:error] = insufficient_balance_message(@event)
       end
 
-      redirect_to contractor_page
+      redirect_back_or_to contractor_page
     end
 
     def reject
@@ -85,7 +85,7 @@ module Payroll
         flash[:error] = "This invoice has already been reviewed."
       end
 
-      redirect_to contractor_page
+      redirect_back_or_to contractor_page
     end
 
     private
