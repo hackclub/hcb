@@ -57,7 +57,7 @@
 
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
-  <%= render partial: "logins/environment_banner" %>
+  <%= render partial: "logins/environment_banner", locals: { login_code: @login_code } %>
 </div>
 
 <%= render partial: "logins/footer" %>

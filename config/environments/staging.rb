@@ -2,6 +2,7 @@
 
 require "active_support/core_ext/integer/time"
 require_relative "../../app/lib/credentials"
+require_relative "../../lib/log_mail_delivery"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -39,11 +40,19 @@ Rails.application.configure do
 
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Set ACTIVE_STORAGE_SERVICE=amazon to use the S3-compatible bucket instead
+  # (e.g. on hosts with ephemeral disks, like Laravel Cloud).
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "local").to_sym
 
+
+  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
+  config.assume_ssl = ENV.fetch("RAILS_ASSUME_SSL", false) == "true"
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
+
+  # Skip http-to-https redirect for the default health check endpoint.
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
   # This is an old Rails 7.0 default, but leaving it in because we depend on it below
@@ -74,7 +83,10 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "bank_production"
 
 
-  config.action_mailer.delivery_method = :smtp
+  # Set ACTION_MAILER_DELIVERY_METHOD=log to write emails (e.g. login codes) to
+  # the log instead of sending them; see lib/log_mail_delivery.rb.
+  ActiveSupport.on_load(:action_mailer) { add_delivery_method :log, LogMailDelivery }
+  config.action_mailer.delivery_method = ENV.fetch("ACTION_MAILER_DELIVERY_METHOD", "smtp").to_sym
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
