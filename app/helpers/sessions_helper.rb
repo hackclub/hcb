@@ -222,8 +222,12 @@ module SessionsHelper
   # Called from explicit sign-out actions (not #sign_out itself, which also runs
   # during login and impersonation) so the next page clears the remembered
   # organizations. An expired session never sets this, so they're kept.
+  #
+  # This is its own cookie rather than part of `session`: a request that was
+  # already running when the user signed out would write its stale copy of the
+  # session back and drop the flag.
   def forget_remembered_organizations!
-    session[:forget_remembered_organizations] = true
+    cookies[:forget_remembered_organizations] = { value: "1", httponly: true }
   end
 
   # Public ids of the transparent organizations (including sub-organizations)
@@ -246,7 +250,7 @@ module SessionsHelper
 
   def remembered_organizations_data
     data = { controller: "remembered-organizations" }
-    data[:remembered_organizations_clear_value] = true if session.delete(:forget_remembered_organizations)
+    data[:remembered_organizations_clear_value] = true if cookies.delete(:forget_remembered_organizations)
 
     if (event_ids = remembered_organizer_event_ids)
       data[:remembered_organizations_event_ids_value] = event_ids.to_json
