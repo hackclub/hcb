@@ -11,6 +11,17 @@
     </div>
   <% end %>
 
+    <a class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAdding">
+      <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+        <%= inline_icon "plus", size: 18 %>
+      </div>
+      <div class="text-left">
+        <p class="font-medium">New recipient</p>
+        <p class="text-sm muted">Create a new payment recipient</p>
+      </div>
+      <%= inline_icon "view-forward", class: "ml-auto muted" %>
+    </a>
+
   <%= turbo_frame_tag :payee_results_list do %>
     <% rows = [@selected, *@payees].uniq.compact %>
     <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
@@ -59,7 +70,7 @@
         <%= paginate @payees, per_page_menu: false %>
       </div>
     <% elsif params[:q].present? %>
-      <div class="px-4">
+      <div class="px-4 py-3 border-t">
         <div class="center pt4 pb4 rounded-lg border border-gray-200 dark:border-gray-700 w-full">
           <p class="muted font-medium mb-2">No results for "<%= params[:q] %>"</p>
           <button
@@ -74,16 +85,5 @@
       </div>
     <% end %>
   <% end %>
-
-    <a class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAdding">
-      <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-        <%= inline_icon "plus", size: 18 %>
-      </div>
-      <div class="text-left">
-        <p class="font-medium">New recipient</p>
-        <p class="text-sm muted">Create a new payment recipient</p>
-      </div>
-      <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
   </div>
 <% end %>
