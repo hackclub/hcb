@@ -517,6 +517,8 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense.reload.category.slug).to eq("repayment")
       expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
       expect(expense.ledger_item.repayment_disbursements).to eq([disbursement])
+      expect(disbursement.repayment.allocations.sole.amount_cents).to eq(100_00)
+      expect(disbursement.repayment.disbursement).to eq(disbursement)
     end
 
     it "must repay the full amount" do
@@ -601,7 +603,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "keeps the repayment when the expense grows afterward, leaving the difference unrepaid" do
       disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
-      repayment = disbursement.repayments.sole
+      repayment = disbursement.repayment.allocations.sole
 
       # e.g. a tip settling on top of a card charge
       expense.update!(amount_cents: -120_00)

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2513,16 +2513,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
-  create_table "repayments", force: :cascade do |t|
+  create_table "repayment_allocations", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
     t.bigint "ledger_item_id", null: false
     t.jsonb "previous_categories", default: {}, null: false
+    t.bigint "repayment_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
-    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
-    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_repayment_allocations_on_ledger_item_id"
+    t.index ["repayment_id", "ledger_item_id"], name: "index_repayment_allocations_on_repayment_id_and_ledger_item_id", unique: true
+    t.index ["repayment_id"], name: "index_repayment_allocations_on_repayment_id"
+    t.check_constraint "amount_cents > 0", name: "repayment_allocations_positive_amount"
+  end
+
+  create_table "repayments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "disbursement_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id", unique: true
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -3287,8 +3295,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "repayment_allocations", "ledger_items"
+  add_foreign_key "repayment_allocations", "repayments"
   add_foreign_key "repayments", "disbursements"
-  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"
