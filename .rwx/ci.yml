@@ -2,25 +2,25 @@ on:
   cli:
     init:
       commit-sha: ${{ event.git.sha }}
-      pull-request: "true"
+      pull-request: true
   github:
     pull_request:
       init:
         commit-sha: ${{ event.git.sha }}
-        pull-request: "true"
+        pull-request: true
       status-checks:
         name: CI
     push:
       - if: ${{ event.git.branch == 'main' || starts-with(event.git.branch, 'gh-readonly-queue/') }}
         init:
           commit-sha: ${{ event.git.sha }}
-          pull-request: "false"
+          pull-request: false
         status-checks:
           name: CI
   cache-rebuild:
     init:
       commit-sha: ${{ event.git.sha }}
-      pull-request: "false"
+      pull-request: false
 
 base:
   image: ubuntu:24.04
@@ -32,7 +32,7 @@ tool-cache:
 aliases:
   rails-test-env: &rails-test-env
     RAILS_ENV: test
-    CI: "true"
+    CI: true
     DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
     REDIS_URL: redis://localhost:6379
 
@@ -122,7 +122,7 @@ tasks:
     runner:
       tmpfs: true
     env:
-      BUNDLE_FROZEN: "true"
+      BUNDLE_FROZEN: true
     filter:
       - .ruby-version
       - Gemfile
@@ -140,6 +140,7 @@ tasks:
     run: |
       corepack enable
       yarn install --frozen-lockfile
+      yarn cache clean
     runner:
       tmpfs: true
     env:
@@ -148,11 +149,6 @@ tasks:
       - node_modules
       - package.json
       - yarn.lock
-    outputs:
-      filesystem:
-        filter:
-          system:
-            - "!/home/ubuntu/.cache/yarn"
 
   - key: eslint
     use: yarn-install
@@ -165,6 +161,8 @@ tasks:
     run: yarn lint
     outputs:
       filesystem: false
+      problems:
+        - matcher: eslint
 
   - key: prettier
     use: yarn-install
@@ -214,10 +212,8 @@ tasks:
     tool-cache: ci-rubocop
     run: bundle exec rubocop
     outputs:
-      filesystem:
-        filter:
-          workspace: []
-          system: [/home/ubuntu/.cache/rubocop_cache]
+      problems:
+        - matcher: rubocop
 
   - key: erblint
     use: bundle-install
@@ -234,6 +230,8 @@ tasks:
     run: bin/erb_lint
     outputs:
       filesystem: false
+      problems:
+        - matcher: erb-lint
 
   - key: brakeman
     use: bundle-install
@@ -249,6 +247,8 @@ tasks:
     run: bundle exec brakeman -q
     outputs:
       filesystem: false
+      problems:
+        - matcher: brakeman
 
   - key: zeitwerk
     use: bundle-install
@@ -256,7 +256,7 @@ tasks:
     run: bundle exec rails zeitwerk:check
     env:
       RAILS_ENV: test
-      CI: "true"
+      CI: true
     outputs:
       filesystem: false
 
@@ -334,27 +334,15 @@ tasks:
     background-processes:
       - *postgres
       - *redis
-    run:
-      - *restore-schema
-      - |
-        for n in $(seq 1 $ABQ_RUNNERS); do docker exec postgres createdb -U postgres -T bank_test bank_test$n; done
-        cat > /tmp/abq-rspec <<'SH'
-        #!/bin/bash
-        n=${ABQ_RUNNER:-1}
-        export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
-        export REDIS_URL=redis://localhost:6379/$n
-        export TEST_ENV_NUMBER=${RETRY:+retry}$n
-        exec bundle exec rspec --tag '~skip' "$@"
-        SH
-        chmod +x /tmp/abq-rspec
-        captain run hcb-rspec \
-          --command "abq test --local --test-strategy by-file --reporter rwx-v1-json=tmp/abq.json -- /tmp/abq-rspec" \
-          --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- /tmp/abq-rspec {{ tests }}" \
-          --retries 1 \
-          --fail-on-duplicate-test-id \
-          --test-results tmp/abq.json \
-          --print-summary
-        TEST_ENV_NUMBER=merge bundle exec ruby -r simplecov -e ''
+    run: |
+      captain run hcb-rspec \
+        --command "abq test --local --reporter rwx-v1-json=tmp/abq.json -- bin/abq-rspec" \
+        --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- bin/abq-rspec {{ tests }}" \
+        --retries 1 \
+        --fail-on-duplicate-test-id \
+        --test-results tmp/abq.json \
+        --print-summary
+      TEST_ENV_NUMBER=merge bundle exec ruby -r simplecov -e ''
     env:
       <<: *rails-test-env
       ABQ_RUNNERS: "15"
@@ -370,9 +358,7 @@ tasks:
     filter: [db/migrate]
     run: |
       git clone --quiet --depth 1 --filter=blob:none --no-checkout https://github.com/hackclub/hcb.git /tmp/main
-      git -C /tmp/main ls-tree -r --name-only HEAD db/migrate | sort > /tmp/on-main
-      ls db/migrate/*.rb | sort > /tmp/here
-      versions=$(comm -13 /tmp/on-main /tmp/here | sed -E 's#.*/([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
+      versions=$(comm -13 <(git -C /tmp/main ls-tree --name-only HEAD db/migrate/ | sort) <(ls -d db/migrate/* | sort) | sed -E 's#.*/([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
       echo "New migrations: ${versions:-none}"
       printf '%s' "${versions:-none}" > "$RWX_VALUES/versions"
     outputs:
@@ -386,7 +372,7 @@ tasks:
     filter:
       - *rails-app
       - tmp/schema.sql
-    if: ${{ init.pull-request == 'true' && tasks.new-migrations.values.versions != 'none' }}
+    if: ${{ init.pull-request && tasks.new-migrations.values.versions != 'none' }}
     background-processes:
       - *postgres
     run:
