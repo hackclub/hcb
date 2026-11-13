@@ -31,7 +31,7 @@
         <% end %>
       </div>
       <% @payees.each do |payee| %>
-        <div class="btn btn--list-item border-t rounded-none relative <%="!bg-blue-100" if params[:payee_id].to_s == payee.hashid %>">
+        <div class="btn btn--list-item border-t rounded-none relative <%= "!bg-blue-100" if params[:payee_id].to_s == payee.hashid %>">
           <%= link_to "", new_recipient_transfer_path(destination, @event, payee_id: payee.hashid), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
           <div class="flex-1 min-w-0">
