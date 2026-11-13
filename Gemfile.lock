@@ -969,6 +969,7 @@ DEPENDENCIES
   business_time
   byebug
   capybara
+  cgi
   chronic
   comma (~> 4.8)
   console1984
