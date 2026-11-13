@@ -59,7 +59,7 @@ aliases:
     key: postgres
     terminate-grace-period-seconds: 0
     run: |
-      exec docker run --rm --name postgres -p 5432:5432 \
+      exec docker run --rm --name postgres --network host \
         -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
         --tmpfs /var/lib/postgresql/data \
         postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
@@ -68,7 +68,7 @@ aliases:
   redis: &redis
     key: redis
     terminate-grace-period-seconds: 0
-    run: exec docker run --rm --name redis -p 6379:6379 redis:latest redis-server --save "" --appendonly no
+    run: exec docker run --rm --name redis --network host redis:latest redis-server --save "" --appendonly no
     ready-check: docker exec redis redis-cli ping
 
 tasks:
@@ -98,6 +98,9 @@ tasks:
   - key: captain
     call: rwx/install-captain 1.2.0
 
+  - key: abq
+    call: rwx/install-abq 1.2.0
+
   - key: ruby
     use: code
     call: ruby/install 2.0.2
@@ -111,6 +114,31 @@ tasks:
     with:
       node-version-file: .node-version
     filter: [.node-version]
+
+  - key: rspec-abq
+    use: ruby
+    run: |
+      gem install rspec-abq -v 1.2.3 --no-document --ignore-dependencies --install-dir /home/ubuntu/rspec-abq
+      cat > /home/ubuntu/rspec-abq/runner.rb <<'RB'
+      require "rspec/abq"
+
+      RSpec.configure do |config|
+        config.before(:suite) do
+          SimpleCov.command_name "RSpec #{ENV.fetch("COVERAGE_NAME")}" if defined?(SimpleCov)
+        end
+      end
+      RB
+      mkdir -p /home/ubuntu/bin
+      cat > /home/ubuntu/bin/abq-rspec <<'SH'
+      #!/bin/bash
+      n=${ABQ_RUNNER:-1}
+      export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
+      export REDIS_URL=redis://localhost:6379/$n
+      export COVERAGE_NAME=${RETRY:+retry }$n
+      exec bundle exec rspec -I /home/ubuntu/rspec-abq/gems/rspec-abq-1.2.3/lib -r /home/ubuntu/rspec-abq/runner.rb --tag '~skip' "$@"
+      SH
+      chmod +x /home/ubuntu/bin/abq-rspec
+      echo /home/ubuntu/bin > $RWX_ENV/PATH
 
   - key: bundle-install
     use: [system-packages, code, ruby]
@@ -315,9 +343,11 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [docker-images, db-schema, assets, chrome, captain]
+    use: [docker-images, db-schema, assets, chrome, captain, abq, rspec-abq]
     docker: true
     runner:
+      cpus: 16
+      memory: 32gb
       tmpfs: true
     filter:
       - *rails-app
@@ -326,23 +356,23 @@ tasks:
       - .rspec
       - .simplecov
       - tmp/schema.sql
-    parallel: 8
     background-processes:
       - *postgres
       - *redis
     run:
       - *restore-schema
       - |
+        for n in $(seq 1 $ABQ_RUNNERS); do docker exec postgres createdb -U postgres -T bank_test bank_test$n; done
         captain run hcb-rspec \
-          --command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress" \
-          --partition-command "bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ testFiles }}" \
-          --partition-globs 'spec/**/*_spec.rb' \
-          --retry-command "env -u CC_TEST_REPORTER_ID bundle exec rspec --tag '~skip' --format json --out tmp/rspec.json --format progress {{ tests }}" \
+          --command "abq test --local --test-strategy by-file --reporter rwx-v1-json=tmp/abq.json -- abq-rspec" \
+          --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- abq-rspec {{ tests }}" \
           --retries 1 \
-          --test-results tmp/rspec.json \
+          --test-results tmp/abq.json \
           --print-summary
+        bundle exec ruby -r simplecov -e 'SimpleCov.command_name "merge"'
     env:
       <<: *rails-test-env
+      ABQ_RUNNERS: "15"
       CC_TEST_REPORTER_ID: "1"
     outputs:
       filesystem: false
