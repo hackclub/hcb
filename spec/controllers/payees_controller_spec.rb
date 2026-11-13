@@ -93,7 +93,7 @@ RSpec.describe PayeesController do
       get :index, params: { event_id: event.slug, payee_id: selected.hashid, q: "Heidi" }
 
       expect(response.body).not_to include("Select Orpheus")
-      expect(response.body).to include("No results for")
+      expect(response.body).to include("No recipients match")
     end
   end
 

@@ -96,9 +96,5 @@
       </div>
     </div>
 
-    <% if show_hcb_transfer && !has_payees %>
-      <div class="card px-0 mt-2 py-0">
-        <%= render "payments/hcb_transfer_option", event: %>
-      </div>
-    <% end %>
+    <%= render "payments/hcb_transfer_option", event: event if show_hcb_transfer && !has_payees %>
   </div>

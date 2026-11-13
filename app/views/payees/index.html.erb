@@ -2,35 +2,34 @@
 
 <%= turbo_frame_tag :payee_results do %>
   <div class="card px-0 pt-2 pb-0">
-  <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "px-4 pb-2 pt-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
-    <%= hidden_field_tag :destination, destination %>
-    <%= form.hidden_field :payee_id, value: params[:payee_id] %>
-    <div class="input input-group max-w-none mt-1">
-      <%= inline_icon "search" %>
-      <%= form.text_field :q, value: params[:q], placeholder: "Search...", autofocus: true, class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced" } %>
-    </div>
-  <% end %>
-
-    <a class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAdding">
-      <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-        <%= inline_icon "plus", size: 18 %>
-      </div>
-      <div class="text-left">
-        <p class="font-medium">New recipient</p>
-        <p class="text-sm muted">Create a new payment recipient</p>
-      </div>
-      <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
-
-    <% if destination == "payments" %>
-      <div class="border-t">
-        <%= render "payments/hcb_transfer_option", event: @event %>
+  <div class="flex items-center gap-2 px-4 pb-2 pt-1">
+    <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "flex-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
+      <%= hidden_field_tag :destination, destination %>
+      <%= form.hidden_field :payee_id, value: params[:payee_id] %>
+      <div class="input input-group max-w-none">
+        <%= inline_icon "search" %>
+        <%= form.text_field :q, value: params[:q], placeholder: "Search recipients...", autofocus: true, class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced" } %>
       </div>
     <% end %>
+    <button type="button" class="btn shrink-0" data-action="payee-picker#showAdding">
+      <%= inline_icon "plus" %>
+      New
+    </button>
+  </div>
 
   <%= turbo_frame_tag :payee_results_list do %>
     <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
     <% if @payees.any? %>
+      <div class="flex items-center justify-between px-5 pt-2 pb-1 text-sm muted">
+        <span><%= pluralize(@payees.total_count, params[:q].present? ? "result" : "recipient") %></span>
+        <% if @payees.total_pages > 1 %>
+          <nav class="flex items-center gap-2" aria-label="Pagination">
+            <%= pop_icon_to "view-back", path_to_prev_page(@payees) || "#", icon_size: 20, class: "!w-7 !h-7", disabled: @payees.first_page?, "aria-label": "Previous page" %>
+            <span class="tabular-nums"><%= @payees.current_page %> of <%= @payees.total_pages %></span>
+            <%= pop_icon_to "view-forward", path_to_next_page(@payees) || "#", icon_size: 20, class: "!w-7 !h-7", disabled: @payees.last_page?, "aria-label": "Next page" %>
+          </nav>
+        <% end %>
+      </div>
       <% @payees.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
           <%= link_to "", new_recipient_transfer_path(destination, @event, payee_id: payee.hashid), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
@@ -45,7 +44,7 @@
             <span class="badge bg-muted shrink-0 relative z-[1] tooltipped tooltipped--w" aria-label="<%= payee.legal_entity.managing_event.name %> entered this recipient's payout information on their behalf">Managed</span>
           <% end %>
           <% if params[:payee_id].to_s == payee.hashid %>
-            <%= inline_icon "check-thin", class: "success shrink-0" %>
+            <span class="badge bg-success shrink-0">Selected</span>
           <% end %>
 
           <% if policy(payee).update? || policy(payee).archive? %>
@@ -71,19 +70,10 @@
           <% end %>
         </div>
       <% end %>
-      <% if @payees.total_pages > 1 %>
-        <nav class="flex items-center justify-between border-t px-5 py-2" aria-label="Pagination">
-          <span class="text-sm muted">Page <%= @payees.current_page %> of <%= @payees.total_pages %></span>
-          <div class="flex gap-2">
-            <%= pop_icon_to "view-back", path_to_prev_page(@payees) || "#", icon_size: 24, disabled: @payees.first_page?, "aria-label": "Previous page" %>
-            <%= pop_icon_to "view-forward", path_to_next_page(@payees) || "#", icon_size: 24, disabled: @payees.last_page?, "aria-label": "Next page" %>
-          </div>
-        </nav>
-      <% end %>
     <% elsif params[:q].present? %>
-      <div class="px-4 py-3 border-t">
-        <div class="center pt4 pb4 rounded-lg border border-gray-200 dark:border-gray-700 w-full">
-          <p class="muted font-medium mb-2">No results for "<%= params[:q] %>"</p>
+      <div class="px-4 pt-4 pb-6">
+        <div class="center w-full">
+          <p class="muted mb-3">No recipients match "<%= params[:q] %>"</p>
           <button
               type="button"
               class="btn"
@@ -94,6 +84,14 @@
           </button>
         </div>
       </div>
+    <% end %>
+  <% end %>
+
+  <% if destination == "payments" %>
+    <%= link_to new_disbursement_path(source_event_id: @event.slug), class: "flex items-center gap-2 px-5 py-3 text-sm muted no-underline border-0 border-t border-solid border-smoke dark:border-slate", data: { turbo_frame: "_top" } do %>
+      <%= inline_icon "bank-account", size: 20 %>
+      Paying another HCB organization?
+      <span class="ml-auto font-medium text-blue">HCB transfer &rarr;</span>
     <% end %>
   <% end %>
   </div>
