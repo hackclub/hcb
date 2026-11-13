@@ -9,8 +9,14 @@ class DocumentPreviewService
     @disbursement = disbursement
   end
 
+  # Renders the first page of the generated PDF to a PNG with libvips, which
+  # doesn't need Poppler's `pdftoppm` binary (unavailable on Laravel Cloud).
   def run
-    IO.popen(cmd, err: File::NULL).read
+    require "vips"
+
+    image = Vips::Image.pdfload(input.path, page: 0, dpi: 72)
+    image = image.flatten(background: 255) if image.has_alpha?
+    image.write_to_buffer(".png")
   end
 
   private
@@ -53,10 +59,6 @@ class DocumentPreviewService
 
       input
     end
-  end
-
-  def cmd
-    ["pdftoppm", "-singlefile", "-r", "72", "-png", input.path]
   end
 
 end

@@ -244,19 +244,30 @@ class Receipt < ApplicationRecord
     Receipt.none
   end
 
+  # TODO: OCR needs the `tesseract` binary and ImageMagick, neither of which is
+  # available on Laravel Cloud's standard image. Restoring OCR there requires
+  # Private Cloud build add-ons or moving to an external OCR service.
+  def self.tesseract_available?
+    return @tesseract_available if defined?(@tesseract_available)
+
+    @tesseract_available = system("which tesseract", out: File::NULL, err: File::NULL)
+  end
+
   private
 
   def pdf_text
-    doc = if self.attachment_changes["file"]&.attachable
-            Poppler::Document.new(File.read(self.attachment_changes["file"].attachable))
-          else
-            Poppler::Document.new(file.download)
-          end
+    bytes = if self.attachment_changes["file"]&.attachable
+              File.binread(self.attachment_changes["file"].attachable)
+            else
+              file.download
+            end
 
-    doc.pages.map(&:text).join(" ")
+    PDF::Reader.new(StringIO.new(bytes)).pages.map(&:text).join(" ")
   end
 
   def tesseract_ocr_text
+    return nil unless self.class.tesseract_available?
+
     file.blob.open do |tempfile|
       words = ::RTesseract.new(ImageProcessing::MiniMagick.source(tempfile.path).convert!("png").path).to_box
       words = words.select { |w| w[:confidence] > 85 }

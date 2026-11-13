@@ -32,11 +32,5 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     postgresql-client \
     libpq-dev \
     poppler-utils \
-    gir1.2-freedesktop \
-    gir1.2-glib-2.0 \
-    libgirepository-1.0-1 \
-    libgirepository1.0-dev \
-    libpoppler-glib-dev \
-    libcairo-gobject2 \
     yarn \
     imagemagick

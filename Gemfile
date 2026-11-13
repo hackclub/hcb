@@ -72,7 +72,7 @@ gem "monetize", "~> 2.0.0"
 gem "business_time"
 
 
-gem "poppler" # PDF parsing
+gem "pdf-reader" # PDF text extraction (pure Ruby; no GLib/cairo native deps)
 gem "wicked_pdf" # HTML to PDF conversion
 
 gem "write_xlsx" # Export Excel files
@@ -176,8 +176,6 @@ group :development do
   gem "listen", "~> 3.9"
   gem "web-console", ">= 3.3.0"
 
-  gem "letter_opener_web" # preview emails
-
   # Ruby language server
   gem "solargraph", require: false
   gem "solargraph-rails", "~> 1.2.0", require: false
@@ -187,6 +185,10 @@ group :development do
   gem "foreman"
 
   gem "bullet"
+end
+
+group :development, :staging do
+  gem "letter_opener_web" # preview emails
 end
 
 gem "jbuilder", "~> 2.13"
