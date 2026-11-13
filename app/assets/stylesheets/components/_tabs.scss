@@ -30,10 +30,14 @@
     a {
       text-decoration: none;
     }
-    &.active a {
+    // A reactive view can't toggle a class, so its tabs mark the current one
+    // with `aria-current="true"` instead.
+    &.active a,
+    & > a[aria-current='true'] {
       color: map-get($palette, primary) !important;
     }
-    &.active::after {
+    &.active::after,
+    &:has(> a[aria-current='true'])::after {
       content: '';
       position: absolute;
       bottom: 0px;

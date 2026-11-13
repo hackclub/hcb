@@ -1,0 +1,19 @@
+<%# locals: (filters:, initial_tab: filters.first[:label]) %>
+<%# herb:slots client %>
+<%# herb:state (selected_tab: initial_tab) %>
+<%# Rendered inside the filter menu's content, which the menu clones when it opens, so each
+    opening starts again at the first filter. The tab labels come from the controller, and the
+    client can only compare a state to a literal or to another state, so each tab and panel is
+    a partial that holds its label as a state of its own. %>
+
+<div>
+  <% filters.each do |filter| %>
+    <%= render "events/filters/menu_tab", label: filter[:label], state: { selected_tab: selected_tab } %>
+  <% end %>
+
+  <div class="menu__divider"></div>
+
+  <% filters.each do |filter| %>
+    <%= render "events/filters/menu_panel", filter:, state: { selected_tab: selected_tab } %>
+  <% end %>
+</div>

@@ -15,7 +15,9 @@
     }
   }
 
-  &.active .step-tab__number {
+  // A reactive view marks its current step with `aria-current="true"`.
+  &.active .step-tab__number,
+  &[aria-current='true'] .step-tab__number {
     border-color: $blue !important;
   }
 

@@ -1,0 +1,6 @@
+<%# locals: (label:) %>
+<%# herb:slots client %>
+<%# herb:state (selected_tab: "", tab: label) %>
+<%# `selected_tab` is bound by events/filters/_menu_tabs; `tab` is never written. %>
+
+<button type="button" class="filter-tab" value="<%= label %>" aria-current="<%= selected_tab == tab %>" data-herb-set="selected_tab=$value"><%= label.humanize %></button>

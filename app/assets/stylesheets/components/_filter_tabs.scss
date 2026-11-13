@@ -1,4 +1,6 @@
-[data-tabs-target='btn'] {
+// Tab buttons in filter menus. Reactive views mark the selected one with
+// `aria-current="true"`, since they can't toggle a class.
+.filter-tab {
   background: transparent;
   border: none;
   height: 24px;
@@ -24,7 +26,7 @@
     transition-duration: 0.125s;
   }
 
-  &.active {
+  &[aria-current='true'] {
     color: map-get($palette, info);
     font-weight: 500;
     opacity: 1;
@@ -37,7 +39,7 @@
     border-radius: 0;
     padding: 0.5rem 0.7rem;
 
-    &.active {
+    &[aria-current='true'] {
       border-color: map-get($palette, primary);
       color: map-get($palette, primary);
     }
