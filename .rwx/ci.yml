@@ -2,9 +2,25 @@ on:
   cli:
     init:
       commit-sha: ${{ event.git.sha }}
+      pull-request: "true"
+  github:
+    pull_request:
+      init:
+        commit-sha: ${{ event.git.sha }}
+        pull-request: "true"
+      status-checks:
+        name: CI
+    push:
+      - if: ${{ event.git.branch == 'main' || starts-with(event.git.branch, 'gh-readonly-queue/') }}
+        init:
+          commit-sha: ${{ event.git.sha }}
+          pull-request: "false"
+        status-checks:
+          name: CI
   cache-rebuild:
     init:
       commit-sha: ${{ event.git.sha }}
+      pull-request: "false"
 
 base:
   image: ubuntu:24.04
@@ -36,22 +52,24 @@ aliases:
     - .ruby-version
 
   restore-schema: &restore-schema |
-    createdb -h localhost -U postgres bank_test
-    psql -h localhost -U postgres -d bank_test -v ON_ERROR_STOP=1 -q -f tmp/schema.sql > /dev/null
+    docker exec postgres createdb -U postgres bank_test
+    docker exec -i postgres psql -U postgres -d bank_test -v ON_ERROR_STOP=1 -q < tmp/schema.sql > /dev/null
 
   postgres: &postgres
     key: postgres
     terminate-grace-period-seconds: 0
     run: |
-      /usr/lib/postgresql/15/bin/initdb -D /tmp/pgdata -U postgres --auth=trust > /dev/null
-      exec /usr/lib/postgresql/15/bin/postgres -D /tmp/pgdata -c unix_socket_directories=/tmp
-    ready-check: pg_isready -h localhost -U postgres
+      exec docker run --rm --name postgres -p 5432:5432 \
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+        --tmpfs /var/lib/postgresql/data \
+        postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+    ready-check: docker exec postgres pg_isready -h localhost -U postgres
 
   redis: &redis
     key: redis
     terminate-grace-period-seconds: 0
-    run: redis-server --save "" --appendonly no
-    ready-check: redis-cli ping
+    run: exec docker run --rm --name redis -p 6379:6379 redis:latest redis-server --save "" --appendonly no
+    ready-check: docker exec redis redis-cli ping
 
 tasks:
   - key: code
@@ -66,16 +84,11 @@ tasks:
       sudo apt-get install -y libpoppler-glib-dev libpq-dev
       sudo apt-get clean
 
-  - key: services
-    use: system-packages
+  - key: docker-images
+    docker: preserve-data
     run: |
-      sudo install -d /usr/share/postgresql-common/pgdg
-      sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
-      echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-      sudo apt-get update
-      sudo apt-get install -y postgresql-15 redis-server
-      sudo apt-get clean
-      echo /usr/lib/postgresql/15/bin > $RWX_ENV/PATH
+      docker pull postgres:15
+      docker pull redis:latest
 
   - key: chrome
     call: google/install-chrome 2.2.1
@@ -265,14 +278,17 @@ tasks:
           system: []
 
   - key: db-schema
-    use: [bundle-install, services]
+    use: [bundle-install, docker-images]
+    docker: true
+    runner:
+      tmpfs: true
     filter: *rails-app
     background-processes:
       - *postgres
     run: |
       bundle exec rails db:create db:schema:load
       mkdir -p tmp
-      pg_dump -h localhost -U postgres --no-owner --no-privileges --no-comments bank_test > tmp/schema.sql
+      docker exec postgres pg_dump -U postgres --no-owner --no-privileges --no-comments bank_test > tmp/schema.sql
     env: *rails-test-env
     outputs:
       filesystem:
@@ -281,7 +297,10 @@ tasks:
           system: []
 
   - key: annotate
-    use: db-schema
+    use: [db-schema, docker-images]
+    docker: true
+    runner:
+      tmpfs: true
     filter:
       - *rails-app
       - .annotaterb.yml
@@ -296,7 +315,10 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [db-schema, assets, chrome, captain]
+    use: [db-schema, docker-images, assets, chrome, captain]
+    docker: true
+    runner:
+      tmpfs: true
     filter:
       - *rails-app
       - spec
@@ -342,11 +364,14 @@ tasks:
       filesystem: false
 
   - key: reversible-migrations
-    use: db-schema
+    use: [db-schema, docker-images]
+    docker: true
+    runner:
+      tmpfs: true
     filter:
       - *rails-app
       - tmp/schema.sql
-    if: ${{ tasks.new-migrations.values.versions != 'none' }}
+    if: ${{ init.pull-request == 'true' && tasks.new-migrations.values.versions != 'none' }}
     background-processes:
       - *postgres
     run:
