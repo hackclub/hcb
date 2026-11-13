@@ -571,7 +571,7 @@ GEM
       monetize (~> 2.0)
       money (~> 7.0)
       railties (>= 7.0)
-    msgpack (1.8.5)
+    msgpack (1.8.7)
     multi_json (1.21.1)
     multipart-post (2.4.1)
     mustermann (4.0.0)
