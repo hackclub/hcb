@@ -1,34 +1,40 @@
-<div id="screenshot_list" class="flex flex-row gap-4 h-[200px] w-full overflow-x-auto min-w-0">
-    <% screenshots.each do |screenshot| %>
-        <% file_path = rails_blob_path(screenshot, only_path: true, disposition: "inline") %>
-        <% if screenshot.image? %>
-            <% modal_id = "preview_screenshot_#{screenshot.id}" %>
-            <%= image_tag screenshot,
-                          class: "h-100 !w-min-content card min-w-0 !flex-shrink-0 pointer",
-                          alt: screenshot.filename,
-                          title: "Click to enlarge",
-                          data: { behavior: "modal_trigger", modal: modal_id } %>
+<%# locals: (screenshots:) %>
 
-            <section class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="overflow: initial; z-index: 300;">
-                <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
-                    <%= inline_icon "view-close", size: 28, class: "pop modal__close muted m0" %>
-                </a>
-                <div class="bg-smoke dark:bg-darkless flex items-center justify-center" style="border-radius: 0.75rem; padding: 1.5rem; max-height: 85vh;">
+<div id="screenshot_list" class="grant-upload__list">
+    <% if screenshots.any? %>
+        <% screenshots.each do |screenshot| %>
+            <% if screenshot.image? %>
+                <% modal_id = "preview_screenshot_#{screenshot.id}" %>
+                <div class="grant-upload__thumb pointer">
                     <%= image_tag screenshot,
-                                  class: "card p0",
-                                  alt: screenshot.filename,
-                                  style: "object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: calc(85vh - 3rem); min-width: 0px;" %>
+                                  alt: screenshot.filename.to_s,
+                                  title: "Click to enlarge",
+                                  data: { behavior: "modal_trigger", modal: modal_id } %>
                 </div>
-            </section>
-        <% else %>
-            <%= link_to file_path, target: "_blank", rel: "noopener", class: "card flex flex-col items-center justify-center h-100 px-4 !flex-shrink-0 min-w-0 pointer", title: "Open #{screenshot.filename}" do %>
-                <%= inline_icon "docs", size: 32, class: "muted" %>
-                <span class="muted h5 mt1 line-clamp-1"><%= screenshot.filename %></span>
+
+                <section class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="overflow: initial; z-index: 300;">
+                    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
+                        <%= inline_icon "view-close", size: 28, class: "pop modal__close muted m0" %>
+                    </a>
+                    <div class="bg-smoke dark:bg-darkless flex items-center justify-center" style="border-radius: 0.75rem; padding: 1.5rem; max-height: 85vh;">
+                        <%= image_tag screenshot,
+                                      class: "card p0",
+                                      alt: screenshot.filename.to_s,
+                                      style: "object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: calc(85vh - 3rem); min-width: 0px;" %>
+                    </div>
+                </section>
+            <% else %>
+                <%= link_to rails_blob_path(screenshot, only_path: true, disposition: "inline"),
+                            target: "_blank",
+                            rel: "noopener",
+                            class: "grant-upload__thumb flex flex-col items-center justify-center px-4",
+                            title: "Open #{screenshot.filename}" do %>
+                    <%= inline_icon "docs", size: 32, class: "muted" %>
+                    <span class="muted h5 mt1 line-clamp-1"><%= screenshot.filename %></span>
+                <% end %>
             <% end %>
         <% end %>
-    <% end %>
-
-    <% if screenshots.empty? %>
-        <%= blankslate "No screenshots uploaded", class: "w-full flex items-center justify-center" %>
+    <% else %>
+        <p class="grant-upload__empty muted m-0">No screenshots uploaded yet</p>
     <% end %>
 </div>
