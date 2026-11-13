@@ -64,7 +64,6 @@ tasks:
     run: |
       corepack enable
       yarn install --frozen-lockfile
-      yarn cache clean
     runner:
       tmpfs: true
     env:
@@ -73,3 +72,8 @@ tasks:
       - node_modules
       - package.json
       - yarn.lock
+    outputs:
+      filesystem:
+        filter:
+          system:
+            - "!/home/ubuntu/.cache/yarn"
