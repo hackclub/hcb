@@ -49,6 +49,15 @@ A state's default can be one of the view's strict locals, so state that starts f
 
 A partial's states are its own unless the caller binds one to its own: `render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role }`. Use the partial's full path. A partial rendered with a block can't be bound, so pass what the block held as a local instead.
 
+## Patterns
+
+- **Comparing with a value from a loop.** The browser can't compare a state with a loop variable, but it can compare two states. Render each item as a partial that seeds a state from its own value and binds the shared one, then compare them: `hidden="<%= selected_tab != tab %>"` (see `events/filters/_menu_tab`, or `static_pages/_suggested_pairing_slide` for a carousel).
+- **Writing a value that varies per element.** `$value` is the value of the element the event fired on, so a button can carry it: `<button value="<%= id %>" data-herb-set="selected_row=$value">`. Give icons inside it `pointer-events-none`, or a click on the icon reads the icon's value.
+- **Marking the selected item.** A reactive view can't toggle a class, so set an attribute it can, such as `aria-current="<%= selected_tab == "details" %>"`, and style that (`_tabs.scss`, `_filter_tabs.scss`).
+- **Closing on an outside click, resetting before Turbo caches the page.** Actions take targets: `data-herb-set="click@outside->menu_open=false"` (`application/_dropdown_button`), `data-herb-reset="turbo:before-cache@document->selected_row"` (`users/_payout_methods_list`).
+- **Content loaded into a turbo frame** writes the states of the view around the frame, like any other element inside it (`payees/index` inside `payments/_payee_picker`).
+- **Menus and modals that move their content.** The `menu` controller clones its content into `<body>`, and jquery-modal moves its `<section>`. Herb state works there when the whole reactive region is inside the moved element, so render a small reactive partial inside the menu content or the modal section. A menu's copy gets its own state, so each opening starts fresh.
+
 ## When JavaScript is still needed
 
 Anything beyond writing a value (fetching, counting words, focus, browser APIs) stays in a Stimulus controller, which can read and write the states around it:
