@@ -41,4 +41,8 @@ class DonationPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def receipt?
+    update? && (record.in_transit? || record.deposited?)
+  end
+
 end
