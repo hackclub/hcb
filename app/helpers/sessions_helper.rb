@@ -238,7 +238,7 @@ module SessionsHelper
 
     @remembered_organizer_event_ids ||= Rails.cache.fetch(["remembered-organizations", current_session.id], expires_in: 10.minutes) do
       Event.transparent.not_hidden
-           .where(id: Event.self_and_descendant_ids(current_user.events.pluck(:id)))
+           .where(id: Event.self_and_descendant_ids(current_user.events.select(:id)))
            .select(:id)
            .map(&:public_id)
     end

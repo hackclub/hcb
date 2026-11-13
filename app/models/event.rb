@@ -197,22 +197,17 @@ class Event < ApplicationRecord
     Event.where(id: descendant_ids)
   end
 
-  # Ids of the given events plus every event nested under them, in one query.
+  # A subquery of the ids of `roots` plus every event nested under them.
   # Like #descendant_ids, these ids skip the paranoid scope, so read them back
   # through ActiveRecord to drop any that are soft deleted.
-  def self.self_and_descendant_ids(root_ids)
-    return [] if root_ids.empty?
-
-    roots = Event.sanitize_sql_array(["e.id = ANY(ARRAY[?]::bigint[])", root_ids])
-
-    Event.connection.select_values(<<-SQL)
-      WITH RECURSIVE tree AS (
-        SELECT e.id FROM events e WHERE #{roots}
-        UNION
-        SELECT e.id FROM events e INNER JOIN tree t ON e.parent_id = t.id
-      )
-      SELECT id FROM tree;
-    SQL
+  def self.self_and_descendant_ids(roots)
+    unscoped
+      .with_recursive(tree: [
+                        unscoped.where(id: roots).select(:id),
+                        unscoped.joins("INNER JOIN tree ON events.parent_id = tree.id").select(:id)
+                      ])
+      .from("tree")
+      .select(:id)
   end
 
   # The direct sub-organizations `user` may see. #visible_descendant_ids walks
