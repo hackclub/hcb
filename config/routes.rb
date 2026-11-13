@@ -666,6 +666,20 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payroll_positions, only: [:show, :edit, :update], controller: "payroll/positions" do
+    member do
+      get "contract"
+      post "terminate"
+    end
+  end
+
+  resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+    member do
+      post "approve"
+      post "reject"
+    end
+  end
+
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
@@ -1037,18 +1051,8 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
-      member do
-        get :contract
-        post :terminate
-      end
-    end
-    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
-      member do
-        post :approve
-        post :reject
-      end
-    end
+    resources :payroll_positions, only: [:new, :create], controller: "payroll/positions"
+    get "payroll_positions/*path", to: redirect("/payroll_positions/%{path}")
     resources :payees, only: [:index, :create, :update] do
       collection do
         get :check_email

@@ -56,7 +56,7 @@ class PayeesController < ApplicationController
 
       if (position = payee.organizer_resign_position)
         flash[:info] = "The contract was reissued with the new email. Please sign it."
-        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: position.id)
+        redirect_to contract_payroll_position_path(position)
       elsif params[:payee][:redirect_to_destination_id].present?
         redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
       else
