@@ -116,7 +116,7 @@
                   <% else %>
                     <span class="muted">&mdash;</span>
                   <% end %>
-                  <%= link_to "", event_payroll_position_path(event_id: @event.slug, id: contractor),
+                  <%= link_to "", payroll_position_path(contractor),
                         class: "stretched-link",
                         data: contractor_popover_data(contractor) %>
                 </td>

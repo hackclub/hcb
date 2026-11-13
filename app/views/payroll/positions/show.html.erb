@@ -24,13 +24,13 @@
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
             <% if @position.draft? %>
-              <%= link_to edit_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center" do %>
+              <%= link_to edit_payroll_position_path(@position), class: "flex items-center" do %>
                 <%= inline_icon "edit", size: 24 %>
                 Edit and sign
               <% end %>
             <% end %>
             <% if @position.may_mark_terminated? %>
-              <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
+              <%= link_to terminate_payroll_position_path(@position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
                 <%= inline_icon "profile-forbidden", size: 24 %>
                 <%= @position.draft? || @position.under_review? ? "Discard" : "Terminate" %>
               <% end %>
@@ -175,8 +175,8 @@
                 <td class="text-right">
                   <% if invoice.submitted? %>
                     <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+                      <%= button_to "Approve", approve_payroll_invoice_path(invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+                      <%= button_to "Reject", reject_payroll_invoice_path(invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
                     </div>
                   <% end %>
                 </td>
