@@ -297,7 +297,7 @@ tasks:
           system: []
 
   - key: annotate
-    use: [db-schema, docker-images]
+    use: [docker-images, db-schema]
     docker: true
     runner:
       tmpfs: true
@@ -315,7 +315,7 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [db-schema, docker-images, assets, chrome, captain]
+    use: [docker-images, db-schema, assets, chrome, captain]
     docker: true
     runner:
       tmpfs: true
@@ -364,7 +364,7 @@ tasks:
       filesystem: false
 
   - key: reversible-migrations
-    use: [db-schema, docker-images]
+    use: [docker-images, db-schema]
     docker: true
     runner:
       tmpfs: true
