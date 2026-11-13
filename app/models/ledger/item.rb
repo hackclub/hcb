@@ -79,6 +79,7 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
     has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -162,6 +163,11 @@ class Ledger
       return false unless linked_object_type.nil?
 
       ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
+    end
+
+    # The repayment marked between this and another transaction, as opposed to a repayment transfer.
+    def marked_repayment
+      repaying_repayment || repayments.find(&:repaying_ledger_item_id)
     end
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
