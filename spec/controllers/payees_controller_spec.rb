@@ -76,6 +76,27 @@ RSpec.describe PayeesController do
     end
   end
 
+  describe "GET #index" do
+    render_views
+
+    let(:user) { create(:user) }
+    let(:event) { create(:event, organizers: [user]) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create_session(user, verified: true)
+    end
+
+    it "does not show the selected recipient in unrelated search results" do
+      selected = create(:payee, event:, display_name: "Orpheus", email: "orpheus@hackclub.com", legal_entity: nil)
+
+      get :index, params: { event_id: event.slug, payee_id: selected.hashid, q: "Heidi" }
+
+      expect(response.body).not_to include("Select Orpheus")
+      expect(response.body).to include("No results for")
+    end
+  end
+
   describe "GET #check_email" do
     let(:user) { create(:user) }
     let(:event) { create(:event, organizers: [user]) }

@@ -14,8 +14,6 @@ class PayeesController < ApplicationController
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
 
-    @selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
-
     render layout: false
   end
 

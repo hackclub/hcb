@@ -22,11 +22,16 @@
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
     </a>
 
+    <% if destination == "payments" %>
+      <div class="border-t">
+        <%= render "payments/hcb_transfer_option", event: @event %>
+      </div>
+    <% end %>
+
   <%= turbo_frame_tag :payee_results_list do %>
-    <% rows = [@selected, *@payees].uniq.compact %>
     <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
-    <% if rows.any? %>
-      <% rows.each do |payee| %>
+    <% if @payees.any? %>
+      <% @payees.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
           <%= link_to "", new_recipient_transfer_path(destination, @event, payee_id: payee.hashid), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
@@ -66,9 +71,15 @@
           <% end %>
         </div>
       <% end %>
-      <div class="px-4">
-        <%= paginate @payees, per_page_menu: false %>
-      </div>
+      <% if @payees.total_pages > 1 %>
+        <nav class="flex items-center justify-between border-t px-5 py-2" aria-label="Pagination">
+          <span class="text-sm muted">Page <%= @payees.current_page %> of <%= @payees.total_pages %></span>
+          <div class="flex gap-2">
+            <%= pop_icon_to "view-back", path_to_prev_page(@payees) || "#", icon_size: 24, disabled: @payees.first_page?, "aria-label": "Previous page" %>
+            <%= pop_icon_to "view-forward", path_to_next_page(@payees) || "#", icon_size: 24, disabled: @payees.last_page?, "aria-label": "Next page" %>
+          </div>
+        </nav>
+      <% end %>
     <% elsif params[:q].present? %>
       <div class="px-4 py-3 border-t">
         <div class="center pt4 pb4 rounded-lg border border-gray-200 dark:border-gray-700 w-full">
