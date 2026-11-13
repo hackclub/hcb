@@ -353,6 +353,7 @@ module Reimbursement
           wise_recipient_id: params[:wise_recipient_id],
           sent_at: Time.now,
           recipient_phone_number: @report.user.phone_number,
+          allow_unsupported_recipient: true, # already approved and sent, so let it through
         )
         wise_transfer.mark_approved!
         wise_transfer.mark_sent!

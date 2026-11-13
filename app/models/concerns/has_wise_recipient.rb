@@ -22,10 +22,13 @@ module HasWiseRecipient
       end
     end
 
-    # Disable unsupported Wise methods temporarily (Interac / Duitnow)
-    validate on: :create do
-      if unsupported_account_type?
-        errors.add(:base, unsupported_account_type_reason)
+    # Lets ops finish a transfer that was already in flight before its rail/currency was disabled
+    attr_accessor :allow_unsupported_recipient
+
+    # Disable unsupported Wise methods temporarily (Interac / Duitnow / CNY)
+    validate on: :create, unless: :allow_unsupported_recipient do
+      if unsupported_recipient?
+        errors.add(:base, unsupported_recipient_reason)
       end
     end
 
@@ -138,7 +141,7 @@ module HasWiseRecipient
 
   class_methods do
     def unsupported_currencies_supported_by_wire
-      @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - AVAILABLE_CURRENCIES).sort
+      @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - (AVAILABLE_CURRENCIES - UNSUPPORTED_CURRENCIES.keys)).sort
     end
   end
 
@@ -148,6 +151,14 @@ module HasWiseRecipient
 
   def unsupported_account_type_reason
     HasWiseRecipient.unsupported_account_type_reason(account_type)
+  end
+
+  def unsupported_recipient?
+    UNSUPPORTED_CURRENCIES.key?(currency) || unsupported_account_type?
+  end
+
+  def unsupported_recipient_reason
+    UNSUPPORTED_CURRENCIES[currency] || unsupported_account_type_reason
   end
 
   def wise_recipient_url
@@ -195,8 +206,13 @@ module HasWiseRecipient
     rail = UNSUPPORTED_ACCOUNT_TYPES[account_type]
     return nil unless rail
 
-    "Wise transfers via #{rail} are currently not supported due to technical difficulties on Wise's side. We recommend using a local bank transfer instead."
+    "Wise transfers via #{rail} are currently not supported due to technical difficulties on Wise's side. We recommend using a local bank transfer via Wise instead. If that isn't possible, please send an international wire."
   end
+
+  # Kept in AVAILABLE_CURRENCIES so existing transfers and payout methods stay valid; only new ones are blocked.
+  UNSUPPORTED_CURRENCIES = {
+    "CNY" => "Wise transfers in CNY are currently not supported. Please send an international wire instead."
+  }.freeze
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 

@@ -110,14 +110,14 @@ class LegalEntity
     end
 
     # A method is unsupported either because the whole method is deprecated, or
-    # because it pays out over a rail (e.g. Interac) our processor has suspended.
+    # because it pays out over a rail (e.g. Interac) or currency (e.g. CNY) our processor has suspended.
     def unsupported?
-      self.class.unsupported?(details.class) || details.try(:unsupported_account_type?) || false
+      self.class.unsupported?(details.class) || details.try(:unsupported_recipient?) || false
     end
 
     def unsupported_details
       self.class.unsupported_details(details.class) ||
-        (details.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
+        (details.try(:unsupported_recipient?) ? { status_badge: "Unavailable", reason: details.unsupported_recipient_reason } : nil)
     end
 
     def error_messages

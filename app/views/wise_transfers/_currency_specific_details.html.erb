@@ -1,5 +1,12 @@
 <%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
 
+<template x-if="<%= HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys.to_json %>.includes(currency)">
+  <div class="flex items-start gap-1 warning mb2">
+    <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
+    <span x-text="<%= HasWiseRecipient::UNSUPPORTED_CURRENCIES.to_json %>[currency]"></span>
+  </div>
+</template>
+
 <% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
   <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
     <div>

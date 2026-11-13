@@ -64,7 +64,7 @@
       <div class="field">
         <div class="flex items-center g1">
           <div style="width: 72px">
-            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "set_currency($event.target.value)", data: { wise_quote_target: "currency", action: "wise-quote#refresh" } } %>
+            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys }, { "@change" => "set_currency($event.target.value)", data: { wise_quote_target: "currency", action: "wise-quote#refresh" } } %>
           </div>
           <div class="flex flex-col flex-grow">
             <%= form.number_field :amount,
