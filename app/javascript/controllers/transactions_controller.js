@@ -43,13 +43,22 @@ export default class extends Controller {
     const selected = this.selectedValue.slice()
     await Promise.all(
       selected.map(async item => {
-        const response = await fetch(`/hcb/${item}/toggle_tag/${tagId}`, {
-          method: 'POST',
-          headers: {
-            'X-CSRF-Token': csrf(),
-            Accept: 'text/vnd.turbo-stream.html',
-          },
-        })
+        const ledgerItemId =
+          document.getElementById(item)?.dataset?.ledgerItemId
+        if (!ledgerItemId) return
+        const body = new URLSearchParams()
+        body.append('tag_id', tagId)
+        const response = await fetch(
+          `/transactions/${ledgerItemId}/toggle_tag`,
+          {
+            method: 'POST',
+            headers: {
+              'X-CSRF-Token': csrf(),
+              Accept: 'text/vnd.turbo-stream.html',
+            },
+            body,
+          }
+        )
         if (response.ok) {
           const text = await response.text()
           this.toggleHcbCode(document.getElementById(item))
