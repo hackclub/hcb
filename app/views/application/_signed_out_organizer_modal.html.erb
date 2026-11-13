@@ -1,0 +1,13 @@
+<%# locals: () %>
+
+<%# Opened by remembered_organizations_controller when an organizer's session has expired %>
+<section class="modal bg-snow" data-behavior="modal" role="dialog" id="signed_out_organizer" data-remembered-organizations-target="modal">
+  <%= modal_header "You’re signed out" %>
+  <p class="mt-0">
+    You’re seeing <strong><%= @event.name %></strong> the way the public does. Sign in to manage it.
+  </p>
+  <div class="flex flex-wrap gap-2">
+    <%= link_to "Sign in", sign_in_path_returning_here, class: "btn" %>
+    <a href="#close_modal" class="btn bg-muted" rel="modal:close">Keep browsing</a>
+  </div>
+</section>

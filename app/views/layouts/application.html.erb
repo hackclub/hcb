@@ -79,6 +79,7 @@
             <%= render "application/footer" unless @no_app_shell || @hide_footer %>
           </div>
         </article>
+        <%= render "application/signed_out_organizer_modal" if @event&.is_public && !signed_in?(allow_unverified: true) %>
       </main>
     <% else %>
       <%= render "application/banner_container" %>

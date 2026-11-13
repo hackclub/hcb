@@ -25,7 +25,7 @@ RSpec.describe "Remembered organizations", type: :system do
     page.evaluate_script("JSON.parse(localStorage.getItem('hcb:remembered-organizations'))")
   end
 
-  it "nudges the user to sign in after their session expires" do
+  it "prompts the user to sign in after their session expires" do
     user_session = sign_in_as(user)
     visit event_path(event)
     expect(page).to have_css("[data-controller~='remembered-organizations']")
@@ -36,28 +36,29 @@ RSpec.describe "Remembered organizations", type: :system do
 
     expect(page).to have_css(".user-menu-trigger--nudge")
     expect(page).to have_text("You’ve been signed out")
-    expect(page).to have_text("You’re seeing #{event.name} the way the public does.")
-    expect(page).to have_link("Sign in to manage it")
-    expect(page).to have_no_text("has made their finances public")
+    within("#signed_out_organizer") do
+      expect(page).to have_text("You’re signed out")
+      expect(page).to have_text("You’re seeing #{event.name} the way the public does.")
+      return_to = Rack::Utils.parse_query(URI(find_link("Sign in")[:href]).query)["return_to"]
+      expect(URI(return_to).path).to eq(event_path(event))
+    end
   end
 
-  it "lets the user dismiss the signed-out banner for the rest of the session" do
+  it "doesn't reopen the modal once it's closed in the same tab" do
     user_session = sign_in_as(user)
     visit event_path(event)
     expect(page).to have_css("[data-controller~='remembered-organizations']")
 
     user_session.update!(expiration_at: 1.minute.ago)
     visit event_path(event)
-    find("button[aria-label='Dismiss']").click
+    within("#signed_out_organizer") { click_link "Keep browsing" }
 
-    expect(page).to have_no_text("the way the public does")
-    expect(page).to have_text("has made their finances public")
+    expect(page).to have_no_css("#signed_out_organizer", visible: true)
 
     visit event_path(event)
 
-    expect(page).to have_text("has made their finances public")
-    expect(page).to have_no_text("the way the public does")
     expect(page).to have_css(".user-menu-trigger--nudge")
+    expect(page).to have_no_css("#signed_out_organizer", visible: true)
   end
 
   it "does not nudge on organizations the user doesn't manage" do
@@ -72,7 +73,7 @@ RSpec.describe "Remembered organizations", type: :system do
     expect(page).to have_link("Sign in")
     expect(page).to have_no_css(".user-menu-trigger--nudge")
     expect(page).to have_no_text("You’ve been signed out")
-    expect(page).to have_no_text("the way the public does")
+    expect(page).to have_no_css("#signed_out_organizer", visible: true)
   end
 
   it "forgets organizations after an explicit sign out" do
@@ -88,6 +89,7 @@ RSpec.describe "Remembered organizations", type: :system do
 
     expect(page).to have_link("Sign in")
     expect(page).to have_no_css(".user-menu-trigger--nudge")
+    expect(page).to have_no_css("#signed_out_organizer", visible: true)
     expect(remembered_organizations).to be_nil
   end
 end

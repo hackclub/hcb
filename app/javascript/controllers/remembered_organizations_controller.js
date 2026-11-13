@@ -1,7 +1,9 @@
+/* global $ */
+
 import { Controller } from '@hotwired/stimulus'
 
 const STORAGE_KEY = 'hcb:remembered-organizations'
-const DISMISSED_KEY = 'hcb:signed-out-notice-dismissed'
+const DISMISSED_KEY = 'hcb:signed-out-modal-dismissed'
 
 // Web storage throws in some private browsing modes; this is best-effort.
 const safely = (fn, fallback) => {
@@ -13,14 +15,14 @@ const safely = (fn, fallback) => {
 }
 
 // Remembers which transparent organizations the user manages so that, once
-// their session expires, we can nudge them to sign back in when they land on
+// their session expires, we can prompt them to sign back in when they land on
 // one of those organizations in transparency mode.
 //
 // The list intentionally outlives the session. It only holds public
 // organizations, and is cleared on explicit sign out or replaced when someone
 // else signs in on this browser.
 export default class extends Controller {
-  static targets = ['signIn', 'hint', 'publicNotice', 'signedOutNotice']
+  static targets = ['signIn', 'hint', 'modal']
   static values = { eventIds: Array, clear: Boolean, currentEvent: String }
 
   connect() {
@@ -38,21 +40,19 @@ export default class extends Controller {
       this.hintTarget.classList.remove('hidden')
     }
 
-    if (this.hasSignedOutNoticeTarget && !this.dismissed()) {
-      this.showSignedOutNotice(true)
+    if (this.hasModalTarget && !this.dismissed() && !$.modal.isActive()) {
+      this.openModal()
     }
   }
 
-  // Hides the signed-out banner for the rest of this tab's session
-  dismiss() {
-    safely(() => sessionStorage.setItem(DISMISSED_KEY, 'true'))
-    this.showSignedOutNotice(false)
-  }
-
-  showSignedOutNotice(show) {
-    this.signedOutNoticeTarget.classList.toggle('hidden', !show)
-    this.signedOutNoticeTarget.classList.toggle('flex', show)
-    this.publicNoticeTarget.classList.toggle('hidden', show)
+  // However the modal is closed, don't open it again for the rest of this
+  // tab's session; the sign-in nudge stays as a reminder.
+  openModal() {
+    $(this.modalTarget)
+      .one($.modal.CLOSE, () =>
+        safely(() => sessionStorage.setItem(DISMISSED_KEY, 'true'))
+      )
+      .modal({ fadeDuration: 200, closeExisting: false })
   }
 
   dismissed() {
