@@ -73,6 +73,19 @@ RSpec.describe Tax::Form, type: :model do
       expect(legal_entity).not_to be_payable
     end
 
+    # An imported recipient's old transfer record said nothing about its type, so
+    # the first completed form is what establishes one.
+    it "teaches an entity with no type the type on the form it adopts" do
+      untyped = create(:legal_entity, entity_type: nil)
+      untyped_form = create(:tax_form, :sent, legal_entity: untyped)
+
+      untyped_form.mark_completed!
+
+      expect(untyped.reload.entity_type).to eq("person")
+      expect(untyped.tin_hash).to eq(untyped_form.reload.tin_hash)
+      expect(untyped).to be_payable
+    end
+
     it "fingerprints the same taxpayer identically across two forms" do
       form.mark_completed!
 
