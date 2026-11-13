@@ -85,7 +85,7 @@
   <% end %>
 
   <% if destination == "payments" %>
-    <%= link_to new_disbursement_path(source_event_id: @event.slug), class: "flex items-center gap-2 px-5 py-3 text-sm muted no-underline border-0 border-t border-solid border-smoke dark:border-slate", data: { turbo_frame: "_top" } do %>
+    <%= link_to new_disbursement_path(source_event_id: @event.slug), class: "flex items-center gap-2 px-5 mt-2 py-3 pt-4 text-sm muted no-underline border-0 border-t border-solid border-smoke dark:border-slate", data: { turbo_frame: "_top" } do %>
       <%= inline_icon "bank-account", size: 20 %>
       Paying another HCB organization?
       <span class="ml-auto font-medium text-blue">HCB transfer &rarr;</span>
