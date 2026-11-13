@@ -45,6 +45,29 @@ RSpec.describe Payroll::Invoice, type: :model do
     end
   end
 
+  describe "#state_text" do
+    def approved_invoice(payment_state)
+      build_invoice(aasm_state: :approved, payment: create(:payment, payee:, aasm_state: payment_state))
+    end
+
+    it "follows the payment once HCB rejects or cancels it, rather than staying approved", :aggregate_failures do
+      expect(approved_invoice(:rejected)).to have_attributes(state_text: "Payment rejected", state_color: "error")
+      expect(approved_invoice(:canceled)).to have_attributes(state_text: "Payment canceled", state_color: "muted")
+    end
+
+    it "only reads as paid once the payment has actually succeeded", :aggregate_failures do
+      expect(approved_invoice(:sent)).to have_attributes(state_text: "Approved", state_color: "success")
+      expect(approved_invoice(:successful)).to have_attributes(state_text: "Paid", state_color: "success")
+    end
+
+    it "ignores a payment's outcome unless the invoice is approved", :aggregate_failures do
+      paid = create(:payment, :successful, payee:)
+
+      expect(build_invoice(payment: paid)).to have_attributes(state_text: "Submitted", state_color: "warning")
+      expect(build_invoice(aasm_state: :rejected, payment: paid)).to have_attributes(state_text: "Rejected", state_color: "error")
+    end
+  end
+
   describe "#approve" do
     it "refuses to pay an invoice the event can't cover, leaving it reviewable" do
       stub_balance(999)

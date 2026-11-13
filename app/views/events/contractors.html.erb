@@ -63,6 +63,27 @@
     </div>
   </div>
 
+  <% if @pending_invoices.any? %>
+    <%= render "application/callout", type: "warning", title: "#{pluralize(@pending_invoices.size, "invoice")} waiting for your review", class: "mt-0" do %>
+      <% @pending_invoices.each do |invoice| %>
+        <div class="flex items-center justify-between gap-2 py-1">
+          <span>
+            <strong><%= invoice.payroll_position.payee.display_name %></strong>
+            <span class="muted">submitted</span>
+            <%= invoice.name %>
+            <span class="muted">for</span>
+            <%= render_money invoice.amount_cents %>
+            <span class="muted">on</span>
+            <%= format_date invoice.created_at %>
+          </span>
+          <%= link_to "Review", event_payroll_position_path(event_id: @event.slug, id: invoice.payroll_position),
+                class: "bold nowrap",
+                data: contractor_popover_data(invoice.payroll_position) %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/filters/search", form: %>
@@ -95,7 +116,7 @@
                 <span class="flex items-center gap-1">
                   <strong><%= contractor.payee.display_name %></strong>
                   <% if pending.positive? %>
-                    <span class="contractor-review-badge"><%= pending %></span>
+                    <span class="badge bg-warning nowrap"><%= pluralize(pending, "invoice") %> to review</span>
                   <% end %>
                 </span>
                 <% if show_details %>

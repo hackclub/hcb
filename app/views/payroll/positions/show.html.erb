@@ -147,19 +147,26 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <tr>
+            <tr id="<%= dom_id(invoice) %>">
               <td>
-                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <span class="badge ml-0 bg-<%= invoice.state_color %> nowrap"><%= invoice.state_text %></span>
               </td>
               <td>
                 <% if invoice.reviewed_by.present? %>
                   <%= invoice.reviewed_by.name %>
+                  <span class="muted block"><%= format_date(invoice.approved_at || invoice.rejected_at) %></span>
                 <% else %>
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
-                <%= invoice.name %>
+              <td style="max-width: 25ch;">
+                <div class="overflow-hidden truncate" title="<%= invoice.name %>"><%= invoice.name %></div>
+                <span class="muted text-xs">
+                  Submitted <%= format_date invoice.created_at %>
+                  <% if invoice.payment.present? && organizer_signed_in? %>
+                    &middot; <%= link_to "View payment", payment_path(invoice.payment), class: "muted", data: payment_popover_data(invoice.payment) %>
+                  <% end %>
+                </span>
               </td>
               <td>
                 <% if invoice.receipts.any? %>
@@ -209,8 +216,12 @@
                 <span class="badge bg-<%= payment.state_color %>"><%= payment.state_text %></span>
               </td>
               <td><%= format_date payment.created_at %></td>
-              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
-                <%= payment.purpose %>
+              <td style="max-width: 25ch;">
+                <div class="overflow-hidden truncate" title="<%= payment.purpose %>"><%= payment.purpose %></div>
+                <% invoice_receipt = payment.payroll_invoice&.receipts&.first %>
+                <% if invoice_receipt&.file&.attached? %>
+                  <%= link_to "View invoice", url_for(invoice_receipt.file), class: "muted text-xs relative z-10", data: { turbo_frame: "_top" } %>
+                <% end %>
               </td>
               <td class="text-right">
                 <%= render_money payment.amount %>

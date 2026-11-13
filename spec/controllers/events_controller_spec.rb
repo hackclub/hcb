@@ -697,10 +697,51 @@ RSpec.describe EventsController do
     render_views
 
     let(:event) { create(:event, plan_type: Event::Plan::Standard, is_public: true) }
+    let!(:position) { create(:payroll_position, payee: create(:payee, event:, display_name: "Casey Contractor", email: "casey.contractor@example.com")) }
 
     before do
       Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
-      create(:payroll_position, payee: create(:payee, event:, display_name: "Casey Contractor", email: "casey.contractor@example.com"))
+    end
+
+    def create_invoice(position, name, aasm_state: :submitted)
+      position.invoices.create!(name:, amount_cents: 50_00, currency: position.currency, aasm_state:)
+    end
+
+    context "with invoices awaiting review" do
+      before do
+        allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+        create_invoice(position, "Pending invoice")
+      end
+
+      it "hides them from signed out visitors" do
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Pending invoice", "to review", "waiting for your review")
+      end
+
+      it "hides them from organizers who can't review invoices" do
+        member = create(:user)
+        create(:organizer_position, event:, user: member, role: :member)
+        create_session(member, verified: true)
+
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Pending invoice", "to review", "waiting for your review")
+      end
+
+      it "lists only this organization's unreviewed invoices to a reviewer", :aggregate_failures do
+        create_invoice(position, "Approved invoice", aasm_state: :approved)
+        create_invoice(position, "Rejected invoice", aasm_state: :rejected)
+        create_invoice(create(:payroll_position), "Other organization invoice")
+        sign_in_organizer_of(event)
+
+        get(:contractors, params: { event_id: event.slug })
+
+        expect(response.body).to include("1 invoice waiting for your review", "Pending invoice", "1 invoice to review")
+        expect(response.body).not_to include("Approved invoice", "Rejected invoice", "Other organization invoice")
+      end
     end
 
     context "as a signed out visitor" do

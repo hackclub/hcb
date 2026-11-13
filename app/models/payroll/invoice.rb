@@ -71,10 +71,25 @@ module Payroll
       end
     end
 
+    # Once approved, an invoice follows its payment, e.g. when HCB rejects the payment.
+    def payment_outcome
+      payment&.aasm_state&.to_sym.presence_in(%i[successful rejected canceled]) if approved?
+    end
+
+    def state_text
+      case payment_outcome
+      when :successful then "Paid"
+      when :rejected then "Payment rejected"
+      when :canceled then "Payment canceled"
+      else aasm_state.humanize
+      end
+    end
+
     def state_color
-      case aasm_state.to_sym
-      when :approved then "success"
+      case payment_outcome || aasm_state.to_sym
+      when :approved, :successful then "success"
       when :rejected then "error"
+      when :canceled then "muted"
       else "warning"
       end
     end

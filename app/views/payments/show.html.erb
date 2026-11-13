@@ -68,6 +68,13 @@
           <strong>Contractor</strong>
           <%= link_to @payment.payee.display_name, event_payroll_position_path(@payment.event, @payment.payroll_position) %>
         </p>
+        <p>
+          <strong>Invoice</strong>
+          <span>
+            <%= link_to @payment.payroll_invoice.name, event_payroll_position_path(@payment.event, @payment.payroll_position, anchor: dom_id(@payment.payroll_invoice)) %>
+            <span class="muted">submitted <%= format_date @payment.payroll_invoice.created_at %></span>
+          </span>
+        </p>
       <% end %>
       <p>
         <strong>Status</strong>
