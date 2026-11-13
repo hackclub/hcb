@@ -1,0 +1,48 @@
+on:
+  cli:
+    init:
+      commit-sha: ${{ event.git.sha }}
+
+base:
+  image: ubuntu:26.04
+  config: rwx/base 1.2.1
+
+tasks:
+  - key: code
+    call: git/clone 2.4.1
+    with:
+      repository: https://github.com/hackclub/hcb.git
+      ref: ${{ init.commit-sha }}
+      preserve-git-dir: true
+
+  - key: setup
+    use: code
+    call: ${{ run.dir }}/packages/setup.yml
+
+  - key: sandbox
+    use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome]
+    docker: true
+    runner:
+      tmpfs: true
+    background-processes:
+      - key: postgres
+        terminate-grace-period-seconds: 0
+        run: |
+          exec docker run --rm --name postgres --network host \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+            --tmpfs /var/lib/postgresql/data \
+            postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+        ready-check: docker exec postgres pg_isready -h localhost -U postgres
+      - key: redis
+        terminate-grace-period-seconds: 0
+        run: exec docker run --rm --name redis --network host redis:latest redis-server --save "" --appendonly no
+        ready-check: docker exec redis redis-cli ping
+    env:
+      RAILS_ENV: test
+      CI: true
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+      REDIS_URL: redis://localhost:6379
+    run: |
+      bundle exec rails db:create db:schema:load
+      yarn build && yarn build:css
+      rwx-sandbox
