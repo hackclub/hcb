@@ -402,28 +402,31 @@ module ApplicationHelper
     capture { link_to(name, uri.to_s, *options) }
   end
 
-  def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
-    return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
-      (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **options[:button_options] do
-          (inline_icon options[:button_icon]) +
-          (content_tag :span, template.call(options[:options][0][1]), class: "truncate", data: { "dropdown-button-target": "text", "template": template })
-        end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+  # A split button: the main button submits the form with the option checked in
+  # the menu its caret opens. `options` are [title, value, description] triples.
+  #
+  # The markup with caller-supplied attributes is built here, because Herb would
+  # mis-compile those hashes in a reactive template. The reactive
+  # `application/dropdown_button` partial only owns whether the menu is open, and
+  # CSS shows the label of whichever option is checked.
+  def dropdown_button(form:, name:, options:, button_icon:, button_class: "bg-success", template: ->(value) { value }, button_options: {}, button_container_options: {}, menu_class: nil, **html_options)
+    labels = options.map { |(_title, value)| tag.span(template.call(value), class: "dropdown-button__label truncate") }
+
+    button = content_tag(:div, class: "dropdown-button__container", **button_container_options) do
+      content_tag(:button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **button_options) do
+        inline_icon(button_icon) + safe_join(labels)
+      end +
+        content_tag(:button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { herb_toggle: "menu_open" }) do
           inline_icon "down-caret", class: "!mr-0"
-        end)
-      end) +
-      (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
-        content_tag :div do
-          options[:options].map.with_index do |option, index|
-            (options[:form].radio_button sanitize(options[:name]), option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": sanitize(template.call(option[1])) } }) +
-            (options[:form].label sanitize(options[:name]), value: option[1] do
-              (tag.strong sanitize(option[0])) + (tag.p sanitize(option[2]))
-            end)
-          end.join.html_safe
         end
-      end)
     end
+
+    radios = safe_join(options.map.with_index do |(title, value, description), index|
+      form.radio_button(name, value, checked: index.zero?, data: { herb_set: "click->menu_open=false" }) +
+        form.label(name, value:) { tag.strong(sanitize(title)) + tag.p(sanitize(description)) }
+    end)
+
+    render "application/dropdown_button", button:, radios:, menu_class:, wrapper_class: html_options[:class]
   end
 
   # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
