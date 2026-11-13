@@ -226,6 +226,8 @@ gem "pstore"
 
 gem "cgi"
 
+gem "ostruct"
+
 gem "bcrypt", "~> 3.1.22"
 
 gem "prosemirror_to_html"

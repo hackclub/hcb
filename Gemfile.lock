@@ -1028,6 +1028,7 @@ DEPENDENCIES
   money-rails (~> 3.0.0)
   namae
   nondisposable
+  ostruct
   paper_trail (~> 17.0.0)
   pdf-reader
   pg (>= 0.18, < 2.0)
