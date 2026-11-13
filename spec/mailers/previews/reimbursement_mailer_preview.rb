@@ -26,6 +26,11 @@ class ReimbursementMailerPreview < ActionMailer::Preview
     ReimbursementMailer.with(reimbursement_payout_holding: @payout_holding, reason: "The recipient's account details were invalid").wise_transfer_failed
   end
 
+  def failed_payout_reminder
+    @payout_holding = Reimbursement::PayoutHolding.last
+    ReimbursementMailer.with(reimbursement_payout_holding: @payout_holding, days: 3).failed_payout_reminder
+  end
+
   def expenses_approved
     @expense = Reimbursement::Expense.last
     @report = @expense.report
