@@ -127,6 +127,12 @@
       <strong>Amount</strong>
       +<%= render_money @donation.amount %>
     </p>
+    <% if policy(@donation).receipt? %>
+      <p>
+        <strong>Receipt</strong>
+        <%= link_to "Download receipt", receipt_donation_path(@donation, format: :pdf), data: { turbo: false } %>
+      </p>
+    <% end %>
     <% if @donation.message.present? %>
     <p>
       <strong>Message</strong>

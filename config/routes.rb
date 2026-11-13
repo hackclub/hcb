@@ -691,6 +691,10 @@ Rails.application.routes.draw do
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
 
   resources :donations, only: [:show, :update] do
+    member do
+      get "receipt"
+    end
+
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
