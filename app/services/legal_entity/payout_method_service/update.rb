@@ -88,9 +88,13 @@ class LegalEntity
         (failed + draft).each do |report|
           safely do
             ActiveRecord::Base.transaction do
+              payout_holding = report.payout_holding
+              payout_holding&.lock!
+              next if payout_holding&.unresolved_payout?
+
               report.update!(legal_entity_payout_method: @payout_method)
               report.convert_report_currency!(@payout_method.currency) if report.mismatched_currency?
-              report.payout_holding.mark_settled! if report.payout_holding&.failed?
+              payout_holding.mark_settled! if payout_holding&.failed?
             end
           end
         end
