@@ -1,5 +1,5 @@
 # Local development image, built by docker-compose.yml (see docker_setup.sh and docker_start.sh).
-FROM ruby:3.4.13
+FROM ruby:4.0.10
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
