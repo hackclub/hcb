@@ -13,7 +13,9 @@
 
   <%= turbo_frame_tag :payee_results_list do %>
     <% rows = [@selected, *@payees].uniq.compact %>
-    <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
+    <%# The query goes into the picker's name field, or its email field when it is an
+        email; the other is cleared. The icon ignores clicks so `$value` is the button's. %>
+    <% prefill, cleared = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? ? %w[selected_email selected_name] : %w[selected_name selected_email] %>
     <% if rows.any? %>
       <% rows.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
@@ -65,9 +67,9 @@
           <button
               type="button"
               class="btn"
-              data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>"
-              data-payee-picker-is-email-param="<%= is_email_query %>">
-            <%= inline_icon "plus", size: 16 %>
+              value="<%= params[:q] %>"
+              data-herb-set="selected_panel=new <%= prefill %>=$value <%= cleared %>=''">
+            <%= inline_icon "plus", size: 16, class: "pointer-events-none" %>
             Add "<%= params[:q] %>" as a new recipient
           </button>
         </div>
@@ -75,7 +77,7 @@
     <% end %>
   <% end %>
 
-    <a class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAdding">
+    <a class="btn btn--list-item border-t rounded-none w-full" data-herb-set="selected_panel=new">
       <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
         <%= inline_icon "plus", size: 18 %>
       </div>

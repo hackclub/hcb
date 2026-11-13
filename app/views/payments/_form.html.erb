@@ -14,7 +14,7 @@
     <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
   <% end %>
 
-  <div data-controller="payee-picker">
+  <div>
     <% unless disabled && payee.nil? %>
       <% if editing %>
         <div data-scroll-seek-target="section">
