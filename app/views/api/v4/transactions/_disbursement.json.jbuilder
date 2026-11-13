@@ -15,6 +15,13 @@ object_shape(json, disbursement) do
   json.outgoing_transaction_id outgoing_hcb_code.public_id
   json.incoming_transaction_id incoming_hcb_code.public_id
   json.amount_cents disbursement.amount
+  json.transfer_type disbursement.transfer_type
+
+  # The repaid expense is in the destination, which the viewer may not see.
+  json.repays disbursement.repaid_ledger_items do |item|
+    visible = item.hcb_code.present? && policy(item.hcb_code).show?
+    json.id(visible ? item.hcb_code.public_id : nil)
+  end
 
   json.from do
     json.partial! "api/v4/events/event", event: disbursement.source_event

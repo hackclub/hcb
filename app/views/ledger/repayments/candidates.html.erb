@@ -1,0 +1,25 @@
+<%= turbo_frame_tag "repayment_candidates" do %>
+  <% if @candidates.any? %>
+    <p class="muted text-sm mt-0 mb-2"><%= page_entries_info @candidates, entry_name: "transaction" %></p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><%# icon %></th>
+            <th>Date</th>
+            <th>Memo</th>
+            <th class="text-right">Amount</th>
+            <th><%# choose %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: "ledger/repayments/candidate", collection: @candidates, locals: { ledger_item: @item } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%= paginate @candidates, per_page_menu: false %>
+  <% else %>
+    <%= blankslate "No transactions of exactly #{@item.amount.abs.format} to match" %>
+  <% end %>
+<% end %>

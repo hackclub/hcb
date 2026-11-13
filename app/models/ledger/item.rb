@@ -79,6 +79,7 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
     has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -162,6 +163,30 @@ class Ledger
       return false unless linked_object_type.nil?
 
       ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
+    end
+
+    # Transactions that paid this one back, by transfer or by money in on the
+    # same ledger. Filters in memory so preloaded repayments are used.
+    def repaid_by_items
+      # A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one.
+      repayments.reject(&:failed?).filter_map do |r|
+        r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item
+      end
+    end
+
+    # Transactions this one paid back.
+    def repays_items
+      if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"])
+        linked_object.disbursement.repaid_ledger_items.to_a
+      else
+        [repaying_repayment&.repaid_ledger_item].compact
+      end
+    end
+
+    # The repayment marked between this and another transaction on its
+    # ledger, if any. Transfers are undone by rejecting them instead.
+    def marked_repayment
+      repaying_repayment || repayments.find(&:repaying_ledger_item_id)
     end
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
