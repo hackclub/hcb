@@ -1,9 +1,9 @@
-<%# locals: (destination_event:) %>
+<%# locals: (destination_event:, selected_transactions: []) %>
 
 <%# Rendered outside the transfer form: the modal has a form of its own, and opening it moves it to the end of the page anyway. %>
-<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="repayment_picker" data-controller="repayment-picker">
-  <%= modal_header "Which transaction are you repaying?" %>
-  <p class="muted mt-0">Pick the expense you're paying back. You can only repay a settled expense once.</p>
+<%= tag.section class: "modal modal--scroll modal--wide bg-snow", data: { behavior: "modal", controller: "repayment-picker transaction-selection", transaction_selection_transactions_value: selected_transactions, action: "transaction-selection:change->repayment-picker#selectionChanged repayment-picker:reset->transaction-selection#clear" }, role: "dialog", id: "repayment_picker" do %>
+  <%= modal_header "Which transactions are you repaying?" %>
+  <p class="muted mt-0">Pick the expenses you're paying back. Each selected expense will be repaid in full. You can only repay a settled expense once.</p>
 
   <%= form_with url: repayable_transactions_disbursements_path, method: :get, class: "flex flex-col gap-2 mb-4", data: { turbo_frame: "repayable_transactions", controller: "form", repayment_picker_target: "form" } do |form| %>
     <%= form.hidden_field :destination_event_id, value: destination_event&.public_id, data: { repayment_picker_target: "destination" } %>
@@ -31,7 +31,13 @@
     </div>
   <% end %>
 
+  <%= render "disbursements/selection" %>
+
   <%= turbo_frame_tag "repayable_transactions", src: (repayable_transactions_disbursements_path(destination_event_id: destination_event.public_id) if destination_event), loading: :lazy, data: { repayment_picker_target: "frame" } do %>
     <%= render "application/loading_container", klass: "py-8" %>
   <% end %>
-</section>
+
+  <div class="flex justify-end mt-4">
+    <button type="button" class="btn btn-small bg-blue" data-action="repayment-picker#done">Done</button>
+  </div>
+<% end %>
