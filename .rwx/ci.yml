@@ -115,31 +115,6 @@ tasks:
       node-version-file: .node-version
     filter: [.node-version]
 
-  - key: rspec-abq
-    use: ruby
-    run: |
-      gem install rspec-abq -v 1.2.3 --no-document --ignore-dependencies --install-dir /home/ubuntu/rspec-abq
-      cat > /home/ubuntu/rspec-abq/runner.rb <<'RB'
-      require "rspec/abq"
-
-      RSpec.configure do |config|
-        config.before(:suite) do
-          SimpleCov.command_name "RSpec #{ENV.fetch("COVERAGE_NAME")}" if defined?(SimpleCov)
-        end
-      end
-      RB
-      mkdir -p /home/ubuntu/bin
-      cat > /home/ubuntu/bin/abq-rspec <<'SH'
-      #!/bin/bash
-      n=${ABQ_RUNNER:-1}
-      export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
-      export REDIS_URL=redis://localhost:6379/$n
-      export COVERAGE_NAME=${RETRY:+retry }$n
-      exec bundle exec rspec -I /home/ubuntu/rspec-abq/gems/rspec-abq-1.2.3/lib -r /home/ubuntu/rspec-abq/runner.rb --tag '~skip' "$@"
-      SH
-      chmod +x /home/ubuntu/bin/abq-rspec
-      echo /home/ubuntu/bin > $RWX_ENV/PATH
-
   - key: bundle-install
     use: [system-packages, code, ruby]
     tool-cache: ci-bundle-install-v2
@@ -343,7 +318,7 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [docker-images, db-schema, assets, chrome, captain, abq, rspec-abq]
+    use: [docker-images, db-schema, assets, chrome, captain, abq]
     docker: true
     runner:
       cpus: 16
@@ -363,13 +338,23 @@ tasks:
       - *restore-schema
       - |
         for n in $(seq 1 $ABQ_RUNNERS); do docker exec postgres createdb -U postgres -T bank_test bank_test$n; done
+        cat > /tmp/abq-rspec <<'SH'
+        #!/bin/bash
+        n=${ABQ_RUNNER:-1}
+        export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
+        export REDIS_URL=redis://localhost:6379/$n
+        export TEST_ENV_NUMBER=${RETRY:+retry}$n
+        exec bundle exec rspec --tag '~skip' "$@"
+        SH
+        chmod +x /tmp/abq-rspec
         captain run hcb-rspec \
-          --command "abq test --local --test-strategy by-file --reporter rwx-v1-json=tmp/abq.json -- abq-rspec" \
-          --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- abq-rspec {{ tests }}" \
+          --command "abq test --local --test-strategy by-file --reporter rwx-v1-json=tmp/abq.json -- /tmp/abq-rspec" \
+          --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- /tmp/abq-rspec {{ tests }}" \
           --retries 1 \
+          --fail-on-duplicate-test-id \
           --test-results tmp/abq.json \
           --print-summary
-        bundle exec ruby -r simplecov -e 'SimpleCov.command_name "merge"'
+        TEST_ENV_NUMBER=merge bundle exec ruby -r simplecov -e ''
     env:
       <<: *rails-test-env
       ABQ_RUNNERS: "15"
