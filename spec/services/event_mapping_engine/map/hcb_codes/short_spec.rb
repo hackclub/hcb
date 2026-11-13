@@ -24,11 +24,11 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     event = create(:event)
     subledger = create(:subledger, event:)
 
+    charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
     cpt = create(:canonical_pending_transaction, amount_cents: -42_34)
     cpt.create_canonical_pending_event_mapping!(event:, subledger:)
     hcb_code = cpt.local_hcb_code
 
-    charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
     create(:canonical_event_mapping, canonical_transaction: charge, event:, subledger:)
     # Mapping a transaction rewrites its HCB code, so group it onto the pending
     # transaction's code afterwards.
