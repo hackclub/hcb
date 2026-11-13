@@ -3,6 +3,11 @@
 require "rails_helper"
 
 RSpec.describe HcbCode, type: :model do
+  def stub_payment_legal_entity(payment)
+    legal_entity = double("LegalEntity", payable?: false, default_payout_method: nil).as_null_object
+    allow(payment).to receive(:legal_entity).and_return(legal_entity)
+  end
+
   describe "disbursement integration" do
     describe "#outgoing_disbursement?" do
       it "returns true for HCB-500-* codes" do
@@ -335,6 +340,32 @@ RSpec.describe HcbCode, type: :model do
         comment = create(:comment, commentable: hcb_code, user:)
 
         expect(hcb_code.all_comments).to include(comment)
+      end
+
+      context "when the code belongs to a payment payout" do
+        let(:event) { create(:event, :with_positive_balance) }
+        let(:payee) { create(:payee, event:) }
+        let(:payment) do
+          p = build(:payment, payee:)
+          stub_payment_legal_entity(p)
+          p.save!
+          p
+        end
+        let(:wire) { create(:wire, account_number: "DE89370400440532013000", event:) }
+
+        before do
+          stub_request(:get, /api\.column\.com\/institutions/).to_return_json(status: 200, body: { country_code: "DE" })
+          create(:payment_attempt, :wire, payment:, payout: wire, payout_method: create(:legal_entity_payout_method_wire, details: build(:wire_payout_method_details, account_number: "DE89370400440532013000", bic_code: "DEUTDEDB", recipient_country: :DE, address_city: "Berlin", address_postal_code: "10115", address_state: "Berlin")))
+        end
+
+        it "includes comments on both the HcbCode and the Payment" do
+          hcb_code = wire.local_hcb_code
+          hcb_code_comment = create(:comment, commentable: hcb_code, user:)
+          payment_comment = create(:comment, commentable: payment, user:)
+
+          expect(hcb_code.payment).to eq(payment)
+          expect(hcb_code.all_comments).to contain_exactly(hcb_code_comment, payment_comment)
+        end
       end
     end
 
