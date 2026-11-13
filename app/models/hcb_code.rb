@@ -697,14 +697,15 @@ class HcbCode < ApplicationRecord
   end
 
   def comment_recipients_for(comment)
+    events = self.events.includes(:users, :point_of_contact).to_a
     users = []
     users += self.comments.includes(:user).map(&:user)
     users += self.comments.flat_map(&:mentioned_users)
-    users += self.events.includes(:users).flat_map(&:users).reject(&:my_threads?)
+    users += events.flat_map(&:users).reject(&:my_threads?)
     users += [author] if author
 
     if comment.admin_only?
-      users += self.events.includes(:point_of_contact).map(&:point_of_contact)
+      users += events.filter_map(&:point_of_contact)
       return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
