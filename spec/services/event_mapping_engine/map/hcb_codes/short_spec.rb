@@ -24,6 +24,8 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     event = create(:event)
     subledger = create(:subledger, event:)
 
+    # A canonical and a pending transaction with the same id share an HCB code,
+    # and only the pending one accepts a code that already has a ledger item.
     charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
     cpt = create(:canonical_pending_transaction, amount_cents: -42_34)
     cpt.create_canonical_pending_event_mapping!(event:, subledger:)
