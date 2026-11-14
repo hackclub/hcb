@@ -54,8 +54,8 @@ module SetLedgerFilters
       reject_disabled_filters
       return if performed?
 
-      if params[:tag]
-        @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
+      if string_param(:tag)
+        @tag = Tag.find_by(event_id: @event.id, label: string_param(:tag))
       end
 
       # A filter that doesn't resolve narrows nothing, like a tag that doesn't
@@ -71,7 +71,7 @@ module SetLedgerFilters
       @missing_receipts = params[:missing_receipts].present?
       @merchant = string_param(:merchant)
       @direction = string_param(:direction)
-      @category = TransactionCategory.find_by(slug: params[:category])
+      @category = string_param(:category)&.then { |slug| TransactionCategory.find_by(slug:) }
 
       @ledger = @event.ledger
       @ledgers = if @use_card_grant_ledgers
