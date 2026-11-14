@@ -3,12 +3,14 @@
 require "rails_helper"
 
 RSpec.describe Event::ApplicationSyncToAirtableJob do
-  # Stands in for an Airrecord row: records the fields the job writes.
+  # Stands in for an existing Airrecord row and records the fields the job
+  # writes. It starts with a field set, like a real row, so the job takes its
+  # "update existing record" path (an empty Hash would read as blank).
   let(:airrecord) do
     Class.new(Hash) do
       def save = true
       def id = "recTEST123"
-    end.new
+    end.new.merge!("HCB Application ID" => "existing")
   end
 
   before do
@@ -17,6 +19,8 @@ RSpec.describe Event::ApplicationSyncToAirtableJob do
 
   it "syncs 'Previously applied?' from previously_applied, not currently_fiscally_sponsored" do
     application = create(:event_application, previously_applied: true, currently_fiscally_sponsored: false)
+
+    expect(application).not_to receive(:with_lock) # the new-record path
 
     described_class.perform_now(application)
 
