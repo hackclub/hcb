@@ -314,6 +314,64 @@ RSpec.describe EventsController do
         expect(response.body).not_to include("Declined with no amount")
       end
 
+      # The old ledger's export quietly ignored the page's filters and handed
+      # back the whole organization. This one exports what you're looking at,
+      # and the menu says which of the two you're getting.
+      describe "the export menu" do
+        before do
+          [["Coffee", -500], ["Donation from Fiona", 2_000]].each do |memo, amount_cents|
+            item = create(:ledger_item, custom_memo: memo, datetime: Time.current)
+            Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+            item.update_columns(amount_cents:, ct_count: 1)
+          end
+        end
+
+        it "offers the whole ledger when nothing is filtered" do
+          get(:ledger, params: { event_id: event.slug })
+
+          expect(response.body).to include("Exports cover every transaction in this ledger.")
+          expect(response.body).to include("All 2 transactions (CSV)")
+          expect(response.body).to include("/exports/ledger/#{event.slug}.csv")
+        end
+
+        it "offers only the filtered transactions, and carries the filter to the export" do
+          get(:ledger, params: { event_id: event.slug, direction: "expenses" })
+
+          expect(response.body).to include("Exports cover only the transactions matching your filters.")
+          expect(response.body).to include("1 filtered transaction (CSV)")
+          expect(response.body).to include("/exports/ledger/#{event.slug}.csv?direction=expenses")
+        end
+
+        it "names the merchant being filtered by" do
+          get(:ledger, params: { event_id: event.slug, merchant: "abc" })
+
+          expect(response).to be_successful
+          expect(response.body).to include("Merchant abc")
+        end
+
+        it "renders when a date filter doesn't parse" do
+          get(:ledger, params: { event_id: event.slug, start: "not-a-date" })
+
+          expect(response).to be_successful
+          expect(response.body).to include("All 2 transactions (CSV)")
+        end
+
+        it "offers only the statements when the filter matches nothing" do
+          get(:ledger, params: { event_id: event.slug, q: "zzz" })
+
+          expect(response).to be_successful
+          expect(response.body).to include("nothing to export", "Monthly statements")
+          expect(response.body).not_to include("(CSV)")
+        end
+
+        it "offers the whole ledger when the filter resolves to nothing" do
+          get(:ledger, params: { event_id: event.slug, tag: "nonexistent" })
+
+          expect(response.body).to include("Exports cover every transaction in this ledger.")
+          expect(response.body).to include("All 2 transactions (CSV)")
+        end
+      end
+
       context "receipt drag and drop" do
         let!(:hcb_code) { create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code }
 

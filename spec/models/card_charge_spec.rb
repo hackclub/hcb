@@ -3,6 +3,25 @@
 require "rails_helper"
 
 RSpec.describe CardCharge, type: :model do
+  describe "#merchant_data" do
+    let(:charge) { described_class.create!(merchant_network_id: "MERCHANT-1") }
+    let(:older) { build(:raw_stripe_transaction, id: 1, stripe_merchant_category: "bakeries") }
+    let(:newer) { build(:raw_stripe_transaction, id: 2, stripe_merchant_category: "taxicabs_limousines") }
+
+    it "reads the newest settled transaction whatever order they were loaded in" do
+      allow(charge).to receive(:raw_stripe_transactions).and_return([newer, older])
+
+      expect(charge.merchant_data["category"]).to eq("taxicabs_limousines")
+    end
+
+    it "falls back to the authorization" do
+      allow(charge).to receive(:raw_stripe_transactions).and_return([])
+      allow(charge).to receive(:raw_pending_stripe_transaction).and_return(older)
+
+      expect(charge.merchant_data["category"]).to eq("bakeries")
+    end
+  end
+
   describe "creating a RawPendingStripeTransaction" do
     it "creates a CardCharge for the authorization" do
       rpst = create(:raw_pending_stripe_transaction)

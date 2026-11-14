@@ -6,6 +6,53 @@ RSpec.describe "Transaction exports", type: :request do
   let(:event) { create(:event, is_public: true) }
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
+  describe "GET /exports/:event with no extension" do
+    it "serves CSV to a client that accepts anything, as curl does" do
+      get "/exports/#{event.slug}", headers: { "Accept" => "*/*" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/csv")
+    end
+
+    it "serves the format the Accept header asks for" do
+      get "/exports/#{event.slug}", headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/json")
+    end
+  end
+
+  describe "GET /exports/collect_email" do
+    it "sends a request with nothing to export back to the homepage" do
+      get "/exports/collect_email"
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "sends the filters back with the address, as form fields" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "ledger", q: "Coffee" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("action=\"/exports/ledger/#{event.slug}.csv\"")
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="q"[^>]*>/)
+      expect(response.body).to match(/<input [^>]*name="q"[^>]*value="Coffee"[^>]*>|<input [^>]*value="Coffee"[^>]*name="q"[^>]*>/)
+    end
+
+    it "sends nothing extra back for a legacy export" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "transactions" }
+
+      expect(response.body).to include("action=\"/exports/#{event.slug}.csv\"")
+      expect(response.body).not_to include("name=\"q\"")
+    end
+
+    it "sends a legacy export's date range back as form fields" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "transactions", start_date: "2024-01-01", end_date: "2024-01-31" }
+
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="start_date"[^>]*>/)
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="end_date"[^>]*>/)
+    end
+  end
+
   describe "GET /exports/:event.pdf" do
     it "renders the statement for a valid month" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month }
@@ -96,8 +143,14 @@ RSpec.describe "Transaction exports", type: :request do
       it "sends a signed-out requester to the email form when no email is given" do
         get "/exports/#{event.slug}.csv"
 
-        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug))
+        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "transactions"))
         expect(Export.count).to eq(0)
+      end
+
+      it "carries the date range to the email form" do
+        get "/exports/#{event.slug}.csv", params: { start_date: last_month, end_date: last_month }
+
+        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "transactions", start_date: last_month, end_date: last_month))
       end
     end
 

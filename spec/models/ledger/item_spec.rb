@@ -5,6 +5,39 @@ require "rails_helper"
 RSpec.describe Ledger::Item, type: :model do
   include DonationSupport
 
+  describe "#category" do
+    let(:item) { create(:ledger_item) }
+    let(:office) { TransactionCategory.find_or_create_by!(slug: "office") }
+    let(:benefits) { TransactionCategory.find_or_create_by!(slug: "benefits") }
+
+    it "takes the earliest settled transaction's category" do
+      TransactionCategoryMapping.create!(category: benefits, categorizable: create(:canonical_transaction, ledger_item: item, date: Date.new(2024, 2, 1)))
+      TransactionCategoryMapping.create!(category: office, categorizable: create(:canonical_transaction, ledger_item: item, date: Date.new(2024, 1, 1)))
+
+      expect(item.reload.category).to eq(office)
+    end
+
+    it "prefers a settled transaction's category to a pending one's" do
+      TransactionCategoryMapping.create!(category: benefits, categorizable: create(:canonical_pending_transaction, ledger_item: item, date: Date.new(2024, 1, 1)))
+      TransactionCategoryMapping.create!(category: office, categorizable: create(:canonical_transaction, ledger_item: item, date: Date.new(2024, 2, 1)))
+
+      expect(item.reload.category).to eq(office)
+    end
+
+    it "falls back to a pending transaction's category" do
+      TransactionCategoryMapping.create!(category: benefits, categorizable: create(:canonical_pending_transaction, ledger_item: item))
+      create(:canonical_transaction, ledger_item: item)
+
+      expect(item.reload.category).to eq(benefits)
+    end
+
+    it "is nil when nothing is categorized" do
+      create(:canonical_transaction, ledger_item: item)
+
+      expect(item.reload.category).to be_nil
+    end
+  end
+
   describe "associations" do
     it "has many ledger_mappings" do
       item = Ledger::Item.new

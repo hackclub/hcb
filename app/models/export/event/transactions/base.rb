@@ -1,0 +1,111 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: exports
+#
+#  id              :bigint           not null, primary key
+#  parameters      :jsonb
+#  type            :text
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  requested_by_id :bigint
+#
+# Indexes
+#
+#  index_exports_on_requested_by_id  (requested_by_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (requested_by_id => users.id)
+#
+class Export
+  module Event
+    module Transactions
+      # Shared plumbing for the legacy whole-organization exports, which walk
+      # the organization's canonical transactions. Each becomes an Export::Row,
+      # and an Export::Format turns the rows into the file, so these produce
+      # the same columns under the same rules as the ledger exports do.
+      # Subclasses only say which format, as FORMAT; the format says which
+      # fields it reads, and only those are built and preloaded.
+      class Base < Export
+        include ::Export::Formatted
+
+        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
+
+        # Counts what the export will contain, so a one-month CSV of a large
+        # organization is served inline like any other small export.
+        def async?
+          return @async if defined?(@async)
+
+          @async = transactions.limit(ASYNC_THRESHOLD + 1).count > ASYNC_THRESHOLD
+        end
+
+        def label
+          "#{formatter.name} transaction export for #{event.name}"
+        end
+
+        def filename
+          "#{event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.#{formatter.extension}"
+        end
+
+        private
+
+        def rows
+          transactions.map { |ct| row(ct) }
+        end
+
+        # What the rows read off a transaction, preloaded so a large export
+        # doesn't turn into one query per transaction, and only what the format
+        # will use. The hcb code's own transactions are what its memo and author
+        # read. The author of a card charge still costs a cardholder lookup per
+        # row, inside HcbCode#author; that predates these exports.
+        def preloads
+          hcb_code = [:canonical_transactions, :canonical_pending_transactions]
+          hcb_code << :tags if reads?(:tags)
+          hcb_code << :comments if reads?(:comments)
+
+          preloads = [{ local_hcb_code: hcb_code }]
+          preloads << :category if reads?(:category)
+          preloads << :transaction_source if reads?(:merchant)
+          preloads
+        end
+
+        def transactions
+          # preload, not includes: transaction_source is polymorphic, so it can
+          # never be joined, and includes would try to the moment a condition
+          # referenced another table.
+          tx = event.canonical_transactions.preload(*preloads)
+          tx = tx.where("date >= ?", start_date) if start_date
+          tx = tx.where("date <= ?", end_date) if end_date
+          tx.order("date desc")
+        end
+
+        def event
+          @event ||= ::Event.find(event_id)
+        end
+
+        def row(ct)
+          hcb_code = ct.local_hcb_code
+
+          ::Export::Row.new(
+            date: ct.date,
+            memo: hcb_code.memo,
+            amount_cents: ct.amount_cents,
+            account_verification: ct.likely_account_verification_related?,
+            income_type: income_type(donation: hcb_code.donation?, invoice: hcb_code.invoice?),
+            **fields_for(ct)
+          )
+        end
+
+        def read_tags(ct) = own_tag_labels(ct.local_hcb_code.tags)
+        def read_comments(ct) = non_admin_comments(ct.local_hcb_code.comments)
+        def read_author(ct) = ct.local_hcb_code.author
+        def read_category(ct) = ct.category
+        def read_merchant(ct) = ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
+
+      end
+    end
+  end
+
+end

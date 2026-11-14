@@ -12,6 +12,46 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
+  <% if !@subledger && @ledger %>
+    <%# The export is generated from the same query that built this page, so it
+        carries whatever filters are applied. Say so, and put the number of
+        transactions on the links themselves: the old ledger's export quietly
+        ignored the filters and handed back the whole organization. The page
+        already counted its rows, so no extra query here; a filter that matches
+        nothing gets no export links, since there's nothing to export, but the
+        statements are always there. %>
+    <% export_count = number_with_delimiter(@items.total_count) %>
+    <% export_noun = "transaction".pluralize(@items.total_count) %>
+    <% export_scope = ledger_filtered? ? "#{export_count} filtered #{export_noun}" : "All #{export_count} #{export_noun}" %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
+      <button
+        type="button"
+        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
+        aria-label="<%= ledger_filtered? ? "Export filtered transactions" : "Export transactions" %>"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        <%= inline_icon "download", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <% if @items.total_count.positive? %>
+          <p class="muted h6 m-0 px-2 py-1">
+            <%= ledger_filtered? ? "Exports cover only the transactions matching your filters." : "Exports cover every transaction in this ledger." %>
+          </p>
+          <div class="menu__divider my-0"></div>
+          <%= link_to "#{export_scope} (CSV)", ledger_exports_path(event: @event, format: :csv, **ledger_filter_params), target: :_blank %>
+          <%= link_to "#{export_scope} (JSON)", ledger_exports_path(event: @event, format: :json, **ledger_filter_params), target: :_blank %>
+          <%= link_to "#{export_scope} (Ledger)", ledger_exports_path(event: @event, format: :ledger, **ledger_filter_params), target: :_blank %>
+        <% else %>
+          <p class="muted h6 m-0 px-2 py-1">
+            <%= ledger_filtered? ? "No transactions match your filters, so there's nothing to export." : "There are no transactions to export yet." %>
+          </p>
+        <% end %>
+        <div class="menu__divider my-0"></div>
+        <%= link_to "Monthly statements", event_statements_path(@event) %>
+      </div>
+    </div>
+  <% end %>
+
   <% unless @subledger %>
     <% admin_tool "line-height-0" do %>
       <% if @event.canonical_transactions.any? %>
@@ -178,7 +218,7 @@
       <% end %>
       <% if @merchant %>
         <div class="badge badge-large bg-muted">
-          <%= @merchant_name %>
+          <%= merchant_name %>
           <%= link_to event_ledger_path(@event, upsert_query_params(merchant: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
             <%= inline_icon "view-close", size: 20 %>
           <% end %>

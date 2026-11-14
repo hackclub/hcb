@@ -11,15 +11,36 @@ module SetLedgerFilters
     missing_receipts merchant direction category
   ].freeze
 
+  # The largest amount the ledger can hold: amount_cents is a 4-byte integer.
+  MAX_FILTER_AMOUNT = Money.new(2**31 - 1)
+
+  # The `type` filter's values, and the linked object types each stands for.
+  TYPE_FILTERS = {
+    "ach_transfer"           => { "$eq": "AchTransfer" },
+    "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
+    "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
+    "card_charge"            => { "$eq": "CardCharge" },
+    "check_deposit"          => { "$eq": "CheckDeposit" },
+    "donation"               => { "$eq": "Donation" },
+    "invoice"                => { "$eq": "Invoice" },
+    "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+    "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+    "wire"                   => { "$eq": "Wire" },
+    "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+    "wise_transfer"          => { "$eq": "WiseTransfer" }
+  }.freeze
+
   included do
+    helper_method :ledger_filtered?, :ledger_filter_params, :merchant_name, :filter_users
+
     private
 
     # Filtering is what makes a transparent organization expensive to read
     # anonymously: every combination is a separate, uncacheable trip through the
     # transaction engines. Anonymous readers get the unfiltered page.
     #
-    # Runs before the filters are resolved, because resolving them is most of the
-    # cost: `Event#merchants` alone loads every transaction for the organization.
+    # Runs before the filters are resolved, so an anonymous reader's request
+    # does none of the lookups resolving them involves.
     def reject_disabled_filters
       @ledger_filters_disabled = !signed_in?
       return unless @ledger_filters_disabled
@@ -36,19 +57,24 @@ module SetLedgerFilters
       reject_disabled_filters
       return if performed?
 
-      if params[:tag]
-        @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
+      if string_param(:tag)
+        @tag = Tag.find_by(event_id: @event.id, label: string_param(:tag))
       end
 
-      @type = params[:type].presence
-      @start_date = params[:start].presence
-      @end_date = params[:end].presence
-      @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
-      @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
+      # A filter that doesn't resolve narrows nothing, like a tag that doesn't
+      # exist: a date that doesn't parse, or a value that isn't even a string
+      # (type[]=x is a param too).
+      # A type nothing is known by resolves to nothing, rather than to items
+      # with no linked object at all.
+      @type = string_param(:type).then { |type| TYPE_FILTERS.key?(type) ? type : nil }
+      @start_date = parse_date_param(params[:start])
+      @end_date = parse_date_param(params[:end])
+      @minimum_amount = parse_amount_param(:minimum_amount)
+      @maximum_amount = parse_amount_param(:maximum_amount)
       @missing_receipts = params[:missing_receipts].present?
-      @merchant = params[:merchant].presence
-      @direction = params[:direction].presence
-      @category = TransactionCategory.find_by(slug: params[:category])
+      @merchant = string_param(:merchant)
+      @direction = string_param(:direction)
+      @category = string_param(:category)&.then { |slug| TransactionCategory.find_by(slug:) }
 
       @ledger = @event.ledger
       @ledgers = if @use_card_grant_ledgers
@@ -57,29 +83,71 @@ module SetLedgerFilters
                    [@ledger]
                  end
 
-      author_ids = Ledger::Item
-                   .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
-                   .where.not(author_id: nil)
-                   .distinct
-                   .select(:author_id)
-      organizer_ids = @event.users.select(:id)
-      @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
-                   .with_attached_profile_picture
-                   .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+      @user = filter_users.friendly.find(string_param(:user), allow_nil: true) if string_param(:user)
+    end
 
-      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
+    # The people the ledger can be filtered by: everyone who authored something
+    # in it, and the organizers. Built on demand, since finding them scans the
+    # ledger and only the filter menu (and a user filter) needs them; an export
+    # with no user filter never does.
+    def filter_users
+      @filter_users ||= begin
+        author_ids = Ledger::Item
+                     .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
+                     .where.not(author_id: nil)
+                     .distinct
+                     .select(:author_id)
+        organizer_ids = @event.users.select(:id)
 
-      if @merchant
-        merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
-
-        @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+        User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
+            .with_attached_profile_picture
+            .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
       end
     end
 
+    # The param as a non-blank string, or nil.
+    def string_param(name)
+      params[name].is_a?(String) ? params[name].presence : nil
+    end
+
+    # The param as money, or nil for anything that isn't an amount the ledger
+    # could hold: "abc" is no amount rather than $0, Money refuses the infinity
+    # that "1e999" parses to, and anything past MAX_FILTER_AMOUNT would be
+    # rejected by the database.
+    def parse_amount_param(name)
+      amount = string_param(name)&.then { |value| Float(value, exception: false) }
+      return nil if amount.nil? || !amount.finite?
+
+      money = Money.from_amount(amount)
+      money.abs > MAX_FILTER_AMOUNT ? nil : money
+    end
+
+    # The merchant filter's display name. Resolved on demand rather than with
+    # the other filters: finding it means loading every merchant the
+    # organization has ever paid, and only the filter chip on the page needs
+    # it. An export filtered by merchant needs only the id.
+    def merchant_name
+      return @merchant_name if defined?(@merchant_name)
+
+      merchant = @event.merchants.find { |candidate| candidate[:id] == @merchant }
+
+      @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
     def ledger_query
+      Ledger::Query.new({ "$and": ledger_filter_predicates + [visibility_predicate] })
+    end
+
+    # The predicates the user's filters add to the query, and nothing else.
+    # Built from the resolved filters, not the raw params: `?tag=nonexistent`
+    # resolves to no tag and so adds no predicate, and the ledger it produces
+    # is the whole ledger.
+    def ledger_filter_predicates
+      return @ledger_filter_predicates if defined?(@ledger_filter_predicates)
+
       query = []
 
-      query << { memo: { "$search": params[:q] } } if params[:q].present?
+      query << { memo: { "$search": string_param(:q) } } if string_param(:q)
 
       if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
         if @direction == "revenue"
@@ -104,46 +172,46 @@ module SetLedgerFilters
         query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
       end
 
-      query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
+      query << { datetime: { "$gte": @start_date } } if @start_date.present?
       # Whole-day inclusive end bound, matching the old transactions page
-      query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
+      query << { datetime: { "$lt": @end_date.next_day } } if @end_date.present?
 
-      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
+      query << { author: { "$eq": @user&.slug || string_param(:user) } } if string_param(:user)
 
       query << { tag: { "$eq": @tag.id } } if @tag.present?
       query << { category: { "$eq": @category.slug } } if @category.present?
       query << { merchant: { "$eq": @merchant } } if @merchant.present?
 
-      if @type.present?
-        linked_object_type = {
-          "ach_transfer"           => { "$eq": "AchTransfer" },
-          "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
-          "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
-          "card_charge"            => { "$eq": "CardCharge" },
-          "check_deposit"          => { "$eq": "CheckDeposit" },
-          "donation"               => { "$eq": "Donation" },
-          "invoice"                => { "$eq": "Invoice" },
-          "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-          "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
-          "wire"                   => { "$eq": "Wire" },
-          "paypal_transfer"        => { "$eq": "PaypalTransfer" },
-          "wise_transfer"          => { "$eq": "WiseTransfer" }
-        }[@type]
+      query << { linked_object_type: TYPE_FILTERS.fetch(@type) } if @type.present?
 
-        query << { linked_object_type: }
-      end
+      @ledger_filter_predicates = query
+    end
 
-      # Amount trumps status: an item that moved any non-zero amount should
-      # always render (e.g. a declined/failed transaction that still posted a
-      # partial charge), regardless of its status. Only zero-amount items are
-      # subject to the status allowlist.
-      query << {
+    # Amount trumps status: an item that moved any non-zero amount should
+    # always render (e.g. a declined/failed transaction that still posted a
+    # partial charge), regardless of its status. Only zero-amount items are
+    # subject to the status allowlist.
+    def visibility_predicate
+      {
         "$or": [
           { amount_cents: { "$ne": 0 } },
           { status: { "$in": ["settled", "pending", "reversed"] } }
         ]
       }
-      Ledger::Query.new({ "$and": query })
+    end
+
+    # Whether the ledger being looked at is narrowed at all. `q` counts: it
+    # narrows the ledger just as much as the filter menu does, even though it
+    # renders outside it. A param that resolved to nothing doesn't count: it
+    # narrowed nothing.
+    def ledger_filtered?
+      ledger_filter_predicates.any?
+    end
+
+    # The filters, as params, for handing to another request — an export link,
+    # most of all, which has to reproduce this exact ledger.
+    def ledger_filter_params
+      @ledger_filter_params ||= [:q, *FILTER_PARAMS].index_with { |name| string_param(name) }.compact
     end
 
   end
