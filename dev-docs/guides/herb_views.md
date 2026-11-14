@@ -63,3 +63,5 @@ export default class extends Controller {
   }
 }
 ```
+
+When which values show something comes from a model (wire fields per country, Wise fields per currency), the `state-switch` controller shows and enables targets whose `data-state-switch-when` (or `-unless`) lists the state's value.

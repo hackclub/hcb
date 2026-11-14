@@ -1,3 +1,6 @@
+<%# locals: (initial_currency: @wise_transfer.currency.to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_currency: initial_currency, selected_account_type: "") %>
 <% disabled = !policy(@event).create_transfer? %>
 <% title "Send a Wise transfer" %>
 <% subtitle "From #{@event.name}" %>
@@ -28,10 +31,7 @@
 <%= form_with(
       model: [@event, @wise_transfer],
       local: true,
-      data: { controller: "wise-quote" },
-      html: {
-        "x-data": "wise_form(#{{ currency: @wise_transfer.currency }.to_json})"
-      }
+      data: { controller: "wise-quote" }
     ) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
@@ -47,7 +47,7 @@
 
       <div class="field">
         <%= form.label :recipient_email, "Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
+        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled: %>
       </div>
 
       <%= render partial: "transfers/recipient_details", locals: { form:, disabled: } %>
@@ -64,7 +64,7 @@
       <div class="field">
         <div class="flex items-center g1">
           <div style="width: 72px">
-            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "set_currency($event.target.value)", data: { wise_quote_target: "currency", action: "wise-quote#refresh" } } %>
+            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { data: { herb_set: "selected_currency=$value", wise_quote_target: "currency", action: "wise-quote#refresh" } } %>
           </div>
           <div class="flex flex-col flex-grow">
             <%= form.number_field :amount,
@@ -91,12 +91,12 @@
         <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
       </div>
 
-      <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
+      <%= render "wise_transfers/currency_specific_details", form:, disabled:, state: { selected_currency: selected_currency, selected_account_type: selected_account_type } %>
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
   </div>
 
-  <button type="submit" <% if disabled %> disabled<% end %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
+  <%= tag.button type: "submit", disabled:, class: "btn !bg-[#9FE870] !text-[#163300] w-full" do %>
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
-  </button>
+  <% end %>
 <% end %>

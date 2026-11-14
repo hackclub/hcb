@@ -1,3 +1,6 @@
+<%# locals: (initial_country: @wire.recipient_country.to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_recipient_country: initial_country) %>
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Edit a wire" %>
@@ -12,9 +15,7 @@
 
 <hr class="mt1 mb1">
 
-<%= form_with(model: @wire, local: true, html: {
-                "x-data": "{ country: #{@wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"} }"
-              }) do |form| %>
+<%= form_with(model: @wire, local: true) do |form| %>
 
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
@@ -38,7 +39,7 @@
   <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
   </div>
 
-  <%= render partial: "transfers/recipient_details", locals: { form:, disabled:, required: true } %>
+  <%= render "transfers/recipient_details", form:, disabled:, required: true, state: { selected_recipient_country: selected_recipient_country } %>
 
   <h2 class="mb2 mt3">Payment information</h2>
 
