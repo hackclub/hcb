@@ -5,6 +5,8 @@ require "rails_helper"
 # Reviewing a contractor's invoice: clicking its row opens the attached invoice
 # in the receipt modal, which is the only place to approve or reject it.
 RSpec.describe "Contractor invoice review", type: :system do
+  include ActionView::RecordIdentifier
+
   let(:manager) { create(:user) }
   let(:event) { create(:event) }
   let(:payee) { create(:payee, event:, display_name: "Fiona Hackworth") }
@@ -20,8 +22,10 @@ RSpec.describe "Contractor invoice review", type: :system do
     create(:organizer_position, user: manager, event:, role: :manager, first_time: false)
   end
 
-  def create_invoice(name, amount_cents: 50_00)
+  def create_invoice(name, amount_cents: 50_00, attachment: true)
     position.invoices.create!(name:, amount_cents:, currency: "USD").tap do |invoice|
+      next unless attachment
+
       Receipt.create!(receiptable: invoice, user: create(:user), upload_method: :contractor_invoice,
                       file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
     end
@@ -48,7 +52,7 @@ RSpec.describe "Contractor invoice review", type: :system do
   end
 
   def within_invoice_modal(invoice, &)
-    within("#preview_receipt_#{invoice.receipts.sole.id}", &)
+    within("##{dom_id(invoice.receipts.first || invoice, :preview)}", &)
   end
 
   context "as a manager" do
@@ -115,16 +119,31 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(page).to have_no_button("Reject", visible: :all)
     end
 
-    it "keeps an invoice reviewable when its attachment can't be previewed" do
-      invoice = create_invoice("Week 1 hours")
-      allow_any_instance_of(Receipt).to receive(:preview).and_return(nil)
+    it "reviews an invoice without an attachment from a modal, never from the table" do
+      invoice = create_invoice("Week 1 hours", attachment: false)
       visit_without_animations position_page
 
-      expect(page).to have_no_css("tr.clickable", text: invoice.name)
-      within("tr", text: invoice.name) { click_button "Approve" }
+      expect(page).to have_no_button("Approve").and have_no_button("Reject")
+
+      open_invoice(invoice)
+      within_invoice_modal(invoice) do
+        expect(page).to have_text("no attachment to preview")
+        click_button "Approve"
+      end
 
       expect(page).to have_invoice_status("Approved")
       expect(invoice.reload).to be_approved
+    end
+
+    it "offers no review actions on a reviewed invoice without an attachment" do
+      invoice = create_invoice("Week 1 hours", attachment: false)
+      invoice.mark_rejected!(manager)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      within_invoice_modal(invoice) { expect(page).to have_text("no attachment to preview") }
+      expect(page).to have_no_button("Approve", visible: :all)
+      expect(page).to have_no_button("Reject", visible: :all)
     end
 
     it "opens the invoice above the contractor popover on the contractors page" do
