@@ -53,7 +53,9 @@ class Ledger
     validate :on_primary_ledger_matches_ledger_primary
 
     after_commit do
-      ledger_item.refresh!
+      # Destroying a mapping alongside its item (see Ledger::Item#absorb) runs
+      # this against an item that is already gone, and refresh! would raise.
+      ledger_item.refresh! if ledger_item&.persisted?
     end
 
     # Plain after_commit (create/update/destroy), matching this file's other hooks.
