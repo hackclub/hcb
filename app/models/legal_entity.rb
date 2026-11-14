@@ -4,15 +4,17 @@
 #
 # Table name: legal_entities
 #
-#  id                :bigint           not null, primary key
-#  archived_at       :datetime
-#  banned_reason     :string
-#  entity_type       :string
-#  name              :string
-#  tin_hash          :string
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
-#  managing_event_id :bigint
+#  id                    :bigint           not null, primary key
+#  archived_at           :datetime
+#  banned_reason         :string
+#  electronic_consent    :boolean
+#  electronic_consent_at :datetime
+#  entity_type           :string
+#  name                  :string
+#  tin_hash              :string
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  managing_event_id     :bigint
 #
 # Indexes
 #
@@ -79,24 +81,28 @@ class LegalEntity < ApplicationRecord
                      .find_each(&:refresh_onboarding_state!)
   end
 
-  # Deliberately the latest *completed* form, not latest_tax_form. A pending form
-  # has a NULL completed_at, which Postgres sorts first on a DESC order, so
-  # latest_tax_form becomes the new form the moment a payee starts one. Keying
-  # payability off that would strand every pending payment of anyone who took us up
-  # on "start a new tax form". A newly submitted TIN only blocks payouts once it
-  # completes and turns out to disagree, which is what mismatched_tax_form catches.
-  # requires_tax_form: false skips the tax-paperwork checks (used for payments
-  # that are not tax reportable, or too small to require one) while still
-  # enforcing the unconditional blockers below.
   def payable?(requires_tax_form: true)
-    return false if tin_banned? || archived?
-    return true unless requires_tax_form
+    pending_payable_requirements(requires_tax_form:).empty?
+  end
 
+  # Deliberately the latest *completed* form, not latest_tax_form. Keying
+  # payability off latest form would strand every pending payment of anyone who took us up
+  # on "start a new tax form".
+  def pending_payable_requirements(requires_tax_form: true)
     form = latest_completed_tax_form
-    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
-    form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !requires_verification)
+    {
+      not_tin_banned: !tin_banned?,
+      not_archived: !archived?,
+      form_present: !requires_tax_form || form.present?,
+      form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
+      form_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
+    }.reject { |k, done| done }.keys
+  end
+
+  def requires_tax_verification?
+    form = latest_completed_tax_form
+    form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
   end
 
   def latest_completed_tax_form
@@ -104,7 +110,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def tax_form_required?
-    payments.pending_legal_entity.any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
+    payments.where(aasm_state: [:pending_legal_entity, :under_review]).any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
@@ -153,6 +159,19 @@ class LegalEntity < ApplicationRecord
                                                   .where.not(entity_type: [nil, entity_type])
                                                   .order(completed_at: :desc, created_at: :desc)
                                                   .first
+  end
+
+  # Forms 1099 are furnished as pages on HCB, so consenting on HCB itself
+  # demonstrates the recipient can access them, as IRS Publication 1179 requires.
+  # We record the time along with when they consented/refused so we know
+  # who hasn't seen the page yet. If electronic_consent is null, they haven't
+  # said yes or no yet.
+  def record_electronic_consent!(consented)
+    update!(electronic_consent: consented, electronic_consent_at: Time.current)
+  end
+
+  def electronic_consent?
+    electronic_consent == true
   end
 
   def archive!

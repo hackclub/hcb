@@ -34,6 +34,7 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
     include Receiptable
+    include Hashid::Rails
 
     has_paper_trail
 
@@ -68,6 +69,14 @@ module Payroll
           update!(reviewed_by:)
         end
         transitions from: :submitted, to: :rejected
+      end
+    end
+
+    def state_color
+      case aasm_state.to_sym
+      when :approved then "success"
+      when :rejected then "error"
+      else "warning"
       end
     end
 

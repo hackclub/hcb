@@ -19,10 +19,6 @@ module Rejectable
     canceled_at.present?
   end
 
-  def status_accepted_or_rejected
-    single_status %i{accepted_at rejected_at}
-  end
-
   def status_accepted_canceled_or_rejected
     single_status %i{accepted_at rejected_at canceled_at}
   end

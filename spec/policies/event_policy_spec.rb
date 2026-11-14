@@ -133,4 +133,81 @@ RSpec.describe EventPolicy, type: :policy do
       end
     end
   end
+
+  describe "#edit?" do
+    let(:event) { create(:event) }
+    let(:user) { create(:user) }
+
+    subject { described_class.new(user, event).edit? }
+
+    context "as a reader" do
+      before { create(:organizer_position, user:, event:, role: :reader) }
+
+      it "is allowed to view settings" do
+        is_expected.to eq(true)
+      end
+
+      it "is not allowed to update settings" do
+        expect(described_class.new(user, event).update?).to eq(false)
+      end
+    end
+
+    context "as a manager" do
+      before { create(:organizer_position, user:, event:, role: :manager) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "as an auditor without a position" do
+      let(:user) { create(:user, :make_auditor) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "without a position" do
+      it { is_expected.to eq(false) }
+    end
+  end
+
+  describe "#account_number?" do
+    let(:event) { create(:event) }
+    let(:user) { create(:user) }
+
+    subject { described_class.new(user, event).account_number? }
+
+    before { allow(event.plan).to receive(:account_number_enabled?).and_return(true) }
+
+    context "as a reader" do
+      before { create(:organizer_position, user:, event:, role: :reader) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "as a member" do
+      before { create(:organizer_position, user:, event:, role: :member) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "as a manager" do
+      before { create(:organizer_position, user:, event:, role: :manager) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "as an auditor without a position" do
+      let(:user) { create(:user, :make_auditor) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "when the plan does not enable account numbers" do
+      before do
+        create(:organizer_position, user:, event:, role: :manager)
+        allow(event.plan).to receive(:account_number_enabled?).and_return(false)
+      end
+
+      it { is_expected.to eq(false) }
+    end
+  end
 end

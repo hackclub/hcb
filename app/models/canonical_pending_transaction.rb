@@ -69,6 +69,9 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
   include Categorizable
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
@@ -223,10 +226,6 @@ class CanonicalPendingTransaction < ApplicationRecord
     hcb_decline_reason || stripe_decline_reason
   end
 
-  def declined_by
-    hcb_decline_reason ? "HCB" : "Stripe"
-  end
-
   def unsettled?
     @unsettled ||= !settled? && !declined?
   end
@@ -376,22 +375,10 @@ class CanonicalPendingTransaction < ApplicationRecord
     raw_stripe_transaction.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_pending_stripe_transaction
 
     raw_pending_stripe_transaction.stripe_transaction_id
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   # DEPRECATED
@@ -482,10 +469,18 @@ class CanonicalPendingTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
       end
     end
+  end
+
+  # Reuse an existing ledger item before creating a new one. Prefer the linked
+  # object's item (e.g. an invoice eagerly creates its ledger item on creation,
+  # before any CPT exists), then fall back to the HCB code's item for items that
+  # are still grouped that way.
+  def calculated_ledger_item
+    @calculated_ledger_item ||= linked_object&.ledger_item || local_hcb_code.ledger_item
   end
 
   def write_hcb_code

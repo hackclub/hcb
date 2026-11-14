@@ -23,11 +23,11 @@ module PendingEventMappingEngine
           cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix)}%")
 
           # 2.b special case if donation is quite old & now results
-          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix[0])}%") if cts.count < 1 && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
+          cts ||= event.canonical_transactions.where("memo ilike ?", "%DONAT% #{ActiveRecord::Base.sanitize_sql_like(prefix[0])}%") if cts.empty? && donation.created_at < Time.utc(2020, 1, 1) # shorter prefix. see Donation id 1 for example.
 
-          next if cts.count < 1 # no match found yet. not processed.
+          next if cts.empty? # no match found yet. not processed.
 
-          Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+          Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.many?
           ct = cts.first
 
           # 3. mark no longer pending

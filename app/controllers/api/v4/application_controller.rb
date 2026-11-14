@@ -34,7 +34,7 @@ module Api
       private
 
       def pundit_user
-        current_user && ApiAdminContext.new(current_user, current_token)
+        current_user && ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
       end
 
       def authenticate!

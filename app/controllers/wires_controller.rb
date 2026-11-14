@@ -2,6 +2,7 @@
 
 class WiresController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
   include Admin::TransferApprovable
   include Admin::PaymentApprovable
 
@@ -77,10 +78,11 @@ class WiresController < ApplicationController
         source_event_id: @wire.event.id,
         amount: 25,
         requested_by_id: current_user.id,
-        fronted: @wire.event.plan.front_disbursements_enabled?
+        fronted: @wire.event.plan.front_disbursements_enabled?,
+        transfer_type: "transfer"
       ).run
 
-      disbursement.local_hcb_code.comments.create(content: "Associated with #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+      disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
@@ -104,7 +106,7 @@ class WiresController < ApplicationController
   private
 
   def wire_params
-    params.require(:wire).permit(
+    permitted = params.require(:wire).permit(
       [:memo,
        :amount,
        :payment_for,
@@ -123,6 +125,7 @@ class WiresController < ApplicationController
        :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
+    @wire_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_wire

@@ -13,7 +13,7 @@ permissions:
 jobs:
   rubocop:
     name: Rubocop
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-ruby
@@ -21,7 +21,7 @@ jobs:
         run: bundle exec rubocop
   suggest_lint_changes:
     name: 'Suggest lint changes'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ github.event_name == 'pull_request' }}
     # parkerbxyz/suggest-changes posts review comments with suggested
     # edits, which requires write access to the PR.
@@ -38,7 +38,7 @@ jobs:
         uses: parkerbxyz/suggest-changes@v3.1.2
   erblint:
     name: 'ERB Lint'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-ruby
@@ -46,15 +46,23 @@ jobs:
         run: bin/erb_lint
   eslint:
     name: ESLint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-node
       - name: Run ESLint
         run: yarn lint
+  herb:
+    name: Herb
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node
+      - name: Run Herb
+        run: yarn lint:herb
   prettier:
     name: Prettier
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-node
@@ -62,7 +70,7 @@ jobs:
         run: yarn format:check
   rspec:
     name: RSpec (shard ${{ matrix.shard }}/${{ strategy.job-total }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       # Don't cancel remaining shards when one fails — we want to see all
       # failures in a single run rather than a slow loop of retries.
@@ -136,7 +144,7 @@ jobs:
           path: coverage/coverage.json
   annotate:
     name: Annotate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:15
@@ -161,7 +169,7 @@ jobs:
         run: bundle exec annotaterb models --frozen
   zeitwerk:
     name: Zeitwerk
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-ruby
@@ -172,7 +180,7 @@ jobs:
         run: bundle exec rails zeitwerk:check
   reversible_migrations:
     name: Reversible Migrations
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'pull_request'
     services:
       postgres:
@@ -253,7 +261,7 @@ jobs:
           echo "✅ All migrations are reversible!"
   brakeman:
     name: Brakeman
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-ruby

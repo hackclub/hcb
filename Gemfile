@@ -40,7 +40,8 @@ gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
-gem "aws-sdk-s3", require: false
+gem "aws-sdk-s3"
+gem "pdf-reader" # ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob checks a dummy form PDF for an unmasked TIN
 
 gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
@@ -68,7 +69,6 @@ gem "phonelib" # phone number validations
 
 gem "money-rails", "~> 3.0.0"
 gem "monetize", "~> 2.0.0"
-gem "rounding"
 
 gem "business_time"
 
@@ -128,7 +128,6 @@ gem "comma", "~> 4.8" # CSV generation
 gem "faker" # Create mock data
 
 gem "chronic" # time/date parsing
-gem "rinku", require: "rails_rinku" # auto-linking URLs in text
 
 gem "geocoder" # lookup lat/lng for Stripe Cards shipment tracking
 gem "validates_zipcode" # validation for event's zip codes
@@ -142,9 +141,10 @@ gem "bootsnap", ">= 1.4.4", require: false # reduces boot times through caching;
 
 gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
-gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
 group :test do
+  gem "capybara" # Browser-driven system tests
+  gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"
@@ -234,8 +234,6 @@ gem "discordrb"
 
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
-
-gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
 

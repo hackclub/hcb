@@ -151,5 +151,33 @@ describe AchTransfersController do
       expect(ach_transfer.payment_for).to eq("Snacks")
       expect(ach_transfer.amount).to eq(500_01)
     end
+
+    it "does not leak another org's recipient bank details via payment_recipient_id" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:, role: :manager)
+      create_session(user, verified: true)
+
+      foreign = create(
+        :payment_recipient,
+        event: create(:event),
+        payment_model: "AchTransfer",
+        account_number: "99887766554433",
+        routing_number: "021000021",
+        bank_name: "Victim Bank"
+      )
+
+      [foreign.hashid, foreign.id].each do |id|
+        post(
+          :create,
+          params: { event_id: event.friendly_id, ach_transfer: { payment_recipient_id: id, amount_money: "1.00", recipient_email: "a@b.com", payment_for: "x" } }
+        )
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).not_to include("99887766554433")
+        expect(response.body).not_to include("Victim Bank")
+        expect(event.ach_transfers).to be_empty
+      end
+    end
   end
 end
