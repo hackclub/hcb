@@ -161,6 +161,50 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe "#exceeds_event_balance?" do
+    let(:event) { create(:event) }
+    let(:report) { create(:reimbursement_report, event:) }
+
+    def stub_balance(cents)
+      allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(cents)
+    end
+
+    before { report.expenses.create!(value: 100, memo: "Stickers") }
+
+    it "is true when the requested amount is above the organization's available balance" do
+      stub_balance(99_99)
+
+      expect(report.exceeds_event_balance?).to be(true)
+    end
+
+    it "is false when the available balance covers the requested amount" do
+      stub_balance(100_00)
+
+      expect(report.exceeds_event_balance?).to be(false)
+    end
+
+    it "is false for non-USD reports, whose balance impact depends on exchange rates" do
+      stub_balance(0)
+      report.update!(currency: "EUR")
+
+      expect(report.exceeds_event_balance?).to be(false)
+    end
+
+    it "is false when the report has no organization yet" do
+      stub_balance(0)
+      report.update!(event: nil)
+
+      expect(report.exceeds_event_balance?).to be(false)
+    end
+
+    it "applies regardless of the report's state" do
+      stub_balance(0)
+      report.update!(aasm_state: :submitted)
+
+      expect(report.exceeds_event_balance?).to be(true)
+    end
+  end
+
   describe "the invitation email" do
     it "is sent when somebody else invited the user" do
       inviter = create(:user)
