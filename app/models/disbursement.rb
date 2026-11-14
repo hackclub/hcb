@@ -125,7 +125,6 @@ class Disbursement < ApplicationRecord
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
   has_one :repayment, dependent: :destroy, autosave: true, inverse_of: :disbursement
-  has_many :repayment_allocations, through: :repayment, source: :allocations
   has_many :repaid_ledger_items, through: :repayment
 
   # What the transfer is for. Decides how each side is categorized. Nil only
