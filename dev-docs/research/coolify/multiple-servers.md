@@ -1,5 +1,8 @@
 # Coolify /w Multiple Servers Feature
 
+> Historical research only: production Docker support has been removed from
+> this repository. The `production.Dockerfile` referenced below no longer exists.
+
 TLDR:
 
 - Multiple Hetzner servers behind a TLS Terminating Load Balancer
