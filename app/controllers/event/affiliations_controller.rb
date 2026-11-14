@@ -21,7 +21,7 @@ class Event
       unless affiliation.save
         flash[:error] = affiliation.errors.full_messages.to_sentence.presence || "Failed to create affiliation."
       end
-      redirect_back fallback_location: @affiliable
+      redirect_back fallback_location: fallback_location_for(@affiliable)
     end
 
     def update
@@ -31,7 +31,7 @@ class Event
 
       affiliation.update(name: params[:type], metadata: @metadata)
 
-      redirect_back fallback_location: affiliation.affiliable
+      redirect_back fallback_location: fallback_location_for(affiliation.affiliable)
     end
 
     def destroy
@@ -40,10 +40,17 @@ class Event
       authorize affiliation
 
       affiliation.destroy!
-      redirect_back fallback_location: affiliation.affiliable
+      redirect_back fallback_location: fallback_location_for(affiliation.affiliable)
     end
 
     private
+
+    # Used when the request has no referrer. An Event resolves on its own, but
+    # Event::Application is routed as `application`, so passing the record
+    # straight to `redirect_back` raises NoMethodError (event_application_url).
+    def fallback_location_for(affiliable)
+      affiliable.is_a?(Event::Application) ? application_path(affiliable) : affiliable
+    end
 
     def set_affiliable
       case params[:affiliable_type]
