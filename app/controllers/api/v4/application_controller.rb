@@ -44,6 +44,7 @@ module Api
         end
 
         @current_user = current_token&.user
+        current_token.touch_last_used_at
       end
 
       def require_admin_scope!(level)

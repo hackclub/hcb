@@ -683,4 +683,24 @@ RSpec.describe User, type: :model do
       expect(results).to be_empty
     end
   end
+
+  describe "activity" do
+    let(:user) { create(:user) }
+
+    it "counts usage of trusted OAuth apps (e.g. the mobile app) as activity" do
+      trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true)
+      create(:api_token, user:, application: trusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).to include(user)
+      expect(user.last_seen_at).to be_within(1.second).of(1.day.ago)
+    end
+
+    it "does not count usage of untrusted OAuth apps as activity" do
+      untrusted_app = Doorkeeper::Application.create!(name: "Untrusted App", redirect_uri: "https://hcb.hackclub.com")
+      create(:api_token, user:, application: untrusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).not_to include(user)
+      expect(user.last_seen_at).to be_nil
+    end
+  end
 end
