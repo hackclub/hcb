@@ -28,9 +28,9 @@ class Export
       # the same columns under the same rules as the ledger exports do.
       # Subclasses only say which format, as FORMAT.
       class Base < Export
-        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
+        include ::Export::Formatted
 
-        delegate :mime_type, to: :formatter
+        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
 
         def async?
           event.canonical_transactions.size > 300
@@ -44,14 +44,10 @@ class Export
           "#{event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.#{formatter.extension}"
         end
 
-        def content
-          formatter.content(transactions.map { |ct| row(ct) })
-        end
-
         private
 
-        def formatter
-          @formatter ||= self.class::FORMAT.new(public_only: public_only == true)
+        def rows
+          transactions.map { |ct| row(ct) }
         end
 
         # Everything a row reads off a transaction, preloaded so a large export
@@ -62,11 +58,6 @@ class Export
         def preloads
           [:category, { local_hcb_code: [:tags, :comments, :canonical_transactions, :canonical_pending_transactions] }]
         end
-
-        # Only the journal names merchants, and reading them means loading the
-        # raw Stripe transaction behind every card charge, so the rest leave
-        # them out.
-        def merchant_for(_ct) = nil
 
         def transactions
           tx = event.canonical_transactions.includes(*preloads)

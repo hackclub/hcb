@@ -33,9 +33,9 @@ class Export
       # Each item becomes an Export::Row, and an Export::Format turns the rows
       # into the file. Subclasses only say which format, as FORMAT.
       class Base < Export
-        store_accessor :parameters, :query, :ledger_ids, :all_ledgers, :event_id, :public_only, :filtered
+        include ::Export::Formatted
 
-        delegate :mime_type, to: :formatter
+        store_accessor :parameters, :query, :ledger_ids, :all_ledgers, :event_id, :public_only, :filtered
 
         # Past this many items we email the export rather than serving it inline.
         ASYNC_THRESHOLD = 300
@@ -62,23 +62,10 @@ class Export
           ].join("_") + ".#{formatter.extension}"
         end
 
-        def content
-          formatter.content(rows)
-        end
-
         private
-
-        def formatter
-          @formatter ||= self.class::FORMAT.new(public_only: public_only == true)
-        end
 
         # A chance to load anything a subclass's rows need beyond PRELOADS.
         def prepare(_items); end
-
-        # Only the journal names merchants, and reading them means loading the
-        # raw Stripe transactions behind every card charge, so the rest leave
-        # them out.
-        def merchant_for(_item) = nil
 
         def items
           @items ||= ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true).preload(*PRELOADS)
