@@ -189,7 +189,7 @@ RSpec.describe ExportsController, type: :controller do
       context "when the search's results are too big to serve inline" do
         before do
           event.update!(is_public: true)
-          stub_const("Export::Ledger::Item::Base::ASYNC_THRESHOLD", 0)
+          stub_const("Export::ASYNC_THRESHOLD", 0)
         end
 
         it "carries the search to the email form" do

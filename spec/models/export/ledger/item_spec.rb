@@ -179,13 +179,13 @@ RSpec.describe Export::Ledger::Item do
     end
 
     it "emails an export bigger than the threshold" do
-      stub_const("Export::Ledger::Item::Base::ASYNC_THRESHOLD", 1)
+      stub_const("Export::ASYNC_THRESHOLD", 1)
 
       expect(build_export(as: :csv).async?).to be(true)
     end
 
     it "counts only what the query matches" do
-      stub_const("Export::Ledger::Item::Base::ASYNC_THRESHOLD", 1)
+      stub_const("Export::ASYNC_THRESHOLD", 1)
 
       expect(build_export(as: :csv, query: { amount_cents: { "$lt" => 0 } }).async?).to be(false)
     end

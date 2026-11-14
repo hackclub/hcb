@@ -34,7 +34,7 @@ class Export
         store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
 
         def async?
-          event.canonical_transactions.size > 300
+          event.canonical_transactions.size > ASYNC_THRESHOLD
         end
 
         def label

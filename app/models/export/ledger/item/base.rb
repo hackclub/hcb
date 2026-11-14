@@ -38,9 +38,6 @@ class Export
 
         store_accessor :parameters, :query, :ledger_ids, :all_ledgers, :event_id, :public_only, :filtered
 
-        # Past this many items we email the export rather than serving it inline.
-        ASYNC_THRESHOLD = 300
-
         # What each optional row field reads off an item.
         PRELOADS_FOR = {
           tags: :tags,

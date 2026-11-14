@@ -20,6 +20,9 @@
 #  fk_rails_...  (requested_by_id => users.id)
 #
 class Export < ApplicationRecord
+  # Past this many rows an export is emailed rather than served inline.
+  ASYNC_THRESHOLD = 300
+
   belongs_to :requested_by, class_name: "User", optional: true
   validates_presence_of :requested_by, if: -> { async? }
 
