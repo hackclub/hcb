@@ -150,6 +150,35 @@ class Tax1099ImportService
     user.legal_entities.where.not(entity_type: :person).to_a
   end
 
+  # Keys for every live Tax1099 import, so the page can hide CSV rows that an
+  # earlier session already imported. Built only from what an import already
+  # stores on the form, and never from the TIN: the browser can't compute
+  # tin_hash, and an unkeyed fingerprint of a TIN could be brute-forced.
+  #
+  # This is a convenience filter, not the duplicate check. A row that slips
+  # through (say, its email was edited during review) is still rejected by
+  # tin_hash on import. Must stay in step with rowKey() in
+  # tax1099_import_controller.js.
+  def self.imported_row_keys
+    Tax::Form.tax1099.not_discarded.where.not(completed_at: nil).includes(legal_entity: :users).flat_map do |form|
+      kind = form.entity_person? ? "person" : "business"
+
+      form.legal_entity.users.map do |user|
+        row_key(email: user.email, completed_on: form.completed_at.to_date.iso8601, kind:, zip_code: form.address_postal_code)
+      end
+    end.uniq
+  end
+
+  def self.row_key(email:, completed_on:, kind:, zip_code:)
+    [
+      email.to_s.strip.downcase,
+      completed_on,
+      kind,
+      # Digits only, ZIP+4 dropped, so "11385" and "11385-1234" agree.
+      zip_code.to_s.gsub(/\D/, "")[0, 5],
+    ].join("|")
+  end
+
   def self.entity_type_for(tin_type:, federal_tax_classification:)
     if tin_type == "SSN"
       :person

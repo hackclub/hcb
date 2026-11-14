@@ -6,7 +6,8 @@
   data-controller="tax1099-import"
   data-tax1099-import-create-url-value="<%= admin_tax1099_imports_path %>"
   data-tax1099-import-legal-entities-url-value="<%= legal_entities_admin_tax1099_imports_path %>"
-  data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>">
+  data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>"
+  data-tax1099-import-imported-row-keys-value="<%= @imported_row_keys.to_json %>">
   <div class="card mb-4">
     <h2 class="mt-0">Load the Tax1099 export</h2>
     <%# Same picker as comment attachments (file_upload_controller.js). %>
@@ -28,6 +29,7 @@
     <span class="badge bg-muted" data-tax1099-import-target="summaryTotal"></span>
     <span class="badge bg-success" data-tax1099-import-target="summaryImported"></span>
     <span class="badge bg-muted" data-tax1099-import-target="summarySkipped"></span>
+    <span class="badge bg-muted" data-tax1099-import-target="summaryHidden" hidden></span>
   </div>
 
   <div data-tax1099-import-target="rows"></div>

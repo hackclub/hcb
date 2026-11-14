@@ -16,6 +16,7 @@ module Admin
       @federal_tax_classifications = Tax1099ImportService::FEDERAL_TAX_CLASSIFICATIONS
       @tin_types = Tax1099ImportService::TIN_TYPES
       @fields = Tax1099ImportService::FIELDS
+      @imported_row_keys = Tax1099ImportService.imported_row_keys
     end
 
     # Answers "who should this form be attached to?" before the row itself is

@@ -376,4 +376,35 @@ RSpec.describe Tax1099ImportService do
         .to contain_exactly(business)
     end
   end
+
+  describe ".imported_row_keys" do
+    it "is empty when nothing has been imported" do
+      expect(described_class.imported_row_keys).to be_empty
+    end
+
+    it "keys a personal import by email, completed date, person, and ZIP" do
+      run
+
+      expect(described_class.imported_row_keys).to eq(["ada@example.com|2025-03-07|person|05482"])
+    end
+
+    it "keys a business import as a business, normalizing the email and ZIP" do
+      run(data: business_data.merge(email: " Ada@Example.com ", zip_code: "05482-1234"))
+
+      expect(described_class.imported_row_keys).to eq(["ada@example.com|2025-03-07|business|05482"])
+    end
+
+    it "leaves out discarded imports" do
+      run.form.update!(aasm_state: :discarded)
+
+      expect(described_class.imported_row_keys).to be_empty
+    end
+
+    it "leaves out forms that didn't come from Tax1099" do
+      user = create(:user, email: "grace@example.com")
+      create(:tax_form, legal_entity: user.personal_legal_entity, source: :taxbandits, completed_at: Time.current)
+
+      expect(described_class.imported_row_keys).to be_empty
+    end
+  end
 end

@@ -36,6 +36,20 @@ function toIsoDate(value) {
   return ''
 }
 
+// Identifies a row that an earlier session already imported, from the row's
+// prefilled (pre-review) values. Must stay in step with
+// Tax1099ImportService.row_key. Deliberately leaves out the TIN; see
+// Tax1099ImportService.imported_row_keys.
+function rowKey(data) {
+  return [
+    data.email.trim().toLowerCase(),
+    data.completed_on,
+    data.tin_type === 'SSN' ? 'person' : 'business',
+    // Digits only, ZIP+4 dropped, so "11385" and "11385-1234" agree.
+    data.zip_code.replace(/\D/g, '').slice(0, 5),
+  ].join('|')
+}
+
 // Tax1099 writes this in the suffix column for rows that have no suffix.
 const EMPTY_SUFFIX = 'SEL'
 
@@ -105,19 +119,20 @@ export default class extends Controller {
   static targets = [
     'csvInput',
     'csvError',
-    'intro',
     'rowTemplate',
     'rows',
     'summary',
     'summaryTotal',
     'summaryImported',
     'summarySkipped',
+    'summaryHidden',
   ]
 
   static values = {
     createUrl: String,
     legalEntitiesUrl: String,
     fields: Array,
+    importedRowKeys: Array,
   }
 
   async loadCsv(event) {
@@ -143,7 +158,17 @@ export default class extends Controller {
       return
     }
 
+    // Rows an earlier session already imported are left out entirely. Ones
+    // imported during this session stay, showing their Imported status.
+    const importedRowKeys = new Set(this.importedRowKeysValue)
+    let hidden = 0
+
     rows.forEach((cells, index) => {
+      if (importedRowKeys.has(rowKey(this.prefill(cells)))) {
+        hidden++
+        return
+      }
+
       // +1 for the header row, +1 to 1-index, matching what an admin sees in a
       // spreadsheet.
       this.rowsTarget.appendChild(this.buildRow(cells, index + 2))
@@ -153,7 +178,9 @@ export default class extends Controller {
     // the browser's handle on it too.
     this.csvInputTarget.value = ''
 
-    this.introTarget.hidden = true
+    this.summaryHiddenTarget.textContent = `${hidden} already imported, hidden`
+    this.summaryHiddenTarget.hidden = hidden === 0
+
     this.summaryTarget.hidden = false
     this.updateSummary()
   }
