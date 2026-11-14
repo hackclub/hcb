@@ -8,7 +8,7 @@
   data-tax1099-import-legal-entities-url-value="<%= legal_entities_admin_tax1099_imports_path %>"
   data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>">
   <div class="card mb-4">
-    <h2 class="mt-0">1. Load the Tax1099 export</h2>
+    <h2 class="mt-0">Load the Tax1099 export</h2>
     <%# Same picker as comment attachments (file_upload_controller.js). %>
     <div data-controller="file-upload" data-file-upload-placeholder-value="Choose Tax1099 CSV">
       <input
@@ -55,13 +55,13 @@
 
               <% case field[:key] %>
               <% when :tin_type %>
-                <select class="w-full" data-field="tin_type" data-action="change->tax1099-import#entityShapeChanged">
+                <select class="w-full max-w-sm" data-field="tin_type" data-action="change->tax1099-import#entityShapeChanged">
                   <% @tin_types.each do |tin_type| %>
                     <option value="<%= tin_type %>"><%= tin_type %></option>
                   <% end %>
                 </select>
               <% when :federal_tax_classification %>
-                <select class="w-full" data-field="federal_tax_classification" data-action="change->tax1099-import#entityShapeChanged">
+                <select class="w-full max-w-sm" data-field="federal_tax_classification" data-action="change->tax1099-import#entityShapeChanged">
                   <option value="">— pick one —</option>
                   <% @federal_tax_classifications.each do |classification| %>
                     <option value="<%= classification %>"><%= classification %></option>
@@ -87,7 +87,7 @@
             <span class="block mb-1">
               This payee already has business legal entities. Which one does this form belong to? *
             </span>
-            <select class="w-full" data-legal-entity-select></select>
+            <select class="w-full max-w-sm" data-legal-entity-select></select>
           </label>
         </div>
 
