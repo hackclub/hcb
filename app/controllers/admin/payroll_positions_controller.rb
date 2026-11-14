@@ -18,7 +18,7 @@ module Admin
     end
 
     def reject
-      position = Payroll::Position.find(params[:id])
+      position = Payroll::Position.find_by_hashid!(params[:id])
       position.mark_rejected!
       redirect_back fallback_location: admin_payroll_positions_path, flash: { success: "Contractor rejected." }
     rescue AASM::InvalidTransition

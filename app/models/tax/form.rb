@@ -34,6 +34,7 @@
 #  index_tax_forms_on_legal_entity_id  (legal_entity_id)
 #  index_tax_forms_on_tin_hash         (tin_hash)
 #
+
 module Tax
   class Form < ApplicationRecord
     include AASM
@@ -86,7 +87,13 @@ module Tax
     end
 
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
+      Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
+
       legal_entity.refresh_pending_contractors_payments!
+    end
+
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed) } do
+      Tax::FormMailer.with(form: self).verification_failed.deliver_later if legal_entity.requires_tax_verification?
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
@@ -120,6 +127,7 @@ module Tax
         after do
           import_taxbandits_data if sent_with_taxbandits?
 
+          Tax::FormMailer.with(form: self).completed.deliver_later
           legal_entity.refresh_pending_contractors_payments!
         end
       end
@@ -223,6 +231,50 @@ module Tax
       queries["whid"].first
     end
 
+    # Returns the raw bytes of the completed form PDF.
+    # This should only be used in Tax::FormsController#download.
+    def pdf_content
+      submission = begin
+        remote_taxbandits_submission
+      rescue
+        nil
+      end
+
+      return nil if submission.nil?
+
+      self.class.taxbandits_pdf(submission)
+    end
+
+    class << self
+      # The PDF TaxBandits generated for a submission, or nil if there isn't one yet.
+      def taxbandits_pdf(submission)
+        submission_form_type = submission["FormType"]
+        pdf_url = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]["PdfUrl"]
+
+        return nil if pdf_url.blank?
+
+        object_key = URI.parse(pdf_url).path.delete_prefix("/")
+
+        taxbandits_s3_bucket.object(object_key).get(
+          sse_customer_algorithm: "AES256",
+          sse_customer_key: Base64.strict_decode64(Credentials.fetch(:TAXBANDITS, :PDF_KEY))
+        ).body.read
+      end
+
+      private
+
+      def taxbandits_s3_bucket
+        Aws::S3::Resource.new(
+          region: "us-east-1",
+          credentials: Aws::Credentials.new(
+            Credentials.fetch(:TAXBANDITS, :S3_ACCESS_KEY_ID),
+            Credentials.fetch(:TAXBANDITS, :S3_SECRET_ACCESS_KEY)
+          )
+        ).bucket(Credentials.fetch(:TAXBANDITS, :S3_BUCKET))
+      end
+
+    end
+
     private
 
     # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside
@@ -267,16 +319,7 @@ module Tax
 
       return if address.blank?
 
-      us_tin, foreign_tin = case submission_form_type
-                            when "FormW9"
-                              [form_data["TIN"], nil]
-                            when "FormW8BEN"
-                              [form_data["USTIN"], form_data["ForeignTIN"]]
-                            when "FormW8ECI"
-                              [form_data["TIN"], form_data["ForeignTIN"]]
-                            when "FormW8BENE", "FormW8IMY", "FormW8EXP"
-                              [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
-                            end
+      us_tin, foreign_tin = submission_tins(submission_form_type, form_data)
 
       entity_type = entity_type_from(submission_form_type, form_data)
       tin, tin_type, country = identify_tin(us_tin, foreign_tin, entity_type, submission_form_type, form_data)
@@ -308,6 +351,21 @@ module Tax
       # sensitive can reach Rails logs or AppSignal. cause: nil mirrors the same
       # defense in Tax::IdentificationNumber::Hasher#hash_tin.
       raise ImportError, "failed to import TaxBandits data for #{public_id} (#{e.class})", cause: nil
+    end
+
+    def submission_tins(submission_form_type, form_data)
+      case submission_form_type
+      when "FormW9"
+        [form_data["TIN"], nil]
+      when "FormW8BEN"
+        [form_data["USTIN"], form_data["ForeignTIN"]]
+      when "FormW8ECI"
+        [form_data["TIN"], form_data["ForeignTIN"]]
+      when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+        [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
+      else
+        [nil, nil]
+      end
     end
 
     def entity_type_from(submission_form_type, form_data)
