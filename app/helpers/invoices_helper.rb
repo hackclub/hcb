@@ -1,16 +1,10 @@
 # frozen_string_literal: true
 
 module InvoicesHelper
+  include PaymentMethodsHelper
+
   def invoice_sent_at(invoice = @invoice)
     format_datetime invoice.created_at
-  end
-
-  def invoice_payment_method(invoice = @invoice)
-    if invoice.manually_marked_as_paid?
-      return "–"
-    elsif invoice&.payout
-      return invoice.payout.source_type.humanize
-    end
   end
 
   def invoice_payment_processor_fee(invoice = @invoice, humanized: true)
@@ -30,76 +24,17 @@ module InvoicesHelper
   end
 
   def invoice_payment_method_mention(invoice = @invoice, **options)
-    return "–" unless invoice&.manually_marked_as_paid? || invoice&.payment_method_type
-
-    if invoice.manually_marked_as_paid?
-      size = 20
-      icon_name = "post-fill"
-      description_text = "Manually marked as paid"
-    elsif invoice&.payment_method_card_brand
-      brand = invoice&.payment_method_card_brand
-      last4 = invoice&.payment_method_card_last4
-
-      icon_name = {
-        "amex"       => "card-amex",
-        "mastercard" => "card-mastercard",
-        "visa"       => "card-visa",
-        "discover"   => "card-discover"
-      }[brand] || "card-other"
-      description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
-      icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
-    else
-      icon_name = "bank-account"
-      size = 20
-
-      if invoice&.payment_method_type == "ach_credit_transfer"
-        description_text = "ACH transfer"
-      elsif invoice&.payment_method_type == "us_bank_account"
-        description_text = "US bank account"
-      else
-        description_text = invoice.payment_method_type.humanize
-      end
-    end
-
-    description = content_tag :span, description_text, class: "ml1"
-    icon ||= inline_icon icon_name, width: size, height: size, class: "slate"
-    content_tag(:span, class: "inline-flex items-center #{options[:class]}") { icon + description }
+    payment_method_mention(invoice, **options, manually_marked_as_paid: invoice&.manually_marked_as_paid?)
   end
 
   def invoice_card_country_mention(invoice = @invoice)
     country_code = invoice&.payment_method_card_country
 
-    return nil unless country_code
-
-    # Hack to turn country code into the country's flag
-    # https://stackoverflow.com/a/50859942
-    emoji = country_code.tr("A-Z", "\u{1F1E6}-\u{1F1FF}")
-
-    content_tag :span, emoji, class: "tooltipped tooltipped--w pr1", 'aria-label': country_code
+    country_to_emoji(country_code) if country_code
   end
 
   def invoice_card_check_badge(check, invoice = @invoice)
-    case invoice.send("payment_method_card_checks_#{check}_check")
-    when "pass"
-      background = "success"
-      icon_name = "checkmark"
-      text = "Passed"
-    when "failed"
-      background = "warning"
-      icon_name = "view-close"
-      text = "Failed"
-    when "unchecked"
-      background = "info"
-      icon_name = "checkbox"
-      text = "Unchecked"
-    else
-      background = "smoke"
-      icon_name = "checkbox"
-      text = "Unavailable"
-    end
-
-    tag = inline_icon icon_name, size: 24
-    content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
+    card_check_badge invoice.send("payment_method_card_checks_#{check}_check")
   end
 
   # this information is visible to admins only because payouts should feel instant to the user

@@ -54,12 +54,13 @@
 <% end %>
 
 <%= form_with(model: [@event, @check], local: true,
-  data: { controller: "extraction", extraction_target: "form" },
+  data: { controller: "payment-recipient" },
   html: {
     "x-data" => "check(#{({
       payment_recipient: (@check.payment_recipient.to_safe_hash if @check.payment_recipient&.event&.== @check.event),
       editing: @check.address_line1.present?,
-    }.to_json)})"
+    }.to_json)})",
+    "@payment-recipient:change" => "payment_recipient = $event.detail",
   }) do |form| %>
   <%= form_errors(@check, "check", "We couldn't send this") %>
 
@@ -83,7 +84,6 @@
           "aria-controls": "#payment-recipient-search",
           data: {
             input_target: "input",
-            extraction_field: "seller_name",
             action: "
               keydown.enter->text-filter#selectFirst
               click->menu#open
@@ -91,13 +91,13 @@
               click@document->menu#close
               keydown@document->menu#keydown
               input->text-filter#query
+              input->payment-recipient#clear
             ",
             menu_target: "toggle",
           },
           maxlength: 250,
           class: "!max-w-full",
-          "x-ref" => "name_input",
-          "@input" => "payment_recipient = null" %>
+          "x-ref" => "name_input" %>
 
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
@@ -106,9 +106,8 @@
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
-                  data-action="input#focus menu#close"
-                  data-recipient="<%= payment_recipient.to_safe_json %>"
-                  @click="select_recipient($el.dataset.recipient)">
+                  data-action="input#focus menu#close payment-recipient#select"
+                  data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
@@ -128,7 +127,6 @@
           placeholder: "fionah@gmail.com",
           required: true,
           disabled: disabled,
-          data: { extraction_field: "seller_email" },
           class: "!max-w-full" %>
       </div>
 
@@ -143,12 +141,10 @@
               <%= form.text_field :address_line1,
                 placeholder: "1 Letterman Drive",
                 required: true,
-                disabled: disabled,
-                data: { extraction_field: "seller_address_line_1" } %>
+                disabled: disabled %>
               <%= form.text_field :address_line2,
                 placeholder: "Suite 500",
-                disabled: disabled,
-                data: { extraction_field: "seller_address_line_2" } %>
+                disabled: disabled %>
             </div>
           </div>
 
@@ -158,16 +154,14 @@
               <%= form.text_field :address_city,
                 placeholder: "San Francisco",
                 required: true,
-                disabled: disabled,
-                data: { extraction_field: "seller_address_city" } %>
+                disabled: disabled %>
             </div>
             <div class="flex-auto">
               <%= form.label :address_state, "State" %>
               <%= form.select :address_state, IncreaseCheck::US_STATES,
               { prompt: "Select a state" },
               class: "min-h-0 h-9",
-              disabled: disabled,
-              data: { extraction_field: "seller_address_state_code" } %>
+              disabled: disabled %>
               <% @check.errors.messages_for(:address_state).each do |message| %>
                 <div class="primary"><%= message %></div>
               <% end %>
@@ -180,8 +174,7 @@
               class: "!max-w-[150px]",
               placeholder: "94129",
               required: true,
-              disabled: disabled,
-              data: { extraction_field: "seller_address_zip" } %>
+              disabled: disabled %>
             <% @check.errors.messages_for(:address_zip).each do |message| %>
               <div class="primary"><%= message %></div>
             <% end %>
@@ -293,8 +286,7 @@
               data: {
                 behavior: "check_amount_field",
                 controller: "truncate-decimal",
-                action: "truncate-decimal#truncate blur->truncate-decimal#pad",
-                extraction_field: "total"
+                action: "truncate-decimal#truncate blur->truncate-decimal#pad"
               } %>
           </div>
         </div>

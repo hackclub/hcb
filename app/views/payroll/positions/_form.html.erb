@@ -38,7 +38,7 @@
               manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
       <% end %>
 
-      <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
+      <% form_url = editing ? payroll_position_path(position) : event_payroll_positions_path(event_id: event.slug) %>
       <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee),
             html: { "x-data": "{ hasAttachment: #{editing && position.file.attached? ? "true" : "false"} }" }) do |form| %>
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
