@@ -427,6 +427,13 @@ class User < ApplicationRecord
     !seasonal_themes_enabled?
   end
 
+  # Memoized since the settings dropdown renders on many pages.
+  def show_tax_settings?
+    return @show_tax_settings if defined?(@show_tax_settings)
+
+    @show_tax_settings = legal_entities.any? { |le| le.tax_form_required? || le.completed_tax_form? }
+  end
+
   # Whether this user is allowed to issue stripe cards and activate card grants.
   # Admins can grant `phone_number_verification_bypassed` to unblock a user who
   # can't complete SMS verification; it deliberately leaves the number itself
