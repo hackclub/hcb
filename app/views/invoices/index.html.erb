@@ -73,8 +73,8 @@
       <thead>
         <tr>
           <% @table_columns.each do |column| %>
-            <th>
-              <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
+            <th class="<%= "text-right" if column[:right] %>">
+              <%= render "events/sort_table_header", sort: column[:key], columns: @table_columns, display: column[:display], right: column[:right] %>
             </th>
           <% end %>
         </tr>

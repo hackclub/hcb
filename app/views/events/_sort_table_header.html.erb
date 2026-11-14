@@ -1,13 +1,13 @@
-<%# locals: (sort:, display: nil, default: false, right: false) %>
+<%# locals: (sort:, columns:, display: nil, right: false) %>
 
 <% if organizer_signed_in? %>
-  <% is_active = params[:sort] == sort || (params[:sort].nil? && local_assigns[:default]) %>
-  <% current_direction = params[:direction].presence || "desc" %>
-  <% direction = is_active ? (current_direction == "asc" ? "desc" : "asc") : "desc" %>
+  <% active_column, current_direction = current_sort(columns) %>
+  <% is_active = active_column[:key] == sort %>
+  <% direction = is_active && current_direction == "desc" ? "asc" : "desc" %>
   <%= link_to upsert_query_params(sort: sort, direction: direction),
     class: ["sort-button", ("sort-button--active" if is_active), ("sort-button--right" if local_assigns[:right])].compact.join(" ") do %>
     <%= display || sort.humanize %>
-    <%= inline_icon(current_direction == "desc" ? "down-caret" : "up-caret", size: 16) %>
+    <%= inline_icon((is_active ? current_direction : "desc") == "desc" ? "down-caret" : "up-caret", size: 16) %>
   <% end %>
 <% else %>
   <%= display || sort.humanize %>
