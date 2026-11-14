@@ -25,11 +25,11 @@
       <% if @legal_entity.latest_tax_form.present? && !@legal_entity.latest_tax_form.failed? %>
         <p>You haven't finished your tax form<%= for_name %> yet.</p>
 
-        <%= link_to "Resume tax form", tax_form_path(@legal_entity.latest_tax_form), class: "btn" %>
+        <%= link_to "Resume tax form", tax_form_path(@legal_entity.latest_tax_form), class: "btn", data: { turbo_frame: "_top" } %>
       <% else %>
         <p>You haven't submitted a tax form<%= for_name %> yet.</p>
 
-        <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+        <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn", form: { data: { turbo_frame: "_top" } } %>
       <% end %>
     <% when :form_not_mismatched %>
       <%= render "legal_entities/mismatched_tax_form", legal_entity: @legal_entity, mismatched:, show_tin: %>
@@ -41,7 +41,7 @@
           Double-check the name and TIN you entered, then submit a new tax form.
         </p>
 
-        <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+        <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn", form: { data: { turbo_frame: "_top" } } %>
       <% else %>
         <p>
           The tax form you submitted<%= for_name %> on <%= format_date @completed_tax_form.completed_at %>
@@ -58,7 +58,7 @@
           If you need to update your tax information, start a new tax form.
         </p>
 
-        <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+        <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn", form: { data: { turbo_frame: "_top" } } %>
       <% else %>
         <p>You don't need a tax form<%= for_name %> right now.</p>
       <% end %>
