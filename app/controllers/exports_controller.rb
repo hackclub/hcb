@@ -12,6 +12,13 @@ class ExportsController < ApplicationController
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
+  # The legacy whole-organization exports, by format.
+  LEGACY_FORMATS = {
+    csv: Export::Event::Transactions::Csv,
+    json: Export::Event::Transactions::Json,
+    ledger: Export::Event::Transactions::Ledger,
+  }.freeze
+
   def transactions
     authorize @event, :show?
 
@@ -19,42 +26,8 @@ class ExportsController < ApplicationController
     # chose: params[:format] is nil without a path extension, and a wildcard
     # Accept (curl's default) matches the first block listed.
     respond_to do |format|
-      format.csv do
-        # CSV exports **can** support date ranges
-        if params[:start_date].present?
-          set_date_range
-          return if performed?
-        end
-
-        @export = Export::Event::Transactions::Csv.new(
-          requested_by: current_user,
-          event_id: @event.id,
-          start_date: @start,
-          end_date: @end,
-          public_only: !organizer_signed_in?
-        )
-
-        deliver_export(@export, file_extension: :csv, filters: statement_range_params)
-      end
-
-      format.json do
-        @export = Export::Event::Transactions::Json.new(
-          requested_by: current_user,
-          event_id: @event.id,
-          public_only: !organizer_signed_in?
-        )
-
-        deliver_export(@export, file_extension: :json)
-      end
-
-      format.ledger do
-        @export = Export::Event::Transactions::Ledger.new(
-          requested_by: current_user,
-          event_id: @event.id,
-          public_only: !organizer_signed_in?
-        )
-
-        deliver_export(@export, file_extension: :ledger)
+      LEGACY_FORMATS.each do |as, export_class|
+        format.public_send(as) { export_transactions(as:, export_class:) }
       end
 
       format.pdf do
@@ -149,6 +122,26 @@ class ExportsController < ApplicationController
   end
 
   private
+
+  def export_transactions(as:, export_class:)
+    attributes = { requested_by: current_user, event_id: @event.id, public_only: !organizer_signed_in? }
+    filters = {}
+
+    # Only the CSV can be narrowed to a date range.
+    if as == :csv
+      if params[:start_date].present?
+        set_date_range
+        return if performed?
+      end
+
+      attributes.merge!(start_date: @start, end_date: @end)
+      filters = statement_range_params
+    end
+
+    @export = export_class.new(**attributes)
+
+    deliver_export(@export, file_extension: as, filters:)
+  end
 
   # The date range a legacy CSV export can be narrowed to, as params, for the
   # same round trip through the email form that the ledger filters make.
