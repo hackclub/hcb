@@ -562,7 +562,7 @@ RSpec.describe LoginsController do
     end
 
     it "redirects to the user's settings page if they don't have a name or phone number" do
-      user = create(:user, full_name: nil, phone_number: nil)
+      user = create(:user, legal_first_name: nil, legal_last_name: nil, phone_number: nil)
       login = create(:login, user:)
       login_code = create(:login_code, user:)
 

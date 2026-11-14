@@ -83,6 +83,59 @@ RSpec.describe StripeCardholder, type: :model do
     expect(stripe_cardholder.reload.stripe_phone_number).to be_nil
   end
 
+  describe ".first_name and .last_name" do
+    it "use the user's legal name, not their preferred name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi Hacks")
+
+      expect(StripeCardholder.first_name(user)).to eq("Fiona")
+      expect(StripeCardholder.last_name(user)).to eq("Hackworth")
+    end
+
+    it "keep middle names and suffixes" do
+      user = create(:user, legal_first_name: "Martin Luther", legal_last_name: "King Jr.")
+
+      expect(StripeCardholder.first_name(user)).to eq("Martin Luther")
+      expect(StripeCardholder.last_name(user)).to eq("King Jr.")
+    end
+
+    it "work for surnames that collide with Namae's title list" do
+      user = create(:user, full_name: "Jane Elder")
+
+      expect(StripeCardholder.first_name(user)).to eq("Jane")
+      expect(StripeCardholder.last_name(user)).to eq("Elder")
+    end
+
+    it "transliterate accented characters" do
+      user = create(:user, legal_first_name: "María-José", legal_last_name: "Carreño Quiñones")
+
+      expect(StripeCardholder.first_name(user)).to eq("Maria-Jose")
+      expect(StripeCardholder.last_name(user)).to eq("Carreno Quinones")
+    end
+
+    it "explain that a last name is required when the user only has a first name" do
+      user = create(:user, legal_first_name: "Madonna", legal_last_name: nil)
+
+      expect(StripeCardholder.first_name(user)).to eq("Madonna")
+      expect { StripeCardholder.last_name(user) }.to raise_error(
+        Errors::StripeInvalidNameError,
+        "A legal last name is required to issue cards. Please add it in your account settings."
+      )
+    end
+
+    it "explain that a first name is required when the user has no name" do
+      user = create(:user, legal_first_name: nil, legal_last_name: nil)
+
+      expect { StripeCardholder.first_name(user) }.to raise_error(Errors::StripeInvalidNameError, /legal first name is required/)
+    end
+
+    it "reject names with no latin letters" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+      user.update_columns(legal_first_name: "ジョン", full_name: "ジョン Hackworth")
+
+      expect { StripeCardholder.first_name(user) }.to raise_error(Errors::StripeInvalidNameError, /must contain at least 1 letter/)
+    end
+  end
+
   describe ".phone_number_supported?" do
     it "works for US numbers" do
       expect(StripeCardholder.phone_number_supported?("+18556254225")).to eq(true)

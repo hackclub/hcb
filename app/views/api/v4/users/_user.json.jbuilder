@@ -14,7 +14,10 @@ object_shape(json, user, created_at: false) do
     json.email user.email
   end
 
+  # Other org members only see `name`, which respects the preferred name.
   expand_pii(override_if: user == current_user) do
+    json.first_name user.first_name(legal: true)
+    json.last_name user.last_name(legal: true)
     json.birthday user.birthday
     if expand?(:shipping_address)
       json.shipping_address do
