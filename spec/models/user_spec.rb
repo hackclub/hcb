@@ -713,6 +713,36 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#unassociated_payments_received" do
+    let(:user) { create(:user) }
+
+    it "includes pending payments to a payee with the user's email and no legal entity" do
+      payment = create(:payment, payee: create(:payee, legal_entity: nil, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "includes pending payments to a payee with the user's email and a managed legal entity" do
+      event = create(:event)
+      managed = create(:legal_entity, managing_event: event)
+      payment = create(:payment, payee: create(:payee, event:, legal_entity: managed, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "excludes payments to a payee with an unmanaged legal entity" do
+      create(:payment, payee: create(:payee, email: user.email))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+
+    it "excludes payments to a payee with a different email" do
+      create(:payment, payee: create(:payee, legal_entity: nil))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
