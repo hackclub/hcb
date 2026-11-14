@@ -41,7 +41,7 @@ module Admin
         pdf: params[:pdf],
         legal_entity: selected_legal_entity,
         new_legal_entity: params[:legal_entity_id] == NEW_LEGAL_ENTITY,
-        pdf_url_builder: ->(token) { taxbandits_w9_pdf_url(token:, format: :pdf) }
+        pdf_url_builder: ->(token) { taxbandits_pdf_url(token) }
       ).run
 
       render json: {
@@ -71,6 +71,18 @@ module Admin
 
       LegalEntity.find_by(id: params[:legal_entity_id]) ||
         raise(Tax1099ImportService::ValidationError, "the selected legal entity no longer exists")
+    end
+
+    # TaxBandits fetches this URL from the outside, so in development it has to
+    # use TEST_URL_HOST (e.g. an ngrok tunnel) rather than the request's host,
+    # which is usually localhost:3000. The request-free route helpers use
+    # default_url_options, which development sets from TEST_URL_HOST.
+    def taxbandits_pdf_url(token)
+      if Rails.env.development?
+        Rails.application.routes.url_helpers.taxbandits_w9_pdf_url(token:, format: :pdf)
+      else
+        taxbandits_w9_pdf_url(token:, format: :pdf)
+      end
     end
 
   end
