@@ -4,20 +4,20 @@ require "rails_helper"
 
 RSpec.describe Subscription, type: :model do
   describe "cadence" do
-    it "fills cadence_days from the cadence bucket" do
-      expect(create(:subscription, cadence: :weekly).cadence_days).to eq(7)
-      expect(create(:subscription, cadence: :quarterly).cadence_days).to eq(90)
+    it "is named after its cadence_days bucket" do
+      expect(build(:subscription, cadence_days: 7).cadence).to eq("weekly")
+      expect(build(:subscription, cadence_days: 90).cadence_label).to eq("quarterly")
     end
 
-    it "keeps cadence_days for a custom cadence" do
-      subscription = create(:subscription, cadence: :custom, cadence_days: 45)
+    it "is custom for any other number of days" do
+      subscription = build(:subscription, cadence_days: 45)
 
-      expect(subscription.cadence_days).to eq(45)
+      expect(subscription.cadence).to eq("custom")
       expect(subscription.cadence_label).to eq("every 45 days")
     end
 
-    it "requires positive cadence days for a custom cadence" do
-      expect(build(:subscription, cadence: :custom, cadence_days: 0)).not_to be_valid
+    it "requires positive cadence days" do
+      expect(build(:subscription, cadence_days: 0)).not_to be_valid
     end
   end
 
@@ -80,13 +80,13 @@ RSpec.describe Subscription, type: :model do
     include_context "card locking charges"
 
     let(:stripe_card) { create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:) }
-    let(:subscription) { create(:subscription, stripe_card:, event:, amount_cents: 10_00) }
+    let(:subscription) { create(:subscription, stripe_card:, amount_cents: 10_00) }
 
     it "tracks the last and next expected charge" do
-      first = create_settled_card_charge(user:, stripe_card:, settled_at: 40.days.ago)
-      last = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago)
+      first = create_settled_card_charge(user:, stripe_card:, settled_at: 40.days.ago).ledger_item.reload
+      last = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago).ledger_item.reload
 
-      [last, first].each { |hcb_code| hcb_code.update!(subscription:) }
+      [last, first].each { |ledger_item| ledger_item.update_column(:subscription_id, subscription.id) }
       subscription.sync_charges!
 
       expect(subscription.last_charged_at).to be_within(1.second).of(last.datetime)
@@ -98,21 +98,21 @@ RSpec.describe Subscription, type: :model do
     include_context "card locking charges"
 
     let(:stripe_card) { create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:) }
-    let(:subscription) { create(:subscription, stripe_card:, event:, amount_cents: 10_00) }
+    let(:subscription) { create(:subscription, stripe_card:, amount_cents: 10_00) }
 
     it "links the charge and tracks it as the last one" do
-      hcb_code = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago)
+      ledger_item = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago).ledger_item.reload
 
-      subscription.link!(hcb_code)
+      subscription.link!(ledger_item)
 
-      expect(hcb_code.reload.subscription).to eq(subscription)
-      expect(subscription.last_charged_at).to be_within(1.second).of(hcb_code.datetime)
+      expect(ledger_item.reload.subscription).to eq(subscription)
+      expect(subscription.last_charged_at).to be_within(1.second).of(ledger_item.datetime)
     end
 
     it "doesn't touch the charge's ledger item" do
-      hcb_code = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago)
+      ledger_item = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago).ledger_item.reload
 
-      expect { subscription.link!(hcb_code) }.not_to(change { hcb_code.ledger_item.reload.updated_at })
+      expect { subscription.link!(ledger_item) }.not_to(change { ledger_item.reload.updated_at })
     end
   end
 end

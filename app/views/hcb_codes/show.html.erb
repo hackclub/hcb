@@ -43,7 +43,9 @@
         end %>
   <% end %>
 
-  <%= render "hcb_codes/detected_subscription", subscription: @hcb_code.subscription if @hcb_code.subscription %>
+  <% if (subscription = @hcb_code.ledger_item&.subscription) %>
+    <%= render "hcb_codes/detected_subscription", subscription:, current_item: @hcb_code.ledger_item %>
+  <% end %>
 
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 

@@ -1,43 +1,61 @@
 # frozen_string_literal: true
 
 class Subscription
-  # Links a settled card charge to the subscription it matches (merchant, exact
-  # amount and timing). When nothing matches, looks for a new subscription among
-  # the card's charges at that merchant (Subscription::Detect).
   #
   # Idempotent: a charge that's already linked is left alone.
   class LinkCharge
-    def initialize(hcb_code:)
-      @hcb_code = hcb_code
+    def self.enqueue(ledger_item)
+      Subscription::LinkChargeJob.perform_later(ledger_item) if candidate?(ledger_item) && ledger_item.primary_mapping.present?
+    end
+
+    def self.candidate?(ledger_item)
+      ledger_item.linked_object_type == CardCharge.name &&
+        ledger_item.settled? &&
+        ledger_item.amount_cents.negative? &&
+        ledger_item.subscription_id.nil?
+    end
+
+    def initialize(ledger_item:)
+      @ledger_item = ledger_item
     end
 
     def run
-      return if @hcb_code.subscription_id.present?
-      return unless @hcb_code.card_charge?
-      return unless @hcb_code.amount_cents.negative?
+      return unless self.class.candidate?(@ledger_item)
 
-      stripe_card = @hcb_code.stripe_card
+      card_charge = @ledger_item.linked_object
+      stripe_card = card_charge.stripe_card
       return unless stripe_card
 
-      merchant = @hcb_code.subscription_merchant
+      merchant = @ledger_item.subscription_merchant
       return unless merchant
 
+      # A settling charge's mapping commits several times, each enqueuing a
+      # job. Locking the card serializes them, so only the first one links or
+      # detects and the rest see the item already linked.
+      stripe_card.with_lock do
+        link_or_detect(stripe_card, merchant) if @ledger_item.reload.subscription_id.nil?
+      end
+    end
+
+    private
+
+    def link_or_detect(stripe_card, merchant)
       subscription = stripe_card.subscriptions.find do |candidate|
         candidate.matches?(
           merchant_network_id: merchant[:network_id],
           merchant_name: merchant[:name],
-          amount_cents: @hcb_code.amount_cents,
-          at: @hcb_code.datetime
+          amount_cents: @ledger_item.amount_cents,
+          at: @ledger_item.datetime
         )
       end
 
       if subscription
-        subscription.link!(@hcb_code)
+        subscription.link!(@ledger_item)
         return subscription
       end
 
       detected = Subscription::Detect.new(stripe_card:, merchant_network_id: merchant[:network_id], merchant_name: merchant[:name]).run
-      detected.find { |detected_subscription| detected_subscription.hcb_codes.exists?(@hcb_code.id) }
+      detected.find { |detected_subscription| detected_subscription.ledger_items.exists?(@ledger_item.id) }
     end
 
   end

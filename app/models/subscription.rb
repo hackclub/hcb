@@ -6,31 +6,30 @@
 #
 #  id                  :bigint           not null, primary key
 #  amount_cents        :integer          not null
-#  cadence             :string           not null
 #  cadence_days        :integer          not null
 #  last_charged_at     :datetime
 #  merchant_name       :string           not null
 #  next_expected_at    :datetime
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  event_id            :bigint           not null
+#  ledger_id           :bigint           not null
 #  merchant_network_id :string
 #  stripe_card_id      :bigint           not null
 #
 # Indexes
 #
-#  index_subscriptions_on_event_id                                (event_id)
+#  index_subscriptions_on_ledger_id                               (ledger_id)
 #  index_subscriptions_on_stripe_card_id                          (stripe_card_id)
 #  index_subscriptions_on_stripe_card_id_and_merchant_network_id  (stripe_card_id,merchant_network_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (ledger_id => ledgers.id)
 #  fk_rails_...  (stripe_card_id => stripe_cards.id)
 #
 # A recurring card charge (e.g. Spotify, Vercel, a domain renewal) found by
 # Subscription::Detect: one merchant charging a card the same amount on a
-# cadence. Charges are linked through `hcb_codes.subscription_id`.
+# cadence. Charges are linked through `ledger_items.subscription_id`.
 #
 # For now this only records what detection finds, so we can see how well it
 # works. Nothing (receipts, card locking) behaves differently for a linked
@@ -59,22 +58,11 @@ class Subscription < ApplicationRecord
   # span up to this many cycles (a skipped month, say).
   MAX_SKIPPED_CYCLES = 3
 
-  belongs_to :event
+  belongs_to :ledger
   belongs_to :stripe_card
-  has_many :hcb_codes, dependent: :nullify, inverse_of: :subscription
+  has_many :ledger_items, class_name: "Ledger::Item", dependent: :nullify, inverse_of: :subscription
 
   monetize :amount_cents
-
-  enum :cadence, {
-    weekly: "weekly",
-    biweekly: "biweekly",
-    monthly: "monthly",
-    quarterly: "quarterly",
-    yearly: "yearly",
-    custom: "custom",
-  }, validate: true
-
-  before_validation :set_cadence_days
 
   validates :merchant_name, presence: true
   validates :cadence_days, numericality: { only_integer: true, greater_than: 0 }
@@ -110,6 +98,14 @@ class Subscription < ApplicationRecord
     gap_days >= (1 - TOLERANCE) * cadence_days
   end
 
+  def cadence
+    CADENCE_DAYS.key(cadence_days)&.to_s || "custom"
+  end
+
+  def custom?
+    cadence == "custom"
+  end
+
   def cadence_label
     return "every #{cadence_days} days" if custom?
 
@@ -127,24 +123,18 @@ class Subscription < ApplicationRecord
 
   # Recomputes the last and next expected charge times from the linked charges.
   def sync_charges!
-    last_charged_at = hcb_codes.reload.map { |hcb_code| hcb_code.datetime || hcb_code.created_at }.max
+    last_charged_at = ledger_items.maximum(:datetime)
 
     update!(last_charged_at:, next_expected_at: last_charged_at && (last_charged_at + cadence_days.days))
   end
 
   # Linking only stamps a foreign key nothing else reacts to, so it skips the
-  # HcbCode callbacks: saving an HcbCode touches its ledger item, which re-runs
-  # the ledger mapper and enqueues card-locking jobs.
-  def link!(hcb_code)
-    hcb_code.update_column(:subscription_id, id)
+  def link!(ledger_item)
+    ledger_item.update_column(:subscription_id, id)
     sync_charges!
   end
 
   private
-
-  def set_cadence_days
-    self.cadence_days = CADENCE_DAYS[cadence.to_sym] if cadence.present? && !custom?
-  end
 
   def not_a_duplicate
     return if stripe_card_id.nil?

@@ -1,4 +1,4 @@
-<%# locals: (subscription:) %>
+<%# locals: (subscription:, current_item:) %>
 
 <% admin_tool("mt2 p-3") do %>
   <h3 class="mt0 mb1">Detected as a subscription</h3>
@@ -11,14 +11,14 @@
     <% end %>
   </p>
   <ul class="list-reset m0">
-    <% subscription.hcb_codes.sort_by { |hcb_code| hcb_code.datetime || hcb_code.created_at }.reverse_each do |hcb_code| %>
+    <% subscription.ledger_items.includes(:hcb_code).order(datetime: :desc).each do |ledger_item| %>
       <li>
-        <% if hcb_code == @hcb_code %>
-          <strong><%= hcb_code.date&.to_fs(:long) %> (this charge)</strong>
+        <% if ledger_item == current_item %>
+          <strong><%= ledger_item.datetime.to_date.to_fs(:long) %> (this charge)</strong>
         <% else %>
-          <%= link_to hcb_code.date&.to_fs(:long) || hcb_code.hashid, hcb_code_path(hcb_code), data: { turbo_frame: "_top" } %>
+          <%= link_to ledger_item.datetime.to_date.to_fs(:long), ledger_item.hcb_code ? hcb_code_path(ledger_item.hcb_code) : ledger_item_path(ledger_item), data: { turbo_frame: "_top" } %>
         <% end %>
-        &middot; <%= render_money hcb_code.amount_cents.abs %>
+        &middot; <%= render_money ledger_item.amount_cents.abs %>
       </li>
     <% end %>
   </ul>
