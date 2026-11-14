@@ -32,9 +32,7 @@
             <%= inline_icon "card", width: 20, class: "muted", "aria-hidden": true %>
           <% end %>
         <% end %>
-        <span class="align-middle timestamp" style="cursor: default" data-controller="timestamp" data-timestamp-time-value="<%= activity.created_at.to_i * 1000 %>">
-          <%= time_ago_in_words activity.created_at %> ago
-        </span>
+        <%= local_time_ago activity.created_at, class: "align-middle timestamp", style: "cursor: default" %>
       </div>
     </div>
   </div>
