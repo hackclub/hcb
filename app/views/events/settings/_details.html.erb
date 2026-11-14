@@ -1,4 +1,6 @@
-<%# locals: (event:) %>
+<%# locals: (event:, transparent_initially: event.is_public?) %>
+<%# herb:slots client %>
+<%# herb:state (transparency_enabled: transparent_initially) %>
 
 <% disabled = !policy(event).update? %>
 
@@ -112,12 +114,12 @@
 
   <h3 class="mb1" id="transparency_mode_heading">Transparency Mode</h3>
 
-  <div class="card mb3" data-controller="accordion">
+  <div class="card mb3">
     <div class="field field--checkbox">
       <span style="font-weight: 700">Make <%= possessive(event.name) %> finances transparent</span>
       <div class="field--checkbox--switch ml-auto">
         <%= form.label :is_public do %>
-          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled:, switch: true %>
+          <%= form.check_box :is_public, data: { herb_set: "change->transparency_enabled=$value" }, disabled:, switch: true %>
           <span class="slider"></span>
         <% end %>
       </div>
@@ -139,7 +141,7 @@
       </li>
       <li>With transparency mode off, your announcements page will only be visible once you have published your first announcement. It will always be visible with transparency mode on.</li>
     </ul>
-    <div data-accordion-target="content">
+    <div hidden="<%= !transparency_enabled %>">
       <div class="menu__divider" style="margin:0px"></div>
       <div class="field mt-2">
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
