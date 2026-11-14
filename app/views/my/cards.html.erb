@@ -42,6 +42,7 @@
       </div>
     </div>
   <% end %>
+  <%= render "stripe_cards/expiration_callout", stripe_cards: current_user.stripe_cards.order(:created_at) %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
     <%= modal_header "Order a card" %>
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>

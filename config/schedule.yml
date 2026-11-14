@@ -139,6 +139,10 @@ stripe_card_nightly_job:
   cron: "0 7 * * *" # run every 1 day, after import
   class: "StripeCard::NightlyJob"
 
+stripe_card_expiration_job:
+  cron: "0 8 1 * *" # run on the 1st of every month, since cards expire at the end of a month
+  class: "StripeCard::ExpirationJob"
+
 blazer_checks_nightly_job:
   cron: "0 8 * * *"
   class: "BlazerChecksJob"

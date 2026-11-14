@@ -1,0 +1,51 @@
+<%# locals: (stripe_cards:) %>
+
+<%# Prompts the cardholder to replace cards from 3 months before they expire
+    until 6 months after (see StripeCard#replaceable_for_expiration?) %>
+<% stripe_cards = stripe_cards.select { |card| policy(card).replace_expired? } %>
+
+<% if stripe_cards.any? %>
+  <% any_expired = stripe_cards.any?(&:expired?) %>
+  <% title = if stripe_cards.one?
+               card = stripe_cards.first
+               "#{card.user == current_user ? "Your" : "This"} card ending in #{card.last4} #{card.expired? ? "expired" : "expires"} on #{card.expires_on.to_fs(:long)}"
+             elsif any_expired
+               "Some of your cards have expired"
+             else
+               "Some of your cards are expiring soon"
+             end %>
+
+  <%= render "application/callout", type: any_expired ? "error" : "warning", title: do %>
+    <p class="mt-0">
+      Order a replacement card to keep spending. Your new card will come with a new expiration date and CVC but will keep the original card number.
+      <% if stripe_cards.any? { |card| card.physical? && !card.expired? } %>
+        Physical cards take can take 5-7 business days to arrive.
+      <% end %>
+    </p>
+
+    <ul class="list-none p-0 m-0 flex flex-col gap-2">
+      <% stripe_cards.each do |card| %>
+        <% flow = StripeCard::ReplacementFlow.new(stripe_card: card, flow: "expired") %>
+        <li class="flex items-center justify-between gap-3 flex-wrap">
+          <span class="flex items-center gap-2 flex-wrap">
+            <%= stripe_card_mention card %>
+            <span class="muted">
+              <%= card.expired? ? "Expired" : "Expires" %> <%= card.expires_on.to_fs(:long) %><%= ", canceled" if card.canceled? %>
+            </span>
+          </span>
+          <%= link_to new_stripe_card_replacement_path(card, **flow.params),
+                      class: "btn btn-small bg-primary",
+                      data: { behavior: "modal_trigger", modal: flow.dom_id(:modal) } do %>
+            <%= inline_icon "card-add" %>
+            Order replacement
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%# Rendered outside the callout so its scrolling doesn't clip the modals %>
+  <% stripe_cards.each do |card| %>
+    <%= render "stripe_cards/actions/replacement_modal", flow: StripeCard::ReplacementFlow.new(stripe_card: card, flow: "expired") %>
+  <% end %>
+<% end %>

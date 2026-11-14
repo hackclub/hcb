@@ -1,0 +1,37 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<% prefill = stripe_card.replacement_shipping_address_source %>
+<% field_id = ->(field) { flow.dom_id("shipping_#{field}") } %>
+<% states = ISO3166::Country["US"].subdivisions.map { |code, subdivision| [subdivision.name, code] }.sort %>
+
+<h3 class="mt-0 mb-2">Where should we send your new card?</h3>
+<p class="mt-0">
+  Cards can only be shipped within the US.
+</p>
+
+<div class="grid grid--split">
+  <div class="field grid__fill">
+    <%= label_tag "shipping_address[name]", "Name", for: field_id.call(:name) %>
+    <%= text_field_tag "shipping_address[name]", stripe_card.user.full_name, required: true, autocomplete: "shipping name", id: field_id.call(:name) %>
+  </div>
+  <div class="field grid__fill">
+    <%= label_tag "shipping_address[line1]", "Address (line 1)", for: field_id.call(:line1) %>
+    <%= text_field_tag "shipping_address[line1]", prefill&.address_line1, required: true, autocomplete: "shipping address-line1", id: field_id.call(:line1) %>
+  </div>
+  <div class="field grid__fill">
+    <%= label_tag "shipping_address[line2]", "Address (line 2)", for: field_id.call(:line2) %>
+    <%= text_field_tag "shipping_address[line2]", prefill&.address_line2, placeholder: "(Building / Apartment / Room)", autocomplete: "shipping address-line2", id: field_id.call(:line2) %>
+  </div>
+  <div class="field">
+    <%= label_tag "shipping_address[city]", "City", for: field_id.call(:city) %>
+    <%= text_field_tag "shipping_address[city]", prefill&.address_city, required: true, autocomplete: "shipping address-level2", id: field_id.call(:city) %>
+  </div>
+  <div class="field">
+    <%= label_tag "shipping_address[state]", "State", for: field_id.call(:state) %>
+    <%= select_tag "shipping_address[state]", options_for_select(states, prefill&.address_state), include_blank: true, required: true, autocomplete: "shipping address-level1", id: field_id.call(:state) %>
+  </div>
+  <div class="field">
+    <%= label_tag "shipping_address[postal_code]", "ZIP code", for: field_id.call(:postal_code) %>
+    <%= text_field_tag "shipping_address[postal_code]", prefill&.address_postal_code, required: true, autocomplete: "shipping postal-code", id: field_id.call(:postal_code) %>
+  </div>
+</div>

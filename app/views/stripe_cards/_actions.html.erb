@@ -6,6 +6,10 @@
     <% else %>
       <%= render "stripe_cards/actions/rename", stripe_card: %>
       <%= render "stripe_cards/actions/freeze", stripe_card: %>
+      <%= render "stripe_cards/actions/replace", stripe_card:, flow: "damaged", label: "Replace damaged card", icon: "card-add" %>
+      <%= render "stripe_cards/actions/replace", stripe_card:, flow: "losten",
+                                                 label: stripe_card.physical? ? "Flag as lost or stolen" : "Flag as stolen",
+                                                 icon: "spy" %>
     <% end %>
     <%= render "stripe_cards/actions/cancel", stripe_card: %>
   </div>

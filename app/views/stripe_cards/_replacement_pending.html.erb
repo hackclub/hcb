@@ -1,0 +1,14 @@
+<%# locals: (stripe_card:) %>
+
+<% replacement = stripe_card.replacement %>
+<% if !stripe_card.canceled? && replacement && !replacement.canceled? && !replacement.initially_activated? %>
+  <div class="card border b--info mb-3">
+    <div class="flex items-center info">
+      <%= inline_icon "info", size: 32, class: "mr1" %>
+      <p class="bold mt0 mb0">A replacement for this card is on its way.</p>
+    </div>
+    <p class="mt1 mb0">
+      This card will keep working until <%= stripe_card_mention replacement %> is activated. Activating it will cancel this card.
+    </p>
+  </div>
+<% end %>

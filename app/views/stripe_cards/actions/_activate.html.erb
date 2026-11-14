@@ -1,6 +1,6 @@
 <% return unless policy(stripe_card).activate? %>
 
-<% if stripe_card.replacement_for %>
+<% if stripe_card.replacement_for && !stripe_card.replacement_for.canceled? %>
   <div class="card border b--warning pb0 mx-auto" data-controller="form-disable">
     <div class="flex items-center warning">
       <%= inline_icon "info", size: 32, class: "mr1" %>
