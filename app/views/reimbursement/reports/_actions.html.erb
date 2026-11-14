@@ -157,6 +157,10 @@
                 Get started by adding an expense to this report.
               <% elsif report.missing_receipts? || report.missing_categories? || report.expenses.any? { |e| e.amount.zero? } %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, amount, and category for each expense to continue.
+                <% missing_category_numbers = report.expenses_missing_category.order(:expense_number).pluck(:expense_number) %>
+                <% if missing_category_numbers.any? %>
+                  <br><span class="bold warning">Missing a category:</span> <%= missing_category_numbers.map { |number| "##{number}" }.to_sentence %>. Edit <%= missing_category_numbers.one? ? "this expense" : "these expenses" %> and select a category.
+                <% end %>
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
               <% elsif report.event&.financially_frozen? %>

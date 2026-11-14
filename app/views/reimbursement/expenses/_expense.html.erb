@@ -40,6 +40,9 @@
   <div style="flex-grow: 1" data-expense-form-target="memo" class="bold <%= "muted" unless expense.memo.presence %>">
     <%= expense.card_label.presence || "Untitled Expense" %>
   </div>
+  <% if expense.missing_category? && !expense.report.locked? && !read_only %>
+    <span class="badge bg-warning ml0 tooltipped tooltipped--w" aria-label="Edit this expense and select a category before submitting.">Missing category</span>
+  <% end %>
   <% if expense.approved_by %>
     <% if expense.approved? %>
       Approved by
