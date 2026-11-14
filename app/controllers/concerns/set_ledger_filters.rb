@@ -31,7 +31,7 @@ module SetLedgerFilters
   }.freeze
 
   included do
-    helper_method :ledger_filtered?, :ledger_filter_params, :merchant_name
+    helper_method :ledger_filtered?, :ledger_filter_params, :merchant_name, :filter_users
 
     private
 
@@ -83,17 +83,26 @@ module SetLedgerFilters
                    [@ledger]
                  end
 
-      author_ids = Ledger::Item
-                   .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
-                   .where.not(author_id: nil)
-                   .distinct
-                   .select(:author_id)
-      organizer_ids = @event.users.select(:id)
-      @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
-                   .with_attached_profile_picture
-                   .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+      @user = filter_users.friendly.find(string_param(:user), allow_nil: true) if string_param(:user)
+    end
 
-      @user = @users.friendly.find(string_param(:user), allow_nil: true) if string_param(:user)
+    # The people the ledger can be filtered by: everyone who authored something
+    # in it, and the organizers. Built on demand, since finding them scans the
+    # ledger and only the filter menu (and a user filter) needs them; an export
+    # with no user filter never does.
+    def filter_users
+      @filter_users ||= begin
+        author_ids = Ledger::Item
+                     .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
+                     .where.not(author_id: nil)
+                     .distinct
+                     .select(:author_id)
+        organizer_ids = @event.users.select(:id)
+
+        User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
+            .with_attached_profile_picture
+            .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+      end
     end
 
     # The param as a non-blank string, or nil.

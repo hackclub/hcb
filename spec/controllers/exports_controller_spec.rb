@@ -113,6 +113,21 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.body).not_to include("Donation from Fiona")
     end
 
+    it "doesn't gather the ledger's users unless filtering by one" do
+      expect_any_instance_of(described_class).not_to receive(:filter_users)
+
+      get :ledger, params: { event: event.slug }, format: :csv
+
+      expect(response).to be_successful
+    end
+
+    it "filters by user" do
+      get :ledger, params: { event: event.slug, user: organizer.slug }, format: :csv
+
+      expect(response).to be_successful
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_filtered_transactions_")
+    end
+
     it "filters by merchant without resolving the merchant's name" do
       expect_any_instance_of(Event).not_to receive(:merchants)
 
