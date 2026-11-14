@@ -8,7 +8,7 @@
 <% mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form if @legal_entity.completed_tax_form? %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "tax", legal_entities: @legal_entities, legal_entity: @legal_entity %>
+  <%= render "users/settings_header", active: "tax", legal_entities: @legal_entities, legal_entity: @legal_entity %>
   <section>
     <p class="muted mt0 mb2">
       Some payments on HCB require a tax form (W-9 or W-8) on file.
