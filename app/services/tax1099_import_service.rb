@@ -51,6 +51,7 @@ class Tax1099ImportService
     { key: :state, label: "State", required: true },
     { key: :zip_code, label: "Zip Code", required: true },
     { key: :email, label: "Email Address", required: true },
+    { key: :completed_on, label: "W-9 Completed Date", required: true },
   ].freeze
 
   Result = Struct.new(:form, :legal_entity, keyword_init: true)
@@ -163,6 +164,23 @@ class Tax1099ImportService
     end
 
     raise ValidationError, "a W-9 PDF is required" if @pdf.blank?
+
+    raise ValidationError, "W-9 completed date must be a date (YYYY-MM-DD)" if completed_on.nil?
+    raise ValidationError, "W-9 completed date can't be in the future" if completed_on > Time.zone.today
+  end
+
+  # When the payee actually completed the W-9 in Tax1099, not when it was
+  # imported. LegalEntity#latest_completed_tax_form and friends rank forms by
+  # completed_at, so stamping an old W-9 with the import time would let it
+  # outrank a newer form the payee has since completed through TaxBandits.
+  def completed_on
+    return @completed_on if defined?(@completed_on)
+
+    @completed_on = begin
+      Date.iso8601(@data[:completed_on].to_s)
+    rescue Date::Error
+      nil
+    end
   end
 
   # A personal form always goes on the personal entity, and a payee with no
@@ -219,7 +237,7 @@ class Tax1099ImportService
       address_postal_code: @data[:zip_code],
       address_country: "US",
       aasm_state: "completed",
-      completed_at: Time.current
+      completed_at: completed_on.in_time_zone
     )
   end
 

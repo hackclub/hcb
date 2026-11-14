@@ -34,7 +34,7 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
     {
       first_name: "Ada", middle_name: "", last_name: "Lovelace", suffix: "",
       tin: "123-45-6789", tin_type: "SSN", federal_tax_classification: "Individual",
-      address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482",
+      address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482", completed_on: "2025-03-07",
       email: "ada@example.com"
     }
   end

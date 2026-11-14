@@ -79,6 +79,8 @@
               <% when :tin %>
                 <%# Never prefilled by the browser and never remembered by it. %>
                 <input type="text" class="w-full" data-field="tin" autocomplete="off" spellcheck="false">
+              <% when :completed_on %>
+                <input type="date" class="w-full" data-field="completed_on" max="<%= Time.zone.today.iso8601 %>">
               <% else %>
                 <input type="text" class="w-full" data-field="<%= field[:key] %>" autocomplete="off">
               <% end %>

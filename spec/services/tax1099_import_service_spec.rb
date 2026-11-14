@@ -23,7 +23,7 @@ RSpec.describe Tax1099ImportService do
     {
       first_name: "Ada", middle_name: "", last_name: "Lovelace", suffix: "",
       tin: "123-45-6789", tin_type: "SSN", federal_tax_classification: "Individual",
-      address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482",
+      address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482", completed_on: "2025-03-07",
       email: "ada@example.com"
     }
   end
@@ -57,7 +57,7 @@ RSpec.describe Tax1099ImportService do
         source: "tax1099", external_service: "taxbandits", external_id: "sub-1",
         form_type: "W9", entity_type: "person", aasm_state: "completed"
       )
-      expect(result.form.completed_at).to be_present
+      expect(result.form.completed_at.to_date).to eq(Date.new(2025, 3, 7))
       expect(result.form.legal_entity).to eq(User.find_by(email: "ada@example.com").personal_legal_entity)
     end
 
@@ -91,6 +91,33 @@ RSpec.describe Tax1099ImportService do
 
       expect(TaxbanditsService).not_to have_received(:create_from_data)
       expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
+  describe "completed_at" do
+    it "is when the W-9 was completed in Tax1099, not when it was imported" do
+      travel_to Time.zone.local(2026, 11, 14, 12) do
+        expect(run.form.completed_at).to eq(Time.zone.local(2025, 3, 7))
+      end
+    end
+
+    it "lets a W-9 the payee completed since outrank the imported one" do
+      user = create(:user, email: "ada@example.com")
+      newer = create(:tax_form, :completed, legal_entity: user.personal_legal_entity, completed_at: 1.week.ago)
+
+      imported = run.form
+
+      expect(user.personal_legal_entity.reload.latest_completed_tax_form).to eq(newer)
+      expect(imported.completed_at).to be < newer.completed_at
+    end
+
+    it "outranks a W-9 the payee completed before it" do
+      user = create(:user, email: "ada@example.com")
+      create(:tax_form, :completed, legal_entity: user.personal_legal_entity, completed_at: Time.zone.local(2024, 1, 1))
+
+      imported = run.form
+
+      expect(user.personal_legal_entity.reload.latest_completed_tax_form).to eq(imported)
     end
   end
 
@@ -216,6 +243,16 @@ RSpec.describe Tax1099ImportService do
     it "rejects a federal tax classification TaxBandits wouldn't accept" do
       expect { run(data: person_data.merge(federal_tax_classification: "Sole Trader")) }
         .to raise_error(described_class::ValidationError, /classification/)
+    end
+
+    it "rejects a completed date that isn't a date" do
+      expect { run(data: person_data.merge(completed_on: "03/07/2025")) }
+        .to raise_error(described_class::ValidationError, /YYYY-MM-DD/)
+    end
+
+    it "rejects a completed date in the future" do
+      expect { run(data: person_data.merge(completed_on: 1.day.from_now.to_date.iso8601)) }
+        .to raise_error(described_class::ValidationError, /future/)
     end
 
     it "rejects a row with no PDF" do

@@ -13,12 +13,27 @@ const COLUMN = {
   lastName: 4,
   suffix: 5,
   tin: 6,
+  w9ReceivedDate: 8,
   email: 9,
   filerType: 12,
   address: 13,
   city: 14,
   state: 15,
   zipCode: 16,
+  w9CompletedDate: 20,
+}
+
+// Turns a Tax1099 date (M/D/YYYY, optionally followed by a time) or an ISO date
+// into the YYYY-MM-DD a date input takes. Anything else comes back blank so the
+// admin has to fill it in rather than import a guess.
+function toIsoDate(value) {
+  const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`
+
+  const us = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\b/)
+  if (us) return `${us[3]}-${us[1].padStart(2, '0')}-${us[2].padStart(2, '0')}`
+
+  return ''
 }
 
 // Tax1099 writes this in the suffix column for rows that have no suffix.
@@ -305,6 +320,12 @@ export default class extends Controller {
       state: cell(COLUMN.state),
       zip_code: cell(COLUMN.zipCode),
       email: cell(COLUMN.email),
+      // When the W-9 was actually completed, so the imported form ranks
+      // correctly against any the payee completes later. Received is the
+      // fallback for rows Tax1099 never stamped as completed.
+      completed_on:
+        toIsoDate(cell(COLUMN.w9CompletedDate)) ||
+        toIsoDate(cell(COLUMN.w9ReceivedDate)),
     }
   }
 
