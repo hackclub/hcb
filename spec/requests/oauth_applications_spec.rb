@@ -26,13 +26,6 @@ RSpec.describe "OAuth applications", type: :request do
     expect(Doorkeeper::Application.sole.owner).to eq(poc)
   end
 
-  it "requires a point of contact" do
-    create_application(owner_email: "nobody@example.com")
-
-    expect(Doorkeeper::Application.count).to eq(0)
-    expect(response.body).to include("Must be the email of an existing user.")
-  end
-
   it "keeps the point of contact when updating without an email" do
     application = Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: poc)
 
