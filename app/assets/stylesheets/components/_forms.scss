@@ -579,20 +579,3 @@ form section.grid--split {
 .dropdown-button__container {
   display: flex;
 }
-
-// The main button holds a label per option and shows the checked option's (up to five options).
-.dropdown-button__label {
-  display: none;
-}
-
-.dropdown-button:not(:has(.dropdown-button__menu input:checked))
-  .dropdown-button__label:first-of-type {
-  display: inline;
-}
-
-@for $i from 1 through 5 {
-  .dropdown-button:has(.dropdown-button__menu input:nth-of-type(#{$i}):checked)
-    .dropdown-button__label:nth-of-type(#{$i}) {
-    display: inline;
-  }
-}

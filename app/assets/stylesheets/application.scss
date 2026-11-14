@@ -626,6 +626,10 @@ summary {
   width: 100%;
 }
 
+.fade-card-hide {
+  animation: fade-card-close 0.1s ease-out forwards;
+}
+
 .fade-card-show {
   animation: fade-card-open 0.1s ease-out forwards;
   display: flex;
@@ -643,6 +647,17 @@ summary {
   }
 }
 
+@keyframes fade-card-close {
+  from {
+    opacity: 1;
+    display: flex;
+  }
+
+  to {
+    opacity: 0;
+    display: none;
+  }
+}
 .command-bar-item {
   display: flex;
   align-items: center;
