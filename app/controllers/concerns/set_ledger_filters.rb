@@ -127,9 +127,9 @@ module SetLedgerFilters
         query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
       end
 
-      query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
+      query << { datetime: { "$gte": @start_date } } if @start_date.present?
       # Whole-day inclusive end bound, matching the old transactions page
-      query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
+      query << { datetime: { "$lt": @end_date.next_day } } if @end_date.present?
 
       query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 

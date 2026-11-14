@@ -198,8 +198,8 @@ class ExportsController < ApplicationController
   # Sets `@start` and `@end`, or renders a 400 when the requested range is
   # invalid. Callers must `return if performed?`.
   def set_date_range
-    start_date = params[:start_date].present? ? parse_date(params[:start_date]) : Date.today.prev_month.to_datetime
-    end_date = params[:end_date].present? ? parse_date(params[:end_date]) : start_date
+    start_date = params[:start_date].present? ? parse_filter_date(params[:start_date]) : Date.today.prev_month
+    end_date = params[:end_date].present? ? parse_filter_date(params[:end_date]) : start_date
 
     if start_date.nil? || end_date.nil?
       return render plain: "Invalid date.", status: :bad_request
@@ -218,10 +218,5 @@ class ExportsController < ApplicationController
 
   # Returns nil for anything that isn't a date (e.g. `?start_date=foo` from a
   # crawler) instead of raising `Date::Error`.
-  def parse_date(value)
-    value.to_s.to_datetime
-  rescue ArgumentError # Date::Error is a subclass of ArgumentError
-    nil
-  end
 
 end
