@@ -50,7 +50,8 @@
                   <p>Sign the contract before activating the organization</p>
                 <% end %>
 
-                <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending? || !@contract.contractable.approved?, data: { "contract-target": "button" } %>
+                <%# Only an approved application's button is re-enabled when signing completes; otherwise the page just reloads. %>
+                <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending? || !@contract.contractable.approved?, data: (@contract.contractable.approved? ? { "contract-target": "button" } : {}) %>
               <% end %>
             <% end %>
           <% end %>

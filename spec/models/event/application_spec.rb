@@ -63,13 +63,21 @@ RSpec.describe Event::Application, type: :model do
       expect(application.reload.event.description).to eq("Run the best hackathon")
     end
 
-    %w[draft submitted under_review rejected].each do |state|
-      it "refuses to activate an application that is #{state.humanize.downcase}" do
-        application = create(:event_application, aasm_state: state)
+    # The real bypass: a fully signed agreement on an application nobody approved.
+    %w[submitted under_review].each do |state|
+      it "refuses to activate a #{state.humanize.downcase} application, even with a signed agreement" do
+        user = create(:user)
+        application = create(:event_application, user:, aasm_state: state)
+        allow(User).to receive(:system_user).and_return(create(:user, :make_admin, email: User::SYSTEM_USER_EMAIL))
+        allow_any_instance_of(Contract::Party).to receive(:sync_with_docuseal)
+        Contract::FiscalSponsorship.create!(contractable: application, include_videos: false)
+        application.reload
+        application.contract.parties.create!(user:, role: :signee)
+        application.contract.update_column(:aasm_state, "signed")
 
         expect { application.activate_event!(risk_level: :zero) }
           .to raise_error(RuntimeError, "Application must be approved before activation")
-        expect(application.reload.event).to be_nil
+        expect(Event.where(application:)).not_to exist
       end
     end
   end

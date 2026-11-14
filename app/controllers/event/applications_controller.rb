@@ -73,7 +73,8 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
-        party.update!(user: current_user)
+        # An admin may have signed for HCB before approving; a signed party can't change hands.
+        party.update!(user: current_user) if party.pending?
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
