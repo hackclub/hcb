@@ -185,6 +185,33 @@ RSpec.describe Tax::Form, type: :model do
     end
   end
 
+  describe "#pdf_content" do
+    let(:form) { create(:tax_form, :completed, legal_entity:) }
+
+    def stub_pdf(pdf, submission: w9_submission)
+      submission[submission["FormType"]]["PdfUrl"] = "https://bucket.s3.amazonaws.com/forms/form.pdf"
+      allow(TaxbanditsService).to receive(:get_submission).and_return(submission)
+
+      allow(Credentials).to receive(:fetch).and_call_original
+      allow(Credentials).to receive(:fetch).with(:TAXBANDITS, :PDF_KEY).and_return(Base64.strict_encode64("k" * 32))
+
+      object = double(get: double(body: StringIO.new(pdf)))
+      allow(described_class).to receive(:taxbandits_s3_bucket).and_return(double(object:))
+    end
+
+    it "serves the PDF from TaxBandits' bucket" do
+      stub_pdf("%PDF-1.4 a form")
+
+      expect(form.pdf_content).to eq("%PDF-1.4 a form")
+    end
+
+    it "is nil until TaxBandits has a PDF" do
+      allow(TaxbanditsService).to receive(:get_submission).and_return(w9_submission)
+
+      expect(form.pdf_content).to be_nil
+    end
+  end
+
   describe "TIN immutability" do
     it "refuses to change a fingerprint once it is set" do
       form = create(:tax_form, :completed, legal_entity:, tin_hash: "abc")

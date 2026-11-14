@@ -3,7 +3,7 @@
 <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
 
 <% admin_tool do %>
-  <details class="mb-6 block w-full" <%= "open" if params[:query].present? %>>
+  <details class="mb-6 block w-full" <% if params[:query].present? %> open<% end %>>
     <summary><strong>Query</strong></summary>
     <%= form_with url: ledger_path(@ledger), method: :get, local: true, class: "pt-1 w-full" do |f| %>
       <%= f.text_area :query, value: params[:query], rows: 6, placeholder: '{"memo": {"$eq": "example"}}', class: "input-reset border rounded p1 !w-full font-mono" %>

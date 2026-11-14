@@ -50,10 +50,10 @@
 
 <% no_spend_names = @subordinate_stats.select { |s| s.total_cents.zero? }.map { |s| s.user.name } %>
 <% if no_spend_names.any? %>
-  <p>People who spent no money this week:
+  <p>People who spent no money this week:</p>
   <ul>
     <% no_spend_names.each do |name| %>
-      <li><%= name %>
+      <li><%= name %></li>
     <% end %>
   </ul>
 <% end %>
