@@ -9,7 +9,14 @@ class Ledger
     # ledger — including on the async path, where the file is generated in a job
     # long after the request that asked for it is gone.
     class Export
-      FORMATS = %i[csv json ledger].freeze
+      # Every format an export can take, and the class that produces it. The
+      # leading `::` matters: inside this class, a bare `Export` resolves to
+      # this class, not to the ActiveRecord model.
+      FORMATS = {
+        csv: ::Export::Ledger::Item::Csv,
+        json: ::Export::Ledger::Item::Json,
+        ledger: ::Export::Ledger::Item::Journal,
+      }.freeze
 
       def initialize(query:, as:, ledgers: [], all_ledgers: false, event_id: nil, requested_by: nil, public_only: false, filtered: false)
         @query = query
@@ -38,17 +45,8 @@ class Ledger
         )
       end
 
-      # The leading `::` matters: inside this class, a bare `Export` resolves to
-      # this class, not to the ActiveRecord model.
       def export_class
-        case as.to_s.to_sym
-        when :csv
-          ::Export::Ledger::Item::Csv
-        when :json
-          ::Export::Ledger::Item::Json
-        when :ledger
-          ::Export::Ledger::Item::Journal
-        else
+        FORMATS.fetch(as.to_s.to_sym) do
           raise Ledger::Query::Error.new("Unsupported export format: #{as}")
         end
       end

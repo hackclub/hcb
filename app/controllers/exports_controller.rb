@@ -92,7 +92,7 @@ class ExportsController < ApplicationController
     authorize @event, :show?
 
     respond_to do |format|
-      format.any(*::Ledger::Query::Export::FORMATS) do
+      format.any(*::Ledger::Query::Export::FORMATS.keys) do
         # The format respond_to matched on, which is what the request wants even
         # when it came via Accept rather than a path extension (params[:format]
         # is nil then).

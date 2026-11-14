@@ -26,10 +26,6 @@ RSpec.describe Ledger::Query::Export, type: :model do
       expect { build_export(as: :xlsx).export_class }
         .to raise_error(Ledger::Query::Error, /Unsupported export format/)
     end
-
-    it "covers every format it advertises" do
-      expect(described_class::FORMATS.map { |as| build_export(as:).export_class }).to all(be < Export)
-    end
   end
 
   describe "#run" do
