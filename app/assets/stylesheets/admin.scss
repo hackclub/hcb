@@ -901,6 +901,14 @@ form:has(> #admin-logout-button) {
   }
 }
 
+@keyframes flash-slide-out {
+  to {
+    translate: 0 calc(100% + var(--flash-offset, 0));
+    visibility: hidden;
+    display: none;
+  }
+}
+
 #flash-container {
   position: fixed;
   bottom: 0;
@@ -923,8 +931,10 @@ form:has(> #admin-logout-button) {
     display: flex;
     align-items: center;
     box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
-    animation-duration: 0.5s;
-    animation-name: flash-slide-in;
+    // Slides in, then back out on its own after 5 seconds.
+    animation:
+      flash-slide-in 0.5s,
+      flash-slide-out 0.5s 5s forwards;
     z-index: 999999;
 
     &.flash--success {
@@ -935,7 +945,8 @@ form:has(> #admin-logout-button) {
       border-top-color: var(--hcb-primary);
     }
 
-    &.flash--dismissed {
+    // Dismissed with the close button.
+    &[hidden] {
       translate: 0 calc(100% + var(--flash-offset));
       display: none;
       transition-property: translate display;

@@ -1383,6 +1383,47 @@ RSpec.describe EventsController do
       expect(modal.text).to include("Unavailable in Playground Mode")
       expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
     end
+
+    describe "the insights timeframe" do
+      let(:event) { create(:event, is_public: true, created_at: 2.years.ago) }
+
+      def insights
+        Nokogiri::HTML5(response.body).at_css("turbo-frame#insights")
+      end
+
+      def chart_sources
+        %w[merchants categories tags users].map { |id| insights.at_css("turbo-frame##{id}")["src"] }
+      end
+
+      it "shows every chart for all time by default" do
+        get(:show, params: { id: event.slug })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
+        expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
+
+        links = insights.css("a[data-turbo-frame='insights']").map { |link| [link.text, link["href"]] }
+        expect(links).to eq([
+                              ["All time", event_path(event)],
+                              ["Past year", event_path(event, timeframe: "Past year")],
+                              ["Past month", event_path(event, timeframe: "Past month")],
+                              ["Past week", event_path(event, timeframe: "Past week")],
+                            ])
+      end
+
+      it "passes the chosen timeframe to the label and every chart" do
+        get(:show, params: { id: event.slug, timeframe: "Past month" })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past month")
+        expect(chart_sources).to all(end_with("?timeframe=Past+month"))
+      end
+
+      it "ignores a timeframe it doesn't know" do
+        get(:show, params: { id: event.slug, timeframe: "Past decade" })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
+        expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
+      end
+    end
   end
 
   # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
