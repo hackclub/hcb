@@ -11,7 +11,7 @@ module PayeesHelper
 
   def updated_recipient_transfer_path(destination, destination_id, **opts)
     if destination.to_s == "contractors"
-      event_payroll_position_path(id: destination_id, **opts)
+      payroll_position_path(destination_id, **opts)
     else
       payment_path(id: destination_id, **opts)
     end
