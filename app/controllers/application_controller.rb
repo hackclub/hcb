@@ -141,6 +141,17 @@ class ApplicationController < ActionController::Base
     { impersonated_by_id: current_session&.impersonated_by_id }
   end
 
+  # A date from a request param, or nil for anything that isn't one: a
+  # crawler's ?start_date=foo, or start[]=x. Callers decide whether that's a
+  # 400 or no filter.
+  def parse_date_param(value)
+    return nil unless value.is_a?(String)
+
+    value.presence&.to_date
+  rescue ArgumentError # Date::Error is a subclass of ArgumentError
+    nil
+  end
+
   def not_found
     raise ActionController::RoutingError.new("Not Found")
   end

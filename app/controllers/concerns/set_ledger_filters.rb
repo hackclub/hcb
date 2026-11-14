@@ -43,8 +43,9 @@ module SetLedgerFilters
       end
 
       @type = params[:type].presence
-      @start_date = parse_filter_date(params[:start])
-      @end_date = parse_filter_date(params[:end])
+      # A date that doesn't parse narrows nothing, like a tag that doesn't exist.
+      @start_date = parse_date_param(params[:start])
+      @end_date = parse_date_param(params[:end])
       @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
       @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
       @missing_receipts = params[:missing_receipts].present?
@@ -82,17 +83,6 @@ module SetLedgerFilters
       merchant = @event.merchants.find { |candidate| candidate[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
-    end
-
-    # A date that doesn't parse narrows nothing, like a tag that doesn't exist,
-    # rather than raising. Only a string can be a date: `start[]=x` is a param
-    # too, and it isn't one.
-    def parse_filter_date(value)
-      return nil unless value.is_a?(String)
-
-      value.presence&.to_date
-    rescue ArgumentError # Date::Error is a subclass of ArgumentError
-      nil
     end
 
     def ledger_query
