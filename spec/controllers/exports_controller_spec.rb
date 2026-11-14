@@ -56,6 +56,21 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
     end
 
+    it "treats a date that doesn't parse as no filter" do
+      get :ledger, params: { event: event.slug, start: "2024-02-30" }, format: :csv
+
+      expect(response).to be_successful
+      expect(response.body).to include("Coffee", "Donation from Fiona")
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
+    end
+
+    it "filters by a date range" do
+      get :ledger, params: { event: event.slug, start: "2024-02-01", end: "2024-03-31" }, format: :csv
+
+      expect(response.body).to include("Coffee")
+      expect(response.body).not_to include("Donation from Fiona")
+    end
+
     it "respects the search box" do
       get :ledger, params: { event: event.slug, q: "Coffee" }, format: :csv
 
