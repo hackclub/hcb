@@ -24,6 +24,11 @@ linter:
       enabled: true
       severity: error
 
+    # Stray, missing or mismatched closing tags, which browsers repair silently.
+    parser-no-errors:
+      enabled: true
+      severity: error
+
 # We don't use Herb's formatter. This keeps editors with the Herb extension
 # from formatting on save if its default ever changes.
 formatter:
