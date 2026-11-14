@@ -5,6 +5,7 @@ class Export
     class Csv < Base
       HEADERS = [:date, :memo, :amount_cents, :amount, :tags, :comments, :user_id, :user_name, :category_slug, :category_label].freeze
 
+      def name = "CSV"
       def mime_type = "text/csv"
       def extension = "csv"
 

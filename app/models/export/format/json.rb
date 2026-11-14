@@ -3,6 +3,7 @@
 class Export
   module Format
     class Json < Base
+      def name = "JSON"
       def mime_type = "application/json"
       def extension = "json"
 

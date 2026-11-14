@@ -23,10 +23,7 @@ class Export
   module Event
     module Transactions
       class Csv < Base
-        private
-
-        def formatter = ::Export::Format::Csv.new(public_only: public_only == true)
-        def format_name = "CSV"
+        FORMAT = ::Export::Format::Csv
 
       end
     end

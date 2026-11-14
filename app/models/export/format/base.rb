@@ -10,6 +10,8 @@ class Export
         @public_only = public_only
       end
 
+      # How the format is called in a label, e.g. "CSV".
+      def name = raise(NotImplementedError)
       def mime_type = raise(NotImplementedError)
       def extension = raise(NotImplementedError)
 

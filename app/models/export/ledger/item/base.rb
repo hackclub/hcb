@@ -31,7 +31,7 @@ class Export
       # from request params on the other side.
       #
       # Each item becomes an Export::Row, and an Export::Format turns the rows
-      # into the file. Subclasses only say which format.
+      # into the file. Subclasses only say which format, as FORMAT.
       class Base < Export
         store_accessor :parameters, :query, :ledger_ids, :all_ledgers, :event_id, :public_only, :filtered
 
@@ -51,7 +51,7 @@ class Export
         end
 
         def label
-          "#{format_name} export of #{scope_description} for #{event&.name || "a ledger"}"
+          "#{formatter.name} export of #{scope_description} for #{event&.name || "a ledger"}"
         end
 
         def filename
@@ -68,9 +68,9 @@ class Export
 
         private
 
-        # Subclasses name their own formatter.
-        def formatter = raise(NotImplementedError)
-        def format_name = raise(NotImplementedError)
+        def formatter
+          @formatter ||= self.class::FORMAT.new(public_only: public_only == true)
+        end
 
         # A chance to load anything a subclass's rows need beyond PRELOADS.
         def prepare(_items); end

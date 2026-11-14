@@ -23,10 +23,7 @@ class Export
   module Event
     module Transactions
       class Json < Base
-        private
-
-        def formatter = ::Export::Format::Json.new(public_only: public_only == true)
-        def format_name = "JSON"
+        FORMAT = ::Export::Format::Json
 
       end
     end

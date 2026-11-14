@@ -26,6 +26,7 @@ class Export
       # the organization's canonical transactions. Each becomes an Export::Row,
       # and an Export::Format turns the rows into the file, so these produce
       # the same columns under the same rules as the ledger exports do.
+      # Subclasses only say which format, as FORMAT.
       class Base < Export
         store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
 
@@ -36,7 +37,7 @@ class Export
         end
 
         def label
-          "#{format_name} transaction export for #{event.name}"
+          "#{formatter.name} transaction export for #{event.name}"
         end
 
         def filename
@@ -49,9 +50,9 @@ class Export
 
         private
 
-        # Subclasses name their own formatter.
-        def formatter = raise(NotImplementedError)
-        def format_name = raise(NotImplementedError)
+        def formatter
+          @formatter ||= self.class::FORMAT.new(public_only: public_only == true)
+        end
 
         # Everything a row reads off a transaction, preloaded so a large export
         # doesn't turn into one query per transaction.

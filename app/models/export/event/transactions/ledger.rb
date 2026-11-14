@@ -28,10 +28,9 @@ class Export
           "Ledger export for #{event.name}"
         end
 
-        private
+        FORMAT = ::Export::Format::Journal
 
-        def formatter = ::Export::Format::Journal.new(public_only: public_only == true)
-        def format_name = "Ledger"
+        private
 
         def preloads
           super + [:transaction_source]

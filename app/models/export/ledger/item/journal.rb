@@ -23,10 +23,9 @@ class Export
   module Ledger
     module Item
       class Journal < Base
-        private
+        FORMAT = ::Export::Format::Journal
 
-        def formatter = ::Export::Format::Journal.new(public_only: public_only == true)
-        def format_name = "Ledger"
+        private
 
         # A card charge reads its merchant off the raw Stripe transactions behind
         # it, which PRELOADS doesn't reach (it stops at the linked object). Load
