@@ -1,0 +1,33 @@
+<%# locals: (expense:) %>
+<%# herb:slots client %>
+<%# herb:state (selected_reimbursement_report_id: "", selected_event_id: "") %>
+
+<%= form_with(model: expense.becomes(Reimbursement::Expense), class: "mb3 mt1", style: "max-width: 600px;", local: true, data: { turbo: false }) do |form| %>
+  <div class="field event-select-target">
+    <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
+    <%= form.select(:reimbursement_report_id,
+          admin_signed_in? ?
+            (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
+          current_user == expense.report.user ?
+            current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
+            expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
+          { prompt: "Select a report…", required: false, include_blank: "Select a report..." }, data: { herb_set: "selected_reimbursement_report_id=$value" }) %>
+    <% unless admin_signed_in? %>
+      <span class="muted mt1">You can transfer an expense to any report of yours.</span>
+    <% end %>
+  </div>
+  <div class="field event-select-target">
+    <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
+    <%= form.select(
+          :event_id,
+          current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
+          { prompt: "Select an event…", required: false }, data: { herb_set: "selected_event_id=$value" }
+        ) %>
+    <% unless admin_signed_in? %>
+      <span class="muted mt1">You can transfer an expense to any report of yours.</span>
+    <% end %>
+  </div>
+  <div hidden="<%= selected_reimbursement_report_id.blank? && selected_event_id.blank? %>">
+    <%= form.submit "Update expense", class: "mt2" %>
+  </div>
+<% end %>

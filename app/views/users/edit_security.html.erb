@@ -20,7 +20,6 @@
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
                   <%= form.label :use_sms_auth do %>
                     <%= form.check_box :use_sms_auth,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
                       disabled: %>
                     <span class="slider"></span>
@@ -32,7 +31,6 @@
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
                   <%= form.label :use_two_factor_authentication do %>
                     <%= form.check_box :use_two_factor_authentication,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
                       disabled: %>
                     <span class="slider"></span>
