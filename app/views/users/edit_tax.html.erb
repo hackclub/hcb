@@ -5,7 +5,7 @@
 <% show_tin = policy(@legal_entity).show_masked_tin? %>
 <% for_name = @legal_entity.person? ? "" : " for #{@legal_entity.display_name}" %>
 <% possessive = @legal_entity.person? ? "Your" : "#{@legal_entity.display_name}'s" %>
-<% next_req = @legal_entity.pending_payable_requirements.first if @legal_entity.tax_form_required? %>
+<% next_req = @legal_entity.pending_payable_requirements(requires_tax_form: @legal_entity.tax_form_required?).first %>
 <% mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form if @legal_entity.completed_tax_form? %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
