@@ -66,8 +66,8 @@ module SetLedgerFilters
       @type = string_param(:type).then { |type| TYPE_FILTERS.key?(type) ? type : nil }
       @start_date = parse_date_param(params[:start])
       @end_date = parse_date_param(params[:end])
-      @minimum_amount = string_param(:minimum_amount)&.then { |amount| Money.from_amount(amount.to_f) }
-      @maximum_amount = string_param(:maximum_amount)&.then { |amount| Money.from_amount(amount.to_f) }
+      @minimum_amount = parse_amount_param(:minimum_amount)
+      @maximum_amount = parse_amount_param(:maximum_amount)
       @missing_receipts = params[:missing_receipts].present?
       @merchant = string_param(:merchant)
       @direction = string_param(:direction)
@@ -96,6 +96,15 @@ module SetLedgerFilters
     # The param as a non-blank string, or nil.
     def string_param(name)
       params[name].is_a?(String) ? params[name].presence : nil
+    end
+
+    # The param as money, or nil for anything that isn't a finite amount:
+    # Money refuses an infinity, which is what "1e999" parses to.
+    def parse_amount_param(name)
+      amount = string_param(name)&.to_f
+      return nil if amount.nil? || !amount.finite?
+
+      Money.from_amount(amount)
     end
 
     # The merchant filter's display name. Resolved on demand rather than with
