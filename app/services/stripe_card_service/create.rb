@@ -94,6 +94,8 @@ module StripeCardService
         attrs[:shipping] = {
           name: @stripe_shipping_name,
           service: shipping_type,
+          # pre 2024-09-30 default; newer versions also block addresses Stripe deems undeliverable
+          address_validation: { mode: "normalization_only" },
           address: {
             line1: @stripe_shipping_address_line1,
             line2: formatted_stripe_shipping_address_line2,

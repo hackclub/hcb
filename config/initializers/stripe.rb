@@ -3,7 +3,9 @@
 stripe_environment = Rails.env.production? ? :live : :test
 
 # update as needed, we specify explicitly in code to avoid inter-branch API version conflicts
-Stripe.api_version = "2024-06-20"
+Stripe.api_version = "2026-09-30.endive"
+# stripe-ruby 13 started retrying failed requests twice by default
+Stripe.max_network_retries = 0
 
 # Use the OS-managed CA bundle so system trust updates also protect Stripe requests.
 Stripe.ca_bundle_path = OpenSSL::X509::DEFAULT_CERT_FILE

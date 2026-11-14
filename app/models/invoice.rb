@@ -295,11 +295,7 @@ class Invoice < ApplicationRecord
     self.due_date = Time.at(inv.due_date).to_datetime # convert from unixtime
     self.ending_balance = inv.ending_balance
 
-    finalized_value = if inv.respond_to?(:status_transitions)
-                        inv.status_transitions.finalized_at
-                      else
-                        inv.try(:finalized_at)
-                      end
+    finalized_value = inv.status_transitions&.finalized_at
     self.finalized_at = finalized_value ? Time.at(finalized_value.to_i).to_datetime : nil
 
     self.hosted_invoice_url = inv.hosted_invoice_url
@@ -311,18 +307,15 @@ class Invoice < ApplicationRecord
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
     self.subtotal = inv.subtotal
-    self.tax = inv.tax
+    self.tax = inv.total_taxes&.sum(&:amount)
     # self.tax_percent = inv.tax_percent
     self.total = inv.total
 
-    charge = inv&.charge
-    # the charge is unexpanded (just an ID) on responses that weren't fetched
-    # through `Partners::Stripe::Invoices::Show`, ex. the response to voiding.
-    if charge.is_a?(String)
-      self.stripe_charge_id = charge
-      return
-    end
+    # `payments` is only expanded on responses fetched through
+    # `Partners::Stripe::Invoices::Show`, not ex. the response to voiding.
+    return unless inv[:payments]
 
+    charge = StripeService.invoice_charge(inv)
     self.stripe_charge_id = charge&.id
     # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
     self.payment_method_type = type = charge&.payment_method_details&.type
@@ -367,6 +360,10 @@ class Invoice < ApplicationRecord
 
   def remote_invoice
     @remote_invoice ||= ::Partners::Stripe::Invoices::Show.new(id: stripe_invoice_id).run
+  end
+
+  def remote_charge
+    StripeService.invoice_charge(remote_invoice)
   end
 
   def paid_at

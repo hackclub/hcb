@@ -25,13 +25,18 @@ class RawPendingStripeTransaction < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :card_charge
 
-  scope :reversed, -> { where("stripe_transaction->>'status' = 'reversed'") }
+  scope :reversed, -> { where("stripe_transaction->>'status' IN ('reversed', 'expired')") }
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
 
   after_create :link_card_charge!
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.stripe_card&.user || User.system_user }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
+
+  # Stripe reports authorizations it expires as `expired`; API versions before 2025-03-31 folded them into `reversed`
+  def reversed?
+    stripe_transaction&.dig("status").in?(%w[reversed expired])
+  end
 
   def date
     date_posted

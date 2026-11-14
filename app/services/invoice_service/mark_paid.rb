@@ -21,7 +21,7 @@ module InvoiceService
       ).ensure_may_approve!
 
       raise ArgumentError, "reason is required" if @reason.blank?
-      if remote_invoice.paid? && !remote_invoice.paid_out_of_band
+      if invoice.remote_paid? && invoice.remote_charge
         raise ArgumentError, "can not manually mark an invoice as paid when it was already paid through Stripe"
       end
 
@@ -29,7 +29,7 @@ module InvoiceService
         # If an invoice was already marked as paid on Stripe, then use the
         # paid_at time from Stripe.
         invoice.manually_marked_as_paid_at =
-          if remote_invoice.paid?
+          if invoice.remote_paid?
             Time.at(remote_invoice.status_transitions.paid_at)
           else
             Time.now
@@ -41,10 +41,8 @@ module InvoiceService
         invoice.save!
         invoice.mark_paid! # aasm
 
-        unless remote_invoice.paid?
-          remote_invoice.paid = true
-          remote_invoice.save
-        end
+        # `pay` returns the updated invoice rather than refreshing the memoized one
+        @remote_invoice = remote_invoice.pay(paid_out_of_band: true) unless invoice.remote_paid?
       end
 
       invoice.set_fields_from_stripe_invoice(remote_invoice)
@@ -58,7 +56,7 @@ module InvoiceService
     end
 
     def remote_invoice
-      @remote_invoice ||= ::Partners::Stripe::Invoices::Show.new(id: invoice.stripe_invoice_id).run
+      @remote_invoice ||= invoice.remote_invoice
     end
 
   end

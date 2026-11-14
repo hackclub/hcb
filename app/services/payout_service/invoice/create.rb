@@ -36,16 +36,12 @@ module PayoutService
         @invoice ||= ::Invoice.find(@invoice_id)
       end
 
-      def remote_invoice
-        @remote_invoice ||= ::Partners::Stripe::Invoices::Show.new(id: invoice.stripe_invoice_id).run
-      end
-
       def charge
-        @charge ||= remote_invoice.charge
+        @charge ||= invoice.remote_charge
       end
 
       def funds_available?
-        Time.current.to_i > remote_invoice.charge.balance_transaction.available_on
+        Time.current.to_i > charge.balance_transaction.available_on
       end
 
     end

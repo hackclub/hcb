@@ -43,7 +43,7 @@ RSpec.describe InvoiceService::Create, type: :model do
         auto_advance: true,
         due_date: due_date_unix,
         ending_balance: 100_00,
-        finalized_at: Time.now.to_i,
+        status_transitions: { finalized_at: Time.now.to_i },
         hosted_invoice_url: "https://example.com",
         invoice_pdf: "https://example.com/invoice.pdf",
         livemode: false,
@@ -52,10 +52,9 @@ RSpec.describe InvoiceService::Create, type: :model do
         starting_balance: 0,
         statement_descriptor: "Statement Descriptor",
         status: "paid",
-        charge: { id: "ch_1234", payment_method_details: { type: nil } },
+        payments: { data: [{ status: "paid", payment: { type: "payment_intent", payment_intent: { latest_charge: { id: "ch_1234", payment_method_details: { type: nil } } } } }] },
         subtotal: 100_00,
-        tax: 0,
-        tax_percent: 0,
+        total_taxes: [],
         total: 100_00,
       )
 
@@ -99,7 +98,7 @@ RSpec.describe InvoiceService::Create, type: :model do
           .with(
             {
               id: stripe_invoice.id,
-              expand: ["charge", "charge.payment_method_details", "charge.balance_transaction"],
+              expand: ["payments.data.payment.charge.balance_transaction", "payments.data.payment.payment_intent.latest_charge.balance_transaction"],
             }
           )
           .and_return(stripe_invoice)

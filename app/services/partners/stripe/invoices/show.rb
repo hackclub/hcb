@@ -20,9 +20,8 @@ module Partners
           {
             id: @id,
             expand: [
-              "charge",
-              "charge.payment_method_details",
-              "charge.balance_transaction"
+              "payments.data.payment.charge.balance_transaction",
+              "payments.data.payment.payment_intent.latest_charge.balance_transaction"
             ]
           }
         end
