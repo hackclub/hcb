@@ -79,8 +79,11 @@ module SetLedgerFilters
     end
 
     # A date that doesn't parse narrows nothing, like a tag that doesn't exist,
-    # rather than raising.
+    # rather than raising. Only a string can be a date: `start[]=x` is a param
+    # too, and it isn't one.
     def parse_filter_date(value)
+      return nil unless value.is_a?(String)
+
       value.presence&.to_date
     rescue ArgumentError # Date::Error is a subclass of ArgumentError
       nil
