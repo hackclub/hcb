@@ -48,16 +48,23 @@ class CardCharge < ApplicationRecord
   end
 
   def merchant_data
-    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_data")
+    latest_stripe_transaction&.stripe_transaction&.dig("merchant_data")
   end
 
   def merchant_currency
-    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
+    latest_stripe_transaction&.stripe_transaction&.dig("merchant_currency")
   end
 
   # Only Stripe authorizations carry verification data; settled transactions
   # don't, so a charge that settled before it was reversed must still read it
   # from the authorization.
+  # The newest settled transaction, else the authorization. By id rather than
+  # `last`, which reads in load order and so answers differently once the
+  # association is preloaded (an export does) than when it's lazily loaded.
+  def latest_stripe_transaction
+    raw_stripe_transactions.max_by(&:id) || raw_pending_stripe_transaction
+  end
+
   def verification_data
     raw_pending_stripe_transaction&.stripe_transaction&.dig("verification_data") || {}
   end
