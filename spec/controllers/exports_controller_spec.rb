@@ -126,6 +126,12 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to end_with(".csv")
     end
 
+    it "is not found for an organization with no ledger" do
+      allow_any_instance_of(Event).to receive(:ledger).and_return(nil)
+
+      expect { get :ledger, params: { event: event.slug }, format: :csv }.to raise_error(ActionController::RoutingError)
+    end
+
     context "when signed in without access to the organization" do
       let(:private_event) { create(:event, is_public: false) }
 

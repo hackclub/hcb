@@ -146,6 +146,11 @@ class ExportsController < ApplicationController
 
   def authorize_ledger
     authorize @event, :show?
+
+    # An organization with no ledger has nothing to export; without this the
+    # query would scope to a nil ledger and serve an empty file as the whole
+    # ledger.
+    not_found if @event.ledger.nil?
   end
 
   def export_ledger(as:)
