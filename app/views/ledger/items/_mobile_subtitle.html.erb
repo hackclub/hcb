@@ -1,0 +1,10 @@
+<%# locals: (datetime:, author: nil) %>
+<%# Author, date, and status under the memo on mobile, where the Date and author columns are hidden %>
+
+<div class="flex items-center gap-[1ch] min-w-0 text-sm muted sm:hidden">
+  <% if author.present? %>
+    <%= avatar_for author, size: 16, class: "shrink-0", alt: author.name, title: author.name, cached: true %>
+  <% end %>
+  <%= time_tag datetime, datetime.strftime(datetime.year == Time.current.year ? "%b %-d" : "%b %-d, %Y"), class: "nowrap" %>
+  <%= yield %>
+</div>

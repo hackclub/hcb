@@ -118,13 +118,12 @@ html[data-dark='true'] {
     }
   }
 
-  span:not(.badge):not(.list-badge):first-of-type {
+  // The memo text: the first plain span, skipping status and tag badges
+  $memo-text: 'span:not(.badge):not(.list-badge):first-of-type';
+
+  #{$memo-text} {
     max-width: 100%;
     overflow: hidden;
-
-    @media screen and (max-width: 32em) {
-      max-width: 32ch; // reduce character count on mobile
-    }
 
     &:not(:has(span)) {
       display: inline-block;
@@ -134,6 +133,14 @@ html[data-dark='true'] {
 
     &.memo-underline > span:hover {
       text-decoration: underline;
+    }
+  }
+
+  // Reduce the character count on mobile. Fluid memos fill their cell and
+  // truncate on their own, so they skip the clamp.
+  &:not(.transaction__memo--fluid) #{$memo-text} {
+    @media screen and (max-width: 32em) {
+      max-width: 32ch;
     }
   }
 
