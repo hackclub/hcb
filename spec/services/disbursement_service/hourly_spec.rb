@@ -3,12 +3,10 @@
 require "rails_helper"
 
 RSpec.describe DisbursementService::Hourly do
-  # Helper to create a canonical transaction with a specific hcb_code
-  # bypassing the after_create callback that would overwrite it
-  def create_ct_with_hcb_code(hcb_code:, amount_cents:)
-    ct = create(:canonical_transaction, amount_cents: amount_cents)
-    ct.update_column(:hcb_code, hcb_code)
-    ct
+  # Helper to create a canonical transaction linked to a disbursement leg via
+  # its ledger item, mirroring how CTs are actually associated to a disbursement.
+  def create_ct_for(ledger_item, amount_cents:)
+    create(:canonical_transaction, amount_cents: amount_cents, ledger_item: ledger_item)
   end
 
   describe "#run" do
@@ -40,7 +38,8 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        create_ct_for(outgoing_li, amount_cents: -disbursement.amount)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -56,8 +55,9 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        create_ct_for(outgoing_li, amount_cents: -disbursement.amount)
+        create_ct_for(outgoing_li, amount_cents: disbursement.amount)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -73,9 +73,10 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: 100)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        create_ct_for(outgoing_li, amount_cents: -disbursement.amount)
+        create_ct_for(outgoing_li, amount_cents: disbursement.amount)
+        create_ct_for(outgoing_li, amount_cents: 100)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -102,11 +103,13 @@ RSpec.describe DisbursementService::Hourly do
 
       before do
         # disbursement1: 2 CTs - should be deposited
-        create_ct_with_hcb_code(hcb_code: disbursement1.outgoing_hcb_code, amount_cents: -disbursement1.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement1.outgoing_hcb_code, amount_cents: disbursement1.amount)
+        disbursement1_li = create(:ledger_item, linked_object: disbursement1.outgoing_disbursement)
+        create_ct_for(disbursement1_li, amount_cents: -disbursement1.amount)
+        create_ct_for(disbursement1_li, amount_cents: disbursement1.amount)
 
         # disbursement2: 1 CT - should stay in_transit
-        create_ct_with_hcb_code(hcb_code: disbursement2.outgoing_hcb_code, amount_cents: -disbursement2.amount)
+        disbursement2_li = create(:ledger_item, linked_object: disbursement2.outgoing_disbursement)
+        create_ct_for(disbursement2_li, amount_cents: -disbursement2.amount)
 
         # disbursement3: 0 CTs - should stay in_transit
       end
