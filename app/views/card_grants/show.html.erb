@@ -11,10 +11,10 @@
     <div class="flex flex-row items-center justify-start gap-2 lg:items-end">
       <div class="flex items-start flex-col lg:flex-row lg:items-end justify-start gap-2">
         <div class="flex flex-row items-end justify-start gap-2 w-min-content min-w-0 flex-shrink-0">
-          <h3 class="m-0 p-0">Card activation</h3>
+          <h3 class="m-0 p-0">Accept your grant</h3>
           <%= inline_icon "view-forward", class: "m-0 lg:self-center", size: 20 %>
         </div>
-        <p class="m-0">We just need one more thing before you can start spending&nbsp;your&nbsp;grant.</p>
+        <p class="m-0">We just need one more thing before you can access&nbsp;your&nbsp;grant.</p>
       </div>
     </div>
   <% end %>
@@ -35,7 +35,7 @@
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
   <%# Grant was converted into a reimbursement report %>
-  <% elsif @card_grant.user == current_user && @card_grant.converted_to_reimbursement_report? %>
+  <% elsif @card_grant.user == current_user && @card_grant.converted_to_reimbursement? %>
     <div class="flex-grow">
       <%= blankslate "This grant was converted into a reimbursement report." %>
       <% if policy(@card_grant.reimbursement_report).show? %>
