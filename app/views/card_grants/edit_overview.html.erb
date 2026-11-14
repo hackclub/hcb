@@ -2,10 +2,12 @@
   <%= render "card_grants/edit_nav", active: "overview" %>
 
   <section class="details details--wide pb2 details--tall">
-    <p>
-      <strong>Grant sent to</strong>
-      <span><%= mail_to @card_grant.user.email %> (<%= copy_to_clipboard(@card_grant.user.public_id, class: "w-fit", tooltip_direction: "e") %>)</span>
-    </p>
+    <% if policy(@card_grant).view_recipient_email? %>
+      <p>
+        <strong>Grant sent to</strong>
+        <span><%= mail_to @card_grant.email %> (<%= copy_to_clipboard(@card_grant.user.public_id, class: "w-fit", tooltip_direction: "e") %>)</span>
+      </p>
+    <% end %>
 
     <p>
       <strong>Expires on</strong>
