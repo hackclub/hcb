@@ -33,6 +33,14 @@ class Export
         def formatter = ::Export::Format::Journal.new(public_only: public_only == true)
         def format_name = "Ledger"
 
+        def preloads
+          super + [:transaction_source]
+        end
+
+        def merchant_for(ct)
+          ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
+        end
+
       end
     end
   end

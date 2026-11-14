@@ -53,8 +53,19 @@ class Export
         def formatter = raise(NotImplementedError)
         def format_name = raise(NotImplementedError)
 
+        # Everything a row reads off a transaction, preloaded so a large export
+        # doesn't turn into one query per transaction.
+        def preloads
+          [:category, { local_hcb_code: [:tags, :comments, :canonical_transactions] }]
+        end
+
+        # Only the journal names merchants, and reading them means loading the
+        # raw Stripe transaction behind every card charge, so the rest leave
+        # them out.
+        def merchant_for(_ct) = nil
+
         def transactions
-          tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments])
+          tx = event.canonical_transactions.includes(*preloads)
           tx = tx.where("date >= ?", start_date) if start_date
           tx = tx.where("date <= ?", end_date) if end_date
           tx.order("date desc")
@@ -76,7 +87,7 @@ class Export
             comments: hcb_code.comments.reject(&:admin_only?).map(&:content),
             author: hcb_code.author,
             category: ct.category,
-            merchant: ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data"),
+            merchant: merchant_for(ct),
             income_type: income_type_for(hcb_code)
           )
         end

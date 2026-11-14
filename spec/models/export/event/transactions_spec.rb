@@ -20,6 +20,34 @@ RSpec.describe Export::Event::Transactions do
     klass.new(requested_by: user, event_id: event.id, public_only: false, **attributes)
   end
 
+  describe "query count" do
+    def stripe_transaction(memo)
+      mapped_transaction(amount_cents: -300, custom_memo: memo, date: Date.new(2024, 3, 4), transaction_source: create(:raw_stripe_transaction))
+    end
+
+    def queries_to_export(klass)
+      count = 0
+      counter = ->(_name, _start, _finish, _id, payload) { count += 1 unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
+
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { build_export(klass).content }
+
+      count
+    end
+
+    [Export::Event::Transactions::Csv, Export::Event::Transactions::Json, Export::Event::Transactions::Ledger].each do |klass|
+      it "#{klass.name.demodulize} doesn't query per transaction" do
+        stripe_transaction("Bread")
+        queries_to_export(klass) # the first export pays for one-time caches; measure the second
+        with_one = queries_to_export(klass)
+
+        stripe_transaction("Croissant")
+        stripe_transaction("Taxi")
+
+        expect(queries_to_export(klass)).to eq(with_one)
+      end
+    end
+  end
+
   describe Export::Event::Transactions::Csv do
     it "exports every transaction, newest first" do
       rows = CSV.parse(build_export(described_class).content, headers: true)
@@ -66,6 +94,12 @@ RSpec.describe Export::Event::Transactions do
 
       expect(content).to include("Coffee", "Expenses:Transfer", "-5.00")
       expect(content).to include("Donation from Fiona", "Income:Transfer", "20.00")
+    end
+
+    it "books a card charge to its merchant's category" do
+      mapped_transaction(amount_cents: -300, custom_memo: "Bread", date: Date.new(2024, 3, 4), transaction_source: create(:raw_stripe_transaction, stripe_merchant_category: "bakeries"))
+
+      expect(build_export(described_class).content).to include("Expenses:Bakeries")
     end
 
     it "names itself" do
