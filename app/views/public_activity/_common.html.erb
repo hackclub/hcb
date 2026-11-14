@@ -32,7 +32,8 @@
             <%= inline_icon "card", width: 20, class: "muted", "aria-hidden": true %>
           <% end %>
         <% end %>
-        <%= local_time_ago activity.created_at, class: "align-middle timestamp", style: "cursor: default" %>
+        <%# local-time (started in application.js) keeps this relative time current in the browser. %>
+        <%= time_tag activity.created_at, "#{time_ago_in_words(activity.created_at)} ago", class: "align-middle timestamp", style: "cursor: default", data: { local: "time-ago" } %>
       </div>
     </div>
   </div>

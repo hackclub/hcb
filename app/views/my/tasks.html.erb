@@ -15,7 +15,7 @@
         <div class="bold"><%= task.text %></div>
         <div>
           Created
-          <%= local_time_ago task.created_at %>
+          <%= time_tag task.created_at, "#{time_ago_in_words(task.created_at)} ago", data: { local: "time-ago" } %>
         </div>
       </div>
     </div>
@@ -33,7 +33,7 @@
           <div class="bold"><%= task.text %></div>
           <div>
             Completed
-            <%= local_time_ago task.completed_at %>
+            <%= time_tag task.completed_at, "#{time_ago_in_words(task.completed_at)} ago", data: { local: "time-ago" } %>
           </div>
         </div>
       </div>
