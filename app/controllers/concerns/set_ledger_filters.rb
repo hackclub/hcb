@@ -11,6 +11,22 @@ module SetLedgerFilters
     missing_receipts merchant direction category
   ].freeze
 
+  # The `type` filter's values, and the linked object types each stands for.
+  TYPE_FILTERS = {
+    "ach_transfer"           => { "$eq": "AchTransfer" },
+    "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
+    "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
+    "card_charge"            => { "$eq": "CardCharge" },
+    "check_deposit"          => { "$eq": "CheckDeposit" },
+    "donation"               => { "$eq": "Donation" },
+    "invoice"                => { "$eq": "Invoice" },
+    "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+    "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+    "wire"                   => { "$eq": "Wire" },
+    "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+    "wise_transfer"          => { "$eq": "WiseTransfer" }
+  }.freeze
+
   included do
     helper_method :ledger_filtered?, :ledger_filter_params, :merchant_name
 
@@ -45,7 +61,9 @@ module SetLedgerFilters
       # A filter that doesn't resolve narrows nothing, like a tag that doesn't
       # exist: a date that doesn't parse, or a value that isn't even a string
       # (type[]=x is a param too).
-      @type = string_param(:type)
+      # A type nothing is known by resolves to nothing, rather than to items
+      # with no linked object at all.
+      @type = string_param(:type).then { |type| TYPE_FILTERS.key?(type) ? type : nil }
       @start_date = parse_date_param(params[:start])
       @end_date = parse_date_param(params[:end])
       @minimum_amount = string_param(:minimum_amount)&.then { |amount| Money.from_amount(amount.to_f) }
@@ -140,24 +158,7 @@ module SetLedgerFilters
       query << { category: { "$eq": @category.slug } } if @category.present?
       query << { merchant: { "$eq": @merchant } } if @merchant.present?
 
-      if @type.present?
-        linked_object_type = {
-          "ach_transfer"           => { "$eq": "AchTransfer" },
-          "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
-          "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
-          "card_charge"            => { "$eq": "CardCharge" },
-          "check_deposit"          => { "$eq": "CheckDeposit" },
-          "donation"               => { "$eq": "Donation" },
-          "invoice"                => { "$eq": "Invoice" },
-          "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-          "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
-          "wire"                   => { "$eq": "Wire" },
-          "paypal_transfer"        => { "$eq": "PaypalTransfer" },
-          "wise_transfer"          => { "$eq": "WiseTransfer" }
-        }[@type]
-
-        query << { linked_object_type: }
-      end
+      query << { linked_object_type: TYPE_FILTERS.fetch(@type) } if @type.present?
 
       @ledger_filter_predicates = query
     end
