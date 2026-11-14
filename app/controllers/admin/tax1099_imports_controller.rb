@@ -77,12 +77,19 @@ module Admin
     # use TEST_URL_HOST (e.g. an ngrok tunnel) rather than the request's host,
     # which is usually localhost:3000. The request-free route helpers use
     # default_url_options, which development sets from TEST_URL_HOST.
+    #
+    # The URL must end in ".pdf" for TaxBandits, but the token has to stay in the
+    # query string (see TaxbanditsController#w9_pdf), so a trailing, ignored
+    # filename parameter supplies the extension. It's appended by hand because
+    # url_for sorts query parameters, which would put it before the token.
     def taxbandits_pdf_url(token)
-      if Rails.env.development?
-        Rails.application.routes.url_helpers.taxbandits_w9_pdf_url(token:, format: :pdf)
-      else
-        taxbandits_w9_pdf_url(token:, format: :pdf)
-      end
+      url = if Rails.env.development?
+              Rails.application.routes.url_helpers.taxbandits_w9_pdf_url(token:, format: :pdf)
+            else
+              taxbandits_w9_pdf_url(token:, format: :pdf)
+            end
+
+      "#{url}&filename=w9.pdf"
     end
 
   end
