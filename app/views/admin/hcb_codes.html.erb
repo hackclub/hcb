@@ -18,7 +18,7 @@
   <div class="ml-auto">
     <%= form.submit "Search" %>
     <%= link_to @params.merge(format: :csv) do %>
-      <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
+      <button type="button" class="btn" <% if @hcb_codes.total_count == 0 %> disabled<% end %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
     <% end %>
   </div>
   </div>

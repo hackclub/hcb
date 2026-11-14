@@ -186,21 +186,7 @@ We've transitioned to using development keys and seed data in development, but h
 
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` environment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
 
-- Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
-
-#### Pulling data from production
-
-On the postgres server:
-```bash
-su - postgres
-pg_dump -Fc --no-acl --no-owner -h localhost -U rails -d hcb_production -f /tmp/hcb_production.dump
-```
-
-On your laptop:
-```bash
-scp hcb-postgres-3:/tmp/hcb_production.dump hcb_production.dump
-pg_restore --verbose --clean --no-acl --no-owner -h localhost -U postgres -d bank_development hcb_production.dump
-```
+- Restore a dump of the production database.
 
 ## Flipper
 

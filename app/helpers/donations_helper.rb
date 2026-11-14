@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module DonationsHelper
+  include PaymentMethodsHelper
+
   def donation_payment_processor_fee(donation = @donation, humanized: true)
     fee = donation.payout_creation_balance_stripe_fee
 
@@ -33,37 +35,7 @@ module DonationsHelper
   end
 
   def donation_payment_method_mention(donation = @donation, **options)
-    payout = donation&.payout
-    payout_t = donation&.payout&.t_transaction
-
-    return "–" unless donation&.payment_method_type
-
-    if donation&.payment_method_card_brand
-      brand = donation&.payment_method_card_brand
-      last4 = donation&.payment_method_card_last4
-
-      icon_name = {
-        "amex"       => "card-amex",
-        "mastercard" => "card-mastercard",
-        "visa"       => "card-visa",
-        "discover"   => "card-discover"
-      }[brand] || "card-other"
-      description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
-      icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
-    else
-      icon_name = "bank-account"
-      size = 20
-
-      if donation&.payment_method_type == "ach_credit_transfer"
-        description_text = "ACH Transfer"
-      else
-        description_text = donation.payment_method_type.humanize
-      end
-    end
-
-    description = content_tag :span, description_text, class: "ml1"
-    icon ||= inline_icon icon_name, width: size, height: size, class: "slate"
-    content_tag(:span, class: "inline-flex items-center #{options[:class]}") { icon + description }
+    payment_method_mention(donation, **options)
   end
 
   def donation_card_country_mention(donation = @donation)

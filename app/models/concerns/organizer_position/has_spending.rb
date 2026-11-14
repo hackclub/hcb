@@ -15,10 +15,6 @@ class OrganizerPosition
     def spending_control_enabled?
       active_spending_control
     end
-
-    def spending_control_disabled?
-      !spending_control_enabled?
-    end
   end
 
 end

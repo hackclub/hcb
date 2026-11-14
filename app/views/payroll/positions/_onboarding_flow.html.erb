@@ -40,8 +40,8 @@
         <% if step[:complete] %>
           <span class="onboarding-flow__status onboarding-flow__status--done">Done</span>
         <% elsif actionable && perspective == :contractor %>
-          <% case step[:key]
-             when :tax_form, :payout_method %>
+          <% case step[:key] %>
+          <% when :tax_form, :payout_method %>
             <%= link_to step[:key] == :tax_form ? "Add tax info" : "Add payout method",
                   choose_legal_entity_payee_path(position.payee), class: "btn btn-small bg-info nowrap" %>
           <% when :contractor_signature %>
@@ -53,7 +53,7 @@
           <% end %>
         <% elsif actionable && perspective == :organizer && step[:key] == :organizer_signature %>
           <%= link_to "Sign contract",
-                contract_event_payroll_position_path(event_id: event.slug, id: position.id),
+                contract_payroll_position_path(position),
                 class: "btn btn-small bg-info nowrap", data: { turbo_frame: "_top" } %>
         <% elsif current %>
           <span class="onboarding-flow__status onboarding-flow__status--waiting nowrap">

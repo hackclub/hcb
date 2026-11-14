@@ -208,4 +208,62 @@ RSpec.describe TransactionCategoryService do
       end
     end
   end
+  describe "sync_from_card_charge!" do
+    let(:stripe_card) { create(:stripe_card, :with_stripe_id) }
+    let(:raw_pending_stripe_transaction) { create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_refunded") }
+    let(:original) { create(:raw_stripe_transaction, stripe_authorization_id: "iauth_refunded", stripe_card:) }
+    let(:refund) { create(:raw_stripe_transaction, :refund, stripe_authorization_id: "iauth_refunded", stripe_card:) }
+    let(:refund_transaction) { create(:canonical_transaction, transaction_source: refund) }
+
+    before do
+      create(:canonical_pending_transaction, raw_pending_stripe_transaction:, category_slug: "rent")
+    end
+
+    it "copies the category of the charge's settled transaction over its pending one" do
+      original_transaction = create(:canonical_transaction, transaction_source: original, category_slug: "food-fun")
+      original_transaction.category_mapping.update!(assignment_strategy: "manual")
+
+      described_class.new(model: refund_transaction).sync_from_card_charge!
+
+      refund_transaction.reload
+      expect(refund_transaction.category.slug).to eq("food-fun")
+      expect(refund_transaction.category_mapping.assignment_strategy).to eq("manual")
+    end
+
+    it "falls back to the charge's pending transaction" do
+      create(:canonical_transaction, transaction_source: original)
+
+      described_class.new(model: refund_transaction).sync_from_card_charge!
+
+      refund_transaction.reload
+      expect(refund_transaction.category.slug).to eq("rent")
+      expect(refund_transaction.category_mapping.assignment_strategy).to eq("automatic")
+    end
+
+    it "leaves the current category intact if one exists" do
+      create(:canonical_transaction, transaction_source: original, category_slug: "food-fun")
+      refund_transaction = create(:canonical_transaction, transaction_source: refund, category_slug: "server-hosting")
+
+      described_class.new(model: refund_transaction).sync_from_card_charge!
+
+      expect(refund_transaction.reload.category.slug).to eq("server-hosting")
+    end
+
+    it "does nothing when nothing on the charge is categorized" do
+      TransactionCategoryMapping.delete_all
+      create(:canonical_transaction, transaction_source: original)
+
+      described_class.new(model: refund_transaction).sync_from_card_charge!
+
+      expect(refund_transaction.reload.category).to be_nil
+    end
+
+    it "ignores transactions that are not on a card charge" do
+      ct = create(:canonical_transaction)
+
+      described_class.new(model: ct).sync_from_card_charge!
+
+      expect(ct.reload.category).to be_nil
+    end
+  end
 end

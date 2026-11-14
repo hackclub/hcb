@@ -34,6 +34,7 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
     include Receiptable
+    include Hashid::Rails
 
     has_paper_trail
 

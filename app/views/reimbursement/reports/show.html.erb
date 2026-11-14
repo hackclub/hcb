@@ -55,7 +55,7 @@
                       style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
                       'aria-label': "View the associated card grant." %>
     <% end %>
-    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event?) %>
+    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event? || (@report.reviewer_assignable_by_creator? && policy(@report).edit?)) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
@@ -170,12 +170,12 @@
       </p>
       <p>
         Begin by adding an expense to this report below. Each purchase must be a separate expense with:
-        <ol>
+      </p>
+      <ol>
           <li>An itemized receipt.</li>
           <li>A memo describing the expense.</li>
           <li>The amount you are seeking reimbursement for.</li>
-        </ol>
-      </p>
+      </ol>
       <p>
         Once you've added all of your expenses to the report, click <i>Submit</i> to begin the review process.
       </p>
@@ -232,7 +232,12 @@
                 :wise_recipient_id,
                 style: "width: 400px;",
                 class: "mt-0 !max-w-full",
-                placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                data: {
+                  controller: "strip-prefix",
+                  action: "paste->strip-prefix#paste",
+                  strip_prefix_prefix_value: "https://wise.com/recipients/"
+                }
               ) %>
         </div>
         <%= form.submit "Mark transfer as sent" %>

@@ -40,7 +40,8 @@ gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
-gem "aws-sdk-s3", require: false
+gem "aws-sdk-s3"
+gem "pdf-reader" # ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob checks a dummy form PDF for an unmasked TIN
 
 gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
@@ -127,7 +128,6 @@ gem "comma", "~> 4.8" # CSV generation
 gem "faker" # Create mock data
 
 gem "chronic" # time/date parsing
-gem "rinku", require: "rails_rinku" # auto-linking URLs in text
 
 gem "geocoder" # lookup lat/lng for Stripe Cards shipment tracking
 gem "validates_zipcode" # validation for event's zip codes
