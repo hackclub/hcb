@@ -111,14 +111,35 @@ RSpec.describe Reimbursement::Report, type: :model do
     it "returns nothing for an unknown country" do
       expect(described_class.in_country("ZZ")).to be_empty
     end
+
+    context "with payout method countries" do
+      def report_with_payout_method(details)
+        user = create(:user)
+        payout_method = create(:legal_entity_payout_method, legal_entity: user.personal_legal_entity, details:)
+        create(:reimbursement_report, user:, currency: "USD", legal_entity_payout_method: payout_method)
+      end
+
+      let!(:wire_brazil_report) { report_with_payout_method(build(:wire_payout_method_details, recipient_country: "BR")) }
+      let!(:wire_india_report) { report_with_payout_method(build(:wire_payout_method_details, recipient_country: "IN")) }
+      let!(:wise_brazil_report) { report_with_payout_method(build(:wise_transfer_payout_method_details, recipient_country: "BR")) }
+
+      it "matches reports whose wire or Wise payout method is in the country" do
+        expect(described_class.in_country("BR")).to contain_exactly(wire_brazil_report, wise_brazil_report)
+        expect(described_class.in_country("IN")).to contain_exactly(wire_india_report)
+      end
+
+      it "doesn't match a payout method in another country by its USD currency" do
+        expect(described_class.in_country("US")).not_to include(wire_brazil_report, wire_india_report)
+      end
+    end
   end
 
   describe ".countries_for_filter" do
-    it "lists every widely recognized country as a [name, alpha2] pair" do
+    it "lists every CountryEnumable country as a [name, alpha2] pair, sorted by name" do
       countries = described_class.countries_for_filter
 
-      expect(countries.size).to eq(described_class::WIDELY_RECOGNIZED_COUNTRY_CODES.size)
-      expect(countries.map(&:last)).to match_array(described_class::WIDELY_RECOGNIZED_COUNTRY_CODES)
+      expect(countries.map(&:last)).to match_array(Event.countries.keys)
+      expect(countries).to include(["Brazil", "BR"], ["United States", "US"])
       expect(countries.map(&:first)).to eq(countries.map(&:first).sort_by { |name| I18n.transliterate(name) })
     end
   end

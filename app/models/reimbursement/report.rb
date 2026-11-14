@@ -53,6 +53,8 @@ module Reimbursement
     include PublicIdentifiable
     set_public_id_prefix :rmr
 
+    include CountryEnumable
+
     belongs_to :user
 
     belongs_to :event, optional: true
@@ -94,23 +96,9 @@ module Reimbursement
     scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
     # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
-    # The 195 widely recognized countries: the 193 UN member states plus the
-    # 2 UN observer states (the Holy See and the State of Palestine). This is
-    # hardcoded, so revisit it if a new state is admitted to the UN.
-    WIDELY_RECOGNIZED_COUNTRY_CODES = %w[
-      AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR
-      BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ
-      DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY
-      HT HN HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KP KR KW KG LA LV LB
-      LS LR LY LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM
-      NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PY PE PH PL PT QA RO RU RW
-      KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA SS ES LK SD SR SE CH
-      SY TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VE VN YE ZM
-      ZW VA PS
-    ].freeze
-
-    # Reports are matched to a country by the reimbursed user's phone number's
-    # calling code and/or by the report's currency, but only using whichever
+    # Reports are matched to a country by the country of the report's wire (or
+    # Wise) payout method, and by the reimbursed user's phone number's calling
+    # code and/or the report's currency, but only using whichever
     # of those is unique to the country, since a signal that several countries
     # share can't tell them apart:
     #
@@ -123,6 +111,9 @@ module Reimbursement
     #   alone. The US shares both USD and +1, so it falls back to currency,
     #   which means USD reports from e.g. Ecuador are included too.
     #
+    # A payout method's recipient country is exact, so it's always used when the
+    # report has a wire or Wise payout method.
+    #
     # `users.phone_number` is stored sanitized (digits only, no leading "+").
     scope :in_country, ->(alpha2) {
       country = ISO3166::Country[alpha2]
@@ -132,11 +123,23 @@ module Reimbursement
       by_currency = country.currency_code.present? && (!by_phone || country_attribute_unique?(country, :currency_code))
 
       matches = []
+      matches << with_payout_method_country(country.alpha2)
       matches << where(currency: country.currency_code) if by_currency
       matches << where(user_id: User.where("phone_number LIKE ?", "#{country.country_code}%").select(:id)) if by_phone
-      next none if matches.empty?
-
       matches.reduce(:or)
+    }
+
+    # Reports whose wire or Wise payout method sends to `alpha2`.
+    scope :with_payout_method_country, ->(alpha2) {
+      methods = [LegalEntity::PayoutMethod::Wire, LegalEntity::PayoutMethod::WiseTransfer].filter_map do |details_class|
+        next unless details_class.recipient_countries.key?(alpha2)
+
+        LegalEntity::PayoutMethod.where(details_type: details_class.name, details_id: details_class.where(recipient_country: alpha2).select(:id)).select(:id)
+      end
+
+      next none if methods.empty?
+
+      methods.map { |ids| where(legal_entity_payout_method_id: ids) }.reduce(:or)
     }
 
     # Whether `country` is the only country with its value for `attribute`.
@@ -145,8 +148,8 @@ module Reimbursement
     end
 
     def self.countries_for_filter
-      WIDELY_RECOGNIZED_COUNTRY_CODES.map { |alpha2| [ISO3166::Country[alpha2].common_name, alpha2] }
-                                     .sort_by { |name, _| I18n.transliterate(name) }
+      country_enum_list.keys.map { |alpha2| [ISO3166::Country[alpha2].common_name, alpha2.to_s] }
+                       .sort_by { |name, _| I18n.transliterate(name) }
     end
 
     include AASM
