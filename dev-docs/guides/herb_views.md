@@ -51,12 +51,13 @@ A partial's states are its own unless the caller binds one to its own: `render "
 
 ## Patterns
 
-- **Comparing with a value from a loop.** The browser can't compare a state with a loop variable, but it can compare two states. Render each item as a partial that seeds a state from its own value and binds the shared one, then compare them: `hidden="<%= selected_tab != tab %>"` (see `events/filters/_menu_tab`, or `static_pages/_suggested_pairing_slide` for a carousel).
+- **Comparing with a value from a loop.** The browser can't compare a state with a loop variable, but it can compare two states. Render each item as a partial that seeds a state from its own value and binds the shared one, then compare them: `hidden="<%= selected_row != row_id %>"` (`users/payout_form/_payout_method_row`).
 - **Writing a value that varies per element.** `$value` is the value of the element the event fired on, so a button can carry it: `<button value="<%= id %>" data-herb-set="selected_row=$value">`. Give icons inside it `pointer-events-none`, or a click on the icon reads the icon's value.
-- **Marking the selected item.** A reactive view can't toggle a class, so set an attribute it can, such as `aria-current="<%= selected_tab == "details" %>"`, and style that (`_tabs.scss`, `_filter_tabs.scss`).
-- **Closing on an outside click, resetting before Turbo caches the page.** Actions take targets: `data-herb-set="click@outside->menu_open=false"` (`application/_dropdown_button`), `data-herb-reset="turbo:before-cache@document->selected_row"` (`users/_payout_methods_list`).
+- **Listening elsewhere.** Actions take targets such as `@document`, `@window` and `@outside`: `data-herb-reset="turbo:before-cache@document->selected_row"` closes the open payout method before Turbo caches the page (`users/_payout_methods_list`).
 - **Content loaded into a turbo frame** writes the states of the view around the frame, like any other element inside it (`payees/index` inside `payments/_payee_picker`).
-- **Menus and modals that move their content.** The `menu` controller clones its content into `<body>`, and jquery-modal moves its `<section>`. Herb state works there when the whole reactive region is inside the moved element, so render a small reactive partial inside the menu content or the modal section. A menu's copy gets its own state, so each opening starts fresh.
+- **Modals.** jquery-modal moves its `<section>` to the end of `<body>`. Herb state still works when the whole reactive region is inside the section, so render a reactive partial inside it rather than making the page around it reactive.
+
+If a conversion needs a workaround like several partials per item, or styling picked by CSS to stand in for a class, a small Stimulus controller is usually clearer.
 
 ## When JavaScript is still needed
 
