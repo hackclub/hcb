@@ -11,7 +11,7 @@
     <p class="h5 muted mt-0 mb-3">
       Which organization are you affiliated with, if any? Leave blank if none of these apply.
     </p>
-    <div class="field field--options field--green trio mb-0">
+    <div class="field field--options field--green auto-rows-fr mb-0">
       <input type="radio" name="<%= form.field_name(:type) %>" id="<%= form.field_id(:type, :first) %>" value="first" checked="<%= selected_type == "first" %>" data-herb-set="selected_type=$value">
       <%= form.label :type, value: :first do %>
         <%= inline_icon "sam", size: 28 %>
@@ -26,6 +26,11 @@
       <%= form.label :type, value: :hack_club do %>
         <%= inline_icon "clubs-fill", size: 28 %>
         <strong>Hack Club</strong>
+      <% end %>
+      <input type="radio" name="<%= form.field_name(:type) %>" id="<%= form.field_id(:type, :destination_imagination) %>" value="destination_imagination" checked="<%= selected_type == "destination_imagination" %>" data-herb-set="selected_type=$value">
+      <%= form.label :type, value: :destination_imagination do %>
+        <%= inline_icon "idea", size: 28 %>
+        <strong>Destination Imagination</strong>
       <% end %>
     </div>
   <% end %>
@@ -66,8 +71,19 @@
     </div>
   </fieldset>
 
+  <fieldset class="contents" hidden="<%= selected_type != "destination_imagination" %>" disabled="<%= selected_type != "destination_imagination" %>">
+    <div class="field">
+      <%= form.label :level, "Level" %>
+      <%= form.select :level, Event::Affiliation::DESTINATION_IMAGINATION_LEVELS.invert.to_a, { required: true, include_blank: "Select a level", selected: affiliation.level }, { disabled: } %>
+    </div>
+    <div class="field">
+      <%= form.label :destination_imagination_team_number, "Team Number" %>
+      <%= form.text_field :team_number, { required: true, placeholder: "Your team number", value: affiliation.team_number, id: "destination_imagination_team_number", disabled: } %>
+    </div>
+  </fieldset>
+
   <%# Every type asks for a size last. %>
-  <fieldset class="contents" hidden="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" %>" disabled="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" %>">
+  <fieldset class="contents" hidden="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" && selected_type != "destination_imagination" %>" disabled="<%= selected_type != "first" && selected_type != "vex" && selected_type != "hack_club" && selected_type != "destination_imagination" %>">
     <div class="field">
       <%= form.label :size, "Size" %>
       <div class="flex items-center">
