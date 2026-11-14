@@ -5,35 +5,8 @@
 <% end %>
 
 <% if flash[:confetti] %>
-  <script src="/brand/js-confetti.browser.js"></script>
-  <script>
-    const triggerConfetti = () => {
-      const jsConfetti = new JSConfetti()
-      const emojis = <%= flash[:confetti_emojis].to_json.html_safe %>
-
-      setTimeout(() => {
-        if (!emojis) {
-          jsConfetti.addConfetti()
-        } else {
-          jsConfetti.addConfetti({
-            emojis: emojis.split(",")
-          })
-        }
-      }, 100);
-    };
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    (async () => {
-      while (typeof JSConfetti == "undefined") {
-        await sleep(500);
-      }
-
-      triggerConfetti()
-    })();
-  </script>
+  <%# turbo-temporary so a cached restore (Back) doesn't fire it again %>
+  <div data-controller="confetti" data-confetti-auto-value="true" data-confetti-emojis-value="<%= flash[:confetti_emojis] %>" data-turbo-temporary></div>
 <% end %>
 <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
   <style>
