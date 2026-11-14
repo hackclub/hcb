@@ -23,6 +23,7 @@ module Api
       end
 
       def transaction_amount(tx, event: nil)
+        return tx.amount_cents if tx.is_a?(Ledger::Item)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
         if tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.source_event

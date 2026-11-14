@@ -8,9 +8,15 @@ module Api
       included do
         private
 
-        def paginate_cursor(list, &block)
+        def pagination_limit
           limit = params[:limit]&.to_i || 25
           raise ArgumentError, "Limit is capped at 100. '#{params[:limit]}' is invalid." if limit > 100
+
+          limit
+        end
+
+        def paginate_cursor(list, &block)
+          limit = pagination_limit
 
           start_index = if params[:after]
                           index = list.index { |item| block.call(item) == params[:after] }
