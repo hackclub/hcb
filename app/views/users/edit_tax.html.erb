@@ -4,7 +4,6 @@
 
 <% show_tin = policy(@legal_entity).show_masked_tin? %>
 <% for_name = @legal_entity.person? ? "" : " for #{@legal_entity.display_name}" %>
-<% possessive = @legal_entity.person? ? "Your" : "#{@legal_entity.display_name}'s" %>
 <% next_req = @legal_entity.pending_payable_requirements(requires_tax_form: @legal_entity.tax_form_required?).first %>
 <% mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form if @legal_entity.completed_tax_form? %>
 
@@ -12,23 +11,23 @@
   <%= render "settings_header", active: "tax", legal_entities: @legal_entities, legal_entity: @legal_entity %>
   <section>
     <p class="muted mt0 mb2">
-      Before organizations can pay you or your business through HCB, we need a tax form (W-9 or W-8) on file.
-      Tax information is stored securely and used to send tax forms at the end of the year
-      if total payments exceed IRS reporting requirements.
+      Some payments on HCB require a tax form (W-9 or W-8) on file.
+      We store your tax information securely and use it to send you tax forms at the end of the year
+      if your payments exceed IRS reporting thresholds.
     </p>
 
     <% case next_req %>
     <% when :not_tin_banned %>
-      <p><%= possessive %> TIN has been banned from receiving payments on HCB.</p>
+      <p><%= @legal_entity.person? ? "You've" : "#{@legal_entity.display_name} has" %> been banned from receiving payments on HCB.</p>
     <% when :not_archived %>
-      <p><%= @legal_entity.person? ? "Your personal legal entity" : @legal_entity.display_name %> has been archived.</p>
+      <p>These tax details were replaced when you switched to a new TIN, so they're no longer used for payments.</p>
     <% when :form_present %>
       <% if @legal_entity.latest_tax_form.present? && !@legal_entity.latest_tax_form.failed? %>
-        <p><%= possessive %> tax form is unfinished.</p>
+        <p>You haven't finished your tax form<%= for_name %> yet.</p>
 
         <%= link_to "Resume tax form", tax_form_path(@legal_entity.latest_tax_form), class: "btn" %>
       <% else %>
-        <p><%= possessive %> tax form hasn't been submitted yet.</p>
+        <p>You haven't submitted a tax form<%= for_name %> yet.</p>
 
         <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
       <% end %>
@@ -37,15 +36,15 @@
     <% when :form_verified %>
       <% if @completed_tax_form.taxbandits_tin_match_failed? %>
         <p>
-          We couldn't verify the tax form you submitted on <%= format_date @completed_tax_form.completed_at %>
+          We couldn't verify the tax form you submitted<%= for_name %> on <%= format_date @completed_tax_form.completed_at %>
           with TIN <%= masked_tin_tag @completed_tax_form, viewable: show_tin %>.
-          Double-check the name and TIN, then submit a new tax form.
+          Double-check the name and TIN you entered, then submit a new tax form.
         </p>
 
         <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
       <% else %>
         <p>
-          The tax form you submitted on <%= format_date @completed_tax_form.completed_at %>
+          The tax form you submitted<%= for_name %> on <%= format_date @completed_tax_form.completed_at %>
           with TIN <%= masked_tin_tag @completed_tax_form, viewable: show_tin %> is pending verification.
         </p>
       <% end %>
@@ -61,7 +60,7 @@
 
         <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
       <% else %>
-        <p>A tax form isn't needed<%= for_name %> right now.</p>
+        <p>You don't need a tax form<%= for_name %> right now.</p>
       <% end %>
     <% end %>
   </section>
