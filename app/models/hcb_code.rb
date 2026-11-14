@@ -624,7 +624,7 @@ class HcbCode < ApplicationRecord
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
       reimbursement_payout_holding || stripe_service_fee ||
-      card_charge
+      fee_reimbursement_group || card_charge
   end
 
   # The `:receipt_required` scope determines the type of

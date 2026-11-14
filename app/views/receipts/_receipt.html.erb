@@ -2,7 +2,14 @@
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
 
-<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
+<%# When a `style` local is given, browsers keep that first `style` attribute and drop the second. %>
+<div id="receipt_<%= receipt.id %>"
+     class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>"
+     <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %>
+     <% if defined?(style) %> style="<%= j style %>"<% end %>
+     data-receipt-id="<%= receipt.id %>"
+     style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<%= " cursor: pointer;" if defined?(selectable) %>"
+     <% if defined?(selectable) %> data-receipt-select-target="receipt" data-action="click->receipt-select#select"<% end %>>
 
 <% unless defined?(hide_info) %>
   <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">
@@ -135,7 +142,7 @@
         <iframe data-src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; max-height: 100%; overflow: hidden;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
       <% else %>
         <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; max-height: 100%; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
-          <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", data: { controller: "image-fit", action: "load->image-fit#fit" } %>
+          <%= image_tag receipt.file.representation(resize: nil), loading: :lazy, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", data: { controller: "image-fit", action: "load->image-fit#fit" } %>
         </div>
       <% end %>
 
@@ -163,7 +170,7 @@
           <iframe data-receipt-tabs-target="preview" data-src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
         <% else %>
           <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
-            <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", data: { controller: "image-fit", action: "load->image-fit#fit" } %>
+            <%= image_tag receipt.file.representation(resize: nil), loading: :lazy, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", data: { controller: "image-fit", action: "load->image-fit#fit" } %>
           </div>
         <% end %>
 

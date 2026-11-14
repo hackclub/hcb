@@ -1,6 +1,6 @@
 <%# locals: (event:) %>
 
-<% show_popovers = popovers_enabled? && organizer_signed_in? %>
+<% show_popovers = organizer_signed_in? %>
 <% pinned_ledger_items = event.pinned_ledger_items.to_a %>
 <% if pinned_ledger_items.any? %>
   <div class="flex gap-4 my-2 pinned__container">

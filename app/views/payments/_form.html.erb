@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <% unless manual %> hidden<% end %>>
           <h3 class="mb-2">Payout method</h3>
           <% if existing_payout_method %>
             <details class="card mb-4 p-0 overflow-hidden">
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
           Send payment
           <%= inline_icon "send" %>
         </button>
