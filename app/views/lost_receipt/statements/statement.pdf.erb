@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Lost receipt statement</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5; color: #222; padding: 24px; }
+      h1 { font-size: 22pt; }
+      table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+      th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+      .amount { text-align: right; white-space: nowrap; }
+      .text { white-space: pre-wrap; overflow-wrap: break-word; }
+      tr { page-break-inside: avoid; }
+      .confirmation { page-break-inside: avoid; margin-top: 32px; }
+    </style>
+  </head>
+  <body>
+    <p>HCB · The Hack Foundation</p>
+    <h1>Lost receipt statement</h1>
+    <p><strong>Transaction:</strong>
+      <% if @statement.receipt.receiptable.is_a?(HcbCode) %>
+        <%= link_to "View transaction", hcb_code_url(@statement.receipt.receiptable) %>
+      <% else %>
+        <%= @statement.receipt.receiptable.to_global_id %>
+      <% end %><br>
+      <strong>Purchase date:</strong> <%= @statement.date.strftime("%B %-d, %Y") %><br>
+      <strong>Merchant:</strong> <%= @statement.merchant %></p>
+    <p><strong>Business purpose</strong></p>
+    <p class="text"><%= @statement.purpose %></p>
+    <table>
+      <thead><tr><th>Description</th><th class="amount">Quantity</th><th class="amount">Unit price (USD)</th><th class="amount">Amount (USD)</th></tr></thead>
+      <tbody>
+        <% @statement.items.each do |item| %>
+          <tr>
+            <td class="text"><%= item.description %></td>
+            <td class="amount"><%= item.quantity %></td>
+            <td class="amount"><%= Money.new(item.unit_amount_cents, "USD").format %></td>
+            <td class="amount"><%= Money.new(item.total_amount_cents, "USD").format %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot><tr><th colspan="3">Total (USD)</th><th class="amount"><%= Money.new(@statement.total_amount_cents, "USD").format %></th></tr></tfoot>
+    </table>
+    <div class="confirmation">
+      <p><%= LostReceipt::Statement::CONFIRMATION %></p>
+      <p>
+        <strong>Confirmed by:</strong> <%= @statement.signer_name %><br>
+        <strong>Submitted:</strong> <%= @statement.confirmed_at.utc.strftime("%B %-d, %Y at %H:%M UTC") %><br>
+        <strong>Submission method:</strong> <%= @statement.submitter ? "Signed in to HCB" : "Receipt request link (not signed in)" %>
+      </p>
+      <% if @statement.submitter %>
+        <p><strong>HCB submitter:</strong> <%= @statement.submitter.full_name %> (user #<%= @statement.submitter.id %>)</p>
+      <% end %>
+    </div>
+  </body>
+</html>

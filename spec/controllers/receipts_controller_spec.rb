@@ -38,7 +38,8 @@ RSpec.describe ReceiptsController do
            }, format: :turbo_stream)
 
       expect(response.body).to include("No/lost receipt?")
-      expect(response.body).not_to include("return_to")
+      link = Nokogiri::HTML5.fragment(response.body).at_css('a[data-modal^="lost_receipt_"]')
+      expect(link["href"]).to eq(receiptable_lost_receipt_path(receiptable_type: "HcbCode", receiptable_id: hcb_code.id))
     end
 
     it "streams the new receipt count into the item's ledger row" do

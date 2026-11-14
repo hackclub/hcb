@@ -1,0 +1,55 @@
+<% title "Lost receipt statement" %>
+<% page_sm %>
+
+<h1>Lost receipt statement</h1>
+
+<%= turbo_frame_tag "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}", target: "_top" do %>
+  <p class="muted mt-0">Ask the merchant for a replacement receipt before completing this statement.</p>
+  <% if current_user %>
+    <p class="muted">You have <%= pluralize current_user.receipts.lost_receipt_statement.count, "lost receipt statement" %> on file.</p>
+  <% end %>
+
+  <%= form_with model: @statement, scope: :lost_receipt_statement, namespace: "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}", url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update" } do |form| %>
+    <%= form_errors @statement, "statement" %>
+    <%= hidden_field_tag :s, params[:s], id: nil %>
+    <%= hidden_field_tag :return_to, params[:return_to], id: nil %>
+
+    <div class="field">
+      <%= form.label :date, "Purchase date" %>
+      <%= form.date_field :date, required: true, max: Date.current.iso8601, class: "!max-w-full" %>
+    </div>
+    <div class="field">
+      <%= form.label :merchant %>
+      <%= form.text_field :merchant, required: true, class: "!max-w-full" %>
+    </div>
+    <div class="field">
+      <%= form.label :purpose, "Business purpose" %>
+      <%= form.text_area :purpose, required: true, rows: 2, class: "!max-w-full" %>
+    </div>
+
+    <h3 class="mb-2">Items purchased</h3>
+    <p class="muted mt-0">Include tax, tips, and fees as separate items. Enter amounts in USD.</p>
+    <div data-lost-receipt-target="items">
+      <%= form.fields_for :items do |item_form| %>
+        <%= render "receiptables/lost_receipt_item", form: item_form %>
+      <% end %>
+    </div>
+    <template data-lost-receipt-target="template">
+      <%= form.fields_for :items, LostReceipt::Item.new(quantity: 1), child_index: "NEW_ITEM" do |item_form| %>
+        <%= render "receiptables/lost_receipt_item", form: item_form %>
+      <% end %>
+    </template>
+    <button type="button" class="btn bg-muted" data-action="lost-receipt#add" data-lost-receipt-target="addButton">Add item</button>
+    <p class="bold">Total: <output data-lost-receipt-target="total" aria-live="polite">$0.00</output></p>
+
+    <div class="field">
+      <%= form.label :signer_name, "Your full name" %>
+      <%= form.text_field :signer_name, required: true, autocomplete: "name", class: "!max-w-full" %>
+    </div>
+    <div class="field field--checkbox">
+      <%= form.check_box :confirmed, required: true %>
+      <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
+    </div>
+    <%= form.submit "Create statement", class: "btn w-full bg-blue mt-2", data: { disable_with: "Creating statement..." } %>
+  <% end %>
+<% end %>
