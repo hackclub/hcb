@@ -341,6 +341,13 @@ RSpec.describe EventsController do
           expect(response.body).to include("1 filtered transaction (CSV)")
           expect(response.body).to include("/exports/ledger/#{event.slug}.csv?direction=expenses")
         end
+
+        it "offers the whole ledger when the filter resolves to nothing" do
+          get(:ledger, params: { event_id: event.slug, tag: "nonexistent" })
+
+          expect(response.body).to include("Exports cover every transaction in this ledger.")
+          expect(response.body).to include("All 2 transactions (CSV)")
+        end
       end
 
       context "receipt drag and drop" do

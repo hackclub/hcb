@@ -79,6 +79,16 @@ module SetLedgerFilters
     end
 
     def ledger_query
+      Ledger::Query.new({ "$and": ledger_filter_predicates + [visibility_predicate] })
+    end
+
+    # The predicates the user's filters add to the query, and nothing else.
+    # Built from the resolved filters, not the raw params: `?tag=nonexistent`
+    # resolves to no tag and so adds no predicate, and the ledger it produces
+    # is the whole ledger.
+    def ledger_filter_predicates
+      return @ledger_filter_predicates if defined?(@ledger_filter_predicates)
+
       query = []
 
       query << { memo: { "$search": params[:q] } } if params[:q].present?
@@ -135,24 +145,28 @@ module SetLedgerFilters
         query << { linked_object_type: }
       end
 
-      # Amount trumps status: an item that moved any non-zero amount should
-      # always render (e.g. a declined/failed transaction that still posted a
-      # partial charge), regardless of its status. Only zero-amount items are
-      # subject to the status allowlist.
-      query << {
+      @ledger_filter_predicates = query
+    end
+
+    # Amount trumps status: an item that moved any non-zero amount should
+    # always render (e.g. a declined/failed transaction that still posted a
+    # partial charge), regardless of its status. Only zero-amount items are
+    # subject to the status allowlist.
+    def visibility_predicate
+      {
         "$or": [
           { amount_cents: { "$ne": 0 } },
           { status: { "$in": ["settled", "pending", "reversed"] } }
         ]
       }
-      Ledger::Query.new({ "$and": query })
     end
 
     # Whether the ledger being looked at is narrowed at all. `q` counts: it
     # narrows the ledger just as much as the filter menu does, even though it
-    # renders outside it.
+    # renders outside it. A param that resolved to nothing doesn't count: it
+    # narrowed nothing.
     def ledger_filtered?
-      params[:q].present? || FILTER_PARAMS.any? { |name| params[name].present? }
+      ledger_filter_predicates.any?
     end
 
     # The filters, as params, for handing to another request — an export link,

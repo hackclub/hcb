@@ -49,6 +49,13 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to include("#{event.slug}_filtered_transactions_")
     end
 
+    it "doesn't call the export filtered when the filter resolved to nothing" do
+      get :ledger, params: { event: event.slug, tag: "nonexistent" }, format: :csv
+
+      expect(response.body).to include("Coffee", "Donation from Fiona")
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
+    end
+
     it "respects the search box" do
       get :ledger, params: { event: event.slug, q: "Coffee" }, format: :csv
 
