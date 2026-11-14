@@ -12,7 +12,9 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
-  <% if !@subledger && @ledger&.items&.exists? %>
+  <%# The page already counted its rows, so no extra query here. A filter that
+      matches nothing gets no export menu: there's nothing to export. %>
+  <% if !@subledger && @ledger && @items.total_count.positive? %>
     <%# The export is generated from the same query that built this page, so it
         carries whatever filters are applied. Say so, and put the number of
         transactions on the links themselves: the old ledger's export quietly

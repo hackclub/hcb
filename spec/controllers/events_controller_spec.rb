@@ -349,6 +349,13 @@ RSpec.describe EventsController do
           expect(response.body).to include("All 2 transactions (CSV)")
         end
 
+        it "offers nothing when the filter matches nothing" do
+          get(:ledger, params: { event_id: event.slug, q: "zzz" })
+
+          expect(response).to be_successful
+          expect(response.body).not_to include("Export filtered transactions")
+        end
+
         it "offers the whole ledger when the filter resolves to nothing" do
           get(:ledger, params: { event_id: event.slug, tag: "nonexistent" })
 
