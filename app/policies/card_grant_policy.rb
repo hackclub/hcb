@@ -17,12 +17,16 @@ class CardGrantPolicy < ApplicationPolicy
     user&.auditor? || cardholder? || user_in_event?
   end
 
+  def view_recipient_email?
+    admin_or_manager?
+  end
+
   def spending?
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
   def edit_overview?
-    auditor_or_member? && record.active?
+    auditor_or_member? && (record.active? || record.canceled?)
   end
 
   alias_method :edit_actions?, :edit_overview?
