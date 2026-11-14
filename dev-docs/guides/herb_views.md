@@ -47,7 +47,17 @@ A state's default can be one of the view's strict locals, so state that starts f
 <%# herb:state (selected_type: initial_type) %>
 ```
 
-A partial's states are its own unless the caller binds one to its own: `render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role }`. Use the partial's full path.
+A partial's states are its own unless the caller binds one to its own: `render "organizer_position_invites/role_and_control_form", form:, state: { selected_role: selected_role }`. Use the partial's full path. A partial rendered with a block can't be bound, so pass what the block held as a local instead.
+
+## Patterns
+
+- **Comparing with a value from a loop.** The browser can't compare a state with a loop variable, but it can compare two states. Render each item as a partial that seeds a state from its own value and binds the shared one, then compare them: `hidden="<%= selected_row != row_id %>"` (`users/payout_form/_payout_method_row`).
+- **Writing a value that varies per element.** `$value` is the value of the element the event fired on, so a button can carry it: `<button value="<%= id %>" data-herb-set="selected_row=$value">`. Give icons inside it `pointer-events-none`, or a click on the icon reads the icon's value.
+- **Listening elsewhere.** Actions take targets such as `@document`, `@window` and `@outside`: `data-herb-reset="turbo:before-cache@document->selected_row"` closes the open payout method before Turbo caches the page (`users/_payout_methods_list`).
+- **Content loaded into a turbo frame** writes the states of the view around the frame, like any other element inside it (`payees/index` inside `payments/_payee_picker`).
+- **Modals.** jquery-modal moves its `<section>` to the end of `<body>`. Herb state still works when the whole reactive region is inside the section, so render a reactive partial inside it rather than making the page around it reactive.
+
+If a conversion needs a workaround like several partials per item, or styling picked by CSS to stand in for a class, a small Stimulus controller is usually clearer.
 
 ## When JavaScript is still needed
 

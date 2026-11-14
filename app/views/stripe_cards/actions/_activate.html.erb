@@ -1,7 +1,9 @@
+<%# herb:slots client %>
+<%# herb:state (confirmed: false) %>
 <% return unless policy(stripe_card).activate? %>
 
 <% if stripe_card.replacement_for %>
-  <div class="card border b--warning pb0 mx-auto" data-controller="form-disable">
+  <div class="card border b--warning pb0 mx-auto">
     <div class="flex items-center warning">
       <%= inline_icon "info", size: 32, class: "mr1" %>
       <p class="bold mt0 mb0">Heads up:</p>
@@ -13,16 +15,15 @@
       You'll need to update billing information for any subscriptions that use <%= stripe_card_mention stripe_card.replacement_for %>.
     </p>
     <div class="field field--checkbox">
-      <input type="checkbox" id="confirm" data-action="form-disable#run" data-form-disable-target="radioButton">
+      <input type="checkbox" id="confirm" data-herb-set="confirmed=$value">
       <label for="confirm">Click here to confirm.</label>
     </div>
-    <%= button_to new_stripe_cards_activation_path,
-                  method: :get,
-                  class: "btn bg-success mt1 mb2",
-                  data: { "form-disable-target" => "submitButton", "turbo" => "false" } do %>
-      <%= inline_icon "rep", size: home_action_size %>
-      Activate
-    <% end %>
+    <form action="<%= new_stripe_cards_activation_path %>" method="get" class="button_to">
+      <button type="submit" class="btn bg-success mt1 mb2" data-turbo="false" disabled="<%= !confirmed %>">
+        <%= inline_icon "rep", size: home_action_size %>
+        Activate
+      </button>
+    </form>
   </div>
 <% else %>
   <%= link_to new_stripe_cards_activation_path, data: { turbo_frame: "_top" }, class: "btn bg-success" do %>

@@ -11,14 +11,16 @@
         <%= form.text_field :q, value: params[:q], placeholder: "Search recipients...", autofocus: true, class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced" } %>
       </div>
     <% end %>
-    <button type="button" class="btn shrink-0" data-action="payee-picker#showAdding">
+    <button type="button" class="btn shrink-0" data-herb-set="selected_panel=new">
       <%= inline_icon "plus" %>
       New
     </button>
   </div>
 
   <%= turbo_frame_tag :payee_results_list do %>
-    <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
+    <%# The query goes into the picker's name field, or its email field when it is an
+        email; the other is cleared. The icon ignores clicks so `$value` is the button's. %>
+    <% prefill, cleared = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? ? %w[selected_email selected_name] : %w[selected_name selected_email] %>
     <% if @payees.any? %>
       <div class="flex items-center justify-between px-5 pt-2 pb-1 text-sm muted">
         <span><%= pluralize(@payees.total_count, params[:q].present? ? "result" : "recipient") %></span>
@@ -74,9 +76,9 @@
           <button
               type="button"
               class="btn"
-              data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>"
-              data-payee-picker-is-email-param="<%= is_email_query %>">
-            <%= inline_icon "plus", size: 16 %>
+              value="<%= params[:q] %>"
+              data-herb-set="selected_panel=new <%= prefill %>=$value <%= cleared %>=''">
+            <%= inline_icon "plus", size: 16, class: "pointer-events-none" %>
             Add "<%= params[:q] %>" as a new recipient
           </button>
         </div>

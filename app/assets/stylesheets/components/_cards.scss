@@ -81,7 +81,7 @@
 // leaving other cards (e.g. callouts) alone. Transparent so the parent's inset
 // border isn't covered.
 .card--nested-flush {
-  :is(turbo-frame, [data-payee-picker-target]) > .card {
+  :is(turbo-frame, [data-payee-panel]) > .card {
     box-shadow: none;
     border-radius: 0;
     margin-top: 0;
