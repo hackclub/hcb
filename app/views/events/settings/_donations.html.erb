@@ -1,4 +1,6 @@
-<%# locals: (event:, frame:) %>
+<%# locals: (event:, frame:, donations_initially: event.donation_page_enabled?) %>
+<%# herb:slots client %>
+<%# herb:state (donations_enabled: donations_initially) %>
 
 <% turbo_page_requires_reload %>
 
@@ -9,20 +11,20 @@
     <%= form_errors event, "organization" %>
     <%= form.hidden_field :tab, value: "donations" %>
     <% unless event.unapproved? %>
-      <div data-controller="accordion">
+      <div>
         <div class="field field--checkbox">
           <span style="font-weight: 700">Enable donations to <%= event.name %></span>
           <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
             <%= form.label :donation_page_enabled do %>
               <%= form.check_box :donation_page_enabled,
-                data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
+                data: { herb_set: "change->donations_enabled=$value" },
                 disabled:,
                 switch: true %>
               <span class="slider"></span>
             <% end %>
           </div>
         </div>
-        <div data-accordion-target="content">
+        <div hidden="<%= !donations_enabled %>">
           <div class="menu__divider m-0 mb-4"></div>
           <div class="field">
             <%= form.label :donation_page_message, "Message to show on donation page" %>
