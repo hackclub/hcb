@@ -44,6 +44,13 @@ RSpec.describe "Transaction exports", type: :request do
       expect(response.body).to include("action=\"/exports/#{event.slug}.csv\"")
       expect(response.body).not_to include("name=\"q\"")
     end
+
+    it "sends a legacy export's date range back as form fields" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "transactions", start_date: "2024-01-01", end_date: "2024-01-31" }
+
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="start_date"[^>]*>/)
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="end_date"[^>]*>/)
+    end
   end
 
   describe "GET /exports/:event.pdf" do
@@ -138,6 +145,12 @@ RSpec.describe "Transaction exports", type: :request do
 
         expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "transactions"))
         expect(Export.count).to eq(0)
+      end
+
+      it "carries the date range to the email form" do
+        get "/exports/#{event.slug}.csv", params: { start_date: last_month, end_date: last_month }
+
+        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "transactions", start_date: last_month, end_date: last_month))
       end
     end
 

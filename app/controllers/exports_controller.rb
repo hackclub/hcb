@@ -34,7 +34,7 @@ class ExportsController < ApplicationController
           public_only: !organizer_signed_in?
         )
 
-        deliver_export(@export, file_extension: :csv)
+        deliver_export(@export, file_extension: :csv, filters: statement_range_params)
       end
 
       format.json do
@@ -144,11 +144,17 @@ class ExportsController < ApplicationController
       @filters = ledger_filter_params
     else
       @export_path = transactions_exports_path(event: @event_slug, format: @file_extension)
-      @filters = {}
+      @filters = statement_range_params
     end
   end
 
   private
+
+  # The date range a legacy CSV export can be narrowed to, as params, for the
+  # same round trip through the email form that the ledger filters make.
+  def statement_range_params
+    params.permit(:start_date, :end_date).to_h.compact_blank.symbolize_keys
+  end
 
   def authorize_ledger
     authorize @event, :show?
