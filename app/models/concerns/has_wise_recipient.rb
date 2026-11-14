@@ -22,7 +22,7 @@ module HasWiseRecipient
       end
     end
 
-    # Disable unsupported Wise methods temporarily (Interac / Duitnow)
+    # Disable unsupported Wise methods temporarily (Interac / Duitnow / CNY)
     validate on: :create do
       if unsupported_account_type?
         errors.add(:base, unsupported_account_type_reason)
@@ -188,7 +188,9 @@ module HasWiseRecipient
     "interac"               => "Interac",
     "mobile_number_duitnow" => "Duitnow",
     "nirc_duitnow"          => "Duitnow",
-    "bnr_duitnow"           => "Duitnow"
+    "bnr_duitnow"           => "Duitnow",
+    "alipay"                => "AliPay",
+    "unionpay"              => "UnionPay"
   }.freeze
 
   def self.unsupported_account_type_reason(account_type)
