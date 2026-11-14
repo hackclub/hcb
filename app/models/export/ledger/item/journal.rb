@@ -31,7 +31,10 @@ class Export
         def content
           journal = ::LedgerJournal::Journal.new
 
-          items.each do |item|
+          records = items.to_a
+          preload_merchant_data(records)
+
+          records.each do |item|
             journal.transactions << (item.amount_cents <= 0 ? expense(item) : income(item))
           end
 
@@ -91,6 +94,20 @@ class Export
             currency: "USD",
             amount: BigDecimal(amount_cents_for(item), 2) / 100
           )
+        end
+
+        # A card charge reads its merchant off the raw Stripe transactions behind
+        # it, which the query's own preloads don't reach (it stops at the linked
+        # object). Load them in one query per association rather than one pair of
+        # queries per charge.
+        def preload_merchant_data(items)
+          card_charges = items.filter_map { |item| item.linked_object if item.linked_object_type == "CardCharge" }
+          return if card_charges.empty?
+
+          ActiveRecord::Associations::Preloader.new(
+            records: card_charges,
+            associations: [:raw_stripe_transactions, :raw_pending_stripe_transaction]
+          ).call
         end
 
         def merchant_data(item)

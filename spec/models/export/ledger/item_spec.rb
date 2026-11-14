@@ -102,6 +102,40 @@ RSpec.describe Export::Ledger::Item do
       expect(content).to include("Coffee")
       expect(content).not_to include("Donation from Fiona")
     end
+
+    context "with card charges" do
+      # A raw Stripe transaction links itself to a card charge on create.
+      def charge_at(merchant_category, memo:)
+        charge = create(:raw_stripe_transaction, stripe_merchant_category: merchant_category).reload.card_charge
+        mapped_item(amount_cents: -300, memo:, datetime: Date.new(2024, 3, 4), linked_object_type: "CardCharge", linked_object_id: charge.id)
+      end
+
+      def queries_to_export
+        count = 0
+        counter = ->(_name, _start, _finish, _id, payload) { count += 1 unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
+
+        ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { build_export(as: :ledger).content }
+
+        count
+      end
+
+      it "books each charge to its merchant's category" do
+        charge_at("bakeries", memo: "Bread")
+
+        expect(build_export(as: :ledger).content).to include("Expenses:Bakeries")
+      end
+
+      it "reads merchants without a query per charge" do
+        charge_at("bakeries", memo: "Bread")
+        queries_to_export # the first export pays for one-time caches; measure the second
+        with_one = queries_to_export
+
+        charge_at("bakeries", memo: "Croissant")
+        charge_at("taxicabs_limousines", memo: "Taxi")
+
+        expect(queries_to_export).to eq(with_one)
+      end
+    end
   end
 
   describe "naming" do
