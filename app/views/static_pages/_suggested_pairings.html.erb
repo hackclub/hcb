@@ -1,11 +1,8 @@
-<%# locals: (pairings:, current_slide: 0, initial_slide: current_slide + 1, total: pairings.length) %>
-<%# herb:slots client %>
-<%# herb:state (dismissed: false, slide: initial_slide, last_slide: total) %>
 <%= turbo_frame_tag "suggested_pairings" do %>
-  <% if pairings.any? %>
-    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);" hidden="<%= dismissed %>">
+  <% if local_assigns[:pairings].any? %>
+    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);" data-controller="element">
       <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
-        <span tabindex="0" role="button" aria-label="Dismiss" data-herb-set="click->dismissed=true keydown.return->dismissed=true" class="pointer">
+        <span tabindex="0" data-action="click->element#remove" class="pointer">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
         </span>
         <div style="display: flex; padding-right: 32px;">
@@ -13,27 +10,102 @@
           <span style="flex-grow: 1;"></span>
           <span style="line-height: 0px; display: flex; align-items: center;">
             <span>
-              <span class="carousel__number"><%= slide %></span>&nbsp;of&nbsp;<%= pairings.length %>
+              <span class="carousel__number"><%= local_assigns[:current_slide] + 1 %></span>&nbsp;of&nbsp<%= local_assigns[:pairings].length %>
             </span>
           </span>
 
         </div>
       </div>
 
-      <div class="carousel">
-        <button type="button" class="carousel__button carousel__button--left pop" aria-label="Previous suggestion" hidden="<%= slide == 1 %>" data-herb-decrement="slide">
-          <%= inline_icon "view-back", size: 40 %>
-        </button>
-        <div class="carousel__items">
-          <% pairings.each_with_index do |pairing, i| %>
-            <%# herb:key pairing.id %>
-            <%= render "static_pages/suggested_pairing_slide", pairing:, i:, position: i + 1, state: { slide: slide } %>
+      <%= carousel(local_assigns[:pairings], local_assigns[:current_slide]) do |pairing, i| %>
+        <p>HCB thinks that one of your receipts, <strong><%= pairing.receipt.file.blob.filename %></strong>, belongs to a transaction in <strong><%= pairing.hcb_code.event.name %></strong>.</p>
+        <div class="flex justify-center">
+
+          <div class="xs-hide sm-hide flex flex-col justify-center pt1" style="user-drag: none; -webkit-user-drag: none; -moz-user-drag: none; min-width: 50px; max-width: max(10vw, 50px)">
+            <%= render partial: "receipts/receipt", locals: { receipt: pairing.receipt, show_delete_button: true, link_to_file: true, hide_info: true, size: 200 } %>
+          </div>
+
+          <div class="flex flex-col justify-center xs-hide sm-hide" style="margin-left: 16px; margin-right: 16px; flex-grow: 0.5; max-width: 36px;">
+            <%= image_tag asset_path("link-arrow.svg"), width: 200, height: 100, style: "object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100px;" %>
+          </div>
+
+          <div class="flex flex-col justify-center" style="max-width: 100%; flex-grow: 1;">
+            <div class="card p0">
+              <h2 class="heading dark:bg-dark leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center">
+                <%= pairing.hcb_code.stripe_card.event.name %>
+
+                <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center", data: { turbo_frame: "_top" } do %>
+                  <%= inline_icon "card", class: "mr1", size: 25 %>
+                  <%= pairing.hcb_code.stripe_card.last_four %>
+                <% end %>
+              </h2>
+
+              <div class="table-container">
+                <table>
+                  <tbody data-behavior="transactions">
+                    <% if pairing.hcb_code.canonical_transactions.any? %>
+                      <% pairing.hcb_code.canonical_transactions.each do |ct| %>
+                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true } %>
+                      <% end %>
+                    <% else %>
+                      <% pairing.hcb_code.canonical_pending_transactions.each do |pt| %>
+                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true } %>
+                      <% end %>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+
+              <% if pairing.receipt.suggested_memo %>
+                <div class="p1 pl2">
+                  <%= inline_icon "rep", size: 24, style: "margin: -6px; margin-right: 0px; color: var(--ai);" %> Suggested memo rename: <strong><%= pairing.receipt.suggested_memo %></strong>
+                </div>
+              <% end %>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="lg-hide m2"></div>
+
+        <div class="flex flex-row justify-end xs-hide sm-hide" style="margin-top: 16px;">
+          <%= link_to ignore_suggested_pairing_path(pairing), data: { turbo_method: :post }, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
+            <%= inline_icon "view-close", size: 32 %>
+            <span>Ignore</span>
+          <% end %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post } do %>
+            <%= inline_icon "link", size: 32 %>
+            <span>Accept</span>
+          <% end %>
+          <% if pairing.receipt.suggested_memo %>
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post, turbo_frame: "_top" } do %>
+              <%= inline_icon "edit", size: 32 %>
+              <span>Accept with memo</span>
+            <% end %>
           <% end %>
         </div>
-        <button type="button" class="carousel__button carousel__button--right pop" aria-label="Next suggestion" hidden="<%= slide == last_slide %>" data-herb-increment="slide">
-          <%= inline_icon "view-back", size: 40 %>
-        </button>
-      </div>
+
+        <div class="flex flex-row justify-center md-hide lg-hide">
+          <%= link_to ignore_suggested_pairing_path(pairing, current_slide: i), class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion", data: { "turbo": "true", "turbo-method": "post" } do %>
+            <%= inline_icon "view-close", size: 32 %>
+            <span>Ignore</span>
+          <% end %>
+
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post, turbo_frame: "_top" } do %>
+            <%= inline_icon "link", size: 32 %>
+            <span>Accept</span>
+          <% end %>
+        </div>
+
+        <% if pairing.receipt.suggested_memo %>
+          <div class="flex flex-row justify-center md-hide lg-hide mt-2">
+            <%= link_to accept_suggested_pairing_path(pairing, current_slide: i, memo: true), class: "btn bg-success ml1 tooltipped tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post } do %>
+              <%= inline_icon "edit", size: 32 %>
+              <span>Accept with memo</span>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
     </div>
   <% end %>
 <% end %>
