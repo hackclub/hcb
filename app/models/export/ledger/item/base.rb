@@ -77,8 +77,14 @@ class Export
           PRELOADS_FOR.filter_map { |field, associations| associations if reads?(field) }
         end
 
+        # The query preloads what the ledger page reads (linked objects,
+        # ledgers, events); an export reads only what its format shows, so
+        # start from nothing and preload that.
         def items
-          @items ||= ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true).preload(*preloads)
+          @items ||= ::Ledger::Query.new(query)
+                                    .execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true)
+                                    .unscope(:preload)
+                                    .preload(*preloads)
         end
 
         def rows
