@@ -95,6 +95,32 @@ RSpec.describe ExportsController, type: :controller do
 
         expect(response).to have_http_status(:bad_request)
       end
+
+      # Signed-out readers can't use the filter menu, but they can search, and
+      # a search's results can still be too big to serve inline.
+      context "when the search's results are too big to serve inline" do
+        before do
+          event.update!(is_public: true)
+          stub_const("Export::Ledger::Item::Base::ASYNC_THRESHOLD", 0)
+        end
+
+        it "carries the search to the email form" do
+          get :ledger, params: { event: event.slug, q: "Coffee" }, format: :csv
+
+          expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "ledger", q: "Coffee"))
+        end
+
+        it "emails the search's results, not the whole ledger" do
+          expect do
+            get :ledger, params: { event: event.slug, q: "Coffee", email: "fiona@example.com" }, format: :csv
+          end.to have_enqueued_job(ExportJob)
+
+          export = Export.last
+          expect(export.query.to_s).to include("Coffee")
+          expect(export.filtered).to be(true)
+          expect(CSV.parse(export.content, headers: true).map { |row| row["memo"] }).to eq(["Coffee"])
+        end
+      end
     end
   end
 end

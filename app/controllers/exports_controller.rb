@@ -107,7 +107,7 @@ class ExportsController < ApplicationController
           filtered: ledger_filtered?
         )
 
-        deliver_export(@export, file_extension: as)
+        deliver_export(@export, file_extension: as, filters: ledger_filter_params)
       end
     end
   end
@@ -135,21 +135,28 @@ class ExportsController < ApplicationController
     end
     @event_slug = params[:event_slug]
     @file_extension = params[:file_extension]
-    # No filters travel through here: only signed-out readers ever land on this
-    # page (a signed-in user always has an address to mail the export to), and
-    # signed-out readers can't filter a ledger in the first place.
-    @export_path = if params[:source] == "ledger"
-                     ledger_exports_path(event: @event_slug, format: @file_extension)
-                   else
-                     transactions_exports_path(event: @event_slug, format: @file_extension)
-                   end
+    # Only signed-out readers land here (a signed-in user always has an address
+    # to mail the export to). They can't use the filter menu, but they can
+    # search, and the export they asked for is the search's results, so the
+    # search has to make the round trip. The form is a GET, which replaces the
+    # URL's query string with its own fields, so the filters ride as fields.
+    if params[:source] == "ledger"
+      @export_path = ledger_exports_path(event: @event_slug, format: @file_extension)
+      @filters = ledger_filter_params
+    else
+      @export_path = transactions_exports_path(event: @event_slug, format: @file_extension)
+      @filters = {}
+    end
   end
 
   private
 
   # Serves an export inline, or — when it's too big to generate in a request —
   # queues it up to be emailed, collecting an address first if we don't have one.
-  def deliver_export(export, file_extension:)
+  # `filters` are the params that narrowed the export; they travel with the
+  # request for an address so the export that's eventually emailed is the one
+  # that was asked for.
+  def deliver_export(export, file_extension:, filters: {})
     if export.async?
       # A signed-in user's export is always emailed to them. Only a
       # signed-out requester (which `authorize` in the caller limits to public
@@ -159,7 +166,7 @@ class ExportsController < ApplicationController
       export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
 
       if export.requested_by.nil?
-        redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event], source: action_name) and return
+        redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event], source: action_name, **filters) and return
       end
 
       export.save!

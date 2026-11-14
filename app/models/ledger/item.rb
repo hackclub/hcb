@@ -192,7 +192,7 @@ class Ledger
 
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
-    # refresh! should not update any non-caching columns
+    # refresh! should not update any non-caching columns.
     def refresh!
       # Recompute from the database, not from what this copy last loaded. One
       # map! refreshes several in-memory copies of the same item (the

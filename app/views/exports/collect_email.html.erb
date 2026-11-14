@@ -6,6 +6,9 @@
   </h3>
   <%= form_with(model: false, local: true, method: :get, url: @export_path) do |form| %>
     <%= form.text_field :event, style: "display: none", value: @event_slug %>
+    <% @filters.each do |name, value| %>
+      <%= form.hidden_field name, value: %>
+    <% end %>
     <%= form.text_field :email, class: "w-100 fit my2", placeholder: "fiona@hackclub.com", required: true, type: "email" %>
     <p>
       <%= form.submit "Submit" %>

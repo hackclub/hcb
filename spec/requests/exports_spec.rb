@@ -6,6 +6,24 @@ RSpec.describe "Transaction exports", type: :request do
   let(:event) { create(:event, is_public: true) }
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
+  describe "GET /exports/collect_email" do
+    it "sends the filters back with the address, as form fields" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "ledger", q: "Coffee" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("action=\"/exports/ledger/#{event.slug}.csv\"")
+      expect(response.body).to match(/<input [^>]*type="hidden"[^>]*name="q"[^>]*>/)
+      expect(response.body).to match(/<input [^>]*name="q"[^>]*value="Coffee"[^>]*>|<input [^>]*value="Coffee"[^>]*name="q"[^>]*>/)
+    end
+
+    it "sends nothing extra back for a legacy export" do
+      get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "transactions" }
+
+      expect(response.body).to include("action=\"/exports/#{event.slug}.csv\"")
+      expect(response.body).not_to include("name=\"q\"")
+    end
+  end
+
   describe "GET /exports/:event.pdf" do
     it "renders the statement for a valid month" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month }
