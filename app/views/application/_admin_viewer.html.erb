@@ -1,67 +1,70 @@
 <% admin_tool("mt1 p-3") do %>
-  <details>
-    <summary>
-      Inspect "<%= record.class.name.underscore %>" record
-    </summary>
+  <%# Fields the viewer's policy hides print as "Hidden" here instead of raising. %>
+  <% FieldGuard.redact do %>
+    <details>
+      <summary>
+        Inspect "<%= record.class.name.underscore %>" record
+      </summary>
 
-    <% unless record.nil? %>
+      <% unless record.nil? %>
 
-      <%== ap admin_inspectable_attributes(record) %>
+        <%== ap admin_inspectable_attributes(record) %>
 
-      <div class="border-left ml1">
+        <div class="border-left ml1">
 
-        <!-- JSON -->
-        <details class="ml2">
-          <summary>
-            View JSON
-          </summary>
-          <div class="overflow-x-auto">
-            <pre class="w-max">
-              <%= json admin_inspectable_attributes(record) %>
-            </pre>
-          </div>
-        </details>
+          <!-- JSON -->
+          <details class="ml2">
+            <summary>
+              View JSON
+            </summary>
+            <div class="overflow-x-auto">
+              <pre class="w-max">
+                <%= json admin_inspectable_attributes(record) %>
+              </pre>
+            </div>
+          </details>
 
-        <!-- TABLE -->
-        <details class="ml2 mt2">
-          <summary>
-            View Table
-          </summary>
+          <!-- TABLE -->
+          <details class="ml2 mt2">
+            <summary>
+              View Table
+            </summary>
 
-          <div class="overflow-x-auto">
-            <table>
-              <thead>
-                <tr>
-                  <% record.attributes.each do |attr| %>
-                    <th><%= attr[0] %></th>
-                  <% end %>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <% record.attributes.each do |attr| %>
-                    <td>
-                      <% unless attr[1].nil? %>
-                        <%= attr[1] %>
-                      <% else %>
-                        <em>nil</em>
-                      <% end %>
-                    </td>
-                  <% end %>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <div class="overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <% record.attributes.each do |attr| %>
+                      <th><%= attr[0] %></th>
+                    <% end %>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <% record.attributes.each do |attr| %>
+                      <td>
+                        <% unless attr[1].nil? %>
+                          <%= attr[1] %>
+                        <% else %>
+                          <em>nil</em>
+                        <% end %>
+                      </td>
+                    <% end %>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-        </details>
-      </div>
+          </details>
+        </div>
 
-    <% else %>
+      <% else %>
 
-      <p>
-        <code>nil</code> (does not exist)
-      </p>
+        <p>
+          <code>nil</code> (does not exist)
+        </p>
 
-    <% end %>
-  </details>
+      <% end %>
+    </details>
+  <% end %>
 <% end %>

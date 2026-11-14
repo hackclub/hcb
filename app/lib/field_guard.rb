@@ -18,7 +18,8 @@
 # Views never call policies. A template that only shows something when the
 # viewer can see it asks the record (`check_deposit.readable?(:front)`), and API
 # views wrap optional output in `FieldGuard.omit_hidden { ... }`, which leaves
-# those keys out when the block reads a hidden field.
+# those keys out when the block reads a hidden field. Views that print whole
+# records, like the admin record inspector, wrap that in `FieldGuard.redact`.
 #
 # Reading a hidden field anywhere else is a bug in the view. It raises
 # FieldGuard::Violation in development and test. In production it is reported
@@ -61,7 +62,7 @@ module FieldGuard
     # Turns field checks on for `viewer` while the block runs.
     def enforce(viewer)
       previous = state
-      self.state = { viewer:, results: {}.compare_by_identity, omitting: 0 }
+      self.state = { viewer:, results: {}.compare_by_identity, omitting: 0, redacting: 0 }
       yield
     ensure
       self.state = previous
@@ -91,9 +92,12 @@ module FieldGuard
 
     # Called by a guarded reader when the viewer can't read the field.
     def violation(record, field)
+      current = state
       error = Violation.new(record, field)
       error.set_backtrace(caller(1))
-      raise error if state[:omitting].positive? || raise_violations?
+      raise error if current[:omitting].positive?
+      return HIDDEN if current[:redacting].positive?
+      raise error if raise_violations?
 
       Rails.error.report(error, handled: true)
       HIDDEN
@@ -102,34 +106,26 @@ module FieldGuard
     # Returns the block's result, or nil if the block reads a field the viewer
     # can't see.
     def omit_hidden
-      current = state
-      return yield if current.nil?
-
-      current[:omitting] += 1
-      begin
+      within(:omitting) do
         yield
       rescue Violation
         nil
-      ensure
-        current[:omitting] -= 1
       end
     end
 
-    # Overrides each field's reader on `model` so it checks the viewer first.
+    # Fields the viewer can't see read as HIDDEN inside the block, without
+    # raising or reporting. For views that print whole records, like the admin
+    # record inspector.
+    def redact(&)
+      within(:redacting, &)
+    end
+
+    # Wraps each field's reader on `model` so it checks the viewer first.
     # Called by ApplicationPolicy.fields when a policy loads.
     def install(model, fields)
+      new_fields = fields - model.guarded_fields.to_a
       model.guarded_fields = (model.guarded_fields | fields).freeze
-      readers = readers_for(model)
-
-      fields.each do |field|
-        readers.define_method(field) do |*args, **kwargs, &block|
-          if FieldGuard.readable?(self, field)
-            super(*args, **kwargs, &block)
-          else
-            FieldGuard.violation(self, field)
-          end
-        end
-      end
+      new_fields.each { |field| guard_reader(model, field) }
     end
 
     private
@@ -151,11 +147,44 @@ module FieldGuard
       mode.nil? ? !Rails.env.production? : mode.to_sym == :raise
     end
 
-    def readers_for(model)
-      model.instance_variable_get(:@field_guard_readers) || begin
-        readers = Module.new
-        model.prepend(readers)
-        model.instance_variable_set(:@field_guard_readers, readers)
+    def within(counter)
+      current = state
+      return yield if current.nil?
+
+      current[counter] += 1
+      begin
+        yield
+      ensure
+        current[counter] -= 1
+      end
+    end
+
+    # The wrapper replaces the reader on the model itself rather than in a
+    # prepended module, because RSpec's `allow_any_instance_of` can't stub
+    # methods that live in a prepended module.
+    def guard_reader(model, field)
+      if model.method_defined?(field, false) || model.private_method_defined?(field, false)
+        # Defined on the model itself (a `def`, `delegate`, `alias`, memo_wise).
+        original = model.instance_method(field)
+        private_reader = model.private_method_defined?(field, false)
+        model.define_method(field) do |*args, **kwargs, &block|
+          if FieldGuard.readable?(self, field)
+            original.bind_call(self, *args, **kwargs, &block)
+          else
+            FieldGuard.violation(self, field)
+          end
+        end
+        model.send(:private, field) if private_reader
+      else
+        # Defined in a module Rails generates for attributes, associations and
+        # attachments, so the wrapper calls up to it.
+        model.define_method(field) do |*args, **kwargs, &block|
+          if FieldGuard.readable?(self, field)
+            super(*args, **kwargs, &block)
+          else
+            FieldGuard.violation(self, field)
+          end
+        end
       end
     end
 

@@ -20,6 +20,12 @@ RSpec.describe FieldGuard do
     expect(ach_transfer.readable?(:account_number)).to be(true)
   end
 
+  it "leaves guarded readers stubbable with allow_any_instance_of" do
+    allow_any_instance_of(AchTransfer).to receive(:account_number).and_return("stubbed")
+
+    expect(ach_transfer.account_number).to eq("stubbed")
+  end
+
   describe "while rendering" do
     it "returns the value to a viewer the policy allows" do
       described_class.enforce(manager) do
@@ -69,6 +75,16 @@ RSpec.describe FieldGuard do
       it "returns the block's value otherwise" do
         described_class.enforce(manager) do
           expect(described_class.omit_hidden { ach_transfer.account_number }).to eq("123456789")
+        end
+      end
+    end
+
+    describe ".redact" do
+      it "reads hidden fields as a placeholder, without raising or reporting" do
+        expect(Rails.error).not_to receive(:report)
+
+        described_class.enforce(member) do
+          expect(described_class.redact { ach_transfer.account_number }).to be(FieldGuard::HIDDEN)
         end
       end
     end
