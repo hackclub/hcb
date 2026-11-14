@@ -20,6 +20,7 @@
 #  form_type                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
+#  source                         :string           default("taxbandits"), not null
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
@@ -31,8 +32,9 @@
 #
 # Indexes
 #
-#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
-#  index_tax_forms_on_tin_hash         (tin_hash)
+#  index_tax_forms_on_legal_entity_id            (legal_entity_id)
+#  index_tax_forms_on_tin_hash                   (tin_hash)
+#  index_tax_forms_unique_live_tax1099_tin_hash  (tin_hash) UNIQUE WHERE (((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))
 #
 
 module Tax
@@ -50,8 +52,12 @@ module Tax
     belongs_to :legal_entity
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
-    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
     enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
+
+    # External service describes what service the form is currently linked to
+    # Source describes where the data initially came from
+    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
+    enum :source, { taxbandits: "taxbandits", tax1099: "tax1099", manual: "manual" }
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[

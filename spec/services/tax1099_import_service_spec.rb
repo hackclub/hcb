@@ -1,0 +1,379 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe Tax1099ImportService do
+  around do |example|
+    original = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    example.run
+  ensure
+    Rails.cache = original
+  end
+
+  let(:pdf_bytes) { "%PDF-1.4\nsigned W-9\n%%EOF" }
+
+  # A fresh handle each time: storing a PDF reads the IO to the end, so a
+  # memoized one would come back empty on a second import.
+  def pdf = StringIO.new(pdf_bytes)
+
+  let(:pdf_url_builder) { ->(token) { "https://hcb.test/taxbandits/w9_certificate.pdf?token=#{token}" } }
+
+  let(:person_data) do
+    {
+      first_name: "Ada", middle_name: "", last_name: "Lovelace", suffix: "",
+      tin: "123-45-6789", tin_type: "SSN", federal_tax_classification: "Individual",
+      address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482", completed_on: "2025-03-07",
+      email: "ada@example.com"
+    }
+  end
+
+  let(:business_data) do
+    person_data.merge(
+      first_name: "Analytical Engines LLC", last_name: "",
+      tin: "12-3456789", tin_type: "EIN", federal_tax_classification: "Partnership",
+      email: "ada@example.com"
+    )
+  end
+
+  def run(data: person_data, legal_entity: nil, new_legal_entity: false, file: :default)
+    file = pdf if file == :default
+    described_class.new(data:, pdf: file, legal_entity:, new_legal_entity:, pdf_url_builder:).run
+  end
+
+  before do
+    allow(TaxbanditsService).to receive(:create_from_data).and_return({ "SubmissionId" => "sub-1" })
+
+    # Fall back to the keyed dev HMAC so fingerprinting a TIN doesn't reach out
+    # to KMS in environments that have a real key configured.
+    allow(Tax::IdentificationNumber::Hasher).to receive(:kms_key_id).and_return(nil)
+  end
+
+  describe "a personal (SSN) row" do
+    it "creates a completed tax1099 W-9 on the payee's personal legal entity" do
+      result = run
+
+      expect(result.form).to have_attributes(
+        source: "tax1099", external_service: "taxbandits", external_id: "sub-1",
+        form_type: "W9", entity_type: "person", aasm_state: "completed"
+      )
+      expect(result.form.completed_at.to_date).to eq(Date.new(2025, 3, 7))
+      expect(result.form.legal_entity).to eq(User.find_by(email: "ada@example.com").personal_legal_entity)
+    end
+
+    it "stores the reviewed address on the form" do
+      expect(run.form).to have_attributes(
+        address_line1: "8 Fake St", address_city: "Shelburne",
+        address_state: "VT", address_postal_code: "05482", address_country: "US"
+      )
+    end
+  end
+
+  it "has already put the form on its legal entity by the time TaxBandits is contacted" do
+    legal_entity_at_submission = :not_called
+    allow(TaxbanditsService).to receive(:create_from_data) do |payload|
+      legal_entity_at_submission = Tax::Form.find_by_public_id(payload["PayeeRef"]).legal_entity
+      { "SubmissionId" => "sub-1" }
+    end
+
+    result = run
+
+    expect(legal_entity_at_submission).to eq(result.legal_entity)
+  end
+
+  describe "when the legal entity can't be created" do
+    before { allow(LegalEntity).to receive(:create!).and_raise(ActiveRecord::RecordInvalid) }
+
+    it "neither contacts TaxBandits nor leaves the staged PDF behind" do
+      allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+      expect { run(data: business_data) }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+      expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
+  describe "completed_at" do
+    it "is when the W-9 was completed in Tax1099, not when it was imported" do
+      travel_to Time.zone.local(2026, 11, 14, 12) do
+        expect(run.form.completed_at).to eq(Time.zone.local(2025, 3, 7))
+      end
+    end
+
+    it "lets a W-9 the payee completed since outrank the imported one" do
+      user = create(:user, email: "ada@example.com")
+      newer = create(:tax_form, :completed, legal_entity: user.personal_legal_entity, completed_at: 1.week.ago)
+
+      imported = run.form
+
+      expect(user.personal_legal_entity.reload.latest_completed_tax_form).to eq(newer)
+      expect(imported.completed_at).to be < newer.completed_at
+    end
+
+    it "outranks a W-9 the payee completed before it" do
+      user = create(:user, email: "ada@example.com")
+      create(:tax_form, :completed, legal_entity: user.personal_legal_entity, completed_at: Time.zone.local(2024, 1, 1))
+
+      imported = run.form
+
+      expect(user.personal_legal_entity.reload.latest_completed_tax_form).to eq(imported)
+    end
+  end
+
+  describe "the TaxBandits payload" do
+    it "hands over a one-time PdfUrl that serves the uploaded PDF" do
+      run
+
+      payload = nil
+      expect(TaxbanditsService).to have_received(:create_from_data) { |sent| payload = sent }
+
+      token = CGI.parse(URI.parse(payload["PdfUrl"]).query)["token"].first
+      expect(Tax::W9PdfStore.claim(token)).to eq(pdf_bytes.b)
+    end
+
+    it "sends the reviewed W-9 data under the form's public id" do
+      result = run
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including(
+          "FormType" => "W9",
+          "PayeeRef" => result.form.public_id,
+          "FormW9"   => hash_including(
+            "FirstNm" => "Ada", "LastNm" => "Lovelace", "Line1Nm" => "Ada Lovelace",
+            "TINType" => "SSN", "TIN" => "123-45-6789",
+            "FederalTaxClassification" => "Individual"
+          )
+        )
+      )
+    end
+
+    it "leaves no blank gaps in Line1Nm when the middle name and suffix are empty" do
+      run(data: person_data.merge(middle_name: "", suffix: ""))
+
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW9" => hash_including("Line1Nm" => "Ada Lovelace")))
+    end
+  end
+
+  describe "a business (EIN) row" do
+    it "creates a new legal entity named after the business when the payee has none" do
+      result = run(data: business_data)
+
+      expect(result.form.entity_type).to eq("business")
+      expect(result.legal_entity).to have_attributes(name: "Analytical Engines LLC", entity_type: "business")
+    end
+
+    it "files a corporation classification as a corporation" do
+      result = run(data: business_data.merge(federal_tax_classification: "S Corporation"))
+
+      expect(result.form.entity_type).to eq("corporation")
+    end
+
+    context "when the payee already has business legal entities" do
+      let(:user) { create(:user, email: "ada@example.com") }
+      let!(:existing) { create(:legal_entity, name: "Engines Co", entity_type: :business, users: [user]) }
+
+      it "refuses the row when no entity was chosen" do
+        expect { run(data: business_data) }
+          .to raise_error(described_class::ValidationError, /pick one/)
+      end
+
+      it "neither creates a form nor contacts TaxBandits when no entity was chosen" do
+        expect { run(data: business_data) rescue nil }.not_to change(Tax::Form, :count)
+        expect(TaxbanditsService).not_to have_received(:create_from_data)
+      end
+
+      it "uses the entity the admin chose" do
+        result = run(data: business_data, legal_entity: existing)
+
+        expect(result.form.legal_entity).to eq(existing)
+      end
+
+      it "creates a new entity when the admin chose to" do
+        result = run(data: business_data, new_legal_entity: true)
+
+        expect(result.legal_entity).not_to eq(existing)
+        expect(result.legal_entity).to have_attributes(name: "Analytical Engines LLC", entity_type: "business")
+        expect(result.form.legal_entity).to eq(result.legal_entity)
+      end
+
+      it "refuses an entity belonging to somebody else" do
+        stranger = create(:legal_entity, entity_type: :business, users: [create(:user)])
+
+        expect { run(data: business_data, legal_entity: stranger) }
+          .to raise_error(described_class::ValidationError, /not one of/)
+      end
+
+      it "refuses the payee's personal entity for a business form" do
+        expect { run(data: business_data, legal_entity: user.personal_legal_entity) }
+          .to raise_error(described_class::ValidationError, /not one of/)
+      end
+    end
+  end
+
+  describe "duplicate detection" do
+    it "refuses a second tax1099 form for the same TIN" do
+      first = run.form
+
+      expect { run }.to raise_error(described_class::DuplicateError) { |error|
+        expect(error.existing_form).to eq(first)
+      }
+    end
+
+    it "does not create a form or contact TaxBandits for the duplicate" do
+      run
+      expect { run rescue nil }.not_to change(Tax::Form, :count)
+      expect(TaxbanditsService).to have_received(:create_from_data).once
+    end
+
+    context "when a concurrent import of the same TIN wins the race" do
+      # Simulates the losing side: the up-front check ran before the winner
+      # committed, so it saw nothing, but by the time this import writes the TIN
+      # the winner's form is there.
+      let!(:winner) { run.form }
+
+      before do
+        calls = 0
+        allow_any_instance_of(described_class).to receive(:duplicate_tax1099_form).and_wrap_original do |original|
+          (calls += 1) == 1 ? nil : original.call
+        end
+      end
+
+      it "reports the winner as a duplicate" do
+        expect { run }.to raise_error(described_class::DuplicateError) { |error|
+          expect(error.existing_form).to eq(winner)
+        }
+      end
+
+      it "fails before anything is sent to TaxBandits" do
+        run rescue nil
+
+        expect(TaxbanditsService).to have_received(:create_from_data).once # the winner's
+      end
+
+      it "leaves no second form behind and discards its staged PDF" do
+        allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+        expect { run rescue nil }.not_to change(Tax::Form.with_deleted, :count)
+        expect(Tax::W9PdfStore).to have_received(:discard)
+      end
+    end
+
+    describe "the unique index" do
+      let(:tin_hash) { run.form.tin_hash }
+
+      it "refuses a second live tax1099 form for the same TIN" do
+        expect { create(:tax_form, :completed, source: :tax1099, tin_hash:) }
+          .to raise_error(ActiveRecord::RecordNotUnique, /#{described_class::UNIQUE_TIN_INDEX}/o)
+      end
+
+      it "ignores forms from other sources" do
+        expect { create(:tax_form, :completed, source: :taxbandits, tin_hash:) }.not_to raise_error
+      end
+
+      it "ignores discarded and deleted tax1099 forms" do
+        Tax::Form.tax1099.find_by(tin_hash:).update!(aasm_state: "discarded")
+        create(:tax_form, :completed, source: :tax1099, tin_hash:).destroy!
+
+        expect { create(:tax_form, :completed, source: :tax1099, tin_hash:) }.not_to raise_error
+      end
+    end
+
+    it "allows a re-import once the original has been discarded" do
+      run.form.update!(aasm_state: "discarded")
+
+      expect { run }.not_to raise_error
+    end
+  end
+
+  describe "validation" do
+    it "rejects a row missing a required field" do
+      expect { run(data: person_data.merge(city: "")) }
+        .to raise_error(described_class::ValidationError, /City/)
+    end
+
+    it "rejects a federal tax classification TaxBandits wouldn't accept" do
+      expect { run(data: person_data.merge(federal_tax_classification: "Sole Trader")) }
+        .to raise_error(described_class::ValidationError, /classification/)
+    end
+
+    it "rejects a completed date that isn't a date" do
+      expect { run(data: person_data.merge(completed_on: "03/07/2025")) }
+        .to raise_error(described_class::ValidationError, /YYYY-MM-DD/)
+    end
+
+    it "rejects a completed date in the future" do
+      expect { run(data: person_data.merge(completed_on: 1.day.from_now.to_date.iso8601)) }
+        .to raise_error(described_class::ValidationError, /future/)
+    end
+
+    it "rejects a row with no PDF" do
+      expect { run(file: nil) }.to raise_error(described_class::ValidationError, /PDF/)
+    end
+
+    it "does not create a form when the row is invalid" do
+      expect { run(data: person_data.merge(city: "")) rescue nil }.not_to change(Tax::Form, :count)
+    end
+  end
+
+  describe "when TaxBandits rejects the submission" do
+    before do
+      allow(TaxbanditsService).to receive(:create_from_data)
+        .and_raise("422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
+    end
+
+    it "keeps the payee's TIN out of the error it raises" do
+      expect { run }.to raise_error(described_class::SubmissionError) { |error|
+        expect(error.message).not_to include("123-45-6789")
+        expect(error.message).not_to include("123456789")
+        expect(error.message).to include("[FILTERED]")
+        # The original exception's unscrubbed message must not ride along.
+        expect(error.cause).to be_nil
+      }
+    end
+
+    it "leaves no form behind" do
+      expect { run rescue nil }.not_to change(Tax::Form.with_deleted, :count)
+    end
+
+    it "leaves no user or legal entity behind" do
+      users = User.count
+      legal_entities = LegalEntity.count
+
+      run(data: business_data) rescue nil
+
+      expect(User.count).to eq(users)
+      expect(LegalEntity.count).to eq(legal_entities)
+    end
+
+    it "discards the staged PDF instead of leaving it to sit out its TTL" do
+      allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+      run rescue nil
+
+      expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
+  describe ".legal_entity_candidates" do
+    let(:user) { create(:user, email: "ada@example.com") }
+
+    it "is empty for a personal form, which always goes on the personal entity" do
+      create(:legal_entity, entity_type: :business, users: [user])
+
+      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :person)).to be_empty
+    end
+
+    it "is empty for an unknown email" do
+      expect(described_class.legal_entity_candidates(email: "nobody@example.com", entity_type: :business)).to be_empty
+    end
+
+    it "lists the payee's business entities, never their personal one" do
+      business = create(:legal_entity, entity_type: :business, users: [user])
+
+      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :business))
+        .to contain_exactly(business)
+    end
+  end
+end
