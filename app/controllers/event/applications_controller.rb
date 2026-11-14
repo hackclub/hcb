@@ -106,10 +106,11 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
+        return_to = start_applications_path(teen_led: params[:teen_led].presence, referral_code:)
+        redirect_to auth_users_path(return_to:, require_reload: true, purpose: "application") and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code:))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -241,6 +242,14 @@ class Event
     end
 
     private
+
+    # The `ref` from the landing page link. Only a plain string is accepted (a
+    # nested param would raise when built into a URL), capped so it can't bloat
+    # the login's return_to, and blank becomes nil.
+    def referral_code
+      code = params[:referral_code]
+      code.strip.first(100).presence if code.is_a?(String)
+    end
 
     def set_application
       @application = Application.find(params[:id])
