@@ -114,7 +114,13 @@
   <% end %>
 
   <div class="mt-4 mb-2 flex items-center justify-between gap-2">
-    <h3 class="my-0">Invoices</h3>
+    <h3 class="my-0 flex items-center gap-2">
+      Invoices
+      <% pending = @can_review ? @invoices.count(&:submitted?) : 0 %>
+      <% if pending.positive? %>
+        <span class="contractor-review-badge tooltipped tooltipped--e" aria-label="<%= pluralize(pending, "invoice") %> pending review"><%= pending %></span>
+      <% end %>
+    </h3>
     <% if @can_upload_invoice %>
       <%= link_to "#", class: "btn btn-small bg-success", data: { behavior: "modal_trigger", modal: dom_id(@position, :upload_invoice) } do %>
         <%= inline_icon "cloud-upload", size: 20 %>
@@ -142,12 +148,19 @@
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
-            <% if @can_review %><th></th><% end %>
           </tr>
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <tr>
+            <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
+            <% preview_receipt = receipts.find(&:preview) %>
+            <% review_actions = capture do %>
+              <div class="flex gap-2">
+                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
+                <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+              </div>
+            <% end if @can_review && invoice.submitted? %>
+            <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
               </td>
@@ -162,25 +175,27 @@
                 <%= invoice.name %>
               </td>
               <td>
-                <% if invoice.receipts.any? %>
-                  <div class="receipts_list flex gap-2">
-                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                <% if preview_receipt %>
+                  <div class="receipts_list flex gap-2 pointer-events-auto">
+                    <% receipts.each do |receipt| %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
+                    <% end %>
                   </div>
                 <% else %>
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-right"><%= render_money invoice.amount_cents %></td>
-              <% if @can_review %>
-                <td class="text-right">
-                  <% if invoice.submitted? %>
-                    <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-                    </div>
-                  <% end %>
-                </td>
-              <% end %>
+              <td class="text-right">
+                <%= render_money invoice.amount_cents %>
+                <%= link_to "", "#", class: "stretched-link", aria: { label: "View invoice" }, data: { behavior: "modal_trigger", modal: dom_id(preview_receipt || invoice, :preview) } %>
+                <% unless preview_receipt %>
+                  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">
+                    <%= modal_header invoice.name %>
+                    <p class="muted mt0">This <%= render_money invoice.amount_cents %> invoice has no attachment to preview.</p>
+                    <%= review_actions %>
+                  </section>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>
