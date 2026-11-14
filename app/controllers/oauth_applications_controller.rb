@@ -9,7 +9,7 @@ class OauthApplicationsController < Doorkeeper::ApplicationsController
     owner_email = params.dig(:doorkeeper_application, :owner_email)
     return super if owner_email.nil?
 
-    @owner ||= User.find_by(email: owner_email)
+    @owner ||= User.find_or_create_by!(email: owner_email)
     super.merge(owner: @owner)
   end
 
