@@ -40,6 +40,31 @@ RSpec.describe "Discord Webhook", type: :request do
 
         expect(response).to have_http_status(:no_content)
       end
+
+      it "sends a welcome DM with a signed link when the bot is added to a server" do
+        bot = instance_double(Discordrb::Bot, pm_channel: "channel")
+        allow(Discord::Bot).to receive(:bot).and_return(bot)
+        sent_message = nil
+        allow(bot).to receive(:send_message) { |_channel, message| sent_message = message }
+
+        body = { type: 1, event: { type: "APPLICATION_AUTHORIZED", data: { integration_type: 0, user: { id: "123456789" } } } }.to_json
+        timestamp, signature = discord_signature(body)
+
+        post "/discord/event_webhook",
+             params: body,
+             headers: {
+               "X-Signature-Timestamp" => timestamp,
+               "X-Signature-Ed25519"   => signature,
+               "Content-Type"          => "application/json"
+             }
+
+        expect(response).to have_http_status(:no_content)
+        query = Rack::Utils.parse_query(URI.parse(sent_message[/https?:\/\/\S+/]).query)
+        expect(query).not_to have_key("discord_id")
+        travel 23.hours do
+          expect(Discord.verify_signed(query["signed_discord_id"], purpose: :link_user)).to eq("123456789")
+        end
+      end
     end
 
     context "with an invalid Discord signature" do

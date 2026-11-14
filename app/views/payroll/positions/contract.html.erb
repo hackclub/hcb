@@ -19,7 +19,7 @@
         Once HCB signs, we'll invite <%= @position.payee_display_name %> to sign and complete onboarding.
       </p>
 
-      <%= form_with url: event_payroll_position_path(event_id: @event.slug, id: @position.id), method: :get do |form| %>
+      <%= form_with url: payroll_position_path(@position), method: :get do |form| %>
         <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
       <% end %>
     </div>
@@ -29,7 +29,7 @@
     <% end %>
   <% end %>
 
-  <%= link_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id),
+  <%= link_to edit_payroll_position_path(@position),
         class: "btn btn--ghost w-full mt-2",
         data: { "turbo-confirm": "Changing the details will void this contract and generate a new one to sign. Continue?" } do %>
     <%= inline_icon "edit" %>
