@@ -74,16 +74,9 @@ class Donation
     end
 
     def update
-      tiers = []
-      params[:tiers]&.each_key do |id|
-        tier = @event.donation_tiers.find_by(id: id)
-        next unless tier
-
+      @event.donation_tiers.where(id: params[:tiers]&.keys).each do |tier|
         authorize tier, :update?
-        tiers << tier
-      end
 
-      tiers.each do |tier|
         data = tier_params(tier.id)
 
         tier.update!(
