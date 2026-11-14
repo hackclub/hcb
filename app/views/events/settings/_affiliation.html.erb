@@ -18,6 +18,19 @@
         <p class="font-bold mt0 mb0">Size:&nbsp;</p>
         <%= affiliation.size %>
       </span>
+    <% elsif affiliation.is_destination_imagination? %>
+      <span class="mt1 flex flex-row items-center">
+        <p class="font-bold mt0 mb0">Level:&nbsp;</p>
+        <%= affiliation.level_name %>
+      </span>
+      <span class="flex flex-row items-center">
+        <p class="font-bold mt0 mb0">Team Number:&nbsp;</p>
+        <%= affiliation.team_number %>
+      </span>
+      <span class="flex flex-row items-center">
+        <p class="font-bold mt0 mb0">Size:&nbsp;</p>
+        <%= affiliation.size %>
+      </span>
     <% elsif affiliation.is_hack_club? %>
       <span class="mt1 flex flex-row items-center">
         <p class="font-bold mt0 mb0">Venue name:&nbsp;</p>

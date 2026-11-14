@@ -25,12 +25,21 @@ class Event
 
     belongs_to :affiliable, polymorphic: true
 
-    store_accessor :metadata, :league, :team_number, :size, :venue_name, :team_name, :role
+    store_accessor :metadata, :league, :level, :team_number, :size, :venue_name, :team_name, :role
+
+    DESTINATION_IMAGINATION_LEVELS = {
+      "early_learning" => "Early Learning",
+      "elementary"     => "Elementary",
+      "middle"         => "Middle",
+      "secondary"      => "Secondary",
+      "university"     => "University",
+    }.freeze
 
     scope :robotics, -> { where(name: %w[first vex]) }
     scope :nonempty, -> { where.not(metadata: {}) }
 
     validate :metadata_contains_required_fields
+    validates :level, inclusion: { in: DESTINATION_IMAGINATION_LEVELS.keys }, allow_nil: true, if: :is_destination_imagination?
 
     def display_name
       case name
@@ -40,6 +49,8 @@ class Event
         "VEX"
       when "hack_club"
         "Hack Club"
+      when "destination_imagination"
+        "Destination Imagination"
       end
     end
 
@@ -55,12 +66,20 @@ class Event
       name == "hack_club"
     end
 
+    def is_destination_imagination?
+      name == "destination_imagination"
+    end
+
+    def level_name
+      DESTINATION_IMAGINATION_LEVELS[level]
+    end
+
     def size
       super&.to_i
     end
 
     def to_s
-      [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
+      [display_name, league&.upcase, level_name, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
     end
 
     # Returns the Event whose FIRST affiliation matches the user's FIRST
@@ -153,6 +172,8 @@ class Event
                           ["league", "team_number", "size"]
                         when "hack_club"
                           ["venue_name", "size"]
+                        when "destination_imagination"
+                          ["level", "team_number", "size"]
                         else
                           return errors.add(:name, "is not a valid affiliation")
                         end
