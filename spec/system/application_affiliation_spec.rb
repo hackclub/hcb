@@ -82,6 +82,18 @@ RSpec.describe "Application affiliation form", type: :system do
     expect(continue_button["data-turbo-confirm"]).to eq(unsaved_warning)
   end
 
+  it "saves a Destination Imagination affiliation" do
+    pick "Destination Imagination"
+    select "Early Learning", from: "Level"
+    fill_in "Team Number", with: "125-12345"
+    fill_in "Size", with: "5"
+    click_button "Save affiliation"
+
+    expect(page).to have_text("Early Learning")
+    affiliation = application.affiliations.reload.sole
+    expect(affiliation.to_s).to eq("Destination Imagination – Early Learning – 125-12345 – 5 people")
+  end
+
   # The edit modal's fields share their names and labels with the new
   # affiliation form on the same page.
   it "changes a saved affiliation's type from its own edit modal" do
