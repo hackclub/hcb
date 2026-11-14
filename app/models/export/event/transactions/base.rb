@@ -68,7 +68,10 @@ class Export
         end
 
         def transactions
-          tx = event.canonical_transactions.includes(*preloads)
+          # preload, not includes: transaction_source is polymorphic, so it can
+          # never be joined, and includes would try to the moment a condition
+          # referenced another table.
+          tx = event.canonical_transactions.preload(*preloads)
           tx = tx.where("date >= ?", start_date) if start_date
           tx = tx.where("date <= ?", end_date) if end_date
           tx.order("date desc")
