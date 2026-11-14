@@ -188,6 +188,11 @@ class Ledger
     # Among several of a kind (a charge and its partial refund, say) the
     # earliest wins, so the answer doesn't depend on the order the database
     # happens to return rows in.
+    #
+    # This is one category for an item that may carry several, so it can
+    # differ from the one a category filter matched the item on: the filter
+    # (Ledger::Query's `category` field) matches an item if any of its
+    # transactions carries the category.
     def category
       oldest_first(canonical_transactions).filter_map(&:category).first ||
         oldest_first(canonical_pending_transactions).filter_map(&:category).first
