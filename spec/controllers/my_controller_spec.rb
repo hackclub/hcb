@@ -318,6 +318,31 @@ RSpec.describe MyController do
     end
   end
 
+  describe "GET #feed" do
+    def create_announcement(event:, title:, aasm_state: :published)
+      Announcement.create!(event:, title:, aasm_state:, author: create(:user), content: {}, published_at: (Time.current if aasm_state == :published))
+    end
+
+    it "only shows published announcements from organizations the user follows" do
+      user = sign_in_verified
+      followed_event = create(:event, name: "Followed Organization")
+      Event::Follow.create!(user:, event: followed_event)
+      other_users_event = create(:event)
+      Event::Follow.create!(user: create(:user), event: other_users_event)
+
+      create_announcement(event: followed_event, title: "Followed Published")
+      create_announcement(event: followed_event, title: "Followed Draft", aasm_state: :draft)
+      create_announcement(event: create(:event), title: "Unfollowed Published")
+      create_announcement(event: other_users_event, title: "Other User Follow")
+
+      get :feed
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Followed Organization", "Followed Published")
+      expect(response.body).not_to include("Followed Draft", "Unfollowed Published", "Other User Follow")
+    end
+  end
+
   describe "GET #pay" do
     it "renders even when the user has not received any payments" do
       sign_in_verified
