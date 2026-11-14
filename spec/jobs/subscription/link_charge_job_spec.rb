@@ -14,6 +14,6 @@ RSpec.describe Subscription::LinkChargeJob do
       create_settled_card_charge(user:, stripe_card:, settled_at: 1.day.ago, amount_cents: -11_99, merchant_network_id: "spotify-1", merchant_name: "SPOTIFY")
     end
 
-    expect(hcb_code.reload.subscription).to eq(subscription)
+    expect(hcb_code.ledger_item.reload.subscription).to eq(subscription)
   end
 end

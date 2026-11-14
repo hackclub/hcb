@@ -30,7 +30,7 @@
 #
 # A recurring card charge (e.g. Spotify, Vercel, a domain renewal) found by
 # Subscription::Detect: one merchant charging a card the same amount on a
-# cadence. Charges are linked through `hcb_codes.subscription_id`.
+# cadence. Charges are linked through `ledger_items.subscription_id`.
 #
 # For now this only records what detection finds, so we can see how well it
 # works. Nothing (receipts, card locking) behaves differently for a linked
@@ -61,7 +61,7 @@ class Subscription < ApplicationRecord
 
   belongs_to :event
   belongs_to :stripe_card
-  has_many :hcb_codes, dependent: :nullify, inverse_of: :subscription
+  has_many :ledger_items, class_name: "Ledger::Item", dependent: :nullify, inverse_of: :subscription
 
   monetize :amount_cents
 
@@ -127,16 +127,14 @@ class Subscription < ApplicationRecord
 
   # Recomputes the last and next expected charge times from the linked charges.
   def sync_charges!
-    last_charged_at = hcb_codes.reload.map { |hcb_code| hcb_code.datetime || hcb_code.created_at }.max
+    last_charged_at = ledger_items.maximum(:datetime)
 
     update!(last_charged_at:, next_expected_at: last_charged_at && (last_charged_at + cadence_days.days))
   end
 
   # Linking only stamps a foreign key nothing else reacts to, so it skips the
-  # HcbCode callbacks: saving an HcbCode touches its ledger item, which re-runs
-  # the ledger mapper and enqueues card-locking jobs.
-  def link!(hcb_code)
-    hcb_code.update_column(:subscription_id, id)
+  def link!(ledger_item)
+    ledger_item.update_column(:subscription_id, id)
     sync_charges!
   end
 

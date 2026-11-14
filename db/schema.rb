@@ -1440,7 +1440,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
     t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
-    t.bigint "subscription_id"
     t.datetime "updated_at", null: false
     t.index ["card_charge_settled_at"], name: "index_hcb_codes_on_card_charge_settled_at"
     t.index ["event_id"], name: "index_hcb_codes_on_event_id"
@@ -1448,7 +1447,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
     t.index ["ledger_item_id"], name: "index_hcb_codes_on_ledger_item_id"
     t.index ["receipt_due_at"], name: "index_hcb_codes_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))"
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
-    t.index ["subscription_id"], name: "index_hcb_codes_on_subscription_id"
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -1630,6 +1628,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
     t.text "short_code"
     t.string "special_appearance"
     t.string "status", default: "pending", null: false
+    t.bigint "subscription_id"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -1639,6 +1638,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
+    t.index ["subscription_id"], name: "index_ledger_items_on_subscription_id"
   end
 
   create_table "ledger_mappings", force: :cascade do |t|
@@ -3194,7 +3194,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
-  add_foreign_key "hcb_codes", "subscriptions", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
@@ -3206,6 +3205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "ledger_items", "users", column: "author_id"
+  add_foreign_key "ledger_items", "subscriptions", on_delete: :nullify
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"

@@ -68,6 +68,14 @@ class CardCharge < ApplicationRecord
     end
   end
 
+  def subscription_merchant
+    network_id = merchant_network_id.presence
+    name = merchant_data&.dig("name").presence
+    return if network_id.nil? && name.nil?
+
+    { network_id:, name: }
+  end
+
   def stripe_merchant_data
     raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transactions.first&.stripe_transaction&.[]("merchant_data")
   end

@@ -28,6 +28,7 @@
 #  author_id                    :bigint
 #  linked_object_id             :bigint
 #  linked_object_type           :string
+#  subscription_id              :bigint
 #
 # Indexes
 #
@@ -38,10 +39,12 @@
 #  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
 #  index_ledger_items_on_short_code       (short_code) UNIQUE
 #  index_ledger_items_on_status           (status)
+#  index_ledger_items_on_subscription_id  (subscription_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (author_id => users.id)
+#  fk_rails_...  (subscription_id => subscriptions.id) ON DELETE => nullify
 #
 class Ledger
   class Item < ApplicationRecord
@@ -64,6 +67,7 @@ class Ledger
     has_many :admin_ledger_audit_tasks, class_name: "Admin::LedgerAudit::Task", foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
+    belongs_to :subscription, optional: true, inverse_of: :ledger_items
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
