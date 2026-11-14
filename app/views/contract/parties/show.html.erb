@@ -17,7 +17,7 @@
             <% if @contract.contractable.is_a?(Event::Application) %>
               <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn w-full" %>
             <% elsif @contract.contractable.is_a?(Payroll::Position) %>
-              <%= link_to "Go to associated contractor position (#{@contract.contractable.id})", event_payroll_position_path(@contract.contractable.event, @contract.contractable), class: "btn w-full" %>
+              <%= link_to "Go to associated contractor position (#{@contract.contractable.id})", payroll_position_path(@contract.contractable), class: "btn w-full" %>
             <% elsif @contract.contractable.is_a?(OrganizerPositionInvite) %>
               <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
             <% end %>

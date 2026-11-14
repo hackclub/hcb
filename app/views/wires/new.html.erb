@@ -144,7 +144,7 @@
 
     <%= render "transfers/domestic_wire_warning", event: @event %>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="<%= disabled %> || country === 'US'">
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %> :disabled="<%= disabled %> || country === 'US'">
       Send wire
       <%= inline_icon "send" %>
     </button>

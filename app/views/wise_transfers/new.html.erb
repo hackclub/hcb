@@ -79,7 +79,7 @@
           <div class="primary"><%= message %></div>
         <% end %>
         <% if @event.balance <= 0 %>
-          <span class="error">There are no funds to transfer.<br>
+          <span class="error">There are no funds to transfer.<br></span>
         <% end %>
 
         <p data-wise-quote-target="quote" class="muted mt-0">Enter an amount &amp; currency to get an estimate in USD</p>
@@ -96,7 +96,7 @@
     </div>
   </div>
 
-  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
+  <button type="submit" <% if disabled %> disabled<% end %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
   </button>
 <% end %>

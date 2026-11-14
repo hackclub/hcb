@@ -17,7 +17,7 @@
 
   <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= link_to @params.merge(format: :csv) do %>
-      <button class="btn" type="button" <%= "disabled" if @count.zero? %>>Export <%= pluralize @count, "record" %></button>
+      <button class="btn" type="button" <% if @count.zero? %> disabled<% end %>>Export <%= pluralize @count, "record" %></button>
     <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>

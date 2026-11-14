@@ -168,7 +168,7 @@
     </div>
   <% end %>
 
-  <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+  <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
     Send transfer
     <%= inline_icon "send" %>
   </button>

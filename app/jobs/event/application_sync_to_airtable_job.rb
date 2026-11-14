@@ -45,7 +45,7 @@ class Event
       airrecord["Team Size"] = @application.team_size
       airrecord["Planning Duration"] = @application.planning_duration
       airrecord["Currently fiscally sponsored?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
-      airrecord["Previously applied?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
+      airrecord["Previously applied?"] = @application.previously_applied? ? "Yes" : "No"
       airrecord["Committed Amount"] = @application.committed_amount.to_f if @application.committed_amount.present?
       airrecord["Annual Budget"] = @application.annual_budget.to_f if @application.annual_budget.present?
       airrecord["Funding Source"] = @application.funding_source
@@ -62,6 +62,8 @@ class Event
         airrecord["Org Type"] = "Robotics"
       elsif @application.affiliations.any?(&:is_hack_club?)
         airrecord["Org Type"] = "Hack Club"
+      elsif @application.affiliations.any?(&:is_destination_imagination?)
+        airrecord["Org Type"] = "Destination Imagination"
       end
 
       if @application.event.present?

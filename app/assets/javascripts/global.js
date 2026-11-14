@@ -1,5 +1,13 @@
 /* eslint-disable no-undef */
 
+// jquery-ujs re-checks required fields before it submits, but its selector
+// (`:not([disabled])`) only looks at the field's own attribute. A field inside a
+// disabled <fieldset> (how our herb views switch between groups of fields) is
+// neither submitted nor validated by the browser, so ujs would block the submit
+// over a blank one. `:disabled` also matches fields disabled by their fieldset.
+$.rails.requiredInputSelector =
+  'input[name][required]:not(:disabled), textarea[name][required]:not(:disabled)'
+
 // BK is our global namespace for utilities
 const BK = {
   blocked: false,
