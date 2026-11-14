@@ -11,8 +11,6 @@ class ExportsController < ApplicationController
   def transactions
     authorize @event, :show?
 
-    should_queue = @event.canonical_transactions.size > 300
-
     respond_to do |format|
       format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
