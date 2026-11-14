@@ -1,0 +1,14 @@
+<%# locals: (yes:, no:) %>
+<%# herb:slots client %>
+<%# herb:state (selected_step: "home") %>
+
+<div class="flex gap-2">
+  <button type="button" class="btn shadow-none" data-herb-set="selected_step=<%= yes %>">
+    Yes
+    <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
+  </button>
+  <button type="button" class="btn shadow-none" data-herb-set="selected_step=<%= no %>">
+    No
+    <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
+  </button>
+</div>

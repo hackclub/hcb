@@ -1,33 +1,30 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?", required: false, initial_wire_country: (payout_method.recipient_country.to_s if payout_method.is_a?(LegalEntity::PayoutMethod::Wire)).to_s, initial_wise_currency: payout_method.try(:currency).to_s, initial_wise_account_type: payout_method.try(:account_type).to_s) %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?", required: false, initial_wire_country: (payout_method.recipient_country.to_s if payout_method.is_a?(LegalEntity::PayoutMethod::Wire)).to_s, initial_wise_currency: payout_method.try(:currency).to_s, initial_wise_account_type: payout_method.try(:account_type).to_s, initial_type: payout_method ? payout_method.class.name : "") %>
 <%# herb:slots client %>
-<%# herb:state (selected_recipient_country: initial_wire_country, selected_currency: initial_wise_currency, selected_account_type: initial_wise_account_type) %>
-<% selected_type = payout_method&.class&.name %>
+<%# herb:state (selected_payout_method_type: initial_type, selected_recipient_country: initial_wire_country, selected_currency: initial_wise_currency, selected_account_type: initial_wise_account_type) %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
 <% unless editing %>
   <fieldset>
     <legend class="heading h3 pb2 bold"><%= title %></legend>
     <div class="field field--options mb-4" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name, required: %>
+      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: initial_type == LegalEntity::PayoutMethod::AchTransfer.name, required:, state: { selected_payout_method_type: selected_payout_method_type } %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name, required: %>
+      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: initial_type == LegalEntity::PayoutMethod::Check.name, required:, state: { selected_payout_method_type: selected_payout_method_type } %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name, required: %>
+      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: initial_type == LegalEntity::PayoutMethod::WiseTransfer.name, required:, state: { selected_payout_method_type: selected_payout_method_type } %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name, required: do %>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-      <% end %>
+      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: initial_type == LegalEntity::PayoutMethod::Wire.name, required:, badge: "$500 minimum", state: { selected_payout_method_type: selected_payout_method_type } %>
     </div>
   </fieldset>
 <% end %>
 
-<div class="field <%= "hidden" unless editing || selected_type.present? %>" data-behavior="payout_method_name_input">
+<div class="field" hidden="<%= selected_payout_method_type.blank? %>">
   <%= form.label :payout_method_name, "Nickname (optional)" %>
   <%= form.text_field :payout_method_name, value: editing&.name, placeholder: "e.g. My Chase Bank Account", maxlength: 100 %>
   <span class="muted">Give this method a name to tell it apart from your others.</span>
 </div>
 
-<section data-behavior="check_payout_method_inputs" data-payout-method-type="<%= LegalEntity::PayoutMethod::Check.name %>" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
+<fieldset class="contents" hidden="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::Check" %>" disabled="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::Check" %>">
   <%= form.fields_for :payout_method_check, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
     <p class="muted mt-2 mb-5">
       Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
@@ -71,9 +68,9 @@
       </div>
     <% end %>
   <% end %>
-</section>
+</fieldset>
 
-<section data-behavior="wire_payout_method_inputs" data-payout-method-type="<%= LegalEntity::PayoutMethod::Wire.name %>" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Wire) %>">
+<fieldset class="contents" hidden="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::Wire" %>" disabled="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::Wire" %>">
   <%= form.fields_for :payout_method_wire, detail_for.call(LegalEntity::PayoutMethod::Wire) do |form| %>
     <p class="muted mt-2 mb-5">
       International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
@@ -99,9 +96,9 @@
       </div>
     <% end %>
   <% end %>
-</section>
+</fieldset>
 
-<section data-behavior="wise_transfer_payout_method_inputs" data-payout-method-type="<%= LegalEntity::PayoutMethod::WiseTransfer.name %>" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>">
+<fieldset class="contents" hidden="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::WiseTransfer" %>" disabled="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::WiseTransfer" %>">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
     <p class="muted mt-2 mb-5">
       We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
@@ -126,17 +123,17 @@
       </div>
     <% end %>
   <% end %>
-</section>
+</fieldset>
 
 <% ach = pm_is.call(LegalEntity::PayoutMethod::AchTransfer) ? payout_method : nil %>
 <% ach_errored = ach&.invalid? || false %>
 <% mask = ->(value) { value = value.to_s; "•" * [value.length - 4, 0].max + value[[-4, -value.length].max..] } %>
 <% routing_display = ach_errored ? ach.routing_number : mask.call(ach&.routing_number) %>
 <% account_display = ach_errored ? ach.account_number : mask.call(ach&.account_number) %>
-<section
-  data-behavior="ach_transfer_payout_method_inputs"
-  data-payout-method-type="<%= LegalEntity::PayoutMethod::AchTransfer.name %>"
-  class="<%= "hidden" unless ach %>"
+<fieldset
+  class="contents"
+  hidden="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::AchTransfer" %>"
+  disabled="<%= selected_payout_method_type != "LegalEntity::PayoutMethod::AchTransfer" %>"
   data-controller="payout-ach-fields"
   data-payout-ach-fields-routing-number-value="<%= ach_errored ? "" : routing_display %>"
   data-payout-ach-fields-account-number-value="<%= ach_errored ? "" : account_display %>"
@@ -182,4 +179,4 @@
       </div>
     <% end %>
   <% end %>
-</section>
+</fieldset>

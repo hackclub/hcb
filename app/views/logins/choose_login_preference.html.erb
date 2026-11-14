@@ -1,3 +1,5 @@
+<%# herb:slots client %>
+<%# herb:state (selected_login_preference: "") %>
 <% title "Choose login method" %>
 <% content_for(:page_class) %>
 
@@ -13,7 +15,7 @@
   <%= render "logins/badge", user: @login.user %>
   <%= render partial: "users/login_code_auth_notice" %>
 
-  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @login.webauthn_available? ? { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
+  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @login.webauthn_available? ? { "controller" => "webauthn-auth", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
     <div data-webauthn-auth-target="error" class="mb2 display-none">
       <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
@@ -22,7 +24,7 @@
 
     <div class="field field--options max-w-full w-full mt-1 <%= "trio" if @login.available_factors.length == 3 %>">
       <% if @login.webauthn_available? %>
-        <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", herb_set: "selected_login_preference=$value" } %>
         <%= form.label :login_preference, value: "webauthn", class: "cursor-pointer" do %>
           <%= inline_icon "fingerprint", size: 28, style: "padding: 3px" %>
           <strong>Security key</strong>
@@ -30,7 +32,7 @@
       <% end %>
 
       <% if @login.totp_available? %>
-        <%= form.radio_button :login_preference, "totp", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.radio_button :login_preference, "totp", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", herb_set: "selected_login_preference=$value" } %>
         <%= form.label :login_preference, value: "totp", class: "cursor-pointer" do %>
           <%= inline_icon "clock", size: 28 %>
           <strong>TOTP</strong>
@@ -38,7 +40,7 @@
       <% end %>
 
       <% if @login.email_available? %>
-        <%= form.radio_button :login_preference, "email", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.radio_button :login_preference, "email", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", herb_set: "selected_login_preference=$value" } %>
         <%= form.label :login_preference, value: "email", class: "cursor-pointer" do %>
           <%= inline_icon "email", size: 28 %>
           <strong>Email code</strong>
@@ -46,7 +48,7 @@
       <% end %>
 
       <% if @login.sms_available? %>
-        <%= form.radio_button :login_preference, "sms", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
+        <%= form.radio_button :login_preference, "sms", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", herb_set: "selected_login_preference=$value" } %>
         <%= form.label :login_preference, value: "sms", class: "cursor-pointer" do %>
           <%= inline_icon "message", size: 28 %>
           <strong>SMS code</strong>
@@ -58,7 +60,7 @@
 
     <div class="flex flex-row justify-between items-center my-4">
       <%= link_to "Cancel", logout_users_path, data: { turbo_method: :delete }, class: "no-underline block" %>
-      <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
+      <input type="submit" name="commit" value="Continue" data-disable-with="Continue" data-webauthn-auth-target="continueButton" disabled="<%= selected_login_preference.empty? %>">
     </div>
 
     <% if @login.backup_code_available? %>

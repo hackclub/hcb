@@ -1,13 +1,10 @@
 <%# locals: () %>
+<%# herb:slots client %>
+<%# herb:state (selected_step: "home") %>
 
 <%= form_with(local: true) do |form| %>
-  <div
-    data-controller="transfer-form"
-    data-transfer-form-ach-value="<%= new_event_ach_transfer_path(@event) %>"
-    data-transfer-form-check-value="<%= new_event_increase_check_path(@event) %>"
-    data-transfer-form-wire-value="<%= new_event_wire_path(@event) %>"
-    data-transfer-form-wise-value="<%= new_event_wise_transfer_path(@event) %>">
-    <div data-transfer-form-target="home">
+  <div>
+    <div hidden="<%= selected_step != "home" %>">
       <fieldset>
         <legend class="heading h2 pb2">What type of transfer?</legend>
         <div class="field field--options fit">
@@ -46,54 +43,55 @@
           <% end %>
         </div>
       </fieldset>
-      <a class="w-full text-center block no-underline -mb-2 pointer" role="button" tabindex="0" data-action="click->transfer-form#showWizard keydown.enter->transfer-form#showWizard">Which method should I use? <strong>Help me decide &rarr;</strong></a>
+      <a class="w-full text-center block no-underline -mb-2 pointer" role="button" tabindex="0" data-herb-set="click->selected_step=q1 keydown.return->selected_step=q1">Which method should I use? <strong>Help me decide &rarr;</strong></a>
     </div>
-    <div data-transfer-form-target="wizard" hidden>
-      <a class="no-underline text-xs inline-flex items-center -ml-2 pointer" role="button" tabindex="0" data-action="click->transfer-form#hideWizard keydown.enter->transfer-form#hideWizard">
+
+    <div hidden="<%= selected_step == "home" %>">
+      <a class="no-underline text-xs inline-flex items-center -ml-2 pointer" role="button" tabindex="0" data-herb-set="click->selected_step=home keydown.return->selected_step=home">
         <%= inline_icon "view-back" %>
         Exit
       </a>
+    </div>
+
+    <%# Help me decide: each answer moves to the next question or to a recommendation. %>
+    <div hidden="<%= selected_step != "q1" %>">
       <p class="eyebrow mb-0">Help me decide</p>
-      <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
-      <div class="flex gap-2">
-        <button type="button" class="btn shadow-none" data-action="click->transfer-form#yesClickHandler">
-          Yes
-          <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
-        </button>
-        <button type="button" class="btn shadow-none" data-action="click->transfer-form#noClickHandler">
-          No
-          <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
-        </button>
-      </div>
+      <h3 class="mt-2 font-bold mb-4">Does your recipient live within the US?</h3>
+      <%= render "events/transfers/wizard_answers", yes: "q2", no: "q3" %>
     </div>
-    <div data-transfer-form-target="answer" hidden>
-      <a class="no-underline text-xs inline-flex items-center -ml-2 pointer" role="button" tabindex="0" data-action="click->transfer-form#hideWizard keydown.enter->transfer-form#hideWizard">
-        <%= inline_icon "view-back" %>
-        Exit
-      </a>
-      <p class="eyebrow pt-0 mb-0">Our recommendation</p>
-      <h3 class="mt-2 font-bold mb-2 capitalize" data-transfer-form-target="answerText"></h3>
-      <div style="font-weight: normal" class="mb-4" data-transfer-form-target="wiseAnswerNote">
-        <strong>Note:</strong>
-        Wise does <strong>not</strong> support these currencies:
-        <ul>
-          <% WiseTransfer.unsupported_currencies_supported_by_wire.excluding("USD").each do |currency_code| %>
-            <li><%= currency_code %></li>
-          <% end %>
-        </ul>
-        If you need to send to one of these currencies, <strong>please select "International wire" instead.</strong>
-      </div>
-      <a href="#" data-transfer-form-target="learnMore" class="mb-3 inline-block no-underline" target="_blank">Learn more &rarr;</a>
-      <div class="flex gap-2">
-        <button type="button" class="btn bg-primary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
-          Let's do it!
-          <%= inline_icon "view-forward", style: "margin-right: -5px;margin-left: 5px" %>
-        </button>
-        <button type="button" class="btn bg-muted shadow-none" data-action="click->transfer-form#reset">
-          Reset
-          <%= inline_icon "view-reload", style: "margin-right: -5px;margin-left: 5px" %>
-        </button>
-      </div>
+    <div hidden="<%= selected_step != "q2" %>">
+      <p class="eyebrow mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4">Do you have their account & routing number?</h3>
+      <%= render "events/transfers/wizard_answers", yes: "ach", no: "check" %>
+    </div>
+    <div hidden="<%= selected_step != "q3" %>">
+      <p class="eyebrow mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4">Is your transfer amount over $500?</h3>
+      <%= render "events/transfers/wizard_answers", yes: "wire", no: "wise" %>
+    </div>
+
+    <div hidden="<%= selected_step != "ach" %>">
+      <%= render "events/transfers/recommendation", title: "ACH transfer", path: new_event_ach_transfer_path(@event), help: "https://help.hcb.hackclub.com/en/articles/15410090-how-do-i-send-an-ach-transfer" %>
+    </div>
+    <div hidden="<%= selected_step != "check" %>">
+      <%= render "events/transfers/recommendation", title: "Mailed check", path: new_event_increase_check_path(@event), help: "https://help.hcb.hackclub.com/en/articles/15410094-how-do-i-send-a-check" %>
+    </div>
+    <div hidden="<%= selected_step != "wire" %>">
+      <%= render "events/transfers/recommendation", title: "International wire", path: new_event_wire_path(@event), help: "https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer" %>
+    </div>
+    <div hidden="<%= selected_step != "wise" %>">
+      <%= render "events/transfers/recommendation", title: "Wise transfer", path: new_event_wise_transfer_path(@event), help: "https://help.hcb.hackclub.com/en/articles/15410093-how-do-i-send-a-wise-transfer" do %>
+        <div style="font-weight: normal" class="mb-4">
+          <strong>Note:</strong>
+          Wise does <strong>not</strong> support these currencies:
+          <ul>
+            <% WiseTransfer.unsupported_currencies_supported_by_wire.excluding("USD").each do |currency_code| %>
+              <li><%= currency_code %></li>
+            <% end %>
+          </ul>
+          If you need to send to one of these currencies, <strong>please select "International wire" instead.</strong>
+        </div>
+      <% end %>
     </div>
   </div>
 <% end %>
