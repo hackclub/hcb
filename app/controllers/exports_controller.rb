@@ -221,7 +221,4 @@ class ExportsController < ApplicationController
     end
   end
 
-  # Returns nil for anything that isn't a date (e.g. `?start_date=foo` from a
-  # crawler) instead of raising `Date::Error`.
-
 end
