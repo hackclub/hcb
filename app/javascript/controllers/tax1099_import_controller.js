@@ -438,8 +438,20 @@ export default class extends Controller {
         element.disabled = true
       })
 
-    const pdf = row.querySelector('[data-pdf]')
-    pdf.value = ''
+    // The file itself is dropped, but the picker keeps showing its name
+    // (disabled) as a record of what went with this row. Its clear button
+    // would only reset a picker that can no longer be used, so hide it.
+    row.querySelector('[data-pdf]').value = ''
+    row
+      .querySelectorAll('[data-file-upload-target="preview"]')
+      .forEach(element => {
+        element.disabled = true
+      })
+    row
+      .querySelectorAll('[data-file-upload-target="clear"]')
+      .forEach(element => {
+        element.style.display = 'none'
+      })
   }
 
   showCsvError(message) {
