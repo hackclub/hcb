@@ -1497,7 +1497,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.string "address_line2"
     t.string "address_state"
     t.string "address_zip"
-    t.integer "amount"
+    t.integer "amount_cents"
     t.datetime "approved_at"
     t.string "check_number"
     t.string "column_delivery_status"

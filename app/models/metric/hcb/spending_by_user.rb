@@ -58,7 +58,7 @@ class Metric
 
             SELECT SUM(amount) AS dollars_spent
             FROM (
-                SELECT amount
+                SELECT amount_cents AS amount
                 FROM "increase_checks"
                 WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
                 AND user_id IN (users.id)
