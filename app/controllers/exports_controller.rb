@@ -92,22 +92,12 @@ class ExportsController < ApplicationController
     authorize @event, :show?
 
     respond_to do |format|
-      format.any(*::Ledger::Query::Export::FORMATS.keys) do
-        # The format respond_to matched on, which is what the request wants even
-        # when it came via Accept rather than a path extension (params[:format]
-        # is nil then).
-        as = request.format.symbol
-
-        @export = ledger_query.export(
-          as:,
-          ledgers: @ledgers,
-          event_id: @event.id,
-          requested_by: current_user,
-          public_only: !organizer_signed_in?,
-          filtered: ledger_filtered?
-        )
-
-        deliver_export(@export, file_extension: as, filters: ledger_filter_params)
+      # One block per format, so the format comes from the block respond_to
+      # chose. Neither params[:format] (nil without a path extension) nor
+      # request.format (nil on a wildcard Accept, which is what curl sends)
+      # reliably says which that was.
+      ::Ledger::Query::Export::FORMATS.each_key do |as|
+        format.public_send(as) { export_ledger(as:) }
       end
     end
   end
@@ -150,6 +140,19 @@ class ExportsController < ApplicationController
   end
 
   private
+
+  def export_ledger(as:)
+    @export = ledger_query.export(
+      as:,
+      ledgers: @ledgers,
+      event_id: @event.id,
+      requested_by: current_user,
+      public_only: !organizer_signed_in?,
+      filtered: ledger_filtered?
+    )
+
+    deliver_export(@export, file_extension: as, filters: ledger_filter_params)
+  end
 
   # Serves an export inline, or — when it's too big to generate in a request —
   # queues it up to be emailed, collecting an address first if we don't have one.

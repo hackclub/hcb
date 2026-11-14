@@ -85,6 +85,16 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to end_with(".csv")
     end
 
+    it "serves CSV to a client that accepts anything, as curl does" do
+      request.headers["Accept"] = "*/*"
+
+      get :ledger, params: { event: event.slug }
+
+      expect(response).to be_successful
+      expect(response.headers["Content-Type"]).to eq("text/csv")
+      expect(response.headers["Content-disposition"]).to end_with(".csv")
+    end
+
     context "when signed out" do
       before { cookies.delete(:session_token) }
 
