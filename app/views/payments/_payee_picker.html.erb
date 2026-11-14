@@ -12,8 +12,6 @@
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
     <% end %>
-
-    <%= render "payments/hcb_transfer_option", event: event if show_hcb_transfer && has_payees %>
   </div>
 
   <div data-payee-picker-target="addingPanel" <%= "hidden" if has_payees %>

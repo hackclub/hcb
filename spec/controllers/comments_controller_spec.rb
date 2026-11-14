@@ -36,6 +36,24 @@ RSpec.describe CommentsController do
     end
   end
 
+  describe "#destroy" do
+    render_views
+
+    it "streams the new comment count into the item's ledger row" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      comments = create_list(:comment, 2, commentable: hcb_code)
+      ledger_item = hcb_code.ledger_item.reload
+      expect(ledger_item.comment_count).to eq(2)
+
+      delete(:destroy, params: { id: comments.first.id }, format: :turbo_stream)
+
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='badges_ledger_item_#{ledger_item.id}']")
+      expect(stream["action"]).to eq("replace")
+      expect(stream.inner_html).to include('aria-label="1 comment"')
+    end
+  end
+
   context "models including Commentable" do
     it "are explicitly registered" do
       Rails.application.eager_load!

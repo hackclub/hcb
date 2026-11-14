@@ -77,8 +77,4 @@ class ApplicationMailer < ActionMailer::Base
     email_address_with_name("hcb@hackclub.com", name)
   end
 
-  def no_recipients?
-    mail.recipients.compact.empty?
-  end
-
 end
