@@ -93,8 +93,13 @@ class ExportsController < ApplicationController
 
     respond_to do |format|
       format.any(*::Ledger::Query::Export::FORMATS) do
+        # The format respond_to matched on, which is what the request wants even
+        # when it came via Accept rather than a path extension (params[:format]
+        # is nil then).
+        as = request.format.symbol
+
         @export = ledger_query.export(
-          as: params[:format],
+          as:,
           ledgers: @ledgers,
           event_id: @event.id,
           requested_by: current_user,
@@ -102,7 +107,7 @@ class ExportsController < ApplicationController
           filtered: ledger_filtered?
         )
 
-        deliver_export(@export, file_extension: params[:format])
+        deliver_export(@export, file_extension: as)
       end
     end
   end

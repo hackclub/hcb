@@ -68,6 +68,16 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-Type"]).to eq("text/ledger")
     end
 
+    it "serves a format negotiated from the Accept header, with no path extension" do
+      request.headers["Accept"] = "text/csv"
+
+      get :ledger, params: { event: event.slug }
+
+      expect(response).to be_successful
+      expect(response.headers["Content-Type"]).to eq("text/csv")
+      expect(response.headers["Content-disposition"]).to end_with(".csv")
+    end
+
     context "when signed out" do
       before { cookies.delete(:session_token) }
 
