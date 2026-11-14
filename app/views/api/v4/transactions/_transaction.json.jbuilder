@@ -2,21 +2,27 @@
 
 # locals: (json:, tx:)
 
-# This partial is capable of rendering `HcbCode`, `CanonicalPendingTransaction`, and `CanonicalTransactionGrouped` instances
+# This partial is capable of rendering `HcbCode`, `CanonicalPendingTransaction`, `CanonicalTransactionGrouped`, and `Ledger::Item` instances
 
-hcb_code = tx.is_a?(HcbCode) ? tx : tx.local_hcb_code
+is_ledger = tx.is_a?(Ledger::Item)
+hcb_code = case tx
+           when Ledger::Item then tx.hcb_code
+           when HcbCode then tx
+           else tx.local_hcb_code
+           end
 is_cpt = tx.is_a?(CanonicalPendingTransaction)
 is_hcb_code = tx.is_a?(HcbCode)
 amount = transaction_amount(tx, event: @event)
 
 object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
-  json.date tx.date
+  json.ledger_item_id is_ledger ? tx.public_id : nil
+  json.date is_ledger ? tx.datetime&.to_date : tx.date
   json.amount_cents amount
-  json.memo hcb_code.memo(event: @event)
+  json.memo is_ledger ? tx.memo : hcb_code.memo(event: @event)
   json.has_custom_memo hcb_code.custom_memo.present?
-  json.pending (is_cpt && tx.unsettled?) || (is_hcb_code && !tx.pt&.fronted? && tx.pt&.unsettled?)
-  json.declined (is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?)
-  json.reversed (is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (is_hcb_code && tx.stripe_reversed_by_merchant?)
+  json.pending is_ledger ? tx.pending? : !!((is_cpt && tx.unsettled?) || (is_hcb_code && !tx.pt&.fronted? && tx.pt&.unsettled?))
+  json.declined is_ledger ? tx.declined? : !!((is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?))
+  json.reversed is_ledger ? tx.reversed? : !!((is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (is_hcb_code && tx.stripe_reversed_by_merchant?))
   json.tags hcb_code.tags do |tag|
     json.id tag.public_id
     json.label tag.label

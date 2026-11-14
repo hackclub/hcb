@@ -13,6 +13,8 @@ module Api
 
         authorize @event, :show_in_v4?
 
+        return index_from_ledger if ledger_engine?
+
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(**filters).run
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(**filters).run
 
@@ -54,6 +56,8 @@ module Api
         else
           @event = @hcb_code.events.find { |e| e.users.include?(current_user) } || @hcb_code.events.first
         end
+
+        @transaction = resolve_engine(@hcb_code)
       end
 
       require_oauth2_scope "ledgers:read", :show # maybe this should be transactions:read
@@ -67,7 +71,7 @@ module Api
 
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @transactions = resolve_engines(paginate_cursor(@hcb_codes, &:public_id))
       end
 
       require_oauth2_scope "ledgers:read", :missing_receipt
@@ -93,6 +97,8 @@ module Api
           end
         end
 
+        @transaction = resolve_engine(@hcb_code)
+
         render "show"
       end
 
@@ -116,8 +122,89 @@ module Api
 
       private
 
-      def filters
-        filter_params = params.fetch(:filters, {}).permit(
+      LEDGER_PENDING_RANK = "(CASE WHEN ledger_items.status = 'pending' THEN 0 ELSE 1 END)"
+
+      def index_from_ledger
+        limit = pagination_limit
+        items = ledger_query.execute(ledgers: [@event.ledger]).where.associated(:hcb_code)
+        @total_count = items.unscope(:order).count
+
+        if params[:after].present?
+          cursor = items.find_by(id: HcbCode.find_by_public_id(params[:after])&.ledger_item_id)
+          raise ArgumentError, "After parameter '#{params[:after]}' not found" if cursor.nil?
+
+          # Keyset on Ledger::Query's ordering: pending first, then datetime, created_at, id descending.
+          items = items.where(
+            "#{LEDGER_PENDING_RANK} > :rank OR (#{LEDGER_PENDING_RANK} = :rank AND (ledger_items.datetime, ledger_items.created_at, ledger_items.id) < (:datetime, :created_at, :id))",
+            rank: cursor.pending? ? 0 : 1, datetime: cursor.datetime, created_at: cursor.created_at, id: cursor.id
+          )
+        end
+
+        page = items.preload(hcb_code: [
+                               :event, :tags,
+                               { canonical_transactions: :canonical_event_mapping },
+                               { canonical_pending_transactions: [:canonical_pending_event_mapping, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] }
+                             ]).limit(limit + 1).to_a
+        @has_more = page.size > limit
+        @transactions = page.first(limit)
+      end
+
+      # `order_by` is ignored: Ledger::Query has a fixed ordering.
+      def ledger_query
+        f = filter_params
+        query = []
+
+        query << { memo: { "$search": f[:search] } } if f[:search].present?
+        query << { amount_cents: { "$gt": 0 } } if f[:revenue].present?
+        query << { amount_cents: { "$lt": 0 } } if f[:expenses].present?
+
+        if f[:minimum_amount].present?
+          minimum = Money.from_amount(f[:minimum_amount].to_f).cents
+          query << { "$or": [{ amount_cents: { "$gte": minimum } }, { amount_cents: { "$lte": -minimum } }] }
+        end
+
+        if f[:maximum_amount].present?
+          # Multiple operators on one field are AND-combined: |amount| <= max
+          maximum = Money.from_amount(f[:maximum_amount].to_f).cents
+          query << { amount_cents: { "$lte": maximum, "$gte": -maximum } }
+        end
+
+        if f[:missing_receipts].present?
+          query << { receipt_count: { "$eq": 0 } }
+          query << { receipt_required: { "$eq": true } }
+          query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
+        end
+
+        query << { datetime: { "$gte": f[:start_date].to_date } } if f[:start_date].present?
+        # Whole-day inclusive end bound, matching the old engine
+        query << { datetime: { "$lt": f[:end_date].to_date.next_day } } if f[:end_date].present?
+
+        if f[:user_id].present?
+          user = @event.users.find_by_public_id(f[:user_id])
+          query << { author: { "$eq": user&.slug || f[:user_id] } }
+        end
+
+        if f[:tag_id].present?
+          tag = Tag.find_by_public_id(f[:tag_id])
+          query << { tag: { "$eq": tag&.id } }
+        end
+
+        query << { category: { "$eq": f[:category] } } if f[:category].present?
+        query << { merchant: { "$eq": f[:merchant] } } if f[:merchant].present?
+        if SetLedgerFilters::TYPE_PREDICATES.key?(params[:type])
+          query << { linked_object_type: SetLedgerFilters::TYPE_PREDICATES[params[:type]] }
+        elsif params[:type] == "refund"
+          # Ledger has no refund flag; approximate as an incoming card charge.
+          query << { linked_object_type: { "$eq": "CardCharge" } }
+          query << { amount_cents: { "$gt": 0 } }
+        end
+
+        query << SetLedgerFilters::VISIBLE
+        Ledger::Query.new({ "$and": query })
+      end
+
+      def filter_params
+        @filter_params ||= params.fetch(:filters, {}).permit(
           :search,
           :tag_id,
           :expenses,
@@ -132,7 +219,9 @@ module Api
           :merchant,
           :order_by
         )
+      end
 
+      def filters
         return {
           event_id: @event.id,
           search: filter_params[:search].presence,

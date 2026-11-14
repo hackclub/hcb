@@ -81,6 +81,25 @@ module Api
         @expand = params[:expand].to_s.split(",").map { |e| e.strip.to_sym }
       end
 
+      LEDGER_ENGINE_FLAG = :new_ledger_api_2026_09_28
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = current_user.present? && Flipper.enabled?(LEDGER_ENGINE_FLAG, current_user)
+      end
+
+      def resolve_engine(hcb_code)
+        resolve_engines([hcb_code]).first
+      end
+
+      def resolve_engines(hcb_codes)
+        return hcb_codes unless ledger_engine?
+
+        ActiveRecord::Associations::Preloader.new(records: hcb_codes, associations: :ledger_item).call
+        hcb_codes.map { |hcb_code| hcb_code.ledger_item || hcb_code }
+      end
+
       attr_reader :current_token
 
     end
