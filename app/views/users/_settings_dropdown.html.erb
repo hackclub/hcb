@@ -23,7 +23,7 @@
   <%= dock_item "Payouts",
                 use_my_path ? settings_payouts_path : payouts_user_path(effective_user),
                 selected: local_assigns[:selected] == :settings_reimbursement_payouts && local_assigns[:open] %>
-  <% if effective_user.legal_entities.any? { |le| le.tax_form_required? || le.completed_tax_form? } %>
+  <% if effective_user&.show_tax_settings? %>
     <%= dock_item "Tax",
                   use_my_path ? settings_tax_path : tax_user_path(effective_user),
                   selected: local_assigns[:selected] == :settings_tax && local_assigns[:open] %>
