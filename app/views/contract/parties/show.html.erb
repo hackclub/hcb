@@ -44,11 +44,13 @@
                   <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
                 </div>
 
-                <% if @party.pending? %>
+                <% if !@contract.contractable.approved? %>
+                  <p>Approve the application before activating the organization</p>
+                <% elsif @party.pending? %>
                   <p>Sign the contract before activating the organization</p>
                 <% end %>
 
-                <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
+                <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending? || !@contract.contractable.approved?, data: { "contract-target": "button" } %>
               <% end %>
             <% end %>
           <% end %>

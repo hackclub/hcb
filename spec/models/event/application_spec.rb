@@ -38,7 +38,7 @@ RSpec.describe Event::Application, type: :model do
   describe "#activate_event!" do
     it "creates an event using the application's description as the mission statement" do
       user = create(:user)
-      application = create(:event_application, user:, description: "Run the best hackathon")
+      application = create(:event_application, user:, description: "Run the best hackathon", aasm_state: "approved")
 
       allow(User).to receive(:system_user).and_return(create(:user, :make_admin, email: User::SYSTEM_USER_EMAIL))
       allow_any_instance_of(Contract::Party).to receive(:sync_with_docuseal)
@@ -61,6 +61,16 @@ RSpec.describe Event::Application, type: :model do
       application.activate_event!(risk_level: :zero)
 
       expect(application.reload.event.description).to eq("Run the best hackathon")
+    end
+
+    %w[draft submitted under_review rejected].each do |state|
+      it "refuses to activate an application that is #{state.humanize.downcase}" do
+        application = create(:event_application, aasm_state: state)
+
+        expect { application.activate_event!(risk_level: :zero) }
+          .to raise_error(RuntimeError, "Application must be approved before activation")
+        expect(application.reload.event).to be_nil
+      end
     end
   end
 
