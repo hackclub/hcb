@@ -96,22 +96,20 @@ class Export
             memo: item.memo,
             amount_cents: item.amount_cents,
             account_verification: item.likely_account_verification_related?,
-            income_type: income_type_for(item),
+            income_type: income_type(donation: item.linked_object_type == "Donation", invoice: item.linked_object_type == "Invoice"),
             **fields_for(item)
           )
         end
 
-        # The optional fields the format reads, and no others.
-        def fields_for(item)
-          fields = {}
-          # Only the organization's own tags; an item can be mapped into several
-          # ledgers and carry another organization's tags alongside these.
-          fields[:tags] = item.tags.select { |tag| tag.event_id == event_id.to_i }.map(&:label) if reads?(:tags)
-          fields[:comments] = item.comments.reject(&:admin_only?).map(&:content) if reads?(:comments)
-          fields[:author] = item.author if reads?(:author)
-          fields[:category] = item.category if reads?(:category)
-          fields[:merchant] = merchant_for(item) if reads?(:merchant)
-          fields
+        def read_tags(item) = own_tag_labels(item.tags)
+        def read_comments(item) = non_admin_comments(item.comments)
+        def read_author(item) = item.author
+        def read_category(item) = item.category
+
+        def read_merchant(item)
+          return nil unless item.linked_object_type == "CardCharge"
+
+          item.linked_object&.merchant_data
         end
 
         # A card charge reads its merchant off the raw Stripe transactions behind
@@ -126,20 +124,6 @@ class Export
             records: card_charges,
             associations: [:raw_stripe_transactions, :raw_pending_stripe_transaction]
           ).call
-        end
-
-        def merchant_for(item)
-          return nil unless item.linked_object_type == "CardCharge"
-
-          item.linked_object&.merchant_data
-        end
-
-        def income_type_for(item)
-          case item.linked_object_type
-          when "Donation" then "Donation"
-          when "Invoice" then "Invoice"
-          else "Transfer"
-          end
         end
 
         def event

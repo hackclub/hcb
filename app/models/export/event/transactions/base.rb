@@ -93,31 +93,16 @@ class Export
             memo: hcb_code.memo,
             amount_cents: ct.amount_cents,
             account_verification: ct.likely_account_verification_related?,
-            income_type: income_type_for(hcb_code),
-            **fields_for(ct, hcb_code)
+            income_type: income_type(donation: hcb_code.donation?, invoice: hcb_code.invoice?),
+            **fields_for(ct)
           )
         end
 
-        # The optional fields the format reads, and no others.
-        def fields_for(ct, hcb_code)
-          fields = {}
-          fields[:tags] = hcb_code.tags.select { |tag| tag.event_id == event_id }.map(&:label) if reads?(:tags)
-          fields[:comments] = hcb_code.comments.reject(&:admin_only?).map(&:content) if reads?(:comments)
-          fields[:author] = hcb_code.author if reads?(:author)
-          fields[:category] = ct.category if reads?(:category)
-          fields[:merchant] = ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data") if reads?(:merchant)
-          fields
-        end
-
-        def income_type_for(hcb_code)
-          if hcb_code.donation?
-            "Donation"
-          elsif hcb_code.invoice?
-            "Invoice"
-          else
-            "Transfer"
-          end
-        end
+        def read_tags(ct) = own_tag_labels(ct.local_hcb_code.tags)
+        def read_comments(ct) = non_admin_comments(ct.local_hcb_code.comments)
+        def read_author(ct) = ct.local_hcb_code.author
+        def read_category(ct) = ct.category
+        def read_merchant(ct) = ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
 
       end
     end
