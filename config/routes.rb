@@ -725,6 +725,7 @@ Rails.application.routes.draw do
     skip_controllers :authorized_applications
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
+  post "api/v4/oauth/applications/:id/revoke_tokens", to: "oauth_applications#revoke_tokens", as: :revoke_tokens_oauth_application
 
   namespace :api do
     namespace :v4 do
