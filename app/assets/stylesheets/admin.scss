@@ -31,6 +31,11 @@ $mono:
 @import 'components/forms';
 @import 'components/wire_tracking';
 
+// Same as application.scss: `hidden` wins over a class that sets `display`.
+[hidden] {
+  display: none !important;
+}
+
 .card {
   --card-bg: #ffffff;
   background-color: $white;

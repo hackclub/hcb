@@ -14,7 +14,7 @@
     <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
   <% end %>
 
-  <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
+  <div>
     <% unless disabled && payee.nil? %>
       <% if editing %>
         <div data-scroll-seek-target="section">
@@ -34,11 +34,10 @@
     <% end %>
 
     <div class="<%= "hidden" unless payee %>">
-      <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true, data: { controller: "payout-required", action: "change->payout-required#update click->payout-required#update" }) do |form| %>
+      <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
         <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
-        <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
 
         <div id="payment-details" data-scroll-seek-target="section">
           <h3 class="mb-2">Payment details</h3>
@@ -67,7 +66,7 @@
           </div>
         </div>
 
-        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <% unless manual %> hidden<% end %>>
+        <div data-scroll-seek-target="section" <% unless manual %> hidden<% end %>>
           <h3 class="mb-2">Payout method</h3>
           <% if existing_payout_method %>
             <details class="card mb-4 p-0 overflow-hidden">
