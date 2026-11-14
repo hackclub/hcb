@@ -64,6 +64,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       visit_without_animations position_page
 
       expect(page).to have_no_button("Approve").and have_no_button("Reject")
+      expect(page).to have_css("h3 .contractor-review-badge", text: "2")
 
       open_invoice(invoice)
       within_invoice_modal(invoice) do
@@ -72,6 +73,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       end
 
       expect(page).to have_invoice_status("Approved")
+      expect(page).to have_css("h3 .contractor-review-badge", text: "1")
       expect(invoice.reload).to be_approved
       expect(other.reload).to be_submitted
       expect(Payment.sole.amount_cents).to eq(50_00)
@@ -117,6 +119,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       within_invoice_modal(invoice) { expect(page).to have_text("receipt.png") }
       expect(page).to have_no_button("Approve", visible: :all)
       expect(page).to have_no_button("Reject", visible: :all)
+      expect(page).to have_no_css("h3 .contractor-review-badge")
     end
 
     it "reviews an invoice without an attachment from a modal, never from the table" do
@@ -171,6 +174,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       within_invoice_modal(invoice) { expect(page).to have_text("receipt.png") }
       expect(page).to have_no_button("Approve", visible: :all)
       expect(page).to have_no_button("Reject", visible: :all)
+      expect(page).to have_no_css("h3 .contractor-review-badge")
     end
   end
 end
