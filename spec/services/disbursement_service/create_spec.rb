@@ -543,7 +543,11 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "can't repay a pending transaction" do
-      pending_expense = create(:canonical_pending_transaction, event: destination_event, amount_cents: -100_00)
+      # Factory transactions fall back to an `HCB-000-<id>` code, and CTs and
+      # CPTs have separate id sequences. If this CPT's id matched the source
+      # event's funding CT, they'd share a ledger item and the source event's
+      # balance would move to the destination. Pick an id no CT can share.
+      pending_expense = create(:canonical_pending_transaction, id: [CanonicalTransaction.maximum(:id).to_i, CanonicalPendingTransaction.maximum(:id).to_i].max + 1_000, event: destination_event, amount_cents: -100_00)
 
       expect(pending_expense.ledger_item.reload).to be_pending
       expect {

@@ -277,7 +277,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
-    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback") }
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: create(:user)) }
 
     it "locks" do
       user = create(:user, locked_at: nil)

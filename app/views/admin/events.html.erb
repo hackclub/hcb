@@ -6,7 +6,7 @@
     <% export_button = capture do %>
       <button class="mt-2 mr-1 btn bg-info">Search</button>
       <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
-        <button type="button" class="mt-2 btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
+        <button type="button" class="mt-2 btn bg-muted" <% if @events.total_count == 0 %> disabled<% end %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
     <% end %>
     <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button } %>

@@ -168,6 +168,7 @@ Rails.application.routes.draw do
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
       get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emails", to: "users#admin_details_emails"
       get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
       get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
       get "admin_details_invoices", to: "users#admin_details_invoices"
@@ -285,6 +286,7 @@ Rails.application.routes.draw do
       get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
+      get "wire_lookup", to: "admin#wire_lookup"
       get "wise_transfers", to: "admin#wise_transfers"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
@@ -384,7 +386,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
@@ -656,6 +657,20 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payroll_positions, only: [:show, :edit, :update], controller: "payroll/positions" do
+    member do
+      get "contract"
+      post "terminate"
+    end
+  end
+
+  resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+    member do
+      post "approve"
+      post "reject"
+    end
+  end
+
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
@@ -699,6 +714,7 @@ Rails.application.routes.draw do
 
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
+    controllers applications: "oauth_applications"
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
@@ -841,8 +857,6 @@ Rails.application.routes.draw do
   post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
-  post "extract/invoice", to: "extraction#invoice"
-
   get "negative_events", to: "admin#negative_events"
 
   get "admin_task_size", to: "admin#task_size"
@@ -942,6 +956,7 @@ Rails.application.routes.draw do
       post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
+      get "download"
     end
   end
 
@@ -963,6 +978,8 @@ Rails.application.routes.draw do
         get "submission"
         get "airtable"
         get "edit"
+        get "unsubscribe"
+        post "unsubscribe"
         post "submit"
         post "archive"
         post "unarchive"
@@ -1029,18 +1046,11 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
-      member do
-        get :contract
-        post :terminate
-      end
-    end
-    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
-      member do
-        post :approve
-        post :reject
-      end
-    end
+    resources :payroll_positions, only: [:new, :create], controller: "payroll/positions"
+    get "payroll_positions/*path", to: redirect { |params, req|
+      path = "/payroll_positions/#{ActionDispatch::Journey::Router::Utils.escape_path(params[:path])}"
+      req.query_string.present? ? "#{path}?#{req.query_string}" : path
+    }
     resources :payees, only: [:index, :create, :update] do
       collection do
         get :check_email
