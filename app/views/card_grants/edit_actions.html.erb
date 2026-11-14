@@ -8,6 +8,6 @@
     <%= render "card_grants/actions/cancel", card_grant: @card_grant, label: "Canceling the card will immediately return funds back to #{@card_grant.event.name}." %>
     <%= render "card_grants/actions/disable_pre_authorization", card_grant: @card_grant, label: "If you've decided you no longer need to require pre-authorization for this grant, you can turn it off." %>
   <% else %>
-    <%= blankslate @card_grant.converted_to_reimbursement_report? ? "This grant has been converted into a reimbursement report, so there are no further actions available." : "This grant has been canceled, so there are no further actions available." %>
+    <%= blankslate @card_grant.converted_to_reimbursement? ? "This grant has been converted into a reimbursement report, so there are no further actions available." : "This grant has been canceled, so there are no further actions available." %>
   <% end %>
 </turbo-frame>
