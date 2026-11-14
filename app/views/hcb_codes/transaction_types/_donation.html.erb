@@ -46,8 +46,9 @@
       <%= form.check_box :anonymous, checked: @donation.anonymous? || @donation.recurring_donation&.anonymous?, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
+    <%= render "donations/admin_donor_fields", form:, donation: @donation %>
     <% if @donation.recurring? %>
-      <p class="muted">This donation is part of a recurring donation. Updating the donor's name or anonymity will update it for all past and future donations.</p>
+      <p class="muted">This donation is part of a recurring donation. Updating the donor's details will update them for all past and future donations.</p>
     <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
