@@ -6,6 +6,22 @@ RSpec.describe "Transaction exports", type: :request do
   let(:event) { create(:event, is_public: true) }
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
+  describe "GET /exports/:event with no extension" do
+    it "serves CSV to a client that accepts anything, as curl does" do
+      get "/exports/#{event.slug}", headers: { "Accept" => "*/*" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/csv")
+    end
+
+    it "serves the format the Accept header asks for" do
+      get "/exports/#{event.slug}", headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/json")
+    end
+  end
+
   describe "GET /exports/collect_email" do
     it "sends a request with nothing to export back to the homepage" do
       get "/exports/collect_email"

@@ -15,40 +15,46 @@ class ExportsController < ApplicationController
   def transactions
     authorize @event, :show?
 
+    # One block per format, so the format comes from the block respond_to
+    # chose: params[:format] is nil without a path extension, and a wildcard
+    # Accept (curl's default) matches the first block listed.
     respond_to do |format|
-      format.any(*%w[json csv ledger]) do
-        file_extension = params[:format]
-
+      format.csv do
         # CSV exports **can** support date ranges
-        if file_extension == "csv" && params[:start_date].present?
+        if params[:start_date].present?
           set_date_range
           return if performed?
         end
 
-        @export = case file_extension
-                  when "csv"
-                    Export::Event::Transactions::Csv.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      start_date: @start,
-                      end_date: @end,
-                      public_only: !organizer_signed_in?
-                    )
-                  when "json"
-                    Export::Event::Transactions::Json.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      public_only: !organizer_signed_in?
-                    )
-                  when "ledger"
-                    Export::Event::Transactions::Ledger.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      public_only: !organizer_signed_in?
-                    )
-                  end
+        @export = Export::Event::Transactions::Csv.new(
+          requested_by: current_user,
+          event_id: @event.id,
+          start_date: @start,
+          end_date: @end,
+          public_only: !organizer_signed_in?
+        )
 
-        deliver_export(@export, file_extension:)
+        deliver_export(@export, file_extension: :csv)
+      end
+
+      format.json do
+        @export = Export::Event::Transactions::Json.new(
+          requested_by: current_user,
+          event_id: @event.id,
+          public_only: !organizer_signed_in?
+        )
+
+        deliver_export(@export, file_extension: :json)
+      end
+
+      format.ledger do
+        @export = Export::Event::Transactions::Ledger.new(
+          requested_by: current_user,
+          event_id: @event.id,
+          public_only: !organizer_signed_in?
+        )
+
+        deliver_export(@export, file_extension: :ledger)
       end
 
       format.pdf do
