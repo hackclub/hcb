@@ -62,6 +62,8 @@ class Event
         @metadata = vex_params
       when "hack_club"
         @metadata = hack_club_params
+      when "destination_imagination"
+        @metadata = destination_imagination_params
       end
     end
 
@@ -75,6 +77,10 @@ class Event
 
     def hack_club_params
       params.permit(:venue_name, :size)
+    end
+
+    def destination_imagination_params
+      params.permit(:level, :team_number, :size)
     end
 
   end

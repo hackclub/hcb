@@ -7,7 +7,7 @@
   <p class="h5 muted mt-0 mb-3">
     Which organization are you affiliated with, if any? Leave blank if none of these apply.
   </p>
-  <div class="field field--options field--green trio mb-0">
+  <div class="field field--options field--green auto-rows-fr mb-0">
     <%= form.radio_button :type, :first, disabled:, "x-model": "type" %>
     <%= form.label :type, value: :first do %>
       <%= inline_icon "sam", size: 28 %>
@@ -22,6 +22,11 @@
     <%= form.label :type, value: :hack_club do %>
       <%= inline_icon "clubs-fill", size: 28 %>
       <strong>Hack Club</strong>
+    <% end %>
+    <%= form.radio_button :type, :destination_imagination, disabled:, "x-model": "type" %>
+    <%= form.label :type, value: :destination_imagination do %>
+      <%= inline_icon "idea", size: 28 %>
+      <strong>Destination Imagination</strong>
     <% end %>
   </div>
 </fieldset>
@@ -89,6 +94,30 @@
   </div>
 </template>
 <template x-if="type == 'hack_club'">
+  <div class="field">
+    <%= form.label :size, "Size" %>
+    <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
+      <div class="input flex gap-2 items-center justify-between py-0">
+        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
+        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template x-if="type == 'destination_imagination'">
+  <div class="field">
+    <%= form.label :level, "Level" %>
+    <%= form.select :level, Event::Affiliation::DESTINATION_IMAGINATION_LEVELS.invert.to_a, { required: true, include_blank: "Select a level", selected: affiliation.level }, disabled: %>
+  </div>
+</template>
+<template x-if="type == 'destination_imagination'">
+  <div class="field">
+    <%= form.label :team_number, "Team Number" %>
+    <%= form.text_field :team_number, { required: true, placeholder: "Your team number", value: affiliation.team_number, disabled: } %>
+  </div>
+</template>
+<template x-if="type == 'destination_imagination'">
   <div class="field">
     <%= form.label :size, "Size" %>
     <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
