@@ -146,6 +146,12 @@ class Ledger
     # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
     ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
 
+    # SQL counterpart of #likely_account_verification_related?
+    scope :not_likely_account_verification_related, -> {
+      where.not("ABS(ledger_items.amount_cents) < 100 AND ledger_items.linked_object_type IS NULL AND ledger_items.memo ILIKE ANY (ARRAY[?])",
+                ACCOUNT_VERIFICATION_MEMO_MATCHES.map { |s| "%#{sanitize_sql_like(s)}%" })
+    }
+
     # Account-verification micro-deposit amounts prove ownership of a linked
     # external account, so they're redacted from non-organizer (transparency)
     # viewers, matching the legacy transactions page. These arrive as raw bank
@@ -180,18 +186,21 @@ class Ledger
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
-      # Nothing to refresh on an item that isn't in the database, and save!
+      # Nothing to refresh on an item that isn't in the database, and reload
       # would raise. Callbacks can still reach one: destroying a Ledger::Mapping
       # alongside its item (see #absorb) runs the mapping's after_commit against
       # the already-destroyed item.
       return unless persisted?
 
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
+      # Recompute from the database, not from what this copy last loaded. One
+      # map! refreshes several in-memory copies of the same item (the
+      # Ledger::Mapping commit hook refreshes its own copy before the copy map!
+      # was called on gets its turn), and a copy loaded before another copy
+      # saved would otherwise see phantom changes: the reversed/released card
+      # charge email went out once per copy. Reloading also drops association
+      # caches that `after_create :map!` memoized before any mapping existed
+      # (e.g. `primary_ledger` as nil).
+      reload
 
       # Counter caches
       self.ct_count = canonical_transactions.size
@@ -311,6 +320,8 @@ class Ledger
         "Fiscal sponsorship fee"
       when "FeeRevenue"
         "Fee revenue"
+      when "FeeReimbursementGroup"
+        "Stripe fee reimbursements"
       when "Reimbursement::PayoutHolding"
         "Reimbursement payout holding"
       when "Reimbursement::ExpensePayout"
@@ -323,7 +334,7 @@ class Ledger
     end
 
     def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee", "FeeReimbursementGroup"].include?(linked_object_type) ? "of" : "for"
 
       amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
 
@@ -372,6 +383,8 @@ class Ledger
         "bank-icon"
       when "FeeRevenue"
         "bank-icon"
+      when "FeeReimbursementGroup"
+        "cash"
       when "Reimbursement::PayoutHolding"
         "reimbursement"
       when "Reimbursement::ExpensePayout"
@@ -476,7 +489,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
     end
 
     def calculate_status
@@ -584,6 +597,8 @@ class Ledger
         end
       when "FeeRevenue"
         "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "FeeReimbursementGroup"
+        linked_object.memo
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"

@@ -67,7 +67,7 @@ RSpec.describe Tax::FormsController do
       freeze_time do
         post :update_electronic_consent, params: { id: form.hashid, electronic_consent: "true" }
 
-        expect(response).to redirect_to(completed_tax_form_path(form))
+        expect(response).to redirect_to(legal_entity_path(legal_entity))
         expect(legal_entity.reload.electronic_consent).to be(true)
         expect(legal_entity.electronic_consent_at).to eq(Time.current)
       end
@@ -76,7 +76,7 @@ RSpec.describe Tax::FormsController do
     it "records a refusal" do
       post :update_electronic_consent, params: { id: form.hashid, electronic_consent: "false" }
 
-      expect(response).to redirect_to(completed_tax_form_path(form))
+      expect(response).to redirect_to(legal_entity_path(legal_entity))
       expect(legal_entity.reload.electronic_consent).to be(false)
       expect(legal_entity.electronic_consent_at).to be_present
     end

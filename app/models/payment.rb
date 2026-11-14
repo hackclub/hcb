@@ -39,7 +39,6 @@ class Payment < ApplicationRecord
   has_one :event, through: :payee
   has_one :legal_entity, through: :payee
   has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
-  has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
   has_one :payroll_position, through: :payroll_invoice
@@ -49,6 +48,8 @@ class Payment < ApplicationRecord
   enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", general_services: "general_services" }, prefix: :for
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  # For viewers who can't see the payee's email (see `EventsController#payments`).
+  pg_search_scope :public_search_recipient, associated_against: { payee: [:display_name] }
   pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
 
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
@@ -132,10 +133,6 @@ class Payment < ApplicationRecord
 
   def popover_path
     Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
-  end
-
-  def estimate_usd_amount_cents
-    MoneyService.convert_to_usd(amount_cents, currency)
   end
 
   # Idempotent: safe to call any number of times, from any code path that

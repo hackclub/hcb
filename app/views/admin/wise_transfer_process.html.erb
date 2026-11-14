@@ -203,7 +203,12 @@
             <%= form.text_field(
                   :wise_recipient_id,
                   class: "w-[400px]",
-                  placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                  data: {
+                    controller: "strip-prefix",
+                    action: "paste->strip-prefix#paste",
+                    strip_prefix_prefix_value: "https://wise.com/recipients/"
+                  }
                 ) %>
           </div>
 
@@ -266,7 +271,7 @@
       </fieldset>
 
     <% else %>
-      <p>This Wise transfer <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %>.</p>
+      <p>This Wise transfer <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %></p>
 
       <em class="muted">No available actions</em>
     <% end %>

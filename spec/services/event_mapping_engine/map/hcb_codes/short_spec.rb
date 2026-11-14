@@ -97,14 +97,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
   it "adds a category to stripe fee reimbursements" do
     event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
 
-    # Copied over from `FeeReimbursementService::Nightly`
-    hcb_code = [
-      TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-      TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-      Time.now.strftime("%G_%V")
-    ].join(TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-
-    local_hcb_code = HcbCode.create!(hcb_code: hcb_code)
+    local_hcb_code = create(:fee_reimbursement_group).local_hcb_code
 
     ct = create(:canonical_transaction, memo: "HCB-#{local_hcb_code.short_code}")
 

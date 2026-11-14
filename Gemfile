@@ -68,7 +68,6 @@ gem "phonelib" # phone number validations
 
 gem "money-rails", "~> 3.0.0"
 gem "monetize", "~> 2.0.0"
-gem "rounding"
 
 gem "business_time"
 
@@ -128,7 +127,6 @@ gem "comma", "~> 4.8" # CSV generation
 gem "faker" # Create mock data
 
 gem "chronic" # time/date parsing
-gem "rinku", require: "rails_rinku" # auto-linking URLs in text
 
 gem "geocoder" # lookup lat/lng for Stripe Cards shipment tracking
 gem "validates_zipcode" # validation for event's zip codes
@@ -144,6 +142,8 @@ gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
 
 group :test do
+  gem "capybara" # Browser-driven system tests
+  gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"

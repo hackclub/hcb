@@ -1,25 +1,27 @@
 <%# locals: (ach_transfer:) %>
 
 <% disabled = !policy(ach_transfer.event).create_transfer? %>
+<% selected_recipient = ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event %>
 
 <%= form_with(
   model: ach_transfer,
   local: true,
   url: event_ach_transfers_path(ach_transfer.event),
-  data: { controller: "input extraction", extraction_target: "form" },
+  data: { controller: "input payment-recipient" },
   html: {
     "x-data" => "ach(#{{
-      payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
+      payment_recipient: selected_recipient,
       editing: ach_transfer.account_number.present?,
-      }.to_json})"
+      }.to_json})",
+    "@payment-recipient:change" => "payment_recipient = $event.detail",
   }) do |form| %>
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
+  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
 
   <% if Rails.env.development? %>
-    <pre x-text="'Debug info:\n\n' + JSON.stringify(payment_recipient || {}, null, 2)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
+    <pre data-payment-recipient-target="debug" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"><%= "Debug info:\n\n#{JSON.pretty_generate(selected_recipient || {})}" %></pre>
   <% end %>
 
   <div data-scroll-seek-target="section">
@@ -36,7 +38,6 @@
                           role: "combobox",
                           "aria-controls": "#payment-recipient-search",
                           data: {
-                            extraction_field: "seller_name",
                             action: "
                               keydown.enter->text-filter#selectFirst
                               click->menu#open
@@ -44,17 +45,17 @@
                               click@document->menu#close
                               keydown@document->menu#keydown
                               input->text-filter#query
+                              input->payment-recipient#clear
                             ",
                             menu_target: "toggle",
                           },
-                          "x-ref" => "name_input",
-                          "@input" => "payment_recipient = null" %>
+                          "x-ref" => "name_input" %>
 
       <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
         <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
           <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
             <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.hashid %>">
-              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close" data-recipient="<%= payment_recipient.to_safe_json %>" @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close payment-recipient#select" data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                 <span class="truncate"><%= payment_recipient.name %></span>
                 <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
               </button>
@@ -76,7 +77,7 @@
     <template x-if="!payment_recipient || editing">
       <div>
         <%= form.label :recipient_email, class: "mb-1" %>
-        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
+        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
       </div>
     </template>
 
@@ -96,7 +97,7 @@
       <div class="flex flex-col gap-3">
         <div class="sm:flex items-center justify-between">
           <%= form.label :bank_name %>
-          <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
+          <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled: disabled %>
         </div>
 
         <div
@@ -104,14 +105,14 @@
           data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
           <div class="sm:flex items-center justify-between">
             <%= form.label :routing_number %>
-            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number", action: "input->external-validation#validate" } %>
+            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { action: "input->external-validation#validate" } %>
           </div>
           <span class="muted text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2 empty:hidden" data-external-validation-target="hint"></span>
         </div>
 
         <div class="sm:flex items-center justify-between">
           <%= form.label :account_number %>
-          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "account_number" } %>
+          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask !max-w-[250px]" %>
         </div>
       </div>
     </template>
@@ -135,7 +136,7 @@
       <div class="flex items-center">
         <div class="input flex gap-2 items-center py-0">
           <span class="bold muted">$</span>
-          <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+          <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
         </div>
       </div>
     </div>
@@ -148,8 +149,8 @@
       <%= form.date_field :invoiced_at, disabled:, style: "max-width: 190px", max: Date.current %>
     </div>
 
-    <%= render "events/transfers/notify_recipient", form:, disabled: %>
-    <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    <%= render "events/transfers/notify_recipient", form:, disabled: disabled %>
+    <%= render "events/transfers/attach_receipt", form:, disabled: disabled %>
   </div>
   </div>
 

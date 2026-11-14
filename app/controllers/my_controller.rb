@@ -252,12 +252,10 @@ class MyController < ApplicationController
     return unless signed_in?
 
     @my_reports = current_user.reimbursement_reports
-    manager_events = current_user.events
-                                 .joins(:organizer_positions)
-                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
     # Managers can't approve their own reports, so those only appear under @my_reports
     @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
-    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
+    reviewing_events = Event::ReimbursementReviewer::OptIn.joins(:organizer_position).where(organizer_positions: { user_id: current_user.id }).select(:event_id)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event_id: reviewing_events, reviewer_id: nil).where.not(user: current_user)
     @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
   end
 

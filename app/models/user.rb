@@ -110,7 +110,6 @@ class User < ApplicationRecord
   has_many :mailbox_addresses
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
-  has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
   has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
@@ -148,7 +147,6 @@ class User < ApplicationRecord
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
-  has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
   has_many :jobs, as: :entity, class_name: "Employee"
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
@@ -333,10 +331,6 @@ class User < ApplicationRecord
     admin!
   end
 
-  def remove_admin!
-    user!
-  end
-
   def first_name(legal: false)
     @first_name ||= (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
   end
@@ -461,14 +455,28 @@ class User < ApplicationRecord
   def lock!
     update!(locked_at: Time.now)
 
+    stripe_cards.active.find_each(&:freeze!)
+
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
-    # Invalidate all API tokens
-    api_tokens.accessible.update_all(revoked_at: Time.current)
+    revoke_api_access!
   end
 
   def unlock!
+    # Tokens revoked by `lock!` stay revoked; OAuth apps have to be re-authorized.
     update!(locked_at: nil)
+  end
+
+  # Revokes every API token, not only the accessible ones: an expired OAuth
+  # access token keeps its refresh token on the same row, and Doorkeeper's
+  # refresh grant only checks that row's revocation, so skipping expired tokens
+  # would let OAuth clients keep minting new access tokens after a lock.
+  # Authorization codes and approved device codes can still be exchanged for a
+  # token too, so those go as well.
+  def revoke_api_access!
+    api_tokens.not_revoked.update_all(revoked_at: Time.current)
+    Doorkeeper::AccessGrant.where(resource_owner_id: id, revoked_at: nil).update_all(revoked_at: Time.current)
+    Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.where(resource_owner_id: id).delete_all
   end
 
   def onboarding?
@@ -708,12 +716,8 @@ class User < ApplicationRecord
     show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{full_name} (Email: #{email}, ID: #{id})" if admin
-
-    full_name.presence || email
+  def to_combobox_display
+    full_name.presence&.strip || email
   end
 
   def unverified?
@@ -725,7 +729,10 @@ class User < ApplicationRecord
   end
 
   def unassociated_payments_received
-    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
+    Payment.pending_legal_entity.joins(payee: [:legal_entity]).where(
+      "(payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email",
+      email:
+    ).distinct
   end
 
   def onboarding_contractor_positions
