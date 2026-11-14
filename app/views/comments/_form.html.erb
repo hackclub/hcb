@@ -57,11 +57,9 @@
 
   <% if commentable.shared_commentable? && !@comment&.persisted? %>
     <% disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement %>
-    <div data-controller="commentable"
-         data-commentable-shared-type-value="<%= commentable.shared_commentable.class.to_s %>"
-         data-commentable-shared-id-value="<%= commentable.shared_commentable.id %>">
-      <%= form.hidden_field :commentable_type, value: commentable.class.to_s, data: { "commentable-target": "commentableType" } %>
-      <%= form.hidden_field :commentable_id, value: commentable.id, data: { "commentable-target": "commentableId" } %>
+    <div>
+      <%= form.hidden_field :commentable_type, value: commentable.class.to_s %>
+      <%= form.hidden_field :commentable_id, value: commentable.id %>
       <%= form.hidden_field :return_to, value: url_for(only_path: false) %>
       <%= dropdown_button form:,
                           options: [

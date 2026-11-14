@@ -1,11 +1,12 @@
-<%= form_with(model: @card, data: { controller: "clear-field" }) do |form| %>
+<%= form_with(model: @card) do |form| %>
   <div class="field">
     <%= form.label :name %>
 
     <div class="flex gap-3 items-stretch">
-      <%= form.text_field :name, placeholder: "Online Retailers", data: { clear_field_target: "field" } %>
+      <%= form.text_field :name, placeholder: "Online Retailers" %>
       <% if @card.name.present? %>
-        <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" type="button" data-clear-field-target="button" data-action="clear-field#clear">
+        <%# Submits the form below, so Enter in the name field still saves. %>
+        <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" type="submit" form="clear_card_name">
           <%= inline_icon "delete", class: "!m-0" %>
         </button>
       <% end %>
@@ -15,4 +16,10 @@
   <div class="actions">
     <%= form.submit "Save" %>
   </div>
+<% end %>
+
+<% if @card.name.present? %>
+  <%= form_with(model: @card, id: "clear_card_name") do |form| %>
+    <%= form.hidden_field :name, value: "" %>
+  <% end %>
 <% end %>
