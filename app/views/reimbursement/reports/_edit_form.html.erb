@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= form_with(model: @report, local: true) do |form| %>
   <%= form.label :report_name, "Report name" %>
   <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
@@ -32,6 +34,11 @@
    <div class="field">
       <%= form.label :reviewer_id, "Assigned reviewer", class: "mt2" %>
       <%= form.collection_select :reviewer_id, @report.event.managers, :id, :name, include_blank: "Anyone" %>
+    </div>
+  <% elsif @report.reviewer_assignable_by_creator? && current_user == @report.user && (@report.submitted? || @report.draft?) %>
+    <div class="field">
+      <%= form.label :reviewer_id, "Reviewer", class: "mt2" %>
+      <%= form.collection_select :reviewer_id, @report.eligible_reviewers, :id, :name, include_blank: "No preference" %>
     </div>
   <% end %>
   <div class="flex items-center w-full justify-between">

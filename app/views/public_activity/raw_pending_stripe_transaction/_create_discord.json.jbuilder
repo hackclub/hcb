@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-current_user ||= local_assigns[:p][:current_user]
+# locals: (activity:, p:)
+
 hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code
 user = activity.user&.name
 

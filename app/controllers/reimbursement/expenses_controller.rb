@@ -7,8 +7,9 @@ module Reimbursement
     def create
       @report = Reimbursement::Report.find(params[:report_id])
 
-      type = params[:type] == "mileage" ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
-      @expense = @report.expenses.build(amount_cents: 0, type:)
+      mileage = params[:type] == "mileage"
+      type = mileage ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
+      @expense = @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage))
 
       authorize @expense
 
@@ -133,10 +134,6 @@ module Reimbursement
 
     def new_expense_turbo_stream
       turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
-    end
-
-    def delete_expense_turbo_stream
-      turbo_stream.remove(@expense)
     end
 
     def on_create_streams

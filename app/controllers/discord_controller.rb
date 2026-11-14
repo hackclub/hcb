@@ -27,7 +27,7 @@ class DiscordController < ApplicationController
       user_id = params[:event][:data][:user][:id]
 
       channel = Discord::Bot.bot.pm_channel(user_id)
-      Discord::Bot.bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(discord_id: user_id)}")
+      Discord::Bot.bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(signed_discord_id: Discord.generate_signed(user_id, purpose: :link_user, expires_in: 1.day))}")
     end
 
     head :no_content

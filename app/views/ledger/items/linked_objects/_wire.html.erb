@@ -68,6 +68,13 @@
         </p>
       <% end %>
 
+      <% if wire.uetr.present? %>
+        <p>
+          <strong>UETR</strong>
+          <%= link_to wire.uetr, wire_lookup_admin_index_path(uetr: wire.uetr), title: "Look up SWIFT tracking", data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Amount (<%= wire.currency %>)</strong>
         <%= Money.from_cents(wire.amount_cents, wire.currency).format %>
@@ -81,10 +88,11 @@
         <% end %>
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
     </section>
   </turbo-frame>
 
-  <% if admin_signed_in? && wire.may_mark_rejected? %>
+  <% if admin_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden">
       <% admin_tool "w-fit" do %>
         <%= button_to "Process", wire_process_admin_path(wire), class: "btn", method: :get, data: { turbo_frame: "_top" } %>

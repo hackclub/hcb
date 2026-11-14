@@ -34,6 +34,68 @@ RSpec.describe Rack::Attack, type: :request do
     !!Rack::Attack.blocklists.fetch(blocklist).block.call(request_for(path, **))
   end
 
+  describe "Request#ip" do
+    it "ignores a client-sent Forwarded header" do
+      request = request_for("/logins")
+      request.env["REMOTE_ADDR"] = "127.0.0.1"
+      request.env["HTTP_FORWARDED"] = "for=198.51.100.1"
+
+      expect(request.ip).to eq("127.0.0.1")
+      expect(::Rack::Request.new(request.env).ip).to eq("127.0.0.1")
+      expect(ActionDispatch::Request.new(request.env).remote_ip).to eq("127.0.0.1")
+    end
+
+    it "uses the address ActionDispatch::RemoteIp worked out" do
+      request = request_for("/logins")
+      request.env["action_dispatch.remote_ip"] = "198.51.100.2"
+
+      expect(request.ip).to eq("198.51.100.2")
+    end
+
+    it "still reads X-Forwarded-For from our proxies" do
+      env = Rack::MockRequest.env_for("/logins", "REMOTE_ADDR" => "10.0.0.5", "HTTP_X_FORWARDED_FOR" => "198.51.100.4")
+
+      expect(ActionDispatch::Request.new(env).remote_ip).to eq("198.51.100.4")
+    end
+
+    it "can't be spoofed into a safelist through a real request" do
+      office_ip = "198.51.100.3"
+      Rack::Attack.safelist("spec office") { |req| req.ip == office_ip }
+
+      post "/logins/abc123/complete", headers: { "Forwarded" => "for=#{office_ip}" }
+
+      expect(request.env["rack.attack.matched"]).not_to eq("spec office")
+    ensure
+      Rack::Attack.safelists.delete("spec office")
+    end
+  end
+
+  describe "logins/complete" do
+    it "throttles completions by IP and by Login" do
+      expect(discriminator("logins/complete/ip", "/logins/abc123/complete", method: "POST")).to eq("203.0.113.7")
+      expect(discriminator("logins/complete/login", "/logins/abc123/complete", method: "POST")).to eq("abc123")
+    end
+
+    it "ignores other login paths" do
+      ["/logins", "/logins/abc123/email", "/logins/abc123/complete/extra"].each do |path|
+        expect(discriminator("logins/complete/ip", path, method: "POST")).to be_nil, "expected #{path} not to be throttled"
+        expect(discriminator("logins/complete/login", path, method: "POST")).to be_nil, "expected #{path} not to be throttled"
+      end
+    end
+
+    it "blocks an IP once it has failed too many completions" do
+      key = Rack::Attack.login_complete_fail2ban_key("203.0.113.7")
+      options = Rack::Attack::LOGIN_COMPLETE_FAIL2BAN
+
+      (options[:maxretry] - 1).times { Rack::Attack::Fail2Ban.filter(key, options) { true } }
+      expect(blocklisted?("fail2ban failed login completions", "/logins/abc123/complete", method: "POST")).to be false
+
+      Rack::Attack::Fail2Ban.filter(key, options) { true }
+      expect(blocklisted?("fail2ban failed login completions", "/logins/abc123/complete", method: "POST")).to be true
+      expect(blocklisted?("fail2ban failed login completions", "/logins", method: "POST")).to be false
+    end
+  end
+
   describe "transparency/ledger/ip" do
     it "throttles anonymous reads of any organization's transactions" do
       [

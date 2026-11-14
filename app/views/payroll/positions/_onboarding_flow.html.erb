@@ -53,7 +53,7 @@
           <% end %>
         <% elsif actionable && perspective == :organizer && step[:key] == :organizer_signature %>
           <%= link_to "Sign contract",
-                contract_event_payroll_position_path(event_id: event.slug, id: position.id),
+                contract_payroll_position_path(position),
                 class: "btn btn-small bg-info nowrap", data: { turbo_frame: "_top" } %>
         <% elsif current %>
           <span class="onboarding-flow__status onboarding-flow__status--waiting nowrap">

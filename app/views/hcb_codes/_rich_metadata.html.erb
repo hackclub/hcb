@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%# donation %>
 <% if @hcb_code.donation? && @hcb_code.donation.present? %>
   <%= render partial: "hcb_codes/transaction_types/donation", locals: {} %>

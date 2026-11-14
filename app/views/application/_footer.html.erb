@@ -28,6 +28,8 @@
       <%= link_to_if !Build.commit_dirty?, build_info, "#{Rails.configuration.constants.github_url}/commit/#{Build.commit_hash}", target: "_blank" %>
       •
     <% end %>
+    <%= link_to "Help", "https://help.hcb.hackclub.com", target: "_blank", rel: "noopener" %>
+    •
     <%= link_to "Security", security_path %>
     •
     <%= link_to "API docs", docs_api_index_path %>

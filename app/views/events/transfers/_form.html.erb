@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= form_with(local: true) do |form| %>
   <div
     data-controller="transfer-form"
@@ -54,11 +56,11 @@
       <p class="eyebrow mb-0">Help me decide</p>
       <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
       <div class="flex gap-2">
-        <button type="button" class="btn shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
+        <button type="button" class="btn shadow-none" data-action="click->transfer-form#yesClickHandler">
           Yes
           <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
         </button>
-        <button type="button" class="btn shadow-none" data-transfer-form-target="no" data-action="click->transfer-form#noClickHandler">
+        <button type="button" class="btn shadow-none" data-action="click->transfer-form#noClickHandler">
           No
           <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
         </button>

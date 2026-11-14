@@ -48,6 +48,7 @@ class OrganizerPosition < ApplicationRecord
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
   has_many :tours, as: :tourable, dependent: :destroy
+  has_many :reimbursement_reviewer_opt_ins, class_name: "Event::ReimbursementReviewer::OptIn", dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
   validate :user_must_be_verified, on: :create
@@ -62,6 +63,11 @@ class OrganizerPosition < ApplicationRecord
 
   after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
   after_destroy :remove_payroll_managers
+  after_create :opt_in_to_reimbursement_reviews, if: :manager?
+  after_update :opt_in_to_reimbursement_reviews, if: -> { role_previously_changed?(to: :manager) }
+  after_update :opt_out_of_reimbursement_reviews, if: -> { role_previously_changed?(from: :manager) }
+
+  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
 
   def tourable_options
     {
@@ -111,6 +117,16 @@ class OrganizerPosition < ApplicationRecord
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
     end
+  end
+
+  # Managers review their own organization's reimbursement reports unless
+  # they opt out in its settings
+  def opt_in_to_reimbursement_reviews
+    reimbursement_reviewer_opt_ins.find_or_create_by!(event:)
+  end
+
+  def opt_out_of_reimbursement_reviews
+    reimbursement_reviewer_opt_ins.destroy_all
   end
 
   def remove_payroll_managers

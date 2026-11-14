@@ -75,6 +75,18 @@ describe LoginCodeService::Request do
     end
   end
 
+  it "invalidates codes sent earlier, so only the newest one works" do
+    user = create(:user)
+    allow(LoginCodeMailer).to receive(:send_code).and_return(double(deliver_now: true))
+
+    first = described_class.new(email: user.email, ip_address:, user_agent:).run[:login_code]
+    second = described_class.new(email: user.email, ip_address:, user_agent:).run[:login_code]
+
+    expect(first.reload).not_to be_active
+    expect(second.reload).to be_active
+    expect(user.login_codes.active).to contain_exactly(second)
+  end
+
   context "errors" do
     context "when user has an error" do
       it "does not save the user, does not create a login code and returns an error" do

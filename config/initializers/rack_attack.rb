@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class Rack::Attack
+  # Every rule below keys on `req.ip`, so it has to be an address the client
+  # can't choose, which ActionDispatch::RemoteIp works out
+  class Request < ::Rack::Request
+    def ip
+      (env["action_dispatch.remote_ip"] || env["REMOTE_ADDR"]).to_s
+    end
+
+  end
+
   ### Configure Cache ###
 
   # If you don't want to use Rails.cache (Rack::Attack's default), then
@@ -155,6 +164,38 @@ class Rack::Attack
     end
   end
 
+  # POST /logins/:id/complete is where codes get guessed. The app caps wrong
+  # email codes per Login and per user (see ProcessLoginService); these are a
+  # cheaper layer in front of that. Legitimate users post here once per factor,
+  # plus the odd typo.
+  LOGIN_COMPLETE_PATH = /\A\/logins\/(?<hashid>[^\/]+)\/complete\z/
+
+  throttle("logins/complete/ip", limit: 20, period: 1.minute) do |req|
+    req.ip if req.post? && LOGIN_COMPLETE_PATH.match?(req.path)
+  end
+
+  throttle("logins/complete/login", limit: 10, period: 5.minutes) do |req|
+    if req.post? && (m = req.path.match(LOGIN_COMPLETE_PATH))
+      m[:hashid]
+    end
+  end
+
+  # Only the app knows whether an attempt failed, so LoginsController#complete
+  # records failures with `Fail2Ban.filter` (LOGIN_COMPLETE_FAIL2BAN) and this
+  # rule turns away an IP once it's banned. Spraying guesses across many
+  # accounts gets past the per-user cap, but not this.
+  LOGIN_COMPLETE_FAIL2BAN = { maxretry: 30, findtime: 15.minutes, bantime: 1.hour }.freeze
+
+  def self.login_complete_fail2ban_key(ip)
+    "logins/complete/ip:#{ip}"
+  end
+
+  blocklist("fail2ban failed login completions") do |req|
+    req.post? &&
+      LOGIN_COMPLETE_PATH.match?(req.path) &&
+      Rack::Attack::Fail2Ban.banned?(login_complete_fail2ban_key(req.ip))
+  end
+
   # Throttle POST requests to SMS verification by IP address
   throttle("sms_verify/ip", limit: 5, period: 8.hours) do |req|
     if req.path == "/users/start_sms_auth_verification" && req.post?
@@ -233,6 +274,24 @@ class Rack::Attack
     req.ip if req.path.match?(ledger_path)
   end
 
+  # Prevention against too many TaxBandits API calls and abuse
+  tax_form_download_path = %r{
+    \A/tax_forms/
+    (?<hashid>[^/]+)/download
+    (?:\.[^/]*)?                  # `(.:format)` reaches the same action
+    /?\z
+  }x
+
+  throttle("tax_forms/download/ip", limit: 10, period: 1.minute) do |req|
+    req.ip if req.get? && req.path.match?(tax_form_download_path)
+  end
+
+  throttle("tax_forms/download/form", limit: 5, period: 1.minute) do |req|
+    if req.get? && (m = req.path.match(tax_form_download_path))
+      m[:hashid]
+    end
+  end
+
   # Lockout IP addresses that are hammering your donation page.
   # After 5 requests in 30 seconds, block all requests from that IP for 3 hours.
   blocklist("allow2ban donation scrapers") do |req|
@@ -247,4 +306,6 @@ class Rack::Attack
 
 end
 
-Rack::Attack.enabled = Rails.env.production? # only enable in production
+# Only enable in production, unless RACK_ATTACK_ENABLED=true is set to try the
+# rules out locally (also run `bin/rails dev:cache`, or nothing gets counted).
+Rack::Attack.enabled = Rails.env.production? || ENV["RACK_ATTACK_ENABLED"] == "true"

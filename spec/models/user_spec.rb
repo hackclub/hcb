@@ -277,10 +277,57 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback") }
+
     it "locks" do
       user = create(:user, locked_at: nil)
       user.lock!
       expect(user).to be_locked
+    end
+
+    it "revokes every API token, including expired ones that still hold a refresh token" do
+      user = create(:user)
+      live = create(:api_token, user:, application:, use_refresh_token: true)
+      expired = create(:api_token, user:, application:, use_refresh_token: true, expires_in: 1, created_at: 3.hours.ago)
+      personal = create(:api_token, user:, expires_in: nil)
+
+      user.lock!
+
+      expect([live, expired, personal].each(&:reload)).to all(be_revoked)
+    end
+
+    it "revokes outstanding authorization codes and device codes" do
+      user = create(:user)
+      grant = Doorkeeper::AccessGrant.create!(application:, resource_owner_id: user.id, expires_in: 600, redirect_uri: application.redirect_uri, scopes: "read")
+      device_grant = Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.create!(application:, resource_owner_id: user.id, expires_in: 300, scopes: "read")
+
+      user.lock!
+
+      expect(grant.reload).to be_revoked
+      expect(Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.exists?(device_grant.id)).to be(false)
+    end
+
+    it "freezes every active card and leaves frozen and canceled ones alone" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:)
+      active_cards = create_list(:stripe_card, 2, :with_stripe_id, stripe_cardholder: cardholder, initially_activated: true)
+      frozen_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "inactive", initially_activated: true)
+      canceled_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "canceled")
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      active_cards.each do |card|
+        expect(StripeService::Issuing::Card).to receive(:update).with(card.stripe_id, status: :inactive)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).with(id: card.stripe_id).and_return(
+          Stripe::Issuing::Card.construct_from(id: card.stripe_id, status: "inactive", brand: "Visa", exp_month: 2, exp_year: 2030, last4: card.last4, type: "virtual", shipping: nil, spending_controls: { spending_limits: [] })
+        )
+      end
+
+      user.lock!
+
+      expect(active_cards.each(&:reload)).to all(be_frozen)
+      expect(active_cards.map(&:last_frozen_by)).to all(eq(User.system_user))
+      expect(frozen_card.reload.last_frozen_by).to be_nil
+      expect(canceled_card.reload).to be_canceled
     end
   end
 
