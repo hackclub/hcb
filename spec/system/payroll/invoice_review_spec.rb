@@ -149,6 +149,25 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(page).to have_no_button("Reject", visible: :all)
     end
 
+    it "keeps the review actions on screen when the details outgrow the modal" do
+      manager.update!(access_level: :admin) # only admins see a receipt's extracted text
+      invoice = create_invoice("Week 1 hours")
+      invoice.receipts.sole.update_columns(textual_content: "A very long line of extracted text\n" * 2000)
+      page.driver.resize(1000, 700)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      on_screen = within_invoice_modal(invoice) do
+        page.evaluate_script(<<~JS, find_button("Approve"))
+          (button => {
+            const { left, top, bottom, width, height } = button.getBoundingClientRect()
+            return bottom <= window.innerHeight && document.elementFromPoint(left + width / 2, top + height / 2) === button
+          })(arguments[0])
+        JS
+      end
+      expect(on_screen).to be(true)
+    end
+
     it "opens the invoice above the contractor popover on the contractors page" do
       invoice = create_invoice("Week 1 hours")
       visit_without_animations event_contractors_path(event_id: event.slug)

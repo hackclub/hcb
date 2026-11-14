@@ -140,8 +140,10 @@
         </div>
       <% end %>
 
-      <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column; overflow-y: auto;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
-        <%= render partial: "receipts/details", locals: { receipt: } %>
+      <div style="border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+        <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0;">
+          <%= render partial: "receipts/details", locals: { receipt: } %>
+        </div>
         <%= local_assigns[:details_footer] %>
       </div>
     </div>
@@ -161,6 +163,9 @@
         </div>
       </ul>
 
+      <%# Above the tabs' content, which can run past the bottom of the screen %>
+      <%= local_assigns[:details_footer] %>
+
         <% if receipt.file.blob.content_type == "application/pdf" %>
           <iframe data-receipt-tabs-target="preview" data-src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
         <% else %>
@@ -171,7 +176,6 @@
 
         <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
           <%= render partial: "receipts/details", locals: { receipt: } %>
-          <%= local_assigns[:details_footer] %>
         </div>
 
     </div>

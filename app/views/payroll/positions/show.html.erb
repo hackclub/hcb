@@ -178,7 +178,7 @@
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">
                     <% receipts.each do |receipt| %>
-                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "sticky bottom-0 mt-auto -mb-6 pt-3 pb-6 bg-white dark:bg-dark") %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
                     <% end %>
                   </div>
                 <% else %>
