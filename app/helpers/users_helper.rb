@@ -40,6 +40,15 @@ module UsersHelper
       selected: selected == :cards,
     }
 
+    if current_user&.recurring_donations&.any?
+      items << {
+        name: "Recurring donations",
+        path: my_recurring_donations_path,
+        icon: "support-recurring",
+        tooltip: "Manage your recurring donations",
+        selected: selected == :recurring_donations
+      }
+    end
 
     if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
       items << {
