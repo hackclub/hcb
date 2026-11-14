@@ -340,7 +340,7 @@ module Payroll
     end
 
     def contractable_link_path
-      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
+      Rails.application.routes.url_helpers.payroll_position_path(self)
     end
 
     # The contractor isn't emailed when the contract is sent; they're notified
