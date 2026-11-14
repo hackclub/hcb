@@ -115,7 +115,7 @@ RSpec.describe Payroll::PositionsController do
       original_contract = position.contracts.sole
 
       patch :update, params: {
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "25.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -131,7 +131,7 @@ RSpec.describe Payroll::PositionsController do
       stub_docuseal_fetch(submission_id: "REISSUED")
 
       patch :update, params: {
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -150,7 +150,7 @@ RSpec.describe Payroll::PositionsController do
       # resend to DocuSeal fails — nothing not-voided exists afterwards, and
       # the failed attempt itself is left voided (linked back to the original).
       patch :update, params: {
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
       expect(original_contract.reload).to be_voided
@@ -166,7 +166,7 @@ RSpec.describe Payroll::PositionsController do
       stub_docuseal_fetch(submission_id: "REISSUED")
 
       patch :update, params: {
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -178,7 +178,7 @@ RSpec.describe Payroll::PositionsController do
       position.contracts.sole.update_column(:aasm_state, "signed")
 
       patch :update, params: {
-        id: position.id,
+        id: position.hashid,
         contractor: { title: "New title", rate: "999.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -201,7 +201,7 @@ RSpec.describe Payroll::PositionsController do
     it "shows the signing embed to the user who created the invite" do
       position.send_contract(organizer_user: user)
 
-      get :contract, params: { id: position.id }
+      get :contract, params: { id: position.hashid }
 
       expect(response.body).to include("docuseal-form")
     end
@@ -211,14 +211,18 @@ RSpec.describe Payroll::PositionsController do
       create(:organizer_position, user: other_organizer, event:, role: :manager)
       position.send_contract(organizer_user: other_organizer)
 
-      get :contract, params: { id: position.id }
+      get :contract, params: { id: position.hashid }
 
       expect(response.body).not_to include("docuseal-form")
       expect(response.body).to include("Waiting on")
     end
 
+    it "doesn't look positions up by numeric id" do
+      expect { get :contract, params: { id: position.id } }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
     it "redirects to edit when no active contract exists yet" do
-      get :contract, params: { id: position.id }
+      get :contract, params: { id: position.hashid }
 
       expect(response).to redirect_to(edit_payroll_position_path(position))
       expect(flash[:error]).to be_present
@@ -239,7 +243,7 @@ RSpec.describe Payroll::PositionsController do
     end
 
     it "doesn't update the position, even when an event the user manages is passed" do
-      patch :update, params: { event_id: event.slug, id: position.id, contractor: { title: "New title", rate: "999.00" } }
+      patch :update, params: { event_id: event.slug, id: position.hashid, contractor: { title: "New title", rate: "999.00" } }
 
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(position.reload.title).not_to eq("New title")
@@ -247,7 +251,7 @@ RSpec.describe Payroll::PositionsController do
     end
 
     it "doesn't terminate the position" do
-      post :terminate, params: { id: position.id }
+      post :terminate, params: { id: position.hashid }
 
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(position.reload).not_to be_terminated

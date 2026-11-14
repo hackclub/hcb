@@ -175,8 +175,8 @@
                 <td class="text-right">
                   <% if invoice.submitted? %>
                     <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_payroll_invoice_path(invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_payroll_invoice_path(invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+                      <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+                      <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
                     </div>
                   <% end %>
                 </td>

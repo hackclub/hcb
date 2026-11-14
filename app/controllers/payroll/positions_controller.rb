@@ -144,7 +144,7 @@ module Payroll
     private
 
     def set_position
-      @position = Payroll::Position.find(params[:id])
+      @position = Payroll::Position.find_by_hashid!(params[:id])
       @event = @position.event
     end
 

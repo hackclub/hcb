@@ -91,11 +91,11 @@ module Payroll
     # signed-in user belongs to the position's legal entity) is enforced by
     # Payroll::InvoicePolicy when we authorize the built invoice.
     def set_position
-      @position = Payroll::Position.find(params[:payroll_position_id])
+      @position = Payroll::Position.find_by_hashid!(params[:payroll_position_id])
     end
 
     def set_invoice
-      @invoice = Payroll::Invoice.find(params[:id])
+      @invoice = Payroll::Invoice.find_by_hashid!(params[:id])
       @event = @invoice.event
     end
 
