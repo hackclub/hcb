@@ -2,7 +2,14 @@
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
 
-<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
+<%# When a `style` local is given, browsers keep that first `style` attribute and drop the second. %>
+<div id="receipt_<%= receipt.id %>"
+     class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>"
+     <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %>
+     <% if defined?(style) %> style="<%= j style %>"<% end %>
+     data-receipt-id="<%= receipt.id %>"
+     style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<%= " cursor: pointer;" if defined?(selectable) %>"
+     <% if defined?(selectable) %> data-receipt-select-target="receipt" data-action="click->receipt-select#select"<% end %>>
 
 <% unless defined?(hide_info) %>
   <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">

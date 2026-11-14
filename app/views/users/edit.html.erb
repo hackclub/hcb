@@ -98,7 +98,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
         <%= javascript_include_tag "phone_input.js" %>
-        </section>
 
         <% if @user.phone_number_in_database.present? %>
           <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
@@ -158,7 +157,7 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" data-persisted-phone-number="<%= @user.phone_number.presence %>" <%= "disabled" if disabled %>>
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" data-persisted-phone-number="<%= @user.phone_number.presence %>" <% if disabled %> disabled<% end %>>
           <p id="unsaved-phone-message" style="display: none;" class="h5 mt1 m0 warning flex items-center">
             <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
             <span>Please save to update the phone number.</span>
