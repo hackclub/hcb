@@ -47,6 +47,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Wire < ApplicationRecord
+  SMALL_WIRE_FEE_AMOUNT_CENTS = 25_00
+
   has_paper_trail
   include HasPaperTrailHelpers
 

@@ -1,0 +1,24 @@
+<p>Hello,</p>
+
+<p>
+  Your payment of <%= @payment.amount.format(with_currency: true) %> to <%= @payment.payee.display_name %>
+  for <i>"<%= @payment.purpose %>"</i> has been sent.
+</p>
+
+<% if @attempt.payout.is_a?(Wire) %>
+  <p>
+    Since the payment was under $500 and sent as a wire transfer,
+    a fee of <%= render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS %> was also charged to <%= @payment.event.name %>.
+  </p>
+<% elsif @attempt.payout.is_a?(WiseTransfer) %>
+  <p>
+    Since the payment was sent as a Wise transfer,
+    a fee of <%= render_money @fee %> was charged to <%= @payment.event.name %>.
+  </p>
+<% end %>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
