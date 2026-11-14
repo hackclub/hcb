@@ -6,60 +6,58 @@
 
 <% disabled = !policy(event).update? %>
 
-<%= turbo_frame_tag :donations_settings do %>
-  <%= form_with(model: event, local: true, class: frame ? "" : "card") do |form| %>
-    <%= form_errors event, "organization" %>
-    <%= form.hidden_field :tab, value: "donations" %>
-    <% unless event.unapproved? %>
-      <div>
-        <div class="field field--checkbox">
-          <span style="font-weight: 700">Enable donations to <%= event.name %></span>
-          <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-            <%= form.label :donation_page_enabled do %>
-              <%= form.check_box :donation_page_enabled,
-                data: { herb_set: "change->donations_enabled=$value" },
-                disabled:,
-                switch: true %>
-              <span class="slider"></span>
-            <% end %>
-          </div>
-        </div>
-        <div hidden="<%= !donations_enabled %>">
-          <div class="menu__divider m-0 mb-4"></div>
-          <div class="field">
-            <%= form.label :donation_page_message, "Message to show on donation page" %>
-            <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: %>
-            <%= inline_icon "markdown", size: 32, class: "muted right" %>
-          </div>
-          <div class="field">
-            <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
-            <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: %>
-            <%= inline_icon "markdown", size: 32, class: "muted right" %>
-          </div>
-          <div class="field">
-            <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
-            <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: %>
-          </div>
-          <%= form.fields_for :config do |config| %>
-            <div class="field field--checkbox">
-              <%= config.check_box :anonymous_donations, disabled:, switch: true %>
-              <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
-            </div>
-            <% if event.revenue_fee > 0 %>
-              <div class="field field--checkbox">
-                <%= config.check_box :cover_donation_fees, disabled:, switch: true %>
-                <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
-              </div>
-            <% end %>
+<%= form_with(model: event, local: true, class: frame ? "" : "card") do |form| %>
+  <%= form_errors event, "organization" %>
+  <%= form.hidden_field :tab, value: "donations" %>
+  <% unless event.unapproved? %>
+    <div>
+      <div class="field field--checkbox">
+        <span style="font-weight: 700">Enable donations to <%= event.name %></span>
+        <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+          <%= form.label :donation_page_enabled do %>
+            <%= form.check_box :donation_page_enabled,
+              data: { herb_set: "change->donations_enabled=$value" },
+              disabled:,
+              switch: true %>
+            <span class="slider"></span>
           <% end %>
         </div>
-        <%= form.submit "Update", disabled:, data: { turbo_frame: "_top" } %>
       </div>
-    <% end %>
+      <div hidden="<%= !donations_enabled %>">
+        <div class="menu__divider m-0 mb-4"></div>
+        <div class="field">
+          <%= form.label :donation_page_message, "Message to show on donation page" %>
+          <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: %>
+          <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        </div>
+        <div class="field">
+          <%= form.label :donation_thank_you_message, "Thank you message to donors" %>
+          <%= form.text_area :donation_thank_you_message, class: "w-100 fit", disabled: %>
+          <%= inline_icon "markdown", size: 32, class: "muted right" %>
+        </div>
+        <div class="field">
+          <%= form.label :donation_reply_to_email, "Reply-to email for donation receipts" %>
+          <%= form.text_field :donation_reply_to_email, type: "email", placeholder: "fiona@hackclub.com", class: "w-100 fit", disabled: %>
+        </div>
+        <%= form.fields_for :config do |config| %>
+          <div class="field field--checkbox">
+            <%= config.check_box :anonymous_donations, disabled:, switch: true %>
+            <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
+          </div>
+          <% if event.revenue_fee > 0 %>
+            <div class="field field--checkbox">
+              <%= config.check_box :cover_donation_fees, disabled:, switch: true %>
+              <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+      <%= form.submit "Update", disabled:, data: { turbo_frame: "_top" } %>
+    </div>
   <% end %>
-
-  <%= render "events/settings/donation_goals", event:, frame: %>
-
-  <%= render "events/settings/donation_tiers", event:, frame: %>
-  <%= render "events/settings/donation_stats", disabled:, event:, frame: %>
 <% end %>
+
+<%= render "events/settings/donation_goals", event:, frame: %>
+
+<%= render "events/settings/donation_tiers", event:, frame: %>
+<%= render "events/settings/donation_stats", disabled:, event:, frame: %>
