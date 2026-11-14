@@ -125,6 +125,25 @@ RSpec.describe Export::Ledger::Item do
         expect(build_export(as: :ledger).content).to include("Expenses:Bakeries")
       end
 
+      it "keeps the merchant for organizers even when Stripe sent no category" do
+        charge = charge_at(nil, memo: "Mystery").linked_object
+        merchant_name = charge.merchant_data["name"]
+
+        content = build_export(as: :ledger).content
+
+        expect(content).to include("Expenses:CardCharge", merchant_name)
+      end
+
+      it "hides the merchant from transparency viewers" do
+        charge = charge_at("bakeries", memo: "Bread").linked_object
+        merchant_name = charge.merchant_data["name"]
+
+        content = build_export(as: :ledger, public_only: true).content
+
+        expect(content).to include("Expenses:CardCharge")
+        expect(content).not_to include(merchant_name)
+      end
+
       it "reads merchants without a query per charge" do
         charge_at("bakeries", memo: "Bread")
         queries_to_export # the first export pays for one-time caches; measure the second

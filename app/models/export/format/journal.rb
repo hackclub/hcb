@@ -25,14 +25,16 @@ class Export
 
         category = if row.merchant.nil?
                      "Transfer"
-                   elsif public_only || row.merchant["category"].blank?
-                     # Transparency viewers get the shape of the charge without
-                     # naming the merchant it was made at.
-                     "CardCharge"
                    else
-                     metadata[:merchant] = row.merchant
-                     metadata[:comments] = row.comments
-                     row.merchant["category"].humanize.titleize.delete(" ")
+                     # Transparency viewers get the shape of the charge without
+                     # the merchant it was made at. Organizers get the merchant
+                     # whether or not Stripe categorized it.
+                     unless public_only
+                       metadata[:merchant] = row.merchant
+                       metadata[:comments] = row.comments
+                     end
+
+                     merchant_category(row.merchant)
                    end
 
         ::LedgerJournal::Transaction.new(
@@ -49,6 +51,12 @@ class Export
           payee: row.memo,
           postings: [posting(account: "Income:#{row.income_type}", row:)]
         )
+      end
+
+      def merchant_category(merchant)
+        return "CardCharge" if public_only || merchant["category"].blank?
+
+        merchant["category"].humanize.titleize.delete(" ")
       end
 
       def posting(account:, row:)
