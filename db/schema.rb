@@ -2716,7 +2716,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.string "external_service", null: false
     t.datetime "failed_at"
     t.string "form_type"
-    t.bigint "legal_entity_id"
+    t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "signing_url"
     t.string "source", default: "taxbandits", null: false

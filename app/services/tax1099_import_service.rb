@@ -84,25 +84,34 @@ class Tax1099ImportService
     # there is no taking it back, so the form must be certain to land somewhere.
     validate_legal_entity_choice!
 
-    # Staged before the form exists so that a rejected upload (too large, not a
-    # PDF) doesn't leave an orphaned Tax::Form behind.
+    # Staged before anything is created so that a rejected upload (too large,
+    # not a PDF) doesn't leave an orphaned user, legal entity, or form behind.
     pdf_token = Tax::W9PdfStore.store(@pdf)
 
-    form = Tax::Form.create!(external_service: :taxbandits, source: :tax1099)
+    # The user, legal entity, and form are all created before TaxBandits is
+    # contacted, so that once it has accepted the submission the form is
+    # guaranteed to already sit on a legal entity: there is nothing left that
+    # could fail and strand it. The TaxBandits call happens inside the
+    # transaction so that a rejected submission rolls all of them back.
+    submitted = false
+    form, legal_entity = begin
+      ActiveRecord::Base.transaction do
+        legal_entity = find_or_create_legal_entity!
+        form = Tax::Form.create!(external_service: :taxbandits, source: :tax1099, legal_entity:)
 
-    begin
-      response = TaxbanditsService.create_from_data(build_payload(form, @pdf_url_builder.call(pdf_token)))
-    rescue => e
+        response = submit!(form, pdf_token)
+        submitted = true
+        form.update!(external_id: response["SubmissionId"])
+
+        [form, legal_entity]
+      end
+    rescue
       # Nothing will ever fetch this PDF now, so don't leave it sitting out its
-      # TTL in the cache.
-      Tax::W9PdfStore.discard(pdf_token)
-      form.destroy!
-      raise SubmissionError, "TaxBandits rejected the submission: #{scrub(e.message)}", cause: nil
+      # TTL in the cache. Once TaxBandits has accepted the submission it may
+      # still re-read the PDF within the grace window, so leave it alone then.
+      Tax::W9PdfStore.discard(pdf_token) unless submitted
+      raise
     end
-
-    form.update!(external_id: response["SubmissionId"])
-
-    legal_entity = assign_legal_entity!(form)
 
     # The recipient never visits TaxBandits themselves (create_from_data already
     # submitted the completed form data on their behalf), so nothing will ever
@@ -239,23 +248,24 @@ class Tax1099ImportService
     }
   end
 
-  # Associates the form with a legal entity by email, same as the console script
-  # this replaces: SSNs go on the user's personal legal entity, EINs go on the
-  # business entity the admin picked or, failing that, a new one. The choice was
-  # already validated by #validate_legal_entity_choice!.
-  def assign_legal_entity!(form)
+  # Finds the legal entity the form belongs on by email, same as the console
+  # script this replaces: SSNs go on the user's personal legal entity, EINs go
+  # on the business entity the admin picked or, failing that, a new one. The
+  # choice was already validated by #validate_legal_entity_choice!.
+  def find_or_create_legal_entity!
     user = User.find_or_create_by!(email: @data[:email])
 
-    legal_entity =
-      if entity_type == :person
-        user.personal_legal_entity
-      else
-        @legal_entity || LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
-      end
+    if entity_type == :person
+      user.personal_legal_entity
+    else
+      @legal_entity || LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
+    end
+  end
 
-    form.update!(legal_entity:)
-
-    legal_entity
+  def submit!(form, pdf_token)
+    TaxbanditsService.create_from_data(build_payload(form, @pdf_url_builder.call(pdf_token)))
+  rescue => e
+    raise SubmissionError, "TaxBandits rejected the submission: #{scrub(e.message)}", cause: nil
   end
 
   # Faraday's raise_error middleware puts the whole response body in the error

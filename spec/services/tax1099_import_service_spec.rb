@@ -69,6 +69,31 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  it "has already put the form on its legal entity by the time TaxBandits is contacted" do
+    legal_entity_at_submission = :not_called
+    allow(TaxbanditsService).to receive(:create_from_data) do |payload|
+      legal_entity_at_submission = Tax::Form.find_by_public_id(payload["PayeeRef"]).legal_entity
+      { "SubmissionId" => "sub-1" }
+    end
+
+    result = run
+
+    expect(legal_entity_at_submission).to eq(result.legal_entity)
+  end
+
+  describe "when the legal entity can't be created" do
+    before { allow(LegalEntity).to receive(:create!).and_raise(ActiveRecord::RecordInvalid) }
+
+    it "neither contacts TaxBandits nor leaves the staged PDF behind" do
+      allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+      expect { run(data: business_data) }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+      expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
   describe "the TaxBandits payload" do
     it "hands over a one-time PdfUrl that serves the uploaded PDF" do
       run
@@ -219,7 +244,17 @@ RSpec.describe Tax1099ImportService do
     end
 
     it "leaves no form behind" do
-      expect { run rescue nil }.not_to change(Tax::Form, :count)
+      expect { run rescue nil }.not_to change(Tax::Form.with_deleted, :count)
+    end
+
+    it "leaves no user or legal entity behind" do
+      users = User.count
+      legal_entities = LegalEntity.count
+
+      run(data: business_data) rescue nil
+
+      expect(User.count).to eq(users)
+      expect(LegalEntity.count).to eq(legal_entities)
     end
 
     it "discards the staged PDF instead of leaving it to sit out its TTL" do

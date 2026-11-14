@@ -28,7 +28,7 @@
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
-#  legal_entity_id                :bigint
+#  legal_entity_id                :bigint           not null
 #
 # Indexes
 #
@@ -48,7 +48,7 @@ module Tax
     acts_as_paranoid
     has_paper_trail
 
-    belongs_to :legal_entity, optional: true
+    belongs_to :legal_entity
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
