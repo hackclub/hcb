@@ -4,6 +4,10 @@ class ExportsController < ApplicationController
   include SetEvent
   include SetLedgerFilters
   before_action :set_event, only: [:transactions, :reimbursements, :ledger]
+  # Before the filters resolve: resolving them is expensive (merchants alone
+  # load every transaction in the organization), so settle whether the
+  # requester may see the ledger at all first.
+  before_action :authorize_ledger, only: [:ledger]
   before_action :set_ledger_filters, only: [:ledger]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
@@ -89,8 +93,6 @@ class ExportsController < ApplicationController
   # what the ledger page is showing: the query carrying the user's filters is
   # what generates the file.
   def ledger
-    authorize @event, :show?
-
     respond_to do |format|
       # One block per format, so the format comes from the block respond_to
       # chose. Neither params[:format] (nil without a path extension) nor
@@ -123,6 +125,7 @@ class ExportsController < ApplicationController
     if !params[:event_slug] || !params[:file_extension]
       redirect_to root_path and return
     end
+
     @event_slug = params[:event_slug]
     @file_extension = params[:file_extension]
     # Only signed-out readers land here (a signed-in user always has an address
@@ -140,6 +143,10 @@ class ExportsController < ApplicationController
   end
 
   private
+
+  def authorize_ledger
+    authorize @event, :show?
+  end
 
   def export_ledger(as:)
     @export = ledger_query.export(

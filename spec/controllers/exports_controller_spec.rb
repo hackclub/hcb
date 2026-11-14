@@ -110,6 +110,20 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to end_with(".csv")
     end
 
+    context "when signed in without access to the organization" do
+      let(:private_event) { create(:event, is_public: false) }
+
+      before { create_session(create(:user), verified: true) }
+
+      it "refuses before resolving the filters" do
+        expect_any_instance_of(Event).not_to receive(:merchants)
+
+        get :ledger, params: { event: private_event.slug, merchant: "abc" }, format: :csv
+
+        expect(response).not_to be_successful
+      end
+    end
+
     context "when signed out" do
       before { cookies.delete(:session_token) }
 
