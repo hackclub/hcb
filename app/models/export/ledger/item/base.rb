@@ -31,7 +31,8 @@ class Export
       # from request params on the other side.
       #
       # Each item becomes an Export::Row, and an Export::Format turns the rows
-      # into the file. Subclasses only say which format, as FORMAT.
+      # into the file. Subclasses say which format, as FORMAT, and which
+      # associations their rows read beyond the defaults, as `preloads`.
       class Base < Export
         include ::Export::Formatted
 
@@ -39,10 +40,6 @@ class Export
 
         # Past this many items we email the export rather than serving it inline.
         ASYNC_THRESHOLD = 300
-
-        # Everything a row reads off an item, preloaded so a large export
-        # doesn't turn into one query per transaction.
-        PRELOADS = [:tags, :comments, { canonical_transactions: :category, canonical_pending_transactions: :category }].freeze
 
         def async?
           return @async if defined?(@async)
@@ -64,11 +61,22 @@ class Export
 
         private
 
-        # A chance to load anything a subclass's rows need beyond PRELOADS.
+        # What a row reads off an item, preloaded so a large export doesn't
+        # turn into one query per transaction. Only what the format will use:
+        # a 50,000-item export shouldn't materialize categories it never shows.
+        def preloads
+          [:tags, :comments]
+        end
+
+        # A chance to load anything a subclass's rows need beyond `preloads`.
         def prepare(_items); end
 
+        # Only the CSV shows categories, and reading them means loading every
+        # canonical transaction behind every item.
+        def category_for(_item) = nil
+
         def items
-          @items ||= ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true).preload(*PRELOADS)
+          @items ||= ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true).preload(*preloads)
         end
 
         def rows
@@ -88,7 +96,7 @@ class Export
             tags: item.tags.select { |tag| tag.event_id == event_id.to_i }.map(&:label),
             comments: item.comments.reject(&:admin_only?).map(&:content),
             author: item.author,
-            category: item.category,
+            category: category_for(item),
             merchant: merchant_for(item),
             income_type: income_type_for(item)
           )

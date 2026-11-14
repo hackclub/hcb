@@ -27,10 +27,15 @@ class Export
 
         private
 
+        # The journal shows no tags.
+        def preloads
+          [:comments]
+        end
+
         # A card charge reads its merchant off the raw Stripe transactions behind
-        # it, which PRELOADS doesn't reach (it stops at the linked object). Load
-        # them in one query per association rather than one pair of queries per
-        # charge.
+        # it, which `preloads` doesn't reach (it stops at the linked object).
+        # Load them in one query per association rather than one pair of
+        # queries per charge.
         def prepare(items)
           card_charges = items.filter_map { |item| item.linked_object if item.linked_object_type == "CardCharge" }
           return if card_charges.empty?

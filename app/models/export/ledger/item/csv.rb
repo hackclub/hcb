@@ -25,6 +25,16 @@ class Export
       class Csv < Base
         FORMAT = ::Export::Format::Csv
 
+        private
+
+        def preloads
+          super + [{ canonical_transactions: :category, canonical_pending_transactions: :category }]
+        end
+
+        def category_for(item)
+          item.category
+        end
+
       end
     end
   end
