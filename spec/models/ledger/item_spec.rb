@@ -569,6 +569,72 @@ RSpec.describe Ledger::Item, type: :model do
 
       expect(Ledger::Item.exists?(item.id)).to be(true)
     end
+
+    it "rolls the whole merge back when something else still references the absorbed item" do
+      ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
+      Admin::LedgerAudit::Task.create!(ledger_item: other)
+
+      expect { item.absorb(other) }.to raise_error(ActiveRecord::InvalidForeignKey)
+
+      expect(Ledger::Item.exists?(other.id)).to be(true)
+      expect(ct.reload.ledger_item).to eq(other)
+      expect(Ledger::Mapping.where(ledger_item_id: other.id)).to exist
+      expect(item.reload.canonical_transactions).to be_empty
+    end
+
+    # #absorb destroys the absorbed item, so every association on Ledger::Item
+    # has to be accounted for: moved to the absorbing item, destroyed with the
+    # absorbed one, allowed to block the merge, or shown to need nothing.
+    # Adding an association to the model fails this spec until it has been
+    # thought through (and #absorb changed, if it has to do something about
+    # it) and recorded here with the outcome.
+    it "accounts for every association on the absorbed item" do
+      considered = {
+        # Moved to the absorbing item, one at a time through the CT/CPT
+        # callbacks, so both items are touched and PaperTrail records the move.
+        canonical_transactions: "moved",
+        canonical_pending_transactions: "moved",
+
+        # Destroyed with the absorbed item.
+        ledger_mappings: "destroyed first; they reference the item with a plain foreign key",
+        primary_mapping: "subset of ledger_mappings",
+        primary_ledger: "through primary_mapping; the ledger itself is untouched",
+        all_ledgers: "through ledger_mappings; the ledgers themselves are untouched",
+        tasks: "dependent: :destroy (IsTaskable)",
+
+        # Refused up front: a linked object is assigned once and never moves,
+        # and the absorbing item may have its own.
+        linked_object: "absorb raises before touching anything",
+
+        # Block the merge: a plain foreign key to ledger_items makes destroy!
+        # raise and roll the whole merge back, transactions included.
+        admin_ledger_audit_tasks: "blocks the merge",
+        repayments: "blocks the merge",
+        repayment_disbursements: "through repayments",
+        personal_transaction: "blocks the merge (and can only exist on an item linked to a CardCharge, which is refused anyway)",
+
+        # Nothing to move.
+        author: "cached column, recomputed from the transactions by the absorbing item's refresh!",
+        versions: "PaperTrail, polymorphic with no foreign key; the absorbed item's history stays under its old id, ending with a destroy version",
+        hcb_code: "not moved; the database nullifies hcb_codes.ledger_item_id when the item is deleted",
+        comments: "through hcb_code; stay on that HcbCode",
+        receipts: "through hcb_code; stay on that HcbCode",
+        tags: "through hcb_code; stay on that HcbCode",
+      }
+
+      live = Ledger::Item.reflect_on_all_associations.map(&:name)
+
+      expect(live).to match_array(considered.keys), <<~MSG
+        Ledger::Item's associations don't match the list #absorb has been checked against.
+
+          not yet considered: #{(live - considered.keys).inspect}
+          no longer on the model: #{(considered.keys - live).inspect}
+
+        Decide what #absorb should do with each new association (move it, destroy it,
+        let it block the merge, or nothing), change #absorb if needed, and record it in
+        this spec.
+      MSG
+    end
   end
 
   describe "CardCharge reversed/released mailer" do
