@@ -42,15 +42,17 @@ module SetLedgerFilters
         @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
       end
 
-      @type = params[:type].presence
-      # A date that doesn't parse narrows nothing, like a tag that doesn't exist.
+      # A filter that doesn't resolve narrows nothing, like a tag that doesn't
+      # exist: a date that doesn't parse, or a value that isn't even a string
+      # (type[]=x is a param too).
+      @type = string_param(:type)
       @start_date = parse_date_param(params[:start])
       @end_date = parse_date_param(params[:end])
-      @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
-      @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
+      @minimum_amount = string_param(:minimum_amount)&.then { |amount| Money.from_amount(amount.to_f) }
+      @maximum_amount = string_param(:maximum_amount)&.then { |amount| Money.from_amount(amount.to_f) }
       @missing_receipts = params[:missing_receipts].present?
-      @merchant = params[:merchant].presence
-      @direction = params[:direction].presence
+      @merchant = string_param(:merchant)
+      @direction = string_param(:direction)
       @category = TransactionCategory.find_by(slug: params[:category])
 
       @ledger = @event.ledger
@@ -70,7 +72,12 @@ module SetLedgerFilters
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
+      @user = @users.friendly.find(string_param(:user), allow_nil: true) if string_param(:user)
+    end
+
+    # The param as a non-blank string, or nil.
+    def string_param(name)
+      params[name].is_a?(String) ? params[name].presence : nil
     end
 
     # The merchant filter's display name. Resolved on demand rather than with
@@ -98,7 +105,7 @@ module SetLedgerFilters
 
       query = []
 
-      query << { memo: { "$search": params[:q] } } if params[:q].present?
+      query << { memo: { "$search": string_param(:q) } } if string_param(:q)
 
       if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
         if @direction == "revenue"
@@ -127,7 +134,7 @@ module SetLedgerFilters
       # Whole-day inclusive end bound, matching the old transactions page
       query << { datetime: { "$lt": @end_date.next_day } } if @end_date.present?
 
-      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
+      query << { author: { "$eq": @user&.slug || string_param(:user) } } if string_param(:user)
 
       query << { tag: { "$eq": @tag.id } } if @tag.present?
       query << { category: { "$eq": @category.slug } } if @category.present?
