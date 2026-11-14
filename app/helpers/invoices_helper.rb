@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module InvoicesHelper
+  include PaymentMethodsHelper
+
   def invoice_sent_at(invoice = @invoice)
     format_datetime invoice.created_at
   end

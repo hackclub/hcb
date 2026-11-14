@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module DonationsHelper
+  include PaymentMethodsHelper
+
   def donation_payment_processor_fee(donation = @donation, humanized: true)
     fee = donation.payout_creation_balance_stripe_fee
 
