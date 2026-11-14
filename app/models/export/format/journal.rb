@@ -21,21 +21,11 @@ class Export
       private
 
       def expense(row)
-        metadata = {}
-
-        category = if row.merchant.nil?
-                     "Transfer"
-                   else
-                     # Transparency viewers get the shape of the charge without
-                     # the merchant it was made at. Organizers get the merchant
-                     # whether or not Stripe categorized it.
-                     unless public_only
-                       metadata[:merchant] = row.merchant
-                       metadata[:comments] = row.comments
-                     end
-
-                     merchant_category(row.merchant)
-                   end
+        # Transparency viewers get the shape of the charge without the merchant
+        # it was made at. Organizers get the merchant whether or not Stripe
+        # categorized it.
+        metadata = public_only || row.merchant.nil? ? {} : { merchant: row.merchant, comments: row.comments }
+        category = row.merchant.nil? ? "Transfer" : merchant_category(row.merchant)
 
         ::LedgerJournal::Transaction.new(
           date: row.date,
