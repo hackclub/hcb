@@ -186,12 +186,6 @@ class Ledger
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
-      # Nothing to refresh on an item that isn't in the database, and reload
-      # would raise. Callbacks can still reach one: destroying a Ledger::Mapping
-      # alongside its item (see #absorb) runs the mapping's after_commit against
-      # the already-destroyed item.
-      return unless persisted?
-
       # Recompute from the database, not from what this copy last loaded. One
       # map! refreshes several in-memory copies of the same item (the
       # Ledger::Mapping commit hook refreshes its own copy before the copy map!
@@ -256,6 +250,13 @@ class Ledger
     # it (and this item may already have its own).
     def absorb(other)
       raise ArgumentError, "a ledger item cannot absorb itself" if other == self
+
+      # Both have to be rows in the database. Moving a transaction onto an
+      # unsaved item would save that item as a side effect (and orphan the
+      # transaction if that save failed validation), and an absorbed item that
+      # was never saved has nothing to move.
+      raise ArgumentError, "only a persisted ledger item can absorb another" unless persisted?
+      raise ArgumentError, "cannot absorb a ledger item that is not persisted" unless other.persisted?
 
       # Work from the database, not from whatever this instance has cached:
       # creating an item loads its (then empty) transaction associations, so a

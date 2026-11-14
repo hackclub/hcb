@@ -570,6 +570,22 @@ RSpec.describe Ledger::Item, type: :model do
       expect(Ledger::Item.exists?(item.id)).to be(true)
     end
 
+    it "refuses to absorb into an unsaved item, rather than saving it as a side effect" do
+      unsaved = Ledger::Item.new(amount_cents: 0, memo: "Unsaved", datetime: Time.current)
+      ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
+
+      expect { unsaved.absorb(other) }.to raise_error(ArgumentError, /persisted/)
+
+      expect(unsaved).to be_new_record
+      expect(ct.reload.ledger_item).to eq(other)
+    end
+
+    it "refuses to absorb an unsaved item" do
+      unsaved = Ledger::Item.new(amount_cents: 0, memo: "Unsaved", datetime: Time.current)
+
+      expect { item.absorb(unsaved) }.to raise_error(ArgumentError, /persisted/)
+    end
+
     it "rolls the whole merge back when something else still references the absorbed item" do
       ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
       Admin::LedgerAudit::Task.create!(ledger_item: other)
