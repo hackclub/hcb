@@ -11,6 +11,9 @@ module SetLedgerFilters
     missing_receipts merchant direction category
   ].freeze
 
+  # The largest amount the ledger can hold: amount_cents is a 4-byte integer.
+  MAX_FILTER_AMOUNT = Money.new(2**31 - 1)
+
   # The `type` filter's values, and the linked object types each stands for.
   TYPE_FILTERS = {
     "ach_transfer"           => { "$eq": "AchTransfer" },
@@ -98,14 +101,16 @@ module SetLedgerFilters
       params[name].is_a?(String) ? params[name].presence : nil
     end
 
-    # The param as money, or nil for anything that isn't a finite amount: "abc"
-    # is no amount rather than $0, and Money refuses the infinity that "1e999"
-    # parses to.
+    # The param as money, or nil for anything that isn't an amount the ledger
+    # could hold: "abc" is no amount rather than $0, Money refuses the infinity
+    # that "1e999" parses to, and anything past MAX_FILTER_AMOUNT would be
+    # rejected by the database.
     def parse_amount_param(name)
       amount = string_param(name)&.then { |value| Float(value, exception: false) }
       return nil if amount.nil? || !amount.finite?
 
-      Money.from_amount(amount)
+      money = Money.from_amount(amount)
+      money.abs > MAX_FILTER_AMOUNT ? nil : money
     end
 
     # The merchant filter's display name. Resolved on demand rather than with

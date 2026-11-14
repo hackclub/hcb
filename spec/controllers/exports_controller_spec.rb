@@ -80,6 +80,14 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
     end
 
+    it "treats an amount the ledger couldn't hold as no filter" do
+      get :ledger, params: { event: event.slug, minimum_amount: "99999999999", maximum_amount: "-99999999999" }, format: :csv
+
+      expect(response).to be_successful
+      expect(response.body).to include("Coffee", "Donation from Fiona")
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
+    end
+
     it "treats an amount that isn't a number as no filter" do
       get :ledger, params: { event: event.slug, minimum_amount: "abc" }, format: :csv
 
