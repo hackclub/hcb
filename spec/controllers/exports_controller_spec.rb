@@ -77,6 +77,15 @@ RSpec.describe ExportsController, type: :controller do
 
       expect(response).to be_successful
       expect(response.body).to include("Coffee", "Donation from Fiona")
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
+    end
+
+    it "treats an amount that isn't a number as no filter" do
+      get :ledger, params: { event: event.slug, minimum_amount: "abc" }, format: :csv
+
+      expect(response).to be_successful
+      expect(response.body).to include("Coffee", "Donation from Fiona")
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_transactions_")
     end
 
     it "treats a filter that isn't even a string as no filter" do

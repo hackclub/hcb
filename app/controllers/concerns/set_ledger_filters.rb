@@ -98,10 +98,11 @@ module SetLedgerFilters
       params[name].is_a?(String) ? params[name].presence : nil
     end
 
-    # The param as money, or nil for anything that isn't a finite amount:
-    # Money refuses an infinity, which is what "1e999" parses to.
+    # The param as money, or nil for anything that isn't a finite amount: "abc"
+    # is no amount rather than $0, and Money refuses the infinity that "1e999"
+    # parses to.
     def parse_amount_param(name)
-      amount = string_param(name)&.to_f
+      amount = string_param(name)&.then { |value| Float(value, exception: false) }
       return nil if amount.nil? || !amount.finite?
 
       Money.from_amount(amount)
