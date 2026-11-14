@@ -193,12 +193,6 @@ class Ledger
         oldest_first(canonical_pending_transactions).filter_map(&:category).first
     end
 
-    # Sorted in memory: an export preloads both associations, and this keeps
-    # the sort from turning into a query per item.
-    def oldest_first(transactions)
-      transactions.sort_by { |transaction| [transaction.date, transaction.id] }
-    end
-
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns.
@@ -380,6 +374,12 @@ class Ledger
     end
 
     private
+
+    # Sorted in memory: an export preloads both associations, and this keeps
+    # the sort from turning into a query per item.
+    def oldest_first(transactions)
+      transactions.sort_by { |transaction| [transaction.date, transaction.id] }
+    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.
