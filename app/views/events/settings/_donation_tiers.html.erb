@@ -73,7 +73,7 @@
               <span class="muted block text-sm flex-1">Changes will be saved automatically</span>
             <% end %>
             <button
-              <%= "disabled" if event.donation_tiers.length >= 10 %>
+              <% if event.donation_tiers.length >= 10 %> disabled<% end %>
               type="submit"
               class="btn gap-4 pr-2 <%= "w-full !transform-none" if event.donation_tiers.empty? %>">
               Create tier

@@ -81,4 +81,39 @@ RSpec.describe "Application affiliation form", type: :system do
     pick "FIRST Robotics"
     expect(continue_button["data-turbo-confirm"]).to eq(unsaved_warning)
   end
+
+  it "saves a Destination Imagination affiliation" do
+    pick "Destination Imagination"
+    select "Early Learning", from: "Level"
+    fill_in "Team Number", with: "125-12345"
+    fill_in "Size", with: "5"
+    click_button "Save affiliation"
+
+    expect(page).to have_text("Early Learning")
+    affiliation = application.affiliations.reload.sole
+    expect(affiliation.to_s).to eq("Destination Imagination – Early Learning – 125-12345 – 5 people")
+  end
+
+  # The edit modal's fields share their names and labels with the new
+  # affiliation form on the same page.
+  it "changes a saved affiliation's type from its own edit modal" do
+    affiliation = application.affiliations.create!(name: "first", metadata: { league: "frc", team_number: "9101", size: 1 })
+    visit project_info_application_path(application)
+
+    find("[data-modal=edit_affiliation_#{affiliation.id}]").click
+    within("#edit_affiliation_#{affiliation.id}") do
+      expect(page).to have_field("Team number", with: "9101")
+      expect(page).to have_text("person")
+
+      choose "VEX Robotics", allow_label_click: true
+      select "IQ", from: "League"
+      fill_in "Team number", with: "11981B"
+      fill_in "Size", with: "4"
+      expect(page).to have_text("people")
+      click_button "Update"
+    end
+
+    expect(page).to have_text("11981B")
+    expect(affiliation.reload).to have_attributes(name: "vex", league: "iq", team_number: "11981B", size: 4)
+  end
 end

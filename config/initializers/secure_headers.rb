@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# `'unsafe-inline'` and `'unsafe-eval'` are currently required and cannot be
-# dropped without a sizable refactor:
+# `'unsafe-inline'` is currently required and cannot be dropped without a
+# sizable refactor:
 #   * style-src  'unsafe-inline' — inline `style=` attributes throughout, and
 #     Stripe Elements and Plaid Link both inject inline styles.
 #   * script-src 'unsafe-inline' — inline bootstrap scripts (Plaid, HelpScout,
-#     Plausible, FullStory) and Alpine.js `x-*`/`@click` attribute handlers.
-#   * script-src 'unsafe-eval'   — Alpine.js evaluates its directive
-#     expressions with `new Function(...)`.
+#     Plausible, FullStory).
+# `'unsafe-eval'` is gone: it was only there for Alpine.js, which our herb views
+# replaced (see dev-docs/guides/herb_views.md).
 #
 # Ships report-only: nothing is blocked until CSP_ENFORCE=true. Once reports are
 # quiet, flip the default below rather than relying on the variable forever.
@@ -33,7 +33,7 @@ csp = {
   form_action: ["'self'"],
   frame_ancestors: ["'self'"], # donation pages relax this per-action
 
-  script_src: ["'self'", "'unsafe-inline'", "'unsafe-eval'"] + %w[
+  script_src: ["'self'", "'unsafe-inline'"] + %w[
     https://js.stripe.com https://*.js.stripe.com https://m.stripe.network
     https://cdn.plaid.com
     https://docuseal.com https://cdn.docuseal.com

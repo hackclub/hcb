@@ -1863,12 +1863,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.boolean "confidential", default: true, null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.bigint "owner_id"
+    t.string "owner_type"
     t.text "redirect_uri", null: false
     t.string "scopes", default: "", null: false
     t.string "secret", null: false
     t.boolean "trusted", default: false, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_oauth_applications_on_owner"
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
