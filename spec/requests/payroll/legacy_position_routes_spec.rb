@@ -15,6 +15,12 @@ RSpec.describe "Legacy event-nested payroll position links" do
     expect(response).to redirect_to("/payroll_positions/abc123/contract")
   end
 
+  it "keeps the query string" do
+    get "/my-org/payroll_positions/abc123?frame=true"
+
+    expect(response).to redirect_to("/payroll_positions/abc123?frame=true")
+  end
+
   it "can't be used to redirect off-site" do
     get "/my-org/payroll_positions/%2F%2Fevil.example"
 

@@ -1052,7 +1052,10 @@ Rails.application.routes.draw do
 
     resources :payments, only: [:new, :create]
     resources :payroll_positions, only: [:new, :create], controller: "payroll/positions"
-    get "payroll_positions/*path", to: redirect("/payroll_positions/%{path}")
+    get "payroll_positions/*path", to: redirect { |params, req|
+      path = "/payroll_positions/#{ActionDispatch::Journey::Router::Utils.escape_path(params[:path])}"
+      req.query_string.present? ? "#{path}?#{req.query_string}" : path
+    }
     resources :payees, only: [:index, :create, :update] do
       collection do
         get :check_email
