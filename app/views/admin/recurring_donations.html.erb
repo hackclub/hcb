@@ -30,7 +30,7 @@
       <th>Tax-Deductible</th>
       <th>Amount</th>
       <th>Status</th>
-      <th>Cancel</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -47,7 +47,13 @@
         <td><%= donation.tax_deductible? %></td>
         <td><strong><%= render_money(donation.amount) %></strong>/month</td>
         <td><%= donation.stripe_status.humanize %></td>
-        <td><%= link_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to cancel this donation to #{donation.event.name}?", turbo_confirm_danger: true } if !donation.canceled? %></td>
+        <td>
+          <% if !donation.canceled? %>
+            <%= link_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to cancel this donation to #{donation.event.name}?", turbo_confirm_danger: true } %>
+          <% elsif policy(donation).restart? %>
+            <%= button_to "Restart donation", restart_recurring_donation_path(donation.url_hash), data: { turbo_confirm: "Restart this donation to #{donation.event.name}? This starts a new subscription and charges #{donation.name(show_anonymous: true)}’s saved card #{render_money donation.amount} right away." } %>
+          <% end %>
+        </td>
       </tr>
     <% end %>
   </tbody>
