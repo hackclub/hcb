@@ -729,7 +729,7 @@ class User < ApplicationRecord
   end
 
   def unassociated_payments_received
-    Payment.pending_legal_entity.joins(payee: [:legal_entity]).where(
+    Payment.pending_legal_entity.left_joins(payee: :legal_entity).where(
       "(payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email",
       email:
     ).distinct
