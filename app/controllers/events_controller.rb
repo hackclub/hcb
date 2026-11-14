@@ -134,7 +134,7 @@ class EventsController < ApplicationController
 
     @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
+    render partial: "events/home/spenders_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
   def stats
