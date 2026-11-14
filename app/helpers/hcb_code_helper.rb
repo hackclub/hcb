@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "cgi"
+require "openssl"
 
 module HcbCodeHelper
   def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, user: nil)
@@ -23,6 +24,38 @@ module HcbCodeHelper
       s: hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
     )
   end
+
+  def short_attach_receipt_url(hcb_code)
+    Rails.application.routes.url_helpers.short_receipt_link_url(
+      id: hcb_code.hashid,
+      token: HcbCodeHelper.receipt_link_token(hcb_code)
+    )
+  end
+
+  def self.receipt_link_token(hcb_code, expires_at: 2.weeks.from_now)
+    expiry = expires_at.to_i
+    signature = OpenSSL::HMAC.hexdigest("SHA256", receipt_link_secret, "#{hcb_code.id}.#{expiry}")
+
+    "#{expiry.to_s(36)}.#{signature.truncate(32, omission: "")}"
+  end
+
+  def self.receipt_link_expires_at(hcb_code, token)
+    expiry_base36, signature = token.to_s.split(".", 2)
+    return nil if expiry_base36.blank? || signature.blank?
+
+    expiry = expiry_base36.to_i(36)
+    expected = OpenSSL::HMAC.hexdigest("SHA256", receipt_link_secret, "#{hcb_code.id}.#{expiry}").truncate(32, omission: "")
+
+    return nil unless ActiveSupport::SecurityUtils.secure_compare(expected, signature)
+    return nil if expiry < Time.now.to_i
+
+    Time.at(expiry)
+  end
+
+  def self.receipt_link_secret
+    Rails.application.key_generator.generate_key("receipt_link")
+  end
+  private_class_method :receipt_link_secret
 
   def can_dispute?(hcb_code:)
     can_dispute, error_reason = ::HcbCodeService::CanDispute.new(hcb_code:).run
