@@ -78,6 +78,15 @@ RSpec.describe ExportsController, type: :controller do
       expect(response.body).not_to include("Donation from Fiona")
     end
 
+    it "filters by merchant without resolving the merchant's name" do
+      expect_any_instance_of(Event).not_to receive(:merchants)
+
+      get :ledger, params: { event: event.slug, merchant: "abc" }, format: :csv
+
+      expect(response).to be_successful
+      expect(response.headers["Content-disposition"]).to include("#{event.slug}_filtered_transactions_")
+    end
+
     it "respects the search box" do
       get :ledger, params: { event: event.slug, q: "Coffee" }, format: :csv
 

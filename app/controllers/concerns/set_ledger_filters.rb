@@ -12,7 +12,7 @@ module SetLedgerFilters
   ].freeze
 
   included do
-    helper_method :ledger_filtered?, :ledger_filter_params
+    helper_method :ledger_filtered?, :ledger_filter_params, :merchant_name
 
     private
 
@@ -70,12 +70,18 @@ module SetLedgerFilters
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
       @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
+    end
 
-      if @merchant
-        merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
+    # The merchant filter's display name. Resolved on demand rather than with
+    # the other filters: finding it means loading every merchant the
+    # organization has ever paid, and only the filter chip on the page needs
+    # it. An export filtered by merchant needs only the id.
+    def merchant_name
+      return @merchant_name if defined?(@merchant_name)
 
-        @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
-      end
+      merchant = @event.merchants.find { |candidate| candidate[:id] == @merchant }
+
+      @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
     end
 
     # A date that doesn't parse narrows nothing, like a tag that doesn't exist,

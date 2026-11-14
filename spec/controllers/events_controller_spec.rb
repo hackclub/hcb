@@ -342,6 +342,13 @@ RSpec.describe EventsController do
           expect(response.body).to include("/exports/ledger/#{event.slug}.csv?direction=expenses")
         end
 
+        it "names the merchant being filtered by" do
+          get(:ledger, params: { event_id: event.slug, merchant: "abc" })
+
+          expect(response).to be_successful
+          expect(response.body).to include("Merchant abc")
+        end
+
         it "renders when a date filter doesn't parse" do
           get(:ledger, params: { event_id: event.slug, start: "not-a-date" })
 
