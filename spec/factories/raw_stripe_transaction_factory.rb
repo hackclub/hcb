@@ -8,13 +8,19 @@ FactoryBot.define do
       sequence(:stripe_transaction_id) { |n| "ipi_#{n}" }
       stripe_card { create(:stripe_card, :with_stripe_id) }
       stripe_merchant_category { "bakeries" }
+      stripe_transaction_type { "capture" }
+    end
+
+    trait :refund do
+      stripe_transaction_type { "refund" }
     end
 
     stripe_transaction do
       {
         "id"            => stripe_transaction_id,
         "card"          => stripe_card.stripe_id,
-        "type"          => "capture",
+        "type"          => stripe_transaction_type,
+        "authorization" => stripe_authorization_id,
         "amount"        => -amount_cents,
         "cardholder"    => stripe_card.stripe_cardholder.id,
         "merchant_data" => {
