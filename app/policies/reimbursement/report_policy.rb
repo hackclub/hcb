@@ -103,6 +103,10 @@ module Reimbursement
       admin
     end
 
+    def retry?
+      admin
+    end
+
     def reverse?
       admin
     end

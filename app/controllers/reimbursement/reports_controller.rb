@@ -399,6 +399,36 @@ module Reimbursement
       redirect_to @report
     end
 
+    def retry
+      authorize @report
+      return unless enforce_sudo_mode
+
+      unless @report.payout_holding&.failed?
+        flash[:error] = "Retry is only available for failed payouts."
+        return redirect_to @report
+      end
+
+      if @report.payout_method.blank?
+        flash[:error] = "Retry is unavailable because there is no payout method on file."
+        return redirect_to @report
+      end
+
+      if @report.payout_method.unsupported?
+        flash[:error] = "Retry is unavailable because the payout method is unsupported; the payout information must be updated."
+        return redirect_to @report
+      end
+
+      if @report.payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+        flash[:error] = "Wise payouts are retried through the Wise transfer flow; use admin_send_wise_transfer instead."
+        return redirect_to @report
+      end
+
+      @report.payout_holding.mark_settled!
+      flash[:success] = "Retried the payout; it will be sent again on the next payout run."
+
+      redirect_to @report
+    end
+
     def reverse
 
       authorize @report
