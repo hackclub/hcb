@@ -7,6 +7,7 @@
 #  id                       :bigint           not null, primary key
 #  expires_in               :integer
 #  ip_address               :inet
+#  last_used_at             :datetime
 #  refresh_token_bidx       :text
 #  refresh_token_ciphertext :text
 #  revoked_at               :datetime
@@ -22,6 +23,7 @@
 #
 #  index_api_tokens_on_application_id      (application_id)
 #  index_api_tokens_on_ip_address          (ip_address)
+#  index_api_tokens_on_last_used_at        (last_used_at)
 #  index_api_tokens_on_refresh_token_bidx  (refresh_token_bidx) UNIQUE
 #  index_api_tokens_on_token_bidx          (token_bidx) UNIQUE
 #  index_api_tokens_on_user_id             (user_id)
@@ -44,6 +46,9 @@ class ApiToken < ApplicationRecord
   scope :not_revoked, -> { where(revoked_at: nil).or(where(revoked_at: Time.now..)) }
 
   scope :accessible, -> { not_expired.and(not_revoked) }
+  scope :from_trusted_application, -> { joins(:application).where(oauth_applications: { trusted: true }) }
+
+  LAST_USED_AT_COOLDOWN = 5.minutes
 
   has_encrypted :token
   has_encrypted :refresh_token
@@ -55,6 +60,12 @@ class ApiToken < ApplicationRecord
   def self.generate(options = {})
     token_size = options.delete(:size) || SIZE
     PREFIX + SecureRandom.urlsafe_base64(token_size)
+  end
+
+  def touch_last_used_at
+    return if last_used_at&.after?(LAST_USED_AT_COOLDOWN.ago) # prevent spamming writes
+
+    update_columns(last_used_at: Time.now)
   end
 
   def abbreviated = "#{token[..7]}...#{token[-3..]}"
