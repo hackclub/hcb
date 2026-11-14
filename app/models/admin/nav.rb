@@ -259,15 +259,11 @@ module Admin
           ),
           make_item(
             name: "Tax Forms",
-            path: admin_tax_forms_path,
-            count: ->{ Tax::Form.count },
-            count_type: :records
+            path: admin_tax_forms_path
           ),
           make_item(
             name: "Tax1099 Import",
-            path: new_admin_tax1099_import_path,
-            count: ->{ Tax::Form.tax1099.count },
-            count_type: :records
+            path: new_admin_tax1099_import_path
           )
         ]
       )
