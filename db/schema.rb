@@ -2631,17 +2631,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.integer "amount_cents", null: false
-    t.string "cadence", null: false
     t.integer "cadence_days", null: false
     t.datetime "created_at", null: false
-    t.bigint "event_id", null: false
     t.datetime "last_charged_at"
+    t.bigint "ledger_id", null: false
     t.string "merchant_name", null: false
     t.string "merchant_network_id"
     t.datetime "next_expected_at"
     t.bigint "stripe_card_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_subscriptions_on_event_id"
+    t.index ["ledger_id"], name: "index_subscriptions_on_ledger_id"
     t.index ["stripe_card_id", "merchant_network_id"], name: "index_subscriptions_on_stripe_card_id_and_merchant_network_id"
     t.index ["stripe_card_id"], name: "index_subscriptions_on_stripe_card_id"
   end
@@ -3277,7 +3276,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
-  add_foreign_key "subscriptions", "events"
+  add_foreign_key "subscriptions", "ledgers"
   add_foreign_key "subscriptions", "stripe_cards"
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"

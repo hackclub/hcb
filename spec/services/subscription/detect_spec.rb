@@ -25,7 +25,7 @@ RSpec.describe Subscription::Detect do
     subscription = detect.sole
     expect(subscription).to have_attributes(
       cadence: "monthly", cadence_days: 30, amount_cents: 20_00,
-      merchant_network_id: "vercel-1", merchant_name: "VERCEL INC"
+      merchant_network_id: "vercel-1", merchant_name: "VERCEL INC", ledger: event.ledger
     )
     expect(subscription.ledger_items.count).to eq(4)
   end
@@ -101,7 +101,7 @@ RSpec.describe Subscription::Detect do
 
   it "skips charges already linked to a subscription" do
     linked, *rest = charges_at(61.days.ago, 31.days.ago, 1.day.ago)
-    create(:subscription, stripe_card:, event:, merchant_network_id: "other", amount_cents: 20_00).then { |subscription| subscription.link!(linked) }
+    create(:subscription, stripe_card:, merchant_network_id: "other", amount_cents: 20_00).then { |subscription| subscription.link!(linked) }
 
     expect(detect).to be_empty
     expect(rest.map { |ledger_item| ledger_item.reload.subscription_id }).to all(be_nil)
@@ -109,7 +109,7 @@ RSpec.describe Subscription::Detect do
 
   it "doesn't duplicate an existing subscription" do
     charges_at(61.days.ago, 31.days.ago, 1.day.ago)
-    create(:subscription, stripe_card:, event:, merchant_network_id: "vercel-1", amount_cents: 20_00)
+    create(:subscription, stripe_card:, merchant_network_id: "vercel-1", amount_cents: 20_00)
 
     expect { expect(detect).to be_empty }.not_to change(Subscription, :count)
   end

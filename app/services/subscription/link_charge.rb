@@ -4,6 +4,10 @@ class Subscription
   #
   # Idempotent: a charge that's already linked is left alone.
   class LinkCharge
+    def self.enqueue(ledger_item)
+      Subscription::LinkChargeJob.perform_later(ledger_item) if candidate?(ledger_item) && ledger_item.primary_mapping.present?
+    end
+
     def self.candidate?(ledger_item)
       ledger_item.linked_object_type == CardCharge.name &&
         ledger_item.settled? &&
@@ -22,7 +26,7 @@ class Subscription
       stripe_card = card_charge.stripe_card
       return unless stripe_card
 
-      merchant = card_charge.subscription_merchant
+      merchant = @ledger_item.subscription_merchant
       return unless merchant
 
       # A settling charge's mapping commits several times, each enqueuing a

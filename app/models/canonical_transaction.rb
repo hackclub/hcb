@@ -146,6 +146,10 @@ class CanonicalTransaction < ApplicationRecord
     Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
   end
 
+  after_commit if: -> { previous_changes.key?("ledger_item_id") && ledger_item.present? } do
+    Subscription::LinkCharge.enqueue(ledger_item)
+  end
+
   after_create :write_hcb_code
   after_create_commit :write_system_event
   after_create_commit do

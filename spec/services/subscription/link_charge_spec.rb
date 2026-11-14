@@ -16,7 +16,7 @@ RSpec.describe Subscription::LinkCharge do
   end
 
   let!(:subscription) do
-    create(:subscription, stripe_card:, event:, merchant_network_id: "spotify-1", amount_cents: 11_99, last_charged_at: 31.days.ago)
+    create(:subscription, stripe_card:, merchant_network_id: "spotify-1", amount_cents: 11_99, last_charged_at: 31.days.ago)
   end
 
   it "links a matching charge" do
@@ -50,7 +50,7 @@ RSpec.describe Subscription::LinkCharge do
   it "is idempotent" do
     ledger_item = charge(1.day.ago)
     link(ledger_item)
-    create(:subscription, stripe_card:, event:, merchant_network_id: "spotify-1", amount_cents: 5_00)
+    create(:subscription, stripe_card:, merchant_network_id: "spotify-1", amount_cents: 5_00)
 
     expect { link(ledger_item) }.not_to(change { ledger_item.reload.subscription_id })
   end

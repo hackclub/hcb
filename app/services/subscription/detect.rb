@@ -36,10 +36,10 @@ class Subscription
     private
 
     def charges
-      items = ledger_items.preload(linked_object: [:raw_stripe_transactions, :raw_pending_stripe_transaction])
+      items = ledger_items.preload(:primary_ledger, linked_object: [:raw_stripe_transactions, :raw_pending_stripe_transaction])
 
       items.filter_map do |ledger_item|
-        merchant = ledger_item.linked_object.subscription_merchant
+        merchant = ledger_item.subscription_merchant
         next unless merchant
 
         merchant_key = Subscription.merchant_key(network_id: merchant[:network_id], name: merchant[:name])
@@ -71,18 +71,20 @@ class Subscription
       charges = without_repeats(group)
       return if charges.size < MIN_YEARLY_CHARGES
 
-      cadence, cadence_days = fit_cadence(charges.each_cons(2).map { |a, b| days_between(a, b) })
-      return if cadence.nil?
-      return if charges.size < MIN_CHARGES && cadence != :yearly
+      cadence_days = fit_cadence(charges.each_cons(2).map { |a, b| days_between(a, b) })
+      return if cadence_days.nil?
+      return if charges.size < MIN_CHARGES && cadence_days != Subscription::CADENCE_DAYS[:yearly]
+
+      ledger = charges.last[:ledger_item].primary_ledger
+      return if ledger.nil?
 
       merchant = charges.last[:merchant]
       subscription = Subscription.new(
-        event: @stripe_card.event,
+        ledger:,
         stripe_card: @stripe_card,
         merchant_network_id: merchant[:network_id],
         merchant_name: merchant[:name] || merchant[:network_id],
         amount_cents: charges.first[:amount_cents],
-        cadence:,
         cadence_days:
       )
       # A subscription for this card, merchant and amount already exists.
@@ -128,14 +130,14 @@ class Subscription
     def fit_cadence(gaps)
       typical_gap = typical(gaps)
 
-      Subscription::CADENCE_DAYS.each do |cadence, days|
+      Subscription::CADENCE_DAYS.each_value do |days|
         next unless (typical_gap - days).abs <= Subscription::TOLERANCE * days
 
-        return [cadence, days] if gaps.all? { |gap| Subscription.gap_fits_cadence?(gap, days) }
+        return days if gaps.all? { |gap| Subscription.gap_fits_cadence?(gap, days) }
       end
 
       custom_days = typical_gap.round
-      return [:custom, custom_days] if gaps.all? { |gap| Subscription.gap_fits_cadence?(gap, custom_days) }
+      return custom_days if gaps.all? { |gap| Subscription.gap_fits_cadence?(gap, custom_days) }
 
       nil
     end

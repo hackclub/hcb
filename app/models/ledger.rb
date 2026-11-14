@@ -47,6 +47,8 @@ class Ledger < ApplicationRecord
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items
 
+  has_many :subscriptions
+
   monetize def balance_cents(start_date: nil, end_date: nil)
     query_items(start_date:, end_date:).sum(:amount_cents)
   end

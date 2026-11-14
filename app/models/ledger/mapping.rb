@@ -60,7 +60,7 @@ class Ledger
     after_commit { CardLocking::Settlement.on_ledger_item(ledger_item, on_primary: on_primary_ledger) }
 
     after_commit on: [:create, :update], if: :on_primary_ledger? do
-      Subscription::LinkChargeJob.perform_later(ledger_item) if Subscription::LinkCharge.candidate?(ledger_item)
+      Subscription::LinkCharge.enqueue(ledger_item)
     end
 
     def self.map_primary!(ledger:, ledger_item:, mapped_by:)

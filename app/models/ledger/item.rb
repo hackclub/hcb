@@ -332,6 +332,16 @@ class Ledger
       end
     end
 
+    def subscription_merchant
+      return unless linked_object.is_a?(CardCharge)
+
+      network_id = linked_object.merchant_network_id.presence
+      name = linked_object.merchant_data&.dig("name").presence
+      return if network_id.nil? && name.nil?
+
+      { network_id:, name: }
+    end
+
     def sign
       return :positive if amount_cents.positive?
       return :negative if amount_cents.negative?
