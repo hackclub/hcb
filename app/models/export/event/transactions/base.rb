@@ -33,8 +33,12 @@ class Export
 
         store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
 
+        # Counts what the export will contain, so a one-month CSV of a large
+        # organization is served inline like any other small export.
         def async?
-          event.canonical_transactions.size > ASYNC_THRESHOLD
+          return @async if defined?(@async)
+
+          @async = transactions.limit(ASYNC_THRESHOLD + 1).count > ASYNC_THRESHOLD
         end
 
         def label

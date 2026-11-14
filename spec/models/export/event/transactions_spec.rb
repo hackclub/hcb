@@ -62,6 +62,13 @@ RSpec.describe Export::Event::Transactions do
       expect(CSV.parse(export.content, headers: true).map { |row| row["memo"] }).to eq(["Coffee"])
     end
 
+    it "decides whether to email the export by what it will contain" do
+      stub_const("Export::ASYNC_THRESHOLD", 1)
+
+      expect(build_export(described_class).async?).to be(true)
+      expect(build_export(described_class, start_date: Date.new(2024, 2, 1), end_date: Date.new(2024, 3, 31)).async?).to be(false)
+    end
+
     it "names itself" do
       export = build_export(described_class)
 
