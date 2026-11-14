@@ -8,6 +8,13 @@
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@check.local_hcb_code.comments.count, "comment") %>)
   <% end %>
+
+  <% if policy(@check).edit? %>
+    <%= link_to edit_increase_check_path(@check), class: "btn btn-small bg-muted flex-shrink-0" do %>
+      <%= inline_icon "edit" %>
+      Edit check
+    <% end %>
+  <% end %>
 </div>
 
 <h1>Process Check #<%= @check.id %> for <%= @check.event.name %> <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @check.event.financially_frozen? %></h1>
