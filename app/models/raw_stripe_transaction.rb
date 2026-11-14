@@ -26,8 +26,6 @@ class RawStripeTransaction < ApplicationRecord
   has_one :card_charge_raw_stripe_transaction
   has_one :card_charge, through: :card_charge_raw_stripe_transaction
 
-  scope :refund, -> { where("stripe_transaction->>'type' = 'refund'") }
-
   after_create :link_card_charge!
 
   def memo
