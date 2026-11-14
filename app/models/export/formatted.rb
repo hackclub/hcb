@@ -3,12 +3,14 @@
 class Export
   # The plumbing shared by every export that serializes Export::Rows through
   # an Export::Format. A subclass names its format as FORMAT and builds its
-  # rows; the rest follows.
+  # rows, consulting `reads?` for which optional fields the format wants;
+  # the rest follows.
   module Formatted
     extend ActiveSupport::Concern
 
     included do
       delegate :mime_type, to: :formatter
+      delegate :reads?, to: :formatter, private: true
     end
 
     def content
@@ -23,11 +25,6 @@ class Export
 
     # The Export::Rows to serialize.
     def rows = raise(NotImplementedError)
-
-    # Only the journal names merchants, and reading them means loading the
-    # raw Stripe transaction behind every card charge, so the rest leave
-    # them out.
-    def merchant_for(_record) = nil
 
   end
 

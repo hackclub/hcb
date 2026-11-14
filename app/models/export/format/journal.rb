@@ -4,6 +4,8 @@ class Export
   module Format
     # A plain-text journal in the format read by ledger-cli, hledger and friends.
     class Journal < Base
+      READS = %i[comments merchant].freeze
+
       def name = "Ledger"
       def mime_type = "text/ledger"
       def extension = "ledger"

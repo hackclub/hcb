@@ -30,16 +30,6 @@ class Export
 
         FORMAT = ::Export::Format::Journal
 
-        private
-
-        def preloads
-          super + [:transaction_source]
-        end
-
-        def merchant_for(ct)
-          ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
-        end
-
       end
     end
   end

@@ -3,6 +3,8 @@
 class Export
   module Format
     class Json < Base
+      READS = %i[tags comments author].freeze
+
       def name = "JSON"
       def mime_type = "application/json"
       def extension = "json"

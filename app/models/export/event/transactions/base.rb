@@ -26,7 +26,8 @@ class Export
       # the organization's canonical transactions. Each becomes an Export::Row,
       # and an Export::Format turns the rows into the file, so these produce
       # the same columns under the same rules as the ledger exports do.
-      # Subclasses only say which format, as FORMAT.
+      # Subclasses only say which format, as FORMAT; the format says which
+      # fields it reads, and only those are built and preloaded.
       class Base < Export
         include ::Export::Formatted
 
@@ -50,13 +51,20 @@ class Export
           transactions.map { |ct| row(ct) }
         end
 
-        # Everything a row reads off a transaction, preloaded so a large export
-        # doesn't turn into one query per transaction. The hcb code's own
-        # transactions are what its memo and author read. The author of a card
-        # charge still costs a cardholder lookup per row, inside HcbCode#author;
-        # that predates these exports.
+        # What the rows read off a transaction, preloaded so a large export
+        # doesn't turn into one query per transaction, and only what the format
+        # will use. The hcb code's own transactions are what its memo and author
+        # read. The author of a card charge still costs a cardholder lookup per
+        # row, inside HcbCode#author; that predates these exports.
         def preloads
-          [:category, { local_hcb_code: [:tags, :comments, :canonical_transactions, :canonical_pending_transactions] }]
+          hcb_code = [:canonical_transactions, :canonical_pending_transactions]
+          hcb_code << :tags if reads?(:tags)
+          hcb_code << :comments if reads?(:comments)
+
+          preloads = [{ local_hcb_code: hcb_code }]
+          preloads << :category if reads?(:category)
+          preloads << :transaction_source if reads?(:merchant)
+          preloads
         end
 
         def transactions
@@ -78,13 +86,20 @@ class Export
             memo: hcb_code.memo,
             amount_cents: ct.amount_cents,
             account_verification: ct.likely_account_verification_related?,
-            tags: hcb_code.tags.select { |tag| tag.event_id == event_id }.map(&:label),
-            comments: hcb_code.comments.reject(&:admin_only?).map(&:content),
-            author: hcb_code.author,
-            category: ct.category,
-            merchant: merchant_for(ct),
-            income_type: income_type_for(hcb_code)
+            income_type: income_type_for(hcb_code),
+            **fields_for(ct, hcb_code)
           )
+        end
+
+        # The optional fields the format reads, and no others.
+        def fields_for(ct, hcb_code)
+          fields = {}
+          fields[:tags] = hcb_code.tags.select { |tag| tag.event_id == event_id }.map(&:label) if reads?(:tags)
+          fields[:comments] = hcb_code.comments.reject(&:admin_only?).map(&:content) if reads?(:comments)
+          fields[:author] = hcb_code.author if reads?(:author)
+          fields[:category] = ct.category if reads?(:category)
+          fields[:merchant] = ct.raw_stripe_transaction&.stripe_transaction&.dig("merchant_data") if reads?(:merchant)
+          fields
         end
 
         def income_type_for(hcb_code)

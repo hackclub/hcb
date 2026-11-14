@@ -6,8 +6,17 @@ class Export
   # transparency viewers may see are decided once.
   module Format
     class Base
+      # The optional Export::Row fields this format shows. Every format shows
+      # the date, memo and amount; an engine builds, and preloads for, only
+      # what's listed here on top of those.
+      READS = [].freeze
+
       def initialize(public_only:)
         @public_only = public_only
+      end
+
+      def reads?(field)
+        self.class::READS.include?(field)
       end
 
       # How the format is called in a label, e.g. "CSV".
