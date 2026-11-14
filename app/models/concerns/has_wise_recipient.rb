@@ -30,6 +30,10 @@ module HasWiseRecipient
     end
 
     # Requirements pulled from https://wise.com/ documentation
+    #
+    # A field with `show_for_account_types` is only asked for when the
+    # `account_type` field is one of those types, and one with
+    # `hide_for_account_types` only when it isn't.
 
     def self.information_required_for(currency)
       fields = []
@@ -64,25 +68,25 @@ module HasWiseRecipient
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "CAD"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "Interac e-Transfer": "interac" } }
-        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Interac email", conditional: "account_type == 'interac'" }
+        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Interac email", show_for_account_types: %w[interac] }
       elsif currency == "CLP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :text_field, key: "rut_number", placeholder: "12345678-9", label: "RUT number" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings", "Demand": "demand" } }
       elsif currency == "CNY"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "AliPay": "alipay", "UnionPay": "unionpay" } }
-        fields << { type: :text_field, key: "account_number", label: "UnionPay card", conditional: "account_type == 'unionpay'" }
-        fields << { type: :text_field, key: "alipay_id", label: "AliPay ID (email or phone number)", conditional: "account_type == 'alipay'" }
+        fields << { type: :text_field, key: "account_number", label: "UnionPay card", show_for_account_types: %w[unionpay] }
+        fields << { type: :text_field, key: "alipay_id", label: "AliPay ID (email or phone number)", show_for_account_types: %w[alipay] }
       elsif currency == "COP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "IDR"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "goPay": "gopay", "OVO": "ovo", "DANA": "dana", "LinkAja": "linkaja", "ShopeePay": "shopeepay" } }
-        fields << { type: :text_field, key: "account_number", label: "Bank account number", conditional: "account_type == 'bank_account'" }
-        fields << { type: :text_field, key: "mobile_wallet_number", label: "E-wallet number", conditional: "account_type !== 'bank_account'" }
+        fields << { type: :text_field, key: "account_number", label: "Bank account number", show_for_account_types: %w[bank_account] }
+        fields << { type: :text_field, key: "mobile_wallet_number", label: "E-wallet number", hide_for_account_types: %w[bank_account] }
       elsif currency == "JPY"
         fields << { type: :text_field, key: "branch_name", label: "Branch name (if applicable)" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "(Futsuu) Savings/General": "futsuu", "(Chochiku) Savings deposit": "chochiku", "(Touza) Checking/Current": "touza" } }
@@ -103,13 +107,13 @@ module HasWiseRecipient
         fields << { type: :text_field, key: "tax_id", label: "CURP number", description: "18-character CURP" }
       elsif currency == "MYR"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Mobile Number (Duitnow)": "mobile_number_duitnow", "NRIC (Duitnow)": "nirc_duitnow", "BNR (Duitnow)": "bnr_duitnow", "Bank Account": "bank_account" } }
-        fields << { type: :text_field, key: "duitnow_id", label: "Duitnow ID", conditional: "account_type != 'bank_account'" }
-        fields << { type: :text_field, key: "account_number", label: "Account number", conditional: "account_type == 'bank_account'" }
+        fields << { type: :text_field, key: "duitnow_id", label: "Duitnow ID", hide_for_account_types: %w[bank_account] }
+        fields << { type: :text_field, key: "account_number", label: "Account number", show_for_account_types: %w[bank_account] }
       elsif currency == "SGD"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "PayNow (Phone Number)": "paynow_phone", "PayNow (NRIC)": "paynow_nric" } }
-        fields << ACCOUNT_NUMBER_FIELD.merge(conditional: "account_type == 'bank_account'")
-        fields << { type: :text_field, key: "paynow_phone_number", label: "Phone Number", placeholder: "+6591234567", conditional: "account_type == 'paynow_phone'" }
-        fields << { type: :text_field, key: "paynow_nric", label: "NRIC", placeholder: "S1234567D", conditional: "account_type == 'paynow_nric'" }
+        fields << ACCOUNT_NUMBER_FIELD.merge(show_for_account_types: %w[bank_account])
+        fields << { type: :text_field, key: "paynow_phone_number", label: "Phone Number", placeholder: "+6591234567", show_for_account_types: %w[paynow_phone] }
+        fields << { type: :text_field, key: "paynow_nric", label: "NRIC", placeholder: "S1234567D", show_for_account_types: %w[paynow_nric] }
       elsif currency == "UYU"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
         fields << ACCOUNT_NUMBER_FIELD
