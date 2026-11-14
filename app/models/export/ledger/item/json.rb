@@ -23,40 +23,10 @@ class Export
   module Ledger
     module Item
       class Json < Base
-        def mime_type
-          "application/json"
-        end
-
-        def content
-          items.map { |item| row(item) }.to_json
-        end
-
         private
 
+        def formatter = ::Export::Format::Json.new(public_only: public_only == true)
         def format_name = "JSON"
-        def extension = "json"
-
-        def preloads
-          [:tags, :comments]
-        end
-
-        def row(item)
-          {
-            date: item.datetime.to_date,
-            memo: item.memo,
-            amount_cents: amount_cents_for(item),
-            tags: tags_for(item).join(", "),
-            comments: comments_for(item),
-            user: if item.author.present?
-                    {
-                      id: item.author.public_id,
-                      name: item.author.name,
-                    }
-                  else
-                    nil
-                  end
-          }
-        end
 
       end
     end

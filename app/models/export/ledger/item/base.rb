@@ -29,11 +29,20 @@ class Export
       # the very query the ledger page ran. That's what lets a filtered export
       # survive the trip through the job queue: nothing has to be reconstructed
       # from request params on the other side.
+      #
+      # Each item becomes an Export::Row, and an Export::Format turns the rows
+      # into the file. Subclasses only say which format.
       class Base < Export
         store_accessor :parameters, :query, :ledger_ids, :all_ledgers, :event_id, :public_only, :filtered
 
+        delegate :mime_type, to: :formatter
+
         # Past this many items we email the export rather than serving it inline.
         ASYNC_THRESHOLD = 300
+
+        # Everything a row reads off an item, preloaded so a large export
+        # doesn't turn into one query per transaction.
+        PRELOADS = [:tags, :comments, { canonical_transactions: :category, canonical_pending_transactions: :category }].freeze
 
         def async?
           return @async if defined?(@async)
@@ -50,23 +59,59 @@ class Export
             event&.slug || "ledger",
             filtered ? "filtered_transactions" : "transactions",
             Time.now.strftime("%Y%m%d%H%M")
-          ].join("_") + ".#{extension}"
+          ].join("_") + ".#{formatter.extension}"
+        end
+
+        def content
+          formatter.content(rows)
         end
 
         private
 
-        # Subclasses name their own format.
+        # Subclasses name their own formatter.
+        def formatter = raise(NotImplementedError)
         def format_name = raise(NotImplementedError)
-        def extension = raise(NotImplementedError)
 
-        # Associations a subclass reads per row, preloaded so a large export
-        # doesn't turn into one query per transaction.
-        def preloads = []
+        # A chance to load anything a subclass's rows need beyond PRELOADS.
+        def prepare(_items); end
+
+        # Only the journal names merchants, and reading them means loading the
+        # raw Stripe transactions behind every card charge, so the rest leave
+        # them out.
+        def merchant_for(_item) = nil
 
         def items
-          @items ||= begin
-            items = ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true)
-            preloads.any? ? items.preload(*preloads) : items
+          @items ||= ::Ledger::Query.new(query).execute(ledgers: ledger_ids, all_ledgers: all_ledgers == true).preload(*PRELOADS)
+        end
+
+        def rows
+          records = items.to_a
+          prepare(records)
+          records.map { |item| row(item) }
+        end
+
+        def row(item)
+          ::Export::Row.new(
+            date: item.datetime.to_date,
+            memo: item.memo,
+            amount_cents: item.amount_cents,
+            account_verification: item.likely_account_verification_related?,
+            # Only the organization's own tags; an item can be mapped into several
+            # ledgers and carry another organization's tags alongside these.
+            tags: item.tags.select { |tag| tag.event_id == event_id.to_i }.map(&:label),
+            comments: item.comments.reject(&:admin_only?).map(&:content),
+            author: item.author,
+            category: item.category,
+            merchant: merchant_for(item),
+            income_type: income_type_for(item)
+          )
+        end
+
+        def income_type_for(item)
+          case item.linked_object_type
+          when "Donation" then "Donation"
+          when "Invoice" then "Invoice"
+          else "Transfer"
           end
         end
 
@@ -78,24 +123,6 @@ class Export
 
         def scope_description
           filtered ? "filtered transactions" : "all transactions"
-        end
-
-        # Account-verification micro-deposits prove ownership of an external
-        # account, so their amounts are redacted from transparency viewers.
-        def amount_cents_for(item)
-          public_only && item.likely_account_verification_related? ? 0 : item.amount_cents
-        end
-
-        # Only the organization's own tags; an item can be mapped into several
-        # ledgers and carry another organization's tags alongside these.
-        def tags_for(item)
-          item.tags.select { |tag| tag.event_id == event_id.to_i }.map(&:label)
-        end
-
-        def comments_for(item)
-          return [] if public_only
-
-          item.comments.reject(&:admin_only?).map(&:content)
         end
 
       end
