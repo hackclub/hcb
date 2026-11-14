@@ -55,9 +55,12 @@ class Export
         end
 
         # Everything a row reads off a transaction, preloaded so a large export
-        # doesn't turn into one query per transaction.
+        # doesn't turn into one query per transaction. The hcb code's own
+        # transactions are what its memo and author read. The author of a card
+        # charge still costs a cardholder lookup per row, inside HcbCode#author;
+        # that predates these exports.
         def preloads
-          [:category, { local_hcb_code: [:tags, :comments, :canonical_transactions] }]
+          [:category, { local_hcb_code: [:tags, :comments, :canonical_transactions, :canonical_pending_transactions] }]
         end
 
         # Only the journal names merchants, and reading them means loading the
