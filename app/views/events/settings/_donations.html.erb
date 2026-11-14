@@ -40,13 +40,19 @@
           </div>
           <%= form.fields_for :config do |config| %>
             <div class="field field--checkbox">
-              <%= config.check_box :anonymous_donations, disabled:, switch: true %>
               <%= config.label :anonymous_donations, "Allow donors to donate anonymously" %>
+              <label class="field--checkbox--switch ml-auto">
+                <%= config.check_box :anonymous_donations, disabled:, switch: true %>
+                <span class="slider"></span>
+              </label>
             </div>
             <% if event.revenue_fee > 0 %>
               <div class="field field--checkbox">
-                <%= config.check_box :cover_donation_fees, disabled:, switch: true %>
                 <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
+                <label class="field--checkbox--switch ml-auto">
+                  <%= config.check_box :cover_donation_fees, disabled:, switch: true %>
+                  <span class="slider"></span>
+                </label>
               </div>
             <% end %>
           <% end %>
