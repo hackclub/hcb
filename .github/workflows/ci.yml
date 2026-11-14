@@ -135,7 +135,7 @@ jobs:
           echo "  $cmd"
           eval "$cmd"
       - name: Upload coverage report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           # Each shard generates its own coverage file; name them uniquely
           # so the upload action doesn't clash. Merging into a single report
