@@ -38,6 +38,9 @@ class Tax1099ImportService
 
   TIN_TYPES = %w[SSN EIN].freeze
 
+  # Enforces at most one live tax1099 form per TIN; see the migration that adds it.
+  UNIQUE_TIN_INDEX = "index_tax_forms_unique_live_tax1099_tin_hash"
+
   FIELDS = [
     { key: :first_name, label: "Payee First Name (or business name)", required: true },
     { key: :middle_name, label: "Payee Middle Name", required: false },
@@ -89,16 +92,22 @@ class Tax1099ImportService
     # not a PDF) doesn't leave an orphaned user, legal entity, or form behind.
     pdf_token = Tax::W9PdfStore.store(@pdf)
 
-    # The user, legal entity, and form are all created before TaxBandits is
-    # contacted, so that once it has accepted the submission the form is
-    # guaranteed to already sit on a legal entity: there is nothing left that
-    # could fail and strand it. The TaxBandits call happens inside the
+    # The user, legal entity, and completed form all exist before TaxBandits is
+    # contacted, so that once it has accepted the submission there is nothing
+    # left that could fail and strand it. The TaxBandits call happens inside the
     # transaction so that a rejected submission rolls all of them back.
+    #
+    # complete_form! is what sets tin_hash, which is what
+    # index_tax_forms_unique_live_tax1099_tin_hash keys on. Doing it before the
+    # submission is what makes double imports impossible: a second import of the
+    # same TIN racing this one blocks on that index until this transaction ends,
+    # then fails there, before it has sent anything to TaxBandits.
     submitted = false
     form, legal_entity = begin
       ActiveRecord::Base.transaction do
         legal_entity = find_or_create_legal_entity!
         form = Tax::Form.create!(external_service: :taxbandits, source: :tax1099, legal_entity:)
+        complete_form!(form)
 
         response = submit!(form, pdf_token)
         submitted = true
@@ -106,20 +115,22 @@ class Tax1099ImportService
 
         [form, legal_entity]
       end
-    rescue
+    rescue => e
       # Nothing will ever fetch this PDF now, so don't leave it sitting out its
       # TTL in the cache. Once TaxBandits has accepted the submission it may
       # still re-read the PDF within the grace window, so leave it alone then.
       Tax::W9PdfStore.discard(pdf_token) unless submitted
+
+      # Lost the race to a concurrent import of the same TIN. That import has
+      # committed by now (the index made this one wait for it), so it can be
+      # reported like any other duplicate.
+      if e.is_a?(ActiveRecord::RecordNotUnique) && e.message.include?(UNIQUE_TIN_INDEX) && (duplicate = duplicate_tax1099_form)
+        raise DuplicateError, duplicate
+      end
+
       raise
     end
 
-    # The recipient never visits TaxBandits themselves (create_from_data already
-    # submitted the completed form data on their behalf), so nothing will ever
-    # call Tax::Form#import_taxbandits_data for these forms. Set what it would
-    # have derived directly, and mark the form complete now rather than leaving
-    # it stuck pending forever.
-    complete_form!(form)
     legal_entity.refresh_pending_contractors_payments!
 
     Result.new(form:, legal_entity:)
@@ -222,9 +233,11 @@ class Tax1099ImportService
   end
 
   # Populates what Tax::Form#import_taxbandits_data would otherwise have derived
-  # from a TaxBandits sync, and marks the form completed directly: these forms
-  # are already complete the moment TaxBandits accepts them, and nothing will
-  # ever sync them afterwards.
+  # from a TaxBandits sync, and marks the form completed directly: the recipient
+  # never visits TaxBandits themselves (create_from_data submits the completed
+  # form data on their behalf), so these forms are already complete the moment
+  # TaxBandits accepts them and nothing will ever import their data afterwards.
+  # Runs before the submission, inside the same transaction; see #run.
   def complete_form!(form)
     form.update!(
       form_type: :W9,

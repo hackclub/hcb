@@ -227,6 +227,59 @@ RSpec.describe Tax1099ImportService do
       expect(TaxbanditsService).to have_received(:create_from_data).once
     end
 
+    context "when a concurrent import of the same TIN wins the race" do
+      # Simulates the losing side: the up-front check ran before the winner
+      # committed, so it saw nothing, but by the time this import writes the TIN
+      # the winner's form is there.
+      let!(:winner) { run.form }
+
+      before do
+        calls = 0
+        allow_any_instance_of(described_class).to receive(:duplicate_tax1099_form).and_wrap_original do |original|
+          (calls += 1) == 1 ? nil : original.call
+        end
+      end
+
+      it "reports the winner as a duplicate" do
+        expect { run }.to raise_error(described_class::DuplicateError) { |error|
+          expect(error.existing_form).to eq(winner)
+        }
+      end
+
+      it "fails before anything is sent to TaxBandits" do
+        run rescue nil
+
+        expect(TaxbanditsService).to have_received(:create_from_data).once # the winner's
+      end
+
+      it "leaves no second form behind and discards its staged PDF" do
+        allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+        expect { run rescue nil }.not_to change(Tax::Form.with_deleted, :count)
+        expect(Tax::W9PdfStore).to have_received(:discard)
+      end
+    end
+
+    describe "the unique index" do
+      let(:tin_hash) { run.form.tin_hash }
+
+      it "refuses a second live tax1099 form for the same TIN" do
+        expect { create(:tax_form, :completed, source: :tax1099, tin_hash:) }
+          .to raise_error(ActiveRecord::RecordNotUnique, /#{described_class::UNIQUE_TIN_INDEX}/o)
+      end
+
+      it "ignores forms from other sources" do
+        expect { create(:tax_form, :completed, source: :taxbandits, tin_hash:) }.not_to raise_error
+      end
+
+      it "ignores discarded and deleted tax1099 forms" do
+        Tax::Form.tax1099.find_by(tin_hash:).update!(aasm_state: "discarded")
+        create(:tax_form, :completed, source: :tax1099, tin_hash:).destroy!
+
+        expect { create(:tax_form, :completed, source: :tax1099, tin_hash:) }.not_to raise_error
+      end
+    end
+
     it "allows a re-import once the original has been discarded" do
       run.form.update!(aasm_state: "discarded")
 

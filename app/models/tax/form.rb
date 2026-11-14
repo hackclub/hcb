@@ -32,8 +32,9 @@
 #
 # Indexes
 #
-#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
-#  index_tax_forms_on_tin_hash         (tin_hash)
+#  index_tax_forms_on_legal_entity_id            (legal_entity_id)
+#  index_tax_forms_on_tin_hash                   (tin_hash)
+#  index_tax_forms_unique_live_tax1099_tin_hash  (tin_hash) UNIQUE WHERE (((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))
 #
 
 module Tax
