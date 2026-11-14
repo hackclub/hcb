@@ -12,14 +12,14 @@
   <%= render "settings_header", active: "tax", legal_entities: @legal_entities, legal_entity: @legal_entity %>
   <section>
     <p class="muted mt0 mb2">
-      Before HCB can send you payments from organizations, we need a tax form (W-9 or W-8) on file.
-      Your tax information is stored securely and used to send you tax forms at the end of the year
-      if your total payments exceed IRS reporting requirements.
+      Before organizations can pay you or your business through HCB, we need a tax form (W-9 or W-8) on file.
+      Tax information is stored securely and used to send tax forms at the end of the year
+      if total payments exceed IRS reporting requirements.
     </p>
 
     <% case next_req %>
     <% when :not_tin_banned %>
-      <p><%= @legal_entity.person? ? "You have" : "#{@legal_entity.display_name} has" %> been banned from receiving payments on HCB.</p>
+      <p><%= possessive %> TIN has been banned from receiving payments on HCB.</p>
     <% when :not_archived %>
       <p><%= @legal_entity.person? ? "Your personal legal entity" : @legal_entity.display_name %> has been archived.</p>
     <% when :form_present %>
@@ -28,7 +28,7 @@
 
         <%= link_to "Resume tax form", tax_form_path(@legal_entity.latest_tax_form), class: "btn" %>
       <% else %>
-        <p><%= @legal_entity.person? ? "You haven't" : "#{@legal_entity.display_name} hasn't" %> submitted a tax form yet.</p>
+        <p><%= possessive %> tax form hasn't been submitted yet.</p>
 
         <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
       <% end %>
@@ -39,7 +39,7 @@
         <p>
           We couldn't verify the tax form you submitted on <%= format_date @completed_tax_form.completed_at %>
           with TIN <%= masked_tin_tag @completed_tax_form, viewable: show_tin %>.
-          Double-check your name and TIN, then submit a new tax form.
+          Double-check the name and TIN, then submit a new tax form.
         </p>
 
         <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
@@ -61,7 +61,7 @@
 
         <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
       <% else %>
-        <p><%= @legal_entity.person? ? "You don't" : "#{@legal_entity.display_name} doesn't" %> need a tax form right now.</p>
+        <p>A tax form isn't needed<%= for_name %> right now.</p>
       <% end %>
     <% end %>
   </section>
