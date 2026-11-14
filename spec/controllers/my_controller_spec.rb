@@ -46,6 +46,78 @@ RSpec.describe MyController do
     end
   end
 
+  describe "GET #recurring_donations" do
+    def create_recurring_donation(email:, **attrs)
+      RecurringDonation.create!(
+        event: create(:event),
+        name: "Donor",
+        email:,
+        amount: 1_000,
+        stripe_subscription_id: SecureRandom.hex,
+        stripe_status: "active",
+        stripe_current_period_end: 1.month.from_now,
+        **attrs
+      )
+    end
+
+    it "lists only donations matching the signed in user's normalized email" do
+      user = sign_in_verified(create(:user, email: "donor@example.com"))
+      mine = create_recurring_donation(email: " Donor@Example.com ")
+      other = create_recurring_donation(email: "someone-else@example.com")
+
+      get :recurring_donations
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(ERB::Util.html_escape(mine.event.name))
+      expect(response.body).to include(cancel_recurring_donation_path(mine.url_hash))
+      expect(response.body).not_to include(ERB::Util.html_escape(other.event.name))
+      expect(response.body).not_to include(other.url_hash)
+      expect(user.recurring_donations).to contain_exactly(mine)
+    end
+
+    it "does not offer cancellation for an already canceled donation" do
+      sign_in_verified(create(:user, email: "donor@example.com"))
+      donation = create_recurring_donation(email: "donor@example.com", stripe_status: "canceled", canceled_at: 1.day.ago)
+
+      get :recurring_donations
+
+      expect(response.body).to include(ERB::Util.html_escape(donation.event.name))
+      expect(response.body).not_to include(cancel_recurring_donation_path(donation.url_hash))
+    end
+
+    it "lists active donations before canceled ones, newest first" do
+      sign_in_verified(create(:user, email: "donor@example.com"))
+      canceled = create_recurring_donation(email: "donor@example.com", stripe_status: "canceled", canceled_at: 1.day.ago, created_at: 1.day.ago)
+      older = create_recurring_donation(email: "donor@example.com", created_at: 2.days.ago)
+      newer = create_recurring_donation(email: "donor@example.com")
+
+      get :recurring_donations
+
+      expect(response.body).to match(/#{newer.url_hash}.*#{older.url_hash}.*#{Regexp.escape(ERB::Util.html_escape(canceled.event.name))}/m)
+    end
+
+    it "hides subscriptions that never completed checkout" do
+      user = sign_in_verified(create(:user, email: "donor@example.com"))
+      incomplete = create_recurring_donation(email: "donor@example.com", stripe_status: "incomplete", stripe_current_period_end: nil)
+      expired = create_recurring_donation(email: "donor@example.com", stripe_status: "incomplete_expired", stripe_current_period_end: nil)
+
+      get :recurring_donations
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(incomplete.url_hash)
+      expect(response.body).not_to include(expired.url_hash)
+      expect(user.recurring_donations).to be_empty
+    end
+
+    it "redirects an unverified session to sign in" do
+      sign_in_unverified
+
+      get :recurring_donations
+
+      expect(response).to redirect_to(auth_users_path(return_to: request.original_url, require_reload: true))
+    end
+  end
+
   describe "GET #reimbursements" do
     it "does not render the authenticated reimbursement-report listing UI for an unverified user" do
       sign_in_unverified

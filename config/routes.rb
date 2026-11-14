@@ -111,6 +111,7 @@ Rails.application.routes.draw do
 
     get "cards", to: "my#cards", as: :my_cards
     get "cards/shipping", to: "stripe_cards#shipping", as: :my_cards_shipping
+    get "recurring_donations", to: "my#recurring_donations", as: :my_recurring_donations
   end
 
   resources :mailbox_addresses, only: [:create, :show] do
