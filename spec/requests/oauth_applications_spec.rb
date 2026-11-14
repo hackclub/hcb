@@ -24,13 +24,31 @@ RSpec.describe "Revoking an OAuth application's tokens", type: :request do
     it "revokes every token, including expired ones that still hold a refresh token" do
       live = create(:api_token, user: create(:user), application:, use_refresh_token: true)
       expired = create(:api_token, user: create(:user), application:, use_refresh_token: true, expires_in: 1, created_at: 3.hours.ago)
+      revoked_later = create(:api_token, user: create(:user), application:, use_refresh_token: true, revoked_at: 1.day.from_now)
 
       post revoke_tokens_oauth_application_path(application)
 
-      expect([live, expired].each(&:reload)).to all(be_revoked)
+      expect([live, expired, revoked_later].each(&:reload)).to all(be_revoked)
       expect(response).to redirect_to(oauth_application_path(application))
       follow_redirect!
-      expect(response.body).to include("Revoked 2 tokens.")
+      expect(response.body).to include("Revoked 3 tokens.")
+    end
+
+    it "revokes a token that a refresh commits after the first sweep has started" do
+      user = create(:user)
+      create(:api_token, user:, application:, use_refresh_token: true)
+      refreshed = nil
+      commit_refresh = lambda do |*, payload|
+        next unless refreshed.nil? && payload[:sql].start_with?('UPDATE "api_tokens"')
+
+        refreshed = create(:api_token, user:, application:, use_refresh_token: true)
+      end
+
+      ActiveSupport::Notifications.subscribed(commit_refresh, "sql.active_record") do
+        post revoke_tokens_oauth_application_path(application)
+      end
+
+      expect(refreshed.reload).to be_revoked
     end
 
     it "revokes outstanding authorization codes and device codes" do
@@ -69,6 +87,30 @@ RSpec.describe "Revoking an OAuth application's tokens", type: :request do
 
       expect(token.reload).not_to be_revoked
       expect(response).to redirect_to(root_path)
+    end
+  end
+
+  context "as a user who isn't an admin" do
+    before { sign_in(create(:user)) }
+
+    it "does not revoke anything" do
+      token = create(:api_token, user: create(:user), application:, use_refresh_token: true)
+
+      post revoke_tokens_oauth_application_path(application)
+
+      expect(token.reload).not_to be_revoked
+      expect(response).to redirect_to(root_path)
+    end
+  end
+
+  context "when signed out" do
+    it "does not revoke anything" do
+      token = create(:api_token, user: create(:user), application:, use_refresh_token: true)
+
+      post revoke_tokens_oauth_application_path(application)
+
+      expect(token.reload).not_to be_revoked
+      expect(response).to have_http_status(:redirect)
     end
   end
 end
