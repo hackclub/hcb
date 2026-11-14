@@ -297,7 +297,7 @@
   </div>
 
   <div class="flex gap-2">
-    <button type="submit" class="gap-2 btn flex-[4] w-full bg-blue" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn flex-[4] w-full bg-blue" <% if disabled %> disabled<% end %>>
       Send check
       <%= inline_icon "send" %>
     </button>

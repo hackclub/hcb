@@ -11,7 +11,7 @@
 
   <div data-scroll-seek-target="section" data-transfer-type-target="types">
     <h3 class="mb-2">What kind of transfer is this?</h3>
-    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
+    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <% if repayable %> hidden<% end %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
 
     <div class="flex flex-col gap-2 mb-4">
       <% [
@@ -53,7 +53,7 @@
                 class="pop self-center mt-2"
                 title="Swap organizations"
                 aria-label="Swap organizations"
-                <%= "disabled" if disabled %>
+                <% if disabled %> disabled<% end %>
                 data-swap-organizations-target="button"
                 data-action="swap-organizations#swap">
           <%= inline_icon "transfers-horizontal", size: 20 %>
@@ -81,17 +81,17 @@
         <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", -repaid_ledger_item.amount_cents / 100.0) if repaid_ledger_item), data: { transfer_type_target: "repaymentAmount" } %>
         <div class="flex items-center gap-3" data-transfer-type-target="repaidCard">
           <div class="flex-1 min-w-0">
-            <p class="muted m-0" data-transfer-type-target="pickHint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
-            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_item || disbursement.destination_event.nil? %>>No transaction chosen yet.</p>
-            <div data-transfer-type-target="repaidSummary" <%= "hidden" unless repaid_ledger_item %>>
+            <p class="muted m-0" data-transfer-type-target="pickHint" <% if disbursement.destination_event %> hidden<% end %>>Choose who you're sending to first.</p>
+            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <% if repaid_ledger_item || disbursement.destination_event.nil? %> hidden<% end %>>No transaction chosen yet.</p>
+            <div data-transfer-type-target="repaidSummary" <% unless repaid_ledger_item %> hidden<% end %>>
               <strong class="block truncate" data-transfer-type-target="repaidMemo"><%= repaid_ledger_item&.memo %></strong>
               <span class="muted text-sm" data-transfer-type-target="repaidDate"><%= repaid_ledger_item&.datetime&.strftime("%b %e, %Y") %></span>
             </div>
           </div>
-          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" unless repaid_ledger_item %>><%= repaid_ledger_item&.amount&.abs&.format %></strong>
-          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
-            <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_item %>>Choose</span>
-            <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaid_ledger_item %>>Change</span>
+          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <% unless repaid_ledger_item %> hidden<% end %>><%= repaid_ledger_item&.amount&.abs&.format %></strong>
+          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <% unless disbursement.destination_event %> disabled<% end %>>
+            <span data-transfer-type-target="chooseLabel" <% if repaid_ledger_item %> hidden<% end %>>Choose</span>
+            <span data-transfer-type-target="changeLabel" <% unless repaid_ledger_item %> hidden<% end %>>Change</span>
           </button>
         </div>
         <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transaction you're repaying.</p>
@@ -157,7 +157,7 @@
       <% end %>
     <% end %>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
       Send transfer
       <%= inline_icon "send" %>
     </button>

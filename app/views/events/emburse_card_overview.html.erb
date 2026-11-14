@@ -127,7 +127,7 @@ West Hollywood, CA 90069</pre>
       </thead>
       <tbody>
         <% @event.emburse_transfers.each do |lcr| %>
-          <tr <%= "under-review" if lcr.under_review? || lcr.pending? %> id="lcr_row">
+          <tr <% if lcr.under_review? || lcr.pending? %> under-review<% end %> id="lcr_row">
             <td><%= format_datetime(lcr.created_at) %></td>
             <td><%= user_mention lcr.creator %></td>
             <td><%= status_badge lcr.status_badge_type %>  <%= lcr.status %></td>

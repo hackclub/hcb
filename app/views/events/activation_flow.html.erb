@@ -58,5 +58,6 @@
     <%= turbo_frame_tag "team_position" do %>
       <%= render partial: "organizer_positions/organizer_position_row", collection: @event.organizer_positions, as: :organizer_position %>
     <% end %>
+    </tbody>
   </table>
 <% end %>

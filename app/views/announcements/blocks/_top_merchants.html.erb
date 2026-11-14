@@ -7,7 +7,7 @@
     <% if is_email %>
       <ol>
         <% merchants.each do |merchant| %>
-          <li><strong><%= merchant[:name] %></strong>: <%= render_money merchant[:value] * 100 %></p>
+          <li><strong><%= merchant[:name] %></strong>: <%= render_money merchant[:value] * 100 %></li>
         <% end %>
       </ol>
     <% else %>
