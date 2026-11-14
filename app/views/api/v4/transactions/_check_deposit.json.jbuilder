@@ -4,7 +4,7 @@
 
 json.status check_deposit.state_text.parameterize(separator: "_")
 
-if policy(check_deposit).view_image?
+omit_hidden(json) do
   json.front_url Rails.application.routes.url_helpers.rails_blob_url(check_deposit.front)
   json.back_url Rails.application.routes.url_helpers.rails_blob_url(check_deposit.back)
 end

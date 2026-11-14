@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AchTransferPolicy < ApplicationPolicy
+  fields :account_number, :routing_number, if: :view_account_routing_numbers?
+
   def index?
     user&.auditor?
   end

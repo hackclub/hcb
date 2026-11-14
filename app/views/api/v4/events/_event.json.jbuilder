@@ -25,19 +25,25 @@ object_shape(json, event, object_name: "organization") do
   end
 
   if expand?(:balance_cents)
-    json.balance_cents event.balance_available
-    json.fee_balance_cents event.fronted_fee_balance_v2_cents
+    omit_hidden(json) do
+      json.balance_cents event.balance_available
+      json.fee_balance_cents event.fronted_fee_balance_v2_cents
+    end
   end
 
   if expand?(:reporting)
-    json.total_spent_cents event.total_spent_cents
-    json.total_raised_cents event.total_raised
+    omit_hidden(json) do
+      json.total_spent_cents event.total_spent_cents
+      json.total_raised_cents event.total_raised
+    end
   end
 
-  if policy(event).account_number? && expand?(:account_number)
-    json.account_number event.account_number
-    json.routing_number event.routing_number
-    json.swift_bic_code event.bic_code
+  if expand?(:account_number)
+    omit_hidden(json) do
+      json.account_number event.account_number
+      json.routing_number event.routing_number
+      json.swift_bic_code event.bic_code
+    end
   end
 
   # TODO: Remove users field once migration to /api/v4/organizer_positions is done

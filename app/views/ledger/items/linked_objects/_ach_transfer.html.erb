@@ -67,7 +67,7 @@
         <%= organizer_signed_in? ? ach_transfer.bank_name : "Sign in to view" %>
       </p>
 
-      <% if policy(ach_transfer).view_account_routing_numbers? %>
+      <% if ach_transfer.readable?(:routing_number) %>
         <p class="fs-mask">
           <strong>Routing number</strong>
           <% if @show_ach_details %>

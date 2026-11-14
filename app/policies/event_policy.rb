@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class EventPolicy < ApplicationPolicy
+  fields :account_number, :routing_number, :bic_code, if: :account_number?
+  # Every name the balance is read through, so none of them gets around the rule.
+  fields :balance_available, :available_balance, :balance_available_v2_cents,
+         :fronted_fee_balance_v2_cents, :total_spent_cents, :total_raised, if: :show?
+
   def index?
     user.present?
   end

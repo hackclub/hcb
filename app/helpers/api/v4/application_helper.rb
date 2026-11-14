@@ -82,6 +82,18 @@ module Api
         @current_user_event_ids.to_set.intersect?(user.organizer_positions.pluck(:event_id))
       end
 
+      # Renders the block, or leaves out every key it set if it reads a field
+      # the viewer can't see. See FieldGuard.
+      def omit_hidden(json)
+        before = json.attributes!.dup
+        rendered = FieldGuard.omit_hidden do
+          yield
+          true
+        end
+        # Jbuilder is a BasicObject that turns unknown method calls into keys.
+        Kernel.instance_method(:instance_variable_set).bind_call(json, :@attributes, before) unless rendered
+      end
+
       def expand_pii(override_if: false)
         yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end

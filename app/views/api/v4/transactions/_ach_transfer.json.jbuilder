@@ -7,7 +7,7 @@ object_shape(json, ach_transfer) do
   json.recipient_email ach_transfer.recipient_email
   json.bank_name ach_transfer.bank_name
 
-  if policy(ach_transfer).view_account_routing_numbers?
+  omit_hidden(json) do
     json.account_number_last4 ach_transfer.account_number.slice(-4, 4)
     json.routing_number ach_transfer.routing_number
   end

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CheckDepositPolicy < ApplicationPolicy
+  fields :front, :back, if: :view_image?
+
   def show?
     auditor_or_user?
   end

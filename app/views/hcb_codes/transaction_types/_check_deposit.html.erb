@@ -70,7 +70,7 @@
 
   <div class="grid gap-4 grid-cols-2 grid-rows-[auto_auto] place-items-center my-4">
     <div>
-      <% if policy(@hcb_code.check_deposit).view_image? %>
+      <% if @hcb_code.check_deposit.readable?(:front) %>
         <%= link_to @hcb_code.check_deposit.front, target: "_blank" do %>
           <%= image_tag @hcb_code.check_deposit.front.representation(resize_to_limit: [300, nil]), class: "rounded", width: 200 %>
         <% end %>
@@ -81,7 +81,7 @@
       <% end %>
     </div>
     <div>
-      <% if policy(@hcb_code.check_deposit).view_image? %>
+      <% if @hcb_code.check_deposit.readable?(:back) %>
         <%= link_to @hcb_code.check_deposit.back, target: "_blank" do %>
           <%= image_tag @hcb_code.check_deposit.back.representation(resize_to_limit: [300, nil]), class: "rounded", width: 200 %>
         <% end %>

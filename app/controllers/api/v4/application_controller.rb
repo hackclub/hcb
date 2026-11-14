@@ -5,6 +5,7 @@ module Api
     class ApplicationController < ActionController::API
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
+      include FieldGuardedRendering
       include PublicActivity::StoreController
       include ErrorHandling
       include AdminScopeCheckable

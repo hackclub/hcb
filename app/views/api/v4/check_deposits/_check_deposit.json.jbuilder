@@ -16,7 +16,7 @@ object_shape(json, check_deposit) do
 
   json.estimated_arrival_date check_deposit.estimated_arrival_date
 
-  if policy(check_deposit).view_image?
+  omit_hidden(json) do
     json.front_url Rails.application.routes.url_helpers.rails_blob_url(check_deposit.front) if check_deposit.front.attached?
     json.back_url Rails.application.routes.url_helpers.rails_blob_url(check_deposit.back) if check_deposit.back.attached?
   end

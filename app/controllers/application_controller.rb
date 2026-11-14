@@ -16,6 +16,7 @@ class ApplicationController < ActionController::Base
   before_action :reject_unknown_format, if: -> { request.get? || request.head? }
 
   include Pundit::Authorization
+  include FieldGuardedRendering
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
