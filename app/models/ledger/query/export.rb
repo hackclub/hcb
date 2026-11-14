@@ -11,12 +11,15 @@ class Ledger
     class Export
       FORMATS = %i[csv json ledger].freeze
 
-      def initialize(query:, as:, ledgers: [], all_ledgers: false, **attributes)
+      def initialize(query:, as:, ledgers: [], all_ledgers: false, event_id: nil, requested_by: nil, public_only: false, filtered: false)
         @query = query
         @as = as
         @ledgers = ledgers
         @all_ledgers = all_ledgers
-        @attributes = attributes
+        @event_id = event_id
+        @requested_by = requested_by
+        @public_only = public_only
+        @filtered = filtered
       end
 
       def run
@@ -28,7 +31,10 @@ class Ledger
           # Strict boolean, matching Ledger::Query#execute: only a literal true
           # opts out of ledger scoping, so a truthy value fails closed.
           all_ledgers: all_ledgers == true,
-          **attributes
+          event_id:,
+          requested_by:,
+          public_only:,
+          filtered:
         )
       end
 
@@ -49,7 +55,7 @@ class Ledger
 
       private
 
-      attr_reader :query, :as, :ledgers, :all_ledgers, :attributes
+      attr_reader :query, :as, :ledgers, :all_ledgers, :event_id, :requested_by, :public_only, :filtered
 
       # Ledgers are stored by id, so the export can be handed to a job.
       def ledger_ids

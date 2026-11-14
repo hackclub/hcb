@@ -47,7 +47,7 @@ RSpec.describe Ledger::Query::Export, type: :model do
       expect(export.ledger_ids).to eq([ledger.id])
     end
 
-    it "passes the remaining attributes through to the export" do
+    it "passes the export's own attributes through to it" do
       export = build_export(as: :csv, event_id: event.id, public_only: true, filtered: true).run
 
       expect(export.event_id).to eq(event.id)
