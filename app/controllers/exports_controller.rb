@@ -4,9 +4,9 @@ class ExportsController < ApplicationController
   include SetEvent
   include SetLedgerFilters
   before_action :set_event, only: [:transactions, :reimbursements, :ledger]
-  # Before the filters resolve: resolving them is expensive (merchants alone
-  # load every transaction in the organization), so settle whether the
-  # requester may see the ledger at all first.
+  # Before the filters resolve: resolving them runs lookups driven by the
+  # params (tags, categories, users), so settle whether the requester may see
+  # the ledger at all first.
   before_action :authorize_ledger, only: [:ledger]
   before_action :set_ledger_filters, only: [:ledger]
   skip_before_action :signed_in_user

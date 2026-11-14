@@ -36,8 +36,8 @@ module SetLedgerFilters
     # anonymously: every combination is a separate, uncacheable trip through the
     # transaction engines. Anonymous readers get the unfiltered page.
     #
-    # Runs before the filters are resolved, because resolving them is most of the
-    # cost: `Event#merchants` alone loads every transaction for the organization.
+    # Runs before the filters are resolved, so an anonymous reader's request
+    # does none of the lookups resolving them involves.
     def reject_disabled_filters
       @ledger_filters_disabled = !signed_in?
       return unless @ledger_filters_disabled
