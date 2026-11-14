@@ -4,8 +4,8 @@
 #   * The inline bootstrap scripts that remain (Plaid, HelpScout, FullStory, the
 #     console banner) are nonced, and every `on*=` attribute has become a
 #     Stimulus `data-action`.
-#   * Alpine.js runs the `@alpinejs/csp` build, which interprets its directives
-#     with a small parser instead of `new Function(...)`.
+#   * Nothing evaluates a string as code any more; the Alpine directives that
+#     needed `new Function(...)` are gone.
 #
 # Note that a nonce makes browsers ignore `'unsafe-inline'` entirely, so the two
 # cannot be mixed as a fallback.
