@@ -1,0 +1,157 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+# Reviewing a contractor's invoice: clicking its row opens the attached invoice
+# in the receipt modal, which is the only place to approve or reject it.
+RSpec.describe "Contractor invoice review", type: :system do
+  let(:manager) { create(:user) }
+  let(:event) { create(:event) }
+  let(:payee) { create(:payee, event:, display_name: "Fiona Hackworth") }
+  let(:position) { create(:payroll_position, payee:, aasm_state: :onboarded) }
+  let(:position_page) { event_payroll_position_path(event_id: event.slug, id: position) }
+
+  before do
+    # Flipper's instance is thread-local, so enabling it here wouldn't reach the app server
+    allow(Flipper).to receive(:enabled?).and_call_original
+    allow(Flipper).to receive(:enabled?).with(:payments_contractors_refresh_2026_06_26, event).and_return(true)
+    allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_00)
+    create(:organizer_position, user: manager, event:, role: :manager, first_time: false)
+  end
+
+  def create_invoice(name, amount_cents: 50_00)
+    position.invoices.create!(name:, amount_cents:, currency: "USD").tap do |invoice|
+      Receipt.create!(receiptable: invoice, user: create(:user), upload_method: :contractor_invoice,
+                      file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+    end
+  end
+
+  # Modals fade in with jQuery; a click that lands mid-fade can miss its target
+  def visit_without_animations(path)
+    visit path
+    page.execute_script("jQuery.fx.off = true")
+  end
+
+  # The rendered status, since a stray test-only favicon request can swallow the flash
+  def have_invoice_status(status)
+    have_css("tr", text: status, wait: 10)
+  end
+
+  # Clicks the row itself (its stretched link), away from the attachment thumbnail
+  def open_row(text)
+    find("tr.clickable", text:).find("a.stretched-link").click(x: 5, y: 5)
+  end
+
+  def open_invoice(invoice)
+    open_row(invoice.name)
+  end
+
+  def within_invoice_modal(invoice, &)
+    within("#preview_receipt_#{invoice.receipts.sole.id}", &)
+  end
+
+  context "as a manager" do
+    before { sign_in(manager) }
+
+    it "approves only the invoice whose row was opened" do
+      other = create_invoice("Week 1 hours", amount_cents: 75_00)
+      invoice = create_invoice("Week 2 hours", amount_cents: 50_00)
+      visit_without_animations position_page
+
+      expect(page).to have_no_button("Approve").and have_no_button("Reject")
+
+      open_invoice(invoice)
+      within_invoice_modal(invoice) do
+        expect(page).to have_button("Reject")
+        click_button "Approve"
+      end
+
+      expect(page).to have_invoice_status("Approved")
+      expect(invoice.reload).to be_approved
+      expect(other.reload).to be_submitted
+      expect(Payment.sole.amount_cents).to eq(50_00)
+    end
+
+    it "rejects only after the confirmation, which shows above the modal" do
+      invoice = create_invoice("Week 1 hours")
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      within_invoice_modal(invoice) { click_button "Reject" }
+      within(".swal-modal") { click_button "Cancel" }
+      expect(page).to have_no_css(".swal-modal")
+      expect(invoice.reload).to be_submitted
+
+      within_invoice_modal(invoice) { click_button "Reject" }
+      within(".swal-modal") { click_button "Confirm" }
+
+      expect(page).to have_invoice_status("Rejected")
+      expect(invoice.reload).to be_rejected
+      expect(Payment.count).to eq(0)
+    end
+
+    it "pays nothing when the invoice was reviewed while the modal was open" do
+      invoice = create_invoice("Week 1 hours")
+      visit_without_animations position_page
+      open_invoice(invoice)
+      invoice.mark_rejected!(create(:user))
+
+      within_invoice_modal(invoice) { click_button "Approve" }
+
+      expect(page).to have_invoice_status("Rejected")
+      expect(invoice.reload).to be_rejected
+      expect(Payment.count).to eq(0)
+    end
+
+    it "offers no review actions on an invoice that was already reviewed" do
+      invoice = create_invoice("Week 1 hours")
+      invoice.mark_rejected!(manager)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      within_invoice_modal(invoice) { expect(page).to have_text("receipt.png") }
+      expect(page).to have_no_button("Approve", visible: :all)
+      expect(page).to have_no_button("Reject", visible: :all)
+    end
+
+    it "keeps an invoice reviewable when its attachment can't be previewed" do
+      invoice = create_invoice("Week 1 hours")
+      allow_any_instance_of(Receipt).to receive(:preview).and_return(nil)
+      visit_without_animations position_page
+
+      expect(page).to have_no_css("tr.clickable", text: invoice.name)
+      within("tr", text: invoice.name) { click_button "Approve" }
+
+      expect(page).to have_invoice_status("Approved")
+      expect(invoice.reload).to be_approved
+    end
+
+    it "opens the invoice above the contractor popover on the contractors page" do
+      invoice = create_invoice("Week 1 hours")
+      visit_without_animations event_contractors_path(event_id: event.slug)
+
+      open_row("Fiona Hackworth")
+      open_invoice(invoice)
+      within_invoice_modal(invoice) { click_button "Approve" }
+
+      expect(page).to have_invoice_status("Approved")
+      expect(invoice.reload).to be_approved
+    end
+  end
+
+  context "as a reader" do
+    it "shows the invoice without any way to review it" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event:, role: :reader, first_time: false)
+      invoice = create_invoice("Week 1 hours")
+      sign_in(reader)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      within_invoice_modal(invoice) { expect(page).to have_text("receipt.png") }
+      expect(page).to have_no_button("Approve", visible: :all)
+      expect(page).to have_no_button("Reject", visible: :all)
+    end
+  end
+end

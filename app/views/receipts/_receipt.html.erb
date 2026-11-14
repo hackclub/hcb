@@ -1,6 +1,7 @@
 <% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true, disposition: "inline") %>
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
+<% modal_id = local_assigns[:modal_id] || "preview_receipt_#{instance}" %>
 
 <div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
 
@@ -44,7 +45,7 @@
         <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
               "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
             } if receipt.preview %>
       </span>
     <% elsif receipt.preview && local_assigns[:popover] %>
@@ -56,7 +57,7 @@
               "receipt-id" => receipt.id,
               "file_type"  => receipt.file.blob.content_type,
               "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
             } if receipt.preview %>
     </span>
     <% if receipt.file.blob.content_type == "application/pdf" %>
@@ -125,7 +126,7 @@
       z-index: 300;
     }
   </style>
-  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "preview_receipt_#{instance}" %>" style="z-index: 300;">
+  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="z-index: 300;">
     <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
       <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
     </a>
@@ -141,6 +142,7 @@
 
       <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column; overflow-y: auto;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
         <%= render partial: "receipts/details", locals: { receipt: } %>
+        <%= local_assigns[:details_footer] %>
       </div>
     </div>
 
@@ -169,6 +171,7 @@
 
         <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
           <%= render partial: "receipts/details", locals: { receipt: } %>
+          <%= local_assigns[:details_footer] %>
         </div>
 
     </div>

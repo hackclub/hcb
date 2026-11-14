@@ -142,12 +142,19 @@
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
-            <% if @can_review %><th></th><% end %>
           </tr>
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <tr>
+            <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
+            <% preview_receipt = receipts.find(&:preview) %>
+            <% review_actions = capture do %>
+              <div class="flex gap-2">
+                <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
+                <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+              </div>
+            <% end if @can_review && invoice.submitted? %>
+            <tr class="<%= "clickable" if preview_receipt %>">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
               </td>
@@ -162,25 +169,25 @@
                 <%= invoice.name %>
               </td>
               <td>
-                <% if invoice.receipts.any? %>
-                  <div class="receipts_list flex gap-2">
-                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                <% if preview_receipt %>
+                  <div class="receipts_list flex gap-2 pointer-events-auto">
+                    <% receipts.each do |receipt| %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "sticky bottom-0 mt-auto -mb-6 pt-3 pb-6 bg-white dark:bg-dark") %>
+                    <% end %>
                   </div>
+                <% elsif review_actions %>
+                  <%# Nothing to preview, so there's no modal to review this invoice from %>
+                  <%= review_actions %>
                 <% else %>
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-right"><%= render_money invoice.amount_cents %></td>
-              <% if @can_review %>
-                <td class="text-right">
-                  <% if invoice.submitted? %>
-                    <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-                    </div>
-                  <% end %>
-                </td>
-              <% end %>
+              <td class="text-right">
+                <%= render_money invoice.amount_cents %>
+                <% if preview_receipt %>
+                  <%= link_to "", "#", class: "stretched-link", aria: { label: "View invoice" }, data: { behavior: "modal_trigger", modal: dom_id(preview_receipt, :preview) } %>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>
