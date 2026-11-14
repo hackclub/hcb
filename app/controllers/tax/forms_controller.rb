@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :electronic_consent, :update_electronic_consent, :completed, :discard]
+    before_action :set_form, only: [:show, :electronic_consent, :update_electronic_consent, :completed, :discard, :download]
 
     def show
       authorize @form
@@ -78,6 +78,19 @@ module Tax
       @form.mark_discarded!
 
       redirect_to legal_entity_path(@form.legal_entity)
+    end
+
+    def download
+      authorize @form
+
+      content = @form.pdf_content
+
+      if content.nil?
+        flash[:error] = "This form has not yet been completed"
+        redirect_back_or_to legal_entity_path(@form.legal_entity)
+      else
+        send_data content, filename: "#{@form.form_type}.pdf", type: "application/pdf", disposition: "attachment"
+      end
     end
 
     private
