@@ -185,9 +185,18 @@ class Ledger
     # Categories are assigned to the underlying canonical transactions rather
     # than to the item itself. A settled transaction's category wins over a
     # pending one's: once a charge settles, its category is the final word.
+    # Among several of a kind (a charge and its partial refund, say) the
+    # earliest wins, so the answer doesn't depend on the order the database
+    # happens to return rows in.
     def category
-      canonical_transactions.filter_map(&:category).first ||
-        canonical_pending_transactions.filter_map(&:category).first
+      oldest_first(canonical_transactions).filter_map(&:category).first ||
+        oldest_first(canonical_pending_transactions).filter_map(&:category).first
+    end
+
+    # Sorted in memory: an export preloads both associations, and this keeps
+    # the sort from turning into a query per item.
+    def oldest_first(transactions)
+      transactions.sort_by { |transaction| [transaction.date, transaction.id] }
     end
 
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
