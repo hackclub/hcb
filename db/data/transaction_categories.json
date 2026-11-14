@@ -128,6 +128,9 @@
       "digital_goods_applications",
       "digital_goods_media",
       "direct_marketing_catalog_merchant",
+      "direct_marketing_inbound_telemarketing",
+      "direct_marketing_other",
+      "direct_marketing_outbound_telemarketing",
       "miscellaneous_publishing_and_printing"
     ]
   },
@@ -294,7 +297,6 @@
       "luggage_and_leather_goods_stores",
       "lumber_building_materials_stores",
       "marinas_service_and_supplies",
-      "marketplaces",
       "medical_dental_ophthalmic_and_hospital_equipment_and_supplies",
       "membership_organizations",
       "mens_and_boys_clothing_and_accessories_stores",
@@ -338,6 +340,9 @@
   },
   "rent": {
     "label": "Rent"
+  },
+  "repayment": {
+    "label": "Repayment"
   },
   "server-hosting": {
     "label": "Server / hosting",

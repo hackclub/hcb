@@ -7,6 +7,9 @@ module HasWiseRecipient
     include CountryEnumable
     has_country_enum(field: :recipient_country)
 
+    before_validation(:normalize_wise_recipient_id)
+    validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
+
     validate do
       if POSTAL_CODE_FORMATS[recipient_country&.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])
         errors.add(:address_postal_code, "does not meet the required format for this country")
@@ -27,6 +30,10 @@ module HasWiseRecipient
     end
 
     # Requirements pulled from https://wise.com/ documentation
+    #
+    # A field with `show_for_account_types` is only asked for when the
+    # `account_type` field is one of those types, and one with
+    # `hide_for_account_types` only when it isn't.
 
     def self.information_required_for(currency)
       fields = []
@@ -48,7 +55,7 @@ module HasWiseRecipient
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
-      elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
+      elsif currency.in?(%w[HKD NGN NPR NZD PHP THB])
         fields << ACCOUNT_NUMBER_FIELD
       elsif currency == "ARS"
         fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number (CBU)" }
@@ -61,25 +68,25 @@ module HasWiseRecipient
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "CAD"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "Interac e-Transfer": "interac" } }
-        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", conditional: "account_type != 'interac'" }
-        fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Interac email", conditional: "account_type == 'interac'" }
+        fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", hide_for_account_types: %w[interac] }
+        fields << { type: :text_field, key: "interac_email", placeholder: "fionah@gmail.com", label: "Interac email", show_for_account_types: %w[interac] }
       elsif currency == "CLP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :text_field, key: "rut_number", placeholder: "12345678-9", label: "RUT number" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings", "Demand": "demand" } }
       elsif currency == "CNY"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "AliPay": "alipay", "UnionPay": "unionpay" } }
-        fields << { type: :text_field, key: "account_number", label: "UnionPay card", conditional: "account_type == 'unionpay'" }
-        fields << { type: :text_field, key: "alipay_id", label: "AliPay ID (email or phone number)", conditional: "account_type == 'alipay'" }
+        fields << { type: :text_field, key: "account_number", label: "UnionPay card", show_for_account_types: %w[unionpay] }
+        fields << { type: :text_field, key: "alipay_id", label: "AliPay ID (email or phone number)", show_for_account_types: %w[alipay] }
       elsif currency == "COP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "IDR"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "goPay": "gopay", "OVO": "ovo", "DANA": "dana", "LinkAja": "linkaja", "ShopeePay": "shopeepay" } }
-        fields << { type: :text_field, key: "account_number", label: "Bank account number", conditional: "account_type == 'bank_account'" }
-        fields << { type: :text_field, key: "mobile_wallet_number", label: "E-wallet number", conditional: "account_type !== 'bank_account'" }
+        fields << { type: :text_field, key: "account_number", label: "Bank account number", show_for_account_types: %w[bank_account] }
+        fields << { type: :text_field, key: "mobile_wallet_number", label: "E-wallet number", hide_for_account_types: %w[bank_account] }
       elsif currency == "JPY"
         fields << { type: :text_field, key: "branch_name", label: "Branch name (if applicable)" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "(Futsuu) Savings/General": "futsuu", "(Chochiku) Savings deposit": "chochiku", "(Touza) Checking/Current": "touza" } }
@@ -100,8 +107,13 @@ module HasWiseRecipient
         fields << { type: :text_field, key: "tax_id", label: "CURP number", description: "18-character CURP" }
       elsif currency == "MYR"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Mobile Number (Duitnow)": "mobile_number_duitnow", "NRIC (Duitnow)": "nirc_duitnow", "BNR (Duitnow)": "bnr_duitnow", "Bank Account": "bank_account" } }
-        fields << { type: :text_field, key: "duitnow_id", label: "Duitnow ID", conditional: "account_type != 'bank_account'" }
-        fields << { type: :text_field, key: "account_number", label: "Account number", conditional: "account_type == 'bank_account'" }
+        fields << { type: :text_field, key: "duitnow_id", label: "Duitnow ID", hide_for_account_types: %w[bank_account] }
+        fields << { type: :text_field, key: "account_number", label: "Account number", show_for_account_types: %w[bank_account] }
+      elsif currency == "SGD"
+        fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "PayNow (Phone Number)": "paynow_phone", "PayNow (NRIC)": "paynow_nric" } }
+        fields << ACCOUNT_NUMBER_FIELD.merge(show_for_account_types: %w[bank_account])
+        fields << { type: :text_field, key: "paynow_phone_number", label: "Phone Number", placeholder: "+6591234567", show_for_account_types: %w[paynow_phone] }
+        fields << { type: :text_field, key: "paynow_nric", label: "NRIC", placeholder: "S1234567D", show_for_account_types: %w[paynow_nric] }
       elsif currency == "UYU"
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
         fields << ACCOUNT_NUMBER_FIELD
@@ -142,6 +154,28 @@ module HasWiseRecipient
     HasWiseRecipient.unsupported_account_type_reason(account_type)
   end
 
+  def wise_recipient_url
+    return nil unless wise_recipient_id.present?
+
+    "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
+  end
+
+  # Admins paste the recipient's Wise URL (e.g. https://wise.com/recipients/<uuid>?new=undefined),
+  # so keep only the UUID
+  def normalize_wise_recipient_id
+    return unless wise_recipient_id_changed?
+
+    normalized = wise_recipient_id&.strip.presence
+
+    if normalized.nil? || normalized.match?(WISE_RECIPIENT_ID_FORMAT)
+      self.wise_recipient_id = normalized
+      return
+    end
+
+    match = WISE_RECIPIENT_ID_REGEXP.match(normalized)
+    self.wise_recipient_id = match[1] if match
+  end
+
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   POSTAL_CODE_FORMATS = {
@@ -169,6 +203,9 @@ module HasWiseRecipient
   end
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
+
+  WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
+  WISE_RECIPIENT_ID_REGEXP = /wise\.com\/recipients\/([\h-]{36})/
 
   AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
 

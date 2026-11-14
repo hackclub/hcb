@@ -53,13 +53,18 @@ module PublicIdentifiable
     private
 
     # ex. 'org_h1izp' => 'h1izp'. nil unless the id is prefixed for this model.
+    #
+    # A public id always has exactly one underscore: no prefix contains one, and
+    # the hashid alphabet is alphanumeric. Anything else is malformed, so reject
+    # it rather than picking a segment out of the middle.
     def hashid_from_public_id(id)
       return nil unless id.is_a? String
 
-      parts = id.split("_")
-      return nil unless parts.first.to_s.downcase == self.get_public_id_prefix
+      prefix, hashid, extra = id.split("_", 3)
+      return nil unless extra.nil? && hashid.present?
+      return nil unless prefix.downcase == self.get_public_id_prefix
 
-      parts.last
+      hashid
     end
   end
 end

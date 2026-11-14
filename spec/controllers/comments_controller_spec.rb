@@ -3,6 +3,57 @@
 require "rails_helper"
 
 RSpec.describe CommentsController do
+  include SessionSupport
+
+  describe "#create" do
+    let(:user) { create(:user, :make_admin) }
+    let(:hcb_code) { create(:canonical_pending_transaction).local_hcb_code }
+
+    before { create_session(user, verified: true) }
+
+    def post_blank_comment
+      post(:create, params: { hcb_code_id: hcb_code.hashid, comment: { commentable_type: "HcbCode", commentable_id: hcb_code.id, content: "" } })
+    end
+
+    it "flashes validation errors back into the frame it was submitted from" do
+      request.headers["Turbo-Frame"] = hcb_code.public_id
+
+      post_blank_comment
+
+      expect(response).to redirect_to(hcb_code)
+      expect(flash[:error]).to eq("Content can't be blank")
+    end
+
+    context "outside of a frame" do
+      render_views
+
+      it "re-renders the form with errors" do
+        post_blank_comment
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Content can&#39;t be blank")
+      end
+    end
+  end
+
+  describe "#destroy" do
+    render_views
+
+    it "streams the new comment count into the item's ledger row" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      comments = create_list(:comment, 2, commentable: hcb_code)
+      ledger_item = hcb_code.ledger_item.reload
+      expect(ledger_item.comment_count).to eq(2)
+
+      delete(:destroy, params: { id: comments.first.id }, format: :turbo_stream)
+
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='badges_ledger_item_#{ledger_item.id}']")
+      expect(stream["action"]).to eq("replace")
+      expect(stream.inner_html).to include('aria-label="1 comment"')
+    end
+  end
+
   context "models including Commentable" do
     it "are explicitly registered" do
       Rails.application.eager_load!

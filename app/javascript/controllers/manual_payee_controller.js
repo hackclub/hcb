@@ -45,6 +45,7 @@ export default class extends Controller {
   }
 
   renderMode() {
+    if (!this.hasDefaultBannerTarget) return
     if (this.hasPayeeFormManualFieldTarget) {
       this.payeeFormManualFieldTarget.value = this.manual ? 'true' : 'false'
     }

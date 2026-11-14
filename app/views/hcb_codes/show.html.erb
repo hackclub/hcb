@@ -49,7 +49,7 @@
   <% if @hcb_code.shared_commentable? %>
     <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.any? %>
       <p class="muted">
         <%= link_to counterparty_hcb_code do %>
           View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
@@ -58,6 +58,11 @@
     <% end %>
   <% end %>
   <%= render "comments/form", commentable: @hcb_code %>
+
+  <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges) %>
+  <% if @frame && @hcb_code.ledger_item.present? %>
+    <%= turbo_stream.replace [@hcb_code.ledger_item, :badges], partial: "ledger/items/badges", locals: { item: @hcb_code.ledger_item } %>
+  <% end %>
 
   <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>

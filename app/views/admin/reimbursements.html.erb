@@ -56,6 +56,9 @@
           <% end %>
         </td>
         <td>
+          <% if report.user.admin_comments? %>
+            <span class="tooltipped tooltipped--e" aria-label="This user has admin comments on their profile">📌</span>
+          <% end %>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
         <td class="w-24"><%= report.amount.format %></td>

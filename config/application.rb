@@ -6,6 +6,7 @@ require "rails/all"
 require_relative "../app/lib/credentials"
 require_relative "../lib/active_storage/previewer/document_previewer"
 require_relative "../app/middleware/set_current_request_ip"
+require_relative "../app/middleware/opt_out_csp_for_mounted_engines"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -64,6 +65,10 @@ module Bank
 
     # Track request IP for all requests
     config.middleware.insert_after ActionDispatch::RemoteIp, SetCurrentRequestIp
+
+    # Must sit inside SecureHeaders::Middleware (which is at position 0) so the
+    # opt-out is recorded before the CSP header is built on the way out.
+    config.middleware.insert_after ActionDispatch::RemoteIp, OptOutCspForMountedEngines
 
     config.active_storage.variant_processor = :mini_magick
 

@@ -20,6 +20,34 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     expect(ct.category).to be_nil
   end
 
+  it "inherits the subledger from the transaction the HCB code is already mapped to" do
+    event = create(:event)
+    subledger = create(:subledger, event:)
+
+    cpt = create(:canonical_pending_transaction, amount_cents: -42_34)
+    cpt.create_canonical_pending_event_mapping!(event:, subledger:)
+    hcb_code = cpt.local_hcb_code
+
+    charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
+    create(:canonical_event_mapping, canonical_transaction: charge, event:, subledger:)
+    # Mapping a transaction rewrites its HCB code, so group it onto the pending
+    # transaction's code afterwards.
+    charge.update_column(:hcb_code, hcb_code.hcb_code)
+
+    # A dispute reimbursement arrives months after the charge it reverses,
+    # carrying the short code in its memo.
+    credit = create(
+      :canonical_transaction,
+      amount_cents: 42_34,
+      date: Date.current,
+      memo: "HCKCLB HCB-#{hcb_code.short_code}"
+    )
+
+    described_class.new.run
+
+    expect(credit.reload.canonical_event_mapping.subledger).to eq(subledger)
+  end
+
   it "adds a category to bank fee transactions" do
     event = create(:event)
     bank_fee = create(:bank_fee, event:, amount_cents: -12_34)
@@ -69,14 +97,7 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
   it "adds a category to stripe fee reimbursements" do
     event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
 
-    # Copied over from `FeeReimbursementService::Nightly`
-    hcb_code = [
-      TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-      TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-      Time.now.strftime("%G_%V")
-    ].join(TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-
-    local_hcb_code = HcbCode.create!(hcb_code: hcb_code)
+    local_hcb_code = create(:fee_reimbursement_group).local_hcb_code
 
     ct = create(:canonical_transaction, memo: "HCB-#{local_hcb_code.short_code}")
 

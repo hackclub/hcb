@@ -30,6 +30,7 @@
         <%= expense.description %>
       </p>
     <% end %>
+    <%= render "ledger/items/repayments", ledger_item: %>
   </section>
 
   <% if expense.is_fee? %>

@@ -1,0 +1,37 @@
+<%# locals: (destination_event:) %>
+
+<%# Rendered outside the transfer form: the modal has a form of its own, and opening it moves it to the end of the page anyway. %>
+<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="repayment_picker" data-controller="repayment-picker">
+  <%= modal_header "Which transaction are you repaying?" %>
+  <p class="muted mt-0">Pick the expense you're paying back. You can only repay a settled expense once.</p>
+
+  <%= form_with url: repayable_transactions_disbursements_path, method: :get, class: "flex flex-col gap-2 mb-4", data: { turbo_frame: "repayable_transactions", controller: "form", repayment_picker_target: "form" } do |form| %>
+    <%= form.hidden_field :destination_event_id, value: destination_event&.public_id, data: { repayment_picker_target: "destination" } %>
+
+    <div class="input input-group max-w-none h-[36px]">
+      <%= inline_icon "search" %>
+      <%= form.search_field :q, placeholder: "Search by memo or amount", autocomplete: "off", class: "bg-transparent", aria: { label: "Search transactions" }, data: { action: "input->form#submitDebounced" } %>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <div class="flex items-center gap-2 flex-1 min-w-[12rem]">
+        <%= form.label :start, "From", class: "muted text-sm shrink-0" %>
+        <%= form.date_field :start, class: "!max-w-full flex-1", data: { action: "change->form#submit" } %>
+      </div>
+      <div class="flex items-center gap-2 flex-1 min-w-[12rem]">
+        <%= form.label :end, "To", class: "muted text-sm shrink-0" %>
+        <%= form.date_field :end, class: "!max-w-full flex-1", data: { action: "change->form#submit" } %>
+      </div>
+      <%= form.select :category,
+                      TransactionCategory.order(slug: :asc).map { |category| [category.definition.label, category.slug] },
+                      { include_blank: "All categories" },
+                      class: "!max-w-full flex-1 min-w-[12rem]",
+                      aria: { label: "Category" },
+                      data: { action: "change->form#submit" } %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "repayable_transactions", src: (repayable_transactions_disbursements_path(destination_event_id: destination_event.public_id) if destination_event), loading: :lazy, data: { repayment_picker_target: "frame" } do %>
+    <%= render "application/loading_container", klass: "py-8" %>
+  <% end %>
+</section>
