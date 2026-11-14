@@ -91,7 +91,7 @@ module GSuiteService
         res = Rails.error.handle(context: { external_service: :g_verify }) do
           Faraday.get do |req|
             req.url G_VERIFY_DOMAIN + domain
-            req.options.timeout = 60
+            req.options.timeout = 10
             req.headers["Authorization"] = Credentials.fetch(:GVERIFY)
           end
         end

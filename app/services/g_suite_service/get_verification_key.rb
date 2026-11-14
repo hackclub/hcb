@@ -11,7 +11,7 @@ module GSuiteService
     def run
       res = Faraday.get do |req|
         req.url url
-        req.options.timeout = 60
+        req.options.timeout = 10
         req.headers["Authorization"] = Credentials.fetch(:GVERIFY)
       end
 
