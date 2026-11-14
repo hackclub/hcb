@@ -121,7 +121,7 @@ class ExportsController < ApplicationController
 
   def collect_email
     if !params[:event_slug] || !params[:file_extension]
-      redirect_to root_path
+      redirect_to root_path and return
     end
     @event_slug = params[:event_slug]
     @file_extension = params[:file_extension]

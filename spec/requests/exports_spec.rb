@@ -7,6 +7,12 @@ RSpec.describe "Transaction exports", type: :request do
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
   describe "GET /exports/collect_email" do
+    it "sends a request with nothing to export back to the homepage" do
+      get "/exports/collect_email"
+
+      expect(response).to redirect_to(root_path)
+    end
+
     it "sends the filters back with the address, as form fields" do
       get "/exports/collect_email", params: { file_extension: "csv", event_slug: event.slug, source: "ledger", q: "Coffee" }
 
