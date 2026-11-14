@@ -197,7 +197,7 @@ module SetLedgerFilters
     # The filters, as params, for handing to another request — an export link,
     # most of all, which has to reproduce this exact ledger.
     def ledger_filter_params
-      @ledger_filter_params ||= params.permit(:q, *FILTER_PARAMS).to_h.compact_blank.symbolize_keys
+      @ledger_filter_params ||= [:q, *FILTER_PARAMS].index_with { |name| string_param(name) }.compact
     end
 
   end
