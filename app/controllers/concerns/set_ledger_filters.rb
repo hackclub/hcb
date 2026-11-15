@@ -55,6 +55,8 @@ module SetLedgerFilters
       # The search query name was historically `search`. It has since been renamed
       # to `q`. This following line retains backwards compatibility.
       params[:q] ||= params[:search]
+      # e.g. `?q[]=x`. Search only takes text, so treat anything else as no search.
+      params.delete(:q) unless params[:q].is_a?(String)
 
       reject_disabled_filters
       return if performed?

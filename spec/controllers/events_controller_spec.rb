@@ -351,6 +351,52 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#ledger search" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    before do
+      [["AMAZON MKTPLACE", 500], ["UBER TRIP", 700]].each do |memo, amount_cents|
+        item = create(:ledger_item, custom_memo: memo, datetime: Time.current)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+        item.update_columns(amount_cents:, ct_count: 1)
+      end
+    end
+
+    context "when signed in" do
+      let(:admin) { create(:user, :make_admin) }
+
+      before { create_session(admin, verified: true) }
+
+      it "shows only items whose memo contains every searched word" do
+        get(:ledger, params: { event_id: event.slug, q: "amaz" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("AMAZON MKTPLACE")
+        expect(response.body).not_to include("UBER TRIP")
+      end
+
+      it "ignores a q that isn't a string instead of erroring" do
+        get(:ledger, params: { event_id: event.slug, q: ["amaz"] })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("AMAZON MKTPLACE")
+        expect(response.body).to include("UBER TRIP")
+      end
+    end
+
+    context "when signed out, on a transparent organization" do
+      it "lets anyone search" do
+        get(:ledger, params: { event_id: event.slug, q: "uber" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("UBER TRIP")
+        expect(response.body).not_to include("AMAZON MKTPLACE")
+      end
+    end
+  end
+
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }

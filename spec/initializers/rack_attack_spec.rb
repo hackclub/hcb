@@ -102,6 +102,7 @@ RSpec.describe Rack::Attack, type: :request do
         "/an-organization/transactions",
         "/an-organization/transactions_list",
         "/an-organization/ledger",
+        "/an-organization/card_grants/transaction_overview",
         "/some-other-org/transactions_list",
         # The format suffix reaches the same action at the same cost.
         "/an-organization/transactions_list.json",
@@ -109,6 +110,11 @@ RSpec.describe Rack::Attack, type: :request do
       ].each do |path|
         expect(discriminator("transparency/ledger/ip", path)).to eq("203.0.113.7"), "expected #{path} to be throttled"
       end
+    end
+
+    it "throttles anonymous searches the same way" do
+      expect(discriminator("transparency/ledger/ip", "/an-organization/ledger?q=amazon")).to eq("203.0.113.7")
+      expect(discriminator("transparency/ledger/ip", "/an-organization/transactions?q=amazon")).to eq("203.0.113.7")
     end
 
     it "ignores requests that carry a session_token cookie" do

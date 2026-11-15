@@ -253,7 +253,7 @@ class Rack::Attack
     \A/
     (?!admin/)                    # `req/ip` above exempts /admin
     [^/]+/                        # organization slug
-    (transactions_list | transactions | ledger)
+    (transactions_list | transactions | ledger | card_grants/transaction_overview)
     (\.[^/]*)?                    # `(.:format)` reaches the same action
     /?\z
   }x
