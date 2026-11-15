@@ -83,7 +83,6 @@ class OrganizerPositionInvite < ApplicationRecord
 
   has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
 
-  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true

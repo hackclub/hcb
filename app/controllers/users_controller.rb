@@ -37,7 +37,7 @@ class UsersController < ApplicationController
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
-    :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
+    :admin_details_disbursements, :admin_details_emails, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
     :suppress_card_locking, :reset_billing_address
@@ -292,6 +292,12 @@ class UsersController < ApplicationController
     authorize @user
 
     @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(safe_per(10))
+  end
+
+  def admin_details_emails
+    authorize @user
+
+    @messages = @user.messages.order(sent_at: :desc, id: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_emburse_cards

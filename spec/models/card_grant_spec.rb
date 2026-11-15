@@ -20,14 +20,27 @@ RSpec.describe CardGrant, type: :model do
         create(:reimbursement_report, event:, user: grant.user, card_grant: grant)
       end
     end
+    let!(:fraudulent) do
+      create(:card_grant, event:, pre_authorization_required: true).tap do |grant|
+        grant.pre_authorization.update!(aasm_state: "fraudulent", product_url: "https://example.com")
+      end
+    end
 
     it "sorts each grant status into one state" do
       expect(event.card_grants.not_activated).to contain_exactly(not_activated)
       expect(event.card_grants.accepted).to contain_exactly(accepted)
       expect(event.card_grants.frozen).to contain_exactly(frozen)
+      expect(event.card_grants.suspected_fraud).to contain_exactly(fraudulent)
       expect(event.card_grants.expired).to contain_exactly(expired)
       expect(event.card_grants.returned).to contain_exactly(returned)
       expect(event.card_grants.converted_to_reimbursement).to contain_exactly(converted)
+    end
+
+    it "treats a fraudulent pre-authorization as active when the event doesn't block suspected fraud" do
+      event.card_grant_setting.update!(block_suspected_fraud: false)
+
+      expect(event.card_grants.suspected_fraud).to be_empty
+      expect(event.card_grants.accepted).to contain_exactly(accepted, fraudulent)
     end
 
     it "treats a card that went inactive before its first activation as frozen" do
@@ -41,11 +54,12 @@ RSpec.describe CardGrant, type: :model do
     describe ".filter_by_state" do
       it "filters to the state" do
         expect(event.card_grants.filter_by_state("not_activated")).to contain_exactly(not_activated)
+        expect(event.card_grants.filter_by_state("suspected_fraud")).to contain_exactly(fraudulent)
       end
 
       it "ignores unknown states" do
-        expect(event.card_grants.filter_by_state("nonsense")).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted)
-        expect(event.card_grants.filter_by_state(nil)).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted)
+        expect(event.card_grants.filter_by_state("nonsense")).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted, fraudulent)
+        expect(event.card_grants.filter_by_state(nil)).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted, fraudulent)
       end
     end
   end

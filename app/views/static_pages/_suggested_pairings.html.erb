@@ -34,7 +34,7 @@
               <h2 class="heading dark:bg-dark leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center">
                 <%= pairing.hcb_code.stripe_card.event.name %>
 
-                <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center" do %>
+                <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center", data: { turbo_frame: "_top" } do %>
                   <%= inline_icon "card", class: "mr1", size: 25 %>
                   <%= pairing.hcb_code.stripe_card.last_four %>
                 <% end %>
