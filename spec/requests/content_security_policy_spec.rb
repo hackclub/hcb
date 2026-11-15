@@ -67,7 +67,7 @@ RSpec.describe "Content Security Policy", type: :request do
     )
   end
 
-  it "no longer needs the unsafe keywords, now that Alpine runs its CSP build" do
+  it "carries neither unsafe keyword in script-src" do
     get start_donation_donations_path(event.slug)
 
     expect(sources_for("script-src")).not_to include("'unsafe-inline'", "'unsafe-eval'")

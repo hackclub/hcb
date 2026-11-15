@@ -121,23 +121,23 @@ class Ledger
     def status_css
       case status.to_sym
       when :pending
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "bg-transparent border border-dashed border-muted m0"
       when :settled
         nil
       when :intended
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "bg-transparent border border-dashed border-muted m0"
       when :reversed
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :released
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :rejected
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :failed
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :canceled
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :declined
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       end
     end
 

@@ -290,7 +290,10 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) {
+    where(id: User::Session.not_impersonated.where(last_seen_at: ago..).select(:user_id))
+      .or(where(id: ApiToken.from_trusted_application.where(last_used_at: ago..).select(:user_id)))
+  }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
@@ -567,7 +570,10 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.not_impersonated.maximum(:last_seen_at)
+    [
+      user_sessions.not_impersonated.maximum(:last_seen_at),
+      api_tokens.from_trusted_application.maximum(:last_used_at)
+    ].compact.max
   end
 
   def last_login_at

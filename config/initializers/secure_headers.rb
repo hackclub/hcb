@@ -2,10 +2,9 @@
 
 # `script-src` carries neither `'unsafe-inline'` nor `'unsafe-eval'`:
 #   * The inline bootstrap scripts that remain (Plaid, HelpScout, FullStory, the
-#     console banner) are nonced, and every `on*=` attribute has become a
-#     Stimulus `data-action`.
-#   * Nothing evaluates a string as code any more; the Alpine directives that
-#     needed `new Function(...)` are gone.
+#     console banner) are nonced, and no `on*=` attributes are left.
+#   * `'unsafe-eval'` was only there for Alpine.js, which our herb views replaced
+#     (see dev-docs/guides/herb_views.md).
 #
 # Note that a nonce makes browsers ignore `'unsafe-inline'` entirely, so the two
 # cannot be mixed as a fallback.

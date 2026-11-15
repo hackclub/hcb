@@ -10,7 +10,7 @@
   <div class="card flex flex-col items-start gap-2 p0 pb2 mb3">
     <div class="event_settings__banner">
       <% if event.background_image.persisted? %>
-        <%= image_tag event.background_image, height: 200, class: "banner__image" %>
+        <%= image_tag polymorphic_url(event.background_image), height: 200, class: "banner__image" %>
       <% end %>
 
       <% if policy(event).update? %>
@@ -41,7 +41,7 @@
 
       <div class="event_settings__banner--logo">
         <% if event.logo.persisted? %>
-          <%= image_tag event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+          <%= image_tag polymorphic_url(event.logo), height: 100, class: "event_settings__banner--logo-image" %>
         <% else %>
           <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% end %>
@@ -171,7 +171,7 @@
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
       <% if event.stripe_card_logo.persisted? %>
-        <%= image_tag event.stripe_card_logo, width: 48 %>
+        <%= image_tag polymorphic_url(event.stripe_card_logo), width: 48 %>
       <% end %>
       <div data-controller="file-upload">
         <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
@@ -244,13 +244,14 @@
       </li>
     </ul>
     <%= form.label :slug, "Organization URL" %>
-    <div class="input flex mt1" data-controller="focus" data-action="click->focus#focus" tabindex="0" style="gap: 0.15rem">
+    <%# A label, so clicking anywhere in the box (the prefix too) focuses the field. %>
+    <label class="input flex mt1 font-normal" style="gap: 0.15rem">
       <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate", focus_target: "element" }, disabled: %>
-    </div>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+    </label>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
       <%= form.submit "Update", disabled: %>
