@@ -148,9 +148,9 @@ module TransactionGroupingEngine
         if @tag_id
           joins << <<~SQL
             left join hcb_codes on hcb_codes.hcb_code = q1.hcb_code
-            left join hcb_codes_tags on hcb_codes_tags.hcb_code_id = hcb_codes.id
+            left join ledger_items_tags on ledger_items_tags.ledger_item_id = hcb_codes.ledger_item_id
           SQL
-          conditions << "hcb_codes_tags.tag_id = :tag_id"
+          conditions << "ledger_items_tags.tag_id = :tag_id"
           query_params.merge!({ tag_id: @tag_id })
         end
 

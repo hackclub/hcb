@@ -15,7 +15,7 @@
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_top_donors do %>
         <%= form.check_box :show_top_donors,
-          data: { action: "change->accordion#toggle change->form#submit", target: "accordion.checkbox" },
+          data: { action: "change->form#submit" },
           disabled:,
           checked: event.show_top_donors,
           switch: true %>
@@ -37,7 +37,7 @@
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_recent_donors do %>
         <%= form.check_box :show_recent_donors,
-          data: { action: "change->accordion#toggle change->form#submit", target: "accordion.checkbox" },
+          data: { action: "change->form#submit" },
           disabled:,
           checked: event.show_recent_donors,
           switch: true %>

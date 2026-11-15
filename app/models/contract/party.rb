@@ -34,12 +34,10 @@ class Contract
 
     enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb", organizer: "organizer", contractor: "contractor" }
 
-    attr_accessor :skip_pending_validation
-
     validates :role, uniqueness: { scope: :contract }
     validate :role_permitted_for_contract_type
     validate :signee_is_user
-    validate :contract_is_pending, on: :create, unless: :skip_pending_validation
+    validate :contract_is_pending, on: :create
     validate :email_cannot_change_after_sign
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
