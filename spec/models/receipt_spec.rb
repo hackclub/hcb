@@ -44,7 +44,7 @@ RSpec.describe Receipt, type: :model do
     statement.receiptable = charge
     statement.acknowledgement = statement.required_acknowledgement
     expect(statement.submit).to eq(true)
-    receipt = build_receipt(receiptable: charge, user: create(:user))
+    receipt = build_receipt(receiptable: charge.ledger_item, user: create(:user))
     receipt.save!
     expect(charge.reload).to be_no_or_lost_receipt
     expect(charge.ledger_item.reload).to be_no_or_lost_receipt
@@ -58,6 +58,26 @@ RSpec.describe Receipt, type: :model do
     receipt.update!(receiptable: nil)
     expect(charge.reload).to be_missing_receipt
     expect(charge.ledger_item.reload).to be_missing_receipt
+  end
+
+  it "marks the transaction missing a receipt again when its statement is moved to the receipt bin" do
+    transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
+    create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
+    charge = transaction.local_hcb_code
+    user = create(:user, full_name: "Alex Example")
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true, submitter: user,
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    statement.receiptable = charge
+    statement.acknowledgement = statement.required_acknowledgement
+    expect(statement.submit).to eq(true)
+    expect(charge.ledger_item.reload.receipt_count).to eq(1)
+
+    statement.receipt.update!(receiptable: nil)
+
+    expect(charge.ledger_item.reload).to have_attributes(receipt_count: 0, marked_no_or_lost_receipt_at: nil)
+    expect(charge.ledger_item).to be_missing_receipt
+    expect(charge.reload).to be_missing_receipt
   end
 
   it "marks the transaction missing a receipt again when its only statement is removed" do

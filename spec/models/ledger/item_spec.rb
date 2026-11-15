@@ -643,12 +643,12 @@ RSpec.describe Ledger::Item, type: :model do
     let(:report) { create(:reimbursement_report, event:) }
     let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
 
-    it "reads #receipts from the reimbursed expense, ignoring any preloaded copies" do
+    it "reads #receipts from the reimbursed expense, ignoring its own preloaded association" do
       receipt = attach_receipt_to(expense)
 
-      item = Ledger::Item.preload(:receipts, hcb_code: :receipts).find(payout_for(expense).reload.ledger_item.id)
+      item = Ledger::Item.preload(:receipts).find(payout_for(expense).reload.ledger_item.id)
 
-      expect(item.preloaded_receipts).to be_nil
+      expect(item.association(:receipts)).to be_loaded
       expect(item.receipts).to contain_exactly(receipt)
     end
 

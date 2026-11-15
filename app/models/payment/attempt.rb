@@ -68,6 +68,25 @@ class Payment
         transitions from: :under_review, to: :sent
         after do
           payment.mark_sent!
+
+          fee = if payout.is_a?(WiseTransfer)
+                  if payout.ledger_item.nil?
+                    Rails.error.unexpected "Missing ledger item for WiseTransfer #{payout.id} on payment attempt #{id}"
+                    0
+                  else
+                    payout.ledger_item.amount_cents.abs - MoneyService.convert_to_usd_wise(payment.amount_cents, payment.currency)
+                  end
+                elsif payout.is_a?(Wire) && payout.usd_amount_cents < payment.event.minimum_wire_amount_cents
+                  Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
+                else
+                  0
+                end
+
+          if fee.positive?
+            Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
+          elsif fee.negative?
+            Rails.error.unexpected "Negative fee (#{fee}) calculated for payment #{id}"
+          end
         end
       end
 
