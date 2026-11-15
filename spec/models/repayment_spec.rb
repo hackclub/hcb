@@ -54,8 +54,14 @@ RSpec.describe Repayment, type: :model do
       expect(repayment.errors[:"allocations.repaid_ledger_item"]).to be_present
     end
 
-    it "rejects donations and invoices" do
-      %w[Donation Invoice].each do |type|
+    it "accepts a check deposit" do
+      income.ledger_item.update_columns(linked_object_type: "CheckDeposit", linked_object_id: 1)
+
+      expect(repayment_by(income)).to be_valid
+    end
+
+    it "rejects revenue, refunds and fee credits" do
+      %w[Donation Invoice CardCharge BankFee AchTransfer].each do |type|
         revenue = create(:canonical_transaction, event:, amount_cents: 100_00)
         revenue.ledger_item.update_columns(linked_object_type: type, linked_object_id: 1)
 
@@ -108,6 +114,13 @@ RSpec.describe Repayment, type: :model do
       create(:canonical_transaction, event:, amount_cents: -50_00)
 
       expect(Repayment.match_candidates(income.ledger_item.reload, member)).to contain_exactly(expense.ledger_item)
+    end
+
+    it "leaves out pending expenses" do
+      expense.ledger_item.update_columns(status: "pending")
+
+      expect(described_class.match_candidates(income.ledger_item, member)).to be_empty
+      expect(described_class.match_candidates(expense.ledger_item, member)).to be_empty
     end
 
     it "matches nothing once the transaction is already part of a repayment" do

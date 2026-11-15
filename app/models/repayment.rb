@@ -36,9 +36,11 @@ class Repayment < ApplicationRecord
   # the incoming repayment as revenue.
   CATEGORY_SLUG = "repayment"
 
-  # Donations and invoices are revenue, not money paid back. Incoming
-  # transfers are only allowed by repaying_ledger_items.
-  NON_REPAYING_LINKED_OBJECT_TYPES = ["Disbursement::Outgoing", "Disbursement::Incoming", "Donation", "Invoice"].freeze
+  # Besides bank deposits with no linked object, the money in that could be
+  # someone paying an expense back. Everything else is revenue, a refund or a
+  # fee credit. Incoming transfers are allowed separately by
+  # repaying_ledger_items.
+  REPAYING_LINKED_OBJECT_TYPES = ["CheckDeposit"].freeze
 
   has_paper_trail
 
@@ -97,8 +99,8 @@ class Repayment < ApplicationRecord
          .where("ledger_items.amount_cents > 0")
          .where("EXISTS (SELECT 1 FROM canonical_transactions WHERE canonical_transactions.ledger_item_id = ledger_items.id)")
          .where(
-           "(? AND (ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?))) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
-           member, NON_REPAYING_LINKED_OBJECT_TYPES, transfers.select(:id)
+           "(? AND (ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type IN (?))) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
+           member, REPAYING_LINKED_OBJECT_TYPES, transfers.select(:id)
          )
          .not_likely_account_verification_related
   end
@@ -119,14 +121,18 @@ class Repayment < ApplicationRecord
   # What a ledger item could be marked as a repayment with: for an unrepaid
   # expense, unused money in of the same amount; for unused money in,
   # unrepaid expenses of the same amount, limited to what the user may link.
+  #
+  # The expense must be settled: a pending one can still be released or
+  # canceled, and nothing would undo the link.
   def self.match_candidates(ledger_item, user = nil)
     event = ledger_item.primary_ledger&.event
     return Ledger::Item.none if event.nil?
 
+    expenses = unrepaid_ledger_items(event).where(status: :settled)
     own, others = if ledger_item.amount_cents.negative?
-                    [unrepaid_ledger_items(event), unused_repaying_ledger_items(event, user)]
+                    [expenses, unused_repaying_ledger_items(event, user)]
                   else
-                    [unused_repaying_ledger_items(event, user), unrepaid_ledger_items(event)]
+                    [unused_repaying_ledger_items(event, user), expenses]
                   end
     return Ledger::Item.none unless own.exists?(ledger_item.id)
 

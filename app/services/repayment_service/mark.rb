@@ -31,10 +31,9 @@ module RepaymentService
         repayment.allocations.each(&:apply_categories!)
         repayment
       end
-    rescue ActiveRecord::RecordInvalid => e
-      raise UserError, e.record.errors.full_messages.to_sentence
-    rescue ActiveRecord::RecordNotUnique
-      raise UserError, "That transaction has already been marked as a repayment."
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
+      # Both were offered by the picker, so one changed since: someone else linked it first.
+      raise UserError, "One of these transactions was just linked to something else. Refresh and try again."
     end
 
     private
