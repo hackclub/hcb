@@ -70,8 +70,8 @@ class Payment
           payment.mark_sent!
 
           fee = if payout.is_a?(WiseTransfer)
-                  payout.ledger_item.amount_cents.abs - payment.amount_cents
-                elsif payout.is_a?(Wire) && payment.amount_cents < payment.event.minimum_wire_amount_cents
+                  payout.ledger_item.amount_cents.abs - MoneyService.convert_to_usd_wise(payment.amount_cents, payment.currency)
+                elsif payout.is_a?(Wire) && payout.usd_amount_cents < payment.event.minimum_wire_amount_cents
                   Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
                 else
                   0
