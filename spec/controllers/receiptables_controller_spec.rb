@@ -152,8 +152,9 @@ RSpec.describe ReceiptablesController do
       get(:lost_receipt, params: base_params)
 
       document = Nokogiri::HTML.fragment(response.body)
-      expect(document.at_css('input[name="return_to"]')["value"]).to eq("http://test.host#{event_transactions_path(event)}")
       expect(document.at_css("nav a.pop")["href"]).to eq("http://test.host#{event_transactions_path(event)}")
+      continue = document.css("a").find { |link| link.text.include?("I still don't have it") }
+      expect(Rack::Utils.parse_query(URI(continue["href"]).query)).to include("continue" => "1", "return_to" => "http://test.host#{event_transactions_path(event)}")
     end
 
     it "preserves the originating popover through the statement form" do
@@ -162,7 +163,7 @@ RSpec.describe ReceiptablesController do
       create_session(user, verified: true)
 
       page_with_popover = event_transactions_path(event, popover: hcb_code_path(hcb_code))
-      get(:lost_receipt, params: base_params.merge(return_to: page_with_popover))
+      get(:lost_receipt, params: base_params.merge(return_to: page_with_popover, continue: 1))
       return_to = Nokogiri::HTML.fragment(response.body).at_css('input[name="return_to"]')["value"]
       expect(return_to).to eq(page_with_popover)
 
@@ -204,8 +205,16 @@ RSpec.describe ReceiptablesController do
   end
 
   describe "#lost_receipt" do
-    it "opens a prefilled statement form from the signed email link" do
+    it "first suggests ways to find the receipt" do
       get(:lost_receipt, params: base_params.merge(s: secret))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Have you tried these?", "help.hcb.hackclub.com/en/articles/15410231")
+      expect(Nokogiri::HTML.fragment(response.body).at_css("form")).to be_nil
+    end
+
+    it "opens a prefilled statement form from the signed email link" do
+      get(:lost_receipt, params: base_params.merge(s: secret, continue: 1))
 
       expect(response).to have_http_status(:ok)
       document = Nokogiri::HTML.fragment(response.body)
