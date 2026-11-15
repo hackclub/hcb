@@ -3,17 +3,36 @@
 <%# Rendered after the transaction menu, which opens it. %>
 <% repaid = ledger_item.amount_cents.negative? %>
 <% event = ledger_item.primary_ledger.event %>
-<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="mark_repayment">
-  <%= modal_header repaid ? "Which transaction repaid this?" : "Which expense did this repay?" %>
+<% amount = ledger_item.amount.abs.format %>
+<%# An expense is matched with one payment; a payment can cover several expenses, picked with checkboxes. %>
+<% data = { behavior: "modal" } %>
+<% data.merge!(controller: "repayment-match transaction-selection", repayment_match_cents_value: ledger_item.amount_cents, action: "transaction-selection:change->repayment-match#selectionChanged") unless repaid %>
+<%= tag.section class: "modal modal--scroll modal--wide bg-snow", data:, role: "dialog", id: "mark_repayment" do %>
+  <%= modal_header repaid ? "Which transaction repaid this?" : "Which expenses did this repay?" %>
   <p class="muted mt-0">
     <% if repaid %>
-      Pick the money that came in to pay this expense back. Only settled transactions of exactly <%= ledger_item.amount.abs.format %> are shown.
+      Pick the money that came in to pay this expense back. Only settled transactions of exactly <%= amount %> are shown.
     <% else %>
-      Pick the <%= event.name %> expense this money paid back. Only settled expenses of exactly <%= ledger_item.amount.abs.format %> that haven't been repaid are shown.
+      Pick the <%= event.name %> expenses this money paid back. They must add up to exactly <%= amount %>. Only settled expenses that haven't been repaid are shown.
     <% end %>
   </p>
+
+  <%= render "disbursements/selection" unless repaid %>
 
   <%= turbo_frame_tag "repayment_candidates", src: candidates_ledger_item_repayment_path(ledger_item), loading: :lazy do %>
     <%= render "application/loading_container", klass: "py-8" %>
   <% end %>
-</section>
+
+  <% unless repaid %>
+    <% confirm = "Mark this as repaying the selected expenses? None of them will count toward #{event.name}'s income or spending." %>
+    <% if ledger_item.linked_object_type == "Disbursement::Incoming" %>
+      <% confirm += " #{ledger_item.linked_object.source_event.name}'s side of the transfer will take the expenses' category if they share one, and be left without a category otherwise." %>
+    <% end %>
+    <% confirm += " This can't be undone." %>
+    <%= form_with url: ledger_item_repayment_path(ledger_item), class: "flex items-center justify-end gap-3 mt-4", data: { turbo_frame: "_top", turbo_confirm: confirm, turbo_confirm_danger: true } do |form| %>
+      <div data-repayment-match-target="inputs"></div>
+      <span class="muted text-sm" aria-live="polite" data-repayment-match-target="status"><%= amount %> left to match</span>
+      <%= form.submit "Mark as a repayment", class: "btn btn-small bg-blue", disabled: true, data: { repayment_match_target: "submit" } %>
+    <% end %>
+  <% end %>
+<% end %>

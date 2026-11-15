@@ -109,11 +109,12 @@ RSpec.describe Repayment, type: :model do
       expect(Repayment.match_candidates(expense.ledger_item.reload, member)).to contain_exactly(income.ledger_item)
     end
 
-    it "matches income with unrepaid expenses of the same amount" do
+    it "matches income with unrepaid expenses of up to its amount" do
       expense
-      create(:canonical_transaction, event:, amount_cents: -50_00)
+      smaller = create(:canonical_transaction, event:, amount_cents: -50_00)
+      create(:canonical_transaction, event:, amount_cents: -150_00)
 
-      expect(Repayment.match_candidates(income.ledger_item.reload, member)).to contain_exactly(expense.ledger_item)
+      expect(Repayment.match_candidates(income.ledger_item.reload, member)).to contain_exactly(expense.ledger_item, smaller.ledger_item)
     end
 
     it "leaves out pending expenses" do

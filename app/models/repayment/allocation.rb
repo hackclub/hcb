@@ -74,21 +74,20 @@ class Repayment
       repaid_transactions.filter_map { |t| t.category_mapping&.category }.first
     end
 
-    # The repaid transactions, plus the money in that repaid them when the
-    # repayment was marked between two transactions rather than transferred.
-    def categorized_transactions
-      repaid_transactions + repayment.repaying_transactions
-    end
-
     # Remembers each transaction's category (and whether it was set by hand).
     #
-    # The sending side of a transfer marked as the repayment takes on the
-    # expense's category (or none, if the expense has none), as it would have
-    # had it been sent as a repayment transfer.
+    # The money in marked as the repayment, and the sending side when it's a
+    # transfer, are shared by every allocation, so the first one records and
+    # sets them. The sending side takes on the expenses' category (see
+    # Repayment#sender_category_slug), as it would have had it been sent as a
+    # repayment transfer.
     def apply_categories!
-      slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
-      expense_slug = repaid_category&.slug
-      repayment.sender_transactions.each { |t| slugs[t] = expense_slug }
+      slugs = repaid_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
+      if repayment.allocations.first == self
+        repayment.repaying_transactions.each { |t| slugs[t] = Repayment::CATEGORY_SLUG }
+        sender_slug = repayment.sender_category_slug
+        repayment.sender_transactions.each { |t| slugs[t] = sender_slug }
+      end
 
       update!(previous_categories: slugs.keys.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
       slugs.each do |t, slug|

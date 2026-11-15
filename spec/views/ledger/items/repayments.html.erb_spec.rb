@@ -16,7 +16,7 @@ RSpec.describe "ledger/items/_repayments" do
 
   context "when the repayment was marked between two transactions on the ledger" do
     before do
-      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: create(:organizer_position, event:, role: :member).user).run
+      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashids: [expense.ledger_item.reload.hashid], created_by: create(:organizer_position, event:, role: :member).user).run
     end
 
     it "links the expense to the income that repaid it" do

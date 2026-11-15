@@ -29,12 +29,16 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
         expect(response.body).not_to include(%(value="#{smaller.ledger_item.hashid}"))
       end
 
-      it "lists unrepaid expenses of the same amount for income" do
+      it "lists unrepaid expenses of up to its amount for income, to tick" do
+        smaller = create(:canonical_transaction, event:, amount_cents: -40_00)
+        larger = create(:canonical_transaction, event:, amount_cents: -150_00)
         expense
 
         get :candidates, params: { item_id: income.ledger_item.hashid }
 
-        expect(response.body).to include(%(value="#{expense.ledger_item.hashid}"))
+        expect(response.body).to include(%(data-transaction-selection-id-param="#{expense.ledger_item.hashid}"))
+        expect(response.body).to include(%(data-transaction-selection-id-param="#{smaller.ledger_item.hashid}"))
+        expect(response.body).not_to include(larger.ledger_item.hashid)
       end
 
       it "shows an empty state when nothing matches" do
@@ -46,15 +50,25 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
 
     describe "POST #create" do
       it "marks income as a repayment of the chosen expense" do
-        post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_id: expense.ledger_item.hashid }
+        post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_ids: [expense.ledger_item.hashid] }
 
         expect(flash[:success]).to eq("Marked as a repayment.")
         expect(response).to redirect_to(hcb_code_path(income.ledger_item.hcb_code))
         expect(income.ledger_item.reload.repaying_repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item)
       end
 
+      it "marks income as a repayment of several expenses" do
+        income = create(:canonical_transaction, event:, amount_cents: 140_00)
+        other_expense = create(:canonical_transaction, event:, amount_cents: -40_00)
+
+        post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_ids: [expense.ledger_item.hashid, other_expense.ledger_item.hashid] }
+
+        expect(flash[:success]).to eq("Marked as a repayment.")
+        expect(income.ledger_item.reload.repaying_repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item, other_expense.ledger_item)
+      end
+
       it "marks an expense as repaid by the chosen income" do
-        post :create, params: { item_id: expense.ledger_item.hashid, other_ledger_item_id: income.ledger_item.hashid }
+        post :create, params: { item_id: expense.ledger_item.hashid, other_ledger_item_ids: [income.ledger_item.hashid] }
 
         expect(flash[:success]).to eq("Marked as repaid.")
         expect(expense.ledger_item.reload.repayments.sole.repaying_ledger_item).to eq(income.ledger_item)
@@ -63,7 +77,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
       it "shows why a match was refused" do
         other_expense = create(:canonical_transaction, event:, amount_cents: -100_00)
 
-        post :create, params: { item_id: expense.ledger_item.hashid, other_ledger_item_id: other_expense.ledger_item.hashid }
+        post :create, params: { item_id: expense.ledger_item.hashid, other_ledger_item_ids: [other_expense.ledger_item.hashid] }
 
         expect(flash[:error]).to eq("That transaction can't be matched with this one.")
         expect(Repayment.count).to eq(0)
@@ -75,7 +89,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
     before { create(:organizer_position, event:, user:, role: :reader) }
 
     it "can't mark a repayment" do
-      post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_id: expense.ledger_item.hashid }
+      post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_ids: [expense.ledger_item.hashid] }
 
       expect(Repayment.count).to eq(0)
       expect(flash[:error]).to be_present
@@ -84,7 +98,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
 
   context "as someone outside the organization" do
     it "can't mark a repayment" do
-      post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_id: expense.ledger_item.hashid }
+      post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_ids: [expense.ledger_item.hashid] }
 
       expect(Repayment.count).to eq(0)
     end

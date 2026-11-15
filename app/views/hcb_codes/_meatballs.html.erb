@@ -5,7 +5,7 @@
 <% disputable = can_dispute?(hcb_code:) %>
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? && hcb_code.ledger_item&.repaying_repayment.nil? %>
 <% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
-<%# Only offered when there's something of the same amount to match it with. A transfer's sender links it through the incoming side. %>
+<%# Only offered when there's something to match it with: money in of the same amount for an expense, expenses of up to its amount for money in. A transfer's sender links it through the incoming side. %>
 <% repayment_item = Repayment.markable_item(hcb_code.ledger_item) if hcb_code.ledger_item.present? %>
 <% markable_repayment = repayment_item.present? && policy(repayment_item).mark_repayment? && Repayment.match_candidates(repayment_item, current_user).exists? %>
 

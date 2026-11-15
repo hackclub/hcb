@@ -120,7 +120,8 @@ class Repayment < ApplicationRecord
 
   # What a ledger item could be marked as a repayment with: for an unrepaid
   # expense, unused money in of the same amount; for unused money in,
-  # unrepaid expenses of the same amount, limited to what the user may link.
+  # unrepaid expenses of up to its amount (one payment can cover several
+  # expenses that add up to it), limited to what the user may link.
   #
   # The expense must be settled: a pending one can still be released or
   # canceled, and nothing would undo the link.
@@ -136,7 +137,9 @@ class Repayment < ApplicationRecord
                   end
     return Ledger::Item.none unless own.exists?(ledger_item.id)
 
-    others.where(amount_cents: -ledger_item.amount_cents)
+    return others.where(amount_cents: -ledger_item.amount_cents) if ledger_item.amount_cents.negative?
+
+    others.where("ledger_items.amount_cents >= ?", -ledger_item.amount_cents)
   end
 
   # The organization whose expenses were repaid.
@@ -156,6 +159,13 @@ class Repayment < ApplicationRecord
   # The sending organization's side of that transfer, which takes on the
   # expense's category (see Allocation).
   def sender_transactions = transactions_of(repaying_transfer&.outgoing_disbursement&.ledger_item)
+
+  # A transfer has one category, so the sender only inherits one the repaid
+  # expenses share, as when it's sent as a repayment transfer.
+  def sender_category_slug
+    slugs = allocations.map { |allocation| allocation.repaid_category&.slug }.uniq
+    slugs.first if slugs.size == 1
+  end
 
   def revert_categories!
     allocations.each(&:revert_categories!)

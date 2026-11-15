@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Ledger
-  # Marks a transaction as a repayment of another on the same ledger. Repayment transfers between organizations live in
+  # Marks money in as a repayment of expenses on the same ledger. Repayment transfers between organizations live in
   # DisbursementsController.
   class RepaymentsController < ApplicationController
     before_action :set_item
@@ -21,7 +21,7 @@ class Ledger
       authorize @item, :mark_repayment?
 
       begin
-        RepaymentService::Mark.new(ledger_item: @item, other_ledger_item_hashid: params[:other_ledger_item_id], created_by: current_user).run
+        RepaymentService::Mark.new(ledger_item: @item, other_ledger_item_hashids: params[:other_ledger_item_ids], created_by: current_user).run
         flash[:success] = @item.amount_cents.negative? ? "Marked as repaid." : "Marked as a repayment."
       rescue RepaymentService::Mark::UserError => e
         flash[:error] = e.message

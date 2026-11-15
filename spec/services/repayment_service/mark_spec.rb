@@ -11,8 +11,8 @@ RSpec.describe RepaymentService::Mark do
   # The examples about transfers set up their own roles.
   before { |example| create(:organizer_position, user:, event:, role: :member) unless example.metadata[:own_roles] }
 
-  def mark(from, to)
-    described_class.new(ledger_item: from.ledger_item.reload, other_ledger_item_hashid: to.ledger_item.reload.hashid, created_by: user).run
+  def mark(from, *to)
+    described_class.new(ledger_item: from.ledger_item.reload, other_ledger_item_hashids: to.map { |t| t.ledger_item.reload.hashid }, created_by: user).run
   end
 
   it "marks income as repaying an expense" do
@@ -37,6 +37,36 @@ RSpec.describe RepaymentService::Mark do
 
     expect(expense.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
     expect(income.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
+  end
+
+  describe "with several expenses" do
+    let(:income) { create(:canonical_transaction, event:, amount_cents: 300_00, memo: "Check from Sam") }
+    let(:snacks) { create(:canonical_transaction, event:, amount_cents: -200_00, memo: "Snacks", category_slug: "food-fun") }
+
+    it "marks income as repaying expenses that add up to it" do
+      repayment = mark(income, expense, snacks)
+
+      expect(repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item, snacks.ledger_item)
+      expect(repayment.allocations.map(&:amount_cents)).to contain_exactly(100_00, 200_00)
+      expect([expense, snacks, income].map { |t| t.reload.category.slug }).to all(eq(Repayment::CATEGORY_SLUG))
+    end
+
+    it "won't mark expenses that don't add up to the income" do
+      expect { mark(income, expense) }.to raise_error(described_class::UserError, "The expenses you choose must add up to $300.00.")
+      expect(Repayment.count).to eq(0)
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "won't mark an expense as repaid by several payments" do
+      halves = Array.new(2) { create(:canonical_transaction, event:, amount_cents: 100_00) }
+
+      expect { mark(expense, *halves) }.to raise_error(described_class::UserError)
+      expect(Repayment.count).to eq(0)
+    end
+
+    it "needs something chosen" do
+      expect { mark(income) }.to raise_error(described_class::UserError, "Choose a transaction to match this one with.")
+    end
   end
 
   it "won't match two expenses" do
@@ -81,6 +111,29 @@ RSpec.describe RepaymentService::Mark do
       expect(outgoing.reload.category.slug).to eq("food-fun")
     end
 
+    describe "repaying several expenses" do
+      let(:transfer) { create(:disbursement, :deposited, source_event: sender, event:, amount: 300_00) }
+      let(:income) { on_transfer_side(create(:canonical_transaction, event:, amount_cents: 300_00), transfer.incoming_disbursement) }
+      let(:outgoing) { on_transfer_side(create(:canonical_transaction, event: sender, amount_cents: -300_00, category_slug: "internal-transfer"), transfer.outgoing_disbursement) }
+
+      before do
+        create(:organizer_position, user:, event: sender, role: :manager)
+        create(:organizer_position, user:, event:, role: :member)
+      end
+
+      it "gives the sender's side the category the expenses share" do
+        mark(income, expense, create(:canonical_transaction, event:, amount_cents: -200_00, category_slug: "food-fun"))
+
+        expect(outgoing.reload.category.slug).to eq("food-fun")
+      end
+
+      it "leaves the sender's side without a category when the expenses' differ" do
+        mark(income, expense, create(:canonical_transaction, event:, amount_cents: -200_00, category_slug: "benefits"))
+
+        expect(outgoing.reload.category).to be_nil
+      end
+    end
+
     it "can be linked by a manager of the sender with read access to the recipient, from the sender's side" do
       create(:organizer_position, user:, event: sender, role: :manager)
       create(:organizer_position, user:, event:, role: :reader)
@@ -92,7 +145,7 @@ RSpec.describe RepaymentService::Mark do
       expect(Repayment.match_candidates(other_income.ledger_item.reload, user)).to be_empty
 
       from_sender = Repayment.markable_item(outgoing.ledger_item.reload)
-      repayment = described_class.new(ledger_item: from_sender, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+      repayment = described_class.new(ledger_item: from_sender, other_ledger_item_hashids: [expense.ledger_item.reload.hashid], created_by: user).run
 
       expect(repayment.repaying_ledger_item).to eq(income.ledger_item)
       expect(outgoing.reload.category.slug).to eq("food-fun")
