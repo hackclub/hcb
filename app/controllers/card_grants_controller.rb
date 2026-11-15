@@ -33,7 +33,8 @@ class CardGrantsController < ApplicationController
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: status_options }
     ]
-    @has_filter = CardGrant::FILTERABLE_STATES.key?(params[:status])
+    params.delete(:status) unless CardGrant::FILTERABLE_STATES.key?(params[:status])
+    @has_filter = helpers.check_filters?(@filter_options, params)
 
     @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :ledger, :reimbursement_report).order(created_at: :desc)
     if params[:q].present?

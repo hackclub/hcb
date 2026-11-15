@@ -1,5 +1,5 @@
 <%# locals: (filters:, append_to: "turbo-frame#ledger", toggle_label: "Add filters") %>
-<% active_filter_count = filters.count { |filter| active_filter_params(filter, params).any? } %>
+<% active_filters = active_filter_options(filters, params) %>
 
 <div
   data-controller="menu"
@@ -10,12 +10,12 @@
   <button
     type="button"
     class="pop my-2 cursor-pointer tooltipped tooltipped--s relative overflow-visible"
-    aria-label="<%= active_filter_count > 0 ? "#{toggle_label} (#{active_filter_count} applied)" : toggle_label %>"
+    aria-label="<%= active_filters.any? ? "#{toggle_label} (#{active_filters.size} applied)" : toggle_label %>"
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
-    <% if active_filter_count > 0 %>
-      <span class="filter-menu__count" aria-hidden="true"><%= active_filter_count %></span>
+    <% if active_filters.any? %>
+      <span class="filter-menu__count" aria-hidden="true"><%= active_filters.size %></span>
     <% end %>
   </button>
 
@@ -33,7 +33,7 @@
           data-tabs-target="btn"
           data-action="tabs#select">
           <span class="filter-menu__tab-label"><%= filter[:label].humanize %></span>
-          <% if active_filter_params(filter, params).any? %>
+          <% if active_filters.include?(filter) %>
             <span class="filter-menu__tab-dot" aria-hidden="true"></span><span class="sr-only">(active)</span>
           <% end %>
         </button>

@@ -62,6 +62,7 @@ RSpec.describe CardGrantsController do
 
       get(:card_index, params: { event_id: event.friendly_id, status: "not_activated" })
       expect(response.body).to include("Clear status filters")
+      expect(response.parsed_body.at_css(".filter-menu__count").text).to eq("1")
 
       expect(response.body).to include("Invited")
       expect(response.body).not_to include("Not activated")
@@ -75,6 +76,7 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include(accepted.purpose)
 
       expect(response.body).not_to include("Clear status filters")
+      expect(response.parsed_body.at_css(".filter-menu__count, .filter-menu__tab-dot")).to be_nil
     end
 
     it "shows all grants when the status is not a string" do
@@ -84,6 +86,7 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include(not_activated.purpose)
       expect(response.body).to include(accepted.purpose)
       expect(response.body).not_to include("Clear status filters")
+      expect(response.parsed_body.at_css(".filter-menu__count, .filter-menu__tab-dot")).to be_nil
     end
 
     it "keeps status filter when searching" do

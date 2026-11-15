@@ -60,4 +60,23 @@ RSpec.describe EventsHelper, type: :helper do
       expect(helper.check_filters?([select_filter, date_filter], {})).to be(false)
     end
   end
+
+  describe "#active_filter_options" do
+    let(:status) { { key: "status", label: "Status", type: "select", options: %w[paid unpaid] } }
+    let(:created) { { key_base: "created", label: "Date", type: "date_range" } }
+    let(:amount) { { key_base: "amount", label: "Amount", type: "amount_range", range: [0, 100] } }
+    let(:filters) { [status, created, amount] }
+
+    it "counts a range once when both of its bounds are set" do
+      params = ActionController::Parameters.new(created_after: "2026-01-01", created_before: "2026-02-01", amount_less_than: "50")
+
+      expect(helper.active_filter_options(filters, params)).to eq([created, amount])
+    end
+
+    it "ignores blank and whitespace-only values" do
+      params = ActionController::Parameters.new(status: "  ", created_after: "", amount_less_than: nil)
+
+      expect(helper.active_filter_options(filters, params)).to be_empty
+    end
+  end
 end

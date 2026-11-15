@@ -414,7 +414,11 @@ module EventsHelper
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? { |opt| active_filter_params(opt, params).any? }
+    active_filter_options(filter_options, params).any?
+  end
+
+  def active_filter_options(filter_options, params)
+    filter_options.select { |opt| active_filter_params(opt, params).any? }
   end
 
   # Param keys for this filter option that currently have a value. Range filters
