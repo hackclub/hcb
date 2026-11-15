@@ -339,7 +339,7 @@ RSpec.describe HcbCode, type: :model do
 
       it "includes comments left on the code's ledger item" do
         hcb_code = create(:hcb_code, ledger_item: create(:ledger_item))
-        on_code = create(:comment, commentable: hcb_code, user:)
+        on_code = create(:comment, :legacy_on_hcb_code, commentable: hcb_code, user:)
         on_item = create(:comment, commentable: hcb_code.ledger_item, user:)
 
         expect(hcb_code.all_comments).to contain_exactly(on_code, on_item)
@@ -350,7 +350,7 @@ RSpec.describe HcbCode, type: :model do
     describe "#comments_count" do
       it "reads the counts cached on the ledger item, which cover both sides" do
         hcb_code = create(:hcb_code, ledger_item: create(:ledger_item))
-        create(:comment, commentable: hcb_code)
+        create(:comment, :legacy_on_hcb_code, commentable: hcb_code)
         create(:comment, commentable: hcb_code.ledger_item, admin_only: true)
 
         hcb_code.reload

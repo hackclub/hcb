@@ -36,6 +36,41 @@ RSpec.describe CommentsController do
     end
   end
 
+  describe "#create on a transaction with a ledger item" do
+    let(:user) { create(:user, :make_admin) }
+    let(:hcb_code) { create(:canonical_pending_transaction).local_hcb_code }
+    let(:ledger_item) { hcb_code.ledger_item }
+
+    before { create_session(user, verified: true) }
+
+    it "puts a comment posted to the ledger item on the item" do
+      expect do
+        post(:create, params: { ledger_item_id: ledger_item.hashid, comment: { commentable_type: "Ledger::Item", commentable_id: ledger_item.id, content: "Hi!" } })
+      end.to change { ledger_item.comments.count }.by(1)
+
+      expect(response).to redirect_to(ledger_item)
+    end
+
+    it "moves a comment posted to the HCB code onto its ledger item" do
+      expect do
+        post(:create, params: { hcb_code_id: hcb_code.hashid, comment: { commentable_type: "HcbCode", commentable_id: hcb_code.id, content: "Hi!" } })
+      end.to change { ledger_item.comments.count }.by(1)
+
+      expect(hcb_code.comments).to be_empty
+    end
+
+    it "puts a comment shared with the other side of a transfer on the transfer" do
+      disbursement = create(:disbursement)
+      ledger_item = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+
+      expect do
+        post(:create, params: { ledger_item_id: ledger_item.hashid, comment: { commentable_type: "Ledger::Item", commentable_id: ledger_item.id, comment_target: "shared", content: "Thanks!" } })
+      end.to change { disbursement.comments.count }.by(1)
+
+      expect(ledger_item.comments).to be_empty
+    end
+  end
+
   describe "#create on a transfer between organizations" do
     let(:user) { create(:user, :make_admin) }
     let(:disbursement) { create(:disbursement) }

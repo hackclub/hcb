@@ -87,5 +87,15 @@ RSpec.describe Api::V4::CommentsController do
 
       expect(response).to have_http_status(:created)
     end
+
+    it "puts the comment on the transaction's ledger item when it has one" do
+      hcb_code.update!(ledger_item: create(:ledger_item))
+
+      post_admin_comment(viewer: create(:user, access_level: :admin), scopes: "admin:read admin:write")
+
+      expect(response).to have_http_status(:created)
+      expect(hcb_code.ledger_item.comments.sole).to be_admin_only
+      expect(hcb_code.comments).to be_empty
+    end
   end
 end
