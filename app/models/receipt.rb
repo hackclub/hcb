@@ -79,8 +79,31 @@ class Receipt < ApplicationRecord
     end
   end
 
-  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
-  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  # Everything a receipt can be: photos, PDFs, and the office files invoices
+  # come as. No SVGs, GIFs or other formats. File inputs, email, SMS and
+  # Discord uploads all read this list.
+  ALLOWED_CONTENT_TYPES = %w[
+    application/pdf
+    image/jpeg
+    image/png
+    image/heic
+    image/heif
+    image/webp
+    application/msword
+    application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    text/csv
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  ].freeze
+  # for <input type="file" accept="...">
+  ACCEPT = ".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.doc,.docx,.csv,.xlsx"
+
+  validates :file, attached: true
+  # Type and size are only checked on new files, so receipts uploaded before
+  # a rule existed stay valid, and so do copies of them.
+  validates :file,
+            content_type: { in: ALLOWED_CONTENT_TYPES, message: "must be a PDF, an image (JPG, PNG, HEIC or WebP), a Word document, a CSV or an Excel file" },
+            size: { less_than_or_equal_to: 50.megabytes },
+            if: -> { attachment_changes["file"].present? && !file.blob.attachments.exists? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
