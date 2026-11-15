@@ -50,13 +50,13 @@
           West Hollywood, CA 90069<br />
           hcb@hackclub.com
         </p>
-      <%= image_tag(wicked_pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
+      <%= image_tag(pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
     </div>
     <br />
     <br />
     <p style="margin-top: 2rem;"><%= Time.now.strftime("%B #{Time.now.day.ordinalize}, %Y") %></p>
     <br />
-    <p style="font-size: 12.5pt;"><span class="bold"><%= @event.name %> Subsidiary Confirmation</span></p>
+    <p style="font-size: 12.5pt;"><span class="bold"><%= @event.name %> Sub-organization Confirmation</span></p>
     <br />
 
     <div style="line-height: 1.5;">
@@ -78,7 +78,7 @@ receiving donations and other funds on their behalf. The Hack Foundation is a 50
     <p>
       Best,
     </p>
-    <%= image_tag(wicked_pdf_asset_base64('melanie_signature.png'), width: 200, height: 118, dpi: 96) %>
+    <%= image_tag(pdf_asset_base64('melanie_signature.png'), width: 200, height: 118, dpi: 96) %>
     <p style="line-height: 1.25">
       Melanie Smith<br />
       Fiscal Sponsorship Director of Operations<br />

@@ -133,6 +133,117 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#admin_details_emails" do
+    render_views
+
+    it "lists the emails sent to the user, newest first, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      # Insertion order deliberately differs from `sent_at desc`.
+      older = Ahoy::Message.create!(user:, to: user.email, subject: "Older email", mailer: "ReceiptMailer#reminder", sent_at: 2.days.ago)
+      newer = Ahoy::Message.create!(user:, to: user.email, subject: "Newer email", mailer: "ReceiptMailer#reminder", sent_at: 1.hour.ago)
+      Ahoy::Message.create!(user: create(:user), subject: "Someone else's email", sent_at: 1.minute.ago)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Newer email", "Older email")
+      expect(response.body).not_to include("Someone else's email")
+      expect(response.body.scan(/data-modal="message_(\d+)"/).flatten.map(&:to_i)).to eq([newer.id, older.id])
+      expect(response.body).to include(emails_admin_index_path(user_id: user.id))
+    end
+
+    it "shows a blank slate when no emails have been sent" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No emails sent")
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:admin_details_emails, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
+  describe "#edit_address reset to default address button" do
+    render_views
+
+    it "shows the reset button when the billing address differs from the default" do
+      user = create(:user)
+      create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(user, verified: true)
+
+      get(:edit_address, params: { id: user.id })
+
+      expect(response.body).to include("Reset to default address")
+    end
+
+    it "hides the reset button when the billing address already matches the default" do
+      user = create(:user)
+      create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}")
+      create_session(user, verified: true)
+
+      get(:edit_address, params: { id: user.id })
+
+      expect(response.body).not_to include("Reset to default address")
+    end
+  end
+
+  describe "#reset_billing_address" do
+    it "lets a user reset their own billing address to the default" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St", stripe_billing_address_city: "Faketown")
+      create_session(user, verified: true)
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(response).to redirect_to(address_user_path(user))
+      expect(flash[:success]).to eq("Reset your billing address to HCB's default address.")
+      cardholder.reload
+      expect(cardholder.stripe_billing_address_line1).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1])
+      expect(cardholder.stripe_billing_address_city).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:city])
+    end
+
+    it "lets an admin reset another user's billing address" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(admin_user, verified: true)
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(response).to redirect_to(address_user_path(user))
+      expect(cardholder.reload.stripe_billing_address_line1).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1])
+    end
+
+    it "forbids a non-admin from resetting another user's billing address" do
+      requester = create(:user)
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(requester, verified: true)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(cardholder.reload.stripe_billing_address_line1).to eq("123 Fake St")
+    end
+  end
+
   describe "#update" do
     render_views
 
@@ -258,6 +369,56 @@ RSpec.describe UsersController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash.to_h["error"]).to include(reason)
       expect(user.reload.default_payout_method).to be_nil
+    end
+
+    it "lets an admin bypass phone number verification for a user" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user, phone_number: "+18556254225")
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { phone_number_verification_bypassed: "1" } })
+
+      user.reload
+      expect(user.phone_number_verification_bypassed).to eq(true)
+      expect(user.phone_number_verified).to eq(false)
+      expect(user.phone_number_verified_or_bypassed?).to eq(true)
+    end
+
+    it "does not let a non-admin bypass phone number verification for themselves" do
+      user = create(:user, phone_number: "+18556254225")
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { phone_number_verification_bypassed: "1" } })
+
+      expect(user.reload.phone_number_verification_bypassed).to eq(false)
+    end
+
+    it "does not let a regular user pretend not to be an admin" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "lets an auditor pretend not to be an admin" do
+      auditor = create(:user, access_level: :auditor)
+      create_session(auditor, verified: true)
+
+      patch(:update, params: { id: auditor.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "does not let an admin make another user pretend not to be an admin" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user, access_level: :auditor)
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(user.reload.pretend_is_not_admin).to eq(false)
     end
   end
 

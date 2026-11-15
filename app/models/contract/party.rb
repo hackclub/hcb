@@ -34,12 +34,10 @@ class Contract
 
     enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb", organizer: "organizer", contractor: "contractor" }
 
-    attr_accessor :skip_pending_validation
-
     validates :role, uniqueness: { scope: :contract }
     validate :role_permitted_for_contract_type
     validate :signee_is_user
-    validate :contract_is_pending, on: :create, unless: :skip_pending_validation
+    validate :contract_is_pending, on: :create
     validate :email_cannot_change_after_sign
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
@@ -56,6 +54,21 @@ class Contract
         end
 
       end
+    end
+
+    # The party a user is allowed to open on one of an organization's sent
+    # contracts: their own, or HCB's if they're an admin.
+    #
+    # This mirrors Contract::PartyPolicy#show? so that we only ever surface a
+    # link the user can actually follow. It is not itself an authorization
+    # check; Contract::PartiesController#show still authorizes the party.
+    def self.for(event:, user:)
+      return if event.nil? || user.nil?
+
+      # find_by does not order on its own, and a user can hold a party on more
+      parties = where(contract: event.contracts.sent).order(:id)
+
+      parties.not_hcb.find_by(user:) || (parties.hcb.first if user.admin?)
     end
 
     def email
@@ -95,7 +108,7 @@ class Contract
       if hcb?
         "Sign #{contract.event_name}'s agreement as HCB Operations"
       elsif cosigner?
-        "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
+        "#{contract.party(:signee).user.name} invited you to sign a #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
       else
         "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
       end

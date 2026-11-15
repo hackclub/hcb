@@ -134,6 +134,19 @@ RSpec.describe AchTransfer, type: :model do
     end
   end
 
+  describe "public activity" do
+    it "attributes creation to the transfer creator when no controller is present" do
+      creator = create(:user)
+
+      transfer = PublicActivity.with_tracking do
+        create(:ach_transfer, event:, creator:)
+      end
+
+      activity = PublicActivity::Activity.find_by!(trackable: transfer, key: "ach_transfer.create")
+      expect(activity.owner).to eq(creator)
+    end
+  end
+
   describe "invoiced_at validation" do
     it "allows invoiced_at to be nil" do
       ach_transfer = build(:ach_transfer, event:, invoiced_at: nil)
@@ -156,6 +169,63 @@ RSpec.describe AchTransfer, type: :model do
 
       expect(ach_transfer).not_to be_valid
       expect(ach_transfer.errors[:invoiced_at]).to include("cannot be after the transfer creation date")
+    end
+  end
+  describe "scheduled transfers" do
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:scheduled_transfer) { create(:ach_transfer, event:, scheduled_on: 1.week.from_now.to_date) }
+
+    def import_pending_transaction(ach_transfer)
+      # What AchTransfer::DailyJob's send, then the nightly import, do once the
+      # scheduled day arrives.
+      rpoat = PendingTransactionEngine::RawPendingOutgoingAchTransactionService::OutgoingAch::ImportSingle.new(ach_transfer:).run
+      PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingAch.new(raw_pending_outgoing_ach_transaction: rpoat).run
+    end
+
+    it "eagerly create an intended ledger item instead of a pending transaction" do
+      expect(scheduled_transfer.canonical_pending_transaction).to be_nil
+
+      item = scheduled_transfer.ledger_item
+      expect(item).to be_present
+      expect(item.status).to eq("intended")
+      expect(item.amount_cents).to eq(0)
+      expect(item.memo).to eq("ACH to #{scheduled_transfer.recipient_name}")
+      expect(item.hcb_code).to eq(scheduled_transfer.local_hcb_code)
+      expect(item.author).to eq(scheduled_transfer.creator)
+      # intended_at captures the creation time and is preserved through refresh!.
+      expect(item.intended_at).to be_within(1.second).of(scheduled_transfer.created_at)
+      expect(item.datetime).to be_within(1.second).of(scheduled_transfer.created_at)
+      # Mapped to the event's ledger via the linked object, even without a CPT.
+      expect(item.primary_ledger).to eq(event.ledger)
+    end
+
+    it "reuse the intended item when the pending transaction is imported after sending" do
+      item = scheduled_transfer.ledger_item
+
+      cpt = import_pending_transaction(scheduled_transfer)
+
+      expect(cpt.reload.ledger_item).to eq(item)
+      expect(Ledger::Item.where(linked_object: scheduled_transfer).count).to eq(1)
+      item.reload
+      expect(item.status).to eq("pending")
+      expect(item.amount_cents).to eq(-scheduled_transfer.amount)
+      expect(item.intended_at).to be_nil
+    end
+
+    it "show the intended item as rejected when canceled before being sent" do
+      item = scheduled_transfer.ledger_item
+
+      scheduled_transfer.mark_rejected!
+
+      expect(item.reload.status).to eq("rejected")
+    end
+
+    it "don't apply to a transfer sent right away, whose pending transaction creates the item" do
+      transfer = create(:ach_transfer, event:)
+
+      expect(transfer.canonical_pending_transaction).to be_present
+      expect(transfer.reload.ledger_item).to eq(transfer.canonical_pending_transaction.ledger_item)
+      expect(Ledger::Item.where(linked_object: transfer).count).to eq(1)
     end
   end
 end

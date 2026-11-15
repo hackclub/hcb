@@ -6,15 +6,11 @@ class WirePolicy < ApplicationPolicy
   end
 
   def show?
-    auditor_or_user?
+    user&.auditor?
   end
 
   def create?
     user_who_can_transfer?
-  end
-
-  def approve?
-    user&.admin?
   end
 
   def send_wire?
@@ -26,21 +22,17 @@ class WirePolicy < ApplicationPolicy
   end
 
   def edit?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   def update?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   private
 
   def auditor_or_user?
     user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
-  def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def user_who_can_transfer?

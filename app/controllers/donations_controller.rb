@@ -6,6 +6,7 @@ class DonationsController < ApplicationController
   include SetEvent
   include DonationPageSetup
   include Rails::Pagination
+  include TurnstileProtection
 
   skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
   skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
@@ -26,10 +27,7 @@ class DonationsController < ApplicationController
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
-  # Allow embedding donation pages inside iframes
-  content_security_policy(only: [:start_donation, :make_donation, :finish_donation]) do |policy|
-    policy.frame_ancestors "*"
-  end
+  before_action :allow_iframe_embedding, only: [:start_donation, :make_donation, :finish_donation]
 
   permissions_policy do |p|
     # Allow stripe.js to wrap PaymentRequest in non-safari browsers.
@@ -38,7 +36,11 @@ class DonationsController < ApplicationController
     p.fullscreen :self
   end
 
-  invisible_captcha only: [:make_donation], honeypot: :subtitle, on_timestamp_spam: :redirect_to_404
+  # Saving a Donation mints a Stripe PaymentIntent, which is what card testers
+  # are after: script this form and you get a fresh intent to burn stolen card
+  # numbers against. Require a solved Turnstile challenge before we create
+  # anything on Stripe.
+  turnstile_protect only: [:make_donation], action: TurnstileService::DONATION_ACTION
 
   # GET /donations/1
   def show
@@ -55,6 +57,7 @@ class DonationsController < ApplicationController
       donations = @event.donations
                         .left_joins(:recurring_donation)
                         .succeeded_and_not_refunded
+                        .tax_deductible
                         .where("COALESCE(recurring_donations.email, donations.email) <> ''")
 
       # Aggregate per donor in SQL: total amount + the id of each group's most
@@ -84,7 +87,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.tax_deductible.order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end
@@ -122,6 +125,9 @@ class DonationsController < ApplicationController
     if @donation.save
       redirect_to finish_donation_donations_path(@event, @donation.url_hash, background: @background)
     else
+      @top_donors = []
+      @recent_donors = []
+
       render :start_donation, status: :unprocessable_content
     end
   end
@@ -201,7 +207,7 @@ class DonationsController < ApplicationController
     authorize @donation
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
-    if @donation.update(params.require(:donation).permit(:anonymous, :name))
+    if @donation.update_donor_details(params.require(:donation).permit(:anonymous, :name))
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
     else
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
@@ -209,6 +215,39 @@ class DonationsController < ApplicationController
   end
 
   private
+
+  def allow_iframe_embedding
+    override_x_frame_options(SecureHeaders::OPT_OUT)
+    override_content_security_policy_directives(frame_ancestors: %w[*])
+  end
+
+  # The donation page hides flashes and the form sits in a Turbo frame, so put
+  # the error on the form the way a failed save does — and keep what they'd
+  # already typed, since re-rendering the frame otherwise empties it.
+  def turnstile_failed
+    return unless build_donation_page!(event: @event, params:, request:)
+
+    @donation.assign_attributes(resubmitted_donation_attributes)
+    @donation.errors.add(:base, TurnstileProtection::FAILURE_MESSAGE)
+    # The POST carries no tier, and the tier picker renders *instead of* the
+    # form — which would swallow the error. Show the form.
+    @show_tiers = false
+    @top_donors = []
+    @recent_donors = []
+    @hide_flash = true
+
+    render :start_donation, status: :unprocessable_content
+  end
+
+  # Deliberately not `donation_params`: that one requires the key, so a bot's
+  # bare POST would raise here. The amount also arrives as dollars.
+  def resubmitted_donation_attributes
+    submitted = params[:donation]
+    return {} unless submitted.is_a?(ActionController::Parameters)
+
+    attributes = submitted.permit(:name, :email, :message, :anonymous, :amount).to_h
+    attributes.merge("amount" => (Monetize.parse(attributes["amount"]).cents if attributes["amount"].present?))
+  end
 
   def stream_donations_csv
     set_file_headers_csv
@@ -283,10 +322,6 @@ class DonationsController < ApplicationController
 
   def donation_params
     params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :referrer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
-  end
-
-  def redirect_to_404
-    raise ActionController::RoutingError.new("Not Found")
   end
 
 end

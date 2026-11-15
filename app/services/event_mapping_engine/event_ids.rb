@@ -14,5 +14,6 @@ module EventMappingEngine
     HACK_FOUNDATION_INTEREST = 2740
     REIMBURSEMENT_CLEARING = 4318
     SVB_SWEEPS = 5832
+    HACK_CLUB_HQ = 183
   end
 end

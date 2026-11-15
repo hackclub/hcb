@@ -89,4 +89,22 @@ RSpec.describe CardLocking::Deadline do
     current_due = settled_at + 7.days
     expect(compute(current_due_at: current_due)).to eq(settled_at + 7.days)
   end
+
+  it "case 16: first deadline whose target is already past → now + 72.hours" do
+    expect(compute(settled_at: now - 30.days)).to eq(now + 72.hours)
+  end
+
+  it "case 17: first deadline inside the floor → now + 72.hours" do
+    expect(compute(settled_at: now - 5.days)).to eq(now + 72.hours)
+  end
+
+  it "case 18: first deadline beyond the floor is untouched by it" do
+    expect(compute(settled_at: now - 1.day)).to eq(now - 1.day + 7.days)
+  end
+
+  # A resolved charge's deadline is read by receipt_trusted? to decide whether the
+  # receipt was on time. Flooring it forward would recast a late upload as on-time.
+  it "case 19: a resolved charge's first deadline is not floored" do
+    expect(compute(settled_at: now - 30.days, resolved: true)).to eq(now - 30.days + 7.days)
+  end
 end

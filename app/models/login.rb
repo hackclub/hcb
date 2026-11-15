@@ -18,9 +18,10 @@
 #
 # Indexes
 #
-#  index_logins_on_referral_link_id  (referral_link_id)
-#  index_logins_on_user_id           (user_id)
-#  index_logins_on_user_session_id   (user_session_id)
+#  index_logins_on_referral_link_id        (referral_link_id)
+#  index_logins_on_user_id                 (user_id)
+#  index_logins_on_user_id_and_created_at  (user_id,created_at)
+#  index_logins_on_user_session_id         (user_session_id)
 #
 class Login < ApplicationRecord
   include AASM
@@ -30,6 +31,7 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, class_name: "User::Session", optional: true
+  has_many :attempts, class_name: "Login::Attempt", inverse_of: :login
 
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })

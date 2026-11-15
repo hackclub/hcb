@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { (organizer_signed_in? && Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
+      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -154,6 +154,7 @@ module EventsHelper
     {
       name: "Contractors",
       path_proc: ->(event_id) { event_contractors_path(event_id:) },
+      async_badge_proc: ->(event) { event_contractors_pending_review_icon_path(event) },
       tooltip: "Manage payroll",
       icon: "person-badge",
       symbol: :contractors,
@@ -185,7 +186,7 @@ module EventsHelper
       name: "Perks",
       path_proc: ->(event_id) { event_promotions_path(event_id:) },
       tooltip: "Receive promos & discounts",
-      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
+      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligible to receive promos & discounts" : "Receive promos & discounts" },
       icon: "perks",
       data: { tour_step: "perks" },
       symbol: :promotions,
@@ -221,7 +222,7 @@ module EventsHelper
     {
       name: "Sub-organizations",
       path_proc: ->(event_id) { event_sub_organizations_path(event_id:) },
-      tooltip: "Create & manage subsidiary organizations",
+      tooltip: "Create & manage sub-organizations",
       icon: "channels",
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
@@ -349,30 +350,12 @@ module EventsHelper
       return ""
     end
 
-    link_to children, (disabled ? "javascript:" : url), options.merge(
+    link_to children, (disabled ? nil : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
       'aria-disabled': disabled ? "true" : "false",
     )
-  end
-
-  def show_mock_data?(event = @event)
-    false
-  end
-
-  def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event
-    prefill << "prefill_Submitter+Name=#{CGI.escape(user.full_name)}" if user
-    prefill << "prefill_Submitter+Email=#{CGI.escape(user.email)}" if user
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
   end
 
   def transaction_memo(tx)
@@ -431,18 +414,33 @@ module EventsHelper
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? do |opt|
-      key = opt[:key].to_s
+    filter_options.any? { |opt| active_filter_params(opt, params).any? }
+  end
 
-      case opt[:type]
-      when "date_range"
-        params["#{opt[:key_base]}_before"].present? || params["#{opt[:key_base]}_after"].present?
-      when "amount_range"
-        params["#{opt[:key_base]}_less_than"].present? || params["#{opt[:key_base]}_greater_than"].present?
-      else
-        params[key].present?
-      end
+  # Param keys for this filter option that currently have a value. Range filters
+  # can have up to two (e.g. both "after" and "before" on a date range).
+  def active_filter_params(filter_option, params)
+    keys = case filter_option[:type]
+           when "date_range"
+             ["#{filter_option[:key_base]}_after", "#{filter_option[:key_base]}_before"]
+           when "amount_range"
+             ["#{filter_option[:key_base]}_greater_than", "#{filter_option[:key_base]}_less_than"]
+           else
+             [filter_option[:key].to_s]
+           end
+
+    keys.select { |key| params[key].present? }
+  end
+
+  # Resolves an applied filter value to the label shown for it in the filter
+  # dropdown. Both the dropdown and the chips use this so they can't disagree
+  # about how a value is spelled.
+  def filter_option_label(filter_option, value)
+    labels = Array(filter_option[:options]).to_h do |option|
+      option.is_a?(Array) ? [option.last.to_s, option.first] : [option.to_s, option.humanize]
     end
+
+    labels[value.to_s] || value.to_s.humanize
   end
 
   def validate_filter_options(filter_options, params)

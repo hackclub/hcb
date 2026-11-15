@@ -11,6 +11,29 @@ module SetLedgerFilters
     missing_receipts merchant direction category
   ].freeze
 
+  TYPE_PREDICATES = {
+    "ach_transfer"           => { "$eq": "AchTransfer" },
+    "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
+    "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
+    "card_charge"            => { "$eq": "CardCharge" },
+    "check_deposit"          => { "$eq": "CheckDeposit" },
+    "donation"               => { "$eq": "Donation" },
+    "invoice"                => { "$eq": "Invoice" },
+    "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+    "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+    "wire"                   => { "$eq": "Wire" },
+    "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+    "wise_transfer"          => { "$eq": "WiseTransfer" }
+  }.freeze
+
+  # Zero-amount items are subject to a status allowlist.
+  VISIBLE = {
+    "$or": [
+      { amount_cents: { "$ne": 0 } },
+      { status: { "$in": ["settled", "pending", "reversed"] } }
+    ]
+  }.freeze
+
   included do
     private
 
@@ -40,8 +63,6 @@ module SetLedgerFilters
         @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
       end
 
-      @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
-
       @type = params[:type].presence
       @start_date = params[:start].presence
       @end_date = params[:end].presence
@@ -68,6 +89,8 @@ module SetLedgerFilters
       @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -108,28 +131,15 @@ module SetLedgerFilters
       # Whole-day inclusive end bound, matching the old transactions page
       query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
-      query << { author: { "$eq": @user.slug } } if @user.present?
+      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 
-      if @type.present?
-        linked_object_type = {
-          "ach_transfer"           => { "$eq": "AchTransfer" },
-          "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
-          "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
-          "card_charge"            => { "$eq": "CardCharge" },
-          "check_deposit"          => { "$eq": "CheckDeposit" },
-          "donation"               => { "$eq": "Donation" },
-          "invoice"                => { "$eq": "Invoice" },
-          "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-          "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
-          "wire"                   => { "$eq": "Wire" },
-          "paypal_transfer"        => { "$eq": "PaypalTransfer" },
-          "wise_transfer"          => { "$eq": "WiseTransfer" }
-        }[@type]
+      query << { tag: { "$eq": @tag.id } } if @tag.present?
+      query << { category: { "$eq": @category.slug } } if @category.present?
+      query << { merchant: { "$eq": @merchant } } if @merchant.present?
 
-        query << { linked_object_type: }
-      end
+      query << { linked_object_type: TYPE_PREDICATES[@type] } if @type.present?
 
-      query << { status: { "$in": [nil, "settled", "pending", "reversed"] } } # TODO: add not null validation and remove nil status from here
+      query << VISIBLE
       Ledger::Query.new({ "$and": query })
     end
 

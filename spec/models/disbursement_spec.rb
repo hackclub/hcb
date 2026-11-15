@@ -256,6 +256,39 @@ RSpec.describe Disbursement, type: :model do
       expect(disbursement.errors[:amount]).to include("must be greater than 0")
     end
 
+    it "requires a repayment's allocations to equal its amount on creation and update" do
+      disbursement = build(:disbursement, event: create(:event), source_event: create(:event), transfer_type: "repayment", amount: 123_45)
+      repayment = disbursement.build_repayment
+      [100_00, 23_45].each do |amount|
+        expense = create(:canonical_transaction, event: disbursement.event, amount_cents: -amount)
+        repayment.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: amount)
+      end
+
+      [123_44, 123_46].each do |amount|
+        disbursement.amount = amount
+        expect(disbursement).not_to be_valid
+        expect(disbursement.errors[:amount]).to include("must match the selected transaction total. Review your selection and try again.")
+      end
+
+      disbursement.amount = 123_45
+      disbursement.save!
+      expect(disbursement.reload.repayment.allocations.sum(:amount_cents)).to eq(123_45)
+      expect(disbursement.update(amount: 123_46)).to be(false)
+      expect(disbursement.reload.amount).to eq(123_45)
+
+      disbursement.repayment.allocations.detect { |allocation| allocation.amount_cents == 23_45 }.mark_for_destruction
+      expect(disbursement).not_to be_valid
+      disbursement.update!(amount: 100_00)
+      expect(disbursement.reload.repayment.allocations.sum(:amount_cents)).to eq(100_00)
+    end
+
+    it "rejects a repayment without allocations" do
+      disbursement = build(:disbursement, transfer_type: "repayment", amount: 123_45)
+
+      expect(disbursement).not_to be_valid
+      expect(disbursement.errors[:amount]).to include("must match the selected transaction total. Review your selection and try again.")
+    end
+
     describe "events_are_different" do
       it "does not allow same source and destination event" do
         event = create(:event)
@@ -707,20 +740,20 @@ RSpec.describe Disbursement, type: :model do
 
     describe "signed-leg transaction separation" do
       it "routes the positive leg to the incoming lens and the negative leg to the outgoing lens" do
-        incoming_ct = create(:canonical_transaction, amount_cents: disbursement.amount)
-        incoming_ct.update_column(:hcb_code, disbursement.incoming_hcb_code)
-        outgoing_ct = create(:canonical_transaction, amount_cents: -disbursement.amount)
-        outgoing_ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_ct = create(:canonical_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
+        outgoing_ct = create(:canonical_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
 
         expect(disbursement.incoming_disbursement.canonical_transactions).to contain_exactly(incoming_ct)
         expect(disbursement.outgoing_disbursement.canonical_transactions).to contain_exactly(outgoing_ct)
       end
 
-      it "scopes pending transactions to each leg's own hcb_code" do
-        incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-        incoming_cpt.update_column(:hcb_code, disbursement.incoming_hcb_code)
-        outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-        outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+      it "scopes pending transactions to each leg's own ledger item" do
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
+        outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
 
         expect(disbursement.incoming_disbursement.canonical_pending_transactions).to contain_exactly(incoming_cpt)
         expect(disbursement.outgoing_disbursement.canonical_pending_transactions).to contain_exactly(outgoing_cpt)
@@ -908,9 +941,7 @@ RSpec.describe Disbursement, type: :model do
     end
   end
 
-  describe "state display fronting branches" do
-    # state / state_text / state_icon all branch on whether the destination event can
-    # front the balance while the transfer is still processing.
+  describe "state display" do
     describe "#state_icon" do
       it "is a checkmark when fulfilled" do
         expect(create(:disbursement, :deposited).state_icon).to eq("checkmark")
@@ -924,36 +955,17 @@ RSpec.describe Disbursement, type: :model do
         expect(disbursement.state_icon).to be_nil
       end
 
-      it "is a checkmark when pending and the destination event can front the balance" do
-        disbursement = create(:disbursement, :pending)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
-        expect(disbursement.state_icon).to eq("checkmark")
-      end
-
-      it "is nil when pending and the destination event cannot front the balance" do
-        disbursement = create(:disbursement, :pending)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
-        expect(disbursement.state_icon).to be_nil
+      it "is a checkmark when pending" do
+        expect(create(:disbursement, :pending).state_icon).to eq("checkmark")
       end
     end
 
-    context "while processing, when the destination event can front the balance" do
+    context "while processing" do
       it "reads as a fulfilled success" do
         disbursement = create(:disbursement, :in_transit)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
 
         expect(disbursement.state).to eq(:success)
         expect(disbursement.state_text).to eq("fulfilled")
-      end
-    end
-
-    context "while processing, when the destination event cannot front the balance" do
-      it "reads as muted and still processing" do
-        disbursement = create(:disbursement, :in_transit)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
-
-        expect(disbursement.state).to eq(:muted)
-        expect(disbursement.state_text).to eq("processing")
       end
     end
   end

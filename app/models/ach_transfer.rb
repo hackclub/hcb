@@ -92,7 +92,7 @@ class AchTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.creator || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User", optional: true
@@ -138,6 +138,7 @@ class AchTransfer < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
@@ -170,6 +171,9 @@ class AchTransfer < ApplicationRecord
     event :mark_rejected do
       after do |processed_by = nil|
         canonical_pending_transaction&.decline!
+        # A scheduled transfer has no pending transaction to decline, so its
+        # intended ledger item learns of the rejection here instead.
+        ledger_item&.refresh! if canonical_pending_transaction.nil?
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
@@ -224,6 +228,22 @@ class AchTransfer < ApplicationRecord
       memo: raw_pending_outgoing_ach_transaction.memo,
       date: raw_pending_outgoing_ach_transaction.date_posted,
     )
+  end
+
+  # A scheduled transfer has no pending transaction until the day it's sent
+  # (AchTransfer::DailyJob, then the nightly import), so eagerly create its
+  # ledger item on creation, as Invoice does. It starts "intended" (no CTs or
+  # CPTs) and is filled in when the pending transaction maps back to it
+  # (CanonicalPendingTransaction#calculated_ledger_item). Until then it is what
+  # the transfer's receipts, comments and tags hang off.
+  after_create_commit if: -> { scheduled_on.present? && ledger_item.nil? } do
+    safely do
+      # amount_cents stays 0 — it's the balance-impacting amount, which is only
+      # realized once the pending transaction maps back to this item. memo and
+      # status are recomputed by Ledger::Item#refresh! on create; intended_at
+      # preserves the creation time through it (see #calculate_intended_at).
+      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: "ACH to #{smart_memo}", short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+    end
   end
 
   def send_ach_transfer!

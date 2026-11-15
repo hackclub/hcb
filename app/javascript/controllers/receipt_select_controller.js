@@ -15,7 +15,6 @@ class Receipt {
 
 export default class extends Controller {
   static targets = ['receipt', 'select', 'confirm', 'noResults', 'search']
-  static values = { selected: String }
 
   select(e) {
     const prevReceiptId = this.selectElement.value + ''

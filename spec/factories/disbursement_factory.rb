@@ -6,6 +6,7 @@ FactoryBot.define do
     association :source_event, factory: :event
     amount { Faker::Number.positive.to_i }
     name { Faker::Name.unique.name }
+    transfer_type { "transfer" }
 
     trait :pending do
       aasm_state { "pending" }

@@ -1,0 +1,22 @@
+<p>Hello,</p>
+
+<p>
+  Your contracting position "<%= @position.title %>" for <%= @position.event.name %> has been terminated early,
+  and you will no longer be able to submit invoices for this position.
+
+  <% if @position.invoices.submitted.exists? || @position.payments.pending_or_under_review.any? %>
+    Any pending invoices or payments for this position may still be reviewed or processed, unless otherwise noted.
+  <% end %>
+</p>
+
+<p>
+  If you have any questions, please contact <%= @position.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @position.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

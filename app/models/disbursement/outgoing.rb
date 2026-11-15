@@ -15,6 +15,7 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
 #  destination_subledger_id            :bigint
@@ -73,15 +74,6 @@ class Disbursement
     alias_method :subledger, :source_subledger
     alias_method :counterparty_subledger, :destination_subledger
     alias_method :transaction_category, :source_transaction_category
-
-    # These need to be updated later to not use HCB code
-    def canonical_transactions
-      @canonical_transactions ||= CanonicalTransaction.where(hcb_code: outgoing_hcb_code)
-    end
-
-    def canonical_pending_transactions
-      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: outgoing_hcb_code)
-    end
 
   end
 

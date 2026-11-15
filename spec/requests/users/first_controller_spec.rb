@@ -53,6 +53,40 @@ RSpec.describe "Users::FirstController", type: :request do
                               "Existing-email branch returned #{taken_status} while new-email branch returned #{fresh_status}; " \
                               "this discrepancy lets an attacker enumerate registered emails."
     end
+    it "blocks existing users from creating more than 10 logins in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      form_params = proc do
+        {
+          user: {
+            email: user.email,
+            full_name: user.full_name,
+            affiliations_attributes: {
+              "0" => {
+                name: "first",
+                league: "FRC",
+                team_number: "9999",
+                team_name: "Test Team",
+                role: "student_member",
+              }
+            }
+          }
+        }
+      end
+
+      10.times do
+        post "/first", params: form_params.call
+      end
+
+      post "/first", params: form_params.call
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
 
     context "when the visitor's session has Referral::Attribution rows from prior link clicks" do
       let(:creator) { create(:user, verified: true) }

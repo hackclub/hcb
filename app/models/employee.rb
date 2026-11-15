@@ -7,10 +7,10 @@
 #  id          :bigint           not null, primary key
 #  aasm_state  :string           not null
 #  deleted_at  :datetime
-#  entity_type :string           not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #  entity_id   :bigint           not null
+#  entity_type :string           not null
 #  event_id    :bigint           not null
 #  gusto_id    :string
 #

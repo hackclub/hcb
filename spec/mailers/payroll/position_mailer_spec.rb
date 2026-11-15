@@ -31,5 +31,54 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
 
       expect(mail.reply_to).to include("manager@example.invalid", "creator@example.invalid")
     end
+
+    describe "#onboarding_reminder" do
+      it "is addressed to the contractor and points to the onboarding page" do
+        mail = described_class.with(position:).onboarding_reminder
+
+        expect(mail.to).to include(payee.email)
+        expect(mail.subject).to include(event.name)
+        expect(mail.reply_to).to include("manager@example.invalid", "creator@example.invalid")
+        expect(mail.body.encoded).to include("payroll_positions/#{position.hashid}")
+      end
+
+      it "goes to the legal entity's users when the contractor has an account" do
+        legal_entity_user = create(:user, email: "contractor@example.invalid")
+        payee.legal_entity.users << legal_entity_user
+
+        mail = described_class.with(position:).onboarding_reminder
+
+        expect(mail.to).to include("contractor@example.invalid")
+      end
+    end
+  end
+
+  describe "#expiring_soon" do
+    let(:manager) { create(:user, email: "manager@example.invalid") }
+    let(:other_manager) { create(:user, email: "other-manager@example.invalid") }
+    let(:event) { create(:event, organizers: [manager, other_manager]) }
+    let(:payee) { create(:payee, event:) }
+
+    before do
+      event.organizer_positions.update_all(role: :manager)
+    end
+
+    it "goes to the position's manager when one is assigned" do
+      position = create(:payroll_position, payee:, manager:, end_date: 7.days.from_now.to_date)
+
+      mail = described_class.with(position:).expiring_soon
+
+      expect(mail.to).to eq(["manager@example.invalid"])
+      expect(mail.subject).to include(payee.display_name, event.name, position.end_date.to_fs(:long))
+      expect(mail.body.encoded).to include("payroll_positions/#{position.hashid}")
+    end
+
+    it "falls back to the event's managers when no manager is assigned" do
+      position = create(:payroll_position, payee:, end_date: 7.days.from_now.to_date)
+
+      mail = described_class.with(position:).expiring_soon
+
+      expect(mail.to).to include("manager@example.invalid", "other-manager@example.invalid")
+    end
   end
 end

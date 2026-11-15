@@ -206,11 +206,84 @@ RSpec.describe Payment::Attempt, type: :model do
     end
   end
 
+  describe "after_create create_transfer! with a real transfer" do
+    let(:payment) { create(:payment) }
+    let(:payout_method) { create(:legal_entity_payout_method) }
+
+    def create_attempt
+      attempt = Payment::Attempt.new(payment:, payout_method:)
+      allow(attempt).to receive(:legal_entity_payable)
+      allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
+      attempt.save!
+      attempt
+    end
+
+    before do
+      allow(Payment::AttemptMailer).to receive(:with).and_return(double.as_null_object)
+      allow(PaymentMailer).to receive(:with).and_return(double.as_null_object)
+      allow(ColumnService).to receive(:get).and_return({ "full_name" => "Test Bank" })
+      allow(Rails.error).to receive(:report)
+    end
+
+    context "when the transfer is created successfully" do
+      before { allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_000) }
+
+      it "links the transfer and the attempt" do
+        attempt = create_attempt
+        transfer = attempt.reload.payout
+
+        expect(transfer).to be_a(AchTransfer)
+        expect(transfer.reload.payment_attempt).to eq(attempt)
+        expect(attempt).to be_under_review
+      end
+    end
+
+    context "when building the transfer raises" do
+      before { allow(payout_method).to receive(:create_transfer).and_raise(StandardError, "boom") }
+
+      it "persists the attempt as failed without a payout" do
+        attempt = create_attempt
+
+        expect(attempt).to be_persisted
+        expect(attempt.reload).to be_failed
+        expect(attempt.payout).to be_nil
+        expect(payment.attempts.reload).to eq([attempt])
+      end
+    end
+
+    context "when the transfer fails validation" do
+      before { allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(0) }
+
+      it "persists the attempt as failed without a payout" do
+        attempt = create_attempt
+
+        expect(attempt.reload).to be_failed
+        expect(attempt.payout).to be_nil
+        expect(AchTransfer.count).to eq(0)
+      end
+    end
+
+    context "when a step after saving the transfer raises" do
+      before do
+        allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_000)
+        allow(Receipt).to receive(:reupload).and_raise(StandardError, "boom")
+      end
+
+      it "rolls back the transfer and persists the attempt as failed" do
+        expect { @attempt = create_attempt }.not_to change(AchTransfer, :count)
+
+        expect(@attempt.reload).to be_failed
+        expect(@attempt.payout).to be_nil
+        expect(payment.reload).to be_pending_legal_entity
+      end
+    end
+  end
+
   describe "after_create create_transfer!" do
     # These tests exercise the branching on payout_method.details type.
     # We call create_transfer! directly to avoid triggering Rails' save
-    # machinery on association doubles. We stub `safely` to be a no-op so
-    # external-service calls inside each branch are skipped.
+    # machinery on association doubles. We stub payout_method.create_transfer
+    # so external-service calls inside each branch are skipped.
 
     def build_attempt_with_payout_method(payout_method)
       attempt = build(:payment_attempt)
@@ -220,9 +293,13 @@ RSpec.describe Payment::Attempt, type: :model do
       payment_double = double("payment").as_null_object
       allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_double)
-      # Make safely a no-op so external-service calls inside each branch are
-      # skipped; we only care that mark_under_review! is called at the end.
-      allow(attempt).to receive(:safely)
+      # Stub the external-service boundary directly so each branch skips real
+      # API calls; we only care that mark_under_review! is called at the end.
+      transfer_double = double("transfer", save!: true, "payment_attempt=": nil, local_hcb_code: double("hcb_code").as_null_object)
+      allow(payout_method).to receive(:create_transfer).and_return(transfer_double)
+      allow(attempt).to receive(:payout=)
+      allow(attempt).to receive(:save!)
+      allow(Receipt).to receive(:reupload)
       attempt
     end
 
@@ -273,7 +350,7 @@ RSpec.describe Payment::Attempt, type: :model do
 
       payee_dbl = double("payee", display_name: "Alice", email: "alice@example.com")
       hcb_code  = double("hcb_code")
-      check     = double("check", save!: nil, local_hcb_code: hcb_code)
+      check     = double("check", save!: nil, "payment_attempt=": nil, local_hcb_code: hcb_code)
       checks_rel = double("checks_rel", build: check)
       event_dbl  = double("event", increase_checks: checks_rel)
       payment_dbl = double("payment",

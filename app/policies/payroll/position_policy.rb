@@ -11,11 +11,11 @@ module Payroll
     # Inviting a contractor is starting a transfer against an event with the
     # contractors feature enabled.
     def new?
-      event_policy.contractors? && event_policy.new_transfer?
+      event_policy.contractors? && event_policy.new_transfer? && !event_policy.record.financially_frozen?
     end
 
     def create?
-      event_policy.contractors? && event_policy.create_transfer?
+      event_policy.contractors? && event_policy.create_transfer? && !event_policy.record.financially_frozen?
     end
 
     # Editing the position requires the same permission as creating a
@@ -28,6 +28,10 @@ module Payroll
 
     def update?
       edit?
+    end
+
+    def terminate?
+      event_policy.contractors? && event_policy.create_transfer?
     end
 
     # Signing its contract during the invite flow requires the same
@@ -52,7 +56,11 @@ module Payroll
     end
 
     def onboarding?
-      user&.auditor? || record.payee.legal_entity&.users&.include?(user) || user&.email == record.payee.email
+      return false if user.nil?
+      return true if user.auditor?
+      return true if record.payee.legal_entity&.users&.include?(user)
+
+      user.email == record.payee.email
     end
 
     private

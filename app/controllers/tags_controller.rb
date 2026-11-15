@@ -8,15 +8,23 @@ class TagsController < ApplicationController
   def create
     authorize @event, policy_class: TagPolicy
 
-    tag = Tag.where(label: params[:label].strip, event: @event)
-    tag = tag.create_with(color: params[:color], emoji: params[:emoji]).first_or_create
+    label = params[:label].strip
+    tag = Tag.where(label: label, event: @event).first_or_initialize(color: params[:color], emoji: params[:emoji])
+    tag.save unless tag.persisted?
 
-    if params[:hcb_code_id]
-      hcb_code = HcbCode.find(params[:hcb_code_id])
-      authorize hcb_code, :toggle_tag?
+    if !tag.persisted? && tag.errors.of_kind?(:label, :taken)
+      # Another request created this same tag concurrently (e.g. a double
+      # submit) between our lookup above and our attempted create. Use the
+      # tag it created instead of carrying forward an invalid record.
+      tag = Tag.find_by(label: label, event: @event) || tag
+    end
+
+    if params[:ledger_item_id].present?
+      ledger_item = Ledger::Item.find_by_hashid!(params[:ledger_item_id])
+      raise Pundit::NotAuthorizedError unless policy(ledger_item).toggle_tag?(tag)
 
       suppress(ActiveRecord::RecordNotUnique) do
-        hcb_code.tags << tag
+        ledger_item.tags << tag
       end
     end
 

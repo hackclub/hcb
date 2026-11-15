@@ -66,6 +66,7 @@
       right: 0;
       bottom: 0;
       opacity: 0.1;
+      pointer-events: none;
       background-image: url('frc-background.png');
       background-size: 24em;
       background-position: center;
@@ -113,16 +114,16 @@ html[data-dark='true'] {
       content: '';
       position: absolute;
       inset: -0.25rem 0;
+      pointer-events: none;
     }
   }
 
-  span:not(.badge):not(.list-badge):first-of-type {
+  // The memo text: the first plain span, skipping status and tag badges
+  $memo-text: 'span:not(.badge):not(.list-badge):first-of-type';
+
+  #{$memo-text} {
     max-width: 100%;
     overflow: hidden;
-
-    @media screen and (max-width: 32em) {
-      max-width: 32ch; // reduce character count on mobile
-    }
 
     &:not(:has(span)) {
       display: inline-block;
@@ -132,6 +133,14 @@ html[data-dark='true'] {
 
     &.memo-underline > span:hover {
       text-decoration: underline;
+    }
+  }
+
+  // Reduce the character count on mobile. Fluid memos fill their cell and
+  // truncate on their own, so they skip the clamp.
+  &:not(.transaction__memo--fluid) #{$memo-text} {
+    @media screen and (max-width: 32em) {
+      max-width: 32ch;
     }
   }
 
@@ -145,14 +154,81 @@ html[data-dark='true'] {
     line-height: 1.3;
     padding: 0.25rem 0.625rem;
   }
+}
 
-  .suggested_tag {
-    max-width: 0px;
+// The organization a transaction belongs to, shown under its memo when rows
+// from several orgs share one table. Long org names truncate.
+.transaction__event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+
+  a {
+    color: map-get($palette, muted);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
-// Grey out the memo for pending transactions. The memo link uses
-// `color: inherit`, so setting the cell's color muted greys it in both themes.
+// The "Older receipts" group is a <details>, and its header is the <summary>.
+// Hide the default disclosure triangle in favour of the caret in the header.
+.receipt-card > summary {
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// The heading's bottom margin is the gap between it and the table below, but on
+// a collapsible group it would have to vanish when collapsed or it reads as dead
+// space under the header. Toggling it snaps the card 8px mid-animation, so the
+// gap lives on the table instead: there it sits inside ::details-content and is
+// revealed by the same block-size transition.
+details.receipt-card {
+  > summary > .heading {
+    margin-bottom: 0;
+  }
+
+  > .table-container {
+    margin-top: 0.5rem;
+  }
+
+  // Turn with the disclosure rather than snapping when it opens.
+  .flip-when-open {
+    transition: transform 0.5s;
+  }
+}
+
+.transaction__receipt-action {
+  width: 1%;
+}
+
+.receipt-card {
+  .transaction__date {
+    min-width: 7.5rem;
+  }
+
+  .transaction__memo {
+    width: 100%;
+    max-width: 0;
+    min-width: 12rem;
+  }
+
+  .transaction__amount {
+    min-width: 7rem;
+  }
+
+  .transaction__receipt-action {
+    min-width: 21rem;
+  }
+}
+
 .transaction__memo--pending {
   color: map-get($palette, muted);
 }
@@ -172,9 +248,8 @@ html[data-dark='true'] {
   visibility: visible;
 }
 
-.transaction:hover .suggested_tag,
-.suggested_tag[aria-expanded='true'] {
-  max-width: 125px;
+.transaction:not(:hover) .add-tag-badge {
+  width: 1px;
 }
 
 [class^='transaction--']:target {
@@ -205,19 +280,20 @@ html[data-dark='true'] {
   }
 }
 
-.transaction__fee_icon {
-  svg {
-    height: 18px;
-    width: 18px;
-    margin-left: 3px;
+@keyframes highlight-row {
+  from {
+    background-color: map-get($palette, warning);
+  }
+  to {
+    background-color: none;
   }
 }
 
 .transaction:has(.renamed) {
-  animation: highlight 2s;
+  animation: highlight-row 2s;
 }
 
-.transaction:has(.renaming) {
+.transaction:has(.renaming:not([hidden])) {
   background-image:
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),

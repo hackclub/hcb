@@ -35,7 +35,7 @@ class Disbursement
       scope :reviewing_or_processing, -> { where(aasm_state: [:reviewing, :pending, :in_transit]) }
 
       # Associations
-      has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+      has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object, inverse_of: :linked_object
       belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
       belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
@@ -48,6 +48,9 @@ class Disbursement
       belongs_to :requested_by, class_name: "User", optional: true
 
       has_one :card_grant, foreign_key: :disbursement_id, inverse_of: :disbursement, required: false
+
+      has_many :canonical_transactions, through: :ledger_item
+      has_many :canonical_pending_transactions, through: :ledger_item
 
       # AASM
       include AASM
@@ -99,14 +102,8 @@ class Disbursement
 
       # State methods
       def state
-        if fulfilled?
+        if fulfilled? || processed? || pending?
           :success
-        elsif processed? || pending?
-          if destination_event.can_front_balance?
-            :success
-          else
-            :muted
-          end
         elsif rejected?
           :error
         elsif scheduled?
@@ -122,14 +119,8 @@ class Disbursement
       alias_method :status, :state
 
       def state_text
-        if fulfilled?
+        if fulfilled? || processed? || pending?
           "fulfilled"
-        elsif processed? || pending?
-          if destination_event.can_front_balance?
-            "fulfilled"
-          else
-            "processing"
-          end
         elsif rejected? && approved_at.present? # Disbursements that were approved, then rejected
           "canceled"
         elsif rejected?
@@ -146,7 +137,7 @@ class Disbursement
       end
 
       def state_icon
-        "checkmark" if fulfilled? || processed? || (pending? && destination_event.can_front_balance?)
+        "checkmark" if fulfilled? || processed? || pending?
       end
 
       # Special appearance methods
@@ -158,7 +149,7 @@ class Disbursement
         return nil if canonical_pending_transactions.with_custom_memo.any? || canonical_transactions.with_custom_memo.any?
 
         Disbursement::SPECIAL_APPEARANCES.each do |key, value|
-          return key if value[:qualifier].call(self)
+          return key if value[:qualifier]&.call(self)
         end
 
         nil

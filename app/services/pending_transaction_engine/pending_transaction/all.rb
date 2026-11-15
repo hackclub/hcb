@@ -42,6 +42,7 @@ module PendingTransactionEngine
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
+            included_local_hcb_code_associations << { ledger_item: [:tags, { primary_ledger: [:event, { card_grant: :event }] }] }
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
                                                          order_by_mapped_at ? :canonical_pending_event_mapping : nil,
                                                          { local_hcb_code: included_local_hcb_code_associations }])
@@ -56,8 +57,8 @@ module PendingTransactionEngine
             if @tag_id
               cpts =
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
-                    .joins("LEFT JOIN hcb_codes_tags ON hcb_codes_tags.hcb_code_id = hcb_codes.id")
-                    .where("hcb_codes_tags.tag_id = ?", @tag_id)
+                    .joins("LEFT JOIN ledger_items_tags ON ledger_items_tags.ledger_item_id = hcb_codes.ledger_item_id")
+                    .where("ledger_items_tags.tag_id = ?", @tag_id)
             end
 
 
@@ -105,9 +106,7 @@ module PendingTransactionEngine
               cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant)
             end
 
-            if event.can_front_balance?
-              cpts = cpts.not_fronted
-            end
+            cpts = cpts.not_fronted
 
             cpts = cpts.search_memo(@search) if @search.present?
             cpts

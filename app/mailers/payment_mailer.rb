@@ -8,11 +8,19 @@ class PaymentMailer < ApplicationMailer
   end
 
   def missing_tax_information
-    mail to: @recipients, subject: initial_subject
+    @initial = params[:initial]
+
+    mail to: @recipients, subject: @initial ? initial_subject : "[Action Required] Submit tax information to receive your payment for \"#{@payment.purpose}\" from #{@payment.event.name}"
   end
 
   def sent
     mail to: @recipients, subject: "Your payment for \"#{@payment.purpose}\" is on the way!"
+  end
+
+  def acceptance_reminder
+    @tax_incomplete = !@payment.legal_entity&.payable?
+    @payout_incomplete = @payment.legal_entity&.default_payout_method.blank?
+    mail to: @recipients, subject: "[Action Required] Finish setup to receive your payment for \"#{@payment.purpose}\" from #{@payment.event.name}"
   end
 
   private
@@ -23,9 +31,8 @@ class PaymentMailer < ApplicationMailer
 
   def set_payment
     @payment = params[:payment]
-    @creator = @payment.creator.email_address_with_name
 
-    if @payment.legal_entity.present?
+    if @payment.legal_entity.present? && !@payment.legal_entity.managed?
       @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
     else
       @recipients = [@payment.payee.email]

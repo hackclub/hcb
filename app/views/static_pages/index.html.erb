@@ -21,8 +21,8 @@
 </h1>
 
 <% if @applications.any? %>
-  <div class="my-2 ml-0 py-2 flex flex-row items-end justify-between">
-    <h2 class="heading h2 line-height-4 m-0 p-0 border-none">Applications</h2>
+  <div class="flex flex-row w-full justify-between items-center">
+    <h2 class="user-home-section mb-2">Applications</h2>
     <%= link_to applications_path, class: "flex items-center shrink-0 no-underline" do %>
       View all applications
       <%= inline_icon "view-forward" %>
@@ -36,9 +36,18 @@
   </div>
 <% end %>
 
+<% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
+<% if valid_contracts.any? %>
+  <h2 class="user-home-section mt-4 mb-2 w-full">Pending forms</h2>
+  <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
+  <div class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
+    <%= render partial: "contracts/contract", collection: valid_contracts, as: :contract %>
+  </div>
+<% end %>
+
 <% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
-  <ul class="grid grid-cols-1 text-left w-full mt-2">
+  <ul class="grid grid-cols-1 text-left w-full mt0">
     <% current_user.card_grants.not_activated.each do |grant| %>
       <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
         <div class="flex-1">
@@ -61,7 +70,7 @@
 <% end %>
 
 <% if current_user.card_grants.activated.any? %>
-  <h2 class="user-home-section">Your grants</h2>
+  <h2 class="user-home-section mb-2">Your grants</h2>
 
   <div class="mixed-grid grid--spacious">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
@@ -74,9 +83,9 @@
 <% end %>
 
 <% if current_user.pending_payments_received.any? %>
-  <h2 class="user-home-section">Payments to you</h2>
+  <h2 class="user-home-section mb-2">Payments to you</h2>
 
-  <ul class="grid grid--wide mb-12 pb-2">
+  <ul class="grid grid--wide mt0 mb-12 pb-2">
     <% current_user.pending_payments_received.each do |payment| %>
       <%= link_to payment.pending_legal_entity? ? choose_legal_entity_payee_path(payment.payee) : payment_path(payment) do %>
         <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
@@ -91,9 +100,9 @@
 <% end %>
 
 <% if current_user.onboarding_contractor_positions.any? %>
-  <h2 class="user-home-section">Finish your contractor onboarding</h2>
+  <h2 class="user-home-section mb-2">Finish your contractor onboarding</h2>
 
-  <ul class="grid grid--wide mb-12 pb-2">
+  <ul class="grid grid--wide mt0 mb-12 pb-2">
     <% current_user.onboarding_contractor_positions.each do |position| %>
       <% next_step = position.next_onboarding_step %>
       <%= link_to onboarding_payroll_position_url(position) do %>
@@ -112,8 +121,8 @@
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
     <% if @invites.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending organization invitations</h2>
-      <ul class="grid grid--narrow text-left w-full mt-2">
+      <h2 class="user-home-section mt-8 mb-2 w-full">Pending organization invitations</h2>
+      <ul class="grid grid--narrow text-left w-full mt0">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
             <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
@@ -128,8 +137,8 @@
     <% end %>
 
     <% if @invite_requests.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending join requests</h2>
-      <ul class="grid grid--narrow text-left w-full mt-2">
+      <h2 class="user-home-section mt-8 mb-2 w-full">Pending join requests</h2>
+      <ul class="grid grid--narrow text-left w-full mt0">
         <% @invite_requests.each do |invite_request| %>
           <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
             <span class="w-full flex gap-2 items-center align-middle">
@@ -188,7 +197,7 @@
 
     <% if @events.hidden.any? %>
       <details class="w-full text-left">
-        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+        <summary><h4 class="inline-block pb-0 mb-2 border-none muted">Hidden organizations</h4></summary>
         <ul class="grid grid--medium-narrow text-left mt-0">
           <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
         </ul>
@@ -209,32 +218,7 @@
 
     <%= render "static_pages/index/teenager_raffle" %>
 
-    <%# Latest HCB announcement %>
-    <% if @latest_hcb_announcement %>
-      <div class="flex flex-row w-full justify-between items-center">
-        <h2 class="heading h2 leading-[1.5] my-2 mt-4 mr-auto py-2 px-4 ml-0 pl-0 border-none">
-          The latest from HCB
-        </h2>
-        <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
-          View all announcements
-          <%= inline_icon "external", size: 18, class: "ml-1 align-text-top", style: "transform: scale(1.2)" %>
-        <% end %>
-      </div>
-      <div class="mb-4 text-left w-full self-stretch">
-        <%= render partial: "announcements/announcement_card", locals: { announcement: @latest_hcb_announcement } %>
-      </div>
-    <% end %>
-
     <%= render "static_pages/index/explore" %>
-
-    <% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
-    <% if valid_contracts.any? %>
-      <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
-      <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
-      <div class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
-        <%= render partial: "contracts/contract", collection: valid_contracts, as: :contract %>
-      </div>
-    <% end %>
   <% end %>
 
   <% if auditor_signed_in? %>

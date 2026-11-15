@@ -73,7 +73,13 @@ class AnnouncementsController < ApplicationController
     end
 
     if params[:announcement][:autosave] != "true"
-      flash[:success] = "Updated announcement"
+      if params[:announcement][:draft] == "true"
+        flash[:success] = "Drafted announcement"
+      elsif params[:announcement][:draft] == "false"
+        flash[:success] = "Published announcement"
+      else
+        flash[:success] = "Updated announcement"
+      end
       redirect_to announcement_path(@announcement)
     end
   end

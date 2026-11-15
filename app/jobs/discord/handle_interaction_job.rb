@@ -83,13 +83,16 @@ module Discord
     end
 
     def attach_receipt_component
+      return require_linked_user unless @user
+
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
       hcb_code = activity&.trackable&.canonical_pending_transaction&.local_hcb_code
 
-      return respond(content: "Could not find the transaction to attach a receipt to.") unless activity&.key == "raw_pending_stripe_transaction.create"
+      return respond(content: "Could not find the transaction to attach a receipt to.", flags: EPHEMERAL_MESSAGE_FLAG) unless activity&.key == "raw_pending_stripe_transaction.create" && hcb_code
 
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless activity.event_id == @current_event&.id && activity.event_id == hcb_code.event.id
+      return respond(content: "You don't have permission to upload receipts for this transaction.", flags: EPHEMERAL_MESSAGE_FLAG) unless can_upload_receipt?(hcb_code)
 
       {
         "type": Discordrb::Interaction::CALLBACK_TYPES[:modal],
@@ -112,9 +115,12 @@ module Discord
     end
 
     def attach_receipt_modal
+      return require_linked_user unless @user
+
       hcb_code = HcbCode.find(@params)
 
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
+      return respond(content: "You don't have permission to upload receipts for this transaction.", flags: EPHEMERAL_MESSAGE_FLAG) unless can_upload_receipt?(hcb_code)
 
       attachments = @interaction.dig(:data, :resolved, :attachments)
       file = attachments&.values&.first
@@ -148,10 +154,14 @@ module Discord
       end
     end
 
+    def can_upload_receipt?(hcb_code)
+      ReceiptablePolicy.new(@user, hcb_code).upload?
+    end
+
     def reimburse_component
       return require_linked_user unless @user
 
-      report = @user.reimbursement_reports.create!(name: "Reimbursement report from Discord")
+      report = @user.reimbursement_reports.create!(name: "Reimbursement report from Discord", inviter: @user)
 
       respond content: "Your new reimbursement report has been created!", embeds: [
         {
@@ -176,7 +186,7 @@ module Discord
       link_server_button = button_to("Set up HCB on this server", generate_discord_setup_url)
 
       if @current_event.present? && @user.present?
-        respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed
+        respond content: "HCB has already been set up for this Discord server!", embeds: linking_embed
       elsif !@current_event.present? && @user.present?
         respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:",
                 components: link_server_button,

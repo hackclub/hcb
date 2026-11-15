@@ -1,6 +1,6 @@
 
 <%= render partial: "hcb_codes/decline_reason", locals: {
-      canonical_pending_transaction: @cpt,
+      hcb_code: @cpt.local_hcb_code,
       include_troubleshooting: true,
       include_external: true,
       is_email: true

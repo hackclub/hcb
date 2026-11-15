@@ -60,11 +60,6 @@
         <%= @transaction.display_name %>
       </span>
     </p>
-
-    <%= pop_icon_to "edit",
-      edit_canonical_transaction_path(@transaction),
-      disabled: !organizer_signed_in?,
-      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
   </div>
 
   <section class="details">
@@ -140,7 +135,7 @@
         <span>
           <%= render_money @transaction.fee.amount_cents_as_decimal %> (<%= render_percentage @transaction.fee.event_sponsorship_fee %>)
           <% admin_tool("py0 ml1", "span") do %>
-            <%= link_to "[waive fee]", waive_fee_canonical_transaction_url(@transaction), method: :post if @transaction.fee.amount_cents_as_decimal > 0 %>
+            <%= link_to "[waive fee]", waive_fee_canonical_transaction_url(@transaction), data: { turbo_method: :post } if @transaction.fee.amount_cents_as_decimal > 0 %>
           <% end %>
         </span>
       </p>
@@ -152,10 +147,9 @@
     <% else %>
       <% admin_tool("py0", "p") do %>
         <strong>Fee</strong>
-        <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transaction), method: :post if @transaction.fee&.revenue_waived? %>
+        <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transaction), data: { turbo_method: :post } if @transaction.fee&.revenue_waived? %>
       <% end %>
     <% end %>
-
   </section>
 
   <% if @transaction&.disbursement %>
@@ -168,7 +162,6 @@
       </p>
     <% end %>
   <% end %>
-
 </article>
 
 <% if @hcb_code %>

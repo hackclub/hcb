@@ -24,12 +24,17 @@ export default class extends Controller {
   }
 
   connect() {
-    this._closeMenusHandler = () => this.close()
+    this._closeMenusHandler = () => this.isOpen && this.close()
     document.addEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
   disconnect() {
     this.cleanup && this.cleanup()
+    // remove cloned popup so it doesn't outlive turbo frame updates.
+    this.content && this.content.remove()
+    this.content = undefined
+    this.cleanup = undefined
+    this.isOpen = false
     document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
@@ -47,7 +52,14 @@ export default class extends Controller {
     if (this.isOpen) return
     if (!this.hasContentTarget) return
 
-    this.content = this.contentTarget.cloneNode(true)
+    // The content can be a <template> wrapping the menu, which keeps its links
+    // and forms out of the page until it opens (a menu inside a link can't
+    // otherwise hold links of its own: HTML doesn't nest them).
+    const source =
+      this.contentTarget instanceof HTMLTemplateElement
+        ? this.contentTarget.content.firstElementChild
+        : this.contentTarget
+    this.content = source.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
     ;(
@@ -95,13 +107,21 @@ export default class extends Controller {
         $(e.target).closest('.menu__content').length
       )
         return
-
-      this.content && this.content.remove()
-    } else {
-      this.content && this.content.remove()
     }
 
-    this.toggleTarget.setAttribute('aria-expanded', false)
+    if (this.content) {
+      const content = this.content
+      if (e?.type == 'click') {
+        // let turbo resolve the target frame before removing the link
+        content.style.display = 'none'
+        setTimeout(() => content.remove(), 0)
+      } else {
+        content.remove()
+      }
+    }
+
+    if (this.hasToggleTarget)
+      this.toggleTarget.setAttribute('aria-expanded', false)
     this.cleanup && this.cleanup()
 
     this.content = undefined

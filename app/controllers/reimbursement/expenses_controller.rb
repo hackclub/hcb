@@ -7,28 +7,25 @@ module Reimbursement
     def create
       @report = Reimbursement::Report.find(params[:report_id])
 
-      type = params[:type] == "mileage" ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
-      @expense = @report.expenses.build(amount_cents: 0, type:)
+      mileage = params[:type] == "mileage"
+      type = mileage ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
+      files = Array(params[:file]).compact_blank
 
-      authorize @expense
-
-      if params[:file]
-        receipt = ::ReceiptService::Create.new(
-          receiptable: @expense,
-          uploader: current_user,
-          attachments: params[:file],
-          upload_method: :quick_expense
-        ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
+      # One expense per uploaded file, or a single blank expense when there are none.
+      @expenses = Array.new([files.size, 1].max) do
+        @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage)).tap { |expense| authorize expense }
       end
 
-      if @expense.save
-        respond_to do |format|
-          format.turbo_stream { render turbo_stream: on_create_streams }
-          format.html { redirect_to url_for(@report) }
-        end
-      else
-        redirect_to @report, flash: { error: @expense.errors.full_messages.to_sentence }
+      @expenses.zip(files).each do |expense, file|
+        return redirect_to @report, flash: { error: expense.errors.full_messages.to_sentence } unless expense.save
+
+        expense.attach_quick_expense_receipt!(file, uploader: current_user) if file
+      end
+      @expense = @expenses.last
+
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: on_create_streams }
+        format.html { redirect_to url_for(@report) }
       end
     end
 
@@ -72,7 +69,7 @@ module Reimbursement
       @expense.mark_approved!(current_user) if @expense.may_mark_approved?
 
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: on_update_streams }
+        format.turbo_stream { render turbo_stream: on_update_streams + approval_prompt_streams }
         format.html { redirect_to @expense.report }
       end
     end
@@ -131,20 +128,29 @@ module Reimbursement
                            })
     end
 
-    def new_expense_turbo_stream
-      turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
-    end
-
-    def delete_expense_turbo_stream
-      turbo_stream.remove(@expense)
+    def new_expense_turbo_streams
+      @expenses.map do |expense|
+        turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense:, new: true })
+      end
     end
 
     def on_create_streams
-      [actions_turbo_stream, new_expense_turbo_stream, blankslate_turbo_stream]
+      [actions_turbo_stream, *new_expense_turbo_streams, blankslate_turbo_stream]
     end
 
     def on_update_streams
       [total_turbo_stream, actions_turbo_stream, replace_expense_turbo_stream]
+    end
+
+    def approval_prompt_streams
+      report = @expense.report
+      return [] unless report.submitted?
+      return [] unless report.expenses.pending.none?
+      return [] unless report.may_mark_reimbursement_requested?
+      return [] unless policy(report).request_reimbursement?
+      return [] if report.currency != "USD" && report.wise_transfer_may_exceed_balance?
+
+      [turbo_stream.open_modal("all_expenses_approved_modal")]
     end
 
     def on_delete_streams

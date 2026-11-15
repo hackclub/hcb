@@ -9,9 +9,13 @@ RSpec.describe User, type: :model do
 
   before { travel_to(now) }
 
+  # Each charge is materialized as of when it settled, which is what production
+  # does: the settle hook fires a MaterializeChargeJob at settle time. Passing the
+  # current `now` would instead model a charge first materialized days late, which
+  # CardLocking::Deadline deliberately floors so it cannot land already overdue.
   def materialize_all
     HcbCode.where(hcb_code: user.stripe_cards.flat_map { |c| c.local_hcb_codes.pluck(:hcb_code) })
-           .find_each { |hc| hc.materialize_card_locking!(now:) }
+           .find_each { |hc| hc.materialize_card_locking!(now: hc.card_locking_settled_at || now) }
   end
 
   describe "#receipt_trusted?" do
@@ -92,14 +96,17 @@ RSpec.describe User, type: :model do
       n.times { |i| create_settled_card_charge(user:, settled_at: (offset + i).days.ago, uploaded_at: (offset + i - 1).days.ago, stripe_card: card) }
     end
 
+    # Charges are slow to build, and any two history sizes expose a per-charge query.
     it "computes trust in a constant number of queries as history grows" do
       card = create(:stripe_card, :with_stripe_id, stripe_cardholder: user.stripe_cardholder || create(:stripe_cardholder, user:), event:)
-      add_history(5, offset: 30, card:)
+      add_history(2, offset: 30, card:)
       materialize_all
       small = queries_during { User.find(user.id).receipt_trusted?(now:) }
 
-      add_history(20, offset: 60, card:)
+      add_history(3, offset: 60, card:)
       materialize_all
+      # Otherwise equal counts could just mean the new charges were never read.
+      expect(HcbCode.card_locking_relevant_for_cardholder(user.id).distinct.count).to eq(5)
       large = queries_during { User.find(user.id).receipt_trusted?(now:) }
 
       expect(large).to eq(small)

@@ -22,7 +22,6 @@ class CanonicalPendingDeclinedMapping < ApplicationRecord
 
   after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
     canonical_pending_transaction.ledger_item.map!
-    canonical_pending_transaction.ledger_item.refresh!
   end
 
 end

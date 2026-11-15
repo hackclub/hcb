@@ -27,7 +27,7 @@ class DiscordController < ApplicationController
       user_id = params[:event][:data][:user][:id]
 
       channel = Discord::Bot.bot.pm_channel(user_id)
-      Discord::Bot.bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(discord_id: user_id)}")
+      Discord::Bot.bot.send_message(channel, "Welcome to HCB! Link your Discord account to your HCB account by going to #{discord_link_url(signed_discord_id: Discord.generate_signed(user_id, purpose: :link_user, expires_in: 1.day))}")
     end
 
     head :no_content
@@ -85,7 +85,7 @@ class DiscordController < ApplicationController
     @channel_id = Discord.verify_signed(@signed_channel_id, purpose: :link_server)
 
     @guild = Discord::Bot.bot.server(@guild_id)
-    @channel = Discord::Bot.bot.channel(@channel_id)
+    @channel = resolve_discord_channel(@channel_id)
 
     redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
   end
@@ -98,7 +98,7 @@ class DiscordController < ApplicationController
     @channel_id = Discord.verify_signed(params[:signed_channel_id], purpose: :link_server)
 
     @guild = Discord::Bot.bot.server(@guild_id)
-    @channel = Discord::Bot.bot.channel(@channel_id)
+    @channel = resolve_discord_channel(@channel_id)
 
     return redirect_to_discord_bot_install_link if @guild.nil? || @channel.nil?
 
@@ -187,6 +187,15 @@ class DiscordController < ApplicationController
 
   def redirect_to_discord_bot_install_link
     redirect_to Discord::Bot.install_link, allow_other_host: true
+  end
+
+  # `Discordrb::Bot#channel` raises `NoPermission` (rather than returning `nil`, like
+  # `Discordrb::Bot#server` does) when the bot can no longer see the channel — e.g. it was
+  # kicked from the server, or lost the `VIEW_CHANNEL` permission after the link was generated.
+  def resolve_discord_channel(channel_id)
+    Discord::Bot.bot.channel(channel_id)
+  rescue Discordrb::Errors::NoPermission
+    nil
   end
 
 end

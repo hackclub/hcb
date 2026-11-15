@@ -77,11 +77,6 @@ class HcbCodesController < ApplicationController
     end
   end
 
-  def memo_frame
-    @hcb_code = HcbCode.find(params[:id])
-    authorize @hcb_code
-  end
-
   def edit
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
     @event = @hcb_code.event
@@ -95,32 +90,6 @@ class HcbCodesController < ApplicationController
 
     @frame = turbo_frame_request?
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
-  end
-
-  def pin
-    @hcb_code = HcbCode.find(params[:id])
-    param_event = Event.friendly.find_by_friendly_id(params[:event])
-    @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
-
-    authorize @hcb_code
-    authorize @event
-
-    # Handle unpinning
-    if (@pin = HcbCode::Pin.find_by(event: @event, hcb_code: @hcb_code))
-      @pin.destroy
-      flash[:success] = "Unpinned transaction from #{@event.name}"
-      redirect_back fallback_location: @event and return
-    end
-
-    # Handle pinning
-    @pin = HcbCode::Pin.new(event: @event, hcb_code: @hcb_code)
-    if @pin.save
-      flash[:success] = "Transaction pinned!"
-    else
-      flash[:error] = @pin.errors.full_messages.to_sentence
-    end
-
-    redirect_back fallback_location: @event
   end
 
   def update
@@ -200,60 +169,6 @@ class HcbCodesController < ApplicationController
     file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
 
     send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
-  end
-
-  def toggle_tag
-    hcb_code = HcbCode.find(params[:id])
-    tag = Tag.find(params[:tag_id])
-    @event = tag.event
-
-    authorize hcb_code
-    authorize tag
-
-    raise Pundit::NotAuthorizedError unless hcb_code.events.include?(tag.event)
-
-    removed = false
-
-    if hcb_code.tags.exists?(tag.id)
-      removed = true
-      hcb_code.tags.destroy(tag)
-    else
-      hcb_code.tags << tag
-    end
-
-    respond_to do |format|
-      format.turbo_stream do
-        if removed
-          render partial: "tags/destroy", locals: { hcb_code:, tag: }
-        else
-          render partial: "tags/create", locals: { hcb_code:, tag: }
-        end
-      end
-      format.any { redirect_back fallback_location: @event }
-    end
-  end
-
-  def invoice_as_personal_transaction
-    hcb_code = HcbCode.find(params[:id])
-    event = hcb_code.event
-
-    authorize hcb_code
-
-    if hcb_code.amount_cents > -100
-      flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
-      return redirect_to hcb_code
-    end
-
-    if hcb_code.personal_transaction
-      flash[:error] = "A repayment invoice already exists for this transaction."
-      return redirect_to hcb_code.personal_transaction.invoice
-    end
-
-    personal_tx = HcbCode::PersonalTransaction.create(hcb_code:, reporter: current_user)
-
-    flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
-
-    redirect_to personal_tx.invoice
   end
 
 end

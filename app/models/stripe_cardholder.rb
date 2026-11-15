@@ -5,7 +5,7 @@
 # Table name: stripe_cardholders
 #
 #  id                                 :bigint           not null, primary key
-#  cardholder_type                    :integer          default("individual"), not null
+#  cardholder_type                    :integer          default(0), not null
 #  stripe_billing_address_city        :text
 #  stripe_billing_address_country     :text
 #  stripe_billing_address_line1       :text
@@ -42,7 +42,7 @@ class StripeCardholder < ApplicationRecord
   alias_method :authorizations, :stripe_authorizations
   alias_method :transactions, :stripe_authorizations
 
-  validates_uniqueness_of :stripe_id
+  validates_uniqueness_of :stripe_id, allow_nil: true, allow_blank: true
 
   validates :stripe_billing_address_line1, presence: true, on: :update
   validates :stripe_billing_address_city, presence: true, on: :update
@@ -64,6 +64,7 @@ class StripeCardholder < ApplicationRecord
   after_validation :update_cardholder_in_stripe, on: :update, if: -> { errors.none? }
 
   before_validation :set_default_billing_address
+  before_validation :clear_unsupported_phone_number
 
   def state
     return :success if remote_status == "active"
@@ -106,10 +107,24 @@ class StripeCardholder < ApplicationRecord
     country: "US"
   }.freeze
 
+  SMS_SUPPORTED = %w[+1 +44].freeze
+
+  def self.phone_number_supported?(phone_number)
+    Phonelib.parse(phone_number).e164.to_s.start_with?(*SMS_SUPPORTED)
+  end
+
   def default_billing_address?
     DEFAULT_BILLING_ADDRESS.all? do |key, value|
       self.public_send(:"address_#{key}") == value
     end
+  end
+
+  def reset_billing_address_to_default!
+    DEFAULT_BILLING_ADDRESS.each do |key, value|
+      self.public_send(:"address_#{key}=", value)
+    end
+
+    save!
   end
 
   def self.first_name(user)
@@ -142,6 +157,13 @@ class StripeCardholder < ApplicationRecord
       method = :"address_#{key}"
       self.public_send(:"#{method}=", value) if self.public_send(method).blank?
     end
+  end
+
+  def clear_unsupported_phone_number
+    return if stripe_phone_number.blank?
+    return if StripeCardholder.phone_number_supported?(stripe_phone_number)
+
+    self.stripe_phone_number = nil
   end
 
   def update_cardholder_in_stripe

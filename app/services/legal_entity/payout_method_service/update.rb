@@ -13,10 +13,11 @@ class LegalEntity
     class Update
       attr_reader :payout_method
 
-      def initialize(legal_entity:, details_type:, details_attrs: {}, make_default: true, replacing: nil)
+      def initialize(legal_entity:, details_type:, details_attrs: {}, name: nil, make_default: true, replacing: nil)
         @legal_entity = legal_entity
         @details_type = details_type
         @details_attrs = details_attrs || {}
+        @name = name&.strip.presence
         @make_default = make_default
         @replacing = replacing
       end
@@ -30,7 +31,10 @@ class LegalEntity
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
         if saved
-          repoint_failed_and_draft_reports if @replacing || @make_default
+          if @replacing || @make_default
+            repoint_failed_and_draft_reports
+            retry_failed_payments
+          end
           @replacing.archive! if @replacing && @replacing != @payout_method
         end
         saved
@@ -48,17 +52,24 @@ class LegalEntity
 
       def build_payout_method
         details_class = LegalEntity::PayoutMethod.details_class_for(@details_type)
-        pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default)
-        pm.details = details_class.new(preserved_ach_attrs || @details_attrs) if details_class
+        pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default, name: @name)
+        pm.details = details_class.new(preserved_details_attrs(details_class)) if details_class
         pm
       end
 
-      def preserved_ach_attrs
-        old = @replacing&.details
-        return unless old.is_a?(LegalEntity::PayoutMethod::AchTransfer)
-        return unless [@details_attrs[:account_number], @details_attrs[:routing_number]].none? { _1.to_s.match?(/\A\d+\z/) }
+      # Masked fields (e.g. ACH account / routing numbers) are shown masked in the
+      # edit form. If a value comes back still masked, the user didn't change it.
+      # keep the existing value instead of overwriting it with the mask. This lets
+      # a nickname-only edit succeed without re-entering the account details.
+      def preserved_details_attrs(details_class)
+        attrs = @details_attrs.dup
+        existing = @replacing&.details
+        return attrs unless existing.is_a?(details_class)
 
-        @details_attrs.to_h.merge(account_number: old.account_number, routing_number: old.routing_number)
+        attrs.each do |field, value|
+          attrs[field] = existing.public_send(field) if value.to_s.include?("•")
+        end
+        attrs
       end
 
       def apply_business_rules
@@ -86,6 +97,12 @@ class LegalEntity
             end
           end
         end
+      end
+
+      def retry_failed_payments
+        failed_payments = @legal_entity.payments.where(aasm_state: :sent).select { |payment| payment.attempts.order(created_at: :desc).first.failed? }
+
+        failed_payments.each(&:retry!)
       end
 
     end

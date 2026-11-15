@@ -45,15 +45,15 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
+  def edit_tax?
+    user.auditor? || record == user
+  end
+
   def edit_featurepreviews?
     user.auditor? || record == user
   end
 
   def edit_security?
-    user.auditor? || record == user
-  end
-
-  def pay?
     user.auditor? || record == user
   end
 
@@ -82,6 +82,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def admin_details_disbursements?
+    admin_details?
+  end
+
+  def admin_details_emails?
     admin_details?
   end
 
@@ -122,6 +126,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def delete_profile_picture?
+    user.admin? || record == user
+  end
+
+  def reset_billing_address?
     user.admin? || record == user
   end
 

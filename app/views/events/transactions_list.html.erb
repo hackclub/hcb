@@ -1,7 +1,7 @@
 <% cache_if @cacheable, "#{@event.id}_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
     <%= render partial: "events/filters/filter" %>
-    <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
+    <% if @pending_transactions.any? || @transactions.any? %>
       <div class="table-container mt-4" data-tour-step="transactions">
         <table>
           <thead>
@@ -36,9 +36,7 @@
       manually doing it here.
     %>
     <% unless @subledger %>
-      <script>
-        window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
-      </script>
+      <div data-controller="history-replace" data-history-replace-url-value="<%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h) %>"></div>
     <% end %>
   <% end %>
 <% end %>
