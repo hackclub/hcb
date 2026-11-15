@@ -1,5 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
+import { USDollar } from '../common/money'
+
 export default class extends Controller {
   static targets = ['checkbox', 'summary', 'review', 'list', 'template']
   static values = { transactions: Array }
@@ -23,27 +25,30 @@ export default class extends Controller {
       .click()
   }
 
-  toggle({ target, params: { id, memo, date, amount } }) {
+  // Reads the dataset rather than Stimulus params, which JSON-parse values and
+  // would mangle a hashid like "12e345" or a memo like "1.50".
+  toggle({ target }) {
+    const {
+      transactionSelectionIdParam: id,
+      transactionSelectionMemoParam: memo,
+      transactionSelectionDateParam: date,
+      transactionSelectionAmountParam: amount,
+    } = target.dataset
     const transactions = this.transactionsValue.filter(
-      transaction => transaction.id !== String(id)
+      transaction => transaction.id !== id
     )
-    if (target.checked)
-      transactions.push({
-        id: String(id),
-        memo: String(memo),
-        date: String(date),
-        amount: Number(amount).toFixed(2),
-      })
+    if (target.checked) transactions.push({ id, memo, date, amount })
     this.transactionsValue = transactions
     this.refresh()
   }
 
-  remove({ params: { id } }) {
+  remove({ currentTarget }) {
+    const id = currentTarget.dataset.transactionSelectionIdParam
     const index = this.transactionsValue.findIndex(
-      transaction => transaction.id === String(id)
+      transaction => transaction.id === id
     )
     this.transactionsValue = this.transactionsValue.filter(
-      transaction => transaction.id !== String(id)
+      transaction => transaction.id !== id
     )
     this.refresh()
     const buttons = this.listTarget.querySelectorAll('button')
@@ -66,14 +71,14 @@ export default class extends Controller {
       (sum, transaction) => sum + Math.round(Number(transaction.amount) * 100),
       0
     )
-    this.summaryTarget.textContent = `${transactions.length} selected · ${this.formatAmount(cents / 100)}`
+    this.summaryTarget.textContent = `${transactions.length} selected · ${USDollar.format(cents / 100)}`
     this.reviewTarget.hidden = transactions.length === 0
     this.listTarget.replaceChildren(
       ...transactions.map(transaction => {
         const row = this.templateTarget.content.cloneNode(true)
         row.querySelector('[data-memo]').textContent = transaction.memo
         row.querySelector('[data-date]').textContent = transaction.date
-        row.querySelector('[data-amount]').textContent = this.formatAmount(
+        row.querySelector('[data-amount]').textContent = USDollar.format(
           transaction.amount
         )
         const remove = row.querySelector('button')
@@ -83,12 +88,5 @@ export default class extends Controller {
       })
     )
     this.dispatch('change', { detail: transactions })
-  }
-
-  formatAmount(amount) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
   }
 }

@@ -192,7 +192,7 @@ class DisbursementsController < ApplicationController
     if transfer_type == "repayment"
       authorize @disbursement, :repay?
       hashids = Array(disbursement_params[:repaid_ledger_item_ids]).reject(&:blank?).uniq
-      @repaid_ledger_items = hashids.filter_map { |hashid| Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(hashid) }
+      @repaid_ledger_items = Repayment.unrepaid_ledger_items(@destination_event).where_hashid(hashids).to_a
       if @repaid_ledger_items.size != hashids.size
         raise DisbursementService::Create::UserError, "One or more selected transactions can no longer be repaid."
       end

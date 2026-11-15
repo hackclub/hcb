@@ -1,5 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
+import { USDollar } from '../common/money'
+
 // Drives the transfer form, which asks what kind of transfer it is first and
 // then shows that type's questions: a repayment picks the recipient's
 // transactions and takes its name and total from them, while a transfer asks
@@ -84,10 +86,7 @@ export default class extends Controller {
     this.chooseLabelTarget.hidden = selected
     this.changeLabelTarget.hidden = !selected
     this.repaidCountTarget.textContent = `${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`
-    this.repaidAmountTarget.textContent = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(cents / 100)
+    this.repaidAmountTarget.textContent = USDollar.format(cents / 100)
     if (selected) this.repaidErrorTarget.hidden = true
 
     this.fillName(transactions)
