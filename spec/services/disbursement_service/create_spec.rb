@@ -532,6 +532,39 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(categories(disbursement)).to eq(["food-fun", "repayment"])
     end
 
+    it "splits the sender's side by category when the expenses' differ" do
+      supplies = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, category_slug: "venue")
+      snacks = create(:canonical_transaction, event: destination_event, amount_cents: -10_00, category_slug: "food-fun")
+      uncategorized = create(:canonical_transaction, event: destination_event, amount_cents: -5_00)
+      disbursement = create_disbursement(amount: "138.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense, supplies, snacks, uncategorized].map { |t| t.ledger_item.id })
+
+      outgoing = disbursement.raw_pending_outgoing_disbursement_transaction.canonical_pending_transaction
+      expect(categories(disbursement)).to eq([nil, "repayment"])
+      expect(outgoing.splits.map { |split| [split.category.slug, split.amount_cents, split.memo] }).to contain_exactly(
+        ["food-fun", -110_00, "Repaying 2 expenses"],
+        ["venue", -23_45, "Repaying #{supplies.ledger_item.memo}"]
+      )
+      # The uncategorized expense's share is what's left of the transaction.
+      expect(outgoing.amount_cents - outgoing.splits.sum(:amount_cents)).to eq(-5_00)
+      expect(disbursement.raw_pending_incoming_disbursement_transaction.canonical_pending_transaction.splits).to be_empty
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(outgoing.splits.reload).to be_empty
+    end
+
+    it "doesn't split the sender's side when the expenses share a category, or an admin chose one" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, category_slug: "food-fun")
+      shared = create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
+      expect(shared.raw_pending_outgoing_disbursement_transaction.canonical_pending_transaction.splits).to be_empty
+
+      other = create(:canonical_transaction, event: destination_event, amount_cents: -1_00, category_slug: "venue")
+      another = create(:canonical_transaction, event: destination_event, amount_cents: -2_00, category_slug: "food-fun")
+      chosen = create_disbursement(amount: "3.00", transfer_type: "repayment", repaid_ledger_item_ids: [other.ledger_item.id, another.ledger_item.id], source_transaction_category_slug: "donations")
+      expect(categories(chosen)).to eq(["donations", "repayment"])
+      expect(chosen.raw_pending_outgoing_disbursement_transaction.canonical_pending_transaction.splits).to be_empty
+    end
+
     it "does not inherit a category when one selected expense is uncategorized" do
       second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45)
       disbursement = create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
