@@ -870,6 +870,22 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview for auditors" do
+    render_views
+
+    it "shows them the last four digits and card links in the list view", :aggregate_failures do
+      event = create(:event)
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder), initially_activated: true, last4: "4242")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.text).to include("•••• •••• •••• 4242")
+      expect(page.css("a[href='#{stripe_card_path(card)}']")).to be_present
+    end
+  end
+
   describe "#card_overview for viewers without access to cards" do
     render_views
 
