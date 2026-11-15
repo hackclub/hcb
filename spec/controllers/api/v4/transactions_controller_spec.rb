@@ -23,6 +23,26 @@ RSpec.describe Api::V4::TransactionsController do
     hcb_code
   end
 
+  # A card authorization as the Stripe webhook imports it, on a card that
+  # belongs to the event. It stays pending until it's declined or captured.
+  def create_card_authorization(approved: true, status: "pending")
+    stripe_card = create(:stripe_card, :with_stripe_id, event:)
+    raw_pending_stripe_transaction = create(
+      :raw_pending_stripe_transaction, amount_cents: -45_00, date_posted: Date.current,
+      stripe_transaction: {
+        "card"                 => { "id" => stripe_card.stripe_id },
+        "approved"             => approved,
+        "status"               => status,
+        "created"              => Time.current.to_i,
+        "authorization_method" => "online",
+        "merchant_data"        => { "name" => "goBILDA", "category" => "bakeries" }
+      }
+    )
+    cpt = PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction:).run
+    PendingEventMappingEngine::Map::Single::Stripe.new(canonical_pending_transaction: cpt).run
+    cpt
+  end
+
   # Keys and value types only; values may legitimately differ between engines.
   def shape(node)
     case node
@@ -91,6 +111,41 @@ RSpec.describe Api::V4::TransactionsController do
       expect(legacy["ledger_item_id"]).to be_nil
       expect(ledger["ledger_item_id"]).to eq(hcb_code.ledger_item.public_id)
       expect(shape(ledger).except("ledger_item_id")).to eq(shape(legacy).except("ledger_item_id"))
+    end
+
+    context "when the transaction didn't go through" do
+      def show_on_both_engines(hcb_code)
+        fields = %w[pending declined reversed]
+        legacy = with_engine(false) { get :show, params: { id: hcb_code.public_id }, format: :json }
+        ledger = with_engine(true) { get :show, params: { id: hcb_code.public_id }, format: :json }
+
+        expect(ledger["ledger_item_id"]).to eq(hcb_code.ledger_item.public_id)
+        [legacy.slice(*fields), ledger.slice(*fields)]
+      end
+
+      it "reports a card authorization the merchant reversed as declined and reversed" do
+        cpt = create_card_authorization(status: "reversed")
+        cpt.decline!
+        hcb_code = cpt.local_hcb_code
+        expect(hcb_code.ledger_item).to be_released
+
+        legacy, ledger = show_on_both_engines(hcb_code)
+
+        expect(ledger).to eq("pending" => false, "declined" => true, "reversed" => true)
+        expect(ledger).to eq(legacy)
+      end
+
+      it "reports a declined card authorization as declined" do
+        cpt = create_card_authorization(approved: false, status: "closed")
+        cpt.decline!
+        hcb_code = cpt.local_hcb_code
+        expect(hcb_code.ledger_item).to be_declined
+
+        legacy, ledger = show_on_both_engines(hcb_code)
+
+        expect(ledger).to eq("pending" => false, "declined" => true, "reversed" => false)
+        expect(ledger).to eq(legacy)
+      end
     end
   end
 end
