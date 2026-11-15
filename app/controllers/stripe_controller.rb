@@ -141,6 +141,18 @@ class StripeController < ActionController::Base
 
     suppress(ActiveRecord::RecordNotFound) do
       recurring_donation = RecurringDonation.find(setup_intent.metadata[:recurring_donation_id])
+
+      # The subscription can have ended even though the edit page is blocked for
+      # canceled donations. The card form is confirmed directly with Stripe, so a
+      # form loaded while the donation was active (e.g. in another tab) can still
+      # be submitted after the donor cancels, and our local status can lag
+      # behind Stripe's. An ended subscription won't bill again, and Stripe
+      # rejects updates to canceled ones, so there's nothing to update.
+      #
+      # This isn't `recurring_donation.stripe_subscription`, which is memoized and
+      # needs to be fetched after the update for the sync below.
+      return if StripeService::Subscription.retrieve(recurring_donation.stripe_subscription_id).status.in?(%w[canceled incomplete_expired])
+
       StripeService::Subscription.update(recurring_donation.stripe_subscription_id, default_payment_method: setup_intent.payment_method)
       recurring_donation.sync_with_stripe_subscription!
       recurring_donation.save!
