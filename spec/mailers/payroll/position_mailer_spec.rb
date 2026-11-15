@@ -94,7 +94,7 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
 
       expect(mail.to).to include(payee.email)
       expect(mail.subject).to include(event.name)
-      expect(mail.body.encoded).to include("submit a final invoice", position.final_invoice_deadline.to_fs(:long))
+      expect(mail.body.encoded).to include("submit a final invoice", position.final_invoice_deadline.to_date.to_fs(:long))
     end
   end
 end

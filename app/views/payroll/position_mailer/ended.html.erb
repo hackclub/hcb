@@ -6,7 +6,7 @@
 
 <p>
   If you have any outstanding work to bill for, you can still <%= link_to "submit a final invoice", my_pay_url(legal_entity_id: @payee.legal_entity_id) %>
-  for this position until <%= @position.final_invoice_deadline.to_fs(:long) %>.
+  for this position until <%= @position.final_invoice_deadline.to_date.to_fs(:long) %>.
   After that, you will no longer be able to submit invoices for this position.
 </p>
 

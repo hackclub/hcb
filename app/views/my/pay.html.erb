@@ -109,7 +109,7 @@
             <% final_invoice = position.expired? %>
             <% if final_invoice %>
               <p class="muted text-sm mt-0 mb-2">
-                This contract has ended. You can submit one final invoice until <%= position.final_invoice_deadline.to_fs(:long) %>.
+                This contract has ended. You can submit one final invoice until <%= position.final_invoice_deadline.to_date.to_fs(:long) %>.
               </p>
             <% end %>
             <%= link_to "#", class: "btn bg-success w-full justify-center", data: { behavior: "modal_trigger", modal: dom_id(position, :submit_invoice) } do %>

@@ -10,6 +10,7 @@
 #  currency                    :string           default("USD"), not null
 #  description                 :text             not null
 #  end_date                    :date             not null
+#  expired_at                  :datetime
 #  onboarded_at                :datetime
 #  onboarding_at               :datetime
 #  rate_cents                  :integer          default(0), not null
@@ -259,9 +260,15 @@ module Payroll
       end
     end
 
-    # The last day a final invoice can be submitted after the position expires.
+    # When the position expired, or when it's scheduled to (for positions that
+    # haven't expired yet, or expired before +expired_at+ was recorded).
+    def expiration_time
+      expired_at || end_date.end_of_day
+    end
+
+    # The moment after which a final invoice can no longer be submitted.
     def final_invoice_deadline
-      end_date + FINAL_INVOICE_GRACE_PERIOD
+      expiration_time + FINAL_INVOICE_GRACE_PERIOD
     end
 
     # True while an expired position is within its grace period and the
@@ -269,8 +276,8 @@ module Payroll
     # the contractor can correct and resubmit it before the deadline.
     def final_invoice_window_open?
       expired? &&
-        Date.current <= final_invoice_deadline &&
-        !invoices.where.not(aasm_state: :rejected).exists?(["created_at > ?", end_date.end_of_day])
+        Time.current <= final_invoice_deadline &&
+        !invoices.where.not(aasm_state: :rejected).exists?(["created_at > ?", expiration_time])
     end
 
     # Whether new invoices can be submitted against this position: while it's

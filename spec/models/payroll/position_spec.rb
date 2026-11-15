@@ -275,10 +275,13 @@ RSpec.describe Payroll::Position, type: :model do
       expect(position.accepting_invoices?).to eq(true)
     end
 
-    it "accepts one invoice after expiring, until 30 days past the end date" do
-      position.mark_expired!
+    it "accepts one invoice after expiring, until 30 days past the expiration" do
+      freeze_time do
+        position.mark_expired!
 
-      expect(position.final_invoice_deadline).to eq(position.end_date + 30.days)
+        expect(position.expired_at).to eq(Time.current)
+        expect(position.final_invoice_deadline).to eq(Time.current + 30.days)
+      end
       expect(position.accepting_invoices?).to eq(true)
 
       submit_invoice
@@ -300,10 +303,26 @@ RSpec.describe Payroll::Position, type: :model do
       expect(position.accepting_invoices?).to eq(true)
     end
 
-    it "closes once the grace period is over" do
+    it "measures the grace period from when the position actually expired, not its end date" do
       position.update_columns(start_date: 90.days.ago.to_date, end_date: 31.days.ago.to_date)
       position.mark_expired!
 
+      expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "closes once the grace period is over" do
+      position.mark_expired!
+      position.update_column(:expired_at, 31.days.ago)
+
+      expect(position.accepting_invoices?).to eq(false)
+    end
+
+    it "falls back to the end date for positions expired without an expired_at" do
+      position.update_columns(aasm_state: "expired", expired_at: nil)
+      expect(position.final_invoice_deadline).to eq(position.end_date.end_of_day + 30.days)
+      expect(position.accepting_invoices?).to eq(true)
+
+      position.update_columns(start_date: 90.days.ago.to_date, end_date: 31.days.ago.to_date)
       expect(position.accepting_invoices?).to eq(false)
     end
 
