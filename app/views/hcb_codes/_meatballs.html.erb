@@ -48,8 +48,8 @@
       <% end %>
       <% if markable_repayment %>
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "mark_repayment" }, class: "flex items-center" do %>
-          <%= inline_icon "checkmark", size: 24 %>
-          <%= repayment_item.amount_cents.negative? ? "This was repaid" : "This was a repayment" %>
+          <%= inline_icon "link", size: 24 %>
+          <%= repayment_item.amount_cents.negative? ? "Mark as repaid" : "Mark as a repayment" %>
         <% end %>
       <% end %>
       <% if flaggable %>

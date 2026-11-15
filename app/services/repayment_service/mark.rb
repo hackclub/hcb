@@ -3,7 +3,7 @@
 module RepaymentService
   # Marks money that came in on an organization's ledger as paying one of its
   # expenses back. Either side can start it: from the income ("This was a
-  # repayment") or from the expense ("This was repaid").
+  # repayment") or from the expense ("Mark as repaid").
   class Mark
     # Raised with a message meant for whoever is marking the repayment.
     class UserError < ArgumentError; end

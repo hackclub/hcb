@@ -154,7 +154,7 @@ RSpec.describe HcbCodesController, type: :controller do
 
         get :show, params: { id: income.local_hcb_code.hashid }
 
-        expect(response.body).to include("This was a repayment")
+        expect(response.body).to include("Mark as a repayment")
         expect(response.body).to include(candidates_ledger_item_repayment_path(income.ledger_item))
       end
 
@@ -163,7 +163,7 @@ RSpec.describe HcbCodesController, type: :controller do
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
-        expect(response.body).to include("This was repaid")
+        expect(response.body).to include("Mark as repaid")
       end
 
       it "is hidden when nothing has the same amount" do
@@ -171,7 +171,7 @@ RSpec.describe HcbCodesController, type: :controller do
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
-        expect(response.body).not_to include("This was repaid")
+        expect(response.body).not_to include("Mark as repaid")
       end
 
       it "is hidden once the expense has been repaid" do
@@ -180,7 +180,7 @@ RSpec.describe HcbCodesController, type: :controller do
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
-        expect(response.body).not_to include("This was repaid")
+        expect(response.body).not_to include("Mark as repaid")
       end
     end
   end
