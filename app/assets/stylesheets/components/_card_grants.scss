@@ -36,10 +36,7 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   // where the hero is much taller.
   &.card.card--background-image {
     background-image:
-      linear-gradient(
-        rgba(255, 255, 255, 0.75)
-      ),
-      var(--bg-image) !important;
+      linear-gradient(rgba(255, 255, 255, 0.75)), var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
