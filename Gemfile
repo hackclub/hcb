@@ -28,6 +28,8 @@ gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
 gem "turbo-rails", "~> 2.0.17"
+gem "reactionview", "~> 0.6.1" # `.html.herb` templates: Herb-compiled, with reactive state and actions. Keep in step with the `reactionview` npm package.
+gem "prism", "~> 2.1" # Herb hands ReActionView Ruby syntax trees serialized by Prism 2; an older Prism can't read them ("Invalid serialization")
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -179,9 +181,8 @@ group :development do
 
   gem "letter_opener_web" # preview emails
 
-  # Ruby language server
-  gem "solargraph", require: false
-  gem "solargraph-rails", "~> 1.2.0", require: false
+  # Solargraph (the Ruby language server) isn't bundled: it requires Prism 1.x
+  # and Herb needs Prism 2. docker-compose.solargraph.yml installs it on its own.
 
   gem "htmlbeautifier", require: false # for https://marketplace.visualstudio.com/items?itemName=tomclose.format-erb
 

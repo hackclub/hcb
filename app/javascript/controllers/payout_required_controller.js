@@ -15,13 +15,10 @@ export default class extends Controller {
       .forEach(section => {
         const active = section.dataset.payoutMethodType === selected
 
+        // Fields that only apply to some countries, currencies or account
+        // types sit in disabled fieldsets while they don't apply, which the
+        // browser skips when validating, so they're handled like the rest.
         section.querySelectorAll('input, select, textarea').forEach(input => {
-          // Alpine manages `required` itself on these (e.g. Wise fields)
-          if (input.hasAttribute('x-bind:required')) {
-            if (!active) input.required = false
-            return
-          }
-
           if (input.required) input.dataset.payoutRequired = 'true'
           if (input.dataset.payoutRequired) input.required = active
         })

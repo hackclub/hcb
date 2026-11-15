@@ -40,8 +40,8 @@
         <% if step[:complete] %>
           <span class="onboarding-flow__status onboarding-flow__status--done">Done</span>
         <% elsif actionable && perspective == :contractor %>
-          <% case step[:key]
-             when :tax_form, :payout_method %>
+          <% case step[:key] %>
+          <% when :tax_form, :payout_method %>
             <%= link_to step[:key] == :tax_form ? "Add tax info" : "Add payout method",
                   choose_legal_entity_payee_path(position.payee), class: "btn btn-small bg-info nowrap" %>
           <% when :contractor_signature %>
