@@ -10,8 +10,10 @@
 #  approved_at         :datetime
 #  currency            :string           default("USD"), not null
 #  description         :text
+#  end_date            :date
 #  name                :text             not null
 #  rejected_at         :datetime
+#  start_date          :date
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  payment_id          :bigint
@@ -34,6 +36,7 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
     include Receiptable
+    include HasPeriod
     include Hashid::Rails
 
     has_paper_trail
@@ -48,6 +51,9 @@ module Payroll
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
+    validates :start_date, :end_date, presence: true, on: :create
+    validate :end_date_not_before_start_date
+    validate :dates_within_position_period, on: :create
 
     after_create_commit :notify_manager
 
@@ -133,6 +139,18 @@ module Payroll
       return if currency == payroll_position.currency
 
       errors.add(:currency, "must match the position's currency")
+    end
+
+    def end_date_not_before_start_date
+      return if start_date.blank? || end_date.blank?
+
+      errors.add(:end_date, "can't be before the start date") if end_date < start_date
+    end
+
+    def dates_within_position_period
+      period = payroll_position.start_date..payroll_position.end_date
+      errors.add(:start_date, "must be within the contract period") if start_date.present? && !period.cover?(start_date)
+      errors.add(:end_date, "must be within the contract period") if end_date.present? && !period.cover?(end_date)
     end
 
   end
