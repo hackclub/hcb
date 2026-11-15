@@ -40,5 +40,31 @@ RSpec.describe Invoice, type: :model do
       expect(cpt.reload.ledger_item).to eq(eager_item)
       expect(Ledger::Item.where(linked_object: invoice).count).to eq(1)
     end
+
+    context "when the invoice is voided before it's paid" do
+      let(:user) { create(:user) }
+
+      before do
+        allow_any_instance_of(Invoice).to receive(:close_stripe_invoice)
+      end
+
+      it "marks the ledger item canceled" do
+        invoice = create(:invoice)
+
+        InvoiceService::MarkVoid.new(invoice_id: invoice.id, user:).run
+
+        expect(invoice.ledger_item.reload.status).to eq("canceled")
+      end
+
+      it "keeps the ledger item intended when the invoice is manually marked as paid" do
+        invoice = create(:invoice)
+
+        InvoiceService::MarkVoid.new(invoice_id: invoice.id, user:).run
+        invoice.update!(manually_marked_as_paid_at: Time.current, manually_marked_as_paid_user: user)
+
+        expect(invoice.reload).to be_void_v2
+        expect(invoice.ledger_item.reload.status).to eq("intended")
+      end
+    end
   end
 end

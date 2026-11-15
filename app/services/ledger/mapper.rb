@@ -46,12 +46,12 @@ class Ledger
         event_from_canonical_pending_transactions
     end
 
-    # An intended item (a linked object but no transactions yet, e.g. an invoice
-    # that's been created but not paid) can still be placed on its event's
-    # ledger. Once transactions exist, they — not the linked object — determine
-    # the ledger.
+    # An item with a linked object but no transactions (e.g. an invoice that's
+    # been created but not paid, or one that was voided) can still be placed on
+    # its event's ledger. Once transactions exist, they — not the linked
+    # object — determine the ledger.
     def event_from_linked_object
-      return unless @ledger_item.intended?
+      return unless @ledger_item.linked_object_only?
 
       @ledger_item.linked_object.try(:event)
     end

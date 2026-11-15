@@ -174,6 +174,7 @@ class Invoice < ApplicationRecord
 
     event :mark_void do
       transitions from: :open_v2, to: :void_v2
+      after_commit :refresh_ledger_item
     end
 
     event :mark_refunded do
@@ -214,6 +215,11 @@ class Invoice < ApplicationRecord
       create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
     end
   end
+
+  # Manually marking an invoice as paid voids it, then saves
+  # manually_marked_as_paid_at separately. Refresh again after that save so the
+  # ledger item reads the invoice as paid.
+  after_update_commit :refresh_ledger_item, if: :saved_change_to_manually_marked_as_paid_at?
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
@@ -420,6 +426,13 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  # Until the invoice is paid, its ledger item has no transactions and takes
+  # its status from the invoice (Ledger::Item#status_from_linked_object). An
+  # invoice with no ledger item has nothing to refresh.
+  def refresh_ledger_item
+    safely { reload_ledger_item&.refresh! }
+  end
 
   def raw_pending_invoice_transaction
     raw_pending_invoice_transactions.first
