@@ -45,6 +45,59 @@ RSpec.describe OrganizerPositionInvite, type: :model do
     end
   end
 
+  describe "contract signing" do
+    let(:invite) { create(:organizer_position_invite, is_signee: true) }
+    let(:contract) do
+      Contract::FiscalSponsorship.create!(contractable: invite, external_service: :manual).tap do |contract|
+        contract.parties.create!(user: invite.user, role: :signee)
+        contract.parties.create!(external_email: "parent@example.com", role: :cosigner)
+        contract.mark_sent!
+      end
+    end
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def sign_as(role)
+      contract.parties.detect { |party| party.role == role.to_s }.mark_signed!
+    end
+
+    it "auto-accepts only after the signee, cosigner, and HCB have signed" do
+      sign_as(:signee)
+      expect(invite.reload).not_to be_accepted
+
+      sign_as(:cosigner)
+      expect(invite.reload).not_to be_accepted
+
+      expect { sign_as(:hcb) }.to change(OrganizerPosition, :count).by(1)
+
+      expect(invite.reload).to be_accepted
+      expect(invite.organizer_position).to have_attributes(
+        user: invite.user,
+        event: invite.event,
+        role: invite.role,
+        is_signee: true,
+        fiscal_sponsorship_contract: contract,
+        first_time: true
+      )
+      expect(invite.reject).to be false
+    end
+
+    context "for an existing team member" do
+      let(:invite) { create(:organizer_position_invite, :accepted) }
+
+      it "updates their contract without creating another position" do
+        position = invite.organizer_position
+        sign_as(:signee)
+        sign_as(:cosigner)
+
+        expect { sign_as(:hcb) }.not_to change(OrganizerPosition, :count)
+        expect(position.reload.fiscal_sponsorship_contract).to eq(contract)
+      end
+    end
+  end
+
   describe "#accept" do
     it "can be accepted" do
       invite = create(:organizer_position_invite)
