@@ -3,6 +3,8 @@
 schedule_file = "config/schedule.yml"
 
 Sidekiq.configure_server do |config|
+  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+
   # Metrics (HCB Wrapped) is given its own capsule since these jobs can be
   # long-running. Long running jobs can cause Sidekiq's usual queue-based
   # priority system to be ineffective.
@@ -20,6 +22,10 @@ Sidekiq.configure_server do |config|
     capsule.queues = %w[metrics]
     capsule.concurrency = ENV.fetch("SIDEKIQ_THROTTLED_QUEUE_CONCURRENCY", 5).to_i
   end
+end
+
+Sidekiq.configure_client do |config|
+  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
 end
 
 if File.exist?(schedule_file) && Sidekiq.server?
