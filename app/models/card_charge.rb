@@ -51,9 +51,18 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_data")
   end
 
+  IN_PERSON_AUTHORIZATION_METHODS = %w[chip swipe contactless].freeze
+
+  # Not paid in person, going by the authorization. A charge without one (a
+  # force capture) counts as not in person.
+  scope :card_not_present, -> {
+    left_joins(:raw_pending_stripe_transaction)
+      .where("COALESCE(raw_pending_stripe_transactions.stripe_transaction->>'authorization_method', '') NOT IN (?)", IN_PERSON_AUTHORIZATION_METHODS)
+  }
+
   # Paid in person (chip, swipe or tap), going by the authorization.
   def card_present?
-    raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method").in?(%w[chip swipe contactless])
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method").in?(IN_PERSON_AUTHORIZATION_METHODS)
   end
 
   def merchant_currency

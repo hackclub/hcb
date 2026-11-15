@@ -125,10 +125,13 @@ class Ledger
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    # Settled card charges that spend money: what subscriptions are made of.
+    scope :subscription_eligible, -> { settled.where(linked_object_type: CardCharge.name, amount_cents: ...0) }
+    scope :with_primary_ledger, ->(ledger_id) { where(id: Ledger::Mapping.where(ledger_id:, on_primary_ledger: true).select(:ledger_item_id)) }
 
-    # A settled card charge that isn't part of a subscription yet.
+    # Subscription eligible, and not part of a subscription yet.
     def subscription_candidate?
-      settled? && linked_object_type == "CardCharge" && amount_cents.negative? && subscription_id.nil?
+      settled? && linked_object_type == CardCharge.name && amount_cents.negative? && subscription_id.nil?
     end
 
     def status_text

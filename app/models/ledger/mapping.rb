@@ -58,7 +58,11 @@ class Ledger
 
     # Plain after_commit (create/update/destroy), matching this file's other hooks.
     after_commit { CardLocking::Settlement.on_ledger_item(ledger_item, on_primary: on_primary_ledger) }
-    after_commit { Subscription::DetectJob.perform_later(ledger_item) if on_primary_ledger && ledger_item.subscription_candidate? }
+    # Only when the item lands on a ledger: every touch of the item re-saves its
+    # mapping unchanged.
+    after_save_commit if: -> { on_primary_ledger && (previously_new_record? || saved_change_to_ledger_id?) && ledger_item.subscription_candidate? } do
+      Subscription::DetectJob.perform_later(ledger_item)
+    end
 
     def self.map_primary!(ledger:, ledger_item:, mapped_by:)
       # Mapping to a new primary ledger will _remove_ any existing primary mapping.
@@ -67,6 +71,7 @@ class Ledger
 
       mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
       if mapped_by.present? && ledger.nil?
+        Subscription.unlink(ledger_item)
         Ledger::Mapping.find_by(ledger_item:, on_primary_ledger: true)&.destroy! and return
       end
 
@@ -80,6 +85,7 @@ class Ledger
         mapping.save!
 
         ledger_item.prune_tags_outside_event! if remapped
+        Subscription.unlink(ledger_item) if remapped
       end
     end
 

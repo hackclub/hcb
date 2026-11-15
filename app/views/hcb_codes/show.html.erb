@@ -43,7 +43,7 @@
         end %>
   <% end %>
 
-  <% if (subscription = @hcb_code.ledger_item&.subscription) %>
+  <% if current_user&.auditor? && (subscription = @hcb_code.ledger_item&.subscription) %>
     <%= render "hcb_codes/detected_subscription", subscription: %>
   <% end %>
 

@@ -11,19 +11,43 @@ class Subscription
     MIN_YEARLY_CHARGES = 2
     # A gap may span this many cycles (two skipped months, say).
     MAX_CYCLES = 3
-    # How far a charge may be from a whole cycle to start a subscription, as a
-    # fraction. Tighter than Subscription::TOLERANCE, which is for charges
-    # joining one: at 20%, real data had chains forming among frequent purchases
-    # of one price. Only known cadences are tried for the same reason: free-form
-    # ones (every 43 days) were almost all coincidences.
+    # How far a charge may be from a whole cycle to start a flat subscription,
+    # as a fraction. Tighter than Subscription::TIMING_TOLERANCE, which is for
+    # charges joining one and for usage billing: at 20%, real data had chains
+    # forming among frequent purchases of one price. Only known cadences are
+    # tried for the same reason: free-form ones (every 43 days) were almost all
+    # coincidences. Subscription#record_charge uses it too, to tell whether a
+    # late charge comes a whole number of cycles after the last one.
     CHAIN_TOLERANCE = 0.1
-    # The card is a signal, not a requirement. Charges on someone else's card
-    # can still form or join a subscription, but need stronger evidence: this
-    # many charges, the exact amount, and no early or skipped cycles.
+    # The card is a signal, not a requirement. Charges on several cardholders'
+    # cards can still start a subscription, but need stronger evidence: this
+    # many charges, the exact amount, and no skipped cycles.
     MIN_OTHER_CARD_CHARGES = 4
-    OTHER_CARD_EARLY = 1.day
+    # A usage bill rarely repeats an amount, so when one amount is more than
+    # this share of the charges, they're a flat price mixed with something
+    # else: a one-off, or a second subscription.
+    MAX_REPEATED_AMOUNT_SHARE = Rational(1, 3)
     # Long enough to hold two yearly charges.
     LOOKBACK = 15.months
+
+    # The ledger's online card charges at a merchant that aren't linked yet.
+    # Charges without a card can't be told apart by cardholder, so they're left
+    # out.
+    def self.unlinked_charges(ledger:, merchant_key:)
+      charges = CardCharge.where(merchant_network_id: merchant_key).where.not(stripe_card_id: nil).card_not_present
+
+      Ledger::Item.subscription_eligible.where(subscription_id: nil).with_primary_ledger(ledger.id).where(linked_object_id: charges.select(:id))
+    end
+
+    # Forgets the ledger's subscriptions at a merchant and detects them again
+    # from its charges, so the result doesn't depend on the order the charges
+    # settled or were backfilled in.
+    def self.rebuild(ledger:, merchant_key:)
+      ledger.subscriptions.where(merchant_key:).destroy_all
+      # Oldest first, so not find_each, which goes by id. Each run only links
+      # charges up to its own, so the later ones loaded here aren't stale.
+      unlinked_charges(ledger:, merchant_key:).order(:datetime, :id).each { |ledger_item| new(ledger_item).run }
+    end
 
     def initialize(ledger_item)
       @item = ledger_item
@@ -47,8 +71,8 @@ class Subscription
     def link_to_existing
       amount_cents = @item.amount_cents.abs
       subscription = @ledger.subscriptions.where(merchant_key: @merchant_key).includes(:payment_rail)
-                            .select { |s| same_cardholder?(s.payment_rail) ? s.due?(@item.datetime) && s.amount_fits?(amount_cents) : exact_match?(s, amount_cents) }
-                            .min_by { |s| [s.payment_rail == @rail ? 0 : 1, (s.amount_cents - amount_cents).abs] }
+                            .select { |s| same_cardholder?(s.payment_rail) ? s.due?(@item.datetime) && s.amount_fits?(amount_cents) : takes_over?(s, amount_cents) }
+                            .min_by { |s| [same_cardholder?(s.payment_rail) ? 0 : 1, s.payment_rail == @rail ? 0 : 1, (s.amount_cents - amount_cents).abs] }
       return unless subscription
 
       subscription.link!(@item, payment_rail: @rail)
@@ -62,9 +86,17 @@ class Subscription
       card == @rail || card.stripe_cardholder_id == @rail.stripe_cardholder_id
     end
 
-    def exact_match?(subscription, amount_cents)
+    # Someone else's charge joins at the exact amount once the cardholder has
+    # missed a whole cycle, around when the next charge would be due and before
+    # the subscription lapses: it has likely moved to their card. Earlier, the
+    # cardholder may still pay late, and it's more likely the other person's own
+    # subscription at the same price.
+    def takes_over?(subscription, amount_cents)
+      overdue_days = (@item.datetime - subscription.next_expected_at) / 1.day
+      cadence_days = subscription.cadence_days
+
       !subscription.variable_amount? && subscription.amount_cents == amount_cents &&
-        @item.datetime >= subscription.next_expected_at - OTHER_CARD_EARLY
+        overdue_days > (1 - Subscription::TIMING_TOLERANCE) * cadence_days && overdue_days <= cadence_days
     end
 
     # Tries, in order: this cardholder's charges of this exact amount (a flat
@@ -84,37 +116,34 @@ class Subscription
 
     # This merchant's unlinked online charges on the ledger, up to this one.
     def history
-      @history ||= Ledger::Item.settled
-                               .joins(:primary_mapping).where(ledger_mappings: { ledger_id: @ledger.id })
-                               .where(linked_object_type: CardCharge.name, linked_object_id: CardCharge.where(merchant_network_id: @merchant_key).select(:id))
-                               .where(subscription_id: nil, amount_cents: ...0, datetime: (@item.datetime - LOOKBACK)..@item.datetime)
-                               .includes(linked_object: [:raw_pending_stripe_transaction, :stripe_card])
-                               .order(:datetime, :id)
-                               .reject { |item| item.linked_object.card_present? }
+      @history ||= self.class.unlinked_charges(ledger: @ledger, merchant_key: @merchant_key)
+                       .where(datetime: (@item.datetime - LOOKBACK)..@item.datetime)
+                       .includes(linked_object: :stripe_card)
+                       .order(:datetime, :id)
+                       .to_a
     end
 
-    # A flat price: the longest chain of same-amount charges ending at this one.
-    # A chain that skips a cycle at most steps is really a longer cadence, and
-    # between equally long chains the one that skips fewest wins, so a monthly
-    # charge isn't read as biweekly with gaps.
+    # A flat price: the longest chain of same-amount charges ending at this one,
+    # among the cadences whose chain is long enough. A chain that skips a cycle
+    # at most steps is really a longer cadence, and between equally long chains
+    # the one that skips fewest wins, so a monthly charge isn't read as biweekly
+    # with gaps.
     def flat(items, max_cycles:, min_charges:)
-      cadence_days, (chain, _skips) = Subscription::CADENCES.keys
-                                                            .map { |days| [days, chain(items, days, max_cycles)] }
-                                                            .reject { |_days, (chain, skips)| skips * 2 > chain.size - 1 }
-                                                            .max_by { |_days, (chain, skips)| [chain.size, -skips] }
-      return if chain.nil?
+      cadence_days, chain = Subscription::CADENCES.keys.filter_map do |days|
+        charges, skips = walk_chain(items, days, max_cycles)
+        # Three yearly charges would need over two years of history.
+        needed = days == 365 && max_cycles > 1 ? MIN_YEARLY_CHARGES : min_charges
+        [days, charges, skips] if charges.size >= needed && skips * 2 <= charges.size - 1
+      end.max_by { |_days, charges, skips| [charges.size, -skips] }
 
-      # Three yearly charges would need over two years of history.
-      min_charges = MIN_YEARLY_CHARGES if cadence_days == 365 && max_cycles > 1
-
-      create(chain, variable_amount: false, cadence_days:) if chain.size >= min_charges
+      create(chain, variable_amount: false, cadence_days:) if chain
     end
 
     # Walks back from this charge one cycle at a time, taking the charge closest
     # to each step and skipping up to max_cycles - 1 cycles. Walking a chain,
     # rather than requiring every charge to fit, finds a subscription among
     # one-off purchases, retries, and a second subscription at the same price.
-    def chain(items, cadence_days, max_cycles)
+    def walk_chain(items, cadence_days, max_cycles)
       chain = [@item]
       skips = 0
 
@@ -136,13 +165,14 @@ class Subscription
     end
 
     # Usage billing: every charge from the merchant, each gap exactly one cycle
-    # of the same known cadence.
+    # of the same known cadence, and amounts that vary.
     def variable(items)
       return if items.size < MIN_CHARGES
+      return if items.map(&:amount_cents).tally.values.max > items.size * MAX_REPEATED_AMOUNT_SHARE
 
       gaps = items.each_cons(2).map { |a, b| days_between(a, b) }
       cadence_days = Subscription::CADENCES.keys.find do |days|
-        gaps.all? { |gap| (gap - days).abs <= Subscription::TOLERANCE * days }
+        gaps.all? { |gap| (gap - days).abs <= Subscription::TIMING_TOLERANCE * days }
       end
 
       create(items, variable_amount: true, cadence_days:) if cadence_days
@@ -158,17 +188,17 @@ class Subscription
         merchant_key: @merchant_key,
         name: YellowPages::Merchant.lookup(network_id: @merchant_key).name || @charge.merchant_data&.dig("name") || @merchant_key,
         variable_amount:,
-        cadence_days:,
-        next_expected_at: items.first.datetime
+        cadence_days:
       )
-      items.each do |item|
-        subscription.record_charge(at: item.datetime, amount_cents: item.amount_cents.abs, payment_rail: item.linked_object.stripe_card || @rail)
-      end
+      subscription.replay(items)
 
-      Subscription.transaction do
+      # A savepoint, so the rollback below still undoes this when a caller has
+      # a transaction open.
+      Subscription.transaction(requires_new: true) do
         subscription.save!
-        # Another job got to some of these charges first: leave them to it.
-        linked = Ledger::Item.where(id: items.map(&:id), subscription_id: nil).update_all(subscription_id: subscription.id)
+        # Another job got to some of these charges first, or one moved to
+        # another ledger: leave them be.
+        linked = Ledger::Item.where(id: items.map(&:id), subscription_id: nil).with_primary_ledger(@ledger.id).update_all(subscription_id: subscription.id)
         raise ActiveRecord::Rollback if linked != items.size
       end
 
