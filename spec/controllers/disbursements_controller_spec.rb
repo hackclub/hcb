@@ -293,7 +293,8 @@ RSpec.describe DisbursementsController do
   describe "#event_search" do
     it "suggests an unlisted transparent organization the user is a member of, without a query" do
       member = create(:user)
-      source_event = create(:event, organizers: [member])
+      # Named so it can't match the "Claude" search below, as a random name could
+      source_event = create(:event, name: "Hackworth Robotics", organizers: [member])
       destination_event = create(:event, name: "Claude Unlisted", is_indexable: false)
       create(:organizer_position, user: member, event: destination_event, role: :member)
       create(:event, name: "Claude Private Member", is_public: false).tap do |e|
@@ -314,7 +315,8 @@ RSpec.describe DisbursementsController do
 
     it "lists public organizations as destinations but hides private, unlisted and demo ones" do
       user = create(:user)
-      create(:event, organizers: [user])
+      # Named so it can't match the "Claude" search below, as a random name could
+      create(:event, name: "Hackworth Robotics", organizers: [user])
       public_event = create(:event, name: "Claude Clearinghouse")
       create(:event, name: "Claude Private", is_public: false)
       create(:event, name: "Claude Unlisted", is_indexable: false)

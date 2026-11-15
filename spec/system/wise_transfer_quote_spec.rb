@@ -42,6 +42,12 @@ RSpec.describe "Wise transfer USD quote", type: :system do
     expect(quote).to have_text(placeholder, exact: true)
   end
 
+  it "doesn't let you pick a currency Wise no longer supports" do
+    visit new_event_wise_transfer_path(event)
+
+    expect(page).to have_select("wise_transfer[currency]", disabled_options: ["CNY"])
+  end
+
   it "shows an error instead of a stale or loading quote when Wise fails" do
     allow(WiseTransfer).to receive(:generate_quote).and_raise(Faraday::ConnectionFailed, "Wise is down")
 

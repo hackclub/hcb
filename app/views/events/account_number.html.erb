@@ -21,8 +21,8 @@
 <% if @event.demo_mode? %>
   <%= blankslate "Unavailable in Playground Mode" %>
 <% elsif @event.column_account_number.present? %>
-  <div class="flex items-start justify-start h2 mb2" style="gap: 2rem">
-    <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
+  <div class="flex flex-wrap items-start justify-start h2 mb2" style="gap: 2rem">
+    <span class="flex flex-col">
       <span class="h4 muted">
         Account
         <% if @event.column_account_number&.deposit_only? %>
@@ -31,13 +31,8 @@
           (receive + send)
         <% end %>
       </span>
-      <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy" data-controller="<%= "reveal-animation" if @animated %>">
-        <% if organizer_signed_in? %>
-          <%= @event.account_number %>
-        <% else %>
-          <%= "•" * @event.account_number.length %>
-        <% end %>
-      </span>
+      <%# Right after the account number is generated, it's revealed straight away. %>
+      <%= render "events/account_number_reveal", frame_id: "account_number_reveal", revealed: @animated, animated: @animated %>
     </span>
     <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.routing_number if organizer_signed_in? %>">
       <span class="h4 muted">Routing</span>

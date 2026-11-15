@@ -120,7 +120,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).preloaded_for_feed.first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -330,7 +330,7 @@ class EventsController < ApplicationController
     @settings_tab = params[:tab]
     @frame = params[:frame]
     @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
@@ -467,20 +467,39 @@ class EventsController < ApplicationController
   end
 
   def card_overview
+    authorize @event
+
     @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
+    @q = params[:q].presence
 
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
+    event_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+    all_stripe_cards = event_cards
 
-    @has_filter = @status.present? || @type.present? || @user.present?
+    # Derived from cards rather than @event.users so removed members' cards stay filterable
+    cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
+    sorted_cardholders = cardholders.sort_by(&:name)
+    # Public ids, since slugs are built from the name a user signed up with
+    @user = cardholders.find_by_public_id(params[:user]) if params[:user]
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
+      { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.public_id] } },
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
 
-    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user).includes(:card_grant)
-                             .order("stripe_status asc, created_at desc")
+    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
+    all_stripe_cards = all_stripe_cards.where(user: { id: @user&.id }) if params[:user]
+
+    if @q
+      # Last four digits are hidden from non-organizers, so they must not be searchable either
+      searchable = organizer_signed_in? ? "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q" : "stripe_cards.name ILIKE :q"
+      all_stripe_cards = all_stripe_cards.where(searchable, q: "%#{StripeCard.sanitize_sql_like(@q)}%")
+    end
 
     all_stripe_cards = case @status
                        when "active"
@@ -504,6 +523,13 @@ class EventsController < ApplicationController
                          all_stripe_cards
                        end
 
+    page = (params[:page] || 1).to_i
+    per_page = safe_per(18)
+    grouped = !(params[:user] || @q)
+
+    all_stripe_cards = all_stripe_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
+                                       .order("stripe_status asc, created_at desc")
+
     if current_user.present?
       @stripe_cards = all_stripe_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
       @user_stripe_cards = all_stripe_cards.where(stripe_cardholder: current_user.stripe_cardholder)
@@ -511,14 +537,6 @@ class EventsController < ApplicationController
       @stripe_cards = all_stripe_cards
       @user_stripe_cards = StripeCard.none
     end
-
-    @stripe_cardholders = StripeCardholder.where(user_id: @event.users.pluck(:id)).includes(:user).order("created_at desc")
-    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
-
-    authorize @event
-
-    page = (params[:page] || 1).to_i
-    per_page = safe_per(18)
 
     display_cards = [
       @user_stripe_cards.active,
@@ -528,7 +546,16 @@ class EventsController < ApplicationController
     ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
-    @all_unique_cardholders = @event.stripe_cards.on_main_ledger.includes(stripe_cardholder: :user).map(&:stripe_cardholder).uniq.sort_by { |cardholder| cardholder.user.name.to_s.downcase }
+
+    if grouped
+      user_groups = display_cards
+                    .group_by(&:user)
+                    .reject { |user, _| user.nil? }
+                    .sort_by { |user, _| [user == current_user ? 0 : 1, user.name.to_s] }
+
+      @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
+      @cards_by_user = @paginated_user_groups.to_h
+    end
   end
 
   def async_balance
@@ -610,6 +637,22 @@ class EventsController < ApplicationController
     end
 
     authorize @event
+  end
+
+  # The account number page doesn't send the account number until someone clicks
+  # "Show". That loads this action into the clicked turbo frame.
+  def reveal_account_number
+    authorize @event, :account_number?
+
+    unless turbo_frame_request? && @event.column_account_number.present?
+      return redirect_to account_number_event_path(@event)
+    end
+
+    render partial: "events/account_number_reveal", locals: {
+      frame_id: turbo_frame_request_id,
+      revealed: true,
+      tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
+    }
   end
 
   def g_suite_overview

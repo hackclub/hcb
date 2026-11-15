@@ -1,13 +1,13 @@
 <%# locals: (event:) %>
 
-<% show_popovers = organizer_signed_in? %>
+<% linkable = organizer_signed_in? %>
 <% pinned_ledger_items = event.pinned_ledger_items.to_a %>
 <% if pinned_ledger_items.any? %>
   <div class="flex gap-4 my-2 pinned__container">
     <% pinned_ledger_items.each do |ledger_item| %>
       <%# The unpin button sits beside the link rather than inside it, so clicking it doesn't also open the transaction. %>
       <div class="pinned__item relative">
-        <%= link_to organizer_signed_in? ? ledger_item_path(ledger_item) : "#", data: show_popovers ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black h-full" do %>
+        <%= link_to linkable ? ledger_item_path(ledger_item) : "#", data: linkable ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black h-full" do %>
           <p class="font-bold m0 flex items-center g2">
             <%= format_date ledger_item.datetime %>
             <%= render "ledger/items/status", ledger_item: %>
