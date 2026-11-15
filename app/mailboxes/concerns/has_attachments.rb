@@ -6,8 +6,10 @@ module HasAttachments
   included do
     private
 
-    def set_attachments(include_body: true, convert_emls: true)
-      files = mail.attachments.select { |a| valid_content_type(a.content_type) && a.content_disposition&.starts_with?("attachment") }.map do |atta|
+    # By default only keeps what can be a receipt. `receipt_types_only: false`
+    # keeps any image or PDF.
+    def set_attachments(include_body: true, convert_emls: true, receipt_types_only: true)
+      files = mail.attachments.select { |a| (receipt_types_only ? a.mime_type.in?(Receipt::ALLOWED_CONTENT_TYPES) : valid_content_type(a.content_type)) && a.content_disposition&.starts_with?("attachment") }.map do |atta|
         {
           io: StringIO.new(atta.decoded),
           content_type: atta.content_type,

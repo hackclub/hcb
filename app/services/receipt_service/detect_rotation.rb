@@ -26,44 +26,86 @@ module ReceiptService
     MIN_WORDS = 10
     MIN_IMPROVEMENT = 2
 
+    # Tesseract's run time grows with pixel count (a 12 megapixel photo took
+    # ~40s), so detection runs on a copy no bigger than this on its long side.
+    MAX_SIDE = 2000
+
+    # Detection runs while the upload request waits, so it gets a hard time
+    # limit. An upright receipt takes 1-3 seconds, a turned one a few more;
+    # out of time means "not sure".
+    TIME_LIMIT = 15.seconds
+    OutOfTime = Class.new(StandardError)
+
     def initialize(path:)
       @path = path
     end
 
     def run
-      output, status = Open3.capture2e(RTesseract.config.command, @path.to_s, "stdout", "--psm", "0")
-      # Tesseract exits non-zero (e.g. "Too few characters") when it can't
-      # detect an orientation.
-      return nil unless status.success?
+      @deadline = TIME_LIMIT.from_now
+      # image_processing applies the EXIF orientation on load
+      @image = ImageProcessing::MiniMagick.source(@path.to_s).resize_to_limit(MAX_SIDE, MAX_SIDE).convert("png").call
+
+      output, status = tesseract(@image.path, "--psm", "0")
+      return nil if output.include?("Too few characters")
+      # Anything else (e.g. missing orientation data file) means detection is
+      # broken, which we want to hear about rather than silently never rotate.
+      raise "tesseract orientation detection failed: #{output.truncate(200)}" unless status.success?
 
       rotate = output[/^Rotate: (\d+)/, 1].to_i
       return nil if rotate.zero?
 
       rotate if reads_better_rotated?(rotate)
+    rescue OutOfTime
+      nil
     end
 
     private
 
     def reads_better_rotated?(degrees)
-      before = confident_words(@path)
-      after = confident_words_rotated(degrees)
-      return false unless after >= MIN_WORDS && after >= before * MIN_IMPROVEMENT
+      # OCR all four orientations at once. Each is its own process, so this
+      # takes about as long as the slowest one. It only happens when Tesseract
+      # proposes a rotation, which is rare.
+      threads = [0, 90, 180, 270].index_with do |turn|
+        Thread.new { confident_words_rotated(turn) }.tap { |thread| thread.report_on_exception = false } # `value` re-raises
+      end
+      words = threads.transform_values(&:value)
+      after = words[degrees]
 
-      # It must also beat the other two orientations, or we could turn a
-      # sideways receipt upside down. Only costs extra OCR when we're about
-      # to rotate, which is rare.
-      ([90, 180, 270] - [degrees]).all? { |other| after > confident_words_rotated(other) }
+      # It must beat the upload clearly, and also the other two orientations,
+      # or we could turn a sideways receipt upside down.
+      after >= MIN_WORDS && after >= words[0] * MIN_IMPROVEMENT && words.except(0, degrees).values.all? { |other| after > other }
     end
 
     def confident_words_rotated(degrees)
-      rotated = ImageProcessing::MiniMagick.source(@path.to_s).rotate(degrees).call
+      return confident_words(@image.path) if degrees.zero?
+
+      rotated = ImageProcessing::MiniMagick.source(@image.path).rotate(degrees).call
       confident_words(rotated.path)
     end
 
-    # `psm: 6` treats the image as one upright block of text. The default mode
+    # `--psm 6` treats the image as one upright block of text. The default mode
     # quietly reads sideways text, which would hide the difference.
     def confident_words(path)
-      RTesseract.new(path.to_s, psm: 6).to_box.count { |w| w[:confidence] > 85 }
+      output, = tesseract(path, "--psm", "6", "tsv")
+      # TSV columns: level (5 = word) is first, confidence and text are last
+      output.lines.count do |line|
+        columns = line.chomp.split("\t")
+        columns[0] == "5" && columns[10].to_f > 85 && columns[11].present?
+      end
+    end
+
+    # Runs tesseract and returns [output, status], killing it at the deadline.
+    def tesseract(path, *args)
+      Open3.popen2e(RTesseract.config.command, path.to_s, "stdout", *args) do |_stdin, out, process|
+        output = Thread.new { out.read }
+        unless process.join([@deadline - Time.current, 0].max)
+          Process.kill("KILL", process.pid)
+          output.join # the pipe closes once the process is dead
+          raise OutOfTime
+        end
+
+        [output.value, process.value]
+      end
     end
 
   end

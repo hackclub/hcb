@@ -62,7 +62,7 @@
                           include_hidden: false,
                           required: true,
                           class: "sr-only",
-                          accept: "image/*,image/heic,.pdf",
+                          accept: Receipt::ACCEPT,
                           data: {
                             "file-drop-target" => "fileInput",
                             "action"           => "change->form#submit"

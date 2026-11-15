@@ -13,7 +13,7 @@ class CommentMailbox < ApplicationMailbox
   before_processing :set_comment
   before_processing :set_commentable
   before_processing do
-    set_attachments(include_body: false)
+    set_attachments(include_body: false, receipt_types_only: false)
   end
 
   def process

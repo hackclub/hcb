@@ -75,8 +75,31 @@ class Receipt < ApplicationRecord
   # `file`, so the original is never lost and the rotation can be undone.
   has_one_attached :original_file
 
-  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
-  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  # Everything a receipt can be: photos, PDFs, and the office files invoices
+  # come as. No SVGs, GIFs or other formats. File inputs, email, SMS and
+  # Discord uploads all read this list.
+  ALLOWED_CONTENT_TYPES = %w[
+    application/pdf
+    image/jpeg
+    image/png
+    image/heic
+    image/heif
+    image/webp
+    application/msword
+    application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    text/csv
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  ].freeze
+  # for <input type="file" accept="...">
+  ACCEPT = ".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.doc,.docx,.csv,.xlsx"
+
+  validates :file, attached: true
+  # Type and size are only checked on new files, so receipts uploaded before
+  # a rule existed stay valid.
+  validates :file,
+            content_type: { in: ALLOWED_CONTENT_TYPES, message: "must be a PDF, an image (JPG, PNG, HEIC or WebP), a Word document, a CSV or an Excel file" },
+            size: { less_than_or_equal_to: 50.megabytes },
+            if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -87,6 +110,11 @@ class Receipt < ApplicationRecord
   SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
+    # Rotation goes first so OCR, pairing suggestions and previews all see the
+    # upright file. It runs on a separate instance: saving this one inside its
+    # own commit callback would stop the remaining create callbacks from firing.
+    reload if Receipt.find(id).auto_rotate
+
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
     unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
@@ -95,8 +123,6 @@ class Receipt < ApplicationRecord
       # see https://github.com/hackclub/hcb/issues/7123
       Receipt::SuggestPairingsJob.perform_later(self)
     end
-
-    Receipt::AutoRotateJob.perform_later(self) if file.image?
   end
 
   after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
@@ -199,35 +225,55 @@ class Receipt < ApplicationRecord
 
   # People often photograph receipts sideways or upside down. If we're sure
   # that happened, replace `file` with an upright copy and keep the upload
-  # as `original_file`. Only ever runs once per receipt.
+  # as `original_file`. Only ever runs once per receipt. Returns true if it
+  # rotated the file.
   def auto_rotate!
-    return unless file.image? && !original_file.attached?
+    return false unless file.image? && !original_file.attached?
 
-    file.blob.open do |tempfile|
-      png = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
-      degrees = ::ReceiptService::DetectRotation.new(path: png.path).run
-      next if degrees.nil?
+    file.blob.open do |upload|
+      degrees = ::ReceiptService::DetectRotation.new(path: upload.path).run
+      next false if degrees.nil?
 
       # PNGs and JPEGs keep their format; anything else (HEIC, WebP, TIFF, ...)
       # is written out as a JPEG since ImageMagick can't encode them all.
       keep_format = file.content_type.in?(%w[image/png image/jpeg])
-      pipeline = ImageProcessing::MiniMagick.source(tempfile.path).rotate(degrees)
+      pipeline = ImageProcessing::MiniMagick.source(upload.path).rotate(degrees)
       pipeline = pipeline.convert("jpg") unless keep_format
+      rotated = pipeline.call # before touching the record, so a failure here changes nothing
 
-      # Attaching the blob to original_file first is what stops ActiveStorage
-      # from purging it when `file` is replaced.
-      original_file.attach(file.blob)
-      file.attach(
-        io: pipeline.call,
-        filename: keep_format ? file.filename.to_s : "#{file.filename.base}.jpg",
-        content_type: keep_format ? file.content_type : "image/jpeg"
-      )
+      # One save, so we never end up with the original kept but the file not
+      # rotated. The lock reloads, and raises if the receipt has been deleted.
+      # Having the blob on original_file is what stops ActiveStorage from
+      # purging it when `file` is replaced.
+      # (Not `with_lock`: this model aliases `transaction` to the receiptable.)
+      Receipt.transaction do
+        lock!
+        self.original_file = file.blob
+        self.file = {
+          io: rotated,
+          filename: keep_format ? file.filename.to_s : "#{file.filename.base}.jpg",
+          content_type: keep_format ? file.content_type : "image/jpeg"
+        }
+        save!
+      end
+
+      true
     end
+  end
+
+  # Never lets a rotation problem fail an upload.
+  def auto_rotate
+    auto_rotate!
+  rescue MiniMagick::Error, ImageProcessing::Error, ActiveRecord::RecordNotFound
+    false # an image our tools can't read, or a receipt deleted meanwhile; leave it be
+  rescue => e
+    Rails.error.report(e, context: { receipt_id: id })
+    false
   end
 
   # Undoes auto_rotate!. original_file stays attached so we don't rotate it again.
   def restore_original_file!
-    file.attach(original_file.blob) if original_file.attached?
+    update!(file: original_file.blob) if original_file.attached?
   end
 
   def has_textual_content?
