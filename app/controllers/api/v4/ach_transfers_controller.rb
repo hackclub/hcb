@@ -27,7 +27,7 @@ module Api
 
         ach_transfer_params = params.require(:ach_transfer).permit(*permitted_params)
 
-        @ach_transfer = @event.ach_transfers.build(ach_transfer_params.merge(creator: current_user))
+        @ach_transfer = @event.ach_transfers.build(ach_transfer_params.except(:file).merge(creator: current_user))
 
         authorize @ach_transfer
 
@@ -37,17 +37,18 @@ module Api
         end
 
 
-        ActiveRecord::Base.transaction do
-          @ach_transfer.save!
+        @ach_transfer.save!
 
-          if ach_transfer_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: ach_transfer_params[:file],
-              upload_method: :api,
-              receiptable: @ach_transfer.local_hcb_code
-            ).run!
-          end
+        # The receipt is attached after the save commits: a transfer's ledger
+        # item, which the receipt belongs on, is only assigned once its pending
+        # transaction commits (see Receipt's before_validation).
+        if ach_transfer_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: Array(ach_transfer_params[:file]),
+            upload_method: :api,
+            receiptable: @ach_transfer.local_hcb_code
+          ).run!
         end
 
         render :show, status: :created

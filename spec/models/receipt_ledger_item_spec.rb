@@ -28,7 +28,7 @@ RSpec.describe Receipt, type: :model do
       expect(ledger_item.reload.receipt_count).to eq(1)
     end
 
-    it "stays on a code that has no ledger item yet" do
+    it "stays on a code that has no ledger item" do
       code_without_item = create(:hcb_code)
 
       receipt = attach_receipt_to(code_without_item)
@@ -95,34 +95,6 @@ RSpec.describe Receipt, type: :model do
 
       expect(receipt.reload.receiptable).to eq(ledger_item)
       expect(hcb_code.receipts).to contain_exactly(receipt)
-    end
-  end
-
-  describe "linking an HCB code to a ledger item" do
-    let(:code_without_item) { create(:hcb_code) }
-
-    it "hands the code's receipts over when it is linked to a ledger item" do
-      receipt = attach_receipt_to(code_without_item)
-      expect(receipt.reload.receiptable).to eq(code_without_item)
-
-      item = create(:ledger_item, hcb_code: code_without_item)
-
-      expect(receipt.reload.receiptable).to eq(item)
-      expect(item.reload.receipt_count).to eq(1)
-      expect(code_without_item.reload.receipts).to contain_exactly(receipt)
-    end
-
-    it "doesn't run the receipt callbacks for a hand-over" do
-      attach_receipt_to(code_without_item)
-
-      expect { create(:ledger_item, hcb_code: code_without_item) }
-        .not_to have_enqueued_job(Receipt::SuggestPairingsJob)
-    end
-
-    it "leaves the item's count alone when the code has no receipts" do
-      item = create(:ledger_item, hcb_code: code_without_item)
-
-      expect(item.reload.receipt_count).to eq(0)
     end
   end
 end

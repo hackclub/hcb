@@ -424,8 +424,8 @@ module Reimbursement
           payout_method.account_holder.presence
         end
 
-      ActiveRecord::Base.transaction do
-        wise_transfer = WiseTransfer.create!(
+      wise_transfer = ActiveRecord::Base.transaction do
+        transfer = WiseTransfer.create!(
           user: as,
           event:,
           amount:,
@@ -443,24 +443,29 @@ module Reimbursement
           recipient_information: payout_method.recipient_information,
         )
 
-        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
-        wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
-
-        expenses.each do |expense|
-          expense.receipts.each do |receipt|
-            ::ReceiptService::Create.new(
-              receiptable: wise_transfer.local_hcb_code,
-              uploader: as,
-              attachments: [receipt.file.blob],
-              upload_method: :duplicate
-            ).run!
-          end
-        end
+        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(transfer.local_hcb_code)}", user: User.system_user)
+        transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
 
         mark_rejected!(skip_mailer: true)
 
-        wise_transfer
+        transfer
       end
+
+      # The receipts belong on the transfer's ledger item, which is only
+      # assigned once its pending transaction commits, so copy them after the
+      # transaction above.
+      expenses.each do |expense|
+        expense.receipts.each do |receipt|
+          ::ReceiptService::Create.new(
+            receiptable: wise_transfer.local_hcb_code,
+            uploader: as,
+            attachments: [receipt.file.blob],
+            upload_method: :duplicate
+          ).run!
+        end
+      end
+
+      wise_transfer
     end
 
     private

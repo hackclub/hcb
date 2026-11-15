@@ -19,7 +19,7 @@ module Api
       end
 
       def create
-        @wire = @event.wires.build(wire_params.merge(user: current_user))
+        @wire = @event.wires.build(wire_params.except(:file).merge(user: current_user))
 
         authorize @wire
 
@@ -30,17 +30,18 @@ module Api
           }, status: :bad_request
         end
 
-        ActiveRecord::Base.transaction do
-          @wire.save!
+        @wire.save!
 
-          if wire_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: wire_params[:file],
-              upload_method: :api,
-              receiptable: @wire.local_hcb_code
-            ).run!
-          end
+        # The receipt is attached after the save commits: a transfer's ledger
+        # item, which the receipt belongs on, is only assigned once its pending
+        # transaction commits (see Receipt's before_validation).
+        if wire_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: Array(wire_params[:file]),
+            upload_method: :api,
+            receiptable: @wire.local_hcb_code
+          ).run!
         end
 
         render :show, status: :created

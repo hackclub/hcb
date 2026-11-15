@@ -48,17 +48,18 @@ module Api
           }, status: :bad_request
         end
 
-        ActiveRecord::Base.transaction do
-          @check.save!
+        @check.save!
 
-          if check_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: check_params[:file],
-              upload_method: :api,
-              receiptable: @check.local_hcb_code
-            ).run!
-          end
+        # The receipt is attached after the save commits: a transfer's ledger
+        # item, which the receipt belongs on, is only assigned once its pending
+        # transaction commits (see Receipt's before_validation).
+        if check_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: Array(check_params[:file]),
+            upload_method: :api,
+            receiptable: @check.local_hcb_code
+          ).run!
         end
 
         render :show, status: :created

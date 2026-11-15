@@ -236,6 +236,29 @@ RSpec.describe Payment::Attempt, type: :model do
         expect(transfer.reload.payment_attempt).to eq(attempt)
         expect(attempt).to be_under_review
       end
+
+      it "copies the payment's receipts onto the transfer's ledger item once everything has committed" do
+        ReceiptService::Create.new(
+          receiptable: payment,
+          uploader: payment.creator,
+          attachments: [file_fixture("receipt.png")],
+          upload_method: :payment_page
+        ).run!
+
+        # Attempts are created inside their callers' transactions, before the
+        # transfer's ledger item exists.
+        attempt = nil
+        ActiveRecord::Base.transaction do
+          attempt = create_attempt
+          expect(Receipt.where(receiptable: payment).count).to eq(1)
+          expect(Receipt.count).to eq(1)
+        end
+
+        hcb_code = attempt.reload.payout.local_hcb_code.reload
+        expect(hcb_code.ledger_item).to be_present
+        expect(hcb_code.ledger_item.receipts.count).to eq(1)
+        expect(Receipt.where(receiptable: hcb_code)).to be_empty
+      end
     end
 
     context "when building the transfer raises" do
@@ -266,7 +289,7 @@ RSpec.describe Payment::Attempt, type: :model do
     context "when a step after saving the transfer raises" do
       before do
         allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_000)
-        allow(Receipt).to receive(:reupload).and_raise(StandardError, "boom")
+        allow_any_instance_of(Payment::Attempt).to receive(:mark_under_review!).and_raise(StandardError, "boom")
       end
 
       it "rolls back the transfer and persists the attempt as failed" do
@@ -339,7 +362,7 @@ RSpec.describe Payment::Attempt, type: :model do
       end
     end
 
-    it "calls Receipt.reupload to transfer payment receipts to the new transfer's hcb_code" do
+    it "calls Receipt.reupload to transfer payment receipts to the new transfer's hcb_code after the transaction commits" do
       payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
       attempt = build(:payment_attempt)
       allow(attempt).to receive(:create_transfer!).and_call_original

@@ -159,7 +159,14 @@ class Payment
             transfer.save!
             save!
 
-            Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
+            # The payment's receipts belong on the transfer's ledger item, which
+            # is only assigned once its pending transaction commits. Attempts
+            # are created inside their callers' transactions (the payment's
+            # lock, a payee reassignment), so wait for the outermost one. A
+            # rolled-back savepoint drops the block.
+            ActiveRecord.after_all_transactions_commit do
+              Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
+            end
 
             mark_under_review!
           end

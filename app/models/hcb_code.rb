@@ -81,8 +81,6 @@ class HcbCode < ApplicationRecord
 
   after_create :write_event_and_subledger_id
 
-  after_commit :move_receipts_to_ledger_item, if: -> { saved_change_to_ledger_item_id? && ledger_item_id.present? }
-
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -697,22 +695,6 @@ class HcbCode < ApplicationRecord
     return if reimbursement_expense_payout?
 
     super
-  end
-
-  # Hands any receipt still attached to this code over to its ledger item once
-  # the code is linked to one. A receipt can be attached before the item
-  # exists: transfers attach one on creation and only get their item once their
-  # pending transaction commits, scheduled transfers once they go out.
-  # (Maintenance::MoveHcbCodeReceiptsToLedgerItemsTask does the same for the
-  # pairs linked before this callback existed.)
-  #
-  # update_all rather than update!: the receipt isn't changing, only which of
-  # the transaction's two records it hangs off, so the pairing and card-locking
-  # callbacks (an unlock job per charge) have nothing to do. It also skips the
-  # touch that would refresh the item, so refresh it by hand.
-  def move_receipts_to_ledger_item
-    moved = Receipt.where(receiptable: self).update_all(receiptable_type: "Ledger::Item", receiptable_id: ledger_item_id)
-    ledger_item.refresh! if moved.positive?
   end
 
   # While receipts are split across an HCB code and its ledger item (see

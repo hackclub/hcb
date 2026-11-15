@@ -86,9 +86,12 @@ class Receipt < ApplicationRecord
   # code is attached to the code's item instead. The item is looked up afresh:
   # a transfer memoizes its code before the pending transaction that creates
   # the item commits, so the instance a controller hands over can predate it.
-  # A code with no item yet (a scheduled or uncommitted transfer, an empty
-  # HCB-000 code) keeps the receipt until it is linked to one (HcbCode's
-  # after_commit hands it over).
+  #
+  # A code with no item keeps the receipt, and nothing moves it later. The
+  # item is assigned when the transaction's pending transaction commits, so
+  # callers that attach a receipt to a transfer they just created must do so
+  # after that commit, not inside the transaction that creates the transfer.
+  # The codes left without an item are the empty HCB-000 ones.
   before_validation if: -> { receiptable.is_a?(HcbCode) } do
     ledger_item_id = receiptable.ledger_item_id || HcbCode.where(id: receiptable).pick(:ledger_item_id)
     self.receiptable = receiptable.ledger_item || Ledger::Item.find(ledger_item_id) if ledger_item_id
