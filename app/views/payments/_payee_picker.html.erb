@@ -1,12 +1,15 @@
-<%# locals: (event:, destination: "payments") %>
-<%# The picker always opens in contractor mode; the manual-payee controller
-    toggles to the manual path client-side via the enable/undo buttons. %>
-<% manual = false %>
+<%# locals: (event:, destination: "payments", initial_panel: event.payees.any? ? "list" : "new", initial_name: params[:payee_name].to_s, initial_email: params[:payee_email].to_s) %>
+<%# herb:slots client %>
+<%# The picker always opens in contractor mode; the buttons at the bottom switch
+    to entering the recipient's payout details on their behalf. `selected_panel` is
+    "list" (search existing recipients) or "new" (the form below); payees/recipient_section
+    binds it, and the buttons in payees/index (loaded into the frame) write it. %>
+<%# herb:state (selected_mode: "contractor", selected_panel: initial_panel, selected_name: initial_name, selected_email: initial_email) %>
 <% has_payees = event.payees.any? %>
 <% show_hcb_transfer = destination == "payments" %>
 
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2" <% unless has_payees %> hidden<% end %>>
+  <div class="py-2" hidden="<%= selected_panel == "new" %>" data-payee-panel>
     <% if has_payees %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
@@ -14,13 +17,13 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" <% if has_payees %> hidden<% end %>
+  <div hidden="<%= selected_panel != "new" %>" data-payee-panel
        data-controller="payee-duplicate-check"
        data-payee-duplicate-check-url-value="<%= check_email_event_payees_path(event_id: event.slug) %>"
        data-payee-duplicate-check-destination-value="<%= destination %>">
     <div class="px-4 py-3 card">
       <% if has_payees %>
-        <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
+        <button type="button" class="btn mb-3" data-herb-set="selected_panel=list">
           <%= inline_icon "view-back" %>
           Back
         </button>
@@ -31,7 +34,7 @@
           managed legal entity, then the page reloads with ?payee_id= selected. %>
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
         <%= hidden_field_tag :destination, destination %>
-        <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
+        <input type="hidden" name="manual" value="true" disabled="<%= selected_mode != "manual" %>">
       <% end %>
 
       <div class="flex flex-col gap-3">
@@ -42,11 +45,11 @@
               <%= inline_icon "info", size: 20 %>
             </span>
           <% end %>
-          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput", "payee-picker-target": "nameInput" } %>
+          <input type="text" name="name" id="name" value="<%= selected_name %>" placeholder="Orpheus" required form="new-payee-form">
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput", action: "input->payee-duplicate-check#check" } %>
+          <input type="email" name="email" id="email" value="<%= selected_email %>" placeholder="orpheus@hackclub.com" required form="new-payee-form" data-action="input->payee-duplicate-check#check">
         </div>
 
         <div data-payee-duplicate-check-target="warning" hidden>
@@ -55,40 +58,41 @@
             Only add a new recipient if this is a different person or legal entity.
           <% end %>
         </div>
-        <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <% unless manual %> hidden<% end %>>
-          <%= label_tag :payee_entity_type, "Recipient type" %>
-          <%= select_tag :payee_entity_type,
-              options_for_select([
-                                   ["Select type", ""],
-                                   ["An individual", "person"],
-                                   ["An unincorporated business", "business"],
-                                   ["A corporation", "corporation"]
-                                 ], params[:payee_entity_type]),
-              required: manual,
-              form: "new-payee-form",
-              data: { "manual-payee-target": "entityTypeInput" } %>
-        </div>
+        <fieldset class="contents" hidden="<%= selected_mode != "manual" %>" disabled="<%= selected_mode != "manual" %>">
+          <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+            <%= label_tag :payee_entity_type, "Recipient type" %>
+            <%= select_tag :payee_entity_type,
+                options_for_select([
+                                     ["Select type", ""],
+                                     ["An individual", "person"],
+                                     ["An unincorporated business", "business"],
+                                     ["A corporation", "corporation"]
+                                   ], params[:payee_entity_type]),
+                required: true,
+                form: "new-payee-form" %>
+          </div>
+        </fieldset>
 
-        <div data-manual-payee-target="defaultBanner" <% if manual %> hidden<% end %>>
+        <div hidden="<%= selected_mode == "manual" %>">
           <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
             They'll be asked to configure their payout method and tax information if necessary before receiving the payment.
           <% end %>
         </div>
 
-        <div data-manual-payee-target="manualBanner" <% unless manual %> hidden<% end %>>
+        <div hidden="<%= selected_mode != "manual" %>">
           <%= render "application/callout", type: "warning", icon: "important", title: "Payout info required", class: "mt-0 mb-0" do %>
             We'll ask for this soon. Only use this if the recipient can't submit their own.
           <% end %>
         </div>
 
-          <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
+          <button type="submit" form="new-payee-form" class="btn bg-blue w-full gap-2 mt-3">
             Continue <%= inline_icon "view-forward" %>
           </button>
           <% if Flipper.enabled?(:manual_payees_2026_08_05, event) %>
-            <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <% if manual %> hidden<% end %>>
+            <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" hidden="<%= selected_mode == "manual" %>" data-herb-set="selected_mode=manual">
               I want to submit payout information on behalf of the recipient
             </button>
-            <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <% unless manual %> hidden<% end %>>
+            <button type="button" class="!shadow-none btn w-full text-sm mt-1" hidden="<%= selected_mode != "manual" %>" data-herb-set="selected_mode=contractor">
               I'll have the recipient fill this out instead
             </button>
           <% end %>
