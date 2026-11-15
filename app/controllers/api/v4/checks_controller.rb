@@ -56,7 +56,7 @@ module Api
               uploader: current_user,
               attachments: check_params[:file],
               upload_method: :api,
-              receiptable: @check.local_hcb_code.ledger_item_or_self
+              receiptable: @check.local_hcb_code
             ).run!
           end
         end

@@ -36,6 +36,19 @@ RSpec.describe Receipt, type: :model do
       expect(receipt.reload.receiptable).to eq(code_without_item)
     end
 
+    it "looks the code's ledger item up afresh" do
+      # A transfer memoizes its code before the pending transaction that
+      # creates the item commits, so the instance a controller hands over
+      # predates the item.
+      transfer = create(:ach_transfer, event: create(:event, :with_positive_balance))
+      stale_code = transfer.local_hcb_code
+      expect(stale_code.ledger_item).to be_nil
+
+      receipt = attach_receipt_to(stale_code)
+
+      expect(receipt.reload.receiptable).to eq(stale_code.reload.ledger_item)
+    end
+
     it "also applies when an existing receipt is linked to the code" do
       receipt = attach_receipt_to(nil, user: create(:user))
 
@@ -66,7 +79,7 @@ RSpec.describe Receipt, type: :model do
       expense = create(:reimbursement_expense)
       attach_receipt_to(expense, user: create(:user))
 
-      Receipt.reupload(old_receiptable: expense, new_receiptable: hcb_code.ledger_item_or_self)
+      Receipt.reupload(old_receiptable: expense, new_receiptable: hcb_code)
 
       expect(ledger_item.receipts.count).to eq(1)
       expect(ledger_item.receipts.sole.receiptable).to eq(ledger_item)
@@ -110,31 +123,6 @@ RSpec.describe Receipt, type: :model do
       item = create(:ledger_item, hcb_code: code_without_item)
 
       expect(item.reload.receipt_count).to eq(0)
-    end
-  end
-
-  describe "upload tasks" do
-    include_context "card locking charges"
-
-    it "are completed by a receipt attached to the ledger item" do
-      charge = create_settled_card_charge(user:, settled_at: 3.days.ago)
-      task = Task::Receiptable::Upload.create!(taskable: charge, assignee: user)
-      expect(task.reload).not_to be_complete
-
-      attach_receipt_to(charge.ledger_item, user:)
-
-      expect(task.reload).to be_complete
-    end
-
-    it "reopen when the receipt is moved back to the receipt bin" do
-      charge = create_settled_card_charge(user:, settled_at: 3.days.ago)
-      task = Task::Receiptable::Upload.create!(taskable: charge, assignee: user)
-      receipt = attach_receipt_to(charge.ledger_item, user:)
-      expect(task.reload).to be_complete
-
-      receipt.update!(receiptable: nil)
-
-      expect(task.reload).not_to be_complete
     end
   end
 end

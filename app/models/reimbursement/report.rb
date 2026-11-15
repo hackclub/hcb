@@ -449,7 +449,7 @@ module Reimbursement
         expenses.each do |expense|
           expense.receipts.each do |receipt|
             ::ReceiptService::Create.new(
-              receiptable: wise_transfer.local_hcb_code.ledger_item_or_self,
+              receiptable: wise_transfer.local_hcb_code,
               uploader: as,
               attachments: [receipt.file.blob],
               upload_method: :duplicate

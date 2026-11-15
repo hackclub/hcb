@@ -1,8 +1,6 @@
 <% instance = pt.__id__ %>
 <% event = @event || pt.local_hcb_code.event %>
 <% ledger_item = pt.local_hcb_code.ledger_item %>
-<%# Receipts live on the ledger item; a code with no item yet holds them itself. %>
-<% receiptable = pt.local_hcb_code.ledger_item_or_self %>
 <%# Rows are only selectable for bulk tagging, so rows that can't be tagged
     (no ledger item, or no permission) aren't selectable at all. %>
 <% can_tag = ledger_item.present? && (local_assigns[:selectable] || local_assigns[:show_tags]) && policy(ledger_item).toggle_tag? %>
@@ -23,7 +21,7 @@
     data-file-drop-target="dropzone"
     data-file-drop-linking-value="true"
     data-file-drop-modal-value="<%= link_receipts_path %>"
-    data-file-drop-receiptable-value="<%= receiptable.class %>:<%= receiptable.id %>"
+    data-file-drop-receiptable-value="HcbCode:<%= pt.local_hcb_code.id %>"
     data-action="
       dragover->file-drop#dragover
       drop->file-drop#drop
@@ -171,8 +169,8 @@
           <% unless @card_grant.present? %>
             <%= form.hidden_field :show_link, value: true %>
           <% end %>
-          <%= form.hidden_field :receiptable_type, value: receiptable.class %>
-          <%= form.hidden_field :receiptable_id, value: receiptable.id %>
+          <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>
+          <%= form.hidden_field :receiptable_id, value: pt.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
           <%= form.hidden_field :show_receipt_button, value: local_assigns[:receipt_upload_button] %>
           <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_column] %>
@@ -206,7 +204,7 @@
     <% if !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag dom_id(receiptable, :link_modal), src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), turbo_frame: "_top" do %>
+        <%= turbo_frame_tag dom_id(pt.local_hcb_code, :link_modal), src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>

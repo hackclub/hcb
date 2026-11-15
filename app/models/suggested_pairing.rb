@@ -38,7 +38,7 @@ class SuggestedPairing < ApplicationRecord
 
     event :mark_accepted do
       before do
-        receipt.update!(receiptable: hcb_code.ledger_item_or_self)
+        receipt.update!(receiptable: hcb_code)
       end
 
       transitions from: :unreviewed, to: :accepted

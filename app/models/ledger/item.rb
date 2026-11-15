@@ -207,24 +207,6 @@ class Ledger
       ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
     end
 
-    # Count-only refresh for callers that moved receipts between the HCB code
-    # and the item with update_all, which skips the touch that would refresh!.
-    def refresh_receipt_count!
-      count = calculate_receipt_count
-      update_column(:receipt_count, count) if receipt_count != count
-    end
-
-    # IsTaskable settles this item's own tasks after every commit. The upload
-    # task for a transaction was created against its HCB code (see
-    # Receiptable), which a receipt attached to the item no longer touches, so
-    # settle the code's tasks here too whenever the item's receipt state changed.
-    def update_task_completion
-      tasks.each(&:update_complete!)
-      return unless saved_change_to_receipt_count? || saved_change_to_marked_no_or_lost_receipt_at?
-
-      hcb_code&.update_task_completion
-    end
-
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns

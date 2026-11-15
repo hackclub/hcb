@@ -82,12 +82,16 @@ class Receipt < ApplicationRecord
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   # A transaction's receipts live on its ledger item
-  # (https://github.com/hackclub/hcb/issues/14106). Every write path passes the
-  # ledger item already; this catches anything still handing over the HCB code.
-  # A code with no ledger item yet keeps the receipt until it is linked to one
-  # (HcbCode's after_commit hands it over).
-  before_validation do
-    self.receiptable = receiptable.ledger_item_or_self if receiptable.is_a?(HcbCode)
+  # (https://github.com/hackclub/hcb/issues/14106), so a receipt handed an HCB
+  # code is attached to the code's item instead. The item is looked up afresh:
+  # a transfer memoizes its code before the pending transaction that creates
+  # the item commits, so the instance a controller hands over can predate it.
+  # A code with no item yet (a scheduled or uncommitted transfer, an empty
+  # HCB-000 code) keeps the receipt until it is linked to one (HcbCode's
+  # after_commit hands it over).
+  before_validation if: -> { receiptable.is_a?(HcbCode) } do
+    ledger_item_id = receiptable.ledger_item_id || HcbCode.where(id: receiptable).pick(:ledger_item_id)
+    self.receiptable = receiptable.ledger_item || Ledger::Item.find(ledger_item_id) if ledger_item_id
   end
 
   before_create do
