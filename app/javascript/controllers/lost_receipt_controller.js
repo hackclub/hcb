@@ -8,16 +8,12 @@ export default class extends Controller {
     'total',
     'addButton',
     'removeButton',
-    'returnTo',
     'number',
     'title',
     'count',
   ]
 
   connect() {
-    // In a modal the form loads in a frame, so only the browser knows the page to return to.
-    if (this.element.closest('.modal'))
-      this.returnToTarget.value = window.location.href
     this.nextIndex =
       Math.max(
         -1,

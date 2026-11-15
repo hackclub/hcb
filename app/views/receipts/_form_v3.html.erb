@@ -104,18 +104,12 @@
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
         <% lost_receipt_path = receiptable_lost_receipt_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret], return_to: (request.original_url if request.get? && !turbo_frame_request?)) %>
-        <%= link_to lost_receipt_path, data: { behavior: "modal_trigger", modal: "lost_receipt_#{instance}" } do %>
+        <%= link_to lost_receipt_path, data: { turbo_frame: "_top" } do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>
         <% end %>
       </div>
-      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" aria-label="Lost receipt statement" id="lost_receipt_<%= instance %>">
-        <%= modal_header "Lost receipt statement" %>
-        <%= turbo_frame_tag "lost_receipt_#{receiptable.class.name.underscore.tr('/', '_')}_#{receiptable.id}", src: lost_receipt_path, loading: :lazy, target: "_top" do %>
-          <%= render "application/loading_container", klass: "py-8" %>
-        <% end %>
-      </section>
     <% end %>
   </div>
 

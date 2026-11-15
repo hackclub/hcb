@@ -142,6 +142,19 @@ RSpec.describe ReceiptablesController do
       expect(user.receipts.lost_receipt_statement).to be_empty
     end
 
+    it "returns to the page the form was opened from" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      request.headers["Referer"] = "http://test.host#{event_transactions_path(event)}"
+      get(:lost_receipt, params: base_params)
+
+      document = Nokogiri::HTML.fragment(response.body)
+      expect(document.at_css('input[name="return_to"]')["value"]).to eq("http://test.host#{event_transactions_path(event)}")
+      expect(document.at_css("nav a.pop")["href"]).to eq("http://test.host#{event_transactions_path(event)}")
+    end
+
     it "preserves the originating popover through the statement form" do
       user = create(:user)
       create(:organizer_position, user:, event:)

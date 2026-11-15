@@ -38,7 +38,7 @@ RSpec.describe ReceiptsController do
            }, format: :turbo_stream)
 
       expect(response.body).to include("No/lost receipt?")
-      link = Nokogiri::HTML5.fragment(response.body).at_css('a[data-modal^="lost_receipt_"]')
+      link = Nokogiri::HTML5.fragment(response.body).at_css('a[href*="lost_receipt"]')
       expect(link["href"]).to eq(receiptable_lost_receipt_path(receiptable_type: "HcbCode", receiptable_id: hcb_code.id))
     end
 

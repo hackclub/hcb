@@ -14,6 +14,7 @@ class ReceiptablesController < ApplicationController
       submitter: current_user
     )
     @statement.items << LostReceipt::Item.new(quantity: 1)
+    render_form
   end
 
   def mark_no_or_lost
@@ -23,17 +24,28 @@ class ReceiptablesController < ApplicationController
 
     if @statement.submit(receiptable:)
       flash[:success] = "Lost receipt statement added."
-      # Signed link visitors can't view the transaction itself.
-      fallback = from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
-      redirect_to url_from(params[:return_to]) || fallback
+      redirect_to url_from(params[:return_to]) || fallback_location
     else
-      render :lost_receipt, status: :unprocessable_entity
+      render_form status: :unprocessable_entity
     end
   rescue ActiveRecord::NestedAttributes::TooManyRecords
     render plain: "A lost receipt statement can have at most 50 items.", status: :unprocessable_entity
   end
 
   private
+
+  def render_form(**options)
+    # The link can sit inside a frame or popover, so the referer is the only reliable way back.
+    @return_to = url_from(params[:return_to]) || (url_from(request.referrer) if request.get?)
+    @back_url = @return_to || url_for(fallback_location)
+    @can_transfer = false # hides the transfer layout's steps and review note
+    render :lost_receipt, layout: "transfer", **options
+  end
+
+  # Signed link visitors can't view the transaction itself.
+  def fallback_location
+    from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+  end
 
   def statement_params
     return {} unless params.key?(:lost_receipt_statement)
