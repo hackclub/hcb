@@ -5,6 +5,8 @@ class Wire
     # Presents a SWIFT GPI tracking payload for display.
     # https://docs.column.com/api/international-wire/get-international-wire-tracking
     class Tracking
+      include PayloadParsing
+
       # SWIFT's own tracking system posts updates under this BIC rather than a real bank.
       TRACKER_BIC = "TRCKCHZZXXX"
 
@@ -162,18 +164,6 @@ class Wire
         "#{banks.count} #{"bank".pluralize(banks.count)}"
       end
 
-      def parse_time(value)
-        Time.zone.parse(value.to_s)
-      rescue ArgumentError, TypeError
-        nil
-      end
-
-      def money(amount, currency)
-        return nil if amount.blank? || currency.blank?
-
-        Money.from_cents(amount, currency)
-      end
-
       # A bank identified only by its BIC. Column never sends institution names, but
       # characters 5-6 of a BIC are its ISO country code, so we can at least place it.
       class Bank
@@ -198,6 +188,8 @@ class Wire
       end
 
       class Event
+        include PayloadParsing
+
         # Each of these also arrives prefixed with `fi_` for the bank-to-bank leg.
         LABELS = {
           "transfer_initiated"                     => "Forwarded to the next bank",
@@ -242,9 +234,7 @@ class Wire
         def rejected? = status == "rejected"
 
         def occurred_at
-          @occurred_at ||= Time.zone.parse(@payload["updated_at"].to_s)
-        rescue ArgumentError, TypeError
-          nil
+          @occurred_at ||= parse_time(@payload["updated_at"])
         end
 
         def charge_bearer = CHARGE_BEARERS[@payload["charge_bearer"]]
@@ -299,20 +289,6 @@ class Wire
           return "send-fill" if type == "transfer_initiated"
 
           "bank-circle"
-        end
-
-        private
-
-        def bank(bic)
-          return nil if bic.blank?
-
-          Bank.new(bic)
-        end
-
-        def money(amount, currency)
-          return nil if amount.blank? || currency.blank?
-
-          Money.from_cents(amount, currency)
         end
 
       end

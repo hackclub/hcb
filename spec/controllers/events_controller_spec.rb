@@ -451,6 +451,28 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    render_views
+
+    let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
+
+    before { sign_in_organizer_of(event) }
+
+    it "keeps donation settings and the submitted message visible with an actionable length error" do
+      message = "a" * 501
+
+      patch(:update, params: { id: event.slug, event: { tab: "donations", donation_thank_you_message: message } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      page = Nokogiri::HTML5(response.body)
+      settings = page.at_css("#donations_settings")
+      expect(settings).to be_present
+      expect(settings.at_css(".error-card").text).to include("Donation thank you message is too long (maximum is 500 characters)")
+      expect(settings.at_css("textarea[name='event[donation_thank_you_message]']").text).to eq(message)
+      expect(event.reload.donation_thank_you_message).to eq("Thank you!")
+    end
+  end
+
+  describe "#update" do
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -1382,6 +1404,57 @@ RSpec.describe EventsController do
       modal = Nokogiri::HTML5(response.body).at_css("#account_number")
       expect(modal.text).to include("Unavailable in Playground Mode")
       expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
+    end
+
+    describe "the insights timeframe" do
+      let(:event) { create(:event, is_public: true, created_at: 2.years.ago) }
+
+      def insights
+        Nokogiri::HTML5(response.body).at_css("turbo-frame#insights")
+      end
+
+      def chart_sources
+        %w[merchants categories tags users].map { |id| insights.at_css("turbo-frame##{id}")["src"] }
+      end
+
+      it "shows every chart for all time by default" do
+        get(:show, params: { id: event.slug })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
+        expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
+
+        links = insights.css("a[data-turbo-frame='insights']").map { |link| [link.text, link["href"]] }
+        expect(links).to eq([
+                              ["All time", event_path(event)],
+                              ["Past year", event_path(event, timeframe: "Past year")],
+                              ["Past month", event_path(event, timeframe: "Past month")],
+                              ["Past week", event_path(event, timeframe: "Past week")],
+                            ])
+      end
+
+      it "passes the chosen timeframe to the label and every chart" do
+        get(:show, params: { id: event.slug, timeframe: "Past month" })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past month")
+        expect(chart_sources).to all(end_with("?timeframe=Past+month"))
+      end
+
+      it "renders the insights frame alone when a timeframe link navigates it" do
+        request.headers["Turbo-Frame"] = "insights"
+        get(:show, params: { id: event.slug, timeframe: "Past week" })
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML5.fragment(response.body).element_children.map { |el| [el.name, el["id"]] }).to eq([["turbo-frame", "insights"]])
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past week")
+        expect(chart_sources).to all(end_with("?timeframe=Past+week"))
+      end
+
+      it "ignores a timeframe it doesn't know" do
+        get(:show, params: { id: event.slug, timeframe: "Past decade" })
+
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
+        expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
+      end
     end
   end
 
