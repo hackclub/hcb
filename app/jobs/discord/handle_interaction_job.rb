@@ -144,7 +144,7 @@ module Discord
           content_type:
         )
 
-        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code).run!
+        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code.ledger_item).run!
 
         respond(embeds: [{
                   title: "Your receipt has been uploaded!",

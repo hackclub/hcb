@@ -14,8 +14,8 @@ RSpec.describe ReceiptsController do
       ledger_item = hcb_code.ledger_item
 
       post(:create, params: {
-             receiptable_type: "HcbCode",
-             receiptable_id: hcb_code.id,
+             receiptable_type: "Ledger::Item",
+             receiptable_id: hcb_code.ledger_item.id,
              upload_method: "receipts_page",
              file: [fixture_file_upload("receipt.png", "image/png")]
            }, format: :turbo_stream)
@@ -28,18 +28,18 @@ RSpec.describe ReceiptsController do
 
     it "doesn't send the re-rendered no/lost link back to the upload endpoint" do
       create_session(create(:user, :make_admin), verified: true)
-      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      ledger_item = create(:canonical_pending_transaction).local_hcb_code.ledger_item
 
       post(:create, params: {
-             receiptable_type: "HcbCode",
-             receiptable_id: hcb_code.id,
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
              upload_method: "transaction_page",
              file: [fixture_file_upload("receipt.png", "image/png")]
            }, format: :turbo_stream)
 
       expect(response.body).to include("No/lost receipt?")
       link = Nokogiri::HTML5.fragment(response.body).at_css('a[href*="lost_receipt"]')
-      expect(link["href"]).to eq(receiptable_lost_receipt_path(receiptable_type: "HcbCode", receiptable_id: hcb_code.id))
+      expect(link["href"]).to eq(receiptable_lost_receipt_path(receiptable_type: "Ledger::Item", receiptable_id: ledger_item.id))
     end
 
     it "streams the new receipt count into the item's ledger row" do
@@ -48,8 +48,8 @@ RSpec.describe ReceiptsController do
       ledger_item = hcb_code.ledger_item
 
       post(:create, params: {
-             receiptable_type: "HcbCode",
-             receiptable_id: hcb_code.id,
+             receiptable_type: "Ledger::Item",
+             receiptable_id: hcb_code.ledger_item.id,
              upload_method: "transaction_popover",
              file: [fixture_file_upload("receipt.png", "image/png")]
            }, format: :turbo_stream)
@@ -126,8 +126,15 @@ RSpec.describe ReceiptsController do
       ApplicationRecord.descendants
                        .filter { _1.include?(Receiptable) }
                        .each do |klass|
+        # A transaction's receipts go on its ledger item, not its HCB code (#14106).
+        next if klass == HcbCode
+
         expect(ReceiptsController::RECEIPTABLE_TYPE_MAP).to have_key(klass.to_s)
       end
+    end
+
+    it "do not include HcbCode" do
+      expect(ReceiptsController::RECEIPTABLE_TYPE_MAP).not_to have_key("HcbCode")
     end
   end
 end

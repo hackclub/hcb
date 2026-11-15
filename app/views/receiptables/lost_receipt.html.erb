@@ -1,6 +1,6 @@
 <% title "Lost receipt statement" %>
-<% charged = @receiptable.try(:amount_cents)&.abs %>
-<% subtitle [@receiptable.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
+<% charged = @transaction.try(:amount_cents)&.abs %>
+<% subtitle [@transaction.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
 
 <%= render "receiptables/lost_receipt_steps", form: true %>
 
@@ -94,7 +94,7 @@
       </div>
       <div class="paper-receipt__barcode" aria-hidden="true"></div>
       <div class="paper-receipt__foot">
-        <%= @receiptable.try(:hcb_code) || @receiptable.to_global_id %>
+        <%= @transaction.try(:hcb_code) || @transaction.to_global_id %>
         <p>No returns. No refunds. No more losing receipts.</p>
         <p>*** Please keep the next one ***</p>
       </div>

@@ -1,8 +1,8 @@
 <% title "Lost receipt statement" %>
-<% charged = @receiptable.try(:amount_cents)&.abs %>
-<% merchant = @receiptable.try(:memo).presence || "the merchant" %>
-<% date = (@receiptable.try(:date) || @receiptable.try(:datetime))&.strftime("%B %-d") %>
-<% subtitle [@receiptable.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
+<% charged = @transaction.try(:amount_cents)&.abs %>
+<% merchant = @transaction.try(:memo).presence || "the merchant" %>
+<% date = (@transaction.try(:date) || @transaction.try(:datetime))&.strftime("%B %-d") %>
+<% subtitle [@transaction.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
 <%= render "receiptables/lost_receipt_steps" %>
 
 <h3 class="mb-2">Have you tried these?</h3>

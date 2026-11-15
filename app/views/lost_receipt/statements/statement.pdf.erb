@@ -1,4 +1,4 @@
-<% receiptable = @statement.receipt.receiptable %>
+<% receiptable = @statement.receiptable %>
 <% charged = receiptable.try(:amount_cents)&.abs %>
 <% cardholder = receiptable.try(:stripe_cardholder)&.user %>
 <% money = ->(cents) { Money.new(cents, "USD").format } %>
