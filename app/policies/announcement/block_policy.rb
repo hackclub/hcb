@@ -10,10 +10,6 @@ class Announcement
       admin_or_manager?
     end
 
-    def refresh?
-      admin_or_manager?
-    end
-
     def edit?
       (manager? && record.announcement.author == user) || admin?
     end

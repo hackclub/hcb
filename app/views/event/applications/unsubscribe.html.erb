@@ -1,0 +1,18 @@
+<% title "Application reminders" %>
+
+<div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+  <% if @application.archived? %>
+    <h2 class="text-3xl md:text-4xl m-0">You're unsubscribed</h2>
+    <p class="max-w-xl md:text-center">Your application has been archived. We won't send you any more reminders to complete it.</p>
+  <% elsif !@application.draft? %>
+    <h2 class="text-3xl md:text-4xl m-0">Your application has already been submitted</h2>
+    <p class="max-w-xl md:text-center">We won't send you any more reminders to complete it. Your application has not been changed.</p>
+  <% else %>
+    <h2 class="text-3xl md:text-4xl m-0">Stop application reminders?</h2>
+    <p class="max-w-xl md:text-center">This will archive your application<% if @application.name.present? %> for <strong><%= @application.name %></strong><% end %>. We won't send you any more reminders to complete it.</p>
+
+    <% content_for :footer do %>
+      <%= button_to "Archive application and stop reminders", unsubscribe_application_path(params[:id]), class: "btn btn--destroy" %>
+    <% end %>
+  <% end %>
+</div>
