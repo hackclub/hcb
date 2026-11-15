@@ -336,7 +336,7 @@ RSpec.describe MyController do
         )
         create(:canonical_event_mapping, canonical_transaction:, event:)
 
-        canonical_transaction.local_hcb_code.reload.tap { |hcb_code| hcb_code.update!(receipt_due_at:) }
+        canonical_transaction.local_hcb_code.reload.tap { |hcb_code| hcb_code.ledger_item.update!(receipt_due_at:) }
       end
 
       it "falls back to card grouping when nothing outstanding has a deadline" do

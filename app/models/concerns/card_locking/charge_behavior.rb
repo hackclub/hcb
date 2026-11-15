@@ -1,27 +1,34 @@
 # frozen_string_literal: true
 
 module CardLocking
-  # All card-locking behavior for a charge (HcbCode). Concentrates the coupling
-  # to HcbCode in one place so it is easy to tear out when HcbCode is removed.
-  # See docs/card-locking/migrating-hcbcode-to-ledger.md.
+  # All card-locking behavior for a charge: a Ledger::Item linked to a
+  # CardCharge. The persisted timing (card_charge_settled_at, receipt_due_at,
+  # receipt_resolved_at) lives on the item.
   module ChargeBehavior
     extend ActiveSupport::Concern
 
-    STRIPE_CARD_JOIN = "INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id"
+    CARD_CHARGE_JOIN = "INNER JOIN card_charges ON ledger_items.linked_object_type = 'CardCharge' AND card_charges.id = ledger_items.linked_object_id"
+    STRIPE_CARD_JOIN = "INNER JOIN stripe_cards ON stripe_cards.id = card_charges.stripe_card_id"
     STRIPE_CARDHOLDER_JOIN = "INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id"
-    EVENT_MAPPING_JOIN = "INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id"
-    ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'"
+    # The item's primary ledger is owned by an event or by a card grant, whose
+    # charges count against the grant's event.
+    PRIMARY_LEDGER_JOIN = <<~SQL.squish
+      INNER JOIN ledger_mappings ON ledger_mappings.ledger_item_id = ledger_items.id AND ledger_mappings.on_primary_ledger
+      INNER JOIN ledgers ON ledgers.id = ledger_mappings.ledger_id
+      LEFT JOIN card_grants ON card_grants.id = ledgers.card_grant_id
+    SQL
+    ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = COALESCE(ledgers.event_id, card_grants.event_id) AND event_plans.aasm_state = 'active'"
 
     included do
       # Every settled Stripe card charge a cardholder has ever made. Unbounded in
       # time, so callers must supply their own date bound or scan the whole table.
       scope :card_locking_relevant, -> {
-        joins(:canonical_transactions)
-          .merge(CanonicalTransaction.stripe_transaction)
+        joins(CARD_CHARGE_JOIN)
           .joins(STRIPE_CARD_JOIN)
-          .joins(EVENT_MAPPING_JOIN)
+          .joins(PRIMARY_LEDGER_JOIN)
           .joins(ACTIVE_EVENT_PLAN_JOIN)
-          .where("canonical_transactions.amount_cents < 0")
+          .where("ledger_items.amount_cents < 0")
+          .where.not(settled_at: nil)
           .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
       }
       # card_locking_relevant narrowed to a single cardholder.
@@ -32,29 +39,31 @@ module CardLocking
       # and settled once enforcement began.
       #
       # This is the live "still missing a receipt" source of truth for candidate
-      # discovery and materialization: it reads the actual receipts join and
+      # discovery and materialization: it reads the actual receipts and
       # marked_no_or_lost_receipt_at, not the persisted receipt_due_at /
       # receipt_resolved_at fast-path that drives the lock decision. The two are
       # kept deliberately distinct (the persisted columns let the lock query use
-      # the partial index and self-heal against this join); a future cleanup must
+      # the partial index and self-heal against this check); a future cleanup must
       # not collapse them.
       scope :card_locking_candidates, -> {
         card_locking_relevant
           .joins(STRIPE_CARDHOLDER_JOIN)
           .without_receipt
           .where(marked_no_or_lost_receipt_at: nil)
-          .where("canonical_transactions.created_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
+          .where("ledger_items.settled_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
       # Charges past their deadline and still unresolved. Keys off the persisted
-      # columns directly (not the receipts join) so the partial index on
+      # columns directly (not the receipts check) so the partial index on
       # receipt_due_at is usable.
       scope :receipt_overdue, ->(now = Time.current) {
-        where("hcb_codes.receipt_due_at <= ?", now).where(receipt_resolved_at: nil)
+        where("ledger_items.receipt_due_at <= ?", now).where(receipt_resolved_at: nil)
       }
     end
 
+    # When the charge settled for the purposes of its receipt clock: the moment
+    # HCB imported its first captured transaction.
     def card_locking_settled_at
-      return unless stripe_card? || stripe_force_capture?
+      return unless linked_object_type == "CardCharge"
       return @card_locking_settled_at if defined?(@card_locking_settled_at)
 
       @card_locking_settled_at = if association(:canonical_transactions).loaded?
@@ -65,7 +74,15 @@ module CardLocking
     end
 
     def card_locking_chargeable?
-      (stripe_card? || stripe_force_capture?) && card_locking_settled_at.present?
+      linked_object_type == "CardCharge" && card_locking_settled_at.present?
+    end
+
+    # The cardholder whose cards this charge can lock: always the person on the
+    # charge's Stripe card, never whoever uploaded the receipt (an org teammate
+    # may, or an email-link upload has no user at all). Nil for anything that
+    # isn't a card charge.
+    def card_locking_cardholder
+      linked_object&.stripe_cardholder&.user if linked_object_type == "CardCharge"
     end
 
     def card_locking_resolved_at
@@ -101,7 +118,7 @@ module CardLocking
       settled_at = card_charge_settled_at || card_locking_settled_at
       resolved_at = receipt_resolved_at || card_locking_resolved_at
       if enforcement_start_date == :unset
-        enforcement_start_date = CardLocking.enforcement_start_date(stripe_card&.stripe_cardholder&.user)
+        enforcement_start_date = CardLocking.enforcement_start_date(card_locking_cardholder)
       end
 
       due_at =

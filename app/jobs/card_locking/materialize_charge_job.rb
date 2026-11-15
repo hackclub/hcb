@@ -7,11 +7,14 @@ module CardLocking
   class MaterializeChargeJob < ApplicationJob
     queue_as :low
 
-    def perform(hcb_code_id:)
-      hcb_code = HcbCode.find_by(id: hcb_code_id)
-      return unless hcb_code
+    # hcb_code_id is only passed by jobs enqueued before card locking moved onto
+    # ledger items; drop it once none are left in the queue.
+    def perform(ledger_item_id: nil, hcb_code_id: nil)
+      ledger_item_id ||= HcbCode.find_by(id: hcb_code_id)&.ledger_item_id
+      ledger_item = Ledger::Item.find_by(id: ledger_item_id)
+      return unless ledger_item
 
-      hcb_code.materialize_card_locking!(now: Time.current)
+      ledger_item.materialize_card_locking!(now: Time.current)
     end
 
   end

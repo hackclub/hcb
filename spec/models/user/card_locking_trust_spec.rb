@@ -14,8 +14,8 @@ RSpec.describe User, type: :model do
   # current `now` would instead model a charge first materialized days late, which
   # CardLocking::Deadline deliberately floors so it cannot land already overdue.
   def materialize_all
-    HcbCode.where(hcb_code: user.stripe_cards.flat_map { |c| c.local_hcb_codes.pluck(:hcb_code) })
-           .find_each { |hc| hc.materialize_card_locking!(now: hc.card_locking_settled_at || now) }
+    Ledger::Item.card_locking_relevant_for_cardholder(user.id).distinct
+                .find_each { |charge| charge.materialize_card_locking!(now: charge.card_locking_settled_at || now) }
   end
 
   describe "#receipt_trusted?" do
@@ -106,7 +106,7 @@ RSpec.describe User, type: :model do
       add_history(3, offset: 60, card:)
       materialize_all
       # Otherwise equal counts could just mean the new charges were never read.
-      expect(HcbCode.card_locking_relevant_for_cardholder(user.id).distinct.count).to eq(5)
+      expect(Ledger::Item.card_locking_relevant_for_cardholder(user.id).distinct.count).to eq(5)
       large = queries_during { User.find(user.id).receipt_trusted?(now:) }
 
       expect(large).to eq(small)

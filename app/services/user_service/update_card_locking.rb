@@ -88,14 +88,14 @@ module UserService
     def unlocked_message(suppressed_until, now:)
       return "Your HCB cards work again. Keep uploading receipts within 7 days of the charge, or your cards will lock again. Manage receipts at #{CardLocking.inbox_url}." if suppressed_until.nil?
 
-      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      count = @user.card_locking_overdue_charges(now:).count("ledger_items.id")
       noun = "receipt".pluralize(count)
       deadline = CardLocking.format_deadline(suppressed_until, @user.assumed_timezone)
       "Your HCB cards work again until #{deadline}, as a one time exception from the HCB team. Upload your #{count} overdue #{noun} before then or your cards lock again. #{CardLocking.inbox_url}"
     end
 
     def locked_message(now:)
-      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      count = @user.card_locking_overdue_charges(now:).count("ledger_items.id")
       noun = "receipt".pluralize(count)
       verb = count == 1 ? "is" : "are"
       "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Recurring charges will also fail until you upload. Upload to unlock in seconds at #{CardLocking.inbox_url}."
@@ -109,7 +109,7 @@ module UserService
       key = "card_locking_still_locked:#{@user.id}"
       return unless Rails.cache.write(key, true, expires_in: 10.minutes, unless_exist: true)
 
-      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      count = @user.card_locking_overdue_charges(now:).count("ledger_items.id")
       return if count.zero?
 
       noun = "receipt".pluralize(count)

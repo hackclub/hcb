@@ -11,7 +11,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
   it "locks and notifies when a charge is overdue" do
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
-    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(Ledger::Item.none)
     expect {
       described_class.new(user:).run
     }.to change { user.reload.cards_locked? }.from(false).to(true)
@@ -82,7 +82,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
   it "tells a cardholder unlocked by suppression when the exception ends" do
     user.update!(cards_locked: true, card_locking_suppressed_until: 24.hours.from_now)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
-    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(Ledger::Item.none)
 
     expect {
       described_class.new(user:).run

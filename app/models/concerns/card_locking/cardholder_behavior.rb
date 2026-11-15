@@ -12,7 +12,7 @@ module CardLocking
 
     class_methods do
       def card_locking_candidates
-        candidate_user_ids = HcbCode.card_locking_candidates.select("DISTINCT stripe_cardholders.user_id")
+        candidate_user_ids = Ledger::Item.card_locking_candidates.select("DISTINCT stripe_cardholders.user_id")
 
         where(cards_locked: true).or(where(id: candidate_user_ids)).distinct
       end
@@ -27,7 +27,7 @@ module CardLocking
     def last_settled_charge_at
       return nil unless stripe_cardholder
 
-      HcbCode.card_locking_relevant_for_cardholder(id).maximum(:card_charge_settled_at)
+      Ledger::Item.card_locking_relevant_for_cardholder(id).maximum(:card_charge_settled_at)
     end
 
     # Trusted iff on-time rate >= 80% over the last 6 months AND the most recent
@@ -37,10 +37,10 @@ module CardLocking
     def receipt_trusted?(now: Time.current)
       return false unless stripe_cardholder
 
-      rows = HcbCode.card_locking_relevant_for_cardholder(id)
-                    .where("hcb_codes.card_charge_settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
-                    .distinct
-                    .pluck(:id, :card_charge_settled_at, :receipt_due_at, :receipt_resolved_at)
+      rows = Ledger::Item.card_locking_relevant_for_cardholder(id)
+                         .where("ledger_items.card_charge_settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
+                         .distinct
+                         .pluck(:id, :card_charge_settled_at, :receipt_due_at, :receipt_resolved_at)
 
       considered = rows.filter_map do |id, settled, due, resolved|
         next if settled.nil?
@@ -84,27 +84,27 @@ module CardLocking
     #
     # The persisted receipt_due_at / receipt_resolved_at columns are the primary
     # signal (partial-index-friendly). card_locking_candidates adds the live "still
-    # missing a receipt" join (no attached receipts row, marked_no_or_lost_receipt_at
+    # missing a receipt" check (no attached receipts row, marked_no_or_lost_receipt_at
     # NULL) as a self-healing safety net: a charge whose receipt was attached via a
     # path that bypassed the materializer (bulk insert, raw import, rolled-back
-    # callback) can't stay wrongly overdue forever. The extra join does not stop the
+    # callback) can't stay wrongly overdue forever. The extra check does not stop the
     # partial index on receipt_due_at from being used for the persisted predicate.
     def card_locking_overdue_charges(now: Time.current)
-      return HcbCode.none unless stripe_cardholder
+      return Ledger::Item.none unless stripe_cardholder
 
-      HcbCode.card_locking_candidates
-             .where(stripe_cardholders: { user_id: id })
-             .receipt_overdue(now)
-             .distinct
+      Ledger::Item.card_locking_candidates
+                  .where(stripe_cardholders: { user_id: id })
+                  .receipt_overdue(now)
+                  .distinct
     end
 
     # All outstanding (unresolved, enforcement-era) charges for this cardholder.
     def card_locking_outstanding_charges
-      return HcbCode.none unless stripe_cardholder
+      return Ledger::Item.none unless stripe_cardholder
 
-      HcbCode.card_locking_candidates
-             .where(stripe_cardholders: { user_id: id })
-             .distinct
+      Ledger::Item.card_locking_candidates
+                  .where(stripe_cardholders: { user_id: id })
+                  .distinct
     end
 
     def card_locking_outstanding_count

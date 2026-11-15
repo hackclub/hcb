@@ -5,8 +5,9 @@ module ReceiptsHelper
   # a single :overdue bucket, then one bucket per calendar day, then :pending
   # for charges that haven't settled yet, then :none for charges that never had
   # a deadline (cardholders outside enforcement).
+  # The deadline lives on the charge's ledger item (CardLocking::ChargeBehavior).
   def receipt_due_group(hcb_code, now: Time.current)
-    due_at = hcb_code.receipt_due_at
+    due_at = hcb_code.ledger_item&.receipt_due_at
 
     # A pending charge has no deadline because its clock only starts once it
     # settles. That makes it the newest thing on the page, not the oldest, so it

@@ -8,11 +8,11 @@ module Maintenance
   # still count toward trust) but no due date, so they are never overdue.
   class BackfillCardLockingTimingTask < MaintenanceTasks::Task
     def collection
-      HcbCode.where(id: HcbCode.card_locking_relevant.select(:id))
+      Ledger::Item.where(id: Ledger::Item.card_locking_relevant.select(:id))
     end
 
-    def process(hcb_code)
-      hcb_code.materialize_card_locking!
+    def process(ledger_item)
+      ledger_item.materialize_card_locking!
     end
 
   end

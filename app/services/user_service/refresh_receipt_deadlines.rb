@@ -19,17 +19,17 @@ module UserService
       last_settled = @user.last_settled_charge_at
       enforcement_start_date = CardLocking.enforcement_start_date(@user)
 
-      outstanding_charges.find_each do |hcb_code|
-        hcb_code.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:)
+      outstanding_charges.find_each do |ledger_item|
+        ledger_item.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:)
       end
     end
 
     private
 
     def outstanding_charges
-      HcbCode.card_locking_candidates
-             .where(stripe_cardholders: { user_id: @user.id })
-             .includes(:canonical_transactions, :receipts)
+      Ledger::Item.card_locking_candidates
+                  .where(stripe_cardholders: { user_id: @user.id })
+                  .includes(:canonical_transactions, :receipts)
     end
 
   end

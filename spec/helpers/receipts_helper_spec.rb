@@ -5,8 +5,13 @@ require "rails_helper"
 RSpec.describe ReceiptsHelper, type: :helper do
   let(:now) { Time.zone.parse("2026-08-06 14:00:00") }
 
+  # The deadline lives on the charge's ledger item.
   def charge(due_at, settled: true)
-    instance_double(HcbCode, receipt_due_at: due_at, canonical_transactions: settled ? [instance_double(CanonicalTransaction)] : [])
+    instance_double(
+      HcbCode,
+      ledger_item: instance_double(Ledger::Item, receipt_due_at: due_at),
+      canonical_transactions: settled ? [instance_double(CanonicalTransaction)] : []
+    )
   end
 
   describe "#receipt_due_group" do

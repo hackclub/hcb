@@ -26,17 +26,17 @@ module Maintenance
     GRACE = CardLocking::DEADLINE_SHORTENING_FLOOR
 
     def collection
-      HcbCode.card_locking_candidates
-             .receipt_overdue
-             .where(stripe_cardholders: { user_id: User.where(cards_locked: false) })
-             .distinct
+      Ledger::Item.card_locking_candidates
+                  .receipt_overdue
+                  .where(stripe_cardholders: { user_id: User.where(cards_locked: false) })
+                  .distinct
     end
 
-    def process(hcb_code)
+    def process(ledger_item)
       # The sweep will not claw this back: Deadline#compute's shortening branch
       # clamps to min(max(target, now + 72h), current_due_at), which holds at the
       # granted value rather than dropping to the original settled_at + 7 days.
-      hcb_code.update_columns(receipt_due_at: GRACE.from_now)
+      ledger_item.update_columns(receipt_due_at: GRACE.from_now)
     end
 
   end

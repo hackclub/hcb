@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_200002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1632,6 +1632,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.bigint "author_id"
+    t.datetime "card_charge_settled_at"
     t.integer "comment_count", default: 0, null: false
     t.integer "cpt_count", default: 0, null: false
     t.datetime "created_at", null: false
@@ -1646,7 +1647,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.integer "not_admin_only_comment_count", default: 0, null: false
     t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
+    t.datetime "receipt_due_at"
     t.boolean "receipt_required"
+    t.datetime "receipt_resolved_at"
     t.datetime "settled_at"
     t.text "short_code"
     t.string "special_appearance"
@@ -1655,9 +1658,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["author_id"], name: "index_ledger_items_on_author_id"
+    t.index ["card_charge_settled_at"], name: "index_ledger_items_on_card_charge_settled_at"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
+    t.index ["receipt_due_at"], name: "index_ledger_items_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
   end

@@ -226,19 +226,19 @@ RSpec.describe Receiptable do
       travel_back
     end
 
-    it "resolves a charge with a receipt attached to its ledger item" do
+    it "resolves a charge with a receipt attached to it" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      travel_to(2.days.ago) { attach_receipt_to(charge.ledger_item, user:) }
+      travel_to(2.days.ago) { attach_receipt_to(charge, user:) }
 
       expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
-      expect(HcbCode.card_locking_candidates).not_to include(charge)
+      expect(Ledger::Item.card_locking_candidates).not_to include(charge)
     end
 
     it "resolves the same way from the preloaded association, without querying" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      travel_to(2.days.ago) { attach_receipt_to(charge.ledger_item, user:) }
+      travel_to(2.days.ago) { attach_receipt_to(charge, user:) }
 
-      loaded = HcbCode.includes(:receipts).find(charge.id)
+      loaded = Ledger::Item.includes(:receipts).find(charge.id)
 
       queries = count_queries do
         expect(loaded.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
@@ -246,10 +246,10 @@ RSpec.describe Receiptable do
       expect(queries).to eq(0)
     end
 
-    it "still lists a charge whose ledger item has no receipt as a candidate" do
+    it "still lists a charge with no receipt as a candidate" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
 
-      expect(HcbCode.card_locking_candidates).to include(charge)
+      expect(Ledger::Item.card_locking_candidates).to include(charge)
     end
   end
 end

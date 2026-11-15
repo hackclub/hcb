@@ -80,14 +80,14 @@ class MyController < ApplicationController
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
-                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
+                                       .includes(:ledger_item, :canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT; the receipt deadline is on the ledger item
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
     # Deadlines only exist (and are only explained elsewhere on this page) for
     # cardholders inside the card locking rollout, so don't group by them until
     # there's at least one to group.
     @groupable_by_due_date = CardLocking.enabled? &&
-                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.ledger_item&.receipt_due_at.present? }
     @grouping =
       if @groupable_by_due_date
         params[:group].presence_in(["due_date", "card"]) || "due_date"
@@ -100,8 +100,8 @@ class MyController < ApplicationController
         # Soonest deadline first, then charges still pending, then charges that
         # never had a deadline; both undated groups newest first.
         hcb_codes_missing_receipt.sort_by do |hcb_code|
-          if hcb_code.receipt_due_at
-            [0, hcb_code.receipt_due_at.to_i]
+          if (due_at = hcb_code.ledger_item&.receipt_due_at)
+            [0, due_at.to_i]
           else
             [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
           end
