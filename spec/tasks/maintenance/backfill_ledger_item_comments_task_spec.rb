@@ -7,7 +7,7 @@ RSpec.describe Maintenance::BackfillLedgerItemCommentsTask, versioning: true do
   let(:hcb_code) { create(:hcb_code, ledger_item: item) }
 
   def legacy_comment(commentable, **attributes)
-    create(:comment, :legacy_on_hcb_code, commentable:, **attributes)
+    create(:comment, commentable:, **attributes)
   end
 
   describe "#collection" do
@@ -45,13 +45,17 @@ RSpec.describe Maintenance::BackfillLedgerItemCommentsTask, versioning: true do
       expect(comment).not_to be_edited
     end
 
-    it "leaves the ledger item's cached counts as they were" do
+    # The task doesn't refresh items; run Maintenance::RefreshLedgerItemsTask
+    # afterwards if the cached counts have drifted.
+    it "is counted by the ledger item once it refreshes" do
       legacy_comment(hcb_code)
       legacy_comment(hcb_code, admin_only: true)
+
+      described_class.new.process(hcb_code)
       item.refresh!
 
-      expect { described_class.new.process(hcb_code) }.not_to(change { item.reload.slice(:comment_count, :not_admin_only_comment_count) })
       expect(item.comment_count).to eq(2)
+      expect(item.not_admin_only_comment_count).to eq(1)
     end
 
     it "is a no-op the second time" do

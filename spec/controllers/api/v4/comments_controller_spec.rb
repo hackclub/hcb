@@ -49,13 +49,13 @@ RSpec.describe Api::V4::CommentsController do
       expect(response).to have_http_status(:ok)
     end
 
-    it "includes comments left on the transaction's ledger item" do
+    it "lists the ledger item's comments when the transaction has one" do
       hcb_code.update!(ledger_item: create(:ledger_item))
       item_comment = create(:comment, commentable: hcb_code.ledger_item)
 
       get_index(viewer: create(:user, access_level: :admin), scopes: "admin:comments:read")
 
-      expect(response.parsed_body.map { |c| c["id"] }).to contain_exactly(comment.public_id, admin_comment.public_id, item_comment.public_id)
+      expect(response.parsed_body.map { |c| c["id"] }).to contain_exactly(item_comment.public_id)
     end
   end
 

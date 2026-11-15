@@ -124,10 +124,10 @@
   <% viewing_disbursement = disbursement_side_of(@item) %>
   <% if viewing_disbursement.present? %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.unshared_comments.any? %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.commentable.comments.any? %>
       <p class="muted">
-        <%= link_to counterparty_hcb_code.ledger_item || counterparty_hcb_code do %>
-          View <%= pluralize(counterparty_hcb_code.unshared_comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
+        <%= link_to counterparty_hcb_code.commentable do %>
+          View <%= pluralize(counterparty_hcb_code.commentable.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
         <% end %>
       </p>
     <% end %>

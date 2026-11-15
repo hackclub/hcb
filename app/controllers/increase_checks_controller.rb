@@ -63,7 +63,7 @@ class IncreaseChecksController < ApplicationController
   def reject
     authorize @check
 
-    @check.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    @check.local_hcb_code.commentable.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     @check.mark_rejected!
 

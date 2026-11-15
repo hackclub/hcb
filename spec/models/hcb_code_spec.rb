@@ -337,20 +337,31 @@ RSpec.describe HcbCode, type: :model do
         expect(hcb_code.all_comments).to include(comment)
       end
 
-      it "includes comments left on the code's ledger item" do
-        hcb_code = create(:hcb_code, ledger_item: create(:ledger_item))
-        on_code = create(:comment, :legacy_on_hcb_code, commentable: hcb_code, user:)
+      it "is the ledger item's comments when the code has one" do
+        disbursement = create(:disbursement)
+        hcb_code = disbursement.outgoing_disbursement.local_hcb_code
+        hcb_code.update!(ledger_item: create(:ledger_item, linked_object: disbursement.outgoing_disbursement))
         on_item = create(:comment, commentable: hcb_code.ledger_item, user:)
+        shared = create(:comment, commentable: disbursement, user:)
 
-        expect(hcb_code.all_comments).to contain_exactly(on_code, on_item)
-        expect(hcb_code.unshared_comments).to contain_exactly(on_code, on_item)
+        expect(hcb_code.all_comments).to contain_exactly(on_item, shared)
+      end
+    end
+
+    describe "#commentable" do
+      it "is the ledger item when the code has one, and the code itself otherwise" do
+        with_item = create(:hcb_code, ledger_item: create(:ledger_item))
+        without_item = create(:hcb_code)
+
+        expect(with_item.commentable).to eq(with_item.ledger_item)
+        expect(without_item.commentable).to eq(without_item)
       end
     end
 
     describe "#comments_count" do
-      it "reads the counts cached on the ledger item, which cover both sides" do
+      it "reads the counts cached on the ledger item" do
         hcb_code = create(:hcb_code, ledger_item: create(:ledger_item))
-        create(:comment, :legacy_on_hcb_code, commentable: hcb_code)
+        create(:comment, commentable: hcb_code.ledger_item)
         create(:comment, commentable: hcb_code.ledger_item, admin_only: true)
 
         hcb_code.reload

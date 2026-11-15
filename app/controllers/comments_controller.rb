@@ -113,6 +113,9 @@ class CommentsController < ApplicationController
     klass = COMMENTABLE_TYPE_MAP[resource.singularize.classify]
     @commentable = klass.find(id)
 
+    # A transaction's comments live on its ledger item (#14105)
+    @commentable = @commentable.commentable if @commentable.is_a?(HcbCode)
+
     # On a transfer between two organizations, the form can share the comment
     # with the other side, which puts it on the transfer itself.
     if params.dig(:comment, :comment_target) == "shared" && @commentable.shared_commentable?

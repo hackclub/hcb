@@ -33,35 +33,6 @@ RSpec.describe Comment, type: :model, versioning: true do
     end
   end
 
-  describe "commentable" do
-    it "moves a new comment on an HcbCode onto the code's ledger item" do
-      hcb_code = create(:hcb_code, ledger_item: create(:ledger_item))
-
-      comment = create(:comment, commentable: hcb_code)
-
-      expect(comment.reload.commentable).to eq(hcb_code.ledger_item)
-      expect(hcb_code.ledger_item.comments).to contain_exactly(comment)
-    end
-
-    it "leaves a new comment on an HcbCode that has no ledger item" do
-      hcb_code = create(:hcb_code)
-
-      comment = create(:comment, commentable: hcb_code)
-
-      expect(comment.reload.commentable).to eq(hcb_code)
-    end
-
-    it "doesn't move an existing comment when it's edited" do
-      hcb_code = create(:hcb_code)
-      comment = create(:comment, commentable: hcb_code)
-      hcb_code.update!(ledger_item: create(:ledger_item))
-
-      comment.update!(content: "Edited")
-
-      expect(comment.reload.commentable).to eq(hcb_code)
-    end
-  end
-
   describe "#shared?" do
     it "returns true when commentable is a Disbursement" do
       disbursement = create(:disbursement)

@@ -265,7 +265,7 @@ RSpec.describe EventsController do
       # Receipt and comment changes stream fresh counts into this element
       it "wraps each row's badges in an element that streams can target" do
         hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
-        create(:comment, commentable: hcb_code)
+        create(:comment, commentable: hcb_code.ledger_item)
 
         get(:ledger, params: { event_id: event.slug })
 
