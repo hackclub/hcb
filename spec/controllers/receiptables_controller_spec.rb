@@ -197,6 +197,17 @@ RSpec.describe ReceiptablesController do
       expect(response).to redirect_to(hcb_code_path(hcb_code))
     end
 
+    it "sends someone who found their receipt to the transaction, not back to where they came from" do
+      user = create(:user, full_name: "Alex Example")
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:lost_receipt, params: base_params.merge(return_to: event_transactions_path(event)))
+
+      found = Nokogiri::HTML.fragment(response.body).at_xpath('.//a[contains(., "I found it")]')
+      expect(URI(found["href"]).path).to eq(hcb_code_path(hcb_code))
+    end
+
     it "ignores a javascript: return_to" do
       user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)

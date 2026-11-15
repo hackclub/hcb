@@ -43,6 +43,8 @@ class ReceiptablesController < ApplicationController
     # The link can sit inside a frame or popover, so the referer is the only reliable way back.
     @return_to = safe_url(params[:return_to]) || (safe_url(request.referrer) unless request.post?)
     @back_url = @return_to || url_for(fallback_location)
+    # Where the upload box is, for someone who found their receipt.
+    @upload_url = url_for(fallback_location)
     @hide_transfer_notes = true
     render template, layout: "transfer", **options
   end
@@ -62,7 +64,7 @@ class ReceiptablesController < ApplicationController
 
   # Signed link visitors can't view the transaction itself.
   def fallback_location
-    from_signed_link? ? attach_receipt_hcb_code_path(hcb_code, s: params[:s]) : @receiptable
+    from_signed_link? ? attach_receipt_hcb_code_path(hcb_code, s: params[:s]) : @transaction
   end
 
   def statement_params
