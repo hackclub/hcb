@@ -1,20 +1,24 @@
 <%# locals: (ledger_item:) %>
 
-<%
-  pending_transactions = ledger_item.canonical_pending_transactions.includes(:canonical_pending_declined_mapping, :canonical_transactions).to_a
-  settled_transaction_ids = pending_transactions.flat_map { |pt| pt.canonical_transactions.map(&:id) }
-  # Transactions that settled from one of this item's pending transactions are
-  # rendered nested under that pending transaction rather than on their own.
-  standalone_transactions = ledger_item.canonical_transactions.reject { |ct| settled_transaction_ids.include?(ct.id) }
-  timeline = (standalone_transactions + pending_transactions).sort_by { |t| [t.date, t.created_at] }
-%>
+<% pending_transactions = ledger_item.canonical_pending_transactions.includes(:canonical_pending_declined_mapping, :canonical_transactions).to_a %>
+<% settled_transaction_ids = pending_transactions.flat_map { |pt| pt.canonical_transactions.map(&:id) } %>
+<%# Transactions that settled from one of this item's pending transactions are
+    rendered nested under that pending transaction rather than on their own. %>
+<% standalone_transactions = ledger_item.canonical_transactions.reject { |ct| settled_transaction_ids.include?(ct.id) } %>
+<% timeline = (standalone_transactions + pending_transactions).sort_by { |t| [t.date, t.created_at] } %>
 
 <section class="my-5 flex flex-col gap-3">
   <% settled = false %>
 
   <% timeline.each_with_index do |transaction, index| %>
     <% if transaction.is_a?(CanonicalTransaction) %>
-      <% label = if index.zero? then "Created" elsif settled then "Updated" else "Settled" end %>
+      <% label = if index.zero?
+                   "Created"
+                 elsif settled
+                   "Updated"
+                 else
+                   "Settled"
+                 end %>
       <% settled = true %>
       <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: } %>
     <% else %>
