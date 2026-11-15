@@ -9,27 +9,23 @@ module Reimbursement
 
       mileage = params[:type] == "mileage"
       type = mileage ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
-      @expense = @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage))
+      files = Array(params[:file]).compact_blank
 
-      authorize @expense
-
-      if params[:file]
-        receipt = ::ReceiptService::Create.new(
-          receiptable: @expense,
-          uploader: current_user,
-          attachments: params[:file],
-          upload_method: :quick_expense
-        ).run!.first&.reload # extraction persists to a separate instance, so refresh ours
-        @expense.update(memo: receipt.suggested_memo, amount_cents: receipt.extracted_total_amount_cents) if receipt&.suggested_memo
+      # One expense per uploaded file, or a single blank expense when there are none.
+      @expenses = Array.new([files.size, 1].max) do
+        @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage)).tap { |expense| authorize expense }
       end
 
-      if @expense.save
-        respond_to do |format|
-          format.turbo_stream { render turbo_stream: on_create_streams }
-          format.html { redirect_to url_for(@report) }
-        end
-      else
-        redirect_to @report, flash: { error: @expense.errors.full_messages.to_sentence }
+      @expenses.zip(files).each do |expense, file|
+        return redirect_to @report, flash: { error: expense.errors.full_messages.to_sentence } unless expense.save
+
+        expense.attach_quick_expense_receipt!(file, uploader: current_user) if file
+      end
+      @expense = @expenses.last
+
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: on_create_streams }
+        format.html { redirect_to url_for(@report) }
       end
     end
 
@@ -132,12 +128,14 @@ module Reimbursement
                            })
     end
 
-    def new_expense_turbo_stream
-      turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
+    def new_expense_turbo_streams
+      @expenses.map do |expense|
+        turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense:, new: true })
+      end
     end
 
     def on_create_streams
-      [actions_turbo_stream, new_expense_turbo_stream, blankslate_turbo_stream]
+      [actions_turbo_stream, *new_expense_turbo_streams, blankslate_turbo_stream]
     end
 
     def on_update_streams
