@@ -410,6 +410,35 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "TIN verification" do
+    before { allow_any_instance_of(LegalEntity).to receive(:requires_tax_verification?).and_return(true) }
+
+    it "counts an imported form as verified, though TaxBandits never matches its TIN" do
+      result = run
+
+      expect(result.form.taxbandits_tin_matching_status).to be_nil
+      expect(result.form).to be_tin_verified
+      expect(result.legal_entity.reload.pending_payable_requirements).not_to include(:form_verified)
+    end
+
+    it "stays verified after a TaxBandits sync reports no TIN match" do
+      result = run
+      allow(TaxbanditsService).to receive(:get_submission).and_return(nil)
+      allow(TaxbanditsService).to receive(:get_status).and_return({ "FormStatus" => "COMPLETED", "TINMatching" => nil })
+
+      result.form.sync_with_taxbandits
+
+      expect(result.legal_entity.reload.pending_payable_requirements).not_to include(:form_verified)
+    end
+
+    it "still needs a TIN match for a form collected through TaxBandits" do
+      user = create(:user, email: "grace@example.com")
+      create(:tax_form, :completed, legal_entity: user.personal_legal_entity)
+
+      expect(user.personal_legal_entity.reload.pending_payable_requirements).to include(:form_verified)
+    end
+  end
+
   describe "on success" do
     it "gives the legal entity the form's TIN identity" do
       result = run

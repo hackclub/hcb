@@ -151,6 +151,16 @@ module Tax
       mark_sent!
     end
 
+    # Whether the TIN on this form counts as verified for payability. Forms
+    # imported from Tax1099 are taken as verified: they were collected and
+    # checked there, and they're submitted to TaxBandits without TIN matching,
+    # so a match result will never arrive. Decided here rather than by writing
+    # a match status, which a later TaxBandits sync would overwrite (and whose
+    # change sends the payee a "verified" email).
+    def tin_verified?
+      tax1099? || taxbandits_tin_match_success?
+    end
+
     # Gives the legal entity this form's TIN identity, if it has none yet. Runs
     # when a form's tin_hash is first set; Tax1099ImportService, which creates
     # its forms with a tin_hash already set, calls it once TaxBandits has
