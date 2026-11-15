@@ -38,7 +38,7 @@ class WiresController < ApplicationController
           uploader: current_user,
           attachments: wire_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @wire.local_hcb_code
+          receiptable: @wire.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
         ).run!
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }

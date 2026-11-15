@@ -137,6 +137,19 @@ RSpec.describe StripeCardsController do
         expect(response.body).not_to include("15 Falls Rd")
       end
 
+      it "doesn't link a shipping card to a private organization the cardholder has since left", :aggregate_failures do
+        setup_shipping_context => { user:, event: }
+        event.update_column(:is_public, false)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).and_return(Stripe::Issuing::Card.construct_from({ shipping: { status: "pending", eta: 3.days.from_now.to_i, tracking_number: nil } }))
+        OrganizerPosition.find_by!(user:, event:).destroy!
+        create_session(user, verified: true)
+
+        get(:shipping)
+
+        expect(response.body).to include("is on the way!", event.name)
+        expect(Nokogiri::HTML5(response.body).css("a[href='#{event_path(event)}']")).to be_empty
+      end
+
       it "shows the shipping address to the cardholder and auditors" do
         setup_shipping_context => { card:, user: }
 
@@ -209,6 +222,21 @@ RSpec.describe StripeCardsController do
           "Network Visa"
         ]
       )
+    end
+  end
+
+  describe "#freeze" do
+    it "does not let a cardholder take over a system freeze" do
+      setup_context => { card:, user: }
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      card.update!(stripe_status: "inactive", last_frozen_by: User.system_user)
+      create_session(user, verified: true)
+      expect(StripeService::Issuing::Card).not_to receive(:update)
+
+      post(:freeze, params: { id: card.id })
+
+      expect(flash[:error]).to eq("Card is already frozen")
+      expect(card.reload.last_frozen_by).to eq(User.system_user)
     end
   end
 end

@@ -2,12 +2,14 @@
 
 module UsersHelper
   def users_nav(selected: nil)
+    has_events = current_user&.events&.exists?
+
     items = [
       {
         name: "Home",
         path: root_path,
         icon: "home",
-        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
+        tooltip: has_events ? "See all your organizations" : "See your dashboard",
         selected: selected == :home
       }
     ]
@@ -41,7 +43,7 @@ module UsersHelper
     }
 
 
-    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
+    if has_events || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
       items << {
         name: "Receipts",
         path: my_inbox_path,
@@ -229,21 +231,30 @@ module UsersHelper
 
       aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
+      if viewer.admin? && user != viewer && !current_session&.impersonated?
+        impersonate_item = link_to(
+          safe_join([inline_icon("spy", size: 16), content_tag(:span, "Impersonate", class: "ml1")]),
+          impersonate_user_path(user.id),
+          class: "menu__item menu__item--icon menu__action",
+          data: { turbo_method: :post, turbo_confirm: "Impersonate #{user.name}?" }
+        )
+      end
+
       # Menu content items
       menu_items = safe_join([
-                               content_tag(
-                                 :span,
+                               mail_to(
+                                 user.email,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
-                                 data: { action: "click->mention#sendEmail" }
+                                 class: "menu__item menu__item--icon menu__action"
                                ),
                                #  copy to clipboard
                                content_tag(
                                  :span,
-                                 safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
-                                 data: { action: "click->mention#copyEmail" }
+                                 safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1", data: { clipboard_target: "label" })]),
+                                 class: "menu__item menu__item--icon menu__action",
+                                 data: { controller: "clipboard", action: "click->clipboard#copy", clipboard_text_value: user.email, clipboard_confirm_text_value: "Copied!" }
                                ),
+                               impersonate_item,
                                content_tag(
                                  :span,
                                  nil,
@@ -257,11 +268,14 @@ module UsersHelper
                                )
                              ])
 
+      # A mention is often rendered inside a link (a document card, a card
+      # charge's spender), and HTML doesn't nest links: the browser would close
+      # the outer one at the menu's first link and spill the items onto the page.
+      # A <template> keeps them out of the page until the menu opens.
       menu_content = content_tag(
-        :span,
-        menu_items,
-        class: "menu__content menu__content--2 menu__content--compact h5",
-        data: { "menu-target": "content", "controller": "mention", "mention-email-value": user.email }
+        :template,
+        content_tag(:span, menu_items, class: "menu__content menu__content--2 menu__content--compact h5"),
+        data: { "menu-target": "content" }
       )
 
       menu_wrapper = content_tag(

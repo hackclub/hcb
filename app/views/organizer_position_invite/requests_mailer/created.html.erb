@@ -4,7 +4,7 @@
   <%= @request.requester.name %> (<%= @request.requester.email %>) has requested to join <%= @request.link.event.name %>.
 </p>
 
-You can <%= link_to "click here", event_team_url(@request.link.event) %> to approve or deny.
+You can <%= link_to "approve or deny the request", event_team_url(@request.link.event) %> from the team page.
 
 <p>
   From,<br>

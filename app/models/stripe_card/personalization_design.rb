@@ -55,7 +55,6 @@ class StripeCard
     scope :under_review, -> { where(stripe_status: "review") }
 
     scope :common, -> { where(common: true) }
-    scope :not_common, -> { where(common: false) }
     scope :stale, -> { where(stale: true) }
     scope :live, -> { where(stale: false) }
 

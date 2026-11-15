@@ -43,12 +43,7 @@ class HashedTransaction < ApplicationRecord
   has_one :canonical_hashed_mapping
   has_one :canonical_transaction, through: :canonical_hashed_mapping
 
-  belongs_to :duplicate_of_hashed_transaction, class_name: "HashedTransaction", optional: true
-  has_many   :duplicate_hashed_transactions, class_name: "HashedTransaction", foreign_key: "duplicate_of_hashed_transaction_id"
-
-  scope :marked_duplicate, -> { where.not(hashed_transaction_id: nil) }
   scope :uncanonized, -> { left_joins(:canonical_hashed_mapping).where(canonical_hashed_mappings: { id: nil }) }
-  scope :possible_duplicates, -> { where(primary_hash: HashedTransaction.select(:primary_hash).group(:primary_hash).having("count(primary_hash) > 1").pluck(:primary_hash)) }
 
   def date
     self[:date] || determine_store_and_return_date

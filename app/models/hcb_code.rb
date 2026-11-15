@@ -54,12 +54,8 @@ class HcbCode < ApplicationRecord
   monetize :amount_cents
 
   has_many :hcb_code_tags
-  has_many :tags, through: :hcb_code_tags, class_name: "::Tag"
-  has_many :hcb_code_tag_suggestions, class_name: "HcbCode::Tag::Suggestion"
-  has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
   has_many :suggested_pairings
-  has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
   has_one :pin, required: false
 
@@ -67,6 +63,10 @@ class HcbCode < ApplicationRecord
   belongs_to :subledger, optional: true
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
+  # Tags live on the ledger item; this reads through to them. Declared after
+  # `belongs_to :ledger_item` since a `through:` needs its association defined
+  # first. Nested through, so read-only — write via `ledger_item.tags`.
+  has_many :tags, through: :ledger_item, source: :tags, class_name: "::Tag"
 
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
@@ -108,16 +108,6 @@ class HcbCode < ApplicationRecord
     else
       "receipts+hcb-#{hashid}@hcb.hackclub.com"
     end
-  end
-
-  def best_suggested_receipts(limit: nil, threshold: nil, only_unreviewed: false)
-    pairings = only_unreviewed ? suggested_pairings.unreviewed : suggested_pairings
-
-    if threshold
-      pairings = pairings.where("distance <= ?", threshold)
-    end
-
-    pairings.includes(:receipt).order(distance: :asc).limit(limit).map(&:receipt).compact
   end
 
   def date
@@ -187,18 +177,6 @@ class HcbCode < ApplicationRecord
       else
         canonical_pending_transactions.sum(:amount_cents)
       end
-  end
-
-  # this replicates our balance calculation
-  def smart_amount_cents
-    sum = canonical_transactions.sum(:amount_cents)
-    sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-
-    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-    sum += [fronted_pt_sum - settled_ct_sum, 0].max
-
-    sum
   end
 
   def amount_cents_by_event(event)
@@ -544,6 +522,10 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def fee_reimbursement_group
+    @fee_reimbursement_group ||= FeeReimbursementGroup.find_by(key: hcb_i2) if outgoing_fee_reimbursement?
+  end
+
   def card_charge
     return nil unless card_charge?
 
@@ -643,7 +625,7 @@ class HcbCode < ApplicationRecord
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
       reimbursement_payout_holding || stripe_service_fee ||
-      card_charge
+      fee_reimbursement_group || card_charge
   end
 
   # The `:receipt_required` scope determines the type of
@@ -705,6 +687,22 @@ class HcbCode < ApplicationRecord
     return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
+  end
+
+  # A payout's receipts live on its expense (see #receipts), which the ledger
+  # rows don't preload.
+  def preloaded_receipts
+    return if reimbursement_expense_payout?
+
+    super
+  end
+
+  # While receipts are split across an HCB code and its ledger item (see
+  # Receiptable#receipts), a code has a receipt if either side does. Keyed on
+  # the code's own columns so the receipt scopes and the raw transaction
+  # queries can use it without a join.
+  def self.receipts_exist_sql
+    "EXISTS (#{Receipt.select("1").where("(receipts.receiptable_type = 'HcbCode' AND receipts.receiptable_id = hcb_codes.id) OR (receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = hcb_codes.ledger_item_id)").to_sql})"
   end
 
   def local_hcb_code

@@ -119,14 +119,6 @@ module ReceiptService
       value / weight * 100
     end
 
-    def sorted_transactions
-      transaction_distances.sort_by { |match| match[:distance] }
-    end
-
-    def best_match
-      sorted_transactions.first
-    end
-
     private
 
     def transaction_distances(include_details: false)

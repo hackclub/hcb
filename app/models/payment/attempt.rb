@@ -150,30 +150,48 @@ class Payment
         end
 
         begin
-          transfer = payout_method.create_transfer(
-            payment.event,
-            amount: payment.amount_cents,
-            memo: "Payment for \"#{payment.purpose}\".",
-            payment_for: "Payment for \"#{payment.purpose}\".",
-            recipient_name: payment.payee.display_name,
-            recipient_email: payment.payee.email,
-            currency: payment.currency,
-            user: payment.creator,
-            purpose: :payment
-          )
+          # Savepoint so a failure here rolls back only the transfer (and its
+          # pending transaction), leaving the attempt itself persisted so it
+          # can be marked as failed below.
+          transaction(requires_new: true) do
+            transfer = payout_method.create_transfer(
+              payment.event,
+              amount: payment.amount_cents,
+              memo: "Payment for \"#{payment.purpose}\".",
+              payment_for: "Payment for \"#{payment.purpose}\".",
+              recipient_name: payment.payee.display_name,
+              recipient_email: payment.payee.email,
+              currency: payment.currency,
+              user: payment.creator,
+              purpose: :payment
+            )
 
-          transfer.save!
+            # Attach the attempt before saving so the transfer's create
+            # callbacks (and any failure handling in them) can see it.
+            transfer.payment_attempt = self
+            self.payout = transfer
+            transfer.save!
+            save!
 
-          self.payout = transfer
-          save!
+            # The payment's receipts belong on the transfer's ledger item, which
+            # only exists once its pending transaction commits. Attempts are
+            # created inside their callers' transactions (the payment's lock,
+            # a payee reassignment), so wait for the outermost one. A
+            # rolled-back savepoint drops the block.
+            ActiveRecord.after_all_transactions_commit do
+              Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.reload_ledger_item) # the association was cached as nil while the transfer's pending transaction was being created
+            end
 
-          Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-
-          mark_under_review!
+            mark_under_review!
+          end
         rescue => e
-          mark_failed!
-
           Rails.error.report(e)
+
+          # Discard in-memory changes from the rolled-back savepoint (e.g. the
+          # unsaved payout) so they aren't autosaved by mark_failed!.
+          reload
+          payment.reload
+          mark_failed!
         end
       end
     end

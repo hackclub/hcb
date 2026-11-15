@@ -42,6 +42,7 @@ module PendingTransactionEngine
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
+            included_local_hcb_code_associations << { ledger_item: [:tags, :receipts, { primary_ledger: [:event, { card_grant: :event }] }] }
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
                                                          order_by_mapped_at ? :canonical_pending_event_mapping : nil,
                                                          { local_hcb_code: included_local_hcb_code_associations }])
@@ -56,8 +57,8 @@ module PendingTransactionEngine
             if @tag_id
               cpts =
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
-                    .joins("LEFT JOIN hcb_codes_tags ON hcb_codes_tags.hcb_code_id = hcb_codes.id")
-                    .where("hcb_codes_tags.tag_id = ?", @tag_id)
+                    .joins("LEFT JOIN ledger_items_tags ON ledger_items_tags.ledger_item_id = hcb_codes.ledger_item_id")
+                    .where("ledger_items_tags.tag_id = ?", @tag_id)
             end
 
 
@@ -72,8 +73,7 @@ module PendingTransactionEngine
             if @missing_receipts
               cpts =
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
-                    .joins("LEFT JOIN receipts ON receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'")
-                    .where("receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND canonical_pending_transactions.amount_cents <= 0")
+                    .where("NOT #{HcbCode.receipts_exist_sql} AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND canonical_pending_transactions.amount_cents <= 0")
             end
 
             if @user

@@ -71,12 +71,6 @@ class StripeAuthorization < ApplicationRecord
     }
   end
 
-  def status_emoji
-    return "✔️" if approved?
-
-    "✖️"
-  end
-
   def status_text
     return "Declined" unless approved?
     return "Pending" if pending?
@@ -93,10 +87,6 @@ class StripeAuthorization < ApplicationRecord
     return :success if approved?
 
     :accent
-  end
-
-  def authorization_method_text
-    (stripe_obj[:wallet] || authorization_method).humanize
   end
 
   def merchant_name

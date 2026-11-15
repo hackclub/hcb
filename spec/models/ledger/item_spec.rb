@@ -564,6 +564,39 @@ RSpec.describe Ledger::Item, type: :model do
         item.update!(custom_memo: "Refunded")
       }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
     end
+
+    # An approved Stripe authorization as the webhook imports it: the raw
+    # pending transaction, its canonical pending transaction mapped to the
+    # card's event, and the ledger item that links them to a CardCharge.
+    def approved_stripe_authorization
+      stripe_card = create(:stripe_card, :with_stripe_id)
+      raw_pending_stripe_transaction = create(
+        :raw_pending_stripe_transaction, amount_cents: -45_00, date_posted: Date.current,
+        stripe_transaction: {
+          "card"                 => { "id" => stripe_card.stripe_id },
+          "approved"             => true,
+          "status"               => "closed",
+          "authorization_method" => "online",
+          "merchant_data"        => { "name" => "goBILDA", "category" => "bakeries" }
+        }
+      )
+      cpt = PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction:).run
+      PendingEventMappingEngine::Map::Single::Stripe.new(canonical_pending_transaction: cpt).run
+      cpt
+    end
+
+    it "emails the cardholder once when an authorization is released, although the item is refreshed from more than one copy" do
+      # Declining the authorization refreshes the item twice: the Ledger::Mapping
+      # commit hook refreshes its own copy of the item before the copy map! was
+      # called on gets its turn. Only the first may see the status change.
+      cpt = approved_stripe_authorization
+
+      expect {
+        cpt.decline!
+      }.to have_enqueued_mail(CardChargeMailer, :reversed).once
+
+      expect(cpt.ledger_item.reload).to be_released
+    end
   end
 
   describe "#author" do
@@ -609,6 +642,15 @@ RSpec.describe Ledger::Item, type: :model do
     let(:event) { create(:event) }
     let(:report) { create(:reimbursement_report, event:) }
     let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
+
+    it "reads #receipts from the reimbursed expense, ignoring any preloaded copies" do
+      receipt = attach_receipt_to(expense)
+
+      item = Ledger::Item.preload(:receipts, hcb_code: :receipts).find(payout_for(expense).reload.ledger_item.id)
+
+      expect(item.preloaded_receipts).to be_nil
+      expect(item.receipts).to contain_exactly(receipt)
+    end
 
     it "counts the receipts uploaded to the reimbursed expense" do
       attach_receipt_to(expense)

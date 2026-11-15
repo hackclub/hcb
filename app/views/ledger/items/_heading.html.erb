@@ -11,7 +11,7 @@
           <%= yield %>
         </span>
       <% end %>
-      <span <%= "hidden" if show_yield %> data-memo-target="memoDisplay">
+      <span <% if show_yield %> hidden<% end %> data-memo-target="memoDisplay">
         <span data-memo-target="tooltip" data-memo-for="<%= dom_id(ledger_item) %>" title="<%= ledger_item.memo %>">
           <%= render "ledger/items/memo/memo_text", item: ledger_item %>
         </span>
@@ -51,8 +51,6 @@
   <% if render_status %>
     <%= render "ledger/items/status", ledger_item: %>
   <% end %>
-
-  <div class="flex-1"></div>
 
   <% if can_rename %>
     <%= link_to "#",

@@ -80,7 +80,10 @@ export default class extends Controller {
     if (this.linkingValue) {
       const receiptId = extractId(e.dataTransfer)
 
-      const [receiptableType, receiptableId] = this.receiptableValue.split(':')
+      // "Ledger::Item:123": the type is namespaced, so split on the last colon
+      const separator = this.receiptableValue.lastIndexOf(':')
+      const receiptableType = this.receiptableValue.slice(0, separator)
+      const receiptableId = this.receiptableValue.slice(separator + 1)
       const linkPath = this.modalValue
 
       if (receiptId && receiptableType && receiptableId) {
