@@ -166,6 +166,34 @@ RSpec.describe CardGrantsController do
       instructions = response.parsed_body.css("[name='card_grant[instructions]']").sole
       expect(instructions.text.strip).to eq("Please only buy an iPad.")
     end
+
+    it "pre-checks the pre-authorization checkbox when the event's setting requires it" do
+      user = create(:user)
+      event = create(:event)
+      create(:card_grant_setting, event:, pre_authorization_required: true)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:new, params: { event_id: event.friendly_id })
+
+      expect(response).to have_http_status(:ok)
+      checkbox = response.parsed_body.css("input[type='checkbox'][name='card_grant[pre_authorization_required]']").sole
+      expect(checkbox.get_attribute("checked")).to eq("checked")
+    end
+
+    it "leaves the pre-authorization checkbox unchecked when the event's setting doesn't require it" do
+      user = create(:user)
+      event = create(:event)
+      create(:card_grant_setting, event:, pre_authorization_required: false)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:new, params: { event_id: event.friendly_id })
+
+      expect(response).to have_http_status(:ok)
+      checkbox = response.parsed_body.css("input[type='checkbox'][name='card_grant[pre_authorization_required]']").sole
+      expect(checkbox.get_attribute("checked")).to be_nil
+    end
   end
 
   describe "#card_index" do
