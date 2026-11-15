@@ -69,8 +69,8 @@ module CardLocking
     end
 
     def card_locking_resolved_at
-      receipt_at = if (preloaded = preloaded_receipts)
-                     preloaded.map(&:created_at).compact.min
+      receipt_at = if association(:receipts).loaded?
+                     receipts.map(&:created_at).compact.min
                    else
                      receipts.minimum(:created_at)
                    end

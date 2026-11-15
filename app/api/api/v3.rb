@@ -63,7 +63,7 @@ module Api
 }
           ]
         ).execute(ledgers: [org.ledger])
-                       .preload(:canonical_transactions, :canonical_pending_transactions, :receipts, :tags, { hcb_code: :receipts }, primary_ledger: :event)
+                       .preload(:canonical_transactions, :canonical_pending_transactions, :receipts, :tags, primary_ledger: :event)
       end
 
       def transactions

@@ -13,16 +13,16 @@ RSpec.describe Metric::User::TimeToReceipt do
     receipt
   end
 
-  # Receipts are moving onto ledger items (#14106); a receipt on either side
-  # counts, measured from the HCB code's creation.
-  it "averages the time from the HCB code's creation to each receipt, wherever it is attached" do
+  # Receipts are attached to the ledger item (#14106); the time is measured
+  # from the HCB code's creation.
+  it "averages the time from the HCB code's creation to each receipt on its ledger item" do
     user = create(:user)
     created_at = Time.zone.local(Metric.year, 6, 1, 12)
     hcb_code = create(:canonical_pending_transaction).local_hcb_code.reload
     hcb_code.update_column(:created_at, created_at)
 
     attach_receipt_to(hcb_code.ledger_item, user:, created_at: created_at + 1.hour)
-    attach_receipt_to(hcb_code, user:, created_at: created_at + 3.hours)
+    attach_receipt_to(hcb_code.ledger_item, user:, created_at: created_at + 3.hours)
 
     expect(described_class.new(subject: user).calculate).to eq(2.hours.to_i)
   end

@@ -31,15 +31,8 @@ RSpec.describe PendingTransactionEngine::PendingTransaction::All do
       expect(missing_receipts).to include(cpt)
     end
 
-    it "excludes an expense whose receipt is on its HCB code" do
-      cpt = pending_expense
-      attach_receipt_to(cpt.local_hcb_code)
-
-      expect(missing_receipts).not_to include(cpt)
-    end
-
-    # Receipts are moving onto ledger items (#14106); the filter has to see them
-    # on either side.
+    # Receipts are attached to the ledger item (#14106); the filter reads them
+    # through the HCB code's ledger_item_id.
     it "excludes an expense whose receipt is on its ledger item" do
       cpt = pending_expense
       attach_receipt_to(cpt.local_hcb_code.reload.ledger_item)
