@@ -3,8 +3,9 @@
 <%# Rows for a transaction's details list, linking a repayment and what it repays. %>
 <% disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) %>
 <%# A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one. %>
-<% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
-<% repays = disbursement ? disbursement.repaid_ledger_items : [] %>
+<%# safely: keeps the page rendering while #15624's migration reshapes the repayments table. %>
+<% repaid_by = safely { ledger_item.repayments.not_failed.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } } || [] %>
+<% repays = (safely { disbursement.repaid_ledger_items.to_a } if disbursement) || [] %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
