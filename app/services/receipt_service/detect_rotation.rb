@@ -96,7 +96,9 @@ module ReceiptService
 
     # Runs tesseract and returns [output, status], killing it at the deadline.
     def tesseract(path, *args)
-      Open3.popen2e(RTesseract.config.command, path.to_s, "stdout", *args) do |_stdin, out, process|
+      # One thread each: we run four at once, and Tesseract's own threads
+      # fighting over cores makes every pass many times slower.
+      Open3.popen2e({ "OMP_THREAD_LIMIT" => "1" }, RTesseract.config.command, path.to_s, "stdout", *args) do |_stdin, out, process|
         output = Thread.new { out.read }
         unless process.join([@deadline - Time.current, 0].max)
           Process.kill("KILL", process.pid)
