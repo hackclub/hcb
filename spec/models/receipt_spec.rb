@@ -42,7 +42,7 @@ RSpec.describe Receipt, type: :model do
                                            signer_name: "Alex Example", confirmed: true,
                                            items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
     expect(statement.submit(receiptable: charge)).to eq(true)
-    receipt = build_receipt(receiptable: charge, user: create(:user))
+    receipt = build_receipt(receiptable: charge.ledger_item, user: create(:user))
     receipt.save!
     expect(charge.reload).to be_no_or_lost_receipt
     expect(charge.ledger_item.reload).to be_no_or_lost_receipt
