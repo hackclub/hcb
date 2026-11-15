@@ -9,9 +9,9 @@ class MyController < ApplicationController
   def activities
     @before = params[:before] || Time.now
     if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-      @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     else
-      @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     end
   end
 
