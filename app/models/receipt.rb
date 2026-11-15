@@ -84,8 +84,8 @@ class Receipt < ApplicationRecord
   # A transaction's receipts live on its ledger item
   # (https://github.com/hackclub/hcb/issues/14106). Every write path passes the
   # ledger item already; this catches anything still handing over the HCB code.
-  # A code with no ledger item yet keeps the receipt until
-  # HcbCode#move_receipts_to_ledger_item! hands it over.
+  # A code with no ledger item yet keeps the receipt until it is linked to one
+  # (HcbCode's after_commit hands it over).
   before_validation do
     self.receiptable = receiptable.ledger_item_or_self if receiptable.is_a?(HcbCode)
   end
