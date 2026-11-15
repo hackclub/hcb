@@ -13,6 +13,10 @@ module Admin
     # The legal entity picker's value for "create a new business legal entity".
     NEW_LEGAL_ENTITY = "new"
 
+    # Imports create tax forms and submit TINs to TaxBandits, so they're
+    # limited to admins; auditors only get read access to the admin area.
+    before_action :require_admin
+
     def new
       @federal_tax_classifications = Tax1099ImportService::FEDERAL_TAX_CLASSIFICATIONS
       @tin_types = Tax1099ImportService::TIN_TYPES
@@ -82,6 +86,15 @@ module Admin
     end
 
     private
+
+    def require_admin
+      return if admin_signed_in?
+
+      respond_to do |format|
+        format.html { redirect_to root_path, flash: { error: "Only admins can import tax forms." } }
+        format.any { render json: { status: "forbidden", message: "Only admins can import tax forms." }, status: :forbidden }
+      end
+    end
 
     def import_params
       params.permit(*Tax1099ImportService::FIELDS.map { _1[:key] })

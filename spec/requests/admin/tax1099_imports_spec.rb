@@ -245,4 +245,29 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
       expect(response).not_to have_http_status(:ok)
     end
   end
+
+  context "when signed in as an auditor" do
+    let(:admin) { create(:user, :make_auditor) }
+
+    it "does not render the import page" do
+      get "/admin/tax1099_imports/new"
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "does not import the row" do
+      expect {
+        post "/admin/tax1099_imports", params: row.merge(pdf:), headers: { "Accept" => "application/json" }
+      }.not_to change(Tax::Form, :count)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "does not look up legal entities" do
+      get "/admin/tax1099_imports/legal_entities", params: { email: "ada@example.com" }, headers: { "Accept" => "application/json" }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end
