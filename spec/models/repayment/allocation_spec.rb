@@ -9,7 +9,7 @@ RSpec.describe Repayment::Allocation do
 
   before { create(:organizer_position, event: source_event, user: requestor) }
 
-  def repay(ledger_item, amount: "100.00")
+  def repay(ledger_item, amount: "100.00", part: nil)
     DisbursementService::Create.new(
       name: "Test",
       amount:,
@@ -17,7 +17,8 @@ RSpec.describe Repayment::Allocation do
       source_event_id: source_event.id,
       destination_event_id: destination_event.id,
       transfer_type: "repayment",
-      repaid_ledger_item_ids: [ledger_item.id]
+      repaid_ledger_item_ids: [ledger_item.id],
+      repaid_amounts: part ? { ledger_item.id => part } : {}
     ).run
   end
 
@@ -74,6 +75,51 @@ RSpec.describe Repayment::Allocation do
 
       expect(settled.reload.category.slug).to eq("food-fun")
       expect(TransactionSplit.count).to eq(0)
+    end
+  end
+
+  describe "repaying an expense in part" do
+    let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
+    let(:item) { expense.ledger_item }
+
+    it "splits off the repaid part and leaves the rest to be repaid later" do
+      repay(item, amount: "40.00", part: 40_00)
+
+      expect(expense.reload.category.slug).to eq("food-fun")
+      expect(splits(expense)).to eq([[-40_00, "repayment"]])
+      expect(Repayment.unrepaid_cents(item)).to eq(60_00)
+      expect(Repayment.unrepaid_ledger_items(destination_event)).to include(item)
+    end
+
+    it "becomes a repayment in full once the rest is repaid, and splits again if a repayment is rejected" do
+      first = repay(item, amount: "40.00", part: 40_00)
+      repay(item, amount: "60.00")
+
+      expect(expense.reload.category.slug).to eq("repayment")
+      expect(splits(expense)).to be_empty
+      expect(Repayment.unrepaid_ledger_items(destination_event)).not_to include(item)
+
+      first.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category.slug).to eq("food-fun")
+      expect(splits(expense)).to eq([[-60_00, "repayment"]])
+      expect(Repayment.unrepaid_cents(item)).to eq(40_00)
+    end
+
+    it "can't repay more than is left" do
+      repay(item, amount: "40.00", part: 40_00)
+
+      expect { repay(item, amount: "70.00", part: 70_00) }.to raise_error(ActiveRecord::RecordInvalid, /\$60.00 left to repay/)
+      expect { repay(item, amount: "0.00", part: 0) }.to raise_error(ArgumentError)
+    end
+
+    it "takes what was overpaid from the latest repayment when the expense ends up costing less" do
+      repay(item, amount: "40.00", part: 40_00)
+      second = repay(item, amount: "60.00")
+      create(:canonical_transaction, ledger_item: item, amount_cents: 30_00)
+
+      expect(expense.reload.category.slug).to eq("repayment")
+      expect(splits(payment(second))).to eq([[30_00, "internal-transfer"]])
     end
   end
 

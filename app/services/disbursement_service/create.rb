@@ -26,7 +26,8 @@ module DisbursementService
       destination_transaction_category_slug: nil,
       category_assignment_strategy: "manual",
       transfer_type: nil,
-      repaid_ledger_item_ids: []
+      repaid_ledger_item_ids: [],
+      repaid_amounts: {}
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -47,6 +48,9 @@ module DisbursementService
       @category_assignment_strategy = category_assignment_strategy
       @transfer_type = transfer_type
       @repaid_ledger_items = Ledger::Item.find(repaid_ledger_item_ids.uniq).sort_by(&:id)
+      # Cents to repay of each expense, by ledger item id. One that isn't
+      # listed is repaid for everything still unrepaid.
+      @repaid_amounts = repaid_amounts
     end
 
     def run
@@ -71,11 +75,11 @@ module DisbursementService
           if @repaid_ledger_items.any?
             repayment = disbursement.build_repayment
             @repaid_ledger_items.each do |item|
-              repayment.allocations.build(repaid_ledger_item: item, amount_cents: -item.amount_cents)
+              repayment.allocations.build(repaid_ledger_item: item, amount_cents: @repaid_amounts[item.id] || Repayment.unrepaid_cents(item))
             end
           end
           disbursement.save!
-          disbursement.repayment&.allocations&.each(&:apply_categories!)
+          disbursement.repayment&.allocations&.each { |allocation| Repayment::Allocation.sync_splits!(allocation.repaid_ledger_item) }
 
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run

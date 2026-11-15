@@ -1,8 +1,13 @@
-<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_items: []) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_items: [], repaid_amounts: {}) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 <% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
-<% selected_transactions = repaid_ledger_items.map { |item| { id: item.hashid, memo: item.memo, date: item.datetime.strftime("%b %e, %Y"), amount: format("%.2f", -item.amount_cents / 100.0) } } %>
+<%# What's being repaid of each transaction: the amount chosen, or everything still unrepaid. %>
+<% selected_transactions = repaid_ledger_items.map do |item|
+     unrepaid = Repayment.unrepaid_cents(item)
+     { id: item.hashid, memo: item.memo, date: item.datetime.strftime("%b %e, %Y"), amount: format("%.2f", (repaid_amounts[item.id] || unrepaid) / 100.0), max: format("%.2f", unrepaid / 100.0) }
+   end %>
+<% repaid_total = selected_transactions.sum { |transaction| (transaction[:amount].to_d * 100).to_i } %>
 
 <%# `data-turbo="true"` keeps jquery-ujs off this form: its blank-required-field check
     only skips inputs that are themselves disabled, so it would silently abort the
@@ -77,13 +82,14 @@
       <div class="field m-0">
         <label for="repayment_picker_trigger">Which of their transactions are you repaying?</label>
         <div data-transfer-type-target="repaidInputs">
-          <% repaid_ledger_items.each do |item| %>
-            <%= hidden_field_tag "disbursement[repaid_ledger_item_ids][]", item.hashid, id: nil %>
+          <% selected_transactions.each do |transaction| %>
+            <%= hidden_field_tag "disbursement[repaid_ledger_item_ids][]", transaction[:id], id: nil %>
+            <%= hidden_field_tag "disbursement[repaid_amounts][#{transaction[:id]}]", transaction[:amount], id: nil %>
           <% end %>
         </div>
-        <%# Set from the picked transactions: a repayment covers each in full. %>
+        <%# Set from the picked transactions and how much of each is being repaid. %>
         <%= form.hidden_field :name, id: "disbursement_repayment_name", value: (disbursement.name if disbursement.transfer_type_repayment?), data: { transfer_type_target: "repaymentName" } %>
-        <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", repaid_ledger_items.sum { |item| -item.amount_cents } / 100.0) if repaid_ledger_items.any?), data: { transfer_type_target: "repaymentAmount" } %>
+        <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", repaid_total / 100.0) if repaid_ledger_items.any?), data: { transfer_type_target: "repaymentAmount" } %>
         <div class="flex items-center gap-3" data-transfer-type-target="repaidCard">
           <div class="flex-1 min-w-0">
             <p class="muted m-0" data-transfer-type-target="pickHint" <% if disbursement.destination_event %> hidden<% end %>>Choose who you're sending to first.</p>
@@ -92,7 +98,7 @@
               <strong class="block" data-transfer-type-target="repaidCount"><%= pluralize(repaid_ledger_items.size, "transaction") %></strong>
             </div>
           </div>
-          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <% if repaid_ledger_items.empty? %> hidden<% end %>><%= render_money(repaid_ledger_items.sum { |item| -item.amount_cents }) %></strong>
+          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <% if repaid_ledger_items.empty? %> hidden<% end %>><%= render_money(repaid_total) %></strong>
           <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <% unless disbursement.destination_event %> disabled<% end %>>
             <span data-transfer-type-target="chooseLabel" <% if repaid_ledger_items.any? %> hidden<% end %>>Choose</span>
             <span data-transfer-type-target="changeLabel" <% if repaid_ledger_items.empty? %> hidden<% end %>>Change</span>
