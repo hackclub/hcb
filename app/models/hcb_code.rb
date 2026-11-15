@@ -213,6 +213,13 @@ class HcbCode < ApplicationRecord
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
 
+  # Like the amount, splits come from the settled transactions once there are
+  # any, and from the pending ones until then.
+  def splits
+    transactions = canonical_transactions.any? ? canonical_transactions : canonical_pending_transactions
+    TransactionSplit.where(splittable_type: transactions.klass.name, splittable_id: transactions.reorder(nil).select(:id)).order(:id)
+  end
+
   def subledgers
     @subledgers ||=
       begin

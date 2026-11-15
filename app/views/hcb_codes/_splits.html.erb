@@ -1,0 +1,33 @@
+<%# locals: (hcb_code:) %>
+
+<%# A bar showing how the transaction is divided: one segment per split, and the rest of the bar for what's left. %>
+<%# Categories aren't shown: they're for reporting, not something users see on a transaction. %>
+<% splits = hcb_code.splits.to_a %>
+
+<% if splits.any? %>
+  <% rest_cents = hcb_code.amount_cents - splits.sum(&:amount_cents) %>
+  <%# A transaction that shrank after it was split can have splits adding up to more than it %>
+  <% total_cents = [hcb_code.amount_cents.abs, splits.sum { |split| split.amount_cents.abs }].max %>
+  <% colors = %w[bg-success bg-info bg-warning bg-primary] %>
+  <% parts = splits.each_with_index.map { |split, i| { label: split[:memo].presence || "Split", cents: split.amount_cents.abs, color: colors[i % colors.size] } } %>
+  <% parts << { label: "Rest of the transaction", cents: rest_cents.abs, color: "bg-gray-300 dark:bg-neutral-600" } unless rest_cents.zero? %>
+
+  <section class="card mt-3" id="splits">
+    <%# The legend below says everything the bar does %>
+    <div class="flex h-3 rounded overflow-hidden bg-gray-200 dark:bg-neutral-700" aria-hidden="true">
+      <% parts.each do |part| %>
+        <div class="h-full <%= part[:color] %>" style="width: <%= (part[:cents] * 100.0 / total_cents).round(2) %>%"></div>
+      <% end %>
+    </div>
+
+    <ul class="list-none p-0 mt-3 mb-0 flex flex-col gap-2">
+      <% parts.each do |part| %>
+        <li class="flex items-center gap-2">
+          <span class="shrink-0 w-3 h-3 rounded-full <%= part[:color] %>" aria-hidden="true"></span>
+          <span class="flex-1 min-w-0"><%= part[:label] %></span>
+          <strong class="shrink-0"><%= render_money part[:cents] %></strong>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

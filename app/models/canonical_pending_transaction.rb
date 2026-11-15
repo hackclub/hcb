@@ -103,6 +103,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_one :subledger, through: :canonical_pending_event_mapping
   has_many :canonical_pending_settled_mappings
   has_many :canonical_transactions, through: :canonical_pending_settled_mappings
+  has_many :splits, -> { order(:id) }, class_name: "TransactionSplit", as: :splittable, dependent: :destroy
   has_one :canonical_pending_declined_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
 

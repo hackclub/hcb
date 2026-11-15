@@ -49,6 +49,22 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).to include("Address check")
     end
 
+    it "lists the transaction's splits and what is left over" do
+      # Factory transactions get an `HCB-000-<id>` code, and settled and pending
+      # ones have separate id sequences: one that matched this event's pending
+      # transaction would be grouped with it. Pick an id neither can share.
+      transaction = create(:canonical_transaction, id: [CanonicalTransaction.maximum(:id).to_i, CanonicalPendingTransaction.maximum(:id).to_i].max + 1_000, event:, amount_cents: -100_00)
+      transaction.splits.create!(amount_cents: -60_00, memo: "Repaid by the PTA", category: TransactionCategory.find_or_create_by!(slug: "repayment"))
+      expense = transaction.local_hcb_code
+
+      get :show, params: { id: expense.hashid }
+
+      expect(response.body).to include("Repaid by the PTA", "$60.00", "$40.00", "Rest of the transaction")
+      # Categories are for reporting and aren't shown on the transaction
+      expect(Nokogiri::HTML(response.body).at_css("#splits").text).not_to include("Repayment")
+      expect(Nokogiri::HTML(response.body).css("#splits [style]").map { |segment| segment["style"] }).to eq(["width: 60.0%", "width: 40.0%"])
+    end
+
     it "links each CPT to its own page" do
       cpt = hcb_code.canonical_pending_transactions.sole
 
