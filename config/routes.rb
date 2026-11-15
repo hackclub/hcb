@@ -111,6 +111,7 @@ Rails.application.routes.draw do
     post "receipt_report", to: "users#receipt_report", as: :trigger_receipt_report
 
     get "cards", to: "my#cards", as: :my_cards
+    get "cards/events/:event_id", to: "my#event_cards", as: :my_event_cards
     get "cards/shipping", to: "stripe_cards#shipping", as: :my_cards_shipping
   end
 
@@ -371,6 +372,9 @@ Rails.application.routes.draw do
     end
     resources :legal_entities, only: [:index]
     resources :tax_forms, only: [:index]
+    resources :tax1099_imports, only: [:new, :create] do
+      get :legal_entities, on: :collection
+    end
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -847,6 +851,9 @@ Rails.application.routes.draw do
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
   post "taxbandits/webhook", to: "taxbandits#webhook"
+  # The one-time URL handed to TaxBandits as PdfUrl. The token lives in the query
+  # string so Rails' parameter filtering keeps it out of the request log.
+  get "taxbandits/w9_certificate", to: "taxbandits#w9_pdf", as: :taxbandits_w9_pdf, format: true
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -1138,7 +1145,6 @@ Rails.application.routes.draw do
         post "disable_pre_authorization"
         post "permit_merchant"
 
-        get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
         get "edit/expiration", to: "card_grants#edit_expiration"
         get "edit/purpose", to: "card_grants#edit_purpose"
@@ -1173,6 +1179,7 @@ Rails.application.routes.draw do
 
     member do
       get "account-number", to: "events#account_number"
+      get "account-number/reveal", to: "events#reveal_account_number", as: :reveal_account_number
       post "toggle_event_tag/:event_tag_id", to: "events#toggle_event_tag", as: :toggle_event_tag
       get "audit_log"
       post "validate_slug"

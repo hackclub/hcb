@@ -1,0 +1,21 @@
+<%# locals: (label:, date:, nested: false) %>
+<%# One row of the transactions list: a label and date on the left, and a card
+    whose contents the caller yields. `nested` rows hang off the row above them. %>
+
+<div class="flex flex-col md:flex-row justify-start items-center gap-5">
+  <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
+    <span class="flex items-center gap-1">
+      <% if nested %>
+        <span class="muted" aria-hidden="true">↳</span>
+      <% end %>
+      <%= label %>
+    </span>
+    <span class="text-sm muted">
+      <%= date.strftime("%b %e, %Y") %>
+    </span>
+  </div>
+
+  <div class="card flex flex-grow w-full justify-between items-center">
+    <%= yield %>
+  </div>
+</div>

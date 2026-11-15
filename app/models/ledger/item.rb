@@ -463,8 +463,15 @@ class Ledger
     def calculate_status
       # An item that has a linked object but no transactions yet (e.g. an invoice
       # that has been created but not paid). The linked object keeps it from being
-      # pruned once orphaned-item pruning exists.
-      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      # pruned once orphaned-item pruning exists. One that was rejected or
+      # canceled before any transaction existed (a scheduled ACH transfer that
+      # was canceled, a voided invoice) is no longer intended.
+      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+        return :rejected if linked_object.try(:rejected?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :intended
+      end
 
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
