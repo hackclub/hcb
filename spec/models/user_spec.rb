@@ -684,6 +684,15 @@ RSpec.describe User, type: :model do
         expect(user.reload.personal_legal_entity).to be_person
         expect(user.personal_legal_entity).not_to eq(business)
       end
+
+      it "ignores archived person entities" do
+        original = user.personal_legal_entity
+        original.archive!
+        replacement = create(:legal_entity, :person, name: user.full_name)
+        user.legal_entity_users.create!(legal_entity: replacement)
+
+        expect(user.reload.personal_legal_entity).to eq(replacement)
+      end
     end
 
     describe "#person_legal_entity_user" do
