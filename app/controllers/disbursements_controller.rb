@@ -4,7 +4,7 @@ class DisbursementsController < ApplicationController
   include TurboStreamFlash
   include ComboboxSearchable
 
-  before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
+  before_action :set_disbursement, only: [:show, :transfer_confirmation_letter]
 
   def show
     authorize @disbursement
@@ -26,7 +26,7 @@ class DisbursementsController < ApplicationController
       end
 
       format.pdf do
-        render pdf: "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})", page_height: "11in", page_width: "8.5in"
+        render_pdf "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})"
       end
 
       # not being used at the moment
@@ -45,7 +45,8 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: params[:amount],
-      name: params[:message]
+      name: params[:message],
+      transfer_type: params[:transfer_type]
     )
 
     authorize @disbursement
@@ -70,7 +71,7 @@ class DisbursementsController < ApplicationController
     own_destination_events = own_events.or(current_user.readable_events.accepting_public_transfers)
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Event.select(:name, :id, :demo_mode, :slug, :is_public, :hidden_at, :financially_frozen).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif sending
              own_events
            elsif q.blank?
@@ -86,7 +87,7 @@ class DisbursementsController < ApplicationController
              own_destination_events
                .or(public_events.where(is_indexable: true))
                .or(public_events.where(slug: q.downcase))
-               .select(:name, :id, :demo_mode, :slug).includes(:plan)
+               .select(:name, :id, :demo_mode, :slug, :is_public, :hidden_at, :financially_frozen).includes(:plan)
            end
 
     # Apply fuzzy search if query present
@@ -134,6 +135,7 @@ class DisbursementsController < ApplicationController
         value: e.public_id,
         label: helpers.combobox_display(e),
         sublabel: disabled_message || balance,
+        badge: helpers.combobox_badge(e),
         disabled: disabled_message.present?
       }
       # Lets the form hide the repayment option for recipients whose
@@ -173,7 +175,8 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: Monetize.parse(disbursement_params[:amount])&.cents,
-      name: disbursement_params[:name]
+      name: disbursement_params[:name],
+      transfer_type: disbursement_params[:transfer_type].presence
     )
 
     authorize @disbursement
@@ -188,7 +191,11 @@ class DisbursementsController < ApplicationController
 
     if transfer_type == "repayment"
       authorize @disbursement, :repay?
-      repaid_ledger_item = Ledger::Item.find_by_hashid(disbursement_params[:repaid_ledger_item_id])
+      hashids = Array(disbursement_params[:repaid_ledger_item_ids]).reject(&:blank?).uniq
+      @repaid_ledger_items = Repayment.unrepaid_ledger_items(@destination_event).where_hashid(hashids).to_a
+      if @repaid_ledger_items.size != hashids.size
+        raise DisbursementService::Create::UserError, "One or more selected transactions can no longer be repaid."
+      end
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
@@ -210,7 +217,7 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug:,
       category_assignment_strategy:,
       transfer_type:,
-      repaid_ledger_item_id: repaid_ledger_item&.id
+      repaid_ledger_item_ids: @repaid_ledger_items.to_a.map(&:id)
     ).run
 
     if disbursement_params[:file]
@@ -237,14 +244,6 @@ class DisbursementsController < ApplicationController
     skip_authorization
     flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
-  end
-
-  def edit
-    authorize @disbursement
-  end
-
-  def update
-    authorize @disbursement
   end
 
   def cancel
@@ -334,12 +333,13 @@ class DisbursementsController < ApplicationController
     return unless @destination_event && params[:repaid_ledger_item_id].present?
     return unless policy(Disbursement.new(destination_event: @destination_event)).repay?
 
-    @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
-    return unless @repaid_ledger_item
+    item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
+    return unless item
 
+    @repaid_ledger_items = [item]
     @disbursement.transfer_type = :repayment
-    @disbursement.amount = -@repaid_ledger_item.amount_cents
-    @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
+    @disbursement.amount = -item.amount_cents
+    @disbursement.name = "Repaying 1 transaction" if @disbursement.name.blank?
   end
 
   def repayable_transactions_query
@@ -377,7 +377,7 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
-      :repaid_ledger_item_id,
+      { repaid_ledger_item_ids: [] },
       { file: [] }
     ]
 

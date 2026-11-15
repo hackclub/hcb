@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module PopoverHelper
-  def popovers_enabled?
-    current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
-  end
-
   # Builds the data attributes hash for triggering the shared popover modal.
   #
   # Usage in views:
@@ -50,7 +46,12 @@ module PopoverHelper
         external_link: ledger_item_path(item)
       )
     else
-      hcb_code_popover_data(item.hcb_code)
+      hcb_code = item.hcb_code
+
+      # fall back to links for items that don't have an HCB code
+      return { turbo: false } unless hcb_code
+
+      hcb_code_popover_data(hcb_code)
     end
   end
 
@@ -77,10 +78,10 @@ module PopoverHelper
   end
 
   def contractor_popover_data(contractor)
-    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    path = payroll_position_path(contractor)
     popover_data(
       title: "#{contractor.payee.display_name}'s contract",
-      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      src: payroll_position_path(contractor, frame: true),
       frame_id: "contractor_#{contractor.id}",
       state_url: path,
       external_link: path

@@ -36,10 +36,6 @@ class Fee < ApplicationRecord
 
   validates :memo, presence: true, unless: -> { canonical_event_mapping.present? }
 
-  scope :greater_than_0, -> { where("amount_cents_as_decimal > 0") }
-  scope :exclude_free_events, -> { where("event_sponsorship_fee > 0") }
-  scope :exclude_outflows, -> { includes(canonical_event_mapping: :canonical_transaction).where("canonical_transactions.amount_cents > 0").references(canonical_event_mapping: :canonical_transaction) }
-
   delegate :date, :smart_memo, :amount, :amount_cents, to: :canonical_transaction
 
   enum :reason, {
@@ -51,10 +47,6 @@ class Fee < ApplicationRecord
     transfer_returned: "TRANSFER RETURNED", # (Doesn't charge fee) Revenue transactions with fee waived (either manually or automatically in certain cases)
     tbd: "TBD",                             # (Doesn't charge fee) Everything else (including non-revenue transactions)
   }
-
-  def amount_decimal
-    amount_cents_as_decimal / 100.0
-  end
 
   def anomaly?
     amount_cents_as_decimal > 0 && canonical_transaction.likely_waveable_for_fee?

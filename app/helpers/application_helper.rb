@@ -27,6 +27,16 @@ module ApplicationHelper
   include TurboStreamActionsHelper
   include UsersHelper
 
+  # Flash keys that aren't messages, and so are never rendered as one.
+  def renderable_flash
+    flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
+
+  # Inline image for PDF templates; the renderer can't reach our asset host from dev.
+  def pdf_asset_base64(path)
+    "data:#{Marcel::MimeType.for(name: path)};base64,#{Base64.strict_encode64(Rails.root.join("app/assets/images", path).binread)}"
+  end
+
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)

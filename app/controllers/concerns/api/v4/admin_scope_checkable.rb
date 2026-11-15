@@ -16,13 +16,19 @@ module Api
       def can_admin?(level)
         return false unless current_user
 
-        context = ApiAdminContext.new(current_user, current_token)
+        context = ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
 
         case level.to_sym
         when :read  then context.auditor?
         when :write then context.admin?
         else false
         end
+      end
+
+      # Controllers override this so `admin:<resource>:read` / `admin:<resource>:write`
+      # scopes also count within them (see ApiAdminContext#admin_scope?).
+      def admin_scope_resource
+        nil
       end
     end
   end

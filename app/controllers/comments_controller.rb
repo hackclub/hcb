@@ -20,6 +20,10 @@ class CommentsController < ApplicationController
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
+    elsif turbo_frame_request?
+      # The new page has no matching frame, so surface the errors in the frame's flash instead
+      flash[:error] = @comment.errors.full_messages.to_sentence
+      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
       render :new, status: :unprocessable_content
     end
@@ -55,14 +59,27 @@ class CommentsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          "comments",
-          partial: "comments/list",
-          locals: {
-            comments: commentable.comments,
-            show_blankslate: commentable.comments.empty?
-          }
-        )
+        streams = [
+          turbo_stream.replace(
+            "comments",
+            partial: "comments/list",
+            locals: {
+              comments: commentable.comments,
+              show_blankslate: commentable.comments.empty?
+            }
+          )
+        ]
+
+        # Update the comment count on the item's ledger row, if it's behind the
+        # popover. A ledger item's comments are still stored on its HCB code;
+        # ones shared with the other side of a transfer aren't, and don't
+        # refresh the item's count yet, so there's nothing to stream for them.
+        ledger_item = commentable.ledger_item if commentable.is_a?(HcbCode)
+        if ledger_item.present?
+          streams << turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item })
+        end
+
+        render turbo_stream: streams
       end
 
       format.any { redirect_back_or_to commentable }
@@ -88,6 +105,12 @@ class CommentsController < ApplicationController
 
     klass = COMMENTABLE_TYPE_MAP[resource.singularize.classify]
     @commentable = klass.find(id)
+
+    # On a transfer between two organizations, the form can share the comment
+    # with the other side, which puts it on the transfer itself.
+    if params.dig(:comment, :comment_target) == "shared" && @commentable.shared_commentable?
+      @commentable = @commentable.shared_commentable
+    end
   end
 
   def set_comment

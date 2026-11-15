@@ -1,0 +1,10 @@
+<p>
+  The masked TIN check found the full TIN of our dummy W-9 (PayeeRef <%= @payee_ref %>)
+  in the PDF TaxBandits generated for it. TaxBandits generates every payee's PDF the
+  same way, so payees downloading their tax forms are likely getting their full TIN.
+</p>
+
+<p>
+  This comes from <code>ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob</code>,
+  which runs hourly and will email again every hour until the TIN is masked.
+</p>

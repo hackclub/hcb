@@ -26,7 +26,7 @@ module Api
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @transactions = resolve_engines(paginate_cursor(@hcb_codes, &:public_id))
       end
 
       def create
@@ -112,20 +112,6 @@ module Api
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
         render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
-      end
-
-      def card_designs
-        if params[:event_id].present?
-          set_api_event
-          authorize @event, :create_stripe_card?, policy_class: ::EventPolicy
-
-          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
-        else
-          skip_authorization
-          @designs = StripeCard::PersonalizationDesign.common.available
-        end
-
-        @designs += StripeCard::PersonalizationDesign.unlisted.available if can_admin?(:read)
       end
 
       def freeze

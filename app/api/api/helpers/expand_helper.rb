@@ -84,10 +84,6 @@ module Api
         options_modify(:hide, entity)
       end
 
-      def options_expand(entity)
-        options_modify(:expand, entity)
-      end
-
       private
 
       def options_modify(key, types)

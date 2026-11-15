@@ -15,7 +15,3 @@ class IncreaseCheck
   end
 
 end
-
-module IncreaseCheckJob
-  RemindUndepositedRecipient = IncreaseCheck::RemindUndepositedRecipientJob
-end

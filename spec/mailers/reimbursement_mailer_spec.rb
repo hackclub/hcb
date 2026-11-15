@@ -3,6 +3,23 @@
 require "rails_helper"
 
 RSpec.describe ReimbursementMailer do
+  describe "#review_requested" do
+    it "doesn't notify managers who opted out of reviewing" do
+      event = create(:event)
+      reviewer = create(:user, email: "reviewer@example.com")
+      opted_out = create(:user, email: "opted-out@example.com")
+      create(:organizer_position, user: reviewer, event:, role: :manager)
+      opted_out_position = create(:organizer_position, user: opted_out, event:, role: :manager)
+      report = create(:reimbursement_report, event:)
+
+      expect(described_class.with(report:).review_requested.to).to include("opted-out@example.com", "reviewer@example.com")
+
+      opted_out_position.reimbursement_reviewer_opt_ins.destroy_all
+
+      expect(described_class.with(report:).review_requested.to).to eq(["reviewer@example.com"])
+    end
+  end
+
   describe "#expenses_approved" do
     it "renders the list of expenses in their original currency" do
       user = create(

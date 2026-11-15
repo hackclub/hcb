@@ -115,8 +115,9 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def find_current_auditor
-    current_user if auditor_signed_in?
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
   end
 
   def safe_per(default, max: 200)
