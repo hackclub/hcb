@@ -37,7 +37,8 @@ module LostReceipt
       return false unless valid?
 
       self.confirmed_at = Time.current
-      self.receipt = Receipt.new(receiptable:, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
+      # A transaction's receipts live on its ledger item (#14106).
+      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
       # Created before uploading so a partial upload can still be purged.

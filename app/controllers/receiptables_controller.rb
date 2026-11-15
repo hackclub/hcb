@@ -13,8 +13,8 @@ class ReceiptablesController < ApplicationController
     return render_page(:lost_receipt_tips) unless params[:continue]
 
     @statement = LostReceipt::Statement.new(
-      date: @receiptable.try(:date) || @receiptable.try(:datetime)&.to_date,
-      merchant: @receiptable.try(:memo),
+      date: @transaction.try(:date) || @transaction.try(:datetime)&.to_date,
+      merchant: @transaction.try(:memo),
       submitter: current_user
     )
     @statement.items << LostReceipt::Item.new(quantity: 1)
@@ -22,11 +22,10 @@ class ReceiptablesController < ApplicationController
   end
 
   def mark_no_or_lost
-    receiptable = @receiptable.is_a?(Ledger::Item) ? (@receiptable.hcb_code || raise(ActiveRecord::RecordNotFound)) : @receiptable
     @statement = LostReceipt::Statement.new(statement_params)
     @statement.submitter = current_user
 
-    if @statement.submit(receiptable:)
+    if @statement.submit(receiptable: @transaction)
       flash[:success] = "Lost receipt statement added."
       redirect_to safe_url(params[:return_to]) || fallback_location
     else
@@ -54,6 +53,9 @@ class ReceiptablesController < ApplicationController
   # Payments, reimbursement expenses and the like can't be marked no/lost, and aren't always in USD.
   def require_markable_receiptable
     raise ActiveRecord::RecordNotFound unless @receiptable.try(:has_attribute?, :marked_no_or_lost_receipt_at)
+
+    # The page may be opened for the ledger item; the statement describes its HCB code.
+    @transaction = hcb_code || @receiptable
   end
 
   # Signed link visitors can't view the transaction itself.
