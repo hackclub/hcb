@@ -152,17 +152,6 @@ class Check < ApplicationRecord
     end
   end
 
-
-  # Can be ready to refund
-  def pending_void?
-    approved? && voided_at.present? && !deposited? && !voided?
-  end
-
-  # Ready to be refunded
-  def unfinished_void?
-    !refunded_at.present? && voided_at && voided_at + 1.day < DateTime.now && !deposited?
-  end
-
   def admin_dropdown_description
     "#{check_number.presence || 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
   end

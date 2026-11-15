@@ -8,7 +8,7 @@
 
 <% content_for(:nav) do %>
   <% if !@event&.demo_mode? %>
-    <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
+    <%= render partial: "ledger/items/create_tag", locals: { button: false } %>
   <% end %>
 
   <nav class="dock flex mt-4 font-medium">
