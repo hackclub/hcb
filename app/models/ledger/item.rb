@@ -207,13 +207,6 @@ class Ledger
       ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
     end
 
-    # Count-only refresh for callers that moved receipts between the HCB code
-    # and the item with update_all, which skips the touch that would refresh!.
-    def refresh_receipt_count!
-      count = calculate_receipt_count
-      update_column(:receipt_count, count) if receipt_count != count
-    end
-
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
