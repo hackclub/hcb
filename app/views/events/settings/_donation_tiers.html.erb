@@ -1,11 +1,13 @@
 <%# locals: (event:, frame:) %>
+<%# herb:slots client %>
+<%# herb:state (saving: false) %>
 
 <% disabled = !policy(event).update? %>
 
 <% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
-<div data-controller="donation-tier-form" class="card mt-4">
+<div class="card mt-4">
   <div class="field field--checkbox mb0">
     <div class="flex-1">
       <span style="font-weight: 700">Enable donation tiers</span>
@@ -13,13 +15,13 @@
         Offer preset monthly donation options with custom names, prices, and perks.
       </p>
     </div>
-    <%= inline_icon "loading", size: 20, class: "hidden mr-2", "data-donation-tier-form-target": "loader" %>
+    <span class="mr-2" hidden="<%= !saving %>"><%= inline_icon "loading", size: 20 %></span>
     <div class="field--checkbox--switch" style="flex-shrink:0">
       <%= form_with(model: event, local: true, data: { controller: "form", turbo_frame: "_top" }) do |form| %>
         <%= form.hidden_field :tab, value: "donations" %>
         <%= form.label :donation_tiers_enabled do %>
           <%= form.check_box :donation_tiers_enabled,
-            data: { "donation-tier-form-target": "checkbox", action: "change->form#submit" },
+            data: { action: "change->form#submit", herb_set: "saving=true" },
             disabled:,
             checked: event.donation_tiers_enabled,
             switch: true %>
@@ -29,9 +31,9 @@
     </div>
   </div>
   <% if @event.donation_tiers_enabled %>
-    <div data-donation-tier-form-target="content">
+    <div>
       <div class="field mt-5">
-        <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>
+        <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch, data: { controller: "form", action: "change->form#submitDebounced" }) do |form| %>
           <ul
             class="list-none p-0 m-0 flex flex-col gap-2"
             data-controller="sortable donation-tier-sort"
@@ -43,17 +45,17 @@
               <div class="draggable card shadow-none border border-gray-200 dark:border-gray-700 bg-gray-50 flex items-start gap-2 mb-2 transition-none">
                 <div class="flex-1">
                   <div class="flex gap-2 w-full">
-                    <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, data: { "donation-tier-form-target": "field" } %>
+                    <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true %>
                     <div class="flex items-center gap-2 rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
                       $
-                      <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !shadow-none !px-0", style: "width: 50px", placeholder: "Cost", data: { "donation-tier-form-target": "field" } %>
+                      <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !shadow-none !px-0", style: "width: 50px", placeholder: "Cost" %>
                       /month
                     </div>
                   </div>
-                  <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description", data: { "donation-tier-form-target": "field" } %>
+                  <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description" %>
                   <div>
                     <label class="inline-flex items-center gap-2 mt-2">
-                      <%= form.check_box "tiers[#{tier.id}][published]", { checked: tier.published, data: { "donation-tier-form-target": "field" } }, "1", "0" %>
+                      <%= form.check_box "tiers[#{tier.id}][published]", { checked: tier.published }, "1", "0" %>
                       <span>Show on donation page?</span>
                     </label>
                   </div>
