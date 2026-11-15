@@ -596,8 +596,6 @@ RSpec.describe CardGrantsController do
       item
     end
 
-    before { Flipper.enable(:new_ledger_everywhere_2026_07_13) }
-
     def page
       Nokogiri::HTML5(response.body)
     end
