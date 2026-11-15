@@ -26,6 +26,9 @@ module Api
       # declines the item's pending transaction, which is what the old engine
       # reports as `declined`. That includes `released`, an approved card
       # authorization that was never captured, which is also `reversed`.
+      #
+      # This mapping exists only for backwards compatibility with the old
+      # engine's `declined` and `reversed` booleans. It will not exist in v5.
       LEDGER_DECLINED_STATUSES = %w[declined rejected failed canceled released].freeze
       LEDGER_REVERSED_STATUSES = %w[reversed released].freeze
 
