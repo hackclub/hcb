@@ -63,17 +63,21 @@ Testing: `require "active_job/continuation/test_helper"` and include `ActiveJob:
 
 ## Cron check-ins
 
-For scheduled jobs that must complete, wrap the work in an AppSignal cron check-in:
+For scheduled jobs that must complete, send an AppSignal cron check-in once the work is done:
 
 ```ruby
 def perform
-  Appsignal::CheckIn.cron("transaction_engine_nightly_job") do
-    # ...
-  end
+  # ...the job's work...
+
+  Appsignal::CheckIn.cron("transaction_engine_nightly_job")
 end
 ```
 
-AppSignal only sends the finish event when the block returns, so a scheduled run that's interrupted, fails, or never runs shows up as a missed check-in. Name the check-in after the job's key in `config/schedule.yml`, and put it in the job (the scheduled unit), not in the services it calls, so ad-hoc runs from the console don't count as scheduled runs. To run one by hand and have it count, use `SomeJob.perform_now`.
+A scheduled run that fails, never runs, or doesn't finish within the monitor's window sends no check-in and shows up as missed.
+
+Use this finish-only form, not the block form (`Appsignal::CheckIn.cron(id) { ... }`). The block form also sends a start event, and every restart of an interrupted run sends another one. AppSignal counts each extra start as a separate unscheduled run, so the scheduled run is reported missed even when the job finishes in time.
+
+Name the check-in after the job's key in `config/schedule.yml`, and put it in the job (the scheduled unit), not in the services it calls, so ad-hoc runs from the console don't count as scheduled runs. To run one by hand and have it count, use `SomeJob.perform_now`.
 
 ## Shutdown timeout and cron
 
@@ -84,8 +88,8 @@ Raising Sidekiq's shutdown timeout gives jobs more time to finish, but it also p
 | Job | Status |
 |---|---|
 | `PendingTransactionEngine::NightlyJob`, `TransactionEngine::NightlyJob` | Cron check-ins added. |
-| Sidekiq 8 upgrade (needed for continuations) | In progress. |
-| `User::UpdateCardLocking::RecurringJob` | Continuation in progress: one checkpoint per user. |
+| Sidekiq 8 upgrade (needed for continuations) | In progress ([#15745](https://github.com/hackclub/hcb/pull/15745)). |
+| `User::UpdateCardLocking::RecurringJob` | Continuation in progress: one checkpoint per user ([#15746](https://github.com/hackclub/hcb/pull/15746)). |
 | `PendingTransactionEngine::NightlyJob` | Planned: one step per import and canonize stage; the Stripe authorization import pages with a cursor; the donation import uses a `find_each` cursor. |
 | `TransactionEngine::NightlyJob` | Planned: measure per-step timing first, then isolated steps for the Plaid, Stripe and Column imports with cursors per bank account and per report. |
 | Other long jobs (ledger assertions, Loops sync, session cleanup, stats, exports) | Later, as needed. |
