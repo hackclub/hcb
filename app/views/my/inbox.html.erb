@@ -8,7 +8,7 @@
   </span>
 </h1>
 
-<% lost_receipts = current_user.lost_receipt_filings.count %>
+<% lost_receipts = current_user.lost_receipts.count %>
 <% if lost_receipts > 0 %>
   <p class="muted">You've lost <%= pluralize lost_receipts, "receipt" %>.</p>
 <% end %>

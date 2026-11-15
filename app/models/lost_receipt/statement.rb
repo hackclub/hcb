@@ -1,17 +1,56 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: lost_receipt_statements
+#
+#  id                 :bigint           not null, primary key
+#  confirmed_at       :datetime         not null
+#  date               :date             not null
+#  items              :jsonb            not null
+#  merchant           :string           not null
+#  purpose            :text             not null
+#  signer_name        :string           not null
+#  total_amount_cents :integer          not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  cardholder_id      :bigint
+#  event_id           :bigint
+#  receipt_id         :bigint           not null
+#  submitter_id       :bigint
+#
+# Indexes
+#
+#  index_lost_receipt_statements_on_cardholder_id  (cardholder_id)
+#  index_lost_receipt_statements_on_event_id       (event_id)
+#  index_lost_receipt_statements_on_receipt_id     (receipt_id) UNIQUE
+#  index_lost_receipt_statements_on_submitter_id   (submitter_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (cardholder_id => users.id)
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (receipt_id => receipts.id)
+#  fk_rails_...  (submitter_id => users.id)
+#
 module LostReceipt
-  class Statement
-    include ActiveModel::Model
-    include ActiveModel::Attributes
-
+  # What someone said they bought, saved next to the PDF generated from it.
+  class Statement < ApplicationRecord
     CONFIRMATION = "I confirm these details are accurate and that I have made every effort possible to get the receipt."
 
-    attr_accessor :receipt, :receiptable, :submitter, :merchant, :purpose, :signer_name, :confirmed_at, :acknowledgement
+    belongs_to :receipt, inverse_of: :lost_receipt_statement
+    belongs_to :event, optional: true
+    belongs_to :submitter, class_name: "User", optional: true
+    # Who the lost receipt counts against. ACHs, checks, and the like have none, so they only count against the organization.
+    belongs_to :cardholder, class_name: "User", optional: true
 
-    attribute :date, :date
+    # The transaction being described. Not stored: the receipt records where it's attached.
+    attr_accessor :receiptable, :acknowledgement
+
     attribute :confirmed, :boolean
-    attribute :items, default: -> { [] }
+
+    # Only once the items are known to be valid numbers.
+    before_save { self[:total_amount_cents] = total_amount_cents }
 
     validates :date, :merchant, :purpose, :signer_name, presence: true
     validates :merchant, :signer_name, length: { maximum: 255 }
@@ -20,8 +59,8 @@ module LostReceipt
     validate :date_is_not_in_the_future
     validate :items_are_valid
     validate :total_matches_transaction
-    validate :acknowledgement_matches
     validate :signer_name_matches_account
+    validate :acknowledgement_matches
 
     def items_attributes=(attributes)
       attributes = attributes.values if attributes.is_a?(Hash)
@@ -31,16 +70,27 @@ module LostReceipt
       self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
     end
 
+    # Stored as JSON, used as Items.
+    def items
+      @items ||= Array(self[:items]).map { |item| Item.new(item) }
+    end
+
+    def items=(items)
+      @items = items
+      self[:items] = items.map { |item| { description: item.description, quantity: Integer(item.quantity, exception: false) || item.quantity, unit_amount_cents: item.unit_amount_cents } }
+    end
+
     # The receipt is only saved once the PDF is stored, so a failed render or
     # upload leaves the transaction missing its receipt.
     def submit(receiptable: self.receiptable)
       self.receiptable = receiptable
+      self.event = receiptable.try(:event)
+      self.cardholder = charged_cardholder
+      self.confirmed_at = Time.current
+      # A transaction's receipts live on its ledger item (#14106). Saving the receipt saves this statement.
+      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       return false unless valid?
 
-      self.confirmed_at = Time.current
-      # A transaction's receipts live on its ledger item (#14106).
-      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
-      receipt.build_lost_receipt_filing(event:, user: cardholder)
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
       # Created before uploading so a partial upload can still be purged.
@@ -64,32 +114,28 @@ module LostReceipt
       items.sum(&:total_amount_cents)
     end
 
-    # The sentence the submitter has to type. Nil when there's no organization to count against.
-    def required_acknowledgement
-      return unless event
-
-      # Only someone filing for their own card can say "I have lost". The emailed link goes to the cardholder.
-      own = if cardholder && (submitter.nil? || submitter == cardholder)
-              ", and the #{(cardholder.lost_receipt_filings.count + 1).ordinalize} receipt I have lost"
-            end
-      "I understand this is the #{(event.lost_receipt_filings.count + 1).ordinalize} receipt my organization has lost#{own}. " \
-        "Continually losing receipts will result in termination of my organization."
-    end
-
     # The name the signature has to match. Someone signed in signs as themselves;
     # the emailed link goes to the cardholder. Nil when we know neither.
     def expected_signer_name
-      (submitter || cardholder)&.full_name.presence
+      (submitter || charged_cardholder)&.full_name.presence
+    end
+
+    # The sentence the submitter has to type. Nil when there's no organization to count against.
+    def required_acknowledgement
+      organization = receiptable.try(:event)
+      return unless organization
+
+      # Only someone filing for their own card can say "I have lost". The emailed link goes to the cardholder.
+      own = if charged_cardholder && (submitter.nil? || submitter == charged_cardholder)
+              ", and the #{(charged_cardholder.lost_receipts.count + 1).ordinalize} receipt I have lost"
+            end
+      "I understand this is the #{(organization.lost_receipt_statements.count + 1).ordinalize} receipt my organization has lost#{own}. " \
+        "Continually losing receipts will result in termination of my organization."
     end
 
     private
 
-    def event
-      receiptable.try(:event)
-    end
-
-    # ACHs, checks, and the like have no cardholder, so they only count against the organization.
-    def cardholder
+    def charged_cardholder
       receiptable.try(:stripe_cardholder)&.user
     end
 
@@ -100,6 +146,7 @@ module LostReceipt
 
       errors.add(:acknowledgement, "must match the sentence shown")
     end
+
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current

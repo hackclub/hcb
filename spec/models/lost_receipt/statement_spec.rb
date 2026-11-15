@@ -28,6 +28,16 @@ RSpec.describe LostReceipt::Statement do
     )
     expect(statement.confirmed_at).to be_present
     expect(statement.receipt.reload).to be_lost_receipt_statement
+
+    saved = statement.receipt.lost_receipt_statement.reload
+    expect(saved).to have_attributes(merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example",
+                                     date: Date.current, total_amount_cents: 879, event: hcb_code.event, submitter: nil)
+    expect(saved.items.map(&:description)).to eq(["Notebooks", "Pens"])
+    expect(saved[:items].first).to eq("description" => "Notebooks", "quantity" => 3, "unit_amount_cents" => 127)
+    expect(saved.items.map(&:total_amount_cents)).to eq([381, 498])
+
+    statement.receipt.destroy!
+    expect(described_class.count).to eq(0)
   end
 
   it "requires complete, confirmed details and valid quantities and amounts" do
@@ -62,11 +72,11 @@ RSpec.describe LostReceipt::Statement do
 
       statement.acknowledgement = "  #{sentence.upcase.delete('.')} "
       expect(statement.submit).to eq(true)
-      expect(event.lost_receipt_filings.sole).to have_attributes(receipt: statement.receipt, user: nil)
+      expect(event.lost_receipt_statements.sole).to have_attributes(receipt: statement.receipt, cardholder: nil)
       expect(described_class.new(receiptable: hcb_code).required_acknowledgement).to include("2nd receipt my organization has lost.")
 
       statement.receipt.destroy!
-      expect(event.lost_receipt_filings).to be_empty
+      expect(event.lost_receipt_statements).to be_empty
     end
 
     it "counts card charges against the cardholder, who is the only one asked to own them" do
@@ -84,7 +94,7 @@ RSpec.describe LostReceipt::Statement do
       expect(statement.required_acknowledgement).to eq(sentence)
       statement.acknowledgement = sentence
       expect(statement.submit).to eq(true)
-      expect(cardholder.lost_receipt_filings.count).to eq(2)
+      expect(cardholder.lost_receipts.count).to eq(2)
     end
   end
 

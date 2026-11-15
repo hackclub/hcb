@@ -57,7 +57,7 @@ class Receipt < ApplicationRecord
   alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
-  attr_accessor :lost_receipt_statement
+  has_one :lost_receipt_statement, class_name: "LostReceipt::Statement", dependent: :destroy, inverse_of: :receipt
 
   # The HCB code of the transaction this receipt is attached to, whether the
   # receiptable is the HCB code itself or the transaction's ledger item. Nil in
@@ -68,7 +68,6 @@ class Receipt < ApplicationRecord
   end
 
   has_many :suggested_pairings, dependent: :destroy
-  has_one :lost_receipt_filing, class_name: "LostReceipt::Filing", dependent: :destroy
 
   # add a size to this array for it to be preprocessed
   # Receipt#preview first checks to see if a preprocessed
