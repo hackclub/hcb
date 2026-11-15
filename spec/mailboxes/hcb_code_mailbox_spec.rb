@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe HcbCodeMailbox, type: :mailbox do
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
   include ActionMailbox::TestHelper
 
   let!(:user) { create(:user, access_level: :admin) }

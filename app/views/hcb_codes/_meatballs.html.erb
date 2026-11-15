@@ -4,8 +4,7 @@
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
-<%# safely: keeps the page rendering while #15624's migration reshapes the repayments table. %>
-<% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && safely { Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) } %>
+<% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
 
 <% merchant_not_allowed = hcb_code.stripe_card? && hcb_code.pt.hcb_decline_reason == :merchant_not_allowed && hcb_code.stripe_card&.card_grant.present? %>
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
