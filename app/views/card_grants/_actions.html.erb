@@ -20,22 +20,37 @@
   <% support = can_get_support ? render("card_grants/actions/support", card_grant:, title: own ? "Questions about this grant?" : "Need help?") : nil %>
   <% answers = own ? render("card_grants/quick_answers") : nil %>
 
-  <% if controls.any? %>
-    <div class="card grant-controls">
-      <h3 class="grant-subheading">Controls</h3>
-      <div class="grant-controls__grid">
-        <%= safe_join controls %>
-      </div>
-    </div>
-  <% end %>
+  <%# With controls, help articles and support all present, support gets its own
+      card under the controls so the two columns come out the same height. %>
+  <% split = controls.any? && answers.present? && support.present? %>
 
-  <%# Help gets its own card so it doesn't read as one more control. The
-      organization's own support comes first: it's who can actually change a
-      grant, so it shouldn't sit below the general help articles. %>
-  <% if answers.present? || support.present? %>
-    <div class="card grant-help <%= "grant-help--articles" if answers.present? && support.present? %>">
-      <%= support %>
-      <%= answers %>
+  <% if controls.any? || answers.present? || support.present? %>
+    <div class="grant-assist <%= "grant-assist--split" if split %>">
+      <% if controls.any? %>
+        <div class="card grant-controls">
+          <div class="grant-assist__head">
+            <h3 class="grant-subheading">Controls</h3>
+          </div>
+          <div class="grant-list">
+            <%= safe_join controls %>
+          </div>
+          <%# Without help articles there's no second column, so support closes out this card. %>
+          <%= support if answers.blank? %>
+        </div>
+      <% end %>
+
+      <% if answers.present? || (support.present? && controls.empty?) %>
+        <div class="card grant-help">
+          <%= answers %>
+          <%= support unless split %>
+        </div>
+      <% end %>
+
+      <% if split %>
+        <div class="card grant-contact">
+          <%= support %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 <% end %>

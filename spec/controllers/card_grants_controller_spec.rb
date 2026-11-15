@@ -235,13 +235,14 @@ RSpec.describe CardGrantsController do
 
       get(:show, params: { id: card_grant.hashid })
 
-      # Beside the spending limits, and again leading the help card.
+      # Beside the spending limits, and again in its own card under the controls.
       note_link = response.parsed_body.at_css(".grant-limits__note a.btn")
       expect(note_link["href"]).to eq("https://hackclub.slack.com/archives/C123")
       expect(note_link.text).to include("Contact #{event.name} on Slack")
-      help = response.parsed_body.at_css(".grant-help")
-      expect(help.element_children.first["href"]).to eq("https://hackclub.slack.com/archives/C123")
-      expect(help.text).to include("Questions about this grant?")
+      contact = response.parsed_body.at_css(".grant-assist > .grant-contact")
+      expect(contact.at_css("a.btn")["href"]).to eq("https://hackclub.slack.com/archives/C123")
+      expect(contact.text).to include("Questions about this grant?")
+      expect(response.parsed_body.at_css(".grant-help .grant-support")).to be_nil
     end
 
     it "opens the organization's support message from every contact button" do
