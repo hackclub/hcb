@@ -56,14 +56,14 @@
   </div>
 
   <% if commentable.shared_commentable? && !@comment&.persisted? %>
-    <% disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement %>
+    <% disbursement = disbursement_side_of(commentable) %>
     <div>
       <%= form.hidden_field :commentable_type, value: commentable.class.to_s %>
       <%= form.hidden_field :commentable_id, value: commentable.id %>
       <%= form.hidden_field :return_to, value: url_for(only_path: false) %>
       <%= dropdown_button form:,
                           options: [
-                            ["Add comment", "private", "Only visible to #{commentable.event&.name || 'this organization'}"],
+                            ["Add comment", "private", "Only visible to #{disbursement.event&.name || 'this organization'}"],
                             ["Share with #{disbursement.counterparty_label}", "shared", "Visible to both organizations"]
                           ],
                           button_class: "bg-info",

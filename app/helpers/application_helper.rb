@@ -5,6 +5,7 @@ module ApplicationHelper
   include LocalTimeHelper
 
   include ComboboxHelper
+  include CommentsHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper

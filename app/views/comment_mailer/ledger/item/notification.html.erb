@@ -1,0 +1,22 @@
+<% item = @commentable %>
+<% event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
+
+<% if @comment.content? %>
+
+  <%= @comment.user.name %> has left a comment on <%= "and attached a file to" if @comment.has_attached_file? %> <%= "#{item.author.possessive_name} transaction for" if item.author %> <i><%= item.memo %></i> in <i><%= event&.name || "unmapped ledger" %></i>:
+
+  <blockquote><%= MarkdownService.instance.render(@comment.content, record: @comment, location: :email) %></blockquote>
+
+<% else %>
+
+ <%= @comment.user.name %> has attached a file to <i><%= item.memo %></i> in <i><%= event&.name || "unmapped ledger" %></i>.
+
+<% end %>
+
+<%= link_to "Click here to view and reply to the comment on HCB.", "#{ledger_item_url(item)}#comment-#{@comment.hashid}", class: "info" %> Alternatively, send a reply to this email.
+
+<p>
+  <small>
+    <%= link_to "Manage the comments you get notified for.", my_settings_url %>
+  </small>
+</p>

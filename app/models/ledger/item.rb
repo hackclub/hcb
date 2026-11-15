@@ -65,8 +65,9 @@ class Ledger
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
-    # TODO: THIS IS SO TEMPORARY REMOVE ASAP
-    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
+    # Comments are polymorphic with no foreign key, so an item can't be
+    # destroyed until merge/prune code moves its comments to the surviving item.
+    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, dependent: :restrict_with_error
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
@@ -376,6 +377,51 @@ class Ledger
 
     def pinned?
       primary_mapping&.pinned? || false
+    end
+
+    # A transfer between two organizations has an item on each side. Comments
+    # shared with the other side live on the Disbursement itself (see
+    # Commentable#all_comments). Overrides the concern's `shared_commentable?`
+    # to answer from the type column rather than loading the linked object.
+    def shared_commentable?
+      linked_object_type.in?(%w[Disbursement::Outgoing Disbursement::Incoming])
+    end
+
+    def shared_commentable
+      linked_object.disbursement if shared_commentable?
+    end
+
+    def comment_recipients_for(comment)
+      event = primary_ledger&.event || primary_ledger&.card_grant&.event
+
+      users = comments.map(&:user)
+      users += comments.flat_map(&:mentioned_users)
+      users += event.users.reject(&:my_threads?) if event
+      users << author if author
+
+      if comment.admin_only?
+        users << event.point_of_contact if event&.point_of_contact
+        return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+      end
+
+      users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
+    end
+
+    def comment_mailer_subject
+      "New comment on #{memo}."
+    end
+
+    def comment_mentionable(current_user: nil)
+      event = primary_ledger&.event || primary_ledger&.card_grant&.event
+
+      users = comments.includes(:user).map(&:user)
+      users += comments.flat_map(&:mentioned_users)
+      if event
+        users += event.users if !current_user || Pundit.policy(current_user, event).team?
+        users << event.point_of_contact
+      end
+
+      users.compact.uniq
     end
 
     private

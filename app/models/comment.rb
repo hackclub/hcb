@@ -60,7 +60,15 @@ class Comment < ApplicationRecord
   }
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
+  tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : Comment.activity_event_for(record.commentable)&.id }, only: [:create, :update, :destroy]
+
+  # The event a comment's activity is filed under. A ledger item's is its
+  # primary ledger's owner.
+  def self.activity_event_for(commentable)
+    return commentable.primary_ledger&.event || commentable.primary_ledger&.card_grant&.event if commentable.is_a?(Ledger::Item)
+
+    commentable.try(:event)
+  end
 
   after_create_commit :send_notification_email
 

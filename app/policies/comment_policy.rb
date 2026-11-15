@@ -57,6 +57,11 @@ class CommentPolicy < ApplicationPolicy
       end
     elsif record.commentable.is_a?(Event)
       user_list = []
+    elsif record.commentable.is_a?(Ledger::Item)
+      # Same reach as an HcbCode: the item's event and its parent organizations
+      ledger = record.commentable.primary_ledger
+      event = ledger&.event || ledger&.card_grant&.event
+      user_list = event&.ancestor_users.to_a || []
     else
       user_list = record.commentable.event.users
     end

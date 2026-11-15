@@ -21,6 +21,18 @@ RSpec.describe Comment, type: :model, versioning: true do
     expect(comment.versions.size).to eq(2)
   end
 
+  describe "activity" do
+    it "is filed under the ledger item's event" do
+      event = create(:event)
+      item = create(:ledger_item)
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+
+      comment = PublicActivity.with_tracking { create(:comment, commentable: item) }
+
+      expect(PublicActivity::Activity.find_by(trackable: comment).event_id).to eq(event.id)
+    end
+  end
+
   describe "#shared?" do
     it "returns true when commentable is a Disbursement" do
       disbursement = create(:disbursement)
