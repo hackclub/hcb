@@ -85,7 +85,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || report.unsupported_payout_method? || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
@@ -95,7 +95,7 @@
                   <span class="bold warning">Warning</span>: your report is in <%= report.currency %>, but your payouts are configured for <%= report.payout_method.currency %>. Update your payout settings or switch the report currency to match.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
-                  <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                  <% if report.unsupported_payout_method? %>
                     update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
@@ -119,7 +119,7 @@
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s payout information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                <% if report.unsupported_payout_method? %>
                   update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
