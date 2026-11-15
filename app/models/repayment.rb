@@ -31,7 +31,7 @@ class Repayment < ApplicationRecord
 
   validates :disbursement_id, uniqueness: true
   validates :allocations, presence: true
-  validate :allocations_match_disbursement
+  validate :disbursement_is_a_repayment
   validate :ledger_items_are_unique
 
   def self.repayable_ledger_items(event) = Allocation.repayable_ledger_items(event)
@@ -43,13 +43,9 @@ class Repayment < ApplicationRecord
 
   private
 
-  def allocations_match_disbursement
-    return unless disbursement
-
-    errors.add(:disbursement, "must be a repayment") unless disbursement.transfer_type_repayment?
-    unless allocations.reject(&:marked_for_destruction?).sum { |allocation| allocation.amount_cents.to_i } == disbursement.amount
-      errors.add(:allocations, "must match the disbursement amount")
-    end
+  # The disbursement checks that the allocations add up to its amount.
+  def disbursement_is_a_repayment
+    errors.add(:disbursement, "must be a repayment") unless disbursement.nil? || disbursement.transfer_type_repayment?
   end
 
   def ledger_items_are_unique

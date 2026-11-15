@@ -558,7 +558,6 @@ Rails.application.routes.draw do
     member do
       get "attach_receipt"
       get "dispute"
-      post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
       scope module: "hcb_code" do
@@ -568,15 +567,6 @@ Rails.application.routes.draw do
 
     collection do
       get "receipt_status"
-    end
-  end
-
-  scope module: "hcb_code" do
-    namespace :tag do
-      resources :suggestions, only: [] do
-        post "accept"
-        post "reject"
-      end
     end
   end
 
@@ -643,6 +633,7 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      post "toggle_tag", to: "items#toggle_tag"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -663,6 +654,20 @@ Rails.application.routes.draw do
     member do
       post "cancel"
       post "retry"
+    end
+  end
+
+  resources :payroll_positions, only: [:show, :edit, :update], controller: "payroll/positions" do
+    member do
+      get "contract"
+      post "terminate"
+    end
+  end
+
+  resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+    member do
+      post "approve"
+      post "reject"
     end
   end
 
@@ -709,6 +714,7 @@ Rails.application.routes.draw do
 
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
+    controllers applications: "oauth_applications"
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
@@ -950,6 +956,7 @@ Rails.application.routes.draw do
       post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
+      get "download"
     end
   end
 
@@ -971,6 +978,8 @@ Rails.application.routes.draw do
         get "submission"
         get "airtable"
         get "edit"
+        get "unsubscribe"
+        post "unsubscribe"
         post "submit"
         post "archive"
         post "unarchive"
@@ -1037,18 +1046,11 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
-      member do
-        get :contract
-        post :terminate
-      end
-    end
-    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
-      member do
-        post :approve
-        post :reject
-      end
-    end
+    resources :payroll_positions, only: [:new, :create], controller: "payroll/positions"
+    get "payroll_positions/*path", to: redirect { |params, req|
+      path = "/payroll_positions/#{ActionDispatch::Journey::Router::Utils.escape_path(params[:path])}"
+      req.query_string.present? ? "#{path}?#{req.query_string}" : path
+    }
     resources :payees, only: [:index, :create, :update] do
       collection do
         get :check_email

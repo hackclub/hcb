@@ -7,12 +7,12 @@
 <%# `data-turbo="true"` keeps jquery-ujs off this form: its blank-required-field check
     only skips inputs that are themselves disabled, so it would silently abort the
     submit over the required fields inside the disabled, inactive panel. %>
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { turbo: true, controller: "transfer-type", transfer_type_transactions_value: selected_transactions, transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, data: { turbo: true, controller: "transfer-type", transfer_type_transactions_value: selected_transactions, transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section" data-transfer-type-target="types">
     <h3 class="mb-2">What kind of transfer is this?</h3>
-    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
+    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <% if repayable %> hidden<% end %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
 
     <div class="flex flex-col gap-2 mb-4">
       <% [
@@ -54,7 +54,7 @@
                 class="pop self-center mt-2"
                 title="Swap organizations"
                 aria-label="Swap organizations"
-                <%= "disabled" if disabled %>
+                <% if disabled %> disabled<% end %>
                 data-swap-organizations-target="button"
                 data-action="swap-organizations#swap">
           <%= inline_icon "transfers-horizontal", size: 20 %>
@@ -86,16 +86,16 @@
         <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", repaid_ledger_items.sum { |item| -item.amount_cents } / 100.0) if repaid_ledger_items.any?), data: { transfer_type_target: "repaymentAmount" } %>
         <div class="flex items-center gap-3" data-transfer-type-target="repaidCard">
           <div class="flex-1 min-w-0">
-            <p class="muted m-0" data-transfer-type-target="pickHint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
-            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_items.any? || disbursement.destination_event.nil? %>>No transactions chosen yet.</p>
-            <div data-transfer-type-target="repaidSummary" <%= "hidden" if repaid_ledger_items.empty? %>>
+            <p class="muted m-0" data-transfer-type-target="pickHint" <% if disbursement.destination_event %> hidden<% end %>>Choose who you're sending to first.</p>
+            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <% if repaid_ledger_items.any? || disbursement.destination_event.nil? %> hidden<% end %>>No transactions chosen yet.</p>
+            <div data-transfer-type-target="repaidSummary" <% if repaid_ledger_items.empty? %> hidden<% end %>>
               <strong class="block" data-transfer-type-target="repaidCount"><%= pluralize(repaid_ledger_items.size, "transaction") %></strong>
             </div>
           </div>
-          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" if repaid_ledger_items.empty? %>><%= render_money(repaid_ledger_items.sum { |item| -item.amount_cents }) %></strong>
-          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
-            <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_items.any? %>>Choose</span>
-            <span data-transfer-type-target="changeLabel" <%= "hidden" if repaid_ledger_items.empty? %>>Change</span>
+          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <% if repaid_ledger_items.empty? %> hidden<% end %>><%= render_money(repaid_ledger_items.sum { |item| -item.amount_cents }) %></strong>
+          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <% unless disbursement.destination_event %> disabled<% end %>>
+            <span data-transfer-type-target="chooseLabel" <% if repaid_ledger_items.any? %> hidden<% end %>>Choose</span>
+            <span data-transfer-type-target="changeLabel" <% if repaid_ledger_items.empty? %> hidden<% end %>>Change</span>
           </button>
         </div>
         <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transactions you're repaying.</p>
@@ -161,7 +161,7 @@
       <% end %>
     <% end %>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
       Send transfer
       <%= inline_icon "send" %>
     </button>

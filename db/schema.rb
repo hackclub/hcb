@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -221,6 +221,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
     t.datetime "created_at", null: false
     t.integer "expires_in"
     t.inet "ip_address"
+    t.datetime "last_used_at"
     t.text "refresh_token_bidx"
     t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
@@ -231,6 +232,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
     t.bigint "user_id", null: false
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
+    t.index ["last_used_at"], name: "index_api_tokens_on_last_used_at"
     t.index ["refresh_token_bidx"], name: "index_api_tokens_on_refresh_token_bidx", unique: true
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
@@ -1660,6 +1662,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
     t.index ["status"], name: "index_ledger_items_on_status"
   end
 
+  create_table "ledger_items_tags", primary_key: ["ledger_item_id", "tag_id"], force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id"], name: "index_ledger_items_tags_on_tag_id"
+  end
+
   create_table "ledger_mappings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "ledger_id", null: false
@@ -1861,12 +1871,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
     t.boolean "confidential", default: true, null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.bigint "owner_id"
+    t.string "owner_type"
     t.text "redirect_uri", null: false
     t.string "scopes", default: "", null: false
     t.string "secret", null: false
     t.boolean "trusted", default: false, null: false
     t.string "uid", null: false
     t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_oauth_applications_on_owner"
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
@@ -3232,6 +3245,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "ledger_items", "users", column: "author_id"
+  add_foreign_key "ledger_items_tags", "ledger_items"
+  add_foreign_key "ledger_items_tags", "tags"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"

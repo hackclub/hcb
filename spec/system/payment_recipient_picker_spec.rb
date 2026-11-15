@@ -4,7 +4,8 @@ require "rails_helper"
 
 # The saved-recipient picker on the ACH, wire, and check forms. Picking a
 # recipient is handled by the `payment-recipient` Stimulus controller, which
-# hands the recipient to the form's Alpine scope via `payment-recipient:change`.
+# writes it to the form's herb states (`selected_payment_recipient_id`,
+# `selected_editing` and the details shown read-only).
 RSpec.describe "Saved payment recipient picker", type: :system do
   let(:event) { create(:event) }
   let(:manager) { create(:user) }
