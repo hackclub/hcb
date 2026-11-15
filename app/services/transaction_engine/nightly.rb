@@ -12,7 +12,6 @@ module TransactionEngine
       # (1) Import transactions
       safely { import_raw_plaid_transactions! }
       safely { import_raw_stripe_transactions! }
-      safely { import_raw_csv_transactions! }
       safely { import_raw_column_transactions! }
 
       # (2) Hash transactions
@@ -44,10 +43,6 @@ module TransactionEngine
 
     def import_raw_stripe_transactions!
       ::TransactionEngine::RawStripeTransactionService::Stripe::Import.new(start_date: @start_date).run
-    end
-
-    def import_raw_csv_transactions!
-      ::TransactionEngine::RawCsvTransactionService::Import.new.run
     end
 
     def import_raw_column_transactions!

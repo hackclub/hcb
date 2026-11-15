@@ -2,10 +2,7 @@
 
 module Payroll
   class InvoicesController < ApplicationController
-    include SetEvent
-
     before_action :set_position, only: [:new, :create]
-    before_action :set_event, only: [:approve, :reject]
     before_action :set_invoice, only: [:approve, :reject]
 
     def new
@@ -94,12 +91,12 @@ module Payroll
     # signed-in user belongs to the position's legal entity) is enforced by
     # Payroll::InvoicePolicy when we authorize the built invoice.
     def set_position
-      @position = Payroll::Position.find(params[:payroll_position_id])
+      @position = Payroll::Position.find_by_hashid!(params[:payroll_position_id])
     end
 
-    # Invoices belonging to one of this event's contractors (review side).
     def set_invoice
-      @invoice = @event.payroll_invoices.find(params[:id])
+      @invoice = Payroll::Invoice.find_by_hashid!(params[:id])
+      @event = @invoice.event
     end
 
     # The form targets _top so success can redirect; errors re-render only the form, inside its modal.
@@ -112,7 +109,7 @@ module Payroll
     end
 
     def contractor_page
-      event_payroll_position_path(event_id: @invoice.event.slug, id: @invoice.payroll_position)
+      payroll_position_path(@invoice.payroll_position)
     end
 
     def invoice_params

@@ -19,8 +19,8 @@ module Reimbursement
           uploader: current_user,
           attachments: params[:file],
           upload_method: :quick_expense
-        ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt.first.suggested_memo
+        ).run!.first&.reload # extraction persists to a separate instance, so refresh ours
+        @expense.update(memo: receipt.suggested_memo, amount_cents: receipt.extracted_total_amount_cents) if receipt&.suggested_memo
       end
 
       if @expense.save
@@ -134,10 +134,6 @@ module Reimbursement
 
     def new_expense_turbo_stream
       turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
-    end
-
-    def delete_expense_turbo_stream
-      turbo_stream.remove(@expense)
     end
 
     def on_create_streams

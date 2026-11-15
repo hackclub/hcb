@@ -25,7 +25,7 @@ RSpec.describe Reimbursement::PayoutHoldingService::Nightly do
       end
 
       it "fails the payout and tells the reimbursee Column's reason" do
-        expect(Rails.error).to receive(:unexpected).with("[reimbursements / check issuing] Invalid payee address. report ID: #{payout_holding.report.id}")
+        expect(Rails.error).not_to receive(:unexpected)
 
         expect { described_class.new.run }
           .to have_enqueued_mail(ReimbursementMailer, :check_failed)
@@ -42,7 +42,7 @@ RSpec.describe Reimbursement::PayoutHoldingService::Nightly do
       end
 
       it "fails the payout and falls back to the error message" do
-        expect(Rails.error).to receive(:unexpected).with("[reimbursements / check issuing] Could not create Column account number. report ID: #{payout_holding.report.id}")
+        expect(Rails.error).not_to receive(:unexpected)
 
         expect { described_class.new.run }
           .to have_enqueued_mail(ReimbursementMailer, :check_failed)
