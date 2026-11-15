@@ -16,9 +16,9 @@ module ReceiptService
   # text upright, or nil when the image is upright or we aren't sure.
   class DetectRotation
     # Tuned on 205 public receipts (scans and phone photos) and checked on 204
-    # held-out ones, each at all four orientations. Held-out result: 77% of
-    # turned scans and 16% of turned (small, blurry) phone photos fixed, none
-    # made worse. Missing a sideways receipt is fine; rotating a good one isn't.
+    # held-out ones plus 152 real uploads, each at all four orientations.
+    # Fixes about two thirds of turned real uploads and never touched an
+    # upright one. Missing a sideways receipt is fine; rotating a good one isn't.
     #
     # A wrongly oriented receipt still OCRs to a few "confident" words by
     # chance: usually under 10 on photos, but up to ~60 on dense scans. Hence
@@ -45,11 +45,19 @@ module ReceiptService
     private
 
     def reads_better_rotated?(degrees)
-      rotated = ImageProcessing::MiniMagick.source(@path.to_s).rotate(degrees).call
       before = confident_words(@path)
-      after = confident_words(rotated.path)
+      after = confident_words_rotated(degrees)
+      return false unless after >= MIN_WORDS && after >= before * MIN_IMPROVEMENT
 
-      after >= MIN_WORDS && after >= before * MIN_IMPROVEMENT
+      # It must also beat the other two orientations, or we could turn a
+      # sideways receipt upside down. Only costs extra OCR when we're about
+      # to rotate, which is rare.
+      ([90, 180, 270] - [degrees]).all? { |other| after > confident_words_rotated(other) }
+    end
+
+    def confident_words_rotated(degrees)
+      rotated = ImageProcessing::MiniMagick.source(@path.to_s).rotate(degrees).call
+      confident_words(rotated.path)
     end
 
     # `psm: 6` treats the image as one upright block of text. The default mode
