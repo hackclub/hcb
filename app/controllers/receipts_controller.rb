@@ -253,7 +253,7 @@ class ReceiptsController < ApplicationController
     @receiptable = @klass.find(params[:receiptable_id])
     # The transaction's HCB code, whether the receipt is being attached to the
     # code itself or to its ledger item. Nil for every other receiptable.
-    @hcb_code = @receiptable.try(:local_hcb_code)
+    @hcb_code = @receiptable.try(:receipt_hcb_code)
   end
 
   def generate_streams

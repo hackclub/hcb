@@ -61,6 +61,19 @@ module Receiptable
       end
     end
 
+    # The HCB code a receipt on this record belongs to: the code itself, or the
+    # ledger item's code. Nil for every other receiptable, including the
+    # transaction-like records (CanonicalTransaction, Transaction, ...) that have
+    # a `local_hcb_code`, so a receipt on those keeps the generic behavior.
+    # TODO: drop alongside #receipt_counterpart once receipts only live on
+    # ledger items.
+    def receipt_hcb_code
+      case self
+      when HcbCode then self
+      when ::Ledger::Item then hcb_code
+      end
+    end
+
     def sync_no_or_lost_receipt!
       counterpart = receipt_counterpart
       return if counterpart.nil?

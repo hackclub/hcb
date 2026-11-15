@@ -183,13 +183,20 @@ class Ledger
       linked_object_type != "Reimbursement::ExpensePayout"
     end
 
-    # The HCB code side of this transaction, under the name every other
-    # transaction-like record (CanonicalTransaction, CanonicalPendingTransaction,
-    # the transfers, ...) uses for it. Lets code that is handed either an HCB
-    # code or a ledger item as a receiptable get at the HCB code with
-    # `receiptable.try(:local_hcb_code)`.
-    def local_hcb_code
-      hcb_code
+    # A reimbursement payout's receipts are uploaded to the expense it pays out,
+    # not to the payout itself, so read them from there (as HcbCode#receipts
+    # does for the payout's HCB code). Every other item reads both itself and its
+    # HCB code (see Receiptable#receipts).
+    def receipts
+      expense_payout_receipts || super
+    end
+
+    # The preloaded copies of a payout's own and its HCB code's receipts aren't
+    # the expense's, so make callers fall back to #receipts.
+    def preloaded_receipts
+      return if linked_object_type == "Reimbursement::ExpensePayout"
+
+      super
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any
@@ -458,8 +465,14 @@ class Ledger
       end
     end
 
+    # The receipts on the expense this item pays out, when it is a reimbursement
+    # payout; nil for every other item.
+    def expense_payout_receipts
+      linked_object&.expense&.receipts if linked_object_type == "Reimbursement::ExpensePayout"
+    end
+
     def calculate_receipt_count
-      return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+      return expense_payout_receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
 
       receipts.size
     end

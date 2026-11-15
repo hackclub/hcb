@@ -59,9 +59,10 @@ class Receipt < ApplicationRecord
 
   # The HCB code of the transaction this receipt is attached to, whether the
   # receiptable is the HCB code itself or the transaction's ledger item. Nil in
-  # the receipt bin and on every other kind of receiptable (expenses, payments).
+  # the receipt bin and on every other kind of receiptable (expenses, payments,
+  # canonical transactions). See Receiptable#receipt_hcb_code.
   def hcb_code
-    receiptable.try(:local_hcb_code)
+    receiptable.try(:receipt_hcb_code)
   end
 
   has_many :suggested_pairings, dependent: :destroy
