@@ -462,6 +462,10 @@ module EventsHelper
     end
   end
 
+  def ledger_filter_path(event, filters)
+    event_ledger_path(event, upsert_query_params(query: filters.presence&.to_json, page: 1))
+  end
+
   private
 
   def validate_date_range(base, params)

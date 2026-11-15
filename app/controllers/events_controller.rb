@@ -11,7 +11,6 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_ledger_filters, only: [:ledger]
   before_action :set_transaction_filters, only: [:transactions, :transactions_list]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
@@ -1409,12 +1408,17 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
+    set_ledger_filters
+    return if performed?
+
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
+  rescue Ledger::Query::Error => e
+    render plain: "Invalid query: #{e.message}", status: :bad_request
   end
 
   def toggle_new_ledger

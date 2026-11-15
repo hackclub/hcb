@@ -62,6 +62,8 @@ class CardGrantsController < ApplicationController
       @ledger = @event.ledger
       @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
     end
+  rescue Ledger::Query::Error => e
+    render plain: "Invalid query: #{e.message}", status: :bad_request
   end
 
   def new

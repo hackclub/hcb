@@ -274,17 +274,117 @@ RSpec.describe EventsController do
         expect(badges.at_css(".list-badge[aria-label='1 comment']")).to be_present
       end
 
-      # The maximum_amount filter used to compile to a malformed `$and` query
-      # that raised Ledger::Query::Error inside the action (only Pundit was
-      # rescued), 500ing the page. Amount-range filtering itself is covered in
-      # the query spec.
-      it "accepts the maximum_amount filter without raising" do
-        item = create(:ledger_item, amount_cents: 100, datetime: Time.current)
-        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+      describe "filtering by query" do
+        # See below for why memo goes in custom_memo and the rest in update_columns.
+        def ledger_item(memo, **columns)
+          item = create(:ledger_item, custom_memo: memo, datetime: Time.current)
+          Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+          item.update_columns(ct_count: 1, **columns)
+          item
+        end
 
-        get(:ledger, params: { event_id: event.slug, maximum_amount: 500 })
+        def get_ledger(query)
+          get(:ledger, params: { event_id: event.slug, query: query.is_a?(String) ? query : query.to_json })
+        end
 
-        expect(response).to have_http_status(:ok)
+        def chips
+          Nokogiri::HTML5(response.body).css(".filter-menu__chips .badge")
+        end
+
+        def query_of(link)
+          JSON.parse(Rack::Utils.parse_query(URI(link["href"]).query).fetch("query", "{}"))
+        end
+
+        it "narrows the ledger to the query" do
+          ledger_item("Large expense", amount_cents: -50_000)
+          ledger_item("Small expense", amount_cents: -500)
+
+          get_ledger({ absolute_amount_cents: { "$gte" => 10_000 } })
+
+          expect(response.body).to include("Large expense")
+          expect(response.body).not_to include("Small expense")
+        end
+
+        it "can't lift the filters the page applies on top of the query" do
+          ledger_item("Declined with no amount", status: "declined", amount_cents: 0)
+
+          get_ledger({ "$or" => [{ status: "declined" }, { amount_cents: 0 }] })
+
+          expect(response).to have_http_status(:ok)
+          expect(response.body).not_to include("Declined with no amount")
+        end
+
+        it "doesn't resolve another organization's tag, listing it as a custom filter instead" do
+          other_tag = Tag.create!(event: create(:event), label: "Their secret project", color: "blue", emoji: "🎉")
+
+          get_ledger({ tag: other_tag.id })
+
+          expect(chips.map { |chip| chip.text.squish }).to eq([{ tag: other_tag.id }.to_json])
+          expect(response.body).not_to include("Their secret project")
+        end
+
+        it "removes only a chip's own clause" do
+          get_ledger({ memo: "Rent", amount_cents: { "$lt" => 0 } })
+
+          custom, direction = chips.partition { |chip| chip.at_css("code") }.map(&:first)
+          expect(direction.text.squish).to eq("Expenses")
+          expect(query_of(custom.at_css("a"))).to eq({ "amount_cents" => { "$lt" => 0 } })
+          expect(query_of(direction.at_css("a"))).to eq({ "memo" => "Rent" })
+        end
+
+        it "keeps the filters when searching" do
+          get_ledger({ amount_cents: { "$gt" => 0 } })
+
+          expect(JSON.parse(Nokogiri::HTML5(response.body).at_css("input#query")["value"])).to eq({ "amount_cents" => { "$gt" => 0 } })
+        end
+
+        it "shows a date filter's inclusive last day, though the query bounds the day after it" do
+          get_ledger({ datetime: { "$gte" => "2024-01-01", "$lt" => "2024-02-01" } })
+
+          expect(chips.map { |chip| chip.text.squish }).to eq(["Between 01/01/2024 and 01/31/2024"])
+        end
+
+        {
+          "malformed JSON"                   => "{\"tag\":",
+          "JSON that isn't an object"        => "[1]",
+          "an unknown field"                 => { amout_cents: 1 },
+          "an object where a value belongs"  => { category: { "$eq" => { "slug" => "rent" } } },
+          "a condition that isn't an object" => { "$or" => [1] },
+          "a query nested beyond its limits" => (1..25).reduce({ amount_cents: 1 }) { |query, _| { "$and" => [query] } }
+        }.each do |description, query|
+          it "rejects #{description} with a 400, not a 500" do
+            get_ledger(query)
+
+            expect(response).to have_http_status(:bad_request)
+            expect(response.body).to start_with("Invalid query")
+          end
+        end
+
+        it "lists a date the filter menu wouldn't write as a custom filter rather than raising" do
+          get_ledger({ datetime: { "$gte" => "2024-02-30" } })
+
+          expect(response).to have_http_status(:ok)
+          expect(chips.map { |chip| chip.text.squish }).to eq([{ datetime: { "$gte" => "2024-02-30" } }.to_json])
+        end
+
+        it "rejects a query sent as nested params rather than JSON" do
+          get(:ledger, params: { event_id: event.slug, query: { tag: "1" } })
+
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+
+      context "as a signed-in user who can't see the organization" do
+        let(:event) { create(:event, is_public: false) }
+
+        before { create_session(create(:user), verified: true) }
+
+        # Answering a bad query before authorizing would confirm the organization exists.
+        it "answers an invalid query with a 404, like any other request" do
+          get(:ledger, params: { event_id: event.slug, query: "{" })
+
+          expect(response).to have_http_status(:not_found)
+        end
       end
 
       # The default status filter hides declined/failed/rejected/canceled/
@@ -349,6 +449,18 @@ RSpec.describe EventsController do
           expect(row.at_css("form[data-file-drop-target='form']")).to be_nil
         end
       end
+    end
+  end
+
+  describe "#ledger as an anonymous reader of a transparent organization" do
+    let!(:event) { create(:event, is_public: true) }
+
+    it "rejects a query before running it" do
+      expect(Ledger::Query).not_to receive(:new)
+
+      get(:ledger, params: { event_id: event.slug, query: { tag: 1 }.to_json })
+
+      expect(response).to have_http_status(:bad_request)
     end
   end
 

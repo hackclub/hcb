@@ -3,11 +3,12 @@
 module SetLedgerFilters
   extend ActiveSupport::Concern
 
-  # Params that narrow a ledger. `q` is excluded because the search box renders
+  # Params that narrow a ledger: `query` for the new ledger, the rest for the
+  # classic transactions page. `q` is excluded because the search box renders
   # outside the filter menu; `subledger` because it picks which ledger to show
   # rather than filtering one.
   FILTER_PARAMS = %i[
-    tag user type start end minimum_amount maximum_amount
+    query tag user type start end minimum_amount maximum_amount
     missing_receipts merchant direction category
   ].freeze
 
@@ -32,6 +33,17 @@ module SetLedgerFilters
       { amount_cents: { "$ne": 0 } },
       { status: { "$in": ["settled", "pending", "reversed"] } }
     ]
+  }.freeze
+
+  DIRECTION_PREDICATES = {
+    "expenses" => { "$lt" => 0 },
+    "revenue"  => { "$gt" => 0 }
+  }.freeze
+
+  MISSING_RECEIPTS = {
+    "receipt_count"                => 0,
+    "receipt_required"             => true,
+    "marked_no_or_lost_receipt_at" => nil
   }.freeze
 
   included do
@@ -59,19 +71,18 @@ module SetLedgerFilters
       reject_disabled_filters
       return if performed?
 
-      if params[:tag]
-        @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
-      end
+      @ledger_filters = parse_ledger_filters
 
-      @type = params[:type].presence
-      @start_date = params[:start].presence
-      @end_date = params[:end].presence
-      @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
-      @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
-      @missing_receipts = params[:missing_receipts].present?
-      @merchant = params[:merchant].presence
-      @direction = params[:direction].presence
-      @category = TransactionCategory.find_by(slug: params[:category])
+      # Chips and menus only recognize the shapes the filter menu writes; anything
+      # else is listed as a custom filter.
+      @tag = @event.tags.find_by(id: @ledger_filters["tag"]) if @ledger_filters["tag"].is_a?(Integer)
+      @type = TYPE_PREDICATES.find { |_, predicate| predicate.stringify_keys == @ledger_filters["linked_object_type"] }&.first
+      @start_date, @end_date = ledger_filter_dates
+      @minimum_amount, @maximum_amount = ledger_filter_amounts
+      @missing_receipts = @ledger_filters >= MISSING_RECEIPTS
+      @merchant = @ledger_filters["merchant"] if @ledger_filters["merchant"].is_a?(String)
+      @direction = DIRECTION_PREDICATES.key(@ledger_filters["amount_cents"])
+      @category = TransactionCategory.find_by(slug: @ledger_filters["category"]) if @ledger_filters["category"].is_a?(String)
 
       @ledger = @event.ledger
       @ledgers = if @use_card_grant_ledgers
@@ -90,57 +101,70 @@ module SetLedgerFilters
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
+      @user = @users.find_by(slug: @ledger_filters["author"]) if @ledger_filters["author"].is_a?(String)
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
         @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
       end
+
+      recognized_fields = {
+        "tag"                   => @tag,
+        "author"                => @user,
+        "linked_object_type"    => @type,
+        "amount_cents"          => @direction,
+        "absolute_amount_cents" => @minimum_amount || @maximum_amount,
+        "datetime"              => @start_date || @end_date,
+        "category"              => @category,
+        "merchant"              => @merchant
+      }.compact.keys
+      recognized_fields += MISSING_RECEIPTS.keys if @missing_receipts
+      @custom_ledger_filters = @ledger_filters.except(*recognized_fields)
     end
 
+    # The viewer's filters are one clause of the query, so they can narrow the
+    # ledger but never lift the filters the page applies on top of them.
     def ledger_query
-      query = []
-
+      query = [@ledger_filters, VISIBLE]
       query << { memo: { "$search": params[:q] } } if params[:q].present?
 
-      if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
-        if @direction == "revenue"
-          query << { amount_cents: { "$gt": 0 } }
-        elsif @direction == "expenses"
-          query << { amount_cents: { "$lt": 0 } }
-        end
-
-        if @minimum_amount.present?
-          query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.cents } }, { amount_cents: { "$lte": -@minimum_amount.cents } }] }
-        end
-
-        if @maximum_amount.present?
-          # Multiple operators on one field are AND-combined: |amount| <= max
-          query << { amount_cents: { "$lte": @maximum_amount.cents, "$gte": -@maximum_amount.cents } }
-        end
-      end
-
-      if @missing_receipts
-        query << { receipt_count: { "$eq": 0 } }
-        query << { receipt_required: { "$eq": true } }
-        query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
-      end
-
-      query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
-      # Whole-day inclusive end bound, matching the old transactions page
-      query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
-
-      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
-
-      query << { tag: { "$eq": @tag.id } } if @tag.present?
-      query << { category: { "$eq": @category.slug } } if @category.present?
-      query << { merchant: { "$eq": @merchant } } if @merchant.present?
-
-      query << { linked_object_type: TYPE_PREDICATES[@type] } if @type.present?
-
-      query << VISIBLE
       Ledger::Query.new({ "$and": query })
+    end
+
+    def parse_ledger_filters
+      return {} if params[:query].blank?
+
+      filters = JSON.parse(params[:query]) if params[:query].is_a?(String)
+      raise Ledger::Query::Error.new("Query must be a JSON object") unless filters.is_a?(Hash)
+
+      filters
+    rescue JSON::ParserError => e
+      raise Ledger::Query::Error.new("Query must be valid JSON: #{e.message}")
+    end
+
+    # A range filter as the filter menu writes it: an object of only these bounds.
+    def ledger_filter_range(field, bounds)
+      range = @ledger_filters[field]
+      range if range.is_a?(Hash) && range.present? && (range.keys - bounds).empty?
+    end
+
+    # The date filter writes whole days: `$gte` the first, `$lt` the day after the last.
+    def ledger_filter_dates
+      dates = ledger_filter_range("datetime", %w[$gte $lt])
+      return unless dates&.values&.all?(String)
+
+      start_date, end_date = dates.values_at("$gte", "$lt").map { |date| date && Date.strptime(date, "%Y-%m-%d") }
+      [start_date, end_date&.prev_day]
+    rescue Date::Error
+      nil
+    end
+
+    def ledger_filter_amounts
+      amounts = ledger_filter_range("absolute_amount_cents", %w[$gte $lte])
+      return unless amounts&.values&.all?(Integer)
+
+      amounts.values_at("$gte", "$lte").map { |cents| cents && Money.new(cents) }
     end
 
   end

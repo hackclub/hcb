@@ -410,6 +410,20 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#transaction_index" do
+    it "rejects an invalid query with a 400, not a 500" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:transaction_index, params: { event_id: event.friendly_id, query: "{" })
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to start_with("Invalid query")
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)
