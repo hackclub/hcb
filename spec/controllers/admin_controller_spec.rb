@@ -97,6 +97,26 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#ledger_items" do
+    render_views
+
+    it "finds ledger items by a partial word in the memo" do
+      admin = create(:user, :make_admin)
+      amazon = create(:ledger_item)
+      amazon.update_columns(memo: "AMAZON MKTPLACE")
+      uber = create(:ledger_item)
+      uber.update_columns(memo: "UBER TRIP")
+
+      create_session(admin, verified: true)
+
+      get :ledger_items, params: { q: "amaz" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("AMAZON MKTPLACE")
+      expect(response.body).not_to include("UBER TRIP")
+    end
+  end
+
   describe "#event_search" do
     it "returns JSON options the combobox can render" do
       admin = create(:user, :make_admin)

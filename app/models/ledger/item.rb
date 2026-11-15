@@ -47,8 +47,17 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
-    include PgSearch::Model
-    pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
+    # Every word in the query must appear somewhere in the memo (see
+    # MemoSearch). A query with no searchable words matches nothing, so this
+    # is safe inside an OR.
+    scope :search_memo, lambda { |query|
+      tokens = MemoSearch.tokens(query)
+      next none if tokens.empty?
+
+      tokens.reduce(all) do |relation, token|
+        relation.where(arel_table[:memo].matches(MemoSearch.pattern(token)))
+      end
+    }
 
     include Hashid::Rails
     include PublicIdentifiable

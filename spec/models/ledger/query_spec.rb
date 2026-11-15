@@ -235,6 +235,79 @@ RSpec.describe Ledger::Query, type: :model do
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f, item_g))
       end
     end
+
+    context "$search" do
+      def search(query) = execute_query({ memo: { "$search" => query } }).pluck(:id)
+
+      it "matches a partial word" do
+        expect(search("alph")).to match_array(ids_of(item_b, item_c))
+      end
+
+      it "requires every word, in any order and any case" do
+        expect(search("PAYMENT alpha")).to match_array(ids_of(item_b))
+      end
+
+      it "matches a two-character word" do
+        expect(search("pa")).to match_array(ids_of(item_b, item_e, item_f, item_g))
+      end
+
+      it "matches straight and curly apostrophes interchangeably" do
+        straight = create_mapped_item(amount_cents: 1, memo: "JOE'S PIZZA", datetime: Date.new(2024, 4, 1))
+        curly = create_mapped_item(amount_cents: 1, memo: "JOE’S PIZZA", datetime: Date.new(2024, 4, 1))
+
+        expect(search("joe's")).to match_array(ids_of(straight, curly))
+        expect(search("joe’s")).to match_array(ids_of(straight, curly))
+      end
+
+      it "matches LIKE metacharacters literally" do
+        percent = create_mapped_item(amount_cents: 1, memo: "100% refund", datetime: Date.new(2024, 4, 1))
+        create_mapped_item(amount_cents: 1, memo: "1000 refund", datetime: Date.new(2024, 4, 1))
+        underscore = create_mapped_item(amount_cents: 1, memo: "a_b", datetime: Date.new(2024, 4, 1))
+        create_mapped_item(amount_cents: 1, memo: "axb", datetime: Date.new(2024, 4, 1))
+        backslash = create_mapped_item(amount_cents: 1, memo: "c\\d", datetime: Date.new(2024, 4, 1))
+        create_mapped_item(amount_cents: 1, memo: "cd", datetime: Date.new(2024, 4, 1))
+
+        expect(search("100%")).to match_array(ids_of(percent))
+        expect(search("a_b")).to match_array(ids_of(underscore))
+        expect(search("c\\d")).to match_array(ids_of(backslash))
+      end
+
+      it "matches nothing when the query has no searchable words" do
+        expect(search("   ")).to be_empty
+        expect(search("...")).to be_empty
+        expect(search("a")).to be_empty
+      end
+
+      it "adds nothing to $or when the query has no searchable words" do
+        result = execute_query({ "$or" => [{ memo: { "$search" => "a" } }, { amount_cents: 200 }] })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_d))
+      end
+
+      it "searches a numeric operand as text" do
+        order = create_mapped_item(amount_cents: 1, memo: "order 42", datetime: Date.new(2024, 4, 1))
+
+        expect(search(42)).to match_array(ids_of(order))
+      end
+
+      it "rejects an operand that isn't a string or number" do
+        expect { search(["alpha"]) }.to raise_error(Ledger::Query::Error, /\$search requires a string/)
+      end
+
+      it "works inside $or" do
+        result = execute_query({ "$or" => [{ memo: { "$search" => "gamma" } }, { amount_cents: 200 }] })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_d, item_f))
+      end
+
+      it "never matches another ledger's items" do
+        other_item = create(:ledger_item, memo: "alpha payment")
+        Ledger::Mapping.create(ledger: create(:event).ledger, ledger_item: other_item, on_primary_ledger: true)
+        other_item.update_columns(ct_count: 1, memo: "alpha payment")
+
+        expect(search("alpha payment")).to match_array(ids_of(item_b))
+      end
+    end
   end
 
   describe "logical operators" do

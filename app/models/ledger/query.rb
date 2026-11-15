@@ -284,11 +284,13 @@ class Ledger
         end
         relation.where.not(id: inner.select(:id))
       when "$search"
-        # $search is an HCB extension (not a MongoDB operator): pg_search
-        # full-text search, supported only on the memo column.
+        # $search is an HCB extension (not a MongoDB operator): every word must
+        # appear somewhere in the memo (Ledger::Item.search_memo). Supported
+        # only on the memo column.
         raise Ledger::Query::Error.new("$search is only supported on the memo field") unless key == "memo"
+        raise Ledger::Query::Error.new("$search requires a string") unless operand.is_a?(String) || operand.is_a?(Numeric)
 
-        relation.where(id: Ledger::Item.search_memo(operand).select(:id))
+        relation.search_memo(operand.to_s)
       else
         raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
       end
