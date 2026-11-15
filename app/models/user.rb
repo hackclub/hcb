@@ -142,6 +142,7 @@ class User < ApplicationRecord
   has_many :stripe_cards, through: :stripe_cardholder
   has_many :stripe_authorizations, through: :stripe_cards
   has_many :receipts
+  has_many :lost_receipt_filings, class_name: "LostReceipt::Filing"
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event

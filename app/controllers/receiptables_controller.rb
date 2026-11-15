@@ -9,6 +9,7 @@ class ReceiptablesController < ApplicationController
 
   def lost_receipt
     @statement = LostReceipt::Statement.new(
+      receiptable: statement_receiptable,
       date: @receiptable.try(:date) || @receiptable.try(:datetime)&.to_date,
       merchant: @receiptable.try(:memo),
       signer_name: current_user&.full_name,
@@ -18,11 +19,11 @@ class ReceiptablesController < ApplicationController
   end
 
   def mark_no_or_lost
-    receiptable = @receiptable.is_a?(Ledger::Item) ? (@receiptable.hcb_code || raise(ActiveRecord::RecordNotFound)) : @receiptable
     @statement = LostReceipt::Statement.new(statement_params)
+    @statement.receiptable = statement_receiptable
     @statement.submitter = current_user
 
-    if @statement.submit(receiptable:)
+    if @statement.submit
       flash[:success] = "Lost receipt statement added."
       # Signed link visitors can't view the transaction itself.
       fallback = from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
@@ -36,10 +37,14 @@ class ReceiptablesController < ApplicationController
 
   private
 
+  def statement_receiptable
+    @receiptable.is_a?(Ledger::Item) ? (@receiptable.hcb_code || raise(ActiveRecord::RecordNotFound)) : @receiptable
+  end
+
   def statement_params
     return {} unless params.key?(:lost_receipt_statement)
 
-    params.expect(lost_receipt_statement: [:date, :merchant, :purpose, :signer_name, :confirmed,
+    params.expect(lost_receipt_statement: [:date, :merchant, :purpose, :signer_name, :confirmed, :acknowledgement,
                                            { items_attributes: [[:description, :quantity, :unit_amount, :unit_amount_cents]] }])
   end
 

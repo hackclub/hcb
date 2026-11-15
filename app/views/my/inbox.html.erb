@@ -8,9 +8,9 @@
   </span>
 </h1>
 
-<% lost_receipt_statements = current_user.receipts.lost_receipt_statement.count %>
-<% if lost_receipt_statements > 0 %>
-  <p class="muted">You've filed <%= pluralize lost_receipt_statements, "lost receipt statement" %>.</p>
+<% lost_receipts = current_user.lost_receipt_filings.count %>
+<% if lost_receipts > 0 %>
+  <p class="muted">You've lost <%= pluralize lost_receipts, "receipt" %>.</p>
 <% end %>
 
 <% if CardLocking.enabled? %>

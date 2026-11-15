@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1795,6 +1795,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
 
+  create_table "lost_receipt_filings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id"
+    t.bigint "receipt_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["event_id"], name: "index_lost_receipt_filings_on_event_id"
+    t.index ["receipt_id"], name: "index_lost_receipt_filings_on_receipt_id", unique: true
+    t.index ["user_id"], name: "index_lost_receipt_filings_on_user_id"
+  end
+
   create_table "mailbox_addresses", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.string "address", null: false
@@ -3256,6 +3267,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
+  add_foreign_key "lost_receipt_filings", "events"
+  add_foreign_key "lost_receipt_filings", "receipts"
+  add_foreign_key "lost_receipt_filings", "users"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"

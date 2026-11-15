@@ -44,6 +44,50 @@ RSpec.describe LostReceipt::Statement do
     expect(hcb_code.receipts).to be_empty
   end
 
+  context "on an organization's transaction" do
+    let(:event) { create(:event) }
+    let(:cardholder) { create(:user) }
+    let(:hcb_code) do
+      transaction = create(:canonical_pending_transaction, amount_cents: -100)
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event:)
+      transaction.local_hcb_code
+    end
+    let(:sentence) { "I understand this is the 1st receipt my organization has lost. Continually losing receipts will result in termination of my organization." }
+
+    it "requires the typed acknowledgement and counts the lost receipt against the organization" do
+      statement = described_class.new(details.merge(receiptable: hcb_code, acknowledgement: "I understand"))
+      expect(statement.required_acknowledgement).to eq(sentence)
+      expect(statement.submit).to eq(false)
+      expect(statement.errors[:acknowledgement]).to be_present
+
+      statement.acknowledgement = "  #{sentence.upcase.delete('.')} "
+      expect(statement.submit).to eq(true)
+      expect(event.lost_receipt_filings.sole).to have_attributes(receipt: statement.receipt, user: nil)
+      expect(described_class.new(receiptable: hcb_code).required_acknowledgement).to include("2nd receipt my organization has lost.")
+
+      statement.receipt.destroy!
+      expect(event.lost_receipt_filings).to be_empty
+    end
+
+    it "counts card charges against the cardholder, who is the only one asked to own them" do
+      allow(hcb_code).to receive(:stripe_cardholder).and_return(double(user: cardholder))
+      earlier = create(:canonical_pending_transaction).local_hcb_code
+      allow(earlier).to receive(:stripe_cardholder).and_return(double(user: cardholder))
+      expect(described_class.new(details).submit(receiptable: earlier)).to eq(true)
+
+      [cardholder, nil].each do |submitter|
+        expect(described_class.new(receiptable: hcb_code, submitter:).required_acknowledgement)
+          .to include("1st receipt my organization has lost, and the 2nd receipt I have lost.")
+      end
+
+      statement = described_class.new(details.merge(receiptable: hcb_code, submitter: create(:user)))
+      expect(statement.required_acknowledgement).to eq(sentence)
+      statement.acknowledgement = sentence
+      expect(statement.submit).to eq(true)
+      expect(cardholder.lost_receipt_filings.count).to eq(2)
+    end
+  end
+
   it "does not resolve the missing receipt if PDF generation fails" do
     allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
 

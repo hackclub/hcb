@@ -7,7 +7,7 @@ module LostReceipt
 
     CONFIRMATION = "I confirm these details are accurate and that I can't get the original receipt."
 
-    attr_accessor :receipt, :submitter, :merchant, :purpose, :signer_name, :confirmed_at
+    attr_accessor :receipt, :receiptable, :submitter, :merchant, :purpose, :signer_name, :confirmed_at, :acknowledgement
 
     attribute :date, :date
     attribute :confirmed, :boolean
@@ -19,6 +19,7 @@ module LostReceipt
     validates :items, length: { minimum: 1, maximum: 50 }
     validate :date_is_not_in_the_future
     validate :items_are_valid
+    validate :acknowledgement_matches
 
     def items_attributes=(attributes)
       attributes = attributes.values if attributes.is_a?(Hash)
@@ -30,11 +31,13 @@ module LostReceipt
 
     # The receipt is only saved once the PDF is stored, so a failed render or
     # upload leaves the transaction missing its receipt.
-    def submit(receiptable:)
+    def submit(receiptable: self.receiptable)
+      self.receiptable = receiptable
       return false unless valid?
 
       self.confirmed_at = Time.current
       self.receipt = Receipt.new(receiptable:, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
+      receipt.build_lost_receipt_filing(event:, user: cardholder)
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
       # Created before uploading so a partial upload can still be purged.
@@ -58,7 +61,36 @@ module LostReceipt
       items.sum(&:total_amount_cents)
     end
 
+    # The sentence the submitter has to type. Nil when there's no organization to count against.
+    def required_acknowledgement
+      return unless event
+
+      # Only someone filing for their own card can say "I have lost". The emailed link goes to the cardholder.
+      own = if cardholder && (submitter.nil? || submitter == cardholder)
+              ", and the #{(cardholder.lost_receipt_filings.count + 1).ordinalize} receipt I have lost"
+            end
+      "I understand this is the #{(event.lost_receipt_filings.count + 1).ordinalize} receipt my organization has lost#{own}. " \
+        "Continually losing receipts will result in termination of my organization."
+    end
+
     private
+
+    def event
+      receiptable.try(:event)
+    end
+
+    # ACHs, checks, and the like have no cardholder, so they only count against the organization.
+    def cardholder
+      receiptable.try(:stripe_cardholder)&.user
+    end
+
+    def acknowledgement_matches
+      # Case, spacing, and punctuation don't matter.
+      normalize = ->(text) { text.to_s.downcase.gsub(/[^a-z0-9]/, "") }
+      return if normalize.call(acknowledgement) == normalize.call(required_acknowledgement)
+
+      errors.add(:acknowledgement, "must match the sentence shown")
+    end
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current

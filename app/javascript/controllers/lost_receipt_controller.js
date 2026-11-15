@@ -9,6 +9,7 @@ export default class extends Controller {
     'addButton',
     'removeButton',
     'returnTo',
+    'acknowledgement',
   ]
 
   connect() {
@@ -54,6 +55,16 @@ export default class extends Controller {
       currency: 'USD',
     }).format(cents / 100)
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
+    if (this.hasAcknowledgementTarget) {
+      // Same comparison as the server: case, spacing, and punctuation don't matter.
+      const normalize = text => text.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const field = this.acknowledgementTarget
+      field.setCustomValidity(
+        normalize(field.value) === normalize(field.dataset.sentence)
+          ? ''
+          : 'Type the sentence exactly as shown.'
+      )
+    }
     this.removeButtonTargets.forEach(button => {
       button.disabled = this.itemTargets.length <= 1
     })

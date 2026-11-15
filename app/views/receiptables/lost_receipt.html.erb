@@ -5,13 +5,9 @@
 
 <% frame_id = "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}" %>
 <% charged = @receiptable.try(:amount_cents)&.abs %>
-<% filed = current_user&.receipts&.lost_receipt_statement&.count.to_i %>
 
 <%= turbo_frame_tag frame_id, target: "_top" do %>
-  <p class="muted mt-0">
-    Lost receipt statements are reviewed by HCB operations. We'll contact you if we need more details.
-    <% if filed > 0 %>You've filed <%= pluralize filed, "lost receipt statement" %>.<% end %>
-  </p>
+  <p class="muted mt-0">Lost receipt statements are reviewed by HCB operations. We'll contact you if we need more details.</p>
 
   <%# paste stops here so the page's paste-to-upload-a-receipt handler ignores text pasted into this form %>
   <%= form_with model: @statement, scope: :lost_receipt_statement, namespace: frame_id, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update paste->lost-receipt#update:stop" } do |form| %>
@@ -67,6 +63,13 @@
       <%= form.check_box :confirmed, required: true %>
       <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
     </div>
+    <% if (sentence = @statement.required_acknowledgement) %>
+      <div class="field">
+        <%= form.label :acknowledgement, "Type this sentence to submit" %>
+        <p class="bold mt-0 mb-2"><%= sentence %></p>
+        <%= form.text_area :acknowledgement, required: true, rows: 3, autocomplete: "off", spellcheck: false, class: "!max-w-full", data: { lost_receipt_target: "acknowledgement", sentence: } %>
+      </div>
+    <% end %>
     <%= form.submit "Submit statement", class: "btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } %>
   <% end %>
 <% end %>

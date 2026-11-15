@@ -13,6 +13,7 @@ RSpec.describe ReceiptablesController do
   let(:secret) { hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload) }
   let(:details) do
     { date: "2026-01-15", merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example", confirmed: "1",
+      acknowledgement: LostReceipt::Statement.new(receiptable: hcb_code).required_acknowledgement,
       items_attributes: [{ description: "Notebooks", quantity: 2, unit_amount_cents: 617 }]
 }
   end

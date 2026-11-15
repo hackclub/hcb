@@ -43,6 +43,9 @@
     </table>
     <div class="confirmation">
       <p><%= LostReceipt::Statement::CONFIRMATION %></p>
+      <% if @statement.required_acknowledgement %>
+        <p><%= @statement.required_acknowledgement %></p>
+      <% end %>
       <p>
         <strong>Confirmed by:</strong> <%= @statement.signer_name %><br>
         <strong>Submitted:</strong> <%= @statement.confirmed_at.utc.strftime("%B %-d, %Y at %H:%M UTC") %><br>

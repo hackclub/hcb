@@ -500,6 +500,7 @@ class Event < ApplicationRecord
   has_one :ledger, -> { where(primary: true) }, inverse_of: :event
   after_create :create_ledger
   has_many :hcb_codes
+  has_many :lost_receipt_filings, class_name: "LostReceipt::Filing"
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
   has_many :pinned_ledger_items, through: :ledger, source: :pinned_items, class_name: "Ledger::Item"
 
