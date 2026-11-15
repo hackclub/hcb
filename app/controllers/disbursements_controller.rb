@@ -163,6 +163,9 @@ class DisbursementsController < ApplicationController
                Ledger::Item.none
              end
     @items = @items.page(params[:page]).per(REPAYABLE_TRANSACTIONS_PER_PAGE)
+    # safely: an empty picker instead of an error while #15624's migration
+    # reshapes the repayments table.
+    @items = Ledger::Item.none.page(1) unless safely { @items.load }
 
     render layout: false
   end
@@ -328,7 +331,8 @@ class DisbursementsController < ApplicationController
     return unless @destination_event && params[:repaid_ledger_item_id].present?
     return unless policy(Disbursement.new(destination_event: @destination_event)).repay?
 
-    @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
+    # safely: see repayable_transactions.
+    @repaid_ledger_item = safely { Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id]) }
     return unless @repaid_ledger_item
 
     @disbursement.transfer_type = :repayment
