@@ -5,9 +5,8 @@ module Maintenance
   # finishing the move of receipts from HcbCode to Ledger::Item
   # (https://github.com/hackclub/hcb/issues/14106). New receipts already go to
   # the ledger item (Receipt's before_validation), and a code hands its
-  # receipts over the moment it is linked to an item
-  # (HcbCode#move_receipts_to_ledger_item!); this catches the pairs linked
-  # before either existed.
+  # receipts over the moment it is linked to an item (HcbCode's after_commit);
+  # this catches the pairs linked before either existed.
   #
   # HCB codes with no ledger item are left alone. In production those are the
   # empty HCB-000 codes with no transactions, which will never get one; their
@@ -15,10 +14,13 @@ module Maintenance
   #
   # The collection only holds codes that still have a receipt of their own, so
   # it shrinks as the task runs: reruns are cheap and an interrupted run can be
-  # restarted. The hand-over itself is an update_all (see
-  # HcbCode#move_receipts_to_ledger_item!), so the pairing and card-locking
-  # receipt callbacks don't fire for every moved row, and the item's cached
-  # receipt_count is refreshed by hand.
+  # restarted.
+  #
+  # The hand-over is an update_all rather than update!: the receipt isn't
+  # changing, only which of the transaction's two records it hangs off, so the
+  # pairing and card-locking receipt callbacks (an unlock job per charge) have
+  # nothing to do. The item's cached receipt_count is refreshed by hand since
+  # nothing touches it.
   class MoveHcbCodeReceiptsToLedgerItemsTask < MaintenanceTasks::Task
     def collection
       HcbCode
@@ -28,7 +30,8 @@ module Maintenance
     end
 
     def process(hcb_code)
-      hcb_code.move_receipts_to_ledger_item!
+      moved = Receipt.where(receiptable: hcb_code).update_all(receiptable_type: "Ledger::Item", receiptable_id: hcb_code.ledger_item_id)
+      hcb_code.ledger_item.refresh_receipt_count! if moved.positive?
     end
 
   end
