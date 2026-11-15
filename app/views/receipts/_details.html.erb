@@ -27,7 +27,8 @@
         Automatically.
         <%= link_to "View original", rails_blob_path(receipt.original_file, only_path: true, disposition: "inline"), target: "_blank" %>
         <% if policy(receipt).restore_original? %>
-          <%= button_to "Undo rotation", restore_original_receipt_path(receipt), class: "p0 bg-transparent border-none cursor-pointer primary underline", form_class: "inline" %>
+          <%# a link, not button_to: this renders inside other forms, and forms can't nest %>
+          <%= link_to "Undo rotation", restore_original_receipt_path(receipt), data: { turbo_method: :post, behavior: "modal_ignore" } %>
         <% end %>
       </span>
     </div>

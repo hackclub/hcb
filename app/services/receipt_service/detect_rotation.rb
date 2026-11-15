@@ -57,7 +57,10 @@ module ReceiptService
 
       rotate if reads_better_rotated?(rotate)
     rescue OutOfTime
+      Rails.logger.warn("ReceiptService::DetectRotation ran out of time") # to see how often this happens
       nil
+    ensure
+      @image&.close!
     end
 
     private
@@ -82,6 +85,8 @@ module ReceiptService
 
       rotated = ImageProcessing::MiniMagick.source(@image.path).rotate(degrees).call
       confident_words(rotated.path)
+    ensure
+      rotated&.close!
     end
 
     # `--psm 6` treats the image as one upright block of text. The default mode

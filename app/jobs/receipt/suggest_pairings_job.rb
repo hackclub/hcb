@@ -10,6 +10,7 @@ class Receipt
     end
 
     def perform(receipt)
+      receipt.auto_rotate # first, so the text is read from the upright file
       ::ReceiptService::Suggest.new(receipt:).run!
     end
 

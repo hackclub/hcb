@@ -11,7 +11,7 @@ RSpec.describe ReceiptsController do
     let(:user) { create(:user) }
     let(:receipt) do
       turned = ImageProcessing::MiniMagick.source(file_fixture("rotation_receipt.png").to_s).rotate(90).call
-      Receipt.create!(user:, upload_method: :api, file: { io: turned, filename: "receipt.png", content_type: "image/png" })
+      Receipt.create!(user:, upload_method: :quick_expense, file: { io: turned, filename: "receipt.png", content_type: "image/png" })
     end
 
     it "shows that a receipt was rotated, and puts the upload back when asked" do
@@ -19,6 +19,7 @@ RSpec.describe ReceiptsController do
       details = -> { controller.render_to_string(partial: "receipts/details", locals: { receipt: receipt.reload }) }
       get(:link_modal) # gives the controller a request to render the partial in
       expect(details.call).to include("Undo rotation", "View original")
+      expect(details.call).not_to include("<form") # it renders inside other forms
 
       post(:restore_original, params: { id: receipt.id })
 

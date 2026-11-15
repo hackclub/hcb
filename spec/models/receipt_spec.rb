@@ -17,8 +17,9 @@ RSpec.describe Receipt, type: :model do
   describe "auto rotation on upload" do
     let(:upright) { Rails.root.join("spec/fixtures/files/rotation_receipt.png").to_s }
 
+    # quick_expense rotates as the receipt is created; most others do it in SuggestPairingsJob
     def new_receipt(io:, content_type: "image/png", filename: "receipt.png", **attributes)
-      described_class.new(receiptable: create(:hcb_code), user: create(:user), upload_method: :api, **attributes).tap do |receipt|
+      described_class.new(receiptable: create(:hcb_code), user: create(:user), upload_method: :quick_expense, **attributes).tap do |receipt|
         receipt.file.attach(io:, filename:, content_type:)
       end
     end
@@ -59,7 +60,12 @@ RSpec.describe Receipt, type: :model do
       ).run!
       expect(seen).to eq([true])
 
-      expect { receipt_turned(90) }.to have_enqueued_job(Receipt::SuggestPairingsJob).with(satisfy { |receipt| receipt.original_file.attached? })
+      # other uploads rotate in the job, so the upload request doesn't wait
+      receipt = nil
+      expect { receipt = receipt_turned(90, upload_method: :api) }.to have_enqueued_job(Receipt::SuggestPairingsJob)
+      expect(receipt.original_file).not_to be_attached
+      perform_enqueued_jobs(only: Receipt::SuggestPairingsJob)
+      expect(seen).to eq([true, true])
     end
 
     it "can be undone, and doesn't rotate again afterwards" do
@@ -104,7 +110,17 @@ RSpec.describe Receipt, type: :model do
     it "doesn't check copies of receipts again" do
       expect(ReceiptService::DetectRotation).not_to receive(:new)
 
-      receipt_turned(90, upload_method: :duplicate)
+      expect(receipt_turned(90, upload_method: :duplicate).auto_rotate).to be(false)
+    end
+
+    it "lets a receipt of a type we no longer accept be copied" do
+      receipt = build_receipt(receiptable: create(:hcb_code), user: create(:user))
+      receipt.file.attach(io: StringIO.new("x"), filename: "receipt.gif", content_type: "image/gif")
+      receipt.save!(validate: false) # uploaded before the rule
+      copy_to = create(:hcb_code)
+
+      expect { described_class.reupload(old_receiptable: receipt.receiptable, new_receiptable: copy_to) }
+        .to change { described_class.where(receiptable: copy_to).count }.by(1)
     end
 
     it "keeps the original, and the undo, on a copy of a rotated receipt" do

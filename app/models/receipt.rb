@@ -103,11 +103,11 @@ class Receipt < ApplicationRecord
 
   validates :file, attached: true
   # Type and size are only checked on new files, so receipts uploaded before
-  # a rule existed stay valid.
+  # a rule existed stay valid, and so do copies of them.
   validates :file,
             content_type: { in: ALLOWED_CONTENT_TYPES, message: "must be a PDF, an image (JPG, PNG, HEIC or WebP), a Word document, a CSV or an Excel file" },
             size: { less_than_or_equal_to: 50.megabytes },
-            if: -> { attachment_changes["file"].present? }
+            if: -> { attachment_changes["file"].present? && !file.blob.attachments.exists? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -119,24 +119,25 @@ class Receipt < ApplicationRecord
 
   SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
-  after_create_commit do
-    # Rotation goes first so OCR, pairing suggestions and previews all see the
-    # upright file. It runs on a separate instance: saving this one inside its
-    # own commit callback would stop the remaining create callbacks from firing.
-    reload if Receipt.find(id).auto_rotate
+  # Above the rotation below, so a card unlock doesn't wait on it.
+  after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
+  after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
 
-    # Queue async job to extract text from newly upload receipt
-    # and to suggest pairings
-    unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
-      # certain interfaces run suggestions synchronously
+  after_create_commit do
+    if Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
+      # These interfaces run suggestions right after creating the receipt, so
+      # rotation has to happen here to come first. It runs on a separate
+      # instance: saving this one inside its own commit callback would stop
+      # the remaining create callbacks from firing.
+      reload if Receipt.find(id).auto_rotate
+    else
+      # Rotates the receipt, then extracts its text and suggests pairings.
+      # Not done here because uploads would wait on it, several files at a time.
       # Receipt::ExtractTextualContentJob.perform_later(self)
       # see https://github.com/hackclub/hcb/issues/7123
       Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
-
-  after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
-  after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
 
   validate :has_owner
 
