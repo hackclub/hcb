@@ -243,6 +243,65 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "when the legal entity already has a different TIN" do
+    def fingerprint(tin, tin_type) = Tax::IdentificationNumber::Hasher.hash_tin(tin, tin_type:, country: "US")
+
+    it "refuses a personal row before anything is staged or sent" do
+      user = create(:user, email: "ada@example.com")
+      user.personal_legal_entity.update!(tin_hash: fingerprint("987-65-4321", :individual))
+      allow(Tax::W9PdfStore).to receive(:store).and_call_original
+
+      expect { run }.to raise_error(described_class::ValidationError, /personal legal entity is already identified by a different TIN/)
+      expect(Tax::W9PdfStore).not_to have_received(:store)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "refuses a picked business entity" do
+      user = create(:user, email: "ada@example.com")
+      existing = create(:legal_entity, entity_type: :business, users: [user], tin_hash: fingerprint("98-7654321", :entity))
+
+      expect { run(data: business_data, legal_entity: existing) }
+        .to raise_error(described_class::ValidationError, /already identified by a different TIN/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "allows the same TIN again" do
+      user = create(:user, email: "ada@example.com")
+      user.personal_legal_entity.update!(tin_hash: fingerprint("123-45-6789", :individual))
+
+      expect(run.form).to be_completed
+      expect(user.personal_legal_entity.reload.mismatched_tax_form).to be_nil
+    end
+
+    it "allows a new business entity, which has no TIN yet" do
+      user = create(:user, email: "ada@example.com")
+      create(:legal_entity, entity_type: :business, users: [user], tin_hash: fingerprint("98-7654321", :entity))
+
+      expect(run(data: business_data, new_legal_entity: true).form).to be_completed
+    end
+
+    it "allows a TIN-less W-8, which can't mismatch" do
+      user = create(:user, email: "sommaiya@example.com")
+      user.personal_legal_entity.update!(tin_hash: fingerprint("987-65-4321", :individual))
+
+      expect { run(data: w8ben_data.merge(tin: "", tin_type: "", ftin_not_legally_required: "1")) }.not_to raise_error
+    end
+
+    it "is checked again against the entity the claim actually uses" do
+      user = create(:user, email: "ada@example.com")
+      calls = 0
+      allow_any_instance_of(described_class).to receive(:validate_legal_entity_choice!).and_wrap_original do |original|
+        original.call
+        # Identified by another form between the up-front check and the claim.
+        user.personal_legal_entity.update!(tin_hash: fingerprint("987-65-4321", :individual)) if (calls += 1) == 1
+      end
+
+      expect { run }.to raise_error(described_class::ValidationError, /different TIN/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+      expect(Tax::Form.with_deleted.count).to eq(0)
+    end
+  end
+
   describe ".legal_entity_candidates for an entity type" do
     let(:user) { create(:user, email: "ada@example.com") }
     let!(:business) { create(:legal_entity, entity_type: :business, users: [user]) }
@@ -683,7 +742,8 @@ RSpec.describe Tax1099ImportService do
     it "isn't a duplicate of the same foreign TIN from another country" do
       run(data: w8ben_data)
 
-      expect { run(data: w8ben_data.merge(country: "GB")) }.not_to raise_error
+      # Another payee: foreign TINs from different countries can coincide.
+      expect { run(data: w8ben_data.merge(country: "GB", email: "someone-in-gb@example.com")) }.not_to raise_error
     end
   end
 

@@ -404,7 +404,12 @@ class Tax1099ImportService
   # business entity yet gets a new one. Anything else is ambiguous, and the
   # admin has to settle it before the row is submitted.
   def validate_legal_entity_choice!
-    return if entity_type == :person
+    if entity_type == :person
+      validate_tin_matches!(User.find_by(email: @data[:email])&.personal_legal_entity)
+      return
+    end
+
+    validate_tin_matches!(@legal_entity)
 
     candidates = self.class.legal_entity_candidates(email: @data[:email], entity_type:)
 
@@ -416,6 +421,24 @@ class Tax1099ImportService
       end
     elsif candidates.any? && !@new_legal_entity
       raise ValidationError, "#{@data[:email]} already has #{entity_type} legal entities; pick one, or choose to create a new one"
+    end
+  end
+
+  # A legal entity's TIN can never change once set, so a form with a different
+  # TIN would never identify it: it would become LegalEntity#mismatched_tax_form
+  # and leave the payee unpayable, after a submission TaxBandits won't take
+  # back. Usually the row's TIN is mistyped, or it belongs on another entity.
+  # Nothing to compare when the row has no TIN or the entity has none yet.
+  def validate_tin_matches!(legal_entity)
+    return if tin_hash.nil? || legal_entity.nil? || legal_entity.tin_hash.nil?
+    return if legal_entity.tin_hash == tin_hash
+
+    if legal_entity.person?
+      raise ValidationError, "#{@data[:email]}'s personal legal entity is already identified by a different TIN. " \
+                             "Check the TIN against the signed form; if it's right, the payee's existing TIN needs sorting out before this can be imported"
+    else
+      raise ValidationError, "the selected legal entity is already identified by a different TIN; check the TIN against the signed form, " \
+                             "or pick another entity or create a new one"
     end
   end
 
@@ -499,6 +522,10 @@ class Tax1099ImportService
       end
 
       legal_entity = find_or_create_legal_entity!
+
+      # Checked up front too; again here against the entity actually used, in
+      # case it has been identified since.
+      validate_tin_matches!(legal_entity)
 
       Tax::Form.create!(
         external_service: :taxbandits,
