@@ -1201,7 +1201,7 @@ class EventsController < ApplicationController
         redirect_to @event
       end
       format.pdf do
-        render pdf: "Termination Letter for #{@event.name}", page_height: "11in", page_width: "8.5in"
+        render_pdf "Termination Letter for #{@event.name}"
       end
     end
   end

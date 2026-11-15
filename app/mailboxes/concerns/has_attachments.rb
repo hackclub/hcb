@@ -24,7 +24,7 @@ module HasAttachments
           next unless content
 
           files << {
-            io: StringIO.new(WickedPdf.new.pdf_from_string(content, encoding: "UTF-8")),
+            io: StringIO.new(CloudflareBrowserRun.pdf(content)),
             content_type: "application/pdf",
             filename: "EML_#{(decoded.subject || Time.now.strftime("%Y%m%d%H%M")).gsub(/[^0-9A-Za-z]/, '').slice(0, 30)}.pdf"
           }
@@ -35,7 +35,7 @@ module HasAttachments
 
       if (content = html || text || body) && include_body
         @attachments = [{
-          io: StringIO.new(WickedPdf.new.pdf_from_string(content, encoding: "UTF-8")),
+          io: StringIO.new(CloudflareBrowserRun.pdf(content)),
           content_type: "application/pdf",
           filename: "Email_#{(mail.subject || Time.now.strftime("%Y%m%d%H%M")).gsub(/[^0-9A-Za-z]/, '').slice(0, 30)}.pdf"
         }]
