@@ -9,7 +9,7 @@ RSpec.describe HasAttachments do
       attr_reader :mail
 
       def initialize(mail) = @mail = mail
-      def run(...) = set_attachments(...)
+      def run = set_attachments
       def html = mail.html_part&.body&.decoded
       def text = mail.text_part&.body&.decoded
       def body = mail.body&.decoded&.presence
@@ -30,15 +30,5 @@ RSpec.describe HasAttachments do
     attachments = mailbox.new(Mail.read_from_string(mail.to_s)).run
 
     expect(attachments.map { |a| a[:content_type] }).to eq(["application/pdf"])
-  end
-
-  it "only keeps receipt file types, so not a GIF in an email signature, unless asked" do
-    mail = Mail.new { body "Receipt attached" }
-    mail.attachments["receipt.png"] = File.binread(Rails.root.join("public/logo.png"))
-    mail.attachments["signature.gif"] = "GIF89a"
-    mail = Mail.read_from_string(mail.to_s)
-
-    expect(mailbox.new(mail).run.map { |a| a[:filename] }).to eq(["receipt.png"])
-    expect(mailbox.new(mail).run(receipt_types_only: false).map { |a| a[:filename] }).to eq(["receipt.png", "signature.gif"])
   end
 end

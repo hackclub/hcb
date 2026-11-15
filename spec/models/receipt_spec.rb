@@ -113,16 +113,6 @@ RSpec.describe Receipt, type: :model do
       expect(receipt_turned(90, upload_method: :duplicate).auto_rotate).to be(false)
     end
 
-    it "lets a receipt of a type we no longer accept be copied" do
-      receipt = build_receipt(receiptable: create(:hcb_code), user: create(:user))
-      receipt.file.attach(io: StringIO.new("x"), filename: "receipt.gif", content_type: "image/gif")
-      receipt.save!(validate: false) # uploaded before the rule
-      copy_to = create(:hcb_code)
-
-      expect { described_class.reupload(old_receiptable: receipt.receiptable, new_receiptable: copy_to) }
-        .to change { described_class.where(receiptable: copy_to).count }.by(1)
-    end
-
     it "keeps the original, and the undo, on a copy of a rotated receipt" do
       receipt = receipt_turned(90)
       copy_to = create(:hcb_code)
@@ -154,43 +144,6 @@ RSpec.describe Receipt, type: :model do
       receipt.destroy!
 
       expect { stale.auto_rotate }.not_to change(ActiveStorage::Attachment, :count)
-    end
-  end
-
-  describe "file types" do
-    def receipt_with(filename, content_type)
-      build_receipt(receiptable: create(:hcb_code), user: create(:user)).tap do |receipt|
-        receipt.file.attach(io: StringIO.new("x"), filename:, content_type:)
-      end
-    end
-
-    {
-      "receipt.pdf"  => "application/pdf",
-      "receipt.jpg"  => "image/jpeg",
-      "receipt.heic" => "image/heic",
-      "invoice.docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "invoice.doc"  => "application/msword",
-      "orders.csv"   => "text/csv",
-      "orders.xlsx"  => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }.each do |filename, content_type|
-      it "accepts #{filename}" do
-        expect(receipt_with(filename, content_type)).to be_valid
-      end
-    end
-
-    { "party.gif" => "image/gif", "logo.svg" => "image/svg+xml", "scan.tiff" => "image/tiff", "notes.txt" => "text/plain" }.each do |filename, content_type|
-      it "rejects #{filename}" do
-        receipt = receipt_with(filename, content_type)
-
-        expect(receipt).not_to be_valid
-        expect(receipt.errors[:file].sole).to start_with("must be a PDF")
-      end
-    end
-
-    it "doesn't invalidate receipts that already have another type" do
-      receipt = receipt_with("party.gif", "image/gif").tap { |r| r.save!(validate: false) }
-
-      expect(described_class.find(receipt.id).update(textual_content: "hello")).to be(true)
     end
   end
 

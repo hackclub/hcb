@@ -75,7 +75,7 @@ module Twilio
       num_media = @params["NumMedia"].to_i
       return [] if num_media.zero?
 
-      (0..num_media - 1).select { |i| @params["MediaContentType#{i}"].in?(Receipt::ALLOWED_CONTENT_TYPES) }.map do |i|
+      (0..num_media - 1).map do |i|
         uri = URI.parse(@params["MediaUrl#{i}"])
         break unless ["http", "https"].include?(uri.scheme)
 

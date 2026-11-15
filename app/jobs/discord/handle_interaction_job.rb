@@ -126,10 +126,10 @@ module Discord
       file = attachments&.values&.first
       content_type = file&.[](:content_type)
 
-      unless file.present? && content_type&.split(";")&.first.in?(Receipt::ALLOWED_CONTENT_TYPES)
+      unless file.present? && (content_type == "application/pdf" || content_type&.start_with?("image/"))
         return respond(embeds: [{
                          title: "There was a problem with your receipt",
-                         description: "Only PDFs, images (JPG, PNG, HEIC, WebP), Word documents, CSVs and Excel files are supported. Please try again.",
+                         description: "Only images and PDF files are supported. Please try again.",
                          color:
                        }])
       end
