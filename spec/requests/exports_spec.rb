@@ -51,12 +51,6 @@ RSpec.describe "Transaction exports", type: :request do
       let(:private_event) { create(:event, is_public: false, organizers: [organizer]) }
       let(:attacker_email) { "attacker@evil.test" }
 
-      def sign_in_with(session)
-        allow_any_instance_of(SessionsHelper)
-          .to receive(:find_current_session)
-          .and_return(session)
-      end
-
       before do
         allow_any_instance_of(Export::Event::Transactions::Csv).to receive(:async?).and_return(true)
       end

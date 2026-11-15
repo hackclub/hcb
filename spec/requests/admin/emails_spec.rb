@@ -8,9 +8,7 @@ RSpec.describe "GET /admin/emails", type: :request do
   before do
     admin_session = create(:user_session, user: admin, verified: true, expiration_at: 1.hour.from_now)
 
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(admin_session)
+    sign_in_with(admin_session)
   end
 
   # Ordered so that neither `id` nor insertion order matches `sent_at desc`.

@@ -70,7 +70,7 @@ RSpec.describe "Money Printer dashboard", type: :request do
     it "shows organization names to auditors" do
       auditor = create(:user, :make_auditor)
       session = create(:user_session, user: auditor, verified: true, expiration_at: 1.hour.from_now)
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+      sign_in_with(session)
       allow(Rails.cache).to receive(:read).with(MoneyPrinterStatsJob::CACHE_KEY).and_return(stats)
 
       get money_printer_path

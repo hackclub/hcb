@@ -7,7 +7,7 @@ RSpec.describe "Users::EmailUpdatesController", type: :request do
   let(:user_session) { create(:user_session, user:) }
 
   before do
-    allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(user_session)
+    sign_in_with(user_session)
   end
 
   describe "GET /email_updates/authorize" do

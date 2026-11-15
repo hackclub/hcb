@@ -12,10 +12,7 @@ RSpec.describe "Transfer recipient fields", type: :system do
 
   before do
     create(:organizer_position, user: manager, event:, role: :manager, first_time: false)
-
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(create(:user_session, user: manager))
+    sign_in(manager)
   end
 
   describe "wire form" do

@@ -8,7 +8,7 @@ RSpec.describe "Users::FirstController#verify_email", type: :request do
 
   describe "GET /first/verify_email" do
     before do
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(unverified_session)
+      sign_in_with(unverified_session)
     end
 
     it "does not start a verification flow" do
@@ -21,7 +21,7 @@ RSpec.describe "Users::FirstController#verify_email", type: :request do
   describe "POST /first/verify_email" do
     context "for an unverified user" do
       before do
-        allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(unverified_session)
+        sign_in_with(unverified_session)
       end
 
       it "starts a verification flow for the user" do
@@ -57,7 +57,7 @@ RSpec.describe "Users::FirstController#verify_email", type: :request do
       let(:verified_session) { create(:user_session, user: verified_user, verified: true) }
 
       before do
-        allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(verified_session)
+        sign_in_with(verified_session)
       end
 
       it "does not start a verification flow" do

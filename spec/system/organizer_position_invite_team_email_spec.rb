@@ -9,9 +9,7 @@ RSpec.describe "Team email warning on the invite form", type: :system do
 
   before do
     create(:organizer_position, user:, event:, role: :manager)
-
-    session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
-    allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
+    sign_in(user)
   end
 
   it "follows the address keystroke by keystroke, without waiting for the field to lose focus" do

@@ -9,8 +9,7 @@ RSpec.describe "Admin tools pinned cards", type: :system do
   let(:pinned_grid) { "[data-admin-tools-pinned-cards-target=pinnedGrid]" }
 
   before do
-    allow_any_instance_of(ApplicationController).to receive(:find_current_session)
-      .and_return(create(:user_session, user:, expiration_at: 1.day.from_now, verified: true))
+    sign_in(user)
     # The async badges would otherwise call Airtable and other external services
     allow_any_instance_of(AdminController).to receive(:pending_task).and_return(0)
   end

@@ -15,9 +15,7 @@ RSpec.describe "impersonation banner", type: :request do
       expiration_at: 1.hour.from_now,
     )
 
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(impersonation_session)
+    sign_in_with(impersonation_session)
   end
 
   # Impersonation sessions mirror their target's `verified` flag, so

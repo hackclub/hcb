@@ -176,7 +176,7 @@ RSpec.describe "Users::FirstController", type: :request do
       user.affiliations.create!(name: "first", metadata: affiliation_metadata.merge("role" => user_role))
 
       session = create(:user_session, user:, verified: true, expiration_at: 1.hour.from_now)
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+      sign_in_with(session)
     end
 
     context "when the team org exists on HCB" do

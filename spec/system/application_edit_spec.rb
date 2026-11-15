@@ -6,12 +6,8 @@ RSpec.describe "Admin application edit page", type: :system do
   let(:cosigner_field) { "#event_application_cosigner_email" }
 
   def visit_edit_page_for(application)
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(create(:user_session, user: create(:user, :make_admin)))
-
-    # intl-tel-input loads from a CDN that Cuprite blocks
-    page.driver.browser.evaluate_on_new_document("window.intlTelInput = () => ({ getNumber: () => '' })")
+    stub_intl_tel_input
+    sign_in(create(:user, :make_admin))
 
     visit edit_application_path(application)
   end
