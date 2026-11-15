@@ -10,6 +10,9 @@ export default class extends Controller {
     'removeButton',
     'returnTo',
     'acknowledgement',
+    'number',
+    'title',
+    'count',
   ]
 
   connect() {
@@ -51,9 +54,14 @@ export default class extends Controller {
       return total + (Number.isFinite(itemCents) ? itemCents : 0)
     }, 0)
     this.totalTarget.value = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      minimumFractionDigits: 2,
     }).format(cents / 100)
+    this.countTarget.textContent = this.itemTargets.length
+    this.itemTargets.forEach((item, index) => {
+      this.numberTargets[index].textContent = `#${index + 1}`
+      this.titleTargets[index].textContent =
+        item.querySelector('[data-description]').value || 'Untitled item'
+    })
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
     if (this.hasAcknowledgementTarget) {
       // Same comparison as the server: case, spacing, and punctuation don't matter.
