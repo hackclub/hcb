@@ -22,6 +22,21 @@ module Api
         json.has_more @has_more
       end
 
+      # Ledger::Item statuses for an item that didn't go through. Each of them
+      # declines the item's pending transaction, which is what the old engine
+      # reports as `declined`. That includes `released`, an approved card
+      # authorization that was never captured, which is also `reversed`.
+      LEDGER_DECLINED_STATUSES = %w[declined rejected failed canceled released].freeze
+      LEDGER_REVERSED_STATUSES = %w[reversed released].freeze
+
+      def ledger_item_declined?(item)
+        item.status.in?(LEDGER_DECLINED_STATUSES)
+      end
+
+      def ledger_item_reversed?(item)
+        item.status.in?(LEDGER_REVERSED_STATUSES)
+      end
+
       def transaction_amount(tx, event: nil)
         return tx.amount_cents if tx.is_a?(Ledger::Item)
         return tx.amount.cents if !tx.is_a?(HcbCode)
