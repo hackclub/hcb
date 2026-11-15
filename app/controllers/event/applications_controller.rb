@@ -73,7 +73,8 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
-        party.update!(user: current_user)
+        # An admin may have signed for HCB before approving; a signed party can't change hands.
+        party.update!(user: current_user) if party.pending?
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -94,6 +95,11 @@ class Event
 
     def admin_activate
       authorize @application
+
+      unless @application.approved?
+        flash[:error] = "Approve this application before activating it."
+        return redirect_back_or_to application_path(@application)
+      end
 
       @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
