@@ -2,7 +2,7 @@
 <%= turbo_frame_tag dom_id(event, :my_cards), target: "_top" do %>
   <% if @view == "list" %>
     <article class="table-container">
-      <table>
+      <table class="stripe-cards-table">
         <thead>
           <tr>
             <th>Name</th>

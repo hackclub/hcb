@@ -477,22 +477,20 @@ class EventsController < ApplicationController
     @view = cookies[:card_overview_view] || "grid"
 
     event_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
-    all_stripe_cards = event_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
-                                  .order("stripe_status asc, created_at desc")
+    all_stripe_cards = event_cards
 
     # Derived from cards rather than @event.users so removed members' cards stay filterable
     cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
+    sorted_cardholders = cardholders.sort_by(&:name)
     @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
-      { key: "user", label: "Cardholder", type: "select", options: cardholders.sort_by(&:name).map { |u| [u.name, u.slug] } },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.slug] } },
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
 
     @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
-
-    return unless turbo_frame_request?
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user&.id }) if params[:user]
 
@@ -524,6 +522,21 @@ class EventsController < ApplicationController
                          all_stripe_cards
                        end
 
+    page = (params[:page] || 1).to_i
+    per_page = safe_per(18)
+    grouped = !(params[:user] || @q)
+
+    unless turbo_frame_request?
+      # Counts only, so the skeleton matches the layout the frame loads into
+      card_counts = all_stripe_cards.group("users.id").count
+      @skeleton_card_count = [card_counts.values.sum, per_page].min
+      @skeleton_group_counts = [current_user, *sorted_cardholders].compact.uniq.filter_map { |u| card_counts[u.id] }.first(10) if grouped
+      return
+    end
+
+    all_stripe_cards = all_stripe_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
+                                       .order("stripe_status asc, created_at desc")
+
     if current_user.present?
       @stripe_cards = all_stripe_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
       @user_stripe_cards = all_stripe_cards.where(stripe_cardholder: current_user.stripe_cardholder)
@@ -531,9 +544,6 @@ class EventsController < ApplicationController
       @stripe_cards = all_stripe_cards
       @user_stripe_cards = StripeCard.none
     end
-
-    page = (params[:page] || 1).to_i
-    per_page = safe_per(18)
 
     display_cards = [
       @user_stripe_cards.active,
@@ -544,7 +554,7 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
 
-    unless params[:user] || @q
+    if grouped
       user_groups = display_cards
                     .group_by(&:user)
                     .reject { |user, _| user.nil? }
