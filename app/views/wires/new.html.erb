@@ -1,3 +1,6 @@
+<%# locals: (recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event) || {}, initial_recipient_id: recipient[:id].to_s, initial_editing: @wire.address_line1.present?, initial_bic_code: recipient[:bic_code].to_s, initial_masked_account_number: recipient[:masked_account_number].to_s, initial_country: @wire.recipient_country.to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_payment_recipient_id: initial_recipient_id, selected_editing: initial_editing, selected_bic_code: initial_bic_code, selected_masked_account_number: initial_masked_account_number, selected_recipient_country: initial_country) %>
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Send a wire" %>
@@ -16,17 +19,15 @@
   <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
 <% end %>
 
-<%= form_with(model: [@event, @wire], local: true, data: { controller: "payment-recipient" }, html: {
-      "x-data" => "wire(#{({
-        payment_recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event),
-        editing: @wire.address_line1.present?,
-        country: @wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"
-      }.to_json)})",
-      "@payment-recipient:change" => "payment_recipient = $event.detail",
-}) do |form| %>
+<%= form_with(model: [@event, @wire], local: true, data: {
+                controller: "payment-recipient",
+                payment_recipient_scope_value: "wire",
+                payment_recipient_recipient_value: recipient.to_json,
+                payment_recipient_shown_value: %w[bic_code masked_account_number recipient_country].to_json,
+              }) do |form| %>
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
+  <input type="hidden" name="<%= form.field_name(:payment_recipient_id) %>" id="<%= form.field_id(:payment_recipient_id) %>" value="<%= selected_payment_recipient_id %>" autocomplete="off">
 
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient details</h3>
@@ -51,13 +52,14 @@
                                 input->payment-recipient#clear
                               ",
                               menu_target: "toggle",
+                              payment_recipient_target: "name",
                             },
                             maxlength: 250,
-                            class: "!max-w-full",
-                            "x-ref" => "name_input" %>
-        <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
+                            class: "!max-w-full" %>
+        <% saved_recipients = @event.payment_recipients.where(payment_model: "Wire") %>
+        <% if organizer_signed_in? && saved_recipients.any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-            <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
+            <% saved_recipients.each do |payment_recipient| %>
               <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.hashid %>">
                 <button
                   type="button"
@@ -78,25 +80,24 @@
 
       <div>
         <%= form.label :recipient_email, "Email" %>
-        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
+        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled, data: { payment_recipient_target: "email" } %>
       </div>
       <%= render "events/transfers/notify_recipient", form:, disabled: %>
 
-      <template x-if="payment_recipient && !editing">
-        <div class="flex flex-col gap-3">
-          <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
-            <%= inline_icon "pen", size: 18 %>
-          </button>
-          <div><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bic_code"></div>
-          <div><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
-        </div>
-      </template>
+      <div class="flex flex-col gap-3" hidden="<%= selected_payment_recipient_id.empty? || selected_editing %>">
+        <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" data-action="payment-recipient#edit" data-payment-recipient-focus-param="wire_address_line1">
+          <%= inline_icon "pen", size: 18 %>
+        </button>
+        <div><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_bic_code %>"></div>
+        <div><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" value="<%= selected_masked_account_number %>"></div>
+      </div>
 
-      <template x-if="!payment_recipient || editing">
+      <%# Not submitted while a saved recipient is picked, so the server fills them in from it. %>
+      <fieldset class="contents" data-payment-recipient-target="editable" hidden="<%= selected_payment_recipient_id.present? && !selected_editing %>" disabled="<%= selected_payment_recipient_id.present? && !selected_editing %>">
         <div class="flex flex-col">
-          <%= render partial: "transfers/recipient_details", locals: { form: form, disabled: disabled, required: true, show_us: true } %>
+          <%= render "transfers/recipient_details", form:, disabled:, required: true, show_us: true, state: { selected_recipient_country: selected_recipient_country } %>
         </div>
-      </template>
+      </fieldset>
     </div>
   </div>
 
@@ -132,21 +133,28 @@
         <span class="error">There are no funds to transfer.</span>
       <% end %>
 
-      <template x-if="(!payment_recipient || editing) && country !== 'US'">
+      <fieldset class="contents" data-payment-recipient-target="editable" hidden="<%= (selected_payment_recipient_id.present? && !selected_editing) || selected_recipient_country == "US" %>" disabled="<%= (selected_payment_recipient_id.present? && !selected_editing) || selected_recipient_country == "US" %>">
         <div class="flex flex-col gap-3">
           <%= render partial: "wires/account_details", locals: { form: form, disabled: disabled, required: true } %>
           <%= render partial: "wires/country_specific_details", locals: { form: form, disabled: disabled, required: true } %>
         </div>
-      </template>
+      </fieldset>
 
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
 
-    <%= render "transfers/domestic_wire_warning", event: @event %>
+    <%= render "transfers/domestic_wire_warning", event: @event, state: { selected_recipient_country: selected_recipient_country } %>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="<%= disabled %> || country === 'US'">
-      Send wire
-      <%= inline_icon "send" %>
-    </button>
+    <% if disabled %>
+      <button type="submit" class="gap-2 btn w-full bg-blue mt-2" disabled>
+        Send wire
+        <%= inline_icon "send" %>
+      </button>
+    <% else %>
+      <button type="submit" class="gap-2 btn w-full bg-blue mt-2" disabled="<%= selected_recipient_country == "US" %>">
+        Send wire
+        <%= inline_icon "send" %>
+      </button>
+    <% end %>
   </div>
 <% end %>

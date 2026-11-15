@@ -120,11 +120,6 @@ class LegalEntity < ApplicationRecord
     latest_completed_tax_form.present?
   end
 
-  def send_tax_form!
-    form = tax_forms.create!(external_service: :taxbandits)
-    form.send!
-  end
-
   def tin_banned?
     tax_identification_number.banned?
   end

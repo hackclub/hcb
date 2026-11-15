@@ -7,7 +7,7 @@
       "useBundler": true // enable rubocop via bundler
     }
   },
-  "solargraph.useBundler": true,
+  "solargraph.useBundler": false, // solargraph is installed outside the bundle, see docker-compose.solargraph.yml
   "solargraph.diagnostics": true,
   "solargraph.completion": true,
   "solargraph.hover": true,

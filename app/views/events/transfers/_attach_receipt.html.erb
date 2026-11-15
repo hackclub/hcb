@@ -25,11 +25,12 @@
         accept: accept,
         data: {
           "file-drop-target"   => "fileInput",
-          "file-upload-target" => "input"
+          "file-upload-target" => "input",
+          **input_html.fetch(:data, {})
         },
         disabled:,
-        **input_html %>
+        **input_html.except(:data) %>
     <button data-file-upload-target="preview" type="button"></button>
-    <%= content_tag :div, "", data: { "file-upload-target" => "clear" }, **clear_html %>
+    <%= content_tag :div, "", data: { "file-upload-target" => "clear", **clear_html.fetch(:data, {}) }, **clear_html.except(:data) %>
   </div>
 </div>

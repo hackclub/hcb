@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ReceiptBinMailbox do
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
   include ActionMailbox::TestHelper
   include ActionMailer::TestHelper
   # The helpers above expect a tagged_logger method to be present
