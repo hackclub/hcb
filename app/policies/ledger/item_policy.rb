@@ -36,12 +36,6 @@ class Ledger
       admin_or_member? || (user.present? && user.manageable_events.exists? && DisbursementPolicy.new(user, Disbursement.new(destination_event: record.primary_ledger&.event)).repay?)
     end
 
-    # Whoever could have linked it: for a transfer, a manager of its sender.
-    def unmark_repayment?
-      sender = record.marked_repayment&.repaying_transfer&.source_event
-      sender ? user&.admin? || OrganizerPosition.role_at_least?(user, sender, :manager) : admin_or_member?
-    end
-
     def toggle_tag?(tag = nil)
       # A ledger item belongs to a single primary ledger (owned by an event or a
       # card grant), so a tag can only be applied within that one event.

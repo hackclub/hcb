@@ -633,7 +633,7 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
-      resource :repayment, only: [:create, :destroy] do
+      resource :repayment, only: [:create] do
         get :candidates
       end
       post "toggle_tag", to: "items#toggle_tag"

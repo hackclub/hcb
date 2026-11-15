@@ -71,19 +71,14 @@ RSpec.describe RepaymentService::Mark do
 
     before { outgoing }
 
-    it "gives the sender's side the expense's category, and puts it back on unmark" do
+    it "gives the sender's side the expense's category" do
       create(:organizer_position, user:, event: sender, role: :manager)
       create(:organizer_position, user:, event:, role: :member)
 
-      repayment = mark(income, expense)
+      mark(income, expense)
 
       expect(income.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
       expect(outgoing.reload.category.slug).to eq("food-fun")
-
-      RepaymentService::Unmark.new(repayment:).run
-
-      expect(outgoing.reload.category.slug).to eq("internal-transfer")
-      expect(expense.reload.category.slug).to eq("food-fun")
     end
 
     it "can be linked by a manager of the sender with read access to the recipient, from the sender's side" do
@@ -101,7 +96,6 @@ RSpec.describe RepaymentService::Mark do
 
       expect(repayment.repaying_ledger_item).to eq(income.ledger_item)
       expect(outgoing.reload.category.slug).to eq("food-fun")
-      expect(Ledger::ItemPolicy.new(user, income.ledger_item.reload).unmark_repayment?).to be(true)
     end
 
     it "isn't offered to a manager of the recipient who doesn't manage the sender" do
@@ -115,29 +109,14 @@ RSpec.describe RepaymentService::Mark do
       expect(outgoing.reload.category.slug).to eq("internal-transfer")
     end
 
-    it "can only be unmarked by a manager of the sender" do
-      create(:organizer_position, user:, event: sender, role: :manager)
-      create(:organizer_position, user:, event:, role: :reader)
-      mark(income, expense)
-      recipient_manager = create(:user)
-      create(:organizer_position, user: recipient_manager, event:, role: :manager)
-
-      expect(Ledger::ItemPolicy.new(recipient_manager, expense.ledger_item.reload).unmark_repayment?).to be(false)
-      expect(Ledger::ItemPolicy.new(user, expense.ledger_item.reload).unmark_repayment?).to be(true)
-    end
-
-    it "clears the sender's category when the expense has none, and puts it back on unmark" do
+    it "clears the sender's category when the expense has none" do
       create(:organizer_position, user:, event: sender, role: :manager)
       create(:organizer_position, user:, event:, role: :reader)
       expense.category_mapping.destroy!
 
-      repayment = mark(income, expense)
+      mark(income, expense)
 
       expect(outgoing.reload.category).to be_nil
-
-      RepaymentService::Unmark.new(repayment:).run
-
-      expect(outgoing.reload.category.slug).to eq("internal-transfer")
     end
 
     it "won't mark a transfer that hasn't been deposited, since it can still be rejected" do

@@ -69,25 +69,6 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
         expect(Repayment.count).to eq(0)
       end
     end
-
-    describe "DELETE #destroy" do
-      before do
-        RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
-      end
-
-      it "unmarks from the income" do
-        delete :destroy, params: { item_id: income.ledger_item.hashid }
-
-        expect(flash[:success]).to eq("Unmarked the repayment.")
-        expect(Repayment.count).to eq(0)
-      end
-
-      it "unmarks from the expense" do
-        delete :destroy, params: { item_id: expense.ledger_item.hashid }
-
-        expect(Repayment.count).to eq(0)
-      end
-    end
   end
 
   context "as a reader" do
@@ -98,14 +79,6 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
 
       expect(Repayment.count).to eq(0)
       expect(flash[:error]).to be_present
-    end
-
-    it "can't unmark one" do
-      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: create(:organizer_position, event:, role: :member).user).run
-
-      delete :destroy, params: { item_id: income.ledger_item.hashid }
-
-      expect(Repayment.count).to eq(1)
     end
   end
 

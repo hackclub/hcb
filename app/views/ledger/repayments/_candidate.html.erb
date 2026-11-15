@@ -2,9 +2,9 @@
 
 <% date = candidate.datetime.strftime("%b %e, %Y") %>
 <% confirm = if ledger_item.amount_cents.negative?
-               "Mark \"#{ledger_item.memo}\" as repaid by \"#{candidate.memo}\"? Both will be categorized as a repayment."
+               "Mark \"#{ledger_item.memo}\" as repaid by \"#{candidate.memo}\"? Both will be categorized as a repayment. This can't be undone."
              else
-               "Mark this as repaying \"#{candidate.memo}\"? Both will be categorized as a repayment."
+               "Mark this as repaying \"#{candidate.memo}\"? Both will be categorized as a repayment. This can't be undone."
              end %>
 <% transfer = [ledger_item, candidate].find { |item| item.linked_object_type == "Disbursement::Incoming" }&.linked_object %>
 <% confirm += " #{transfer.source_event.name}'s side of the transfer will take on the expense's category." if transfer %>

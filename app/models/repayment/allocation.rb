@@ -80,8 +80,7 @@ class Repayment
       repaid_transactions + repayment.repaying_transactions
     end
 
-    # Remembers each transaction's category (and whether it was set by hand)
-    # so undoing the repayment can put it back.
+    # Remembers each transaction's category (and whether it was set by hand).
     #
     # The sending side of a transfer marked as the repayment takes on the
     # expense's category (or none, if the expense has none), as it would have
@@ -89,42 +88,31 @@ class Repayment
     def apply_categories!
       slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
       expense_slug = repaid_category&.slug
-      sender = repayment.sender_transactions
-      sender.each { |t| slugs[t] = expense_slug }
+      repayment.sender_transactions.each { |t| slugs[t] = expense_slug }
 
-      update!(previous_categories: slugs.to_h { |t, slug|
-        snapshot = category_snapshot(t)
-        # The sender's side isn't in the repayment category, so remember what it was set to.
-        snapshot = (snapshot || {}).merge("set_to" => slug) if sender.include?(t)
-        [snapshot_key(t), snapshot]
-      })
+      update!(previous_categories: slugs.keys.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
       slugs.each do |t, slug|
         TransactionCategoryService.new(model: t).set!(slug:, assignment_strategy: "manual")
       end
     end
 
-    # Puts each transaction back to the category it had before, unless
-    # someone has recategorized it since.
+    # Puts each repaid transaction back to the category it had before, unless
+    # someone has recategorized it since. Only repayment transfers are undone
+    # (by rejecting them); a repayment marked between two transactions isn't.
     def revert_categories!
-      own = categorized_transactions
-      (own + repayment.sender_transactions).each do |t|
+      repaid_transactions.each do |t|
+        mapping = t.category_mapping
+        next unless mapping&.category&.slug == Repayment::CATEGORY_SLUG
+
         # A transaction that settled after the repayment has no snapshot of its
         # own; it inherited the category from its pending transaction.
         key = snapshot_key(t)
         key = snapshot_key(t.canonical_pending_transaction) if !previous_categories.key?(key) && t.try(:canonical_pending_transaction)
         previous = previous_categories[key]
-
-        # The sender's side remembers what it was set to, which may be nothing.
-        recategorized_sender = previous&.key?("set_to")
-        next unless recategorized_sender || own.include?(t)
-
-        mapping = t.category_mapping
-        next unless mapping&.category&.slug == (recategorized_sender ? previous["set_to"] : Repayment::CATEGORY_SLUG)
-
-        if previous&.dig("slug").nil?
-          mapping&.destroy!
+        if previous.nil?
+          mapping.destroy!
         else
-          (mapping || t.build_category_mapping).update!(
+          mapping.update!(
             category: TransactionCategory.find_or_create_by!(slug: previous["slug"]),
             assignment_strategy: previous["assignment_strategy"]
           )

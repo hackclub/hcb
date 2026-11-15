@@ -91,18 +91,6 @@ RSpec.describe Repayment, type: :model do
 
       expect(repayment_by(income)).not_to be_valid
     end
-
-    it "puts both sides back when reverted, keeping a category set since" do
-      repayment = repayment_by(income)
-      repayment.save!
-      repayment.allocations.each(&:apply_categories!)
-      TransactionCategoryService.new(model: income.reload).set!(slug: "donations", assignment_strategy: "manual")
-
-      repayment.revert_categories!
-
-      expect(category_of(expense)).to eq("food-fun")
-      expect(category_of(income)).to eq("donations")
-    end
   end
 
   describe ".match_candidates" do

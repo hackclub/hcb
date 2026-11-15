@@ -7,9 +7,6 @@
 <%# A transfer marked as a repayment after the fact shows what it repays on both of its sides. %>
 <% repaying_item = disbursement ? disbursement.incoming_disbursement.ledger_item : ledger_item %>
 <% repays = Array(disbursement&.repaid_ledger_items) + Array(repaying_item&.repaying_repayment&.repaid_ledger_items) %>
-<%# Repayments marked between two transactions on this ledger can be undone; transfers are undone by rejecting them. %>
-<% marked_item = ledger_item.marked_repayment ? ledger_item : repaying_item %>
-<% unmarkable = marked_item&.marked_repayment.present? && policy(marked_item).unmark_repayment? %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
@@ -24,14 +21,6 @@
                    end
             safe_join([name, tag.span("on #{item.datetime.strftime("%b %-d, %Y")}", class: "muted")], " ")
           }, ", ") %>
-      <% if unmarkable %>
-        <%= button_to "Unmark",
-                      ledger_item_repayment_path(marked_item),
-                      method: :delete,
-                      class: "p0 bg-transparent border-none cursor-pointer link-reset muted underline",
-                      form_class: "inline",
-                      form: { data: { turbo_frame: "_top", turbo_confirm: "Unmark this repayment? Both transactions go back to the categories they had before." } } %>
-      <% end %>
     </span>
   </p>
 <% end %>
