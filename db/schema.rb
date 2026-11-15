@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1662,6 +1662,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.index ["status"], name: "index_ledger_items_on_status"
   end
 
+  create_table "ledger_items_tags", primary_key: ["ledger_item_id", "tag_id"], force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id"], name: "index_ledger_items_tags_on_tag_id"
+  end
+
   create_table "ledger_mappings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "ledger_id", null: false
@@ -2518,16 +2526,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
-  create_table "repayments", force: :cascade do |t|
+  create_table "repayment_allocations", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
     t.bigint "ledger_item_id", null: false
     t.jsonb "previous_categories", default: {}, null: false
+    t.bigint "repayment_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
-    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
-    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_repayment_allocations_on_ledger_item_id"
+    t.index ["repayment_id", "ledger_item_id"], name: "index_repayment_allocations_on_repayment_id_and_ledger_item_id", unique: true
+    t.index ["repayment_id"], name: "index_repayment_allocations_on_repayment_id"
+    t.check_constraint "amount_cents > 0", name: "repayment_allocations_positive_amount"
+  end
+
+  create_table "repayments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "disbursement_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id", unique: true
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -3229,6 +3245,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "ledger_items", "users", column: "author_id"
+  add_foreign_key "ledger_items_tags", "ledger_items"
+  add_foreign_key "ledger_items_tags", "tags"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
@@ -3292,8 +3310,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
   add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "repayment_allocations", "ledger_items"
+  add_foreign_key "repayment_allocations", "repayments"
   add_foreign_key "repayments", "disbursements"
-  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"
