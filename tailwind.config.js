@@ -1,5 +1,3 @@
-const plugin = require('tailwindcss/plugin')
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -104,10 +102,4 @@ module.exports = {
     },
   },
   darkMode: ['selector', '[data-dark="true"]'],
-  plugins: [
-    // Turbo sets aria-busy on a form while its submission is in flight
-    plugin(({ addVariant }) =>
-      addVariant('form-busy', 'form[aria-busy="true"] &')
-    ),
-  ],
 }
