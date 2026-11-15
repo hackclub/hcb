@@ -88,8 +88,8 @@ Raising Sidekiq's shutdown timeout gives jobs more time to finish, but it also p
 | Job | Status |
 |---|---|
 | `PendingTransactionEngine::NightlyJob`, `TransactionEngine::NightlyJob` | Cron check-ins added. |
-| Sidekiq 8 upgrade (needed for continuations) | In progress. |
-| `User::UpdateCardLocking::RecurringJob` | Continuation in progress: one checkpoint per user. |
+| Sidekiq 8 upgrade (needed for continuations) | In progress ([#15745](https://github.com/hackclub/hcb/pull/15745)). |
+| `User::UpdateCardLocking::RecurringJob` | Continuation in progress: one checkpoint per user ([#15746](https://github.com/hackclub/hcb/pull/15746)). |
 | `PendingTransactionEngine::NightlyJob` | Planned: one step per import and canonize stage; the Stripe authorization import pages with a cursor; the donation import uses a `find_each` cursor. |
 | `TransactionEngine::NightlyJob` | Planned: measure per-step timing first, then isolated steps for the Plaid, Stripe and Column imports with cursors per bank account and per report. |
 | Other long jobs (ledger assertions, Loops sync, session cleanup, stats, exports) | Later, as needed. |
