@@ -102,15 +102,8 @@ RSpec.describe TransactionGroupingEngine::Transaction::All do
       expect(missing_receipt_codes).to include(ct.hcb_code)
     end
 
-    it "excludes an expense whose receipt is on its HCB code" do
-      ct = settled_expense
-      attach_receipt_to(ct.local_hcb_code)
-
-      expect(missing_receipt_codes).not_to include(ct.hcb_code)
-    end
-
-    # Receipts are moving onto ledger items (#14106); the filter has to see them
-    # on either side.
+    # Receipts are attached to the ledger item (#14106); the filter reads them
+    # through the HCB code's ledger_item_id.
     it "excludes an expense whose receipt is on its ledger item" do
       ct = settled_expense
       attach_receipt_to(ct.local_hcb_code.reload.ledger_item)

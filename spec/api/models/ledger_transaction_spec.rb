@@ -161,15 +161,14 @@ RSpec.describe Api::Models::LedgerTransaction do
 
     # Loads the item the way the v3 ledger query does (see Api::V3).
     def v3_transaction_for(ledger_item)
-      described_class.new(Ledger::Item.preload(:receipts, hcb_code: :receipts).find(ledger_item.id))
+      described_class.new(Ledger::Item.preload(:receipts).find(ledger_item.id))
     end
 
-    it "reads the receipts on both the ledger item and its HCB code" do
+    it "reads the ledger item's receipts" do
       hcb_code = create(:canonical_pending_transaction).local_hcb_code.reload
-      on_code = attach_receipt_to(hcb_code)
-      on_item = attach_receipt_to(hcb_code.ledger_item)
+      receipt = attach_receipt_to(hcb_code.ledger_item)
 
-      expect(v3_transaction_for(hcb_code.ledger_item).receipts).to contain_exactly(on_code, on_item)
+      expect(v3_transaction_for(hcb_code.ledger_item).receipts).to contain_exactly(receipt)
     end
 
     # A payout's receipts live on the expense it pays out, as HcbCode#receipts

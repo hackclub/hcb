@@ -186,18 +186,9 @@ class Ledger
 
     # A reimbursement payout's receipts are uploaded to the expense it pays out,
     # not to the payout itself, so read them from there (as HcbCode#receipts
-    # does for the payout's HCB code). Every other item reads both itself and its
-    # HCB code (see Receiptable#receipts).
+    # does for the payout's HCB code). Every other item reads its own.
     def receipts
       expense_payout_receipts || super
-    end
-
-    # The preloaded copies of a payout's own and its HCB code's receipts aren't
-    # the expense's, so make callers fall back to #receipts.
-    def preloaded_receipts
-      return if linked_object_type == "Reimbursement::ExpensePayout"
-
-      super
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any
