@@ -5,20 +5,23 @@
 <%# A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one. %>
 <% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
 <% repays = disbursement ? disbursement.repaid_ledger_items : [] %>
+<%# When repayments split the transaction, a bar shows the parts (see hcb_codes/_splits). On an expense it lists the repayments, so it takes the place of the plain "Repaid by" links. %>
+<% split = ledger_item.hcb_code.present? && ledger_item.hcb_code.splits.where.not(repayment_allocation_id: nil).exists? %>
+<% repaid_by = [] if split %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
   <p>
     <strong><%= label %></strong>
     <span>
-      <%= safe_join(linked.map { |item|
-            name = if policy(item).show?
-                     link_to item.memo, ledger_item_path(item), target: "_top"
-                   else
-                     "A transaction in #{item.primary_ledger&.event&.name || "another organization"}"
-                   end
-            safe_join([name, tag.span("on #{item.datetime.strftime("%b %-d, %Y")}", class: "muted")], " ")
-          }, ", ") %>
+      <%= safe_join(linked.map { |item| render("ledger/items/repayment_link", item:) }, ", ") %>
     </span>
   </p>
+<% end %>
+
+<% if split %>
+  <div>
+    <strong><%= disbursement ? "Breakdown" : "Repaid by" %></strong>
+    <div class="flex-1 min-w-0"><%= render "hcb_codes/splits", hcb_code: ledger_item.hcb_code, embedded: true %></div>
+  </div>
 <% end %>

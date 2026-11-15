@@ -64,7 +64,7 @@ module CanonicalPendingTransactionService
         amount_cents = split.amount_cents.clamp(*[0, left].sort)
         next if amount_cents.zero?
 
-        @canonical_transaction.splits.create!(amount_cents:, memo: split[:memo], category: split.category)
+        @canonical_transaction.splits.create!(amount_cents:, memo: split[:memo], category: split.category, repayment_allocation: split.repayment_allocation)
         left -= amount_cents
       end
     end

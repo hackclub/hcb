@@ -18,12 +18,14 @@
 #  memo                    :text
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  repayment_allocation_id :bigint
 #  splittable_id           :bigint           not null
 #  splittable_type         :string           not null
 #  transaction_category_id :bigint
 #
 # Indexes
 #
+#  index_transaction_splits_on_repayment_allocation_id  (repayment_allocation_id)
 #  index_transaction_splits_on_splittable               (splittable_type,splittable_id)
 #  index_transaction_splits_on_transaction_category_id  (transaction_category_id)
 #
@@ -33,6 +35,9 @@
 #
 class TransactionSplit < ApplicationRecord
   belongs_to :splittable, polymorphic: true
+  # Set on splits a repayment made, which it replaces as amounts change (see
+  # Repayment::Allocation.sync_splits!).
+  belongs_to :repayment_allocation, class_name: "Repayment::Allocation", optional: true, inverse_of: :splits
   belongs_to :category, class_name: "TransactionCategory", foreign_key: :transaction_category_id, inverse_of: false, optional: true
 
   attr_readonly :transaction_category_id

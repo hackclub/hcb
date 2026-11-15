@@ -38,6 +38,8 @@ class Repayment
     delegate :disbursement, to: :repayment, allow_nil: true
     belongs_to :repaid_ledger_item, class_name: "Ledger::Item", foreign_key: :ledger_item_id, inverse_of: :repayment_allocations
 
+    has_many :splits, class_name: "TransactionSplit", foreign_key: :repayment_allocation_id, inverse_of: :repayment_allocation, dependent: :destroy
+
     # Rejected and errored disbursements never moved money, so they don't count.
     scope :not_failed, -> { joins(:repayment).merge(Repayment.not_failed) }
 
@@ -64,6 +66,57 @@ class Repayment
     validate :repays_in_full, on: :create
     validate :repaid_transaction_not_already_repaid, on: :create
 
+    # Brings an expense's categories and splits in line with what it costs now.
+    # An expense's amount can change after it's repaid (a tip at settlement, a
+    # partial refund), and the amount repaid doesn't:
+    #
+    # - Costs what was repaid: the whole expense is a repayment, with no splits.
+    # - Costs more: the repaid part becomes a repayment split and the rest goes
+    #   back to the expense's own category.
+    # - Costs less: the whole expense is a repayment, and the part of the
+    #   payment beyond its cost is split off as an internal transfer.
+    #
+    # Works from the current state alone, so it's safe to run at any time.
+    def self.sync_splits!(ledger_item)
+      allocations = ledger_item.repayment_allocations.not_failed.order(:id).to_a
+      return if allocations.empty?
+
+      TransactionSplit.where(repayment_allocation: allocations).destroy_all
+      cost = [-ledger_item.amount_cents, 0].max
+
+      if cost > allocations.sum(&:amount_cents)
+        allocations.each do |allocation|
+          allocation.revert_categories!
+          allocation.split!(ledger_item, -allocation.amount_cents, Repayment::CATEGORY_SLUG, "Repaid by #{allocation.disbursement.source_event.name}")
+        end
+      else
+        allocations.each do |allocation|
+          allocation.apply_categories!
+          covered = [allocation.amount_cents, cost].min
+          cost -= covered
+
+          payment = allocation.disbursement.incoming_disbursement.ledger_item
+          allocation.split!(payment, allocation.amount_cents - covered, "internal-transfer", "Extra beyond the cost of #{ledger_item.memo}") if payment
+        end
+      end
+    end
+
+    # Splits `amount_cents` off the ledger item's transactions under a
+    # category, taking only the room each transaction has left so it can't fail.
+    def split!(ledger_item, amount_cents, category_slug, memo)
+      category = TransactionCategory.find_or_create_by!(slug: category_slug)
+      transactions = [*ledger_item.canonical_transactions, *ledger_item.canonical_pending_transactions.unsettled]
+
+      transactions.each do |transaction|
+        room = transaction.amount_cents - transaction.splits.sum(:amount_cents)
+        part = amount_cents.clamp(*[0, room].sort)
+        next if part.zero?
+
+        splits.create!(splittable: transaction, amount_cents: part, category:, memo:)
+        amount_cents -= part
+      end
+    end
+
     def repaid_transactions
       [
         *repaid_ledger_item.canonical_transactions.includes(category_mapping: :category),
@@ -77,9 +130,14 @@ class Repayment
 
     # Remembers each repaid transaction's category (and whether it was set by
     # hand) so rejecting the repayment can put it back.
+    # Skips transactions that are already a repayment, so running it again
+    # doesn't remember "repayment" as the category to put back.
     def apply_categories!
-      transactions = repaid_transactions
-      update!(previous_categories: transactions.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
+      transactions = repaid_transactions.reject { |t| t.category_mapping&.category&.slug == Repayment::CATEGORY_SLUG }
+      # A transaction settling a pending one we remembered goes back to that
+      # category (see revert_categories!), so it needs no entry of its own.
+      remembered = transactions.reject { |t| t.try(:canonical_pending_transaction)&.then { |pending| previous_categories.key?(snapshot_key(pending)) } }
+      update!(previous_categories: previous_categories.merge(remembered.to_h { |t| [snapshot_key(t), category_snapshot(t)] }))
       transactions.each do |t|
         TransactionCategoryService.new(model: t).set!(slug: Repayment::CATEGORY_SLUG, assignment_strategy: "manual")
       end
