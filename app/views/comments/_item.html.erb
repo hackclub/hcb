@@ -24,7 +24,7 @@
           <% end %>
         <% end %>
         <% viewing_commentable = local_assigns[:viewing_commentable] %>
-        <% if viewing_commentable.is_a?(HcbCode) && comment.shared? %>
+        <% if (viewing_commentable.is_a?(HcbCode) || viewing_commentable.is_a?(Ledger::Item)) && comment.shared? %>
           <% viewing_disbursement = disbursement_side_of(viewing_commentable) %>
           <span class="muted right">shared with <%= viewing_disbursement.counterparty_label %></span>
         <% elsif viewing_commentable.is_a?(Disbursement) %>

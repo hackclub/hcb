@@ -14,7 +14,7 @@ module TransactionGroupingEngine
 
       def preload_associations!
         hcb_code_codes = @transactions.map(&:hcb_code)
-        included_models = [:receipts, :comments,
+        included_models = [:receipts,
                            { canonical_transactions: :canonical_event_mapping },
                            { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping] }]
         included_models << :tags

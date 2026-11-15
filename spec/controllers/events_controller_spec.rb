@@ -363,6 +363,15 @@ RSpec.describe EventsController do
 
         expect(response).to have_http_status(:ok)
       end
+
+      it "counts a comment on the ledger item in the row's badge" do
+        hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+        create(:comment, commentable: hcb_code.ledger_item)
+
+        get(:transactions, params: { event_id: event.slug })
+
+        expect(Nokogiri::HTML5(response.body).at_css(".list-badge[aria-label='1 comment']")).to be_present
+      end
     end
 
     context "when the organization is public" do

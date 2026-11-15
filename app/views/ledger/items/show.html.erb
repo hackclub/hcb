@@ -120,19 +120,19 @@
         end %>
   <% end %>
 
-  <% if @item.hcb_code.present? %>
-    <%= render "comments/list", comments: @item.hcb_code.all_comments, viewing_commentable: @item.hcb_code %>
-    <% viewing_disbursement = @item.hcb_code.outgoing_disbursement || @item.hcb_code.incoming_disbursement %>
-    <% if viewing_disbursement.present? %>
-      <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-      <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.any? %>
-        <p class="muted">
-          <%= link_to counterparty_hcb_code.ledger_item || counterparty_hcb_code do %>
-            View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
-          <% end %>
-        </p>
-      <% end %>
+  <%= render "comments/list", comments: @item.all_comments, viewing_commentable: @item %>
+  <% viewing_disbursement = disbursement_side_of(@item) %>
+  <% if viewing_disbursement.present? %>
+    <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.unshared_comments.any? %>
+      <p class="muted">
+        <%= link_to counterparty_hcb_code.ledger_item || counterparty_hcb_code do %>
+          View <%= pluralize(counterparty_hcb_code.unshared_comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
+        <% end %>
+      </p>
     <% end %>
+  <% end %>
+  <% if @item.hcb_code.present? %>
     <%= render "comments/form", commentable: @item.hcb_code %>
   <% end %>
 

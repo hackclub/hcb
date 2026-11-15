@@ -715,19 +715,61 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
 
+    describe "#all_comments" do
+      let(:disbursement) { create(:disbursement) }
+      let(:item) { create(:ledger_item, linked_object: disbursement.outgoing_disbursement) }
+      let(:hcb_code) { disbursement.outgoing_disbursement.local_hcb_code.tap { |code| code.update!(ledger_item: item) } }
+
+      it "includes comments on the item, on its HCB code and shared with the other side of the transfer" do
+        own = create(:comment, commentable: item)
+        on_code = create(:comment, commentable: hcb_code)
+        shared = create(:comment, commentable: disbursement)
+        create(:comment, commentable: disbursement.incoming_disbursement.local_hcb_code)
+
+        expect(item.reload.all_comments).to contain_exactly(own, on_code, shared)
+        expect(item.unshared_comments).to contain_exactly(own, on_code)
+      end
+    end
+
+    describe "#refresh!" do
+      it "counts comments on both the item and its HCB code, split by admin visibility" do
+        hcb_code = create(:hcb_code, ledger_item: item)
+        create(:comment, commentable: item)
+        create(:comment, commentable: hcb_code)
+        create(:comment, commentable: hcb_code, admin_only: true)
+
+        item.refresh!
+
+        expect(item.comment_count).to eq(3)
+        expect(item.not_admin_only_comment_count).to eq(2)
+      end
+    end
+
     describe "#comment_recipients_for" do
       let(:organizer) { create(:user).tap { |u| create(:organizer_position, user: u, event:) } }
 
-      it "notifies the event's organizers and earlier commenters, except whoever left the comment" do
+      it "notifies the event's organizers and earlier commenters on either side, except whoever left the comment" do
         organizer
         earlier_commenter = create(:user)
         create(:comment, commentable: item, user: earlier_commenter)
+        code_commenter = create(:user)
+        create(:comment, commentable: create(:hcb_code, ledger_item: item), user: code_commenter)
         comment = create(:comment, commentable: item, user: create(:user))
 
         expect(item.reload.comment_recipients_for(comment)).to contain_exactly(
           organizer.email_address_with_name,
-          earlier_commenter.email_address_with_name
+          earlier_commenter.email_address_with_name,
+          code_commenter.email_address_with_name
         )
+      end
+
+      it "doesn't notify people who only commented on the other side of a transfer" do
+        disbursement = create(:disbursement)
+        item = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        create(:comment, commentable: disbursement, user: create(:user))
+        comment = create(:comment, commentable: item, user: create(:user))
+
+        expect(item.reload.comment_recipients_for(comment)).to be_empty
       end
 
       it "skips organizers who only want threads they're part of" do

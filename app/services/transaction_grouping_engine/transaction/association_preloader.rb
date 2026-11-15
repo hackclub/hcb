@@ -16,7 +16,6 @@ module TransactionGroupingEngine
         hcb_code_codes = @transactions.map(&:hcb_code)
         included_models = [
           :receipts,
-          :comments,
           { canonical_transactions: [:canonical_event_mapping, :transaction_source] },
           { canonical_pending_transactions: [:event, :subledger, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] },
           { reimbursement_expense_payout: { expense: [:report] } }

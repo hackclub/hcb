@@ -230,7 +230,8 @@ class Disbursement < ApplicationRecord
 
   # Override Commentable#all_comments to include comments from both sides of the disbursement
   def all_comments
-    Comment.where(commentable: [self, outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code])
+    sides = [outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code]
+    Comment.where(commentable: [self, *sides, *sides.map(&:ledger_item)].compact)
   end
 
   def events

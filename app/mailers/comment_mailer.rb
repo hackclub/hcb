@@ -41,7 +41,7 @@ class CommentMailer < ApplicationMailer
     {
       in_reply_to: thread_id(@commentable),
       message_id: message_id(@comment),
-      references: @commentable.comments.map { |c| message_id(c) }.join(" ")
+      references: @commentable.all_comments.map { |c| message_id(c) }.join(" ")
     }.compact_blank
   end
 
@@ -51,7 +51,7 @@ class CommentMailer < ApplicationMailer
   end
 
   def thread_id(commentable)
-    first_comment = commentable.comments.first
+    first_comment = commentable.all_comments.first
     message_id(first_comment)
   end
 
