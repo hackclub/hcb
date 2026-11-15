@@ -12,6 +12,7 @@ export default class extends Controller {
     'mismatch',
     'submit',
     'signature',
+    'confirmation',
   ]
   static values = { charged: Number }
 
@@ -66,6 +67,9 @@ export default class extends Controller {
         ? `Add ${money} more to match the transaction.`
         : `Remove ${money} to match the transaction.`
     this.submitTarget.disabled = off !== 0
+    // Nothing to confirm until the items add up.
+    this.confirmationTarget.inert = off !== 0
+    this.confirmationTarget.style.opacity = off === 0 ? '' : 0.4
     const signature = this.signatureTarget
     const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase()
     signature.setCustomValidity(
