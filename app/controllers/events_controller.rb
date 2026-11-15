@@ -1416,18 +1416,6 @@ class EventsController < ApplicationController
     return head :not_found
   end
 
-  def toggle_new_ledger
-    authorize @event
-
-    if params[:enabled] == "true"
-      Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_ledger_path(@event)
-    else
-      Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_transactions_path(@event)
-    end
-  end
-
   private
 
   def process_hidden_param!(params_hash)
