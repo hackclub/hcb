@@ -20,10 +20,13 @@
     </div>
   </td>
   <td><%= date %></td>
-  <td class="transaction__memo transaction__memo--fluid min-w-[12rem]">
+  <td class="transaction__memo transaction__memo--fluid min-w-[12rem]<%= " transaction__memo--pending" if item.pending? %>">
     <div>
-      <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= item.memo %>">
-        <%= render "ledger/items/memo/memo_text", item: %>
+      <div class="flex items-center gap-[1ch] min-w-0">
+        <%= render "ledger/items/status", ledger_item: item %>
+        <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= item.memo %>">
+          <%= render "ledger/items/memo/memo_text", item: %>
+        </div>
       </div>
     </div>
   </td>
