@@ -302,6 +302,58 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "archived legal entities" do
+    let(:user) { create(:user, email: "ada@example.com") }
+
+    it "aren't offered for a business form" do
+      archived = create(:legal_entity, entity_type: :business, users: [user], archived_at: 1.day.ago)
+
+      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :business)).not_to include(archived)
+    end
+
+    it "are refused if picked anyway, before contacting TaxBandits" do
+      create(:legal_entity, entity_type: :business, users: [user])
+      archived = create(:legal_entity, entity_type: :business, users: [user], archived_at: 1.day.ago)
+
+      expect { run(data: business_data, legal_entity: archived) }
+        .to raise_error(described_class::ValidationError, /not one of/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "don't make a business form pick when the payee's only business entity is archived" do
+      archived = create(:legal_entity, entity_type: :business, users: [user], archived_at: 1.day.ago)
+
+      result = run(data: business_data)
+
+      expect(result.legal_entity).not_to eq(archived)
+      expect(result.legal_entity).not_to be_archived
+    end
+
+    context "when the payee has an archived personal entity as well as an active one" do
+      let!(:archived_personal) do
+        user.personal_legal_entity.tap { _1.update!(archived_at: 1.day.ago) }
+      end
+      let!(:active_personal) { create(:legal_entity, entity_type: :person, users: [user]) }
+
+      it "puts a personal form on the active one" do
+        expect(run.form.legal_entity).to eq(active_personal)
+      end
+
+      it "checks the TIN against the active one" do
+        archived_personal.update!(tin_hash: Tax::IdentificationNumber::Hasher.hash_tin("987-65-4321", tin_type: :individual, country: "US"))
+
+        expect(run.form).to be_completed
+      end
+    end
+
+    it "refuses a personal form when the payee has no active personal entity" do
+      user.personal_legal_entity.update!(archived_at: 1.day.ago)
+
+      expect { run }.to raise_error(described_class::ValidationError, /no active personal legal entity/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+  end
+
   describe ".legal_entity_candidates for an entity type" do
     let(:user) { create(:user, email: "ada@example.com") }
     let!(:business) { create(:legal_entity, entity_type: :business, users: [user]) }

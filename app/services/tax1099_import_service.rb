@@ -254,7 +254,17 @@ class Tax1099ImportService
     # (a corporation's W-9 on a business entity, say) never gives the entity its
     # TIN and is flagged by LegalEntity#entity_type_mismatched_tax_form, which
     # leaves the payee unpayable, after a submission that can't be taken back.
-    user.legal_entities.where(entity_type:).to_a
+    #
+    # And only unarchived ones: a form on an archived entity still leaves the
+    # payee unpayable (LegalEntity#pending_payable_requirements' not_archived).
+    user.legal_entities.not_archived.where(entity_type:).to_a
+  end
+
+  # The user's active personal legal entity. Not User#personal_legal_entity,
+  # which is an unordered has_one that can return an archived personal entity
+  # when the user also has an active one.
+  def self.personal_legal_entity_for(user)
+    user.legal_entities.not_archived.find_by(entity_type: :person)
   end
 
   # Keys for every live Tax1099 import, so the page can hide CSV rows that an
@@ -405,7 +415,13 @@ class Tax1099ImportService
   # admin has to settle it before the row is submitted.
   def validate_legal_entity_choice!
     if entity_type == :person
-      validate_tin_matches!(User.find_by(email: @data[:email])&.personal_legal_entity)
+      user = User.find_by(email: @data[:email])
+      return if user.nil? # gets a personal entity when it's created
+
+      personal = self.class.personal_legal_entity_for(user)
+      raise ValidationError, "#{@data[:email]} has no active personal legal entity to put this form on" if personal.nil?
+
+      validate_tin_matches!(personal)
       return
     end
 
@@ -682,7 +698,8 @@ class Tax1099ImportService
     user = User.find_or_create_by!(email: @data[:email])
 
     if entity_type == :person
-      user.personal_legal_entity
+      self.class.personal_legal_entity_for(user) ||
+        raise(ValidationError, "#{@data[:email]} has no active personal legal entity to put this form on")
     else
       @legal_entity || begin
         @created_legal_entity = true
