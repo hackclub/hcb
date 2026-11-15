@@ -697,14 +697,20 @@ class HcbCode < ApplicationRecord
     self.short_code = ::HcbCodeService::Generate::ShortCode.new.run
   end
 
-  def comment_counterpart
-    ledger_item
+  # A transaction's comments live on its ledger item (#14105); a code without
+  # one keeps its own. Write new comments to `commentable.comments`.
+  def commentable
+    ledger_item || self
+  end
+
+  def all_comments
+    ledger_item ? ledger_item.all_comments : super
   end
 
   def comment_recipients_for(comment)
     users = []
-    users += unshared_comments.map(&:user)
-    users += unshared_comments.flat_map(&:mentioned_users)
+    users += self.comments.map(&:user)
+    users += self.comments.flat_map(&:mentioned_users)
     users += self.events.flat_map(&:users).reject(&:my_threads?)
     users += [author] if author
 
@@ -722,8 +728,8 @@ class HcbCode < ApplicationRecord
 
   def comment_mentionable(current_user: nil)
     users = []
-    users += unshared_comments.includes(:user).map(&:user)
-    users += unshared_comments.flat_map(&:mentioned_users)
+    users += self.comments.includes(:user).map(&:user)
+    users += self.comments.flat_map(&:mentioned_users)
     users += self.events.includes(:users).select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
     users += self.events.includes(:point_of_contact).map(&:point_of_contact)
 

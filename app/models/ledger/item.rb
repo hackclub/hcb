@@ -390,15 +390,11 @@ class Ledger
       linked_object.disbursement if shared_commentable?
     end
 
-    def comment_counterpart
-      hcb_code
-    end
-
     def comment_recipients_for(comment)
       event = primary_ledger&.event || primary_ledger&.card_grant&.event
 
-      users = unshared_comments.map(&:user)
-      users += unshared_comments.flat_map(&:mentioned_users)
+      users = comments.map(&:user)
+      users += comments.flat_map(&:mentioned_users)
       users += event.users.reject(&:my_threads?) if event
       users << author if author
 
@@ -417,8 +413,8 @@ class Ledger
     def comment_mentionable(current_user: nil)
       event = primary_ledger&.event || primary_ledger&.card_grant&.event
 
-      users = unshared_comments.includes(:user).map(&:user)
-      users += unshared_comments.flat_map(&:mentioned_users)
+      users = comments.includes(:user).map(&:user)
+      users += comments.flat_map(&:mentioned_users)
       if event
         users += event.users if !current_user || Pundit.policy(current_user, event).team?
         users << event.point_of_contact

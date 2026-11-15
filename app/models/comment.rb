@@ -47,13 +47,6 @@ class Comment < ApplicationRecord
 
   validate :commentable_includes_concern
 
-  # A transaction's comments live on its Ledger::Item (#14105). The write sites
-  # still build them on the HcbCode, so move them over here, in one place;
-  # a code with no ledger item keeps its own.
-  before_validation on: :create do
-    self.commentable = commentable.ledger_item if commentable.is_a?(HcbCode) && commentable.ledger_item.present?
-  end
-
   scope :admin_only, -> { where(admin_only: true) }
   scope :not_admin_only, -> { where(admin_only: false) }
   scope :by_admin, -> { joins(:user).merge(User.admin.where(pretend_is_not_admin: false)) }

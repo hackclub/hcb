@@ -20,7 +20,7 @@ RSpec.describe CommentsController do
 
       post_blank_comment
 
-      expect(response).to redirect_to(hcb_code)
+      expect(response).to redirect_to(hcb_code.ledger_item)
       expect(flash[:error]).to eq("Content can't be blank")
     end
 
@@ -114,9 +114,9 @@ RSpec.describe CommentsController do
 
     it "streams the new comment count into the item's ledger row" do
       create_session(create(:user, :make_admin), verified: true)
-      hcb_code = create(:canonical_pending_transaction).local_hcb_code
-      comments = create_list(:comment, 2, commentable: hcb_code)
-      ledger_item = hcb_code.ledger_item.reload
+      ledger_item = create(:canonical_pending_transaction).local_hcb_code.ledger_item
+      comments = create_list(:comment, 2, commentable: ledger_item)
+      ledger_item.reload
       expect(ledger_item.comment_count).to eq(2)
 
       delete(:destroy, params: { id: comments.first.id }, format: :turbo_stream)

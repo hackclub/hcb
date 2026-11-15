@@ -9,7 +9,7 @@ RSpec.describe Metric::User::MostInteractedWith do
     disbursement = create(:disbursement, requested_by: requester)
     hcb_code = disbursement.outgoing_disbursement.local_hcb_code
     hcb_code.update!(ledger_item: create(:ledger_item))
-    create(:comment, :legacy_on_hcb_code, commentable: hcb_code, user: commenter, created_at: Date.new(Metric.year, 6, 1))
+    create(:comment, commentable: hcb_code, user: commenter, created_at: Date.new(Metric.year, 6, 1))
     create(:comment, commentable: hcb_code.ledger_item, user: commenter, created_at: Date.new(Metric.year, 6, 2))
 
     expect(described_class.new(subject: requester).calculate).to eq(name: commenter.name, id: commenter.id, comments: 2)

@@ -15,7 +15,7 @@ module Api
 
         admin_only = params[:admin_only] || false
 
-        @comment = @hcb_code.comments.build(
+        @comment = @hcb_code.commentable.comments.build(
           content: params[:content],
           user: current_user,
           admin_only: admin_only,
