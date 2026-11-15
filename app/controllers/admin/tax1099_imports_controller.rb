@@ -25,8 +25,8 @@ module Admin
     end
 
     # Answers "who should this form be attached to?" before the row itself is
-    # submitted, so the page can ask the admin the question the console script
-    # used to ask at the prompt — without having sent a TIN or a PDF yet.
+    # submitted, so the page can ask the admin without having sent a TIN or a
+    # PDF yet.
     def legal_entities
       candidates = Tax1099ImportService.legal_entity_candidates(
         email: params[:email].to_s.strip,

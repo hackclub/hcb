@@ -758,10 +758,10 @@ class Tax1099ImportService
     [@data[:first_name], @data[:middle_name], @data[:last_name], @data[:suffix]].compact_blank.join(" ")
   end
 
-  # Finds the legal entity the form belongs on by email, same as the console
-  # script this replaces: SSNs go on the user's personal legal entity, EINs go
-  # on the business entity the admin picked or, failing that, a new one. The
-  # choice was already validated by #validate_legal_entity_choice!.
+  # Finds the legal entity the form belongs on by email: a personal form goes
+  # on the user's active personal legal entity, and any other on the entity of
+  # the form's type the admin picked or, failing that, a new one. The choice was
+  # already validated by #validate_legal_entity_choice!.
   def find_or_create_legal_entity!
     user = User.find_or_create_by!(email: @data[:email])
 
