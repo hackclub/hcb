@@ -191,7 +191,7 @@
                 <% else %>
                   <%= render_money invoice.amount_cents %>
 
-                  <% unless (fee_details = invoice.estimated_fee_details).present? %>
+                  <% if (fee_details = invoice.estimated_fee_details).present? %>
                     <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details.reason %>">
                       + <%= render_money fee_details.amount_cents %> fee
                     </span>
