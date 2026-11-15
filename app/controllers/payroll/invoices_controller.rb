@@ -29,6 +29,9 @@ module Payroll
       end
 
       ActiveRecord::Base.transaction do
+        # Serializes submissions so an expired position's single final invoice
+        # can't be exceeded by concurrent requests.
+        @position.lock!
         @invoice.save!
         ::ReceiptService::Create.new(
           uploader: current_user,

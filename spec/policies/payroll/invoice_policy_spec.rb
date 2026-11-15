@@ -42,6 +42,25 @@ RSpec.describe Payroll::InvoicePolicy, type: :policy do
     end
   end
 
+  describe "after the position expires" do
+    before do
+      create(:legal_entity_user, legal_entity:, user: contractor)
+      position.update_columns(aasm_state: "expired", start_date: 60.days.ago.to_date, end_date: 10.days.ago.to_date)
+    end
+
+    let(:contractor) { create(:user) }
+
+    it "lets the contractor submit a final invoice during the grace period" do
+      expect(described_class.new(contractor, invoice).create?).to eq(true)
+    end
+
+    it "denies the contractor once the grace period is over" do
+      position.update_columns(start_date: 90.days.ago.to_date, end_date: 31.days.ago.to_date)
+
+      expect(described_class.new(contractor, invoice).create?).to eq(false)
+    end
+  end
+
   describe "#approve?" do
     it "is denied for the contractor themselves, even after the position ends" do
       create(:legal_entity_user, legal_entity:, user: organizer)

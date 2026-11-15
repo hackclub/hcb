@@ -91,6 +91,10 @@ module Payroll
 
     EXPIRING_SOON_NOTICE = 7.days
 
+    # After a position expires, the contractor may still submit one final
+    # invoice (e.g. for their last stretch of work) within this window.
+    FINAL_INVOICE_GRACE_PERIOD = 30.days
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
@@ -134,6 +138,10 @@ module Payroll
 
       event :mark_expired do
         transitions from: :onboarded, to: :expired
+
+        after do
+          Payroll::PositionMailer.with(position: self).ended.deliver_later
+        end
       end
 
       event :mark_terminated do
@@ -249,6 +257,26 @@ module Payroll
       onboarding_checklist.any? do |step|
         CONTRACTOR_ONBOARDING_STEPS.include?(step[:key]) && !step[:complete]
       end
+    end
+
+    # The last day a final invoice can be submitted after the position expires.
+    def final_invoice_deadline
+      end_date + FINAL_INVOICE_GRACE_PERIOD
+    end
+
+    # True while an expired position is within its grace period and the
+    # contractor hasn't yet used it. A rejected final invoice doesn't count, so
+    # the contractor can correct and resubmit it before the deadline.
+    def final_invoice_window_open?
+      expired? &&
+        Date.current <= final_invoice_deadline &&
+        !invoices.where.not(aasm_state: :rejected).exists?(["created_at > ?", end_date.end_of_day])
+    end
+
+    # Whether new invoices can be submitted against this position: while it's
+    # active, or once more during the grace period after it ends.
+    def accepting_invoices?
+      onboarded? || final_invoice_window_open?
     end
 
     def onboarding_reminder_days

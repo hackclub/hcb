@@ -14,5 +14,11 @@ module Payroll
       Payroll::PositionMailer.with(position:).expiring_soon
     end
 
+    def ended
+      position = Payroll::Position.last
+
+      Payroll::PositionMailer.with(position:).ended
+    end
+
   end
 end
