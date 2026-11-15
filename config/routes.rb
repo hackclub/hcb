@@ -111,7 +111,6 @@ Rails.application.routes.draw do
     post "receipt_report", to: "users#receipt_report", as: :trigger_receipt_report
 
     get "cards", to: "my#cards", as: :my_cards
-    get "cards/events/:event_id", to: "my#event_cards", as: :my_event_cards
     get "cards/shipping", to: "stripe_cards#shipping", as: :my_cards_shipping
   end
 
@@ -1179,6 +1178,7 @@ Rails.application.routes.draw do
 
     member do
       get "account-number", to: "events#account_number"
+      get "account-number/reveal", to: "events#reveal_account_number", as: :reveal_account_number
       post "toggle_event_tag/:event_tag_id", to: "events#toggle_event_tag", as: :toggle_event_tag
       get "audit_log"
       post "validate_slug"

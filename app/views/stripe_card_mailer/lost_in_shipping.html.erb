@@ -1,4 +1,4 @@
 <p>Hey!</p>
-<p>Unfortunately, the postal service was unable to deliver your HCB card (ending in <%= @card.last4 %>) for <%= @event.name %> to your provided address. Please order a new one <%= link_to "here", event_cards_overview_url(event_id: @event.slug) %>.</p>
+<p>Unfortunately, the postal service was unable to deliver your HCB card (ending in <%= @card.last4 %>) for <%= @event.name %> to your provided address. Please <%= link_to "order a new card", event_cards_overview_url(event_id: @event.slug) %>.</p>
 <p>Apologies for this. Let us know if you have any questions.</p>
 <p>—HCB team</p>
