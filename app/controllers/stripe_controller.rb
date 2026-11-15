@@ -11,15 +11,13 @@ class StripeController < ActionController::Base
       event = StripeService.construct_webhook_event(payload, sig_header)
       method = "handle_#{event["type"].tr(".", "_")}"
 
+      # Success so that Stripe doesn't retry event types HCB doesn't handle
+      return head :ok unless respond_to?(method, true)
+
       self.send method, event
     rescue JSON::ParserError => e
       head :bad_request
       Rails.error.report(e)
-      return
-    rescue NoMethodError => e
-      puts e
-      Rails.error.report(e)
-      head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
       head :bad_request
@@ -74,6 +72,8 @@ class StripeController < ActionController::Base
 
   def handle_issuing_card_updated(event)
     card = StripeCard.find_by(stripe_id: event[:data][:object][:id])
+    return unless card
+
     card.sync_from_stripe!
     card.save
 
@@ -286,8 +286,12 @@ class StripeController < ActionController::Base
 
     design.sync_from_stripe!
 
+    # Stripe can reject a design for its carrier text only, with nothing wrong with the logo.
+    logo_rejection_reason = event.data.object["rejection_reasons"]["card_logo"]&.first
+    return unless logo_rejection_reason
+
     if design.event&.stripe_card_logo&.attached? # if the logo is no longer attached it's already been rejected.
-      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: event.data.object["rejection_reasons"]["card_logo"].first).design_rejected.deliver_later
+      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: logo_rejection_reason).design_rejected.deliver_later
       design.event.stripe_card_personalization_designs.update(stale: true)
       design.event.stripe_card_logo.delete
     end
