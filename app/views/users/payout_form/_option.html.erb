@@ -1,12 +1,16 @@
-<%# locals: (form:, model:, title:, description:, icon:, checked: false, required: false) %>
+<%# locals: (form:, model:, title:, description:, icon:, checked: false, required: false, badge: nil) %>
+<%# herb:slots client %>
+<%# herb:state (selected_payout_method_type: "") %>
 
 <% unsupported = LegalEntity::PayoutMethod.unsupported?(model) %>
-<%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported, required: %>
+<%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported, required:, data: { herb_set: "selected_payout_method_type=$value" } %>
 <%= form.label :payout_method_type, value: model.name do %>
   <%= inline_icon icon, size: 28 %>
   <strong><%= title %></strong>
 
-  <%= yield %><%# in case you wanna add more flare to a specific option %>
+  <% if badge %>
+    <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;"><%= badge %></div>
+  <% end %>
 
   <% if unsupported %>
     <div class="badge bg-warning m1 mt0 w-fit"><%= LegalEntity::PayoutMethod.unsupported_details(model)[:status_badge] %></div>

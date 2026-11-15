@@ -96,14 +96,17 @@ RSpec.describe User, type: :model do
       n.times { |i| create_settled_card_charge(user:, settled_at: (offset + i).days.ago, uploaded_at: (offset + i - 1).days.ago, stripe_card: card) }
     end
 
+    # Charges are slow to build, and any two history sizes expose a per-charge query.
     it "computes trust in a constant number of queries as history grows" do
       card = create(:stripe_card, :with_stripe_id, stripe_cardholder: user.stripe_cardholder || create(:stripe_cardholder, user:), event:)
-      add_history(5, offset: 30, card:)
+      add_history(2, offset: 30, card:)
       materialize_all
       small = queries_during { User.find(user.id).receipt_trusted?(now:) }
 
-      add_history(20, offset: 60, card:)
+      add_history(3, offset: 60, card:)
       materialize_all
+      # Otherwise equal counts could just mean the new charges were never read.
+      expect(HcbCode.card_locking_relevant_for_cardholder(user.id).distinct.count).to eq(5)
       large = queries_during { User.find(user.id).receipt_trusted?(now:) }
 
       expect(large).to eq(small)
