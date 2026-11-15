@@ -89,9 +89,6 @@ class WiseTransfer < ApplicationRecord
   validates(:wise_id, format: { with: WISE_ID_FORMAT, message: "is not a valid Wise ID" }, allow_nil: true)
   validates(:wise_id, presence: true, if: :processed?)
 
-  WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
-  before_validation(:normalize_wise_recipient_id)
-  validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
   validates(:wise_recipient_id, presence: true, if: :processed?)
 
   after_create do
@@ -277,12 +274,6 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/transactions/activities/by-resource/TRANSFER/#{CGI.escape(wise_id)}"
   end
 
-  def wise_recipient_url
-    return nil unless wise_recipient_id.present?
-
-    "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
-  end
-
   def can_cancel?
     pending?
   end
@@ -316,22 +307,6 @@ class WiseTransfer < ApplicationRecord
         break
       end
     end
-  end
-
-  WISE_RECIPIENT_ID_REGEXP = /wise\.com\/recipients\/([\h-]{36})/
-
-  def normalize_wise_recipient_id
-    return unless wise_recipient_id_changed? && wise_recipient_id.present?
-
-    normalized = wise_recipient_id.strip
-
-    if normalized =~ WISE_RECIPIENT_ID_FORMAT
-      self.wise_recipient_id = normalized
-      return
-    end
-
-    match = WISE_RECIPIENT_ID_REGEXP.match(normalized)
-    self.wise_recipient_id = match[1] if match
   end
 
 end

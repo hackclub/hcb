@@ -67,10 +67,6 @@ class Payee < ApplicationRecord
     end
   end
 
-  def search_avatar
-    User.find_by(email:)
-  end
-
   def total_paid_cents
     # Use the in-memory association when it's already loaded (e.g. the
     # contractors index eager-loads payments) to avoid an N+1 of sum queries.

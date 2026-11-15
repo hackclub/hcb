@@ -19,9 +19,8 @@ module Discord
         if node.name == "img"
           node.remove
         end
-        if node["data-timestamp-time-value".to_sym].present?
-          node.remove
-        end
+        # The activity's relative time (Discord shows the embed's own timestamp)
+        node.remove if node.name == "time" && node.classes.include?("timestamp")
         node.remove if node.name == "svg"
         node.name = "p" if node.name == "li"
         node.remove if node.comment?
