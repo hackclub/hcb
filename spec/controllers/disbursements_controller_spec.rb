@@ -502,8 +502,8 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
-    it "creates one repayment covering multiple picked transactions" do
-      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Stickers")
+    it "creates one repayment covering multiple picked transactions in the same category" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Stickers", category_slug: "food-fun")
       post(:create, params: {
              disbursement: {
                name: "Paying back pizza and stickers",
@@ -518,6 +518,62 @@ RSpec.describe DisbursementsController do
       expect(response).to redirect_to(event_transfers_path(source_event))
       expect(Disbursement.last.amount).to eq(123_45)
       expect(Disbursement.last.repaid_ledger_items).to contain_exactly(expense.ledger_item, second.ledger_item)
+    end
+
+    describe "of expenses in different categories" do
+      let!(:snacks) { create(:canonical_transaction, event: destination_event, amount_cents: -10_00, memo: "Snacks", category_slug: "food-fun") }
+      let!(:venue) { create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Hall", category_slug: "venue") }
+      let!(:uncategorized) { create(:canonical_transaction, event: destination_event, amount_cents: -5_00, memo: "Misc") }
+
+      def repay(amount: "138.45", **options)
+        post(:create, params: {
+               disbursement: {
+                 name: "Repaying 4 transactions",
+                 source_event_id: source_event.public_id,
+                 event_id: destination_event.public_id,
+                 amount:,
+                 transfer_type: "repayment",
+                 repaid_ledger_item_ids: [expense, snacks, venue, uncategorized].map { |t| t.ledger_item.hashid },
+                 **options
+               }
+             })
+      end
+
+      it "creates a transfer per category, each with its category" do
+        expect { repay }.to change(Disbursement, :count).by(3)
+
+        expect(flash[:success]).to eq("3 transfers requested, one for each category of expense.")
+        expect(Disbursement.last(3).map { |d| [d.source_transaction_category&.slug, d.amount, d.name, d.repaid_ledger_items.map(&:id).sort] }).to contain_exactly(
+          ["food-fun", 110_00, "Repaying 2 transactions", [expense, snacks].map { |t| t.ledger_item.id }.sort],
+          ["venue", 23_45, "Repaying 1 transaction", [venue.ledger_item.id]],
+          [nil, 5_00, "Repaying 1 transaction", [uncategorized.ledger_item.id]]
+        )
+      end
+
+      it "attaches an uploaded receipt to each transfer" do
+        repay(file: [fixture_file_upload("receipt.png", "image/png")])
+
+        receipts = Disbursement.last(3).map { |d| d.outgoing_disbursement.ledger_item.receipts.sole }
+        expect(receipts.map { |receipt| receipt.file.byte_size }).to all(eq(File.size(file_fixture("receipt.png"))))
+      end
+
+      it "creates none of them when the amount doesn't match the total" do
+        expect { repay(amount: "100.00") }.not_to change(Disbursement, :count)
+
+        expect(flash[:error]).to include("must match the selected transaction total")
+      end
+
+      context "when the sender can afford some but not all of them" do
+        let(:source_event) { create(:event).tap { |event| create(:canonical_transaction, event:, amount_cents: 120_00) } }
+
+        it "creates none of them" do
+          expect { repay }.not_to change(Disbursement, :count)
+
+          expect(flash[:error]).to include("enough money")
+          expect(Repayment.unrepaid_ledger_items(destination_event)).to include(expense.ledger_item, venue.ledger_item)
+          expect(expense.reload.category.slug).to eq("food-fun")
+        end
+      end
     end
 
     it "rejects an invalid selection without dropping it or revealing another organization's expense" do
