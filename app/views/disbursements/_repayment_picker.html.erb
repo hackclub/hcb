@@ -3,7 +3,7 @@
 <%# Rendered outside the transfer form: the modal has a form of its own, and opening it moves it to the end of the page anyway. %>
 <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="repayment_picker" data-controller="repayment-picker">
   <%= modal_header "Which transaction are you repaying?" %>
-  <p class="muted mt-0">Pick the expense you're paying back. You can only repay a settled expense once.</p>
+  <p class="muted mt-0">Pick the expense you're paying back. You can only repay an expense once.</p>
 
   <%= form_with url: repayable_transactions_disbursements_path, method: :get, class: "flex flex-col gap-2 mb-4", data: { turbo_frame: "repayable_transactions", controller: "form", repayment_picker_target: "form" } do |form| %>
     <%= form.hidden_field :destination_event_id, value: destination_event&.public_id, data: { repayment_picker_target: "destination" } %>
