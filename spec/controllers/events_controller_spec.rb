@@ -1417,6 +1417,16 @@ RSpec.describe EventsController do
         expect(chart_sources).to all(end_with("?timeframe=Past+month"))
       end
 
+      it "renders the insights frame alone when a timeframe link navigates it" do
+        request.headers["Turbo-Frame"] = "insights"
+        get(:show, params: { id: event.slug, timeframe: "Past week" })
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML5.fragment(response.body).element_children.map { |el| [el.name, el["id"]] }).to eq([["turbo-frame", "insights"]])
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past week")
+        expect(chart_sources).to all(end_with("?timeframe=Past+week"))
+      end
+
       it "ignores a timeframe it doesn't know" do
         get(:show, params: { id: event.slug, timeframe: "Past decade" })
 
