@@ -49,7 +49,7 @@ RSpec.describe StripeMissedWebhooksJob do
     )
   end
 
-  it "explains that Stripe decided a single unanswered card authorization itself" do
+  it "says Stripe declined an unanswered card authorization" do
     stub_failed_events([
                          { id: "evt_1", type: "issuing_authorization.request" }
                        ])
@@ -58,7 +58,7 @@ RSpec.describe StripeMissedWebhooksJob do
 
     expect(Rails.error).to have_received(:unexpected).with(
       "🚨 1 Stripe webhook failed in the past five minutes. " \
-      "Stripe doesn't retry issuing_authorization.request, so it approved or declined those card authorizations without HCB's response. " \
+      "Stripe doesn't retry issuing_authorization.request, so it declined those card authorizations. " \
       "issuing_authorization.request: evt_1."
     )
   end
@@ -73,7 +73,7 @@ RSpec.describe StripeMissedWebhooksJob do
 
     expect(Rails.error).to have_received(:unexpected).with(
       "🚨 100+ Stripe webhooks failed in the past five minutes. " \
-      "Stripe doesn't retry issuing_authorization.request, so it approved or declined those card authorizations without HCB's response. " \
+      "Stripe doesn't retry issuing_authorization.request, so it declined those card authorizations. " \
       "Of the 100 most recent: 60 issuing_authorization.request, 40 charge.updated."
     )
   end

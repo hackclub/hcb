@@ -15,7 +15,7 @@ class StripeMissedWebhooksJob < ApplicationJob
 
     message = ["🚨 #{page_full ? "100+" : events.count} Stripe #{"webhook".pluralize(events.count)} failed in the past five minutes."]
     if events_by_type.key?("issuing_authorization.request")
-      message << "Stripe doesn't retry issuing_authorization.request, so it approved or declined those card authorizations without HCB's response."
+      message << "Stripe doesn't retry issuing_authorization.request, so it declined those card authorizations."
     end
     message << if page_full
                  "Of the 100 most recent: #{events_by_type.map { |type, events_of_type| "#{events_of_type.count} #{type}" }.join(", ")}."
