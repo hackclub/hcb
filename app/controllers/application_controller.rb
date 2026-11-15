@@ -115,6 +115,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+  end
+
   def safe_per(default, max: 200)
     (params[:per] || default).to_i.clamp(1, max)
   end

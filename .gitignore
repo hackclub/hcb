@@ -58,4 +58,8 @@ yarn-debug.log*
 /coverage
 
 # AI
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+.claude/hooks/*
+!.claude/hooks/block_manual_migrations.rb

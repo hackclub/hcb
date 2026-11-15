@@ -44,6 +44,163 @@ RSpec.describe MyController do
 
       expect(response).to have_http_status(:ok)
     end
+
+    context "for a verified user" do
+      let(:user) { create(:user) }
+      let(:cardholder) { create(:stripe_cardholder, user:) }
+      let(:zebra) { create(:event, name: "Zebra Club") }
+      let(:aardvark) { create(:event, name: "aardvark Society") }
+
+      before { sign_in_verified(user) }
+
+      def ivar(name) = controller.instance_variable_get(:"@#{name}")
+
+      def create_card(event: zebra, **attributes)
+        create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, event:, **attributes)
+      end
+
+      def searched_cards
+        ivar(:stripe_cards).to_a
+      end
+
+      it "lists the user's cards grouped by organization, sorted by name" do
+        zebra_card = create_card(name: "Zebra card")
+        aardvark_card = create_card(event: aardvark)
+        aardvark_canceled = create_card(event: aardvark, stripe_status: "canceled")
+        create(:stripe_card, :with_stripe_id, event: zebra)
+
+        get :cards
+
+        expect(response).to have_http_status(:ok)
+        expect(ivar(:cards_by_event).keys).to eq([aardvark, zebra])
+        expect(ivar(:cards_by_event)[aardvark]).to contain_exactly(aardvark_card, aardvark_canceled)
+        expect(ivar(:cards_by_event)[zebra]).to eq([zebra_card])
+        expect(response.body).to include("Zebra Club", "aardvark Society", "Zebra card")
+        expect(response.parsed_body.at_css("turbo-frame[id^=my_cards_event]")).to be_nil
+      end
+
+      it "puts organizations with more active cards first, ignoring inactive ones" do
+        3.times { create_card(event: aardvark, stripe_status: "canceled") }
+        create_card(event: aardvark)
+        2.times { create_card }
+
+        get :cards
+
+        expect(ivar(:cards_by_event).keys).to eq([zebra, aardvark])
+      end
+
+      context "in the list view" do
+        def list_page
+          get :cards, params: { view: "list" }
+          response.parsed_body
+        end
+
+        it "only links cards in organizations the user can still open", :aggregate_failures do
+          create(:organizer_position, user:, event: aardvark)
+          kept = create_card(event: aardvark)
+          left_behind = create_card
+
+          page = list_page
+
+          expect(page.css("a[href='#{stripe_card_path(kept)}']")).to be_present
+          expect(page.css("a[href='#{stripe_card_path(left_behind)}'], [data-popover-src*='#{left_behind.hashid}']")).to be_empty
+          expect(page.css("tr.clickable").count).to eq(1)
+        end
+
+        it "shows a placeholder for cards without a name, including blank ones" do
+          create_card(name: nil)
+          create_card(name: "")
+
+          expect(list_page.css("tbody tr td:first-child").map { |td| td.text.strip }).to eq(%w[— —])
+        end
+      end
+
+      it "applies the search and filters" do
+        laptop = create_card(name: "Laptop fund", stripe_status: "canceled", card_type: "virtual")
+        create_card(name: "Snacks", stripe_status: "canceled", card_type: "virtual")
+
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        expect(ivar(:cards_by_event)).to eq(zebra => [laptop])
+      end
+
+      it "renders a table when list view is selected" do
+        create_card(name: "Laptop fund")
+        cookies[:my_cards_view] = "list"
+
+        get :cards
+
+        expect(response.parsed_body.at_css("table.stripe-cards-table")).to be_present
+        expect(response.body).to include("Laptop fund")
+      end
+
+      it "opens the user's own cards in a popover, in both views", :aggregate_failures do
+        card = create_card
+        create(:organizer_position, user:, event: zebra)
+        src = "[data-popover-src='#{card.popover_path}']"
+
+        get :cards
+        expect(response.parsed_body.at_css(".mixed-grid #{src}")).to be_present
+
+        cookies[:my_cards_view] = "list"
+        get :cards
+        expect(response.parsed_body.at_css("table #{src}")).to be_present
+      end
+
+      it "remembers the selected view" do
+        get :cards, params: { view: "list" }
+        expect(ivar(:view)).to eq("list")
+        expect(cookies[:my_cards_view]).to eq("list")
+
+        get :cards, params: { view: "bogus" }
+        expect(ivar(:view)).to eq("list")
+      end
+
+      it "searches cards by name but not last four digits" do
+        laptop = create_card(name: "Laptop fund", last4: "1234")
+        create_card(name: "Snacks", last4: "5678")
+
+        get :cards, params: { q: "laptop" }
+        expect(searched_cards).to eq([laptop])
+
+        get :cards, params: { q: "5678" }
+        expect(searched_cards).to be_empty
+
+        get :cards, params: { q: "nothing matches this" }
+        expect(searched_cards).to be_empty
+        expect(response.body).to include("No cards found!")
+      end
+
+      it "searches cards by card grant purpose" do
+        event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+        card = create_card(event:, name: "Generic card")
+        create(:card_grant, event:, user:, email: user.email, stripe_card: card, purpose: "Hackathon pizza")
+        create_card(name: "Other card")
+
+        get :cards, params: { q: "pizza" }
+
+        expect(response).to have_http_status(:ok)
+        expect(searched_cards).to eq([card])
+      end
+
+      it "treats LIKE wildcards in the search as literal text" do
+        percent = create_card(name: "100% done")
+        create_card(name: "1000 club")
+
+        get :cards, params: { q: "100%" }
+
+        expect(searched_cards).to eq([percent])
+      end
+
+      it "keeps the status and type filters when searching" do
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        expect(response).to have_http_status(:ok)
+        form = response.parsed_body.css("form").find { |f| f.at_css("input[name='q']") }
+        expect(form.at_css("input[type='hidden'][name='status']")["value"]).to eq("canceled")
+        expect(form.at_css("input[type='hidden'][name='type']")["value"]).to eq("virtual")
+      end
+    end
   end
 
   describe "GET #reimbursements" do

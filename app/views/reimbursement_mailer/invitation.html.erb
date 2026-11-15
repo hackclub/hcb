@@ -31,7 +31,7 @@
 <% end %>
 
 <p>
-  <%= link_to "Click here", reimbursement_report_url(@report, email: @report.user.email) %> to learn more and begin submitting expenses.
+  <%= link_to "Open your reimbursement report", reimbursement_report_url(@report, email: @report.user.email) %> to learn more and begin submitting expenses.
   <% unless @report.event.users.include?(@report.user) %>
     If you have any questions, please contact <%= @report.event.name %>.
   <% end %>
