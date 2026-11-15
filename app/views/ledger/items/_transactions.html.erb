@@ -18,13 +18,17 @@
       <% settled = true %>
       <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: } %>
     <% else %>
-      <%# A pending transaction and the transaction(s) it settled into are packed together as one group. %>
+      <%# A pending transaction and what became of it (the transaction(s) it settled into, or its decline) are packed together as one group. %>
       <div class="flex flex-col gap-1">
         <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: index.zero? ? "Created" : "Updated" } %>
 
         <% transaction.canonical_transactions.sort_by { |ct| [ct.date, ct.created_at] }.each do |settled_transaction| %>
           <% settled = true %>
           <%= render partial: "ledger/items/transactions/row", locals: { transaction: settled_transaction, label: "Settled", nested: true } %>
+        <% end %>
+
+        <% if transaction.canonical_pending_declined_mapping.present? %>
+          <%= render partial: "ledger/items/transactions/declined", locals: { transaction: } %>
         <% end %>
       </div>
     <% end %>
