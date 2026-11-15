@@ -1,0 +1,25 @@
+<%# locals: (count:, headless: true) %>
+
+<article class="mixed-grid grid--spacious motion-safe:animate-pulse" aria-busy="true" aria-label="Loading cards">
+  <% count.times do %>
+    <div>
+      <% unless headless %>
+        <div class="flex items-center gap-2">
+          <span class="block size-6 rounded-full bg-smoke dark:bg-darkless"></span>
+          <span class="block h-4 w-1/2 rounded-full bg-smoke dark:bg-darkless"></span>
+        </div>
+      <% end %>
+      <div class="stripe-card stripe-card--skeleton virtual mt1">
+        <span></span>
+        <span class="block">
+          <span class="block h-5 w-3/4 rounded-full bg-snow dark:bg-dark"></span>
+          <span class="flex justify-between items-center mt-3">
+            <span class="block h-5 w-1/3 rounded-full bg-snow dark:bg-dark"></span>
+            <span class="block h-5 w-1/6 rounded-full bg-snow dark:bg-dark"></span>
+          </span>
+        </span>
+      </div>
+      <span class="block h-4 w-1/3 mx-auto mt2 rounded-full bg-smoke dark:bg-darkless"></span>
+    </div>
+  <% end %>
+</article>

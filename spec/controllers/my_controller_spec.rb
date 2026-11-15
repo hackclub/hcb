@@ -81,6 +81,16 @@ RSpec.describe MyController do
         expect(frame["loading"]).to eq("lazy")
       end
 
+      it "puts organizations with more active cards first, ignoring inactive ones" do
+        3.times { create_card(event: aardvark, stripe_status: "canceled") }
+        create_card(event: aardvark)
+        2.times { create_card }
+
+        get :cards
+
+        expect(ivar(:events)).to eq([zebra, aardvark])
+      end
+
       it "passes the search and filters to each organization's frame" do
         create_card(name: "Laptop fund", stripe_status: "canceled", card_type: "virtual")
 

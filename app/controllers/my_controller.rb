@@ -33,9 +33,10 @@ class MyController < ApplicationController
 
     # Each organization's cards are lazy-loaded by `event_cards`, so only load the groups and their counts here
     @card_counts = @stripe_cards.unscope(:order).group("stripe_cards.event_id").count
+    active_counts = @stripe_cards.active.unscope(:order).group("stripe_cards.event_id").count
     @events = Event.where(id: @card_counts.keys)
                    .includes(:plan, logo_attachment: :blob)
-                   .reorder(Arel.sql("LOWER(events.name)"))
+                   .sort_by { |event| [-active_counts.fetch(event.id, 0), event.name.downcase] }
   end
 
   def event_cards
