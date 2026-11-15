@@ -36,29 +36,7 @@
           }[stripe_decline_reason] || "")).strip %>.</span>
     <% end %>
   <% else %>
-  <span>
-    <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
-      <%= {
-            merchant_not_allowed_globally: "Merchant not allowed",
-            merchant_not_allowed: "Merchant not allowed",
-            cash_withdrawals_not_allowed: "Cash withdrawals disabled",
-            user_cards_locked: "Card locked due to overdue receipts",
-          }[hcb_decline_reason] || "Insufficient funds" %>
-    <% else %>
-      <%= {
-            card_inactive: card&.initially_activated? ? "Card frozen" : "Card not activated",
-            card_canceled: "Card canceled",
-            card_expired: "Card expired",
-            verification_failed: "Card verification failed",
-            suspected_fraud: "Suspected fraud",
-            reversed_by_merchant: "Reversed by merchant",
-            cardholder_verification_required: "Cardholder verification required",
-            insufficient_funds: "Integration issue",
-            insecure_authorization_method: "Insecure authorization method",
-            webhook_timeout: "Network error",
-          }[stripe_decline_reason] || "Unknown error" %>
-    <% end %>
-    </span>
+    <span><%= decline_reason_label(pt, card:) %></span>
   <% end %>
 
   <% if local_assigns[:include_external] && !local_assigns[:include_troubleshooting] %>
