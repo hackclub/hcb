@@ -578,15 +578,19 @@ RSpec.describe CardGrantsController do
     end
   end
 
-  describe "receipt upload buttons on the new ledger" do
+  describe "rows on the new ledger" do
     let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
-    let(:card_grant) { create(:card_grant, event:) }
+    let(:grantee) { create(:user) }
+    let(:card_grant) do
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: grantee))
+      create(:card_grant, event:, user: grantee, stripe_card: card)
+    end
     let!(:item) do
       # A bare factory CPT gets an "HCB-000-<id>" code, which collides with the
       # event's positive balance CT whenever the two happen to share an id and
       # merges them into one ledger item. A Stripe transaction keys the code on
       # its iauth id instead.
-      item = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction)).local_hcb_code.ledger_item
+      item = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card)).local_hcb_code.ledger_item
       Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
       item.refresh!
       item
@@ -643,6 +647,17 @@ RSpec.describe CardGrantsController do
 
       expect(page.css("tbody tr.transaction")).to be_present
       expect(page.at_css(".transaction__receipt-action")).to be_nil
+    end
+
+    it "links each charge to its transaction page for the grantee" do
+      create_session(grantee, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      link = page.at_css("tbody tr.transaction td.transaction__memo a[href='#{ledger_item_path(item)}']")
+      expect(link).to be_present
+      expect(link["data-popover-src"]).to eq(item.hcb_code.popover_path)
+      expect(link["data-popover-frame-id"]).to eq(item.hcb_code.public_id)
     end
   end
 
