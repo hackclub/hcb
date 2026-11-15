@@ -15,14 +15,14 @@ module ReceiptService
   # Returns the clockwise rotation in degrees (90, 180 or 270) that makes the
   # text upright, or nil when the image is upright or we aren't sure.
   class DetectRotation
-    # Tuned on 205 public receipts (scans and phone photos) and checked on 204
-    # held-out ones plus 152 real uploads, each at all four orientations.
-    # Fixes about two thirds of turned real uploads and never touched an
-    # upright one. Missing a sideways receipt is fine; rotating a good one isn't.
+    # Checked on a sample of 152 real receipt uploads, each as uploaded and
+    # turned 90, 180 and 270 degrees: 69% of turned copies fixed, and no
+    # upright receipt touched. Missing a sideways receipt is fine; rotating a
+    # good one isn't.
     #
-    # A wrongly oriented receipt still OCRs to a few "confident" words by
-    # chance: usually under 10 on photos, but up to ~60 on dense scans. Hence
-    # both a floor and a ratio.
+    # A wrongly oriented receipt still OCRs to some "confident" words by
+    # chance: about 10 on a typical receipt and up to ~80 on a dense one,
+    # against about 60 the right way up. Hence both a floor and a ratio.
     MIN_WORDS = 10
     MIN_IMPROVEMENT = 2
 
