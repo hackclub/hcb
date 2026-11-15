@@ -60,7 +60,7 @@ RSpec.describe RepaymentService::Mark do
 
   describe "with a settled transfer from another organization", :own_roles do
     let(:sender) { create(:event) }
-    let(:transfer) { create(:disbursement, source_event: sender, event:, amount: 100_00) }
+    let(:transfer) { create(:disbursement, :deposited, source_event: sender, event:, amount: 100_00) }
     let(:income) { on_transfer_side(create(:canonical_transaction, event:, amount_cents: 100_00), transfer.incoming_disbursement) }
     let(:outgoing) { on_transfer_side(create(:canonical_transaction, event: sender, amount_cents: -100_00, category_slug: "internal-transfer"), transfer.outgoing_disbursement) }
 
@@ -124,6 +124,28 @@ RSpec.describe RepaymentService::Mark do
 
       expect(Ledger::ItemPolicy.new(recipient_manager, expense.ledger_item.reload).unmark_repayment?).to be(false)
       expect(Ledger::ItemPolicy.new(user, expense.ledger_item.reload).unmark_repayment?).to be(true)
+    end
+
+    it "clears the sender's category when the expense has none, and puts it back on unmark" do
+      create(:organizer_position, user:, event: sender, role: :manager)
+      create(:organizer_position, user:, event:, role: :reader)
+      expense.category_mapping.destroy!
+
+      repayment = mark(income, expense)
+
+      expect(outgoing.reload.category).to be_nil
+
+      RepaymentService::Unmark.new(repayment:).run
+
+      expect(outgoing.reload.category.slug).to eq("internal-transfer")
+    end
+
+    it "won't mark a transfer that hasn't been deposited, since it can still be rejected" do
+      create(:organizer_position, user:, event: sender, role: :manager)
+      create(:organizer_position, user:, event:, role: :reader)
+      transfer.update_columns(aasm_state: "in_transit")
+
+      expect(Repayment.match_candidates(expense.ledger_item.reload, user)).to be_empty
     end
 
     it "won't mark a transfer that was sent as a repayment" do

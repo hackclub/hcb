@@ -6,9 +6,10 @@ RSpec.describe Repayment, type: :model do
   let(:event) { create(:event) }
   let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza", category_slug: "food-fun") }
   let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00, memo: "Check from Sam") }
+  let(:member) { create(:organizer_position, event:, role: :member).user }
 
   def repayment_by(income_ct, expense_ct = expense, amount_cents: 100_00)
-    Repayment.new(repaying_ledger_item: income_ct.ledger_item.reload).tap do |r|
+    Repayment.new(repaying_ledger_item: income_ct.ledger_item.reload, created_by: member).tap do |r|
       r.allocations.build(repaid_ledger_item: expense_ct.ledger_item.reload, amount_cents:)
     end
   end
@@ -111,21 +112,21 @@ RSpec.describe Repayment, type: :model do
       used = create(:canonical_transaction, event:, amount_cents: 100_00)
       repayment_by(used, create(:canonical_transaction, event:, amount_cents: -100_00)).save!
 
-      expect(Repayment.match_candidates(expense.ledger_item.reload)).to contain_exactly(income.ledger_item)
+      expect(Repayment.match_candidates(expense.ledger_item.reload, member)).to contain_exactly(income.ledger_item)
     end
 
     it "matches income with unrepaid expenses of the same amount" do
       expense
       create(:canonical_transaction, event:, amount_cents: -50_00)
 
-      expect(Repayment.match_candidates(income.ledger_item.reload)).to contain_exactly(expense.ledger_item)
+      expect(Repayment.match_candidates(income.ledger_item.reload, member)).to contain_exactly(expense.ledger_item)
     end
 
     it "matches nothing once the transaction is already part of a repayment" do
       repayment_by(income).save!
       create(:canonical_transaction, event:, amount_cents: -100_00)
 
-      expect(Repayment.match_candidates(income.ledger_item.reload)).to be_empty
+      expect(Repayment.match_candidates(income.ledger_item.reload, member)).to be_empty
     end
   end
 

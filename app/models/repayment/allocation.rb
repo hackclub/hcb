@@ -84,12 +84,12 @@ class Repayment
     # so undoing the repayment can put it back.
     #
     # The sending side of a transfer marked as the repayment takes on the
-    # expense's category, as it would have had it been sent as a repayment
-    # transfer.
+    # expense's category (or none, if the expense has none), as it would have
+    # had it been sent as a repayment transfer.
     def apply_categories!
       slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
       expense_slug = repaid_category&.slug
-      sender = expense_slug ? repayment.sender_transactions : []
+      sender = repayment.sender_transactions
       sender.each { |t| slugs[t] = expense_slug }
 
       update!(previous_categories: slugs.to_h { |t, slug|
@@ -114,15 +114,17 @@ class Repayment
         key = snapshot_key(t.canonical_pending_transaction) if !previous_categories.key?(key) && t.try(:canonical_pending_transaction)
         previous = previous_categories[key]
 
-        # The sender's side is only touched if it was recategorized.
-        set_to = previous&.dig("set_to") || (Repayment::CATEGORY_SLUG if own.include?(t))
+        # The sender's side remembers what it was set to, which may be nothing.
+        recategorized_sender = previous&.key?("set_to")
+        next unless recategorized_sender || own.include?(t)
+
         mapping = t.category_mapping
-        next unless set_to && mapping&.category&.slug == set_to
+        next unless mapping&.category&.slug == (recategorized_sender ? previous["set_to"] : Repayment::CATEGORY_SLUG)
 
         if previous&.dig("slug").nil?
-          mapping.destroy!
+          mapping&.destroy!
         else
-          mapping.update!(
+          (mapping || t.build_category_mapping).update!(
             category: TransactionCategory.find_or_create_by!(slug: previous["slug"]),
             assignment_strategy: previous["assignment_strategy"]
           )

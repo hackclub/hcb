@@ -64,7 +64,7 @@
           Manually mark as paid
         <% end %>
       <% end %>
-      <% if hcb_code.donation? %>
+      <% if hcb_code.donation? && organizer_signed_in?(as: :member) %>
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
           <%= inline_icon "person", size: 24 %>
           Edit donor

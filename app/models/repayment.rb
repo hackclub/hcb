@@ -76,20 +76,26 @@ class Repayment < ApplicationRecord
   #   which is what sending it as a repayment would have taken. Linking it
   #   moves the expense onto the sender's books, so nobody else can: the
   #   income would leave revenue here without the sender taking the expense.
-  # Without a user, transfers are left out.
+  # Without a user, nothing is.
+  #
+  # A ledger item reads as settled once its money is fronted or its transfer
+  # is approved, and either can still fall through with nothing to undo the
+  # link. So the money must have actually arrived: a settled transaction,
+  # and for a transfer, one that has been deposited.
   def self.repaying_ledger_items(event, user = nil)
-    transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil)
+    transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil, aasm_state: "deposited")
                             .where.not(source_event_id: event.id)
     if user.nil? || !DisbursementPolicy.new(user, Disbursement.new(destination_event: event)).repay?
       transfers = transfers.none
     elsif !user.admin?
       transfers = transfers.where(source_event_id: user.manageable_events.select(:id))
     end
-    member = user.nil? || OrganizerPosition.role_at_least?(user, event, :member)
+    member = user.present? && OrganizerPosition.role_at_least?(user, event, :member)
 
     event.ledger.items
          .where(status: :settled)
          .where("ledger_items.amount_cents > 0")
+         .where("EXISTS (SELECT 1 FROM canonical_transactions WHERE canonical_transactions.ledger_item_id = ledger_items.id)")
          .where(
            "(? AND (ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?))) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
            member, NON_REPAYING_LINKED_OBJECT_TYPES, transfers.select(:id)
