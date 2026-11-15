@@ -13,7 +13,7 @@ class Ledger
     def candidates
       authorize @item, :mark_repayment?
 
-      @candidates = Repayment.match_candidates(@item).order(datetime: :desc).page(params[:page]).per(CANDIDATES_PER_PAGE)
+      @candidates = Repayment.match_candidates(@item, current_user).order(datetime: :desc).page(params[:page]).per(CANDIDATES_PER_PAGE)
 
       render layout: false
     end

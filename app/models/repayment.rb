@@ -68,12 +68,18 @@ class Repayment < ApplicationRecord
 
   # Settled money in on the organization's ledger that could have paid an
   # expense back. Pending money in can still change amount or never arrive.
-  def self.repaying_ledger_items(event)
+  def self.repaying_ledger_items(event, user = nil)
     # A plain transfer from another organization that should have been sent
     # as a repayment can be marked as one once it has settled. Repayment
     # transfers already have their own repayment.
+    #
+    # Marking one also moves the expense onto the sender's books, so only
+    # someone who manages the sender can do it. Otherwise the income would
+    # leave the recipient's revenue without the sender taking on the expense.
     markable_transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil)
                                      .where.not(source_event_id: event.id)
+    markable_transfers = markable_transfers.none if user.nil?
+    markable_transfers = markable_transfers.where(source_event_id: user.manageable_events.select(:id)) unless user.nil? || user.admin?
 
     event.ledger.items
          .where(status: :settled)
@@ -86,21 +92,22 @@ class Repayment < ApplicationRecord
   end
 
   # Money in that hasn't already been marked as repaying something.
-  def self.unused_repaying_ledger_items(event)
-    repaying_ledger_items(event).where.not(id: where.not(repaying_ledger_item_id: nil).select(:repaying_ledger_item_id))
+  def self.unused_repaying_ledger_items(event, user = nil)
+    repaying_ledger_items(event, user).where.not(id: where.not(repaying_ledger_item_id: nil).select(:repaying_ledger_item_id))
   end
 
   # What a ledger item could be marked as a repayment with: for an unrepaid
   # expense, unused money in of the same amount; for unused money in,
-  # unrepaid expenses of the same amount.
-  def self.match_candidates(ledger_item)
+  # unrepaid expenses of the same amount. Transfers are only offered to a
+  # user who manages their sender.
+  def self.match_candidates(ledger_item, user = nil)
     event = ledger_item.primary_ledger&.event
     return Ledger::Item.none if event.nil?
 
     own, others = if ledger_item.amount_cents.negative?
-                    [unrepaid_ledger_items(event), unused_repaying_ledger_items(event)]
+                    [unrepaid_ledger_items(event), unused_repaying_ledger_items(event, user)]
                   else
-                    [unused_repaying_ledger_items(event), unrepaid_ledger_items(event)]
+                    [unused_repaying_ledger_items(event, user), unrepaid_ledger_items(event)]
                   end
     return Ledger::Item.none unless own.exists?(ledger_item.id)
 
@@ -121,8 +128,8 @@ class Repayment < ApplicationRecord
     repaying_ledger_item.linked_object.disbursement if repaying_ledger_item&.linked_object_type == "Disbursement::Incoming"
   end
 
-  # The sending organization's side of that transfer. Only recategorized when
-  # whoever marked the repayment also manages the sender (see Allocation).
+  # The sending organization's side of that transfer, which takes on the
+  # expense's category (see Allocation).
   def sender_transactions = transactions_of(repaying_transfer&.outgoing_disbursement&.ledger_item)
 
   def revert_categories!
@@ -147,7 +154,7 @@ class Repayment < ApplicationRecord
   # The event comes from the repaying item's ledger, so this also keeps both
   # sides on the same ledger.
   def repaying_transaction_is_money_in_on_the_same_ledger
-    unless event && Repayment.repaying_ledger_items(event).exists?(repaying_ledger_item.id)
+    unless event && Repayment.repaying_ledger_items(event, created_by).exists?(repaying_ledger_item.id)
       errors.add(:repaying_ledger_item, "must be settled money in on an organization's ledger")
     end
   end

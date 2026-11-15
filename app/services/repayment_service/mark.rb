@@ -28,10 +28,7 @@ module RepaymentService
         repayment = Repayment.new(repaying_ledger_item: repaying, created_by: @created_by)
         repayment.allocations.build(repaid_ledger_item: repaid, amount_cents: repaying.amount_cents)
         repayment.save!
-        # Changing the sender's books takes the same access as sending from them.
-        sender = repayment.repaying_transfer&.source_event
-        recategorize_sender = sender.present? && EventPolicy.new(@created_by, sender).update?
-        repayment.allocations.each { |allocation| allocation.apply_categories!(recategorize_sender:) }
+        repayment.allocations.each(&:apply_categories!)
         repayment
       end
     rescue ActiveRecord::RecordInvalid => e
@@ -49,7 +46,7 @@ module RepaymentService
     # Looked up among what the picker offers, so an id from another ledger or
     # of a different amount is treated as not found rather than revealed.
     def other_ledger_item
-      @other_ledger_item ||= Repayment.match_candidates(@ledger_item).find_by_hashid(@other_ledger_item_hashid)
+      @other_ledger_item ||= Repayment.match_candidates(@ledger_item, @created_by).find_by_hashid(@other_ledger_item_hashid)
     end
 
   end

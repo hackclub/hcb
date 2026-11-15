@@ -7,7 +7,7 @@
                "Mark this as repaying \"#{candidate.memo}\"? Both will be categorized as a repayment."
              end %>
 <% transfer = [ledger_item, candidate].find { |item| item.linked_object_type == "Disbursement::Incoming" }&.linked_object %>
-<% confirm += " #{transfer.source_event.name}'s side of the transfer will take on the expense's category." if transfer && policy(transfer.source_event).update? %>
+<% confirm += " #{transfer.source_event.name}'s side of the transfer will take on the expense's category." if transfer %>
 
 <tr class="transaction transaction--<%= candidate.sign %>">
   <td class="transaction__icon">

@@ -6,7 +6,7 @@
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
 <% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
 <%# Only offered when there's something of the same amount to match it with. %>
-<% markable_repayment = hcb_code.ledger_item.present? && policy(hcb_code.ledger_item).mark_repayment? && Repayment.match_candidates(hcb_code.ledger_item).exists? %>
+<% markable_repayment = hcb_code.ledger_item.present? && policy(hcb_code.ledger_item).mark_repayment? && Repayment.match_candidates(hcb_code.ledger_item, current_user).exists? %>
 
 <% merchant_not_allowed = hcb_code.stripe_card? && hcb_code.pt.hcb_decline_reason == :merchant_not_allowed && hcb_code.stripe_card&.card_grant.present? %>
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>

@@ -83,13 +83,13 @@ class Repayment
     # Remembers each transaction's category (and whether it was set by hand)
     # so undoing the repayment can put it back.
     #
-    # With recategorize_sender, the sending side of a transfer marked as the
-    # repayment takes on the expense's category, as it would have had it been
-    # sent as a repayment transfer.
-    def apply_categories!(recategorize_sender: false)
+    # The sending side of a transfer marked as the repayment takes on the
+    # expense's category, as it would have had it been sent as a repayment
+    # transfer.
+    def apply_categories!
       slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
       expense_slug = repaid_category&.slug
-      sender = recategorize_sender && expense_slug ? repayment.sender_transactions : []
+      sender = expense_slug ? repayment.sender_transactions : []
       sender.each { |t| slugs[t] = expense_slug }
 
       update!(previous_categories: slugs.to_h { |t, slug|

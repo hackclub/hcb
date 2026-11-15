@@ -82,20 +82,18 @@ RSpec.describe RepaymentService::Mark do
       expect(expense.reload.category.slug).to eq("food-fun")
     end
 
-    it "leaves the sender's side alone when the marker doesn't manage the sender" do
+    it "isn't offered to someone who doesn't manage the sender" do
       create(:organizer_position, user:, event: sender, role: :member)
 
-      repayment = mark(income, expense)
-
-      expect(income.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
-      expect(outgoing.reload.category.slug).to eq("internal-transfer")
-
-      RepaymentService::Unmark.new(repayment:).run
-
+      expect(Repayment.match_candidates(expense.ledger_item.reload, user)).to be_empty
+      expect(Repayment.match_candidates(income.ledger_item.reload, user)).to be_empty
+      expect { mark(income, expense) }.to raise_error(described_class::UserError, "That transaction can't be matched with this one.")
+      expect(income.reload.category).to be_nil
       expect(outgoing.reload.category.slug).to eq("internal-transfer")
     end
 
     it "won't mark a transfer that was sent as a repayment" do
+      create(:organizer_position, user:, event: sender, role: :manager)
       transfer.update_columns(transfer_type: "repayment")
 
       expect { mark(income, expense) }.to raise_error(described_class::UserError, "That transaction can't be matched with this one.")
