@@ -46,17 +46,20 @@
 #
 # What is covered, and how
 #
-#   Flat price on a cadence     3 charges of one amount on one card, evenly
-#                               spaced (2 for yearly). Up to 2 skipped cycles.
-#   Usage-based / foreign       3 charges of any amount on one card, every gap
-#   currency                    exactly one cycle. Marked variable_amount.
+#   Flat price on a cadence     3 charges of one amount, evenly spaced
+#                               (2 for yearly). Up to 2 skipped cycles.
+#   Usage-based / foreign       3 charges of any amount, every gap exactly one
+#   currency                    cycle. Marked variable_amount.
 #   Late charge (locked card)   Any charge after the due date links. The due
 #                               date keeps its day of the month, so the next
 #                               on-time charge still links.
 #   Price change                A flat subscription takes a charge within 20%
 #                               of the last amount.
-#   Replaced or swapped card    A due subscription takes the charge from
-#                               another card of the same cardholder.
+#   Replaced or swapped card    The card is a signal, not a requirement. The
+#                               same cardholder's cards count as one. Someone
+#                               else's card needs stronger evidence: the exact
+#                               amount on time to join a subscription, 4 exact
+#                               charges with no skipped cycle to start one.
 #   Several at one merchant     Each price is its own subscription.
 #   Retry / double charge       Charges within 5 days of the last are skipped.
 #   In-person purchases         Chip, swipe and tap charges are ignored.
@@ -66,7 +69,8 @@
 #
 #   ACH and other rails         The schema allows them; nothing detects them.
 #   Two subscriptions at one merchant for the same price on one card
-#   A subscription moved to a different person's card: found again as new.
+#   A usage-based subscription moved to a different person's card: found
+#   again as new.
 #   Cycles other than the seven above.
 #   A price change over 20%, or monthly to yearly: found again as a new one.
 #   Declined charges            Not recorded.

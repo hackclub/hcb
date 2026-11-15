@@ -35,6 +35,13 @@ RSpec.describe Subscription::Detect do
     expect(charge(240)).to have_attributes(cadence_days: 60, cadence_label: "every two months")
   end
 
+  it "needs four charges when they are spread over different cardholders' cards" do
+    cards = [stripe_card, create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder), event:)]
+
+    expect([0, 30, 60].map { |day| charge(day, card: cards[(day / 30) % 2]) }).to all(be_nil)
+    expect(charge(90, card: cards[1]).ledger_items.count).to eq(4)
+  end
+
   it "ignores a cycle that isn't a known cadence" do
     [0, 43, 86, 129].each { |day| charge(day) }
 
@@ -96,11 +103,18 @@ RSpec.describe Subscription::Detect do
       expect(subscription.reload.payment_rail).to eq(replacement)
     end
 
-    it "leaves another cardholder's charge at the same merchant alone" do
-      someone_elses = create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder), event:)
+    context "with a charge on another cardholder's card" do
+      let(:someone_elses) { create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder), event:) }
 
-      expect(charge(90, card: someone_elses)).to be_nil
-      expect(charge(90)).to eq(subscription)
+      it "links it when the amount and timing are exact" do
+        expect(charge(90, card: someone_elses)).to eq(subscription)
+      end
+
+      it "leaves it alone when it is early or a different amount" do
+        expect(charge(86, card: someone_elses)).to be_nil
+        expect(charge(90, card: someone_elses, amount_cents: -22_00)).to be_nil
+        expect(charge(90)).to eq(subscription)
+      end
     end
 
     it "keeps a different price at the same merchant separate" do

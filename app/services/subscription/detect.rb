@@ -14,6 +14,11 @@ class Subscription
     MIN_GAP_DAYS = 5
     # A gap may span this many cycles (two skipped months, say).
     MAX_CYCLES = 3
+    # The card is a signal, not a requirement. Charges on someone else's card
+    # can still form or join a subscription, but need stronger evidence: this
+    # many charges, the exact amount, and no early or skipped cycles.
+    MIN_OTHER_CARD_CHARGES = 4
+    OTHER_CARD_EARLY = 1.day
     # Long enough to hold two yearly charges.
     LOOKBACK = 15.months
 
@@ -39,7 +44,7 @@ class Subscription
     def link_to_existing
       amount_cents = @item.amount_cents.abs
       subscription = @ledger.subscriptions.where(merchant_key: @merchant_key).includes(:payment_rail)
-                            .select { |s| s.due?(@item.datetime) && s.amount_fits?(amount_cents) && same_cardholder?(s.payment_rail) }
+                            .select { |s| same_cardholder?(s.payment_rail) ? s.due?(@item.datetime) && s.amount_fits?(amount_cents) : exact_match?(s, amount_cents) }
                             .min_by { |s| [s.payment_rail == @rail ? 0 : 1, (s.amount_cents - amount_cents).abs] }
       return unless subscription
 
@@ -47,27 +52,40 @@ class Subscription
       subscription
     end
 
-    # Another card only counts when it is the same person's (a replaced or
-    # swapped card). On a ledger where many people hold cards, someone else's
-    # charge at the same merchant is their own subscription.
+    # A replaced card belongs to the same cardholder, so it counts as the same
+    # card. On a ledger where many people hold cards, someone else's charge at
+    # the same merchant is usually their own subscription.
     def same_cardholder?(card)
       card == @rail || card.stripe_cardholder_id == @rail.stripe_cardholder_id
     end
 
-    # Tries the charges of this exact amount first (a flat price), then every
-    # charge from the merchant (usage billing), which has to fit more strictly.
-    def create_from_history
-      same_amount = without_repeats(history.select { |item| item.amount_cents == @item.amount_cents })
-      create(same_amount, variable_amount: false) || create(history, variable_amount: true)
+    def exact_match?(subscription, amount_cents)
+      !subscription.variable_amount? && subscription.amount_cents == amount_cents &&
+        @item.datetime >= subscription.next_expected_at - OTHER_CARD_EARLY
     end
 
-    # This merchant's unlinked online charges on this card, up to this one.
+    # Tries, in order: this cardholder's charges of this exact amount (a flat
+    # price), all of this cardholder's charges (usage billing, which has to fit
+    # strictly), then charges of this exact amount on any card.
+    def create_from_history
+      mine = history.select { |item| same_cardholder?(item.linked_object.stripe_card) }
+
+      create(same_amount(mine), variable_amount: false) ||
+        create(mine, variable_amount: true) ||
+        create(same_amount(history), variable_amount: false, strict: true, min_charges: MIN_OTHER_CARD_CHARGES)
+    end
+
+    def same_amount(items)
+      without_repeats(items.select { |item| item.amount_cents == @item.amount_cents })
+    end
+
+    # This merchant's unlinked online charges on the ledger, up to this one.
     def history
       @history ||= Ledger::Item.settled
                                .joins(:primary_mapping).where(ledger_mappings: { ledger_id: @ledger.id })
-                               .where(linked_object_type: CardCharge.name, linked_object_id: CardCharge.where(merchant_network_id: @merchant_key, stripe_card: @rail).select(:id))
+                               .where(linked_object_type: CardCharge.name, linked_object_id: CardCharge.where(merchant_network_id: @merchant_key).select(:id))
                                .where(subscription_id: nil, amount_cents: ...0, datetime: (@item.datetime - LOOKBACK)..@item.datetime)
-                               .includes(linked_object: :raw_pending_stripe_transaction)
+                               .includes(linked_object: [:raw_pending_stripe_transaction, :stripe_card])
                                .order(:datetime, :id)
                                .reject { |item| item.linked_object.card_present? }
     end
@@ -82,12 +100,13 @@ class Subscription
       (b.datetime - a.datetime) / 1.day
     end
 
-    def create(items, variable_amount:)
-      return if items.size < MIN_YEARLY_CHARGES
+    # Strict allows no skipped cycles and no yearly-from-two-charges.
+    def create(items, variable_amount:, strict: variable_amount, min_charges: MIN_YEARLY_CHARGES)
+      return if items.size < min_charges
 
-      cadence_days = fit_cadence(items.each_cons(2).map { |a, b| days_between(a, b) }, strict: variable_amount)
+      cadence_days = fit_cadence(items.each_cons(2).map { |a, b| days_between(a, b) }, strict:)
       return if cadence_days.nil?
-      return if items.size < MIN_CHARGES && (variable_amount || cadence_days != 365)
+      return if items.size < MIN_CHARGES && (strict || cadence_days != 365)
 
       subscription = Subscription.new(
         ledger: @ledger,
