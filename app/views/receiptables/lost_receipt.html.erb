@@ -2,10 +2,11 @@
 <% charged = @receiptable.try(:amount_cents)&.abs %>
 <% subtitle [@receiptable.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
 
+<%= render "receiptables/lost_receipt_steps", form: true %>
+
 <% content_for :sidebar_footer do %>
   <%= render "application/callout", type: "info", title: "Before you submit", class: "mt-2 mb-0" do %>
     <ul>
-      <li>Ask the merchant for a copy of the receipt first.</li>
       <li>List everything you bought, with tax, tips, and fees as their own items.</li>
       <li>The total should match the transaction.</li>
     </ul>
@@ -16,7 +17,9 @@
   <%= form_errors @statement, "statement" %>
   <%= hidden_field_tag :s, params[:s], id: nil %>
   <%= hidden_field_tag :return_to, @return_to, id: nil %>
+  <%= hidden_field_tag :continue, 1, id: nil %>
 
+  <div data-scroll-seek-target="section">
   <h3 class="mb-2">Purchase details</h3>
   <div class="card mb-4 flex flex-col gap-3">
     <div class="flex flex-wrap gap-2">
@@ -38,6 +41,9 @@
     </div>
   </div>
 
+  </div>
+
+  <div data-scroll-seek-target="section">
   <h3 class="mb-2">Items</h3>
   <div class="flex flex-col gap-2" data-lost-receipt-target="items">
     <%= form.fields_for :items do |item_form| %>
@@ -71,6 +77,9 @@
     </div>
   </div>
 
+  </div>
+
+  <div data-scroll-seek-target="section">
   <h3 class="mb-2">Confirmation</h3>
   <div class="card mb-4 flex flex-col gap-3">
     <div class="field field--checkbox !items-start mb-0">
@@ -82,6 +91,8 @@
       <%# Not prefilled or autofilled: typing the name is the signature. %>
       <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full" %>
     </div>
+  </div>
+
   </div>
 
   <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } do %>

@@ -8,13 +8,16 @@ class ReceiptablesController < ApplicationController
   before_action :authorize_receiptable
 
   def lost_receipt
+    # First ask whether they've really looked for the receipt.
+    return render_page(:lost_receipt_tips) unless params[:continue]
+
     @statement = LostReceipt::Statement.new(
       date: @receiptable.try(:date) || @receiptable.try(:datetime)&.to_date,
       merchant: @receiptable.try(:memo),
       submitter: current_user
     )
     @statement.items << LostReceipt::Item.new(quantity: 1)
-    render_form
+    render_page(:lost_receipt)
   end
 
   def mark_no_or_lost
@@ -26,7 +29,7 @@ class ReceiptablesController < ApplicationController
       flash[:success] = "Lost receipt statement added."
       redirect_to url_from(params[:return_to]) || fallback_location
     else
-      render_form status: :unprocessable_entity
+      render_page :lost_receipt, status: :unprocessable_entity
     end
   rescue ActiveRecord::NestedAttributes::TooManyRecords
     render plain: "A lost receipt statement can have at most 50 items.", status: :unprocessable_entity
@@ -34,12 +37,12 @@ class ReceiptablesController < ApplicationController
 
   private
 
-  def render_form(**options)
+  def render_page(template, **options)
     # The link can sit inside a frame or popover, so the referer is the only reliable way back.
     @return_to = url_from(params[:return_to]) || (url_from(request.referrer) if request.get?)
     @back_url = @return_to || url_for(fallback_location)
-    @can_transfer = false # hides the transfer layout's steps and review note
-    render :lost_receipt, layout: "transfer", **options
+    @hide_transfer_notes = true
+    render template, layout: "transfer", **options
   end
 
   # Signed link visitors can't view the transaction itself.
