@@ -204,9 +204,10 @@ export default class extends Controller {
       return
     }
 
-    // Rows an earlier session already imported are left out entirely. Ones
-    // imported during this session stay, showing their Imported status.
-    const importedRowKeys = new Set(this.importedRowKeysValue)
+    // Rows already imported are left out entirely, whether in an earlier
+    // session or since this page loaded: loading the CSV again (or switching
+    // files and back) must not bring a handled row back as "Not imported".
+    const importedRowKeys = this.importedRowKeys()
     let hidden = 0
 
     rows.forEach((cells, index) => {
@@ -323,6 +324,7 @@ export default class extends Controller {
 
     if (!payload || typeof payload.status !== 'string') {
       this.setStatus(row, 'uncertain')
+      this.rememberHandledRow(row)
       this.setMessage(
         row,
         "No answer came back from HCB, so it isn't known whether this row was imported. " +
@@ -340,6 +342,7 @@ export default class extends Controller {
 
     if (response.ok && payload.status === 'imported') {
       this.setStatus(row, 'imported')
+      this.rememberHandledRow(row)
       this.setMessage(
         row,
         `Imported as ${payload.form_id} on ${payload.legal_entity.name}.`
@@ -351,10 +354,12 @@ export default class extends Controller {
       // TaxBandits may have accepted it, so this row must not be resubmitted;
       // the message says how to resolve it.
       this.setStatus(row, 'uncertain')
+      this.rememberHandledRow(row)
       this.setMessage(row, payload.message, true)
       this.disableRow(row)
     } else if (payload.status === 'duplicate') {
       this.setStatus(row, 'duplicate')
+      this.rememberHandledRow(row)
       this.setMessage(row, payload.message, true)
       this.disableRow(row)
     } else {
@@ -368,9 +373,23 @@ export default class extends Controller {
 
   /* Building rows */
 
+  // Every row the server knew about at page load, plus the ones this page has
+  // since imported, found to be duplicates, or left unconfirmed.
+  importedRowKeys() {
+    this.handledRowKeys ??= new Set(this.importedRowKeysValue)
+    return this.handledRowKeys
+  }
+
+  // Called once a row may exist on the server. Keyed by the row's original CSV
+  // values, which is what loadCsv compares against.
+  rememberHandledRow(row) {
+    this.importedRowKeys().add(row.dataset.rowKey)
+  }
+
   buildRow(cells, rowNumber) {
     const row = this.rowTemplateTarget.content.firstElementChild.cloneNode(true)
     const data = this.prefill(cells)
+    row.dataset.rowKey = rowKey(data)
 
     row.querySelector('[data-row-number]').textContent = `Row ${rowNumber}`
     row.querySelector('[data-row-title]').textContent =

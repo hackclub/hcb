@@ -645,10 +645,74 @@ RSpec.describe Tax1099ImportService do
       )
     end
 
-    it "isn't taken for a duplicate of another TIN-less import" do
+    it "isn't taken for a duplicate of another payee's TIN-less import" do
       run(data: tinless_data)
 
       expect { run(data: tinless_data.merge(email: "someone-else@example.com")) }.not_to raise_error
+    end
+
+    it "is a duplicate of an earlier import of the same row" do
+      first = run(data: tinless_data).form
+
+      expect { run(data: tinless_data) }.to raise_error(described_class::DuplicateError) { |error|
+        expect(error.existing_form).to eq(first)
+      }
+      expect(TaxbanditsService).to have_received(:create_from_data).once
+    end
+
+    it "matches the row however its email and postal code are written" do
+      run(data: tinless_data)
+
+      expect { run(data: tinless_data.merge(email: " Sommaiya@Example.com ", zip_code: "201 014")) }
+        .to raise_error(described_class::DuplicateError)
+    end
+
+    it "is a duplicate of an earlier import left unconfirmed" do
+      allow(TaxbanditsService).to receive(:create_from_data).and_raise(Faraday::TimeoutError, "timeout")
+      run(data: tinless_data) rescue nil
+
+      expect { run(data: tinless_data) }.to raise_error(described_class::DuplicateError)
+    end
+
+    it "isn't a duplicate once the earlier import is discarded" do
+      run(data: tinless_data).form.update!(aasm_state: :discarded)
+
+      expect { run(data: tinless_data) }.not_to raise_error
+    end
+
+    it "isn't a duplicate of a different form type or completed date" do
+      run(data: tinless_data)
+
+      expect { run(data: tinless_data.merge(completed_on: "2025-07-23")) }.not_to raise_error
+      expect {
+        run(data: tinless_data.merge(form_type: "W8BENE", first_name: "Sommaiya Studio", ch3_status: "CORPORATION"))
+      }.not_to raise_error
+    end
+
+    it "isn't a duplicate of the same payee's form that has a TIN" do
+      run(data: w8ben_data)
+
+      expect { run(data: tinless_data) }.not_to raise_error
+    end
+
+    context "when a concurrent import of the same row wins the race" do
+      # As with the TIN race: the up-front check saw nothing, but the winner has
+      # committed by the time this one takes the row's lock.
+      let!(:winner) { run(data: tinless_data).form }
+
+      before do
+        calls = 0
+        allow_any_instance_of(described_class).to receive(:tinless_duplicate).and_wrap_original do |original|
+          (calls += 1) == 1 ? nil : original.call
+        end
+      end
+
+      it "reports the winner as a duplicate before anything is sent" do
+        expect { run(data: tinless_data) }.to raise_error(described_class::DuplicateError) { |error|
+          expect(error.existing_form).to eq(winner)
+        }
+        expect(TaxbanditsService).to have_received(:create_from_data).once # the winner's
+      end
     end
 
     it "needs the box ticked when there's no TIN" do

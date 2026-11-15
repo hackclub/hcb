@@ -12,13 +12,14 @@
 class Tax1099ImportService
   class Error < StandardError; end
 
-  # Raised when a not-discarded tax1099 form already exists for this TIN.
+  # Raised when a not-discarded tax1099 form already exists for this TIN, or,
+  # for a W-8 with no TIN, for this row; see #duplicate_tax1099_form.
   class DuplicateError < Error
     attr_reader :existing_form
 
     def initialize(existing_form)
       @existing_form = existing_form
-      super("a tax1099 form for this TIN already exists (#{existing_form.public_id})")
+      super("this has already been imported as #{existing_form.public_id}")
     end
 
   end
@@ -261,13 +262,19 @@ class Tax1099ImportService
   # tin_hash on import. Must stay in step with rowKey() in
   # tax1099_import_controller.js.
   def self.imported_row_keys
-    Tax::Form.tax1099.not_discarded.where.not(completed_at: nil).includes(legal_entity: :users).flat_map do |form|
-      kind = form.entity_person? ? "person" : "business"
+    Tax::Form.tax1099.not_discarded.where.not(completed_at: nil).includes(legal_entity: :users)
+             .flat_map { row_keys_for(_1) }.uniq
+  end
 
-      form.legal_entity.users.map do |user|
-        row_key(email: user.email, completed_on: form.completed_at.to_date.iso8601, kind:, zip_code: form.address_postal_code)
-      end
-    end.uniq
+  # One key per user on the form's legal entity.
+  def self.row_keys_for(form)
+    return [] if form.completed_at.nil?
+
+    kind = form.entity_person? ? "person" : "business"
+
+    form.legal_entity.users.map do |user|
+      row_key(email: user.email, completed_on: form.completed_at.to_date.iso8601, kind:, zip_code: form.address_postal_code)
+    end
   end
 
   def self.row_key(email:, completed_on:, kind:, zip_code:)
@@ -435,12 +442,30 @@ class Tax1099ImportService
     Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: foreign_tin?)
   end
 
-  # A TIN-less W-8 has no fingerprint to check, and find_by(tin_hash: nil) would
-  # match every other TIN-less import.
   def duplicate_tax1099_form
-    return nil if tin_hash.nil?
+    return Tax::Form.tax1099.not_discarded.find_by(tin_hash:) if tin_hash
 
-    Tax::Form.tax1099.not_discarded.find_by(tin_hash:)
+    tinless_duplicate
+  end
+
+  # A W-8 with no TIN has no fingerprint (and find_by(tin_hash: nil) would match
+  # every other TIN-less import), so it's matched the way the page matches CSV
+  # rows: by email, completed date, person or business, and postal code, and
+  # here also by form type. Only against other TIN-less forms: one with a TIN
+  # is a different filing, even from the same payee on the same day.
+  def tinless_duplicate
+    Tax::Form.tax1099.not_discarded.where(tin_hash: nil, form_type:)
+             .includes(legal_entity: :users)
+             .find { |form| self.class.row_keys_for(form).include?(row_key) }
+  end
+
+  def row_key
+    self.class.row_key(
+      email: @data[:email],
+      completed_on: completed_on.iso8601,
+      kind: entity_type == :person ? "person" : "business",
+      zip_code: @data[:zip_code]
+    )
   end
 
   # Creates the user, legal entity, and form, and commits them. The form is
@@ -455,6 +480,19 @@ class Tax1099ImportService
   # change.
   def claim_form!
     ActiveRecord::Base.transaction do
+      # A TIN-less W-8 has no unique index to stop two concurrent imports of
+      # the same row, so they're serialized on the row's key instead, and the
+      # check before this one is repeated now that it can't race. The lock is
+      # held until this transaction commits, by which time the form is visible.
+      unless tin_hash
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql(["SELECT pg_advisory_xact_lock(?)", Zlib.crc32("tax1099_import:#{row_key}")])
+        )
+        if (duplicate = tinless_duplicate)
+          raise DuplicateError, duplicate
+        end
+      end
+
       legal_entity = find_or_create_legal_entity!
 
       Tax::Form.create!(
