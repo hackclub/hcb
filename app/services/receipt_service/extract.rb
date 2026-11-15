@@ -99,8 +99,7 @@ module ReceiptService
       )
 
 
-      if @receipt.receiptable_type == "HcbCode"
-        hcb_code = @receipt.receiptable
+      if (hcb_code = @receipt.hcb_code).present?
         hcb_code.broadcast_action_later_to(
           [hcb_code, "ai_memo"],
           action: :replace,
