@@ -278,13 +278,26 @@ RSpec.describe Payroll::Position, type: :model do
         expect(position).to be_renewable
       end
 
-      %w[under_review onboarding terminated rejected].each do |aasm_state|
+      %w[draft under_review onboarding terminated rejected].each do |aasm_state|
         it "is not renewable when #{aasm_state}" do
           position.update!(aasm_state:)
           expect(position).not_to be_renewable
         end
       end
 
+      it "starts a renewal as a draft until the organizer signs, counting it as in progress" do
+        renewal = create_renewal
+      
+        expect(renewal).to be_draft
+        expect(position.renewal).to eq(renewal)
+        expect(position.renewal_chain).to eq([position, renewal])
+      end
+      
+      it "is renewable again once a draft renewal is discarded" do
+        create_renewal.terminate!
+        expect(position.reload).to be_renewable
+      end
+      
       it "is not renewable again while a renewal is in progress" do
         create_renewal
         expect(position).not_to be_renewable
@@ -434,6 +447,23 @@ RSpec.describe Payroll::Position, type: :model do
         expect(renewal.reload).to be_terminated
       end
 
+      it "discards a draft renewal without emailing the contractor" do
+        renewal = create_renewal
+      
+        expect { renewal.terminate! }.not_to have_enqueued_mail(Payroll::PositionMailer, :terminated)
+      
+        expect(renewal.reload).to be_terminated
+        expect(position.reload).to be_onboarded
+      end
+      
+      it "emails the contractor once when ending a contract along with its draft renewal" do
+        renewal = create_renewal
+      
+        expect { position.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once.with(params: { position: }, args: [])
+      
+        expect(renewal.reload).to be_terminated
+      end
+      
       it "ends a pending renewal along with the contract it renews" do
         renewal = create_renewal
 
