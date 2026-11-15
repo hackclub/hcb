@@ -37,6 +37,96 @@ RSpec.describe "Stripe Webhook", type: :request do
       end
     end
 
+    context "with an event type HCB doesn't handle" do
+      let(:payload) do
+        { id: "evt_test", object: "event", type: "customer.created", data: { object: { id: "cus_test" } } }.to_json
+      end
+
+      it "returns 200 so Stripe doesn't retry it" do
+        post "/stripe/webhook",
+             params: payload,
+             headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "when the event's handler raises a NoMethodError" do
+      before { allow_any_instance_of(StripeController).to receive(:handle_charge_updated).and_raise(NoMethodError) }
+
+      it "doesn't respond with success, so Stripe retries the event" do
+        expect do
+          post "/stripe/webhook",
+               params: payload,
+               headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
+        end.to raise_error(NoMethodError)
+      end
+    end
+
+    context "with an issuing_card.updated event for a card HCB doesn't have" do
+      let(:payload) do
+        { id: "evt_test", object: "event", type: "issuing_card.updated", data: { object: { id: "ic_unknown", object: "issuing.card" } } }.to_json
+      end
+
+      it "returns 204 without syncing anything" do
+        post "/stripe/webhook",
+             params: payload,
+             headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
+
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context "with an issuing_personalization_design.rejected event" do
+      let(:event) { create(:event) }
+      let!(:design) do
+        StripeCard::PersonalizationDesign.create!(event:, stripe_id: "pd_test", color: "black", stripe_status: "review")
+      end
+      let(:rejection_reasons) { { card_logo: nil, carrier_text: ["other"] } }
+      let(:payload) do
+        {
+          id: "evt_test",
+          object: "event",
+          type: "issuing_personalization_design.rejected",
+          data: { object: { id: "pd_test", object: "issuing.personalization_design", rejection_reasons: } }
+        }.to_json
+      end
+
+      before do
+        event.stripe_card_logo.attach(io: File.open(Rails.root.join("spec/fixtures/files/receipt.png")), filename: "logo.png")
+        allow(StripeService::Issuing::PersonalizationDesign).to receive(:retrieve).and_return(
+          Stripe::Issuing::PersonalizationDesign.construct_from(
+            id: "pd_test", status: "rejected", carrier_text: nil, physical_bundle: nil, name: "Test design", card_logo: nil
+          )
+        )
+      end
+
+      def post_webhook
+        post "/stripe/webhook",
+             params: payload,
+             headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
+      end
+
+      context "when only the carrier text was rejected" do
+        it "keeps the logo and doesn't send the logo rejection email" do
+          expect { post_webhook }.not_to have_enqueued_mail(StripeCard::PersonalizationDesignMailer, :design_rejected)
+
+          expect(response).to have_http_status(:no_content)
+          expect(event.reload.stripe_card_logo).to be_attached
+        end
+      end
+
+      context "when the logo was rejected" do
+        let(:rejection_reasons) { { card_logo: ["geographic_location"], carrier_text: nil } }
+
+        it "removes the logo and emails the organization why" do
+          expect { post_webhook }.to have_enqueued_mail(StripeCard::PersonalizationDesignMailer, :design_rejected)
+
+          expect(event.reload.stripe_card_logo).not_to be_attached
+        end
+      end
+    end
+
     context "with an invalid Stripe signature" do
       it "returns 400 and does not process the webhook" do
         expect(StripeController.private_method_defined?(:handle_charge_updated)).to be(true)
