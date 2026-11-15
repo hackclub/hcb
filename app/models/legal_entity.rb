@@ -96,7 +96,7 @@ class LegalEntity < ApplicationRecord
       not_archived: !archived?,
       form_present: !requires_tax_form || form.present?,
       form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
-      form_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
+      form_verified: !requires_tax_form || form&.tin_verified? || !requires_tax_verification?,
     }.reject { |k, done| done }.keys
   end
 
@@ -110,7 +110,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def tax_form_required?
-    payments.where(aasm_state: [:pending_legal_entity, :under_review]).any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
+    payments.where(aasm_state: [:pending_legal_entity, :under_review], requires_tax_form: true).exists? || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
@@ -118,11 +118,6 @@ class LegalEntity < ApplicationRecord
   # "you're set up" state or starting a new form would look like losing the old one.
   def completed_tax_form?
     latest_completed_tax_form.present?
-  end
-
-  def send_tax_form!
-    form = tax_forms.create!(external_service: :taxbandits)
-    form.send!
   end
 
   def tin_banned?

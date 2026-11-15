@@ -253,7 +253,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def on_contract_signed(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      deliver if organizer_position.nil?
+      accept if organizer_position.nil?
 
       # Unfreeze the event if this is the first signed contract
       if event.contracts.signed.count == 1
