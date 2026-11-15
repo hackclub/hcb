@@ -78,10 +78,10 @@
       <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
       <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
     </div>
-    <div>
+    <div class="sm:flex items-center justify-between gap-3">
       <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
       <%# Not prefilled or autofilled: typing the name is the signature. %>
-      <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full" %>
+      <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full sm:!max-w-[250px]" %>
     </div>
   </div>
 
