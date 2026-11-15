@@ -30,6 +30,19 @@ class Ledger
       merchant
     ].freeze
 
+    # Fields compared by their column's absolute value, for ranges that hold in
+    # either direction: "at least $50" matches $50 of revenue and a $50 expense.
+    ABSOLUTE_VALUE_FIELDS = {
+      "absolute_amount_cents" => :amount_cents
+    }.freeze
+
+    RANGE_OPERATORS = {
+      "$gt"  => :gt,
+      "$gte" => :gteq,
+      "$lt"  => :lt,
+      "$lte" => :lteq
+    }.freeze
+
     # Query hashes are untrusted input (they can be constructed client-side), so
     # bound their shape: cap nesting depth, the number of predicate groups, and
     # the length of any array (e.g. a $in list) so a deeply-nested, very wide, or
@@ -128,6 +141,8 @@ class Ledger
     private
 
     def apply_query(relation:, query:, context: "and")
+      raise Ledger::Query::Error.new("Each condition must be an object") unless query.is_a?(Hash)
+
       query.each do |key, value|
         key = key.to_s
 
@@ -218,20 +233,20 @@ class Ledger
 
     def apply_partial_predicate(relation, operator, raw_key, operand)
       return apply_virtual_predicate(relation, operator, raw_key, operand) if VIRTUAL_FIELDS.include?(raw_key.to_s)
+      return apply_absolute_value_predicate(relation, operator, raw_key.to_s, operand) if ABSOLUTE_VALUE_FIELDS.key?(raw_key.to_s)
 
       key = PERMITTED_COLUMNS_MAP[raw_key]
       raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
       operand = coerce_datetime_operand(operand) if DATETIME_COLUMNS.include?(key)
 
-      if operand.is_a?(String) && key == "author"
-        case operator.to_s
-        when "$eq"
-          return relation.where(author: User.where(slug: operand))
-        when "$ne"
-          return relation.where.not(author: User.where(slug: operand))
-        else
-          raise Ledger::Query::Error.new("Unsupported comparison operator for author: #{operator}")
+      # author is an association, not a column, so it has no ordering to compare.
+      if key == "author"
+        raise Ledger::Query::Error.new("Unsupported comparison operator for author: #{operator}") unless operator.to_s.in?(%w[$eq $ne])
+
+        if operand.is_a?(String)
+          users = User.where(slug: operand)
+          return operator.to_s == "$eq" ? relation.where(author: users) : relation.where.not(author: users)
         end
       end
 
@@ -246,10 +261,10 @@ class Ledger
       # wrong".
       case operator.to_s
       when "$eq"
-        reject_array_operand!(operator, operand)
+        require_scalar_operand!(operator, operand)
         relation.where(key => operand)
       when "$ne"
-        reject_array_operand!(operator, operand)
+        require_scalar_operand!(operator, operand)
         # != drops NULL rows; MongoDB's $ne matches them, so re-include (unless
         # the operand is NULL itself, which means IS NOT NULL).
         if operand.nil?
@@ -257,14 +272,8 @@ class Ledger
         else
           relation.where.not(key => operand).or(relation.where(key => nil))
         end
-      when "$gt"
-        relation.where(col.gt(require_comparable_operand!(operator, operand)))
-      when "$gte"
-        relation.where(col.gteq(require_comparable_operand!(operator, operand)))
-      when "$lt"
-        relation.where(col.lt(require_comparable_operand!(operator, operand)))
-      when "$lte"
-        relation.where(col.lteq(require_comparable_operand!(operator, operand)))
+      when *RANGE_OPERATORS.keys
+        relation.where(col.public_send(RANGE_OPERATORS[operator.to_s], require_comparable_operand!(operator, key, operand)))
       when "$in"
         require_array_operand!(operator, operand)
         relation.where(key => operand)
@@ -305,7 +314,7 @@ class Ledger
       # apply_partial_predicate returns above before reaching its own operand
       # guards, so repeat the one $eq carries: an array operand would otherwise
       # turn $eq into an IN here while it raises on every other field.
-      reject_array_operand!(operator, operand)
+      require_scalar_operand!(operator, operand)
 
       case key.to_s
       when "tag"
@@ -342,20 +351,33 @@ class Ledger
       end
     end
 
+    def apply_absolute_value_predicate(relation, operator, key, operand)
+      arel_operator = RANGE_OPERATORS[operator.to_s]
+      raise Ledger::Query::Error.new("Unsupported comparison operator for #{key}: #{operator}") unless arel_operator
+
+      column = ABSOLUTE_VALUE_FIELDS[key]
+      absolute_value = Arel::Nodes::NamedFunction.new("ABS", [Ledger::Item.arel_table[column]])
+      relation.where(absolute_value.public_send(arel_operator, require_comparable_operand!(operator, column, operand)))
+    end
+
     def require_array_operand!(operator, operand)
       raise Ledger::Query::Error.new("#{operator} requires an array operand") unless operand.is_a?(Array)
+      raise Ledger::Query::Error.new("#{operator} requires an array of single values") if operand.any? { |value| value.is_a?(Array) || value.is_a?(Hash) }
     end
 
-    def reject_array_operand!(operator, operand)
+    def require_scalar_operand!(operator, operand)
       raise Ledger::Query::Error.new("#{operator} does not support array operands (use $in / $nin)") if operand.is_a?(Array)
+      raise Ledger::Query::Error.new("#{operator} does not support object operands") if operand.is_a?(Hash)
     end
 
-    def require_comparable_operand!(operator, operand)
+    def require_comparable_operand!(operator, key, operand)
       # Range comparisons need a single ordered scalar: a number, a string, or a
       # coerced datetime. Arrays, booleans, and nil have no ordering here.
       unless operand.is_a?(Numeric) || operand.is_a?(String) || operand.acts_like?(:date) || operand.acts_like?(:time)
         raise Ledger::Query::Error.new("#{operator} requires a comparable value")
       end
+      # Out-of-range values would otherwise raise only once the SQL is compiled.
+      raise Ledger::Query::Error.new("#{operator} value is out of range for #{key}") unless Ledger::Item.type_for_attribute(key).serializable?(operand)
 
       operand
     end

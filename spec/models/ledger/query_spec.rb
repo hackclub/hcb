@@ -470,6 +470,68 @@ RSpec.describe Ledger::Query, type: :model do
 
       expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /array|too large|elements/i)
     end
+
+    # Queries arrive as JSON from the browser, so each of these used to crash
+    # with a NoMethodError, TypeError, or SQL error rather than a query error.
+    %w[$and $or $nor].each do |operator|
+      it "rejects a #{operator} branch that isn't an object" do
+        expect { execute_query({ operator => [{ amount_cents: 100 }, 1] }) }.to raise_error(Ledger::Query::Error, /must be an object/)
+      end
+    end
+
+    it "rejects an object operand rather than reading it as a table reference" do
+      expect { execute_query({ datetime: { "$eq" => { "year" => 2024 } } }) }.to raise_error(Ledger::Query::Error, /object/)
+    end
+
+    it "rejects an object operand on a virtual field" do
+      expect { execute_query({ category: { "slug" => "rent" } }) }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator/)
+      expect { execute_query({ category: { "$eq" => { "slug" => "rent" } } }) }.to raise_error(Ledger::Query::Error, /object/)
+    end
+
+    it "rejects an object nested in a $in list" do
+      expect { execute_query({ status: { "$in" => ["settled", { "$ne" => "settled" }] } }) }.to raise_error(Ledger::Query::Error, /single values/)
+    end
+
+    it "rejects ordering comparisons on author, which has no column to compare" do
+      expect { execute_query({ author: { "$gt" => 1 } }) }.to raise_error(Ledger::Query::Error, /operator for author/)
+    end
+
+    it "rejects $in on author rather than matching slugs against user ids" do
+      expect { execute_query({ author: { "$in" => ["some-slug"] } }) }.to raise_error(Ledger::Query::Error, /operator for author/)
+    end
+
+    it "rejects a bound too large for the column when the query is built, not when its SQL runs" do
+      expect { execute_query({ amount_cents: { "$gt" => 10**30 } }) }.to raise_error(Ledger::Query::Error, /out of range/)
+    end
+  end
+
+  describe "absolute_amount_cents" do
+    let!(:expense) { create_mapped_item(amount_cents: -200, memo: "omega expense", datetime: Date.new(2024, 3, 20)) }
+
+    it "matches revenue and expenses alike within the range" do
+      result = execute_query({ absolute_amount_cents: { "$gte" => 150, "$lte" => 200 } })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_c, item_d, expense))
+    end
+
+    it "narrows, rather than replaces, a direction on amount_cents" do
+      result = execute_query({ amount_cents: { "$lt" => 0 }, absolute_amount_cents: { "$gte" => 150 } })
+
+      expect(result.pluck(:id)).to eq(ids_of(expense))
+    end
+
+    it "rejects operators other than ranges" do
+      expect { execute_query({ absolute_amount_cents: 200 }) }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator for absolute_amount_cents/)
+      expect { execute_query({ absolute_amount_cents: { "$in" => [200] } }) }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator/)
+    end
+
+    it "rejects a bound that isn't comparable" do
+      expect { execute_query({ absolute_amount_cents: { "$gte" => nil } }) }.to raise_error(Ledger::Query::Error, /comparable/)
+    end
+
+    it "rejects a bound too large for amount_cents" do
+      expect { execute_query({ absolute_amount_cents: { "$lte" => 10**30 } }) }.to raise_error(Ledger::Query::Error, /out of range/)
+    end
   end
 
   describe "ledger scoping" do
