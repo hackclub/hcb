@@ -3,6 +3,11 @@
 schedule_file = "config/schedule.yml"
 
 Sidekiq.configure_server do |config|
+  # Sidekiq's default formatter colorizes every line, which only helps someone
+  # reading a terminal. Anywhere else (a log file, the journal, a log shipper)
+  # the escape codes end up in the logs.
+  config.logger.formatter = Sidekiq::Logger::Formatters::Plain.new unless $stdout.tty?
+
   # Metrics (HCB Wrapped) is given its own capsule since these jobs can be
   # long-running. Long running jobs can cause Sidekiq's usual queue-based
   # priority system to be ineffective.
