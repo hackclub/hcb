@@ -308,7 +308,7 @@ class Receipt < ApplicationRecord
       ::ReceiptService::Create.new(
         receiptable: new_receiptable,
         uploader: receipt.user,
-        attachments: [receipt.file.blob],
+        attachments: [receipt],
         upload_method: :duplicate,
       ).run!
     end

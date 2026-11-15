@@ -451,7 +451,7 @@ module Reimbursement
             ::ReceiptService::Create.new(
               receiptable: wise_transfer.local_hcb_code,
               uploader: as,
-              attachments: [receipt.file.blob],
+              attachments: [receipt],
               upload_method: :duplicate
             ).run!
           end

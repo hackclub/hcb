@@ -107,6 +107,20 @@ RSpec.describe Receipt, type: :model do
       receipt_turned(90, upload_method: :duplicate)
     end
 
+    it "keeps the original, and the undo, on a copy of a rotated receipt" do
+      receipt = receipt_turned(90)
+      copy_to = create(:hcb_code)
+
+      described_class.reupload(old_receiptable: receipt.receiptable, new_receiptable: copy_to)
+      copy = copy_to.receipts.sole
+
+      expect(copy.file.blob).to eq(receipt.file.blob)
+      expect(copy).to be_auto_rotated
+      copy.restore_original_file!
+      expect(copy.reload.file.blob).to eq(receipt.original_file.blob)
+      expect(receipt.reload).to be_auto_rotated # undoing the copy leaves the first receipt alone
+    end
+
     it "still saves a receipt whose image can't be read" do
       allow(Rails.error).to receive(:report)
       receipt = new_receipt(io: StringIO.new("not really a png"))
