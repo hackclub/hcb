@@ -10,7 +10,9 @@ module PendingTransactionEngine
     end
 
     def perform
-      ::PendingTransactionEngine::Nightly.new.run
+      Appsignal::CheckIn.cron("pending_transaction_engine_nightly_job") do
+        ::PendingTransactionEngine::Nightly.new.run
+      end
     end
 
   end
