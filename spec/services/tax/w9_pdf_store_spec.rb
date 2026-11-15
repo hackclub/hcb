@@ -108,4 +108,33 @@ RSpec.describe Tax::W9PdfStore do
 
     expect(Rails.cache.instance_variable_get(:@data).keys.join).not_to include(token)
   end
+
+  describe ".clear!" do
+    it "removes every staged PDF" do
+      tokens = Array.new(3) { described_class.store(pdf) }
+
+      described_class.clear!
+
+      tokens.each { expect(described_class.claim(_1)).to be_nil }
+    end
+
+    it "leaves the rest of the cache alone" do
+      Rails.cache.write("something/else", "kept")
+      described_class.store(pdf)
+
+      described_class.clear!
+
+      expect(Rails.cache.read("something/else")).to eq("kept")
+    end
+
+    it "matches by glob on Redis" do
+      redis_store = ActiveSupport::Cache::RedisCacheStore.new
+      allow(redis_store).to receive(:delete_matched)
+      Rails.cache = redis_store
+
+      described_class.clear!
+
+      expect(redis_store).to have_received(:delete_matched).with("tax/w9_pdf/*")
+    end
+  end
 end

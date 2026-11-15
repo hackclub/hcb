@@ -35,6 +35,9 @@ module Tax
 
     CONTENT_TYPE = "application/pdf"
 
+    # Every staged PDF's cache key starts with this; see .key_for.
+    KEY_PREFIX = "tax/w9_pdf/"
+
     class TooLarge < StandardError; end
     class NotAPdf < StandardError; end
     class CacheUnavailable < StandardError; end
@@ -85,6 +88,26 @@ module Tax
         entry.data
       end
 
+      # Removes every staged PDF at once, for use from a console:
+      #
+      #   Tax::W9PdfStore.clear!
+      #
+      # Any import still waiting on TaxBandits to fetch its PDF will have that
+      # fetch fail, so don't run this while one is in progress. Touches nothing
+      # else in the cache.
+      def clear!
+        # Redis matches keys by glob; the in-memory store used in development
+        # matches them by regex.
+        matcher = if Rails.cache.is_a?(ActiveSupport::Cache::RedisCacheStore)
+                    "#{KEY_PREFIX}*"
+                  else
+                    /\A#{Regexp.escape(KEY_PREFIX)}/
+                  end
+
+        Rails.cache.delete_matched(matcher)
+        nil
+      end
+
       # Removes the PDF immediately. Called when the submission the PDF was
       # staged for fails, so a PDF nobody will fetch doesn't sit out its TTL.
       def discard(token)
@@ -99,7 +122,7 @@ module Tax
         # Digested rather than interpolated so the raw token isn't what's sitting
         # in Redis' keyspace, where it would show up in KEYS/MONITOR output and
         # in any cache instrumentation that logs key names.
-        "tax/w9_pdf/#{OpenSSL::Digest::SHA256.hexdigest(token)}"
+        "#{KEY_PREFIX}#{OpenSSL::Digest::SHA256.hexdigest(token)}"
       end
 
     end
