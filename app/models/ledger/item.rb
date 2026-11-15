@@ -80,6 +80,7 @@ class Ledger
     has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayments, through: :repayment_allocations
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
