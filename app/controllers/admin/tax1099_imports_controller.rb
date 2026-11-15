@@ -22,6 +22,7 @@ module Admin
       @country_codes_by_name = Tax1099ImportService::COUNTRY_CODES_BY_NAME
       @fields = Tax1099ImportService::FIELDS
       @imported_row_keys = Tax1099ImportService.imported_row_keys
+      @hack_club_ein = Tax1099ImportService::HACK_CLUB_EIN
     end
 
     # Answers "who should this form be attached to?" before the row itself is

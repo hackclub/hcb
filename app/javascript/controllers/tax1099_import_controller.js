@@ -222,6 +222,7 @@ export default class extends Controller {
     importedRowKeys: Array,
     usStates: Object,
     countryCodesByName: Object,
+    hackClubEin: String,
   }
 
   async loadCsv(event) {
@@ -260,7 +261,19 @@ export default class extends Controller {
 
       // +1 for the header row, +1 to 1-index, matching what an admin sees in a
       // spreadsheet.
-      this.rowsTarget.appendChild(this.buildRow(cells, index + 2))
+      const row = this.buildRow(cells, index + 2)
+      this.rowsTarget.appendChild(row)
+
+      // A form whose TIN is Hack Club's own EIN is never imported (the server
+      // refuses it too), so it starts out skipped. Shown rather than hidden so
+      // the admin can see why the row was passed over.
+      if (this.isHackClubTin(this.prefill(cells).tin)) {
+        this.skipRow(row)
+        this.setMessage(
+          row,
+          "Skipped automatically: this form's TIN is Hack Club's own EIN."
+        )
+      }
     })
 
     // The file itself is never read again and never leaves this function; drop
@@ -308,13 +321,24 @@ export default class extends Controller {
   }
 
   skip(event) {
-    const row = event.target.closest('[data-row]')
+    this.skipRow(event.target.closest('[data-row]'))
+    this.updateSummary()
+  }
 
+  skipRow(row) {
     this.setStatus(row, 'skipped')
     this.disableRow(row)
     row.querySelector('[data-body]').hidden = true
     row.querySelector('[data-toggle]').textContent = 'Review'
-    this.updateSummary()
+  }
+
+  // Mirrors Tax1099ImportService.hack_club_tin?: digits only, so "81-2908499"
+  // and "812908499" both match.
+  isHackClubTin(tin) {
+    return (
+      this.hackClubEinValue !== '' &&
+      tin.replace(/\D/g, '') === this.hackClubEinValue
+    )
   }
 
   async import(event) {

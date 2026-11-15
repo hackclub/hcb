@@ -81,6 +81,18 @@ class Tax1099ImportService
 
   TIN_TYPES = %w[SSN EIN FTIN].freeze
 
+  # The Hack Foundation's (Hack Club's) own EIN, digits only. Some Tax1099 rows
+  # carry it as the payee's TIN (a form filled in by or for Hack Club itself),
+  # and those are never imported: the page skips them as the CSV loads, and
+  # #validate! refuses them.
+  HACK_CLUB_EIN = "812908499"
+
+  # Whether a TIN, however it's formatted, is Hack Club's EIN. Mirrors
+  # isHackClubTin() in tax1099_import_controller.js.
+  def self.hack_club_tin?(tin)
+    tin.to_s.gsub(/\D/, "") == HACK_CLUB_EIN
+  end
+
   # Folds a country name for matching: accents stripped, lowercased, letters and
   # digits only, so "TURKIYE", "Türkiye" and "türkiye" agree, as do "KOREA,
   # REPUBLIC OF" and "Korea, Republic of". Mirrors normalizeName() in
@@ -422,6 +434,10 @@ class Tax1099ImportService
 
     missing = FIELDS.select { |field| required?(field) && @data[field[:key]].blank? }
     raise ValidationError, "missing required field(s): #{missing.map { _1[:label] }.join(", ")}" if missing.any?
+
+    if self.class.hack_club_tin?(@data[:tin])
+      raise ValidationError, "this TIN is Hack Club's own EIN, so this form isn't imported"
+    end
 
     validate_w8_tin! if W8_FORM_TYPES.include?(form_type)
 

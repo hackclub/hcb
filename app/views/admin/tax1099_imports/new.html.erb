@@ -18,7 +18,8 @@
   data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>"
   data-tax1099-import-imported-row-keys-value="<%= @imported_row_keys.to_json %>"
   data-tax1099-import-us-states-value="<%= @us_states.to_json %>"
-  data-tax1099-import-country-codes-by-name-value="<%= @country_codes_by_name.to_json %>">
+  data-tax1099-import-country-codes-by-name-value="<%= @country_codes_by_name.to_json %>"
+  data-tax1099-import-hack-club-ein-value="<%= @hack_club_ein %>">
   <div class="card mb-4">
     <h2 class="mt-0">Load the Tax1099 export</h2>
     <%# Same picker as comment attachments (file_upload_controller.js). %>

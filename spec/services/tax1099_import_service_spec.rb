@@ -547,6 +547,20 @@ RSpec.describe Tax1099ImportService do
   end
 
   describe "validation" do
+    it "refuses a W-9 or W-8 whose TIN is Hack Club's EIN, however it's formatted" do
+      [
+        business_data.merge(tin: "81-2908499"),
+        business_data.merge(tin: "812908499"),
+        w8ben_data.merge(tin: "81-2908499"),
+        w8bene_data.merge(tin: " 812908499 "),
+      ].each do |data|
+        expect { run(data:) }.to raise_error(described_class::ValidationError, /Hack Club's own EIN/)
+      end
+
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+      expect(Tax::Form.count).to eq(0)
+    end
+
     it "rejects an individual's name longer than TaxBandits takes, naming the field" do
       expect { run(data: person_data.merge(first_name: "Augusta Ada Elizabeth")) }
         .to raise_error(described_class::ValidationError, /Payee First Name.*21 characters.*at most 20 \(FirstNm\)/)
