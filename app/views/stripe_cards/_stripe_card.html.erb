@@ -1,6 +1,7 @@
 <% sc_href = (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : nil %>
 <% sc_data = { turbo_frame: "_top" } %>
-<% sc_data.merge!(stripe_card_popover_data(stripe_card)) if @show_card_popovers %>
+<%# Lists pass `popover: true`; pages that already show this card leave it off %>
+<% sc_data.merge!(stripe_card_popover_data(stripe_card)) if local_assigns[:popover] && sc_href %>
 <%= content_tag sc_href ? :a : :div, href: sc_href, class: "text-decoration-none", data: sc_data do %>
 
   <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless defined? headless %>

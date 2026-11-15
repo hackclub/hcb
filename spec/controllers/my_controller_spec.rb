@@ -108,6 +108,19 @@ RSpec.describe MyController do
         expect(response.body).to include("Laptop fund")
       end
 
+      it "opens the user's own cards in a popover, in both views", :aggregate_failures do
+        card = create_card
+        create(:organizer_position, user:, event: zebra)
+        src = "[data-popover-src='#{card.popover_path}']"
+
+        get :cards
+        expect(response.parsed_body.at_css(".mixed-grid #{src}")).to be_present
+
+        cookies[:my_cards_view] = "list"
+        get :cards
+        expect(response.parsed_body.at_css("table #{src}")).to be_present
+      end
+
       it "remembers the selected view" do
         get :cards, params: { view: "list" }
         expect(ivar(:view)).to eq("list")

@@ -1,7 +1,6 @@
 <% title "Cards for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :cards %>
-<% @show_card_popovers = organizer_signed_in? && !@event.demo_mode %>
 <% if @event.stripe_cards.any? || !organizer_signed_in? || @has_filter %>
   <% if current_user.try(:full_name).try(:blank?) %>
     <h1 class="heading">
@@ -75,7 +74,7 @@
               <% end %>
             </div>
             <article class="mixed-grid grid--spacious">
-              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true, show_purpose: true } %>
+              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true, show_purpose: true, popover: !@event.demo_mode } %>
             </article>
             <% if cards.count > preview_count %>
               <div class="flex mt-3">
@@ -92,7 +91,7 @@
       <% end %>
     <% else %>
       <article class="mixed-grid grid--spacious">
-        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true } %>
+        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true, popover: !@event.demo_mode } %>
       </article>
 
       <% if @paginated_stripe_cards.blank? %>

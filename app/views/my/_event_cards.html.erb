@@ -21,7 +21,7 @@
             <td><span class="ml0 badge bg-<%= c.state %>"><%= c.state_text %></span></td>
             <td>
               <%= format_date c.created_at %>
-              <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers ? stripe_card_popover_data(c) : {} %>
+              <%= link_to "", stripe_card_path(c), class: "stretched-link", data: stripe_card_popover_data(c) %>
             </td>
           </tr>
         <% end %>
@@ -30,6 +30,6 @@
   </article>
 <% else %>
   <article class="mixed-grid grid--spacious">
-    <%= render stripe_cards, headless: true, show_purpose: true %>
+    <%= render stripe_cards, headless: true, show_purpose: true, popover: true %>
   </article>
 <% end %>
