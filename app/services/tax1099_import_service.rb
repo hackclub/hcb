@@ -69,6 +69,10 @@ class Tax1099ImportService
     "LLC S Corporation", "LLC Partnership", "Others"
   ].freeze
 
+  # The suffixes TaxBandits accepts, and nothing else (not even "Jr."). See
+  # #suffix for how a row's is matched to one.
+  SUFFIXES = %w[Jr Sr I II III IV V VI VII].freeze
+
   W9 = "W9"
   W8BEN = "W8BEN"
   W8BENE = "W8BENE"
@@ -125,6 +129,28 @@ class Tax1099ImportService
     FOREIGN_GOVERNMENT_CONTROLLED_ENTITY FOREIGN_GOVERNMENT_INTEGRAL_PART
   ].freeze
 
+  # TaxBandits' length limits for what this sends it, checked by #validate! so a
+  # row that breaks one is caught on the page with the field to fix, instead of
+  # as a rejection. Each is [the TaxBandits field, its limit, when it applies,
+  # what it's sent from]: a FIELDS key, or a method for a value built from
+  # several.
+  #
+  # On a W-9, TaxBandits only checks (and only keeps) FirstNm, MiddleNm and
+  # LastNm for the "Individual" classification. For every other one it accepts
+  # them at any length and stores them as null, keeping just Line1Nm, which is
+  # required and checked for every W-9. Found against TaxBandits' sandbox, Nov
+  # 2026: a 41-character FirstNm on a Partnership or Sole Proprietor W-9 was
+  # accepted and discarded, a 21-character one on an Individual's was rejected.
+  LENGTH_LIMITS = [
+    ["FirstNm", 20, :individual_names?, :first_name],
+    ["MiddleNm", 20, :individual_names?, :middle_name],
+    ["LastNm", 20, :individual_names?, :last_name],
+    ["Line1Nm", 40, [W9], :full_name],
+    ["NmOfIndividual", 60, [W8BEN], :full_name],
+    ["NmOfOrganization", 40, [W8BENE], :first_name],
+    ["OtherDesc", 50, [W9], :other_description],
+  ].freeze
+
   # Enforces at most one live tax1099 form per TIN; see the migration that adds it.
   UNIQUE_TIN_INDEX = "index_tax_forms_unique_live_tax1099_tin_hash"
 
@@ -148,6 +174,12 @@ class Tax1099ImportService
     },
     { key: :ftin_not_legally_required, label: "FTIN not legally required (box ticked on the form)", required: false, only_for: W8_FORM_TYPES },
     { key: :federal_tax_classification, label: "Federal Tax Classification", required: [W9], only_for: [W9] },
+    # TaxBandits requires it with "Others" (as OtherDesc), and takes it with
+    # nothing else; see #validate!.
+    {
+      key: :other_description, label: "Other Classification Description", required: false, only_for: [W9],
+      hint: "Only for the \"Others\" classification: what the payee wrote beside \"Other\" on line 3 of the W-9."
+    },
     {
       key: :ch3_status, label: "Chapter 3 Status", required: [W8BENE], only_for: [W8BENE],
       hint: "On the W-8BEN-E, copy the one box ticked in Part I, line 4 (\"Chapter 3 Status (entity type)\"). " \
@@ -402,6 +434,16 @@ class Tax1099ImportService
       raise ValidationError, "federal tax classification must be one of: #{FEDERAL_TAX_CLASSIFICATIONS.join(", ")}"
     end
 
+    if form_type == W9 && @data[:federal_tax_classification] == "Others" && @data[:other_description].blank?
+      raise ValidationError, "the \"Others\" federal tax classification needs an Other Classification Description"
+    end
+
+    if form_type != W8BENE && @data[:suffix].present? && suffix.nil?
+      raise ValidationError, "suffix must be one of: #{SUFFIXES.join(", ")}"
+    end
+
+    validate_lengths!
+
     if form_type == W9 && us_state.nil?
       raise ValidationError, "state must be a US state, as its 2-letter code (e.g. MA) or its full name"
     end
@@ -428,6 +470,34 @@ class Tax1099ImportService
 
   def form_type
     @data[:form_type].to_s
+  end
+
+  def validate_lengths!
+    too_long = LENGTH_LIMITS.filter_map do |taxbandits_field, limit, applies, source|
+      next unless applies.is_a?(Symbol) ? send(applies) : applies.include?(form_type)
+
+      value = FIELDS.any? { _1[:key] == source } ? @data[source].to_s : send(source)
+      next if value.length <= limit
+
+      label = FIELDS.find { _1[:key] == source }&.fetch(:label) || "The full name (first, middle, last and suffix together)"
+      "#{label} is #{value.length} characters, and TaxBandits takes at most #{limit} (#{taxbandits_field})"
+    end
+
+    raise ValidationError, too_long.to_sentence if too_long.any?
+  end
+
+  # Whether TaxBandits checks FirstNm, MiddleNm and LastNm; see LENGTH_LIMITS.
+  # The W-8BEN's limits are from its documentation, not tested.
+  def individual_names?
+    form_type == W8BEN || (form_type == W9 && @data[:federal_tax_classification] == "Individual")
+  end
+
+  # The row's suffix as TaxBandits spells it, matched case-insensitively and
+  # without a trailing period, so "Jr.", "JR" and "jr" are all "Jr". nil when
+  # there's none, or it isn't one TaxBandits takes (see #validate!).
+  def suffix
+    given = @data[:suffix].to_s.strip.delete_suffix(".")
+    SUFFIXES.find { _1.casecmp?(given) } if given.present?
   end
 
   # A W-9 payee is always in the US. For a W-8 it's the country of residence
@@ -715,7 +785,7 @@ class Tax1099ImportService
       "Line1Nm"                  => full_name,
       "MiddleNm"                 => @data[:middle_name],
       "LastNm"                   => @data[:last_name],
-      "Suffix"                   => @data[:suffix],
+      "Suffix"                   => suffix,
       "TINType"                  => @data[:tin_type],
       "TIN"                      => @data[:tin],
       "Address"                  => {
@@ -725,7 +795,9 @@ class Tax1099ImportService
         "ZipCd"    => @data[:zip_code]
       },
       "FederalTaxClassification" => @data[:federal_tax_classification]
-    }
+    }.merge(
+      @data[:federal_tax_classification] == "Others" ? { "OtherDesc" => @data[:other_description] } : {}
+    )
   end
 
   # Tax1099's export has a single country, so it is used for citizenship as well
@@ -737,7 +809,7 @@ class Tax1099ImportService
       "FirstNm"                  => @data[:first_name],
       "MiddleNm"                 => @data[:middle_name],
       "LastNm"                   => @data[:last_name],
-      "Suffix"                   => @data[:suffix],
+      "Suffix"                   => suffix,
       "CitizenOfCountry"         => country,
       "ForeignTIN"               => @data[:tin].presence,
       "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
@@ -783,7 +855,7 @@ class Tax1099ImportService
   end
 
   def full_name
-    [@data[:first_name], @data[:middle_name], @data[:last_name], @data[:suffix]].compact_blank.join(" ")
+    [@data[:first_name], @data[:middle_name], @data[:last_name], suffix].compact_blank.join(" ")
   end
 
   # Finds the legal entity the form belongs on by email: a personal form goes
@@ -816,7 +888,7 @@ class Tax1099ImportService
     begin
       TaxbanditsService.create_from_data(payload)
     rescue Faraday::ClientError => e
-      raise SubmissionError, "TaxBandits rejected the submission: #{scrub(e.message)}", cause: nil
+      raise SubmissionError, "TaxBandits rejected the submission: #{scrub(rejection_reasons(e))}", cause: nil
     rescue => e
       # Nothing from the exception is kept: like a rejection's, its message could
       # carry the TIN, and here there's nothing in it the admin can act on.
@@ -825,9 +897,39 @@ class Tax1099ImportService
     end
   end
 
-  # Faraday's raise_error middleware puts the whole response body in the error
-  # message, and a TaxBandits validation error echoes back the field it rejected
-  # — which for a W-9 can be the TIN itself. Anything that reaches Rails' logs,
+  # What TaxBandits said was wrong, from the Errors ([{ Id, Name, Message }]) in
+  # its response body, e.g. "FormW9.FirstNm: ...". Faraday's own message is only
+  # "the server responded with status 400", and the body is still the raw JSON
+  # string here, since raise_error runs before the json middleware. Falls back
+  # to the status when the body has no errors we can read.
+  def rejection_reasons(error)
+    body = error.response_body
+    if body.is_a?(String)
+      body = begin
+        JSON.parse(body)
+      rescue JSON::ParserError
+        nil
+      end
+    end
+
+    reasons = taxbandits_errors(body).filter_map { |e| [e["Name"], e["Message"]].compact_blank.join(": ").presence }
+    reasons.any? ? reasons.join("; ") : "HTTP #{error.response_status}"
+  end
+
+  # Every { Id, Name, Message } under an "Errors" key, wherever it's nested.
+  def taxbandits_errors(node)
+    case node
+    when Hash
+      Array(node["Errors"]).grep(Hash) + node.except("Errors").values.flat_map { taxbandits_errors(_1) }
+    when Array
+      node.flat_map { taxbandits_errors(_1) }
+    else
+      []
+    end
+  end
+
+  # A TaxBandits validation error echoes back the field it rejected — which for
+  # a W-9 can be the TIN itself. Anything that reaches Rails' logs,
   # AppSignal, or the admin's browser from here has to have the TIN removed
   # first, and the original exception severed (cause: nil at the raise site) so
   # its unscrubbed message can't ride along. Same defense as

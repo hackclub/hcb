@@ -547,6 +547,60 @@ RSpec.describe Tax1099ImportService do
   end
 
   describe "validation" do
+    it "rejects an individual's name longer than TaxBandits takes, naming the field" do
+      expect { run(data: person_data.merge(first_name: "Augusta Ada Elizabeth")) }
+        .to raise_error(described_class::ValidationError, /Payee First Name.*21 characters.*at most 20 \(FirstNm\)/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    # TaxBandits keeps only Line1Nm for these, so FirstNm's limit doesn't apply.
+    it "allows a business or sole proprietor's name past FirstNm's limit, up to Line1Nm's" do
+      expect { run(data: business_data.merge(first_name: "Analytical Engines Company")) }.not_to raise_error
+      expect { run(data: business_data.merge(first_name: "A" * 41, tin: "98-7654321", email: "other@example.com")) }
+        .to raise_error(described_class::ValidationError, /\(Line1Nm\)/)
+    end
+
+    it "rejects a full W-9 name longer than TaxBandits' Line1Nm takes" do
+      data = person_data.merge(first_name: "Augusta Adelaide", middle_name: "Ada Byron Noel", last_name: "King-Lovelace")
+
+      expect { run(data:) }.to raise_error(described_class::ValidationError, /full name.*\(Line1Nm\)/)
+    end
+
+    it "allows a W-8BEN-E organization name up to TaxBandits' 40 characters" do
+      expect { run(data: w8bene_data.merge(first_name: "K" * 40)) }.not_to raise_error
+      expect { run(data: w8bene_data.merge(first_name: "K" * 41, email: "other@example.com", tin: "OTHER123")) }
+        .to raise_error(described_class::ValidationError, /\(NmOfOrganization\)/)
+    end
+
+    it "sends a suffix as TaxBandits spells it" do
+      run(data: person_data.merge(suffix: "jr."))
+
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW9" => hash_including("Suffix" => "Jr", "Line1Nm" => "Ada Lovelace Jr")))
+    end
+
+    it "rejects a suffix TaxBandits doesn't take" do
+      expect { run(data: person_data.merge(suffix: "Esq.")) }
+        .to raise_error(described_class::ValidationError, /suffix must be one of/)
+    end
+
+    it "requires a description with the \"Others\" classification, and sends it as OtherDesc" do
+      others = business_data.merge(federal_tax_classification: "Others")
+
+      expect { run(data: others) }.to raise_error(described_class::ValidationError, /Other Classification Description/)
+
+      run(data: others.merge(other_description: "Cooperative"))
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW9" => hash_including("FederalTaxClassification" => "Others", "OtherDesc" => "Cooperative")))
+    end
+
+    it "doesn't send a description with any other classification" do
+      run(data: person_data.merge(other_description: "left over"))
+
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW9" => hash_excluding("OtherDesc")))
+    end
+
     it "rejects a row missing a required field" do
       expect { run(data: person_data.merge(city: "")) }
         .to raise_error(described_class::ValidationError, /City/)
@@ -577,9 +631,38 @@ RSpec.describe Tax1099ImportService do
   end
 
   describe "when TaxBandits rejects the submission" do
+    # Built the way Faraday 1.x's raise_error middleware builds it: the message
+    # is only the status, and the body, still the raw JSON string, is in the
+    # response.
+    def rejection(body, status: 400)
+      Faraday::BadRequestError.new({ status:, headers: {}, body: })
+    end
+
+    let(:errors_body) do
+      {
+        StatusCode: 400, StatusName: "BadRequest", StatusMessage: "One or more errors occurred",
+        Errors: [
+          { Id: "F00-100023", Name: "FormW9.TIN", Message: "TIN 123-45-6789 is invalid" },
+          { Id: "F00-100031", Name: "FormW9.Address.City", Message: "City is required" }
+        ]
+      }.to_json
+    end
+
     before do
-      allow(TaxbanditsService).to receive(:create_from_data)
-        .and_raise(Faraday::UnprocessableEntityError, "422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
+      allow(TaxbanditsService).to receive(:create_from_data).and_raise(rejection(errors_body))
+    end
+
+    it "tells the admin what TaxBandits said was wrong" do
+      expect { run }.to raise_error(described_class::SubmissionError) { |error|
+        expect(error.message).to include("FormW9.Address.City: City is required")
+        expect(error.message).to include("FormW9.TIN: TIN [FILTERED] is invalid")
+      }
+    end
+
+    it "falls back to the status when the body has no errors in it" do
+      allow(TaxbanditsService).to receive(:create_from_data).and_raise(rejection("<html>Bad Request</html>"))
+
+      expect { run }.to raise_error(described_class::SubmissionError, /rejected the submission: HTTP 400\z/)
     end
 
     it "keeps the payee's TIN out of the error it raises" do
