@@ -16,6 +16,15 @@
       if your payments exceed IRS reporting thresholds.
     </p>
 
+    <% if @completed_tax_form.present? && @legal_entity.electronic_consent.nil? && policy(@completed_tax_form).update_electronic_consent? %>
+      <%= render "application/callout", type: "info", title: "Choose how to receive your tax forms", class: "mt-0" do %>
+        <p class="mt0">
+          You haven't told us whether you'd like to receive tax forms<%= for_name %> electronically or by mail.
+        </p>
+        <%= link_to "Choose delivery method", electronic_consent_tax_form_path(@completed_tax_form), class: "btn", data: { turbo_frame: "_top" } %>
+      <% end %>
+    <% end %>
+
     <% case next_req %>
     <% when :not_tin_banned %>
       <p><%= @legal_entity.person? ? "You've" : "#{@legal_entity.display_name} has" %> been banned from receiving payments on HCB.</p>
