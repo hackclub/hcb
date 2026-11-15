@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
-require Rails.root.join("db/migrate/20261110120000_split_repayments_into_instances_and_allocations")
+require Rails.root.join("db/migrate/20261115120000_split_repayments_into_instances_and_allocations")
 
 RSpec.describe SplitRepaymentsIntoInstancesAndAllocations do
   it "groups allocations by disbursement and preserves expense amounts, snapshots and links through rollback" do
