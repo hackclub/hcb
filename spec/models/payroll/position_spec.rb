@@ -267,6 +267,13 @@ RSpec.describe Payroll::Position, type: :model do
       position.update_columns(start_date: 60.days.ago.to_date, end_date: 10.days.ago.to_date)
     end
 
+    def sql_queries_during(&block)
+      queries = []
+      callback = ->(*, payload) { queries << payload[:sql] unless payload[:name] == "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
+      queries
+    end
+
     def submit_invoice(**attrs)
       position.invoices.create!(name: "Final hours", amount_cents: 1_000, currency: position.currency, **attrs)
     end
@@ -301,6 +308,19 @@ RSpec.describe Payroll::Position, type: :model do
       submit_invoice.update_column(:aasm_state, "rejected")
 
       expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "uses preloaded invoices without querying" do
+      position.mark_expired!
+      submit_invoice.update_column(:created_at, 15.days.ago)
+      submit_invoice(name: "Rejected final").update_column(:aasm_state, "rejected")
+
+      open_position = Payroll::Position.includes(:invoices).find(position.id)
+      expect(sql_queries_during { expect(open_position.accepting_invoices?).to eq(true) }).to be_empty
+
+      submit_invoice(name: "Final hours")
+      used_position = Payroll::Position.includes(:invoices).find(position.id)
+      expect(sql_queries_during { expect(used_position.accepting_invoices?).to eq(false) }).to be_empty
     end
 
     it "measures the grace period from when the position actually expired, not its end date" do

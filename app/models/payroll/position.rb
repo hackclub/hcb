@@ -277,7 +277,15 @@ module Payroll
     def final_invoice_window_open?
       expired? &&
         Time.current <= final_invoice_deadline &&
-        !invoices.where.not(aasm_state: :rejected).exists?(["created_at > ?", expiration_time])
+        !final_invoice_submitted?
+    end
+
+    def final_invoice_submitted?
+      if invoices.loaded?
+        invoices.any? { |invoice| invoice.persisted? && !invoice.rejected? && invoice.created_at > expiration_time }
+      else
+        invoices.where.not(aasm_state: :rejected).exists?(["created_at > ?", expiration_time])
+      end
     end
 
     # Whether new invoices can be submitted against this position: while it's
