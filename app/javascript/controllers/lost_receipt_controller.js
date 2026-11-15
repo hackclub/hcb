@@ -11,7 +11,10 @@ export default class extends Controller {
     'number',
     'title',
     'count',
+    'mismatch',
+    'submit',
   ]
+  static values = { charged: Number }
 
   connect() {
     this.nextIndex =
@@ -52,6 +55,18 @@ export default class extends Controller {
       minimumFractionDigits: 2,
     }).format(cents / 100)
     this.countTarget.textContent = this.itemTargets.length
+    // The server checks this too; here it just explains why submit is off.
+    const off = this.hasChargedValue ? this.chargedValue - cents : 0
+    const money = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(Math.abs(off) / 100)
+    this.mismatchTarget.hidden = off === 0
+    this.mismatchTarget.textContent =
+      off > 0
+        ? `Add ${money} more to match the transaction.`
+        : `Remove ${money} to match the transaction.`
+    this.submitTarget.disabled = off !== 0
     this.itemTargets.forEach((item, index) => {
       this.numberTargets[index].textContent = `#${index + 1}`
       this.titleTargets[index].textContent =

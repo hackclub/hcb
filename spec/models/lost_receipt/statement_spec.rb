@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe LostReceipt::Statement do
-  let(:hcb_code) { create(:canonical_pending_transaction).local_hcb_code }
+  let(:hcb_code) { create(:canonical_pending_transaction, amount_cents: -879).local_hcb_code }
   let(:details) do
     { date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example", confirmed: true,
       items_attributes: [{ description: "Notebooks", quantity: 3, unit_amount_cents: 127 },
@@ -41,6 +41,14 @@ RSpec.describe LostReceipt::Statement do
       expect(statement.submit(receiptable: hcb_code)).to eq(false)
       expect(statement.errors).to be_present
     end
+    expect(hcb_code.receipts).to be_empty
+  end
+
+  it "requires the items to add up to the transaction" do
+    statement = described_class.new(details.merge(items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 878 }]))
+
+    expect(statement.submit(receiptable: hcb_code)).to eq(false)
+    expect(statement.errors[:base]).to include("The items add up to $8.78, but the transaction was $8.79")
     expect(hcb_code.receipts).to be_empty
   end
 
