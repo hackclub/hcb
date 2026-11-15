@@ -67,7 +67,6 @@ class Ledger
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
-    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
 
@@ -181,6 +180,15 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # The HCB code side of this transaction, under the name every other
+    # transaction-like record (CanonicalTransaction, CanonicalPendingTransaction,
+    # the transfers, ...) uses for it. Lets code that is handed either an HCB
+    # code or a ledger item as a receiptable get at the HCB code with
+    # `receiptable.try(:local_hcb_code)`.
+    def local_hcb_code
+      hcb_code
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any

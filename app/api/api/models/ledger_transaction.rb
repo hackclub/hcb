@@ -84,7 +84,10 @@ module Api
 
       def not_admin_only_comments_count = not_admin_only_comment_count
 
-      def receipts = hcb_code&.receipts || __getobj__.receipts
+      # Ledger::Item#receipts reads both the item and its HCB code; prefer the
+      # copies the v3 ledger query preloaded so the serializer doesn't query
+      # per transaction.
+      def receipts = preloaded_receipts || __getobj__.receipts
 
       def type
         return :card_grant if outgoing_disbursement? && special_appearance&.key == "card_grant"

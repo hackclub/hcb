@@ -330,7 +330,7 @@ class UsersController < ApplicationController
     # TODO: add change here in receipt bin PR
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
                                        .order(created_at: :desc)
-                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags, { ledger_item: :receipts }])
                                        .page(params[:page] || 1).per(safe_per(10))
   end
 
@@ -364,7 +364,7 @@ class UsersController < ApplicationController
     else
       @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
                                     .order(created_at: :desc)
-                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags, { ledger_item: :receipts }])
                                     .page(params[:page] || 1).per(safe_per(10))
     end
   end
