@@ -1,0 +1,55 @@
+<% title "Statement filed" %>
+<% subtitle "Here's the receipt, as you remember it. The signed statement is attached to the transaction." %>
+<% event = @statement.receiptable.try(:event) %>
+
+<div class="paper-receipt__printer">
+  <div class="paper-receipt">
+    <span class="paper-receipt__stamp" aria-hidden="true">FILED</span>
+    <span class="paper-receipt__coffee" aria-hidden="true"></span>
+
+    <div class="paper-receipt__head">
+      <strong><%= @statement.merchant %></strong>
+      <small><%= @statement.date.strftime("%m/%d/%Y") %></small>
+    </div>
+    <hr>
+
+    <div class="paper-receipt__item paper-receipt__columns" aria-hidden="true">
+      <span>Qty</span><span>Item</span><span>Amount</span>
+    </div>
+    <% @statement.items.each do |item| %>
+      <div class="paper-receipt__item">
+        <span><%= item.quantity %></span>
+        <span>
+          <%= item.description %>
+          <% if item.quantity.to_i > 1 %>
+            <small>@ <%= render_money item.unit_amount %></small>
+          <% end %>
+        </span>
+        <span><%= render_money item.total_amount_cents %></span>
+      </div>
+    <% end %>
+    <hr>
+
+    <div class="paper-receipt__row paper-receipt__total">
+      <span>Total</span>
+      <span><%= render_money @statement.total_amount_cents %></span>
+    </div>
+    <div class="paper-receipt__row">
+      <span>Items</span>
+      <span><%= @statement.items.sum { |item| item.quantity.to_i } %></span>
+    </div>
+
+    <div class="paper-receipt__barcode" aria-hidden="true"></div>
+    <div class="paper-receipt__foot">
+      <%= @receiptable.try(:hcb_code) || @receiptable.to_global_id %>
+      <% if event %>
+        <p>Lost receipt no. <%= event.lost_receipt_filings.count %> for <%= event.name %></p>
+      <% end %>
+      <p>No returns. No refunds. No more losing receipts.</p>
+      <p>*** Please keep the next one ***</p>
+    </div>
+  </div>
+</div>
+
+<%= link_to "Done", @back_url, class: "btn w-full bg-blue mt-2" %>
+<p class="muted mt-3 text-center text-sm">Lost receipt statements are reviewed by HCB operations. We'll contact you if we need more details.</p>

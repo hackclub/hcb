@@ -31,7 +31,7 @@ export default class extends Controller {
       'beforeend',
       this.templateTarget.innerHTML.replaceAll('NEW_ITEM', this.nextIndex++)
     )
-    this.itemTargets.at(-1).querySelector('input[type=text]').focus()
+    this.itemTargets.at(-1).querySelector('input').focus()
     this.update()
   }
 
