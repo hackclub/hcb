@@ -64,4 +64,53 @@ RSpec.describe Payroll::Invoice, type: :model do
       expect { expect(stale_copy.approve(reviewed_by: approver)).to eq(false) }.not_to change(Payment, :count)
     end
   end
+
+  describe "#reject" do
+    let(:invoice) { build_invoice.tap(&:save!) }
+
+    it "records who rejected it and why, and tells the contractor" do
+      invoice
+
+      expect { expect(invoice.reject(reviewed_by: approver, reason: " Wrong hours ")).to eq(true) }
+        .to have_enqueued_mail(Payroll::InvoiceMailer, :rejected).once
+
+      expect(invoice.reload).to be_rejected
+      expect(invoice).to have_attributes(rejection_reason: "Wrong hours", reviewed_by: approver)
+      expect(invoice.rejected_at).to be_present
+    end
+
+    it "refuses to reject without a reason" do
+      expect { invoice.reject(reviewed_by: approver, reason: " \n ") }.to raise_error(ArgumentError)
+      expect(invoice.reload).to be_submitted
+    end
+
+    it "changes nothing when the reason is too long" do
+      expect { invoice.reject(reviewed_by: approver, reason: "a" * 1001) }.to raise_error(ActiveRecord::RecordInvalid)
+      expect(invoice.reload).to have_attributes(aasm_state: "submitted", rejection_reason: nil, reviewed_by: nil)
+    end
+
+    it "keeps the first reason when two requests reject the same invoice" do
+      stale_copy = Payroll::Invoice.find(invoice.id)
+      invoice.reject(reviewed_by: approver, reason: "First")
+
+      expect { expect(stale_copy.reject(reviewed_by: create(:user), reason: "Second")).to eq(false) }
+        .not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+      expect(invoice.reload).to have_attributes(rejection_reason: "First", reviewed_by: approver)
+    end
+
+    it "won't reject an invoice that was already approved" do
+      stub_balance(100_00)
+      invoice.approve(reviewed_by: approver)
+
+      expect(invoice.reject(reviewed_by: approver, reason: "Too late")).to eq(false)
+      expect(invoice.reload).to have_attributes(aasm_state: "approved", rejection_reason: nil)
+    end
+
+    it "can't be approved afterwards" do
+      stub_balance(100_00)
+      invoice.reject(reviewed_by: approver, reason: "Wrong hours")
+
+      expect { expect(invoice.approve(reviewed_by: approver)).to eq(false) }.not_to change(Payment, :count)
+    end
+  end
 end

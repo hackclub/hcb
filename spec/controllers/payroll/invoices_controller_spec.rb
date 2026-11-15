@@ -191,7 +191,7 @@ RSpec.describe Payroll::InvoicesController do
       end
 
       it "can't reject the invoice" do
-        post :reject, params: { id: invoice.hashid }
+        post :reject, params: { id: invoice.hashid, reason: "Not ours to pay" }
 
         expect(invoice.reload).to be_submitted
       end
@@ -199,17 +199,113 @@ RSpec.describe Payroll::InvoicesController do
   end
 
   describe "POST #reject" do
-    before { create_session(organizer, verified: true) }
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency) }
 
-    # Invoices created before amounts had to be positive must still be reviewable.
-    it "rejects a legacy invoice with a non-positive amount" do
-      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
-      invoice.update_column(:amount_cents, 0)
+    def reject!(reason)
+      post :reject, params: { id: invoice.hashid, reason: }.compact
+    end
 
-      post :reject, params: { id: invoice.hashid }
+    context "as an organizer" do
+      before { create_session(organizer, verified: true) }
 
-      expect(invoice.reload).to be_rejected
-      expect(invoice.reviewed_by).to eq(organizer)
+      it "rejects the invoice and emails the reason to the contractor" do
+        invoice
+
+        expect { reject!("  Wrong hours\r\nPlease resubmit  ") }
+          .to have_enqueued_mail(Payroll::InvoiceMailer, :rejected).once
+
+        expect(invoice.reload).to be_rejected
+        expect(invoice.rejection_reason).to eq("Wrong hours\nPlease resubmit")
+        expect(invoice.reviewed_by).to eq(organizer)
+        expect(invoice.rejected_at).to be_present
+        expect(flash[:success]).to include("Invoice rejected.")
+        expect(response).to redirect_to(payroll_position_path(position))
+      end
+
+      it "leaves the invoice reviewable when no reason is given" do
+        invoice
+
+        [nil, "", "  \r\n "].each do |reason|
+          expect { reject!(reason) }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+          expect(invoice.reload).to be_submitted
+          expect(invoice.rejection_reason).to be_nil
+          expect(flash[:error]).to include("why you're rejecting this invoice")
+        end
+      end
+
+      it "accepts a reason at the limit, counting a line break once" do
+        reject!("#{"a" * 499}\r\n#{"b" * 500}")
+
+        expect(invoice.reload).to be_rejected
+        expect(invoice.rejection_reason.length).to eq(1000)
+      end
+
+      it "refuses a reason over the limit" do
+        reject!("a" * 1001)
+
+        expect(invoice.reload).to be_submitted
+        expect(flash[:error]).to eq("Please keep the reason under 1,000 characters.")
+      end
+
+      it "keeps the first review when the invoice was already rejected" do
+        invoice.reject(reviewed_by: create(:user), reason: "First reason")
+
+        expect { reject!("Second reason") }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+        expect(invoice.reload.rejection_reason).to eq("First reason")
+        expect(invoice.reviewed_by).not_to eq(organizer)
+        expect(flash[:error]).to eq("This invoice has already been reviewed.")
+      end
+
+      it "can't reject an invoice that was already approved and paid" do
+        stub_balance(100_00)
+        invoice.approve(reviewed_by: organizer)
+
+        reject!("Changed my mind")
+
+        expect(invoice.reload).to be_approved
+        expect(invoice.rejection_reason).to be_nil
+        expect(flash[:error]).to eq("This invoice has already been reviewed.")
+      end
+
+      # Invoices created before amounts had to be positive must still be reviewable.
+      it "rejects a legacy invoice with a non-positive amount" do
+        invoice.update_column(:amount_cents, 0)
+
+        reject!("Nothing to pay")
+
+        expect(invoice.reload).to be_rejected
+        expect(invoice.reviewed_by).to eq(organizer)
+      end
+    end
+
+    context "as an organizer who is also the contractor" do
+      before do
+        create(:legal_entity_user, legal_entity:, user: organizer)
+        create_session(organizer, verified: true)
+      end
+
+      it "can't reject their own invoice" do
+        reject!("Withdrawn")
+
+        expect(invoice.reload).to be_submitted
+        expect(invoice.rejection_reason).to be_nil
+      end
+    end
+
+    context "as an organizer who isn't a manager" do
+      before do
+        member = create(:user)
+        create(:organizer_position, event:, user: member, role: :member)
+        create_session(member, verified: true)
+      end
+
+      it "can't reject the invoice" do
+        reject!("Not approved")
+
+        expect(invoice.reload).to be_submitted
+      end
     end
   end
 end

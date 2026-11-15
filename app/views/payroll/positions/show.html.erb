@@ -154,12 +154,7 @@
           <% @invoices.each do |invoice| %>
             <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
             <% preview_receipt = receipts.find(&:preview) %>
-            <% review_actions = capture do %>
-              <div class="flex gap-2">
-                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
-                <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-              </div>
-            <% end if @can_review && invoice.submitted? %>
+            <% review = render("payroll/invoices/review", invoice:, can_review: @can_review).presence %>
             <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
@@ -178,7 +173,7 @@
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">
                     <% receipts.each do |receipt| %>
-                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review && tag.div(review, class: "px-6 py-4") %>
                     <% end %>
                   </div>
                 <% else %>
@@ -192,7 +187,7 @@
                   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">
                     <%= modal_header invoice.name %>
                     <p class="muted mt0">This <%= render_money invoice.amount_cents %> invoice has no attachment to preview.</p>
-                    <%= review_actions %>
+                    <%= review %>
                   </section>
                 <% end %>
               </td>

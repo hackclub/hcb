@@ -343,5 +343,43 @@ RSpec.describe MyController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(settings_payouts_path(legal_entity_id: legal_entity.id))
     end
+
+    describe "contractor invoices" do
+      let(:user) { create(:user) }
+      let(:legal_entity) { user.personal_legal_entity }
+      let(:event) { create(:event, name: "Hack the Planet") }
+      let(:position) { create(:payroll_position, payee: create(:payee, event:, legal_entity:), aasm_state: :onboarded) }
+
+      before do
+        allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+        sign_in_verified(user)
+      end
+
+      def create_invoice(name)
+        position.invoices.create!(name:, amount_cents: 50_00, currency: position.currency)
+      end
+
+      it "shows why a recent invoice was rejected, alongside those awaiting review" do
+        create_invoice("Week 1 hours")
+        create_invoice("Week 2 hours").reject(reviewed_by: create(:user), reason: "Hours <i>don't</i> match")
+
+        get :pay
+
+        expect(response.body).to include("Week 1 hours", "Week 2 hours")
+        expect(response.body).to include("Hours &lt;i&gt;don&#39;t&lt;/i&gt; match")
+      end
+
+      it "drops rejected invoices after 30 days, and never lists approved ones" do
+        allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_00)
+        create_invoice("Old rejection").reject(reviewed_by: create(:user), reason: "Stale reason")
+        Payroll::Invoice.rejected.update_all(rejected_at: 31.days.ago)
+        create_invoice("Paid hours").approve(reviewed_by: create(:user))
+
+        get :pay
+
+        expect(controller.instance_variable_get(:@invoices)).to be_empty
+        expect(response.body).not_to include("Stale reason")
+      end
+    end
   end
 end

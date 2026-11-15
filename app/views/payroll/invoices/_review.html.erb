@@ -1,0 +1,46 @@
+<%# locals: (invoice:, can_review: false) %>
+<%# Rendered more than once per invoice (once per attachment, and again for the
+    receipt modal's mobile layout), so nothing in here may carry an id. %>
+
+<% if can_review && invoice.submitted? %>
+  <div data-controller="invoice-review">
+    <div data-invoice-review-target="actions">
+      <div class="flex gap-2">
+        <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
+        <button type="button" class="btn bg-muted flex-1" data-action="invoice-review#startRejecting">Reject</button>
+      </div>
+    </div>
+
+    <div data-invoice-review-target="rejection" hidden>
+      <%= form_with url: reject_payroll_invoice_path(invoice), data: { turbo_frame: "_top" } do |form| %>
+        <label class="block">
+          <span class="bold block">Why are you rejecting this invoice?</span>
+          <span class="muted h5 block mb-2">We'll email this to <%= invoice.payroll_position.payee.display_name %>.</span>
+          <%= form.text_area :reason,
+                rows: 3,
+                required: true,
+                maxlength: Payroll::Invoice::REJECTION_REASON_MAX_LENGTH,
+                placeholder: "e.g. The hours don't match the timesheet",
+                class: "w-full max-w-full",
+                style: "resize: vertical;",
+                id: nil,
+                data: { invoice_review_target: "reason", action: "keydown->invoice-review#submitOnShortcut" } %>
+        </label>
+        <div class="flex gap-2 mt-2">
+          <%= form.submit "Reject invoice", class: "btn bg-error flex-1", data: { disable_with: "Rejecting…" } %>
+          <button type="button" class="btn bg-muted flex-1" data-action="invoice-review#cancelRejecting">Cancel</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% elsif invoice.rejected? && invoice.rejection_reason.present? %>
+  <div>
+    <strong class="error block">
+      Rejected<%= " by #{invoice.reviewed_by.name}" if invoice.reviewed_by.present? %>
+    </strong>
+    <% if invoice.rejected_at.present? %>
+      <span class="muted h5 block"><%= format_date invoice.rejected_at %></span>
+    <% end %>
+    <p class="mt-1 mb-0 break-words whitespace-pre-line overflow-y-auto" style="max-height: 12rem; overflow-wrap: anywhere;"><%= invoice.rejection_reason %></p>
+  </div>
+<% end %>

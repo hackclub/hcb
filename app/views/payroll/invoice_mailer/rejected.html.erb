@@ -1,0 +1,27 @@
+<p>Hello,</p>
+
+<p>
+  <%= @event.name %> rejected your invoice "<%= @invoice.name %>" for
+  <%= @invoice.amount.format(with_currency: true) %>, so it won't be paid.
+</p>
+
+<p><strong><%= @invoice.reviewed_by&.name || @event.name %> gave this reason:</strong></p>
+
+<blockquote>
+  <%= simple_format(h(@invoice.rejection_reason), {}, sanitize: false) %>
+</blockquote>
+
+<p>
+  <% if @position.status == :active %>
+    If the invoice needs correcting, you can <%= link_to "submit a new one on HCB", my_pay_url %>.
+  <% end %>
+  If you have any questions, reply to this email to reach <%= @event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

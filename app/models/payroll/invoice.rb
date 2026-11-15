@@ -12,6 +12,7 @@
 #  description         :text
 #  name                :text             not null
 #  rejected_at         :datetime
+#  rejection_reason    :text
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  payment_id          :bigint
@@ -36,6 +37,8 @@ module Payroll
     include Receiptable
     include Hashid::Rails
 
+    REJECTION_REASON_MAX_LENGTH = 1_000
+
     has_paper_trail
 
     belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
@@ -47,6 +50,7 @@ module Payroll
     monetize :amount_cents, with_model_currency: :currency, numericality: { greater_than: 0, on: :create }
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
+    validates :rejection_reason, length: { maximum: REJECTION_REASON_MAX_LENGTH }
     validate :currency_matches_position
 
     after_create_commit :notify_manager
@@ -97,6 +101,30 @@ module Payroll
         mark_approved!(reviewed_by)
         true
       end
+    end
+
+    # Returns false if the invoice was already reviewed. The reason is shown to
+    # the contractor, so a rejection can't go ahead without one.
+    def reject(reviewed_by:, reason:)
+      reason = self.class.normalize_rejection_reason(reason)
+      raise ArgumentError, "an invoice can't be rejected without a reason" if reason.blank?
+
+      rejected = with_lock do
+        next false unless submitted?
+
+        update!(rejection_reason: reason)
+        mark_rejected!(reviewed_by)
+        true
+      end
+
+      Payroll::InvoiceMailer.with(invoice: self).rejected.deliver_later if rejected
+      rejected
+    end
+
+    # Browsers submit line breaks as CRLF, which would count twice against the
+    # limit the textarea enforced.
+    def self.normalize_rejection_reason(reason)
+      reason.to_s.gsub(/\r\n?/, "\n").strip
     end
 
     def receipt_required?

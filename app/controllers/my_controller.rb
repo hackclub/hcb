@@ -232,10 +232,11 @@ class MyController < ApplicationController
                                              .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
     # Approved invoices are represented by their payment in the history table
-    # below, so only surface invoices still awaiting review here to avoid
-    # duplicating information.
+    # below, so only surface the ones that never became a payment: those still
+    # awaiting review, and recent rejections so the contractor can see why.
     @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
                                 .where(aasm_state: "submitted")
+                                .or(Payroll::Invoice.where(payroll_position: @contractor_positions).rejected.where(rejected_at: 30.days.ago..))
                                 .includes(payroll_position: { payee: :event })
                                 .order(created_at: :desc)
   end

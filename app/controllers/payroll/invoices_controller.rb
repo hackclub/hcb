@@ -75,9 +75,14 @@ module Payroll
     def reject
       authorize @invoice
 
-      if @invoice.submitted?
-        @invoice.mark_rejected!(current_user)
-        flash[:success] = "Invoice rejected."
+      reason = Payroll::Invoice.normalize_rejection_reason(params[:reason])
+
+      if reason.blank?
+        flash[:error] = "Please tell #{@invoice.payroll_position.payee.display_name} why you're rejecting this invoice."
+      elsif reason.length > Payroll::Invoice::REJECTION_REASON_MAX_LENGTH
+        flash[:error] = "Please keep the reason under #{helpers.number_with_delimiter(Payroll::Invoice::REJECTION_REASON_MAX_LENGTH)} characters."
+      elsif @invoice.reject(reviewed_by: current_user, reason:)
+        flash[:success] = "Invoice rejected. We've let #{@invoice.payroll_position.payee.display_name} know why."
       else
         flash[:error] = "This invoice has already been reviewed."
       end

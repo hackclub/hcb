@@ -4,6 +4,7 @@ require "rails_helper"
 
 # Reviewing a contractor's invoice: clicking its row opens the attached invoice
 # in the receipt modal, which is the only place to approve or reject it.
+# Rejecting asks for a reason first, which the contractor is told.
 RSpec.describe "Contractor invoice review", type: :system do
   include ActionView::RecordIdentifier
 
@@ -79,22 +80,92 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(Payment.sole.amount_cents).to eq(50_00)
     end
 
-    it "rejects only after the confirmation, which shows above the modal" do
+    it "rejects only once a reason is given, and emails it to the contractor" do
       invoice = create_invoice("Week 1 hours")
       visit_without_animations position_page
       open_invoice(invoice)
 
-      within_invoice_modal(invoice) { click_button "Reject" }
-      within(".swal-modal") { click_button "Cancel" }
-      expect(page).to have_no_css(".swal-modal")
+      within_invoice_modal(invoice) do
+        expect(page).to have_no_field("reason")
+        click_button "Reject"
+
+        # The review buttons give way to the reason form, which takes focus
+        expect(page).to have_no_button("Approve")
+        expect(page.evaluate_script("document.activeElement.name")).to eq("reason")
+        expect(page).to have_text("We'll email this to Fiona Hackworth.")
+
+        click_button "Cancel"
+        expect(page).to have_button("Approve")
+        expect(page).to have_no_field("reason")
+        expect(invoice.reload).to be_submitted
+
+        click_button "Reject"
+        click_button "Reject invoice" # blocked by the browser: the reason is required
+        expect(page).to have_field("reason")
+        expect(invoice.reload).to be_submitted
+
+        fill_in "reason", with: "   " # whitespace alone isn't a reason
+        click_button "Reject invoice"
+      end
+      expect(page).to have_css("tr", text: "Submitted", wait: 10)
       expect(invoice.reload).to be_submitted
 
-      within_invoice_modal(invoice) { click_button "Reject" }
-      within(".swal-modal") { click_button "Confirm" }
+      open_invoice(invoice)
+      within_invoice_modal(invoice) do
+        click_button "Reject"
+        fill_in "reason", with: "The hours don't match the timesheet.\nPlease resubmit."
+        click_button "Reject invoice"
+      end
 
       expect(page).to have_invoice_status("Rejected")
       expect(invoice.reload).to be_rejected
+      expect(invoice.rejection_reason).to eq("The hours don't match the timesheet.\nPlease resubmit.")
+      expect(invoice.reviewed_by).to eq(manager)
       expect(Payment.count).to eq(0)
+
+      # The reason stays with the invoice for anyone who opens it afterwards
+      open_invoice(invoice)
+      within_invoice_modal(invoice) do
+        expect(page).to have_text("Rejected by #{manager.name}")
+        expect(page).to have_text("The hours don't match the timesheet.")
+      end
+    end
+
+    it "rejects an invoice without an attachment with a reason" do
+      invoice = create_invoice("Week 1 hours", attachment: false)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      within_invoice_modal(invoice) do
+        click_button "Reject"
+        fill_in "reason", with: "No timesheet attached"
+        click_button "Reject invoice"
+      end
+
+      expect(page).to have_invoice_status("Rejected")
+      expect(invoice.reload.rejection_reason).to eq("No timesheet attached")
+
+      open_invoice(invoice)
+      within_invoice_modal(invoice) { expect(page).to have_text("No timesheet attached") }
+    end
+
+    it "keeps a long reason from breaking out of the modal" do
+      invoice = create_invoice("Week 1 hours")
+      invoice.reject(reviewed_by: manager, reason: "x" * 1000)
+      page.driver.resize(1000, 700)
+      visit_without_animations position_page
+      open_invoice(invoice)
+
+      contained = within_invoice_modal(invoice) do
+        page.evaluate_script(<<~JS, find("p", text: "xxxxxxxx"))
+          (reason => {
+            const modal = reason.closest(".modal").getBoundingClientRect()
+            const { left, right, bottom } = reason.getBoundingClientRect()
+            return left >= modal.left && right <= modal.right && bottom <= window.innerHeight
+          })(arguments[0])
+        JS
+      end
+      expect(contained).to be(true)
     end
 
     it "pays nothing when the invoice was reviewed while the modal was open" do
