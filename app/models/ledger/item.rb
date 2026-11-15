@@ -186,8 +186,14 @@ class Ledger
     # Tags are event-scoped. When this item is remapped to a different event, any
     # tag belonging to an event it no longer touches is orphaned (hidden on the
     # new org's event-filtered views and impossible to remove via `toggle_tag`),
-    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap.
-    def prune_tags_outside_event!(event:)
+    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap,
+    # which saves the new mapping on a separate row — so reload the associations
+    # before reading the (now-current) event off the primary ledger.
+    def prune_tags_outside_event!
+      association(:primary_mapping).reload
+      association(:primary_ledger).reload
+
+      event = primary_ledger&.event || primary_ledger&.card_grant&.event
       return if event.nil?
 
       ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all

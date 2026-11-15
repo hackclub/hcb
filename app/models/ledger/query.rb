@@ -80,28 +80,23 @@ class Ledger
       # top; callers that only aggregate pay nothing, since preloads don't fire
       # until records are materialized.
       #
-      # hcb_code: :event is here for one line of ledger/items/_tags, which gates
-      # on `hcb_code.event&.demo_mode?` even where the page already holds @event
-      # — the next line down uses @event, and _tag_menu prefers it. Reaching
-      # through the HCB code for an event the page already has costs a query a
-      # row without this preload, and one with it. #15023 moves tags onto
-      # Ledger::Item and takes that partial's other use of the HCB code with it,
-      # leaving the guard as the last one; it can go the same way.
+      # hcb_code is for ledger/_item's receipt affordances (receiptable id,
+      # upload policy). Its event is no longer needed: the tag partials and
+      # Ledger::ItemPolicy#toggle_tag? now resolve the owning event through the
+      # primary ledger (or its card grant) instead of the HCB code.
       #
-      # The preload outlives that, though: the admin cardholder page runs
+      # primary_ledger: [:event, { card_grant: :event }] feeds both
+      # Ledger::ItemPolicy#toggle_tag? (checked per row by _tag_menu) and the
+      # tag partials' demo_mode guard. The admin cardholder page runs
       # all_ledgers with no @event, over items spanning every org the cardholder
       # holds a card for, so there the event really is per item.
-      #
-      # primary_ledger is for Ledger::ItemPolicy#toggle_tag?, which _tag_menu
-      # checks per row and which resolves the owning event through the primary
-      # ledger (or its card grant).
       #
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError). It also costs one query per distinct
       # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:author, :linked_object, :tags, hcb_code: :event, primary_ledger: [:event, { card_grant: :event }])
+             .preload(:author, :linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
     end
 
     def self.sanitize_query(query_hash)

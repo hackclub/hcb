@@ -126,7 +126,7 @@
               <% if event.tags.any? %>
                 <div class="menu__divider tags__divider"></div>
               <% end %>
-              <%= render partial: "hcb_codes/create_tag", locals: { button: ledger_item&.hashid } %>
+              <%= render partial: "ledger/items/create_tag", locals: { button: ledger_item&.hashid } %>
             </div>
           </div>
         <% end %>
