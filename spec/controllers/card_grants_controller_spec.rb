@@ -321,13 +321,13 @@ RSpec.describe CardGrantsController do
       expect(cell).to be_present
 
       form = cell.at_css("form[action='#{receipts_path}']")
-      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
-      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.hcb_code.id.to_s)
+      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("Ledger::Item")
+      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.id.to_s)
       expect(form.at_css("input[type='file'][name='file[]']")).to be_present
       expect(cell.text).to include("Upload receipt")
 
-      frame = cell.at_css("turbo-frame#link_modal_#{item.hcb_code.id}")
-      expect(frame["src"]).to eq(link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: item.hcb_code.id))
+      frame = cell.at_css("turbo-frame##{ActionView::RecordIdentifier.dom_id(item, :link_modal)}")
+      expect(frame["src"]).to eq(link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: item.id))
       expect(frame["loading"]).to eq("lazy")
     end
 

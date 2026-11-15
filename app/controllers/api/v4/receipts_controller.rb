@@ -23,7 +23,7 @@ module Api
         else
           skip_authorization
         end
-        @receipt = Receipt.create!(file: params[:file], receiptable: @hcb_code, user: current_user, upload_method: :api)
+        @receipt = Receipt.create!(file: params[:file], receiptable: @hcb_code&.ledger_item_or_self, user: current_user, upload_method: :api)
 
         render "show", status: :created
       end

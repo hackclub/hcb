@@ -38,7 +38,7 @@ class WiresController < ApplicationController
           uploader: current_user,
           attachments: wire_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @wire.local_hcb_code
+          receiptable: @wire.local_hcb_code.ledger_item_or_self
         ).run!
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }

@@ -159,7 +159,7 @@ class Payment
             transfer.save!
             save!
 
-            Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
+            Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code.ledger_item_or_self)
 
             mark_under_review!
           end

@@ -35,7 +35,8 @@ module Twilio
       end
 
       receipts = ::ReceiptService::Create.new(
-        receiptable: @receiptable,
+        # An HCB code's receipts live on its ledger item; an expense holds its own.
+        receiptable: @receiptable.try(:ledger_item_or_self) || @receiptable,
         uploader: @user,
         attachments: @attachments,
         upload_method: reimbursement? ? "sms_reimbursement" : "sms"

@@ -1,4 +1,4 @@
-<%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
+<%= turbo_frame_tag dom_id(@receiptable, :link_modal) do %>
   <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
         controller: "receipt-select",
         turbo: @streams

@@ -12,7 +12,7 @@
 
   <%= render "application/flash", klass: "mb-2" %>
   <%= render partial: "receipts/form_v3", locals: {
-        receiptable: @hcb_code,
+        receiptable: @hcb_code.ledger_item_or_self,
         upload_method: "attach_receipt_page",
         include_spacing: true,
         show_banner: true,

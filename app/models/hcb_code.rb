@@ -81,6 +81,8 @@ class HcbCode < ApplicationRecord
 
   after_create :write_event_and_subledger_id
 
+  after_commit :move_receipts_to_ledger_item!, if: -> { saved_change_to_ledger_item_id? && ledger_item_id.present? }
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -695,6 +697,33 @@ class HcbCode < ApplicationRecord
     return if reimbursement_expense_payout?
 
     super
+  end
+
+  # A transaction's receipts live on its ledger item
+  # (https://github.com/hackclub/hcb/issues/14106); this is the record to attach
+  # them to. A code with no ledger item yet (HCB-000 codes with no transactions
+  # never get one) holds them itself.
+  def ledger_item_or_self
+    ledger_item || self
+  end
+
+  # Hands any receipt still attached to this code over to its ledger item. A
+  # receipt can be attached before the item exists: transfers attach one on
+  # creation and only get their item once their pending transaction commits,
+  # scheduled transfers once they go out. So this runs whenever the code is
+  # linked to an item, and the backfill task calls it for the pairs linked
+  # before it existed.
+  #
+  # update_all rather than update!: the receipt isn't changing, only which of
+  # the transaction's two records it hangs off, so the pairing and card-locking
+  # callbacks (an unlock job per charge) have nothing to do. The item's cached
+  # count is refreshed by hand since nothing touches it.
+  def move_receipts_to_ledger_item!
+    return 0 if ledger_item.nil?
+
+    moved = Receipt.where(receiptable: self).update_all(receiptable_type: "Ledger::Item", receiptable_id: ledger_item_id)
+    ledger_item.refresh_receipt_count! if moved.positive?
+    moved
   end
 
   # While receipts are split across an HCB code and its ledger item (see

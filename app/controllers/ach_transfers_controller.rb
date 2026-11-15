@@ -63,7 +63,7 @@ class AchTransfersController < ApplicationController
           uploader: current_user,
           attachments: ach_transfer_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @ach_transfer.local_hcb_code
+          receiptable: @ach_transfer.local_hcb_code.ledger_item_or_self
         ).run!
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }

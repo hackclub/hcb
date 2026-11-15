@@ -321,17 +321,18 @@ RSpec.describe EventsController do
           Nokogiri::HTML5(response.body).at_css("tr.transaction")
         end
 
-        it "makes ledger rows a drop target for receipts on the item's HCB code" do
+        it "makes ledger rows a drop target for receipts on the item" do
           get(:ledger, params: { event_id: event.slug })
 
+          item = hcb_code.reload.ledger_item
           row = ledger_row
           expect(row["data-controller"]).to eq("file-drop")
-          expect(row["data-file-drop-receiptable-value"]).to eq("HcbCode:#{hcb_code.id}")
+          expect(row["data-file-drop-receiptable-value"]).to eq("Ledger::Item:#{item.id}")
 
           form = row.at_css("form[data-file-drop-target='form']")
           expect(form["action"]).to eq(receipts_path)
-          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
-          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(hcb_code.id.to_s)
+          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("Ledger::Item")
+          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.id.to_s)
         end
 
         it "doesn't make ledger rows a drop target for users who can't upload receipts" do

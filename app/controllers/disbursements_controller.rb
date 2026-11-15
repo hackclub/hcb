@@ -220,7 +220,7 @@ class DisbursementsController < ApplicationController
         uploader: current_user,
         attachments: disbursement_params[:file],
         upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code
+        receiptable: disbursement.local_hcb_code.ledger_item_or_self
       ).run!
     end
 

@@ -81,6 +81,15 @@ class Receipt < ApplicationRecord
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
+  # A transaction's receipts live on its ledger item
+  # (https://github.com/hackclub/hcb/issues/14106). Every write path passes the
+  # ledger item already; this catches anything still handing over the HCB code.
+  # A code with no ledger item yet keeps the receipt until
+  # HcbCode#move_receipts_to_ledger_item! hands it over.
+  before_validation do
+    self.receiptable = receiptable.ledger_item_or_self if receiptable.is_a?(HcbCode)
+  end
+
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable.update(marked_no_or_lost_receipt_at: nil)

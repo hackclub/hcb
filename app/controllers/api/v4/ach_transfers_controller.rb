@@ -45,7 +45,7 @@ module Api
               uploader: current_user,
               attachments: ach_transfer_params[:file],
               upload_method: :api,
-              receiptable: @ach_transfer.local_hcb_code
+              receiptable: @ach_transfer.local_hcb_code.ledger_item_or_self
             ).run!
           end
         end

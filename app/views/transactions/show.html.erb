@@ -168,7 +168,7 @@
   <h2>Receipts</h2>
   <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   <%= render partial: "receipts/form_v3", locals: {
-        receiptable: @hcb_code,
+        receiptable: @hcb_code.ledger_item_or_self,
         enable_linking: true,
         upload_method: "transaction_page",
         include_spacing: true,
