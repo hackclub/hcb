@@ -22,10 +22,6 @@ RSpec.describe ReceiptablesController do
   before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
 
   describe "#mark_no_or_lost" do
-    def done_link
-      Nokogiri::HTML.fragment(response.body).at_xpath('.//a[text()="Done"]')["href"].sub(/\Ahttps?:\/\/[^\/]+/, "")
-    end
-
     it "generates a statement using the receipt request link without claiming an authenticated signer" do
       post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details))
 
@@ -35,9 +31,8 @@ RSpec.describe ReceiptablesController do
       expect(CloudflareBrowserRun).to have_received(:pdf).with(a_string_including("Alex Example", "Receipt request link (not signed in)"))
       expect(receipt.user).to be_nil
       expect(hcb_code.reload).to be_no_or_lost_receipt
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("paper-receipt", "FILED")
-      expect(done_link).to eq(attach_receipt_hcb_code_path(hcb_code, s: secret))
+      expect(flash[:success]).to eq("Lost receipt statement added.")
+      expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
     end
 
     it "does not resolve the missing receipt without statement details" do
@@ -137,7 +132,7 @@ RSpec.describe ReceiptablesController do
       expect(hcb_code.reload).not_to be_missing_receipt
       expect(hcb_code).to be_no_or_lost_receipt
       expect(hcb_code.ledger_item.reload).to be_no_or_lost_receipt
-      expect(done_link).to eq(hcb_code_path(hcb_code))
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
 
       receipt.destroy!
 
@@ -176,7 +171,7 @@ RSpec.describe ReceiptablesController do
 
       expect(hcb_code.reload).to be_no_or_lost_receipt
       expect(hcb_code.receipts.sole).to be_lost_receipt_statement
-      expect(done_link).to eq(page_with_popover)
+      expect(response).to redirect_to(page_with_popover)
     end
 
     it "rejects a signature that isn't the signed-in user's name" do
@@ -199,7 +194,7 @@ RSpec.describe ReceiptablesController do
 
       post(:mark_no_or_lost, params: base_params.merge(return_to: "https://evil.example.com", lost_receipt_statement: details))
 
-      expect(done_link).to eq(hcb_code_path(hcb_code))
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
     end
 
     it "refuses a signed in user who isn't on the organization" do

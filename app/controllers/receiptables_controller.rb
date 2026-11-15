@@ -27,8 +27,8 @@ class ReceiptablesController < ApplicationController
     @statement.submitter = current_user
 
     if @statement.submit
-      # The items only live in the PDF, so the receipt is shown now rather than after a redirect.
-      render_page :lost_receipt_filed
+      flash[:success] = "Lost receipt statement added."
+      redirect_to url_from(params[:return_to]) || fallback_location
     else
       render_page :lost_receipt, status: :unprocessable_entity
     end

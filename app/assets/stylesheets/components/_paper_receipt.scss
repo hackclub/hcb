@@ -1,4 +1,4 @@
-// The receipt shown after a lost receipt statement is filed.
+// The receipt preview on the lost receipt statement form.
 // Paper stays paper-coloured in dark mode, like a real one would.
 
 .paper-receipt__printer {
@@ -114,24 +114,6 @@
   pointer-events: none;
 }
 
-// Rubber stamp, pressed on a little crooked.
-.paper-receipt__stamp {
-  position: absolute;
-  top: 3.25rem;
-  right: 0.5rem;
-  transform: rotate(14deg);
-  padding: 0.125rem 0.5rem;
-  border: 3px double #ec3750;
-  border-radius: 6px;
-  color: #ec3750;
-  font-weight: bold;
-  font-size: 1.125rem;
-  letter-spacing: 0.2em;
-  opacity: 0.75;
-  pointer-events: none;
-  animation: paper-receipt-stamp 0.35s 1.1s cubic-bezier(0.2, 2, 0.4, 1) both;
-}
-
 .paper-receipt__barcode {
   height: 44px;
   margin: 1rem auto 0.25rem;
@@ -171,16 +153,8 @@
   }
 }
 
-@keyframes paper-receipt-stamp {
-  from {
-    opacity: 0;
-    transform: rotate(14deg) scale(2.2);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .paper-receipt,
-  .paper-receipt__stamp {
+  .paper-receipt {
     animation: none;
   }
 }

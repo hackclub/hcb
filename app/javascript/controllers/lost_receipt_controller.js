@@ -13,6 +13,10 @@ export default class extends Controller {
     'mismatch',
     'submit',
     'signature',
+    'receiptMerchant',
+    'receiptDate',
+    'receiptItems',
+    'receiptTotal',
   ]
   static values = { charged: Number }
 
@@ -43,14 +47,34 @@ export default class extends Controller {
   }
 
   update() {
+    const usd = cents =>
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(cents / 100)
+    const field = name => this.element.querySelector(`[name$="[${name}]"]`)
+    this.receiptMerchantTarget.textContent = field('merchant').value
+    // The date input's value is YYYY-MM-DD.
+    const [year, month, day] = field('date').value.split('-')
+    this.receiptDateTarget.textContent = year ? `${month}/${day}/${year}` : ''
+    const lines = []
     const cents = this.itemTargets.reduce((total, item) => {
       const quantity = Number(
         item.querySelector('[data-amount="quantity"]').value
       )
       const price = Number(item.querySelector('[data-amount="price"]').value)
       const itemCents = quantity * Math.round(price * 100)
+      const line = document.createElement('div')
+      line.className = 'paper-receipt__item'
+      const description = item.querySelector('input[type="text"]').value
+      for (const text of [quantity, description, usd(itemCents || 0)]) {
+        line.appendChild(document.createElement('span')).textContent = text
+      }
+      lines.push(line)
       return total + (Number.isFinite(itemCents) ? itemCents : 0)
     }, 0)
+    this.receiptItemsTarget.replaceChildren(...lines)
+    this.receiptTotalTarget.textContent = usd(cents)
     this.totalTarget.value = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
     }).format(cents / 100)

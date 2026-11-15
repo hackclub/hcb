@@ -72,6 +72,37 @@
   </div>
 
   <div data-scroll-seek-target="section">
+  <h3 class="mt-4 mb-0">Receipt</h3>
+  <p class="muted mt-0 mb-0">Check that this looks like the receipt you lost.</p>
+  <%# Filled in by the lost-receipt controller as the fields above change. %>
+  <div class="paper-receipt__printer">
+    <div class="paper-receipt">
+      <span class="paper-receipt__coffee" aria-hidden="true"></span>
+      <div class="paper-receipt__head">
+        <strong data-lost-receipt-target="receiptMerchant"></strong>
+        <small data-lost-receipt-target="receiptDate"></small>
+      </div>
+      <hr>
+      <div class="paper-receipt__item paper-receipt__columns" aria-hidden="true">
+        <span>Qty</span><span>Item</span><span>Amount</span>
+      </div>
+      <div data-lost-receipt-target="receiptItems"></div>
+      <hr>
+      <div class="paper-receipt__row paper-receipt__total">
+        <span>Total</span>
+        <span data-lost-receipt-target="receiptTotal"></span>
+      </div>
+      <div class="paper-receipt__barcode" aria-hidden="true"></div>
+      <div class="paper-receipt__foot">
+        <%= @receiptable.try(:hcb_code) || @receiptable.to_global_id %>
+        <p>No returns. No refunds. No more losing receipts.</p>
+        <p>*** Please keep the next one ***</p>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div data-scroll-seek-target="section">
   <h3 class="mt-4 mb-2">Confirmation</h3>
   <div class="card mb-4 flex flex-col gap-3">
     <div class="field field--checkbox !items-start mb-0">
