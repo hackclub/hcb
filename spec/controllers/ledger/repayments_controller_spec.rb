@@ -40,7 +40,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
       it "shows an empty state when nothing matches" do
         get :candidates, params: { item_id: expense.ledger_item.hashid }
 
-        expect(response.body).to include("No transactions of exactly $100.00 to match")
+        expect(response.body).to include("No transactions left to match")
       end
     end
 
@@ -87,6 +87,23 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
       post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_id: expense.ledger_item.hashid }
 
       expect(Repayment.count).to eq(0)
+    end
+  end
+
+  context "as a manager of another organization viewing a transparent one" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    before { create(:organizer_position, event: create(:event), user:, role: :manager) }
+
+    it "doesn't show the amount of a transaction they can't link" do
+      item = create(:canonical_transaction, event:, amount_cents: 123_45).ledger_item
+
+      get :candidates, params: { item_id: item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).not_to include("123.45")
     end
   end
 end

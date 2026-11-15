@@ -20,6 +20,7 @@
 
     <%= paginate @candidates, per_page_menu: false %>
   <% else %>
-    <%= blankslate "No transactions of exactly #{@item.amount.abs.format} to match" %>
+    <%# Rendered for any transaction the user can open the picker on, including ones they can't link, so it says nothing about @item. %>
+    <%= blankslate "No transactions left to match" %>
   <% end %>
 <% end %>
