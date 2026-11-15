@@ -153,6 +153,29 @@ RSpec.describe Reimbursement::Report, type: :model do
       expect(report.may_mark_submitted?).to be(true)
     end
 
+    context "when the payout method is a Wise transfer in an unsupported currency" do
+      let(:report) do
+        details = create(:wise_transfer_payout_method_details, currency: "CNY", account_type: "alipay", allow_unsupported_recipient: true)
+        user.personal_legal_entity.payout_methods.create!(default: true, details:)
+        create(:reimbursement_report, user:, currency: "CNY")
+      end
+
+      it "can't be submitted as a new report" do
+        add_expense(category: "Project Supplies")
+
+        expect(report.unsupported_payout_method?).to be(true)
+        expect(report.may_mark_submitted?).to be(false)
+      end
+
+      it "doesn't block a report that was already submitted" do
+        add_expense(category: "Project Supplies")
+        report.update_columns(aasm_state: "reimbursement_requested")
+
+        expect(report.unsupported_payout_method?).to be(false)
+        expect(report.may_mark_submitted?).to be(true)
+      end
+    end
+
     it "does not require a category on fees" do
       add_expense(category: "Project Supplies")
       report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)

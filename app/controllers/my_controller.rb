@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :event_cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
@@ -31,19 +31,9 @@ class MyController < ApplicationController
     cookies[:my_cards_view] = params[:view] if params[:view].in?(%w[grid list])
     @view = cookies[:my_cards_view] || "grid"
 
-    # Each organization's cards are lazy-loaded by `event_cards`, so only load the groups and their counts here
-    @card_counts = @stripe_cards.unscope(:order).group("stripe_cards.event_id").count
-    @events = Event.where(id: @card_counts.keys)
-                   .includes(:plan, logo_attachment: :blob)
-                   .reorder(Arel.sql("LOWER(events.name)"))
-  end
-
-  def event_cards
-    event = Event.find(params[:event_id])
-    @stripe_cards = filtered_stripe_cards.includes(:card_grant, :event).where(event:)
-    @view = cookies[:my_cards_view] || "grid"
-
-    render partial: "my/event_cards", locals: { event:, stripe_cards: @stripe_cards }
+    cards_by_event = @stripe_cards.includes(:card_grant, event: [:plan, { logo_attachment: :blob }]).group_by(&:event)
+    # Organizations with the most active cards come first
+    @cards_by_event = cards_by_event.sort_by { |event, cards| [-cards.count(&:active?), event.name.downcase] }.to_h
   end
 
   def tasks

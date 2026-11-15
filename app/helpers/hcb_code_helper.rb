@@ -38,6 +38,44 @@ module HcbCodeHelper
     content_tag :span, emoji, class: "tooltipped tooltipped--w pr1", 'aria-label': country_code
   end
 
+  # The short label shown for a declined card authorization: "Card frozen",
+  # "Merchant not allowed", etc. Used wherever a decline is explained (the
+  # ledger item page, the decline email, the admin transactions list) so they
+  # all agree on what a reason key means.
+  #
+  # Stripe reports `insufficient_funds` whenever HCB's authorization webhook
+  # declined, so it's an integration issue rather than a balance problem; the
+  # real balance case is HCB's own `inadequate_balance`.
+  def decline_reason_label(pending_transaction, card: nil)
+    hcb_decline_reason = pending_transaction&.hcb_decline_reason
+    stripe_decline_reason = pending_transaction&.stripe_decline_reason
+
+    if hcb_decline_reason.present? || stripe_decline_reason == :webhook_declined
+      case hcb_decline_reason
+      when :merchant_not_allowed_globally, :merchant_not_allowed then "Merchant not allowed"
+      when :cash_withdrawals_not_allowed then "Cash withdrawals disabled"
+      when :user_cards_locked then "Card locked due to overdue receipts"
+      else "Insufficient funds"
+      end
+    else
+      case stripe_decline_reason
+      when :card_inactive
+        card ||= pending_transaction&.stripe_card
+        card&.initially_activated? ? "Card frozen" : "Card not activated"
+      when :card_canceled then "Card canceled"
+      when :card_expired then "Card expired"
+      when :verification_failed then "Card verification failed"
+      when :suspected_fraud then "Suspected fraud"
+      when :reversed_by_merchant then "Reversed by merchant"
+      when :cardholder_verification_required then "Cardholder verification required"
+      when :insufficient_funds then "Integration issue"
+      when :insecure_authorization_method then "Insecure authorization method"
+      when :webhook_timeout then "Network error"
+      else "Unknown error"
+      end
+    end
+  end
+
   def stripe_verification_check_badge(check, verification_data = @verification_data)
     card_check_badge verification_data["#{check}_check"]
   end
