@@ -5,7 +5,7 @@ module LostReceipt
     include ActiveModel::Model
     include ActiveModel::Attributes
 
-    CONFIRMATION = "I confirm these details are accurate and that I can't get the original receipt."
+    CONFIRMATION = "I confirm these details are accurate and that I have made every effort possible to get the receipt."
 
     attr_accessor :receipt, :receiptable, :submitter, :merchant, :purpose, :signer_name, :confirmed_at, :acknowledgement
 
