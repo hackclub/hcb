@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-manual-migrations.sh"
+            "command": "ruby --disable-gems \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block_manual_migrations.rb"
           }
         ]
       }
