@@ -90,7 +90,7 @@ class Ledger
       released: "released", # uncaptured by Stripe (CardCharge only)
       rejected: "rejected", # transfer rejected by ops
       failed: "failed", # error
-      canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
+      canceled: "canceled", # user canceled transfer or voided invoice (for IncreaseCheck this also includes transfers rejected by ops)
       declined: "declined" # CPT has CPDM, no CPTs
     }
 
@@ -182,6 +182,14 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # Whether the item is only its linked object so far: no CTs or CPTs have
+    # mapped to it yet (an unpaid invoice, a scheduled ACH transfer that hasn't
+    # been sent, a voided invoice). Its ledger and status then come from the
+    # linked object, and it keeps its intended_at.
+    def linked_object_only?
+      linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any
@@ -399,7 +407,7 @@ class Ledger
     # linked object's creation time) is preserved while the item stays intended
     # and cleared once a transaction maps in.
     def calculate_intended_at
-      return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      return nil unless linked_object_only?
 
       intended_at || created_at
     end
@@ -467,7 +475,11 @@ class Ledger
       # voided invoice or a scheduled ACH transfer rejected before it was sent.
       # The linked object keeps it from being pruned once orphaned-item pruning
       # exists.
-      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      if linked_object_only?
+        # Marking an invoice as paid outside Stripe voids it so it can't also be
+        # paid through Stripe. It was paid, not canceled.
+        return :intended if linked_object.try(:manually_marked_as_paid?)
+
         return status_from_linked_object || :intended
       end
 

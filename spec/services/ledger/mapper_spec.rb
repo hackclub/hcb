@@ -62,6 +62,17 @@ RSpec.describe Ledger::Mapper do
         expect(item.primary_ledger).to eq(invoice.event.ledger)
       end
 
+      it "maps to the linked object's event when the linked object was voided" do
+        invoice = create(:invoice)
+        invoice.update_columns(aasm_state: "void_v2")
+        item.update!(linked_object: invoice, status: :canceled)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to eq(invoice.event.ledger)
+      end
+
       it "ignores the linked object's event once a transaction exists" do
         invoice = create(:invoice)
         item.update!(linked_object: invoice)
