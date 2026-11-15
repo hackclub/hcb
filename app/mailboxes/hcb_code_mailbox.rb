@@ -20,7 +20,7 @@ class HcbCodeMailbox < ApplicationMailbox
 
     if @attachments&.any? && (@commands.empty? || mail.attachments.any?)
       result = ::ReceiptService::Create.new(
-        receiptable: @hcb_code.ledger_item_or_self,
+        receiptable: @hcb_code,
         uploader: @user,
         attachments: @attachments,
         upload_method: "email_hcb_code"

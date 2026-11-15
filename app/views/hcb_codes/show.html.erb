@@ -27,7 +27,7 @@
     <% end %>
     <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
     <%= begin receipt_upload_form_config = {
-          receiptable: @hcb_code.ledger_item_or_self,
+          receiptable: @hcb_code,
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,

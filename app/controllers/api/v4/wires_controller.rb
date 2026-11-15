@@ -38,7 +38,7 @@ module Api
               uploader: current_user,
               attachments: wire_params[:file],
               upload_method: :api,
-              receiptable: @wire.local_hcb_code.ledger_item_or_self
+              receiptable: @wire.local_hcb_code
             ).run!
           end
         end

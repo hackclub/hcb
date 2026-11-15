@@ -35,7 +35,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: check.local_hcb_code.ledger_item_or_self
+              receiptable: check.local_hcb_code
             ).run!
 
             check.send_check! if payment.previously_paid?
@@ -64,7 +64,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: ach_transfer.local_hcb_code.ledger_item_or_self
+              receiptable: ach_transfer.local_hcb_code
             ).run!
 
             if payment.previously_paid?
