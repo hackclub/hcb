@@ -12,11 +12,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_120101) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_223545) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
+  enable_extension "pg_trgm"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
@@ -1658,6 +1659,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120101) do
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
+    t.index ["memo"], name: "index_ledger_items_on_memo_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
   end
