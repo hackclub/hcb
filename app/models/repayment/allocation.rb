@@ -41,13 +41,12 @@ class Repayment
     # Rejected and errored disbursements never moved money, so they don't count.
     scope :not_failed, -> { joins(:repayment).merge(Repayment.not_failed) }
 
-    # Settled expenses on the organization's ledger. Pending ones can still
-    # change amount or drop off, so they can't be repaid yet. Transfers between
-    # organizations can't be repaid, nor can account-verification micro-deposits,
-    # whose amounts are redacted from transparent ledgers.
+    # Pending and settled expenses on the organization's ledger. Transfers
+    # between organizations can't be repaid, nor can account-verification
+    # micro-deposits, whose amounts are redacted from transparent ledgers.
     def self.repayable_ledger_items(event)
       event.ledger.items
-           .where(status: :settled)
+           .where(status: [:pending, :settled])
            .where("ledger_items.amount_cents < 0")
            .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", ["Disbursement::Outgoing", "Disbursement::Incoming"])
            .not_likely_account_verification_related
@@ -93,7 +92,11 @@ class Repayment
         mapping = t.category_mapping
         next unless mapping&.category&.slug == Repayment::CATEGORY_SLUG
 
-        previous = previous_categories[snapshot_key(t)]
+        # A transaction that settled after the repayment has no snapshot of its
+        # own; it inherited the category from its pending transaction.
+        key = snapshot_key(t)
+        key = snapshot_key(t.canonical_pending_transaction) if !previous_categories.key?(key) && t.try(:canonical_pending_transaction)
+        previous = previous_categories[key]
         if previous.nil?
           mapping.destroy!
         else
@@ -122,7 +125,7 @@ class Repayment
       return if repaid_ledger_item.nil? || disbursement.nil?
 
       unless Repayment.repayable_ledger_items(disbursement.destination_event).exists?(repaid_ledger_item.id)
-        errors.add(:repaid_ledger_item, "must be a settled expense of #{disbursement.destination_event.name}")
+        errors.add(:repaid_ledger_item, "must be an expense of #{disbursement.destination_event.name}")
       end
     end
 

@@ -21,8 +21,8 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
   json.memo is_ledger ? tx.memo : hcb_code.memo(event: @event)
   json.has_custom_memo hcb_code.custom_memo.present?
   json.pending is_ledger ? tx.pending? : !!((is_cpt && tx.unsettled?) || (is_hcb_code && !tx.pt&.fronted? && tx.pt&.unsettled?))
-  json.declined is_ledger ? tx.declined? : !!((is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?))
-  json.reversed is_ledger ? tx.reversed? : !!((is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (is_hcb_code && tx.stripe_reversed_by_merchant?))
+  json.declined is_ledger ? ledger_item_declined?(tx) : !!((is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?))
+  json.reversed is_ledger ? ledger_item_reversed?(tx) : !!((is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (is_hcb_code && tx.stripe_reversed_by_merchant?))
   json.tags(hcb_code.ledger_item&.tags || []) do |tag|
     json.id tag.public_id
     json.label tag.label
