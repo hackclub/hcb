@@ -1,11 +1,11 @@
 <p>Hello,</p>
 
 <p>
-  Your contracting position "<%= @position.title %>" for <%= @event.name %> has ended>.
+  Your contracting position "<%= @position.title %>" for <%= @event.name %> has ended.
 </p>
 
 <p>
-  If you have any outstanding work to bill for, you can still submit one final invoice
+  If you have any outstanding work to bill for, you can still <%= link_to "submit a final invoice", my_pay_url(legal_entity_id: @payee.legal_entity_id) %>
   for this position until <%= @position.final_invoice_deadline.to_fs(:long) %>.
   After that, you will no longer be able to submit invoices for this position.
 </p>
@@ -13,10 +13,6 @@
 <% if @position.invoices.submitted.exists? || @position.payments.pending_or_under_review.any? %>
   <p>Any pending invoices or payments for this position will still be reviewed and processed as usual.</p>
 <% end %>
-
-<p>
-  <%= link_to "Submit a final invoice", my_pay_url(legal_entity_id: @payee.legal_entity_id) %>
-</p>
 
 <p>
   If you have any questions, please contact <%= @event.name %>.
