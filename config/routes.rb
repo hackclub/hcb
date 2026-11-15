@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    get "settings/tax", to: "users#edit_tax"
     resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
       member do
         patch :set_default
@@ -159,6 +160,7 @@ Rails.application.routes.draw do
     member do
       get "address", to: "users#edit_address"
       get "payouts", to: "users#edit_payout"
+      get "tax", to: "users#edit_tax"
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
@@ -558,7 +560,6 @@ Rails.application.routes.draw do
     member do
       get "attach_receipt"
       get "dispute"
-      post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
       scope module: "hcb_code" do
@@ -568,15 +569,6 @@ Rails.application.routes.draw do
 
     collection do
       get "receipt_status"
-    end
-  end
-
-  scope module: "hcb_code" do
-    namespace :tag do
-      resources :suggestions, only: [] do
-        post "accept"
-        post "reject"
-      end
     end
   end
 
@@ -643,6 +635,7 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      post "toggle_tag", to: "items#toggle_tag"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -723,6 +716,7 @@ Rails.application.routes.draw do
 
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
+    controllers applications: "oauth_applications"
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
@@ -986,6 +980,8 @@ Rails.application.routes.draw do
         get "submission"
         get "airtable"
         get "edit"
+        get "unsubscribe"
+        post "unsubscribe"
         post "submit"
         post "archive"
         post "unarchive"
