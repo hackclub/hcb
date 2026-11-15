@@ -2,49 +2,47 @@
 
 require "rails_helper"
 
+# Runs real Tesseract and ImageMagick on purpose: what matters is that the two
+# agree on which way is clockwise, and that a wrong guess gets caught.
 RSpec.describe ReceiptService::DetectRotation do
-  subject(:rotation) { described_class.new(path: "/tmp/receipt.png").run }
+  let(:upright) { Rails.root.join("spec/fixtures/files/rotation_receipt.png").to_s }
 
-  def stub_tesseract(output, success: true)
+  def turned(degrees)
+    # held in an ivar so the tempfile isn't collected mid-example
+    @turned = ImageProcessing::MiniMagick.source(upright).rotate(degrees).call
+    @turned.path
+  end
+
+  def stub_orientation_guess(output, success: true)
     status = instance_double(Process::Status, success?: success)
+    allow(Open3).to receive(:capture2e).and_call_original
     allow(Open3).to receive(:capture2e)
-      .with("tesseract", "/tmp/receipt.png", "stdout", "--psm", "0")
+      .with("tesseract", upright, "stdout", "--psm", "0")
       .and_return([output, status])
   end
 
-  def osd_output(rotate:, confidence:)
-    <<~OUTPUT
-      Page number: 0
-      Orientation in degrees: #{(360 - rotate) % 360}
-      Rotate: #{rotate}
-      Orientation confidence: #{confidence}
-      Script: Latin
-      Script confidence: 2.13
-    OUTPUT
-  end
-
-  it "returns the clockwise rotation needed to make the text upright" do
-    stub_tesseract(osd_output(rotate: 270, confidence: 8.35))
-    expect(rotation).to eq(270)
+  { 90 => 270, 180 => 180, 270 => 90 }.each do |applied, fix|
+    it "returns #{fix} for a receipt turned #{applied} degrees clockwise" do
+      expect(described_class.new(path: turned(applied)).run).to eq(fix)
+    end
   end
 
   it "returns nil when the image is already upright" do
-    stub_tesseract(osd_output(rotate: 0, confidence: 8.04))
-    expect(rotation).to be_nil
+    expect(described_class.new(path: upright).run).to be_nil
   end
 
-  it "returns nil when tesseract isn't confident" do
-    stub_tesseract(osd_output(rotate: 270, confidence: 0.63))
-    expect(rotation).to be_nil
+  it "returns nil when tesseract confidently proposes a rotation that reads worse" do
+    stub_orientation_guess("Rotate: 180\nOrientation confidence: 6.85\n")
+    expect(described_class.new(path: upright).run).to be_nil
   end
 
   it "returns nil when tesseract can't detect an orientation" do
-    stub_tesseract("Too few characters. Skipping this page\nError during processing.\n", success: false)
-    expect(rotation).to be_nil
+    stub_orientation_guess("Too few characters. Skipping this page\nError during processing.\n", success: false)
+    expect(described_class.new(path: upright).run).to be_nil
   end
 
-  it "returns nil when the output is missing the fields we need" do
-    stub_tesseract("Page number: 0\n")
-    expect(rotation).to be_nil
+  it "returns nil when the output has no rotation" do
+    stub_orientation_guess("Page number: 0\n")
+    expect(described_class.new(path: upright).run).to be_nil
   end
 end

@@ -13,37 +13,70 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
-  describe "#extract_textual_content!" do
-    let(:receipt) { build_receipt(receiptable: create(:hcb_code), user: create(:user)).tap(&:save!) }
-    let(:words) { ("word " * 30).split.map { |w| { word: w, confidence: 99 } } }
+  # Real Tesseract and ImageMagick, no mocks.
+  describe "#auto_rotate!" do
+    let(:upright) { Rails.root.join("spec/fixtures/files/rotation_receipt.png").to_s }
 
-    before do
-      allow(RTesseract).to receive(:new).and_return(instance_double(RTesseract, to_box: words))
+    def receipt_turned(degrees)
+      described_class.new(receiptable: create(:hcb_code), user: create(:user), upload_method: :api).tap do |receipt|
+        receipt.file.attach(
+          io: ImageProcessing::MiniMagick.source(upright).rotate(degrees).call,
+          filename: "receipt.png",
+          content_type: "image/png"
+        )
+        receipt.save!
+      end
     end
 
-    def dimensions(receipt)
-      image = MiniMagick::Image.read(receipt.file.download)
-      [image.width, image.height]
+    def rotation_needed(receipt)
+      receipt.file.blob.open { |file| ReceiptService::DetectRotation.new(path: file.path).run }
     end
 
-    it "rotates the stored image when it was uploaded sideways" do
-      allow(ReceiptService::DetectRotation).to receive(:new).and_return(instance_double(ReceiptService::DetectRotation, run: 270))
-      expect(dimensions(receipt)).to eq([454, 678])
-
-      expect { receipt.extract_textual_content! }.to(change { receipt.reload.file.blob })
-
-      expect(dimensions(receipt)).to eq([678, 454])
-      expect(receipt.file.content_type).to eq("image/png")
-      expect(receipt.file.filename.to_s).to eq("receipt.png")
-      expect(receipt.textual_content).to be_present
-      expect(receipt).to be_tesseract_ocr_text
+    it "is queued when an image receipt is uploaded" do
+      expect { receipt_turned(0) }.to have_enqueued_job(Receipt::AutoRotateJob)
     end
 
-    it "leaves the stored image alone when it is upright" do
-      allow(ReceiptService::DetectRotation).to receive(:new).and_return(instance_double(ReceiptService::DetectRotation, run: nil))
+    [90, 180, 270].each do |degrees|
+      it "turns a receipt uploaded #{degrees} degrees clockwise upright and keeps the upload" do
+        receipt = receipt_turned(degrees)
+        upload = receipt.file.blob
+
+        perform_enqueued_jobs { receipt.auto_rotate! }
+        receipt.reload
+
+        expect(rotation_needed(receipt)).to be_nil
+        expect(receipt.file.blob).not_to eq(upload)
+        expect(MiniMagick::Image.read(receipt.file.download).dimensions).to eq([542, 735])
+        expect(receipt.file.filename.to_s).to eq("receipt.png")
+        expect(receipt.file.content_type).to eq("image/png")
+        # the purge job for the replaced attachment has run by now
+        expect(receipt.original_file.blob).to eq(upload)
+        expect(upload.reload.download).to be_present
+      end
+    end
+
+    it "can be undone, and doesn't rotate again afterwards" do
+      receipt = receipt_turned(90)
+      upload = receipt.file.blob
+      receipt.auto_rotate!
+
+      receipt.restore_original_file!
+      expect(receipt.reload.file.blob).to eq(upload)
+
+      expect { receipt.auto_rotate! }.not_to(change { receipt.reload.file.blob })
+    end
+
+    it "leaves an upright receipt alone" do
+      receipt = receipt_turned(0)
+
+      expect { receipt.auto_rotate! }.not_to(change { receipt.reload.file.blob })
+      expect(receipt.original_file).not_to be_attached
+    end
+
+    it "is not triggered by text extraction" do
+      receipt = receipt_turned(90)
 
       expect { receipt.extract_textual_content! }.not_to(change { receipt.reload.file.blob })
-      expect(dimensions(receipt)).to eq([454, 678])
       expect(receipt.textual_content).to be_present
     end
   end
