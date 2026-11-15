@@ -29,7 +29,7 @@ class AchTransfersController < ApplicationController
       end
 
       format.pdf do
-        render pdf: "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})", page_height: "11in", page_width: "8.5in"
+        render_pdf "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})"
       end
 
       # works, but not being used at the moment

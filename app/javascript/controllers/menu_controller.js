@@ -24,7 +24,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this._closeMenusHandler = () => this.close()
+    this._closeMenusHandler = () => this.isOpen && this.close()
     document.addEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 

@@ -931,10 +931,6 @@ GEM
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     whitesimilarity (0.0.2)
-    wicked_pdf (2.8.2)
-      activesupport
-      ostruct
-    wkhtmltopdf-binary (0.12.6.8)
     write_xlsx (1.12.3)
       nkf
       rubyzip (>= 2.4.0, < 4.0)
@@ -1087,8 +1083,6 @@ DEPENDENCIES
   webauthn (~> 3.4)
   webmock
   whitesimilarity
-  wicked_pdf
-  wkhtmltopdf-binary (= 0.12.6.8)
   write_xlsx
   xxhash
   yellow_pages!

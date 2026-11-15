@@ -1,6 +1,7 @@
 <% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true, disposition: "inline") %>
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
+<% modal_id = local_assigns[:modal_id] || "preview_receipt_#{instance}" %>
 
 <%# When a `style` local is given, browsers keep that first `style` attribute and drop the second. %>
 <div id="receipt_<%= receipt.id %>"
@@ -51,7 +52,7 @@
         <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
               "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
             } if receipt.preview %>
       </span>
     <% elsif receipt.preview && local_assigns[:popover] %>
@@ -63,7 +64,7 @@
               "receipt-id" => receipt.id,
               "file_type"  => receipt.file.blob.content_type,
               "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
             } if receipt.preview %>
     </span>
     <% if receipt.file.blob.content_type == "application/pdf" %>
@@ -132,7 +133,7 @@
       z-index: 300;
     }
   </style>
-  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "preview_receipt_#{instance}" %>" style="z-index: 300;">
+  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="z-index: 300;">
     <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
       <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
     </a>
@@ -146,8 +147,11 @@
         </div>
       <% end %>
 
-      <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column; overflow-y: auto;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
-        <%= render partial: "receipts/details", locals: { receipt: } %>
+      <div style="border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+        <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0;">
+          <%= render partial: "receipts/details", locals: { receipt: } %>
+        </div>
+        <%= local_assigns[:details_footer] %>
       </div>
     </div>
 
@@ -165,6 +169,9 @@
           </a>
         </div>
       </ul>
+
+      <%# Above the tabs' content, which can run past the bottom of the screen %>
+      <%= local_assigns[:details_footer] %>
 
         <% if receipt.file.blob.content_type == "application/pdf" %>
           <iframe data-receipt-tabs-target="preview" data-src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
