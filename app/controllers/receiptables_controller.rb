@@ -44,7 +44,7 @@ class ReceiptablesController < ApplicationController
   # The transaction's HCB code, whether the receiptable is the code itself or
   # its ledger item. Nil for every other receiptable.
   def hcb_code
-    @hcb_code ||= @receiptable.try(:local_hcb_code)
+    @hcb_code ||= @receiptable.try(:receipt_hcb_code)
   end
 
   # True when the request came from the signed link in a receipt request email,

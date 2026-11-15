@@ -224,6 +224,13 @@ RSpec.describe Receiptable do
       expect(attach_receipt_to(create(:reimbursement_expense)).hcb_code).to be_nil
       expect(attach_receipt_to(nil, user: create(:user)).hcb_code).to be_nil
     end
+
+    it "is nil for a canonical transaction, even though it has a local HCB code" do
+      canonical_transaction = create(:canonical_transaction)
+      expect(canonical_transaction.local_hcb_code).to be_present
+
+      expect(attach_receipt_to(canonical_transaction).hcb_code).to be_nil
+    end
   end
 
   describe "card locking" do
