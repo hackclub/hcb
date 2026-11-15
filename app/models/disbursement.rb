@@ -89,6 +89,7 @@ class Disbursement < ApplicationRecord
     event :mark_errored do
       after do
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        remove_splits!
         repayment&.revert_categories!
       end
       transitions from: [:pending, :in_transit], to: :errored
@@ -98,6 +99,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        remove_splits!
         repayment&.revert_categories!
         create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
@@ -286,6 +288,12 @@ class Disbursement < ApplicationRecord
   end
 
   private
+
+  # A transfer that never went through wasn't spent on anything, so its
+  # sending side loses the split by the repaid expenses' categories.
+  def remove_splits!
+    TransactionSplit.where(splittable: canonical_pending_transactions).destroy_all
+  end
 
   def repayment_allocations_match_amount
     unless repayment && repayment.allocations.reject(&:marked_for_destruction?).sum { |allocation| allocation.amount_cents.to_i } == amount

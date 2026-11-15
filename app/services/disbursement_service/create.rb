@@ -85,6 +85,7 @@ module DisbursementService
           ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
           # 4. Front if required
           o_cpt.update(fronted: @fronted)
+          split_by_repaid_category!(o_cpt)
 
           if disbursement.scheduled_on.nil?
             # We only want to import Incoming Disbursements AFTER the scheduled date
@@ -169,10 +170,34 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      # A transfer has one category, so only inherit a shared expense category.
+      # A transfer has one category, so it only inherits one the expenses
+      # share. Otherwise it's split by category (see split_by_repaid_category!).
       when "repayment"
-        slugs = @repaid_ledger_items.map { |item| Repayment::Allocation.new(repaid_ledger_item: item).repaid_category&.slug }.uniq
-        slugs.first if slugs.size == 1
+        repaid_items_by_category_slug.keys.first if repaid_items_by_category_slug.size == 1
+      end
+    end
+
+    # The repaid expenses under each category's slug (nil for uncategorized).
+    # Memoized because repaying them recategorizes them as repayments.
+    def repaid_items_by_category_slug
+      @repaid_items_by_category_slug ||= @repaid_ledger_items.group_by { |item| Repayment::Allocation.new(repaid_ledger_item: item).repaid_category&.slug }
+    end
+
+    # When the repaid expenses' categories differ, the sender's side carries
+    # each category for its share of the transfer, so the sender's reports show
+    # what the money was spent on. Uncategorized expenses stay with the rest of
+    # the transaction, which has no category of its own.
+    def split_by_repaid_category!(pending_transaction)
+      return if @source_transaction_category_slug.present? || repaid_items_by_category_slug.size < 2
+
+      repaid_items_by_category_slug.each do |slug, items|
+        next if slug.nil?
+
+        pending_transaction.splits.create!(
+          amount_cents: items.sum(&:amount_cents),
+          category: TransactionCategory.find_or_create_by!(slug:),
+          memo: items.one? ? "Repaying #{items.first.memo}" : "Repaying #{items.size} expenses"
+        )
       end
     end
 
