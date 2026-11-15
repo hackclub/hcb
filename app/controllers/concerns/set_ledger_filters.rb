@@ -11,6 +11,29 @@ module SetLedgerFilters
     missing_receipts merchant direction category
   ].freeze
 
+  TYPE_PREDICATES = {
+    "ach_transfer"           => { "$eq": "AchTransfer" },
+    "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
+    "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
+    "card_charge"            => { "$eq": "CardCharge" },
+    "check_deposit"          => { "$eq": "CheckDeposit" },
+    "donation"               => { "$eq": "Donation" },
+    "invoice"                => { "$eq": "Invoice" },
+    "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+    "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+    "wire"                   => { "$eq": "Wire" },
+    "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+    "wise_transfer"          => { "$eq": "WiseTransfer" }
+  }.freeze
+
+  # Zero-amount items are subject to a status allowlist.
+  VISIBLE = {
+    "$or": [
+      { amount_cents: { "$ne": 0 } },
+      { status: { "$in": ["settled", "pending", "reversed"] } }
+    ]
+  }.freeze
+
   included do
     private
 
@@ -114,35 +137,9 @@ module SetLedgerFilters
       query << { category: { "$eq": @category.slug } } if @category.present?
       query << { merchant: { "$eq": @merchant } } if @merchant.present?
 
-      if @type.present?
-        linked_object_type = {
-          "ach_transfer"           => { "$eq": "AchTransfer" },
-          "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
-          "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
-          "card_charge"            => { "$eq": "CardCharge" },
-          "check_deposit"          => { "$eq": "CheckDeposit" },
-          "donation"               => { "$eq": "Donation" },
-          "invoice"                => { "$eq": "Invoice" },
-          "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-          "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
-          "wire"                   => { "$eq": "Wire" },
-          "paypal_transfer"        => { "$eq": "PaypalTransfer" },
-          "wise_transfer"          => { "$eq": "WiseTransfer" }
-        }[@type]
+      query << { linked_object_type: TYPE_PREDICATES[@type] } if @type.present?
 
-        query << { linked_object_type: }
-      end
-
-      # Amount trumps status: an item that moved any non-zero amount should
-      # always render (e.g. a declined/failed transaction that still posted a
-      # partial charge), regardless of its status. Only zero-amount items are
-      # subject to the status allowlist.
-      query << {
-        "$or": [
-          { amount_cents: { "$ne": 0 } },
-          { status: { "$in": ["settled", "pending", "reversed"] } }
-        ]
-      }
+      query << VISIBLE
       Ledger::Query.new({ "$and": query })
     end
 

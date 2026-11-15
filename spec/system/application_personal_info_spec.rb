@@ -46,4 +46,15 @@ RSpec.describe "Application personal info page", type: :system do
     select 15.years.ago.year.to_s, from: "event_application_birthday_1i"
     expect(page).to have_css("#{cosigner_field}[required]")
   end
+
+  it "rejects the applicant's own email as the cosigner's" do
+    user = create(:user, email: "orpheus+teen@hackclub.com", birthday: 15.years.ago.to_date)
+    visit_personal_info_as(user)
+
+    fill_in "event_application_cosigner_email", with: user.email
+    expect(page.evaluate_script("document.querySelector('#{cosigner_field}').validity.patternMismatch")).to be(true)
+
+    fill_in "event_application_cosigner_email", with: "parent@hackclub.com"
+    expect(page.evaluate_script("document.querySelector('#{cosigner_field}').validity.valid")).to be(true)
+  end
 end
