@@ -1,0 +1,41 @@
+<%# locals: (candidate:, ledger_item:) %>
+
+<% date = candidate.datetime.strftime("%b %-d, %Y") %>
+<% expense = ledger_item.amount_cents.negative? ? ledger_item : candidate %>
+<% confirm = if ledger_item.amount_cents.negative?
+               "Mark \"#{ledger_item.memo}\" as repaid by \"#{candidate.memo}\" (#{date})?"
+             else
+               "Mark this as repaying \"#{candidate.memo}\" (#{date})?"
+             end %>
+<% confirm += " Neither will count toward #{expense.primary_ledger.event.name}'s income or spending." %>
+<% transfer = [ledger_item, candidate].find { |item| item.linked_object_type == "Disbursement::Incoming" }&.linked_object %>
+<% if transfer %>
+  <% category = Repayment::Allocation.new(repaid_ledger_item: expense).repaid_category %>
+  <% confirm += " #{transfer.source_event.name}'s side of the transfer will be #{category ? "categorized as #{category.label}" : "left without a category"}." %>
+<% end %>
+<% confirm += " This can't be undone." %>
+
+<tr class="transaction transaction--<%= candidate.sign %>">
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= candidate.humanized_type %>">
+      <%= render "ledger/items/icon", ledger_item: candidate %>
+    </div>
+  </td>
+  <td><%= date %></td>
+  <td class="transaction__memo transaction__memo--fluid min-w-[12rem]">
+    <div>
+      <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= candidate.memo %>">
+        <%= render "ledger/items/memo/memo_text", item: candidate %>
+      </div>
+    </div>
+  </td>
+  <td class="nowrap text-right"><%= candidate.amount.format %></td>
+  <td class="text-right">
+    <%= button_to "Choose",
+                  ledger_item_repayment_path(ledger_item),
+                  params: { other_ledger_item_id: candidate.hashid },
+                  class: "btn btn-small",
+                  aria: { label: "Choose #{candidate.memo}, #{candidate.amount.abs.format} on #{date}" },
+                  form: { data: { turbo_frame: "_top", turbo_confirm: confirm, turbo_confirm_danger: true } } %>
+  </td>
+</tr>

@@ -23,6 +23,23 @@ RSpec.describe StaticPageService::Index, type: :model do
     end
   end
 
+  describe "#active_card_counts" do
+    it "counts active, main-ledger cards per event in one query" do
+      event = create(:event)
+      other_event = create(:event)
+      empty_event = create(:event)
+
+      create_list(:stripe_card, 2, :with_stripe_id, event:)
+      create(:stripe_card, :with_stripe_id, event:, stripe_status: "inactive")
+      create(:stripe_card, :with_stripe_id, event:, subledger: create(:subledger, event:))
+      create(:stripe_card, :with_stripe_id, event: other_event)
+
+      result = service.active_card_counts([event, other_event, empty_event])
+
+      expect(result).to eq(event.id => 2, other_event.id => 1)
+    end
+  end
+
   describe "#invites" do
     it "returns invites for that user" do
       result = service.invites
