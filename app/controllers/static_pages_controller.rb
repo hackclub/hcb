@@ -44,9 +44,9 @@ class StaticPagesController < ApplicationController
     @applications = @service.applications
 
     if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     else
-      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     end
 
     @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
