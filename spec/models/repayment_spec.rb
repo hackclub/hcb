@@ -8,7 +8,13 @@ RSpec.describe Repayment, type: :model do
   let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00, memo: "Check from Sam") }
 
   def repayment_by(income_ct, expense_ct = expense, amount_cents: 100_00)
-    Repayment.new(repaid_ledger_item: expense_ct.ledger_item.reload, repaying_ledger_item: income_ct.ledger_item.reload, amount_cents:)
+    Repayment.new(repaying_ledger_item: income_ct.ledger_item.reload).tap do |r|
+      r.allocations.build(repaid_ledger_item: expense_ct.ledger_item.reload, amount_cents:)
+    end
+  end
+
+  def repayment_by_transfer(expense_ct, disbursement)
+    Repayment.new(disbursement:).tap { |r| r.allocations.build(repaid_ledger_item: expense_ct.ledger_item, amount_cents: 100_00) }
   end
 
   def category_of(ct)
@@ -23,7 +29,7 @@ RSpec.describe Repayment, type: :model do
     it "categorizes both sides as a repayment" do
       repayment = repayment_by(income)
       repayment.save!
-      repayment.apply_categories!
+      repayment.allocations.each(&:apply_categories!)
 
       expect(category_of(expense)).to eq(Repayment::CATEGORY_SLUG)
       expect(category_of(income)).to eq(Repayment::CATEGORY_SLUG)
@@ -35,7 +41,7 @@ RSpec.describe Repayment, type: :model do
       repayment = repayment_by(smaller, amount_cents: 50_00)
 
       expect(repayment).not_to be_valid
-      expect(repayment.errors[:amount_cents]).to include("must match the full amount of the repaid transaction")
+      expect(repayment.errors[:"allocations.amount_cents"]).to include("must match the full amount of the repaid transaction")
     end
 
     it "rejects money in on another organization's ledger" do
@@ -44,7 +50,7 @@ RSpec.describe Repayment, type: :model do
       repayment = repayment_by(elsewhere)
 
       expect(repayment).not_to be_valid
-      expect(repayment.errors[:repaid_ledger_item]).to be_present
+      expect(repayment.errors[:"allocations.repaid_ledger_item"]).to be_present
     end
 
     it "rejects donations and invoices" do
@@ -76,11 +82,11 @@ RSpec.describe Repayment, type: :model do
       repayment = repayment_by(other_income)
 
       expect(repayment).not_to be_valid
-      expect(repayment.errors[:repaid_ledger_item]).to include("has already been repaid")
+      expect(repayment.errors[:"allocations.repaid_ledger_item"]).to include("has already been repaid")
     end
 
     it "rejects an expense already repaid by a transfer" do
-      Repayment.new(disbursement: create(:disbursement, event:), repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+      repayment_by_transfer(expense, create(:disbursement, event:)).save!(validate: false)
 
       expect(repayment_by(income)).not_to be_valid
     end
@@ -88,7 +94,7 @@ RSpec.describe Repayment, type: :model do
     it "puts both sides back when reverted, keeping a category set since" do
       repayment = repayment_by(income)
       repayment.save!
-      repayment.apply_categories!
+      repayment.allocations.each(&:apply_categories!)
       TransactionCategoryService.new(model: income.reload).set!(slug: "donations", assignment_strategy: "manual")
 
       repayment.revert_categories!
@@ -127,7 +133,7 @@ RSpec.describe Repayment, type: :model do
     it "includes repayments by a ledger item and excludes failed transfers" do
       by_income = repayment_by(income).tap(&:save!)
       rejected_expense = create(:canonical_transaction, event:, amount_cents: -100_00)
-      rejected = Repayment.new(disbursement: create(:disbursement, :rejected, event:), repaid_ledger_item: rejected_expense.ledger_item, amount_cents: 100_00)
+      rejected = repayment_by_transfer(rejected_expense, create(:disbursement, :rejected, event:))
       rejected.save!(validate: false)
 
       expect(Repayment.not_failed).to include(by_income)
@@ -137,9 +143,11 @@ RSpec.describe Repayment, type: :model do
 
   describe "database constraint" do
     it "requires exactly one of a disbursement or a repaying ledger item" do
-      neither = Repayment.new(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
+      neither = Repayment.new
       both = repayment_by(income).tap { |r| r.disbursement = create(:disbursement, event:) }
 
+      expect(neither).not_to be_valid
+      expect(both).not_to be_valid
       expect { neither.save!(validate: false) }.to raise_error(ActiveRecord::StatementInvalid, /repayments_disbursement_or_repaying_ledger_item/)
       expect { both.save!(validate: false) }.to raise_error(ActiveRecord::StatementInvalid, /repayments_disbursement_or_repaying_ledger_item/)
     end

@@ -117,11 +117,18 @@ class CardGrant < ApplicationRecord
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
+  # mirrors `#suspected_fraud?`
+  scope :suspected_fraud, -> {
+    joins(:pre_authorization, :card_grant_setting)
+      .where(card_grant_pre_authorizations: { aasm_state: "fraudulent" }, card_grant_settings: { block_suspected_fraud: true })
+  }
+  scope :not_suspected_fraud, -> { where.not(id: suspected_fraud) }
+
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
 
-  scope :accepted, -> { active.joins(:stripe_card).merge(StripeCard.active) }
-  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.where(stripe_status: "inactive")) }
+  scope :accepted, -> { active.not_suspected_fraud.joins(:stripe_card).merge(StripeCard.active) }
+  scope :frozen, -> { active.not_suspected_fraud.joins(:stripe_card).merge(StripeCard.where(stripe_status: "inactive")) }
   scope :returned, -> { canceled.where.missing(:reimbursement_report) }
   scope :converted_to_reimbursement, -> { canceled.joins(:reimbursement_report) }
 
@@ -130,6 +137,7 @@ class CardGrant < ApplicationRecord
     "not_activated"              => "Invited",
     "accepted"                   => "Active",
     "frozen"                     => "Frozen",
+    "suspected_fraud"            => "Fraudulent",
     "expired"                    => "Expired",
     "returned"                   => "Returned",
     "converted_to_reimbursement" => "Converted to reimbursement"

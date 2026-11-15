@@ -53,7 +53,7 @@ RSpec.describe "ledger/items/_repayments" do
   end
 
   it "doesn't offer to unmark a repayment transfer" do
-    Repayment.new(disbursement: create(:disbursement, event:), repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+    Repayment.new(disbursement: create(:disbursement, event:)).tap { |r| r.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00) }.save!(validate: false)
 
     render partial: "ledger/items/repayments", locals: { ledger_item: expense.ledger_item.reload }
 

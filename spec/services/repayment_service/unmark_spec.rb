@@ -32,7 +32,7 @@ RSpec.describe RepaymentService::Unmark do
   end
 
   it "leaves repayment transfers to be undone by rejecting them" do
-    repayment = Repayment.new(disbursement: create(:disbursement, event:), repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
+    repayment = Repayment.new(disbursement: create(:disbursement, event:)).tap { |r| r.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00) }
     repayment.save!(validate: false)
 
     expect { described_class.new(repayment:).run }.to raise_error(ArgumentError)

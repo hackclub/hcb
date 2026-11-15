@@ -16,16 +16,16 @@ RSpec.describe RepaymentService::Mark do
     repayment = mark(income, expense)
 
     expect(repayment).to be_persisted
-    expect(repayment.repaid_ledger_item).to eq(expense.ledger_item)
+    expect(repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item)
     expect(repayment.repaying_ledger_item).to eq(income.ledger_item)
-    expect(repayment.amount_cents).to eq(100_00)
+    expect(repayment.allocations.sole.amount_cents).to eq(100_00)
     expect(repayment.created_by).to eq(user)
   end
 
   it "marks an expense as repaid by income" do
     repayment = mark(expense, income)
 
-    expect(repayment.repaid_ledger_item).to eq(expense.ledger_item)
+    expect(repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item)
     expect(repayment.repaying_ledger_item).to eq(income.ledger_item)
   end
 
@@ -55,10 +55,10 @@ RSpec.describe RepaymentService::Mark do
     expect { mark(income, other_expense) }.to raise_error(described_class::UserError)
   end
 
-  it "reports a mismatched amount and leaves categories alone" do
+  it "won't match a different amount, and leaves categories alone" do
     smaller = create(:canonical_transaction, event:, amount_cents: 50_00)
 
-    expect { mark(smaller, expense) }.to raise_error(described_class::UserError, /must match the full amount/)
+    expect { mark(smaller, expense) }.to raise_error(described_class::UserError, "That transaction can't be matched with this one.")
     expect(Repayment.count).to eq(0)
     expect(expense.reload.category.slug).to eq("food-fun")
   end

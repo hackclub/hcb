@@ -50,7 +50,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
 
         expect(flash[:success]).to eq("Marked as a repayment.")
         expect(response).to redirect_to(hcb_code_path(income.ledger_item.hcb_code))
-        expect(income.ledger_item.reload.repaying_repayment.repaid_ledger_item).to eq(expense.ledger_item)
+        expect(income.ledger_item.reload.repaying_repayment.repaid_ledger_items).to contain_exactly(expense.ledger_item)
       end
 
       it "marks an expense as repaid by the chosen income" do

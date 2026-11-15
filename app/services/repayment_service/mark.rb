@@ -25,8 +25,10 @@ module RepaymentService
         # checks without this. Locking in id order keeps them from deadlocking.
         Ledger::Item.where(id: [repaid.id, repaying.id]).order(:id).lock.load
 
-        repayment = Repayment.create!(repaid_ledger_item: repaid, repaying_ledger_item: repaying, amount_cents: repaying.amount_cents, created_by: @created_by)
-        repayment.apply_categories!
+        repayment = Repayment.new(repaying_ledger_item: repaying, created_by: @created_by)
+        repayment.allocations.build(repaid_ledger_item: repaid, amount_cents: repaying.amount_cents)
+        repayment.save!
+        repayment.allocations.each(&:apply_categories!)
         repayment
       end
     rescue ActiveRecord::RecordInvalid => e
@@ -41,13 +43,10 @@ module RepaymentService
       @event ||= @ledger_item.primary_ledger&.event
     end
 
-    # Looked up among the organization's own transactions, so an id from
-    # another ledger is treated as not found rather than revealed.
+    # Looked up among what the picker offers, so an id from another ledger or
+    # of a different amount is treated as not found rather than revealed.
     def other_ledger_item
-      @other_ledger_item ||= begin
-        candidates = @ledger_item.amount_cents.negative? ? Repayment.unused_repaying_ledger_items(event) : Repayment.unrepaid_ledger_items(event)
-        candidates.find_by_hashid(@other_ledger_item_hashid)
-      end
+      @other_ledger_item ||= Repayment.match_candidates(@ledger_item).find_by_hashid(@other_ledger_item_hashid)
     end
 
   end
