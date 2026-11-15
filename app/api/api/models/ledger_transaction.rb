@@ -84,12 +84,6 @@ module Api
 
       def not_admin_only_comments_count = not_admin_only_comment_count
 
-      # Ledger::Item#receipts reads both the item and its HCB code (or, for a
-      # reimbursement payout, the expense); prefer the copies the v3 ledger query
-      # preloaded so the serializer doesn't query per transaction. A payout has
-      # none preloaded and falls through to the expense's.
-      def receipts = preloaded_receipts || __getobj__.receipts
-
       def type
         return :card_grant if outgoing_disbursement? && special_appearance&.key == "card_grant"
         return :card_force_capture if hcb_code&.stripe_force_capture?
