@@ -63,17 +63,21 @@ Testing: `require "active_job/continuation/test_helper"` and include `ActiveJob:
 
 ## Cron check-ins
 
-For scheduled jobs that must complete, wrap the work in an AppSignal cron check-in:
+For scheduled jobs that must complete, send an AppSignal cron check-in once the work is done:
 
 ```ruby
 def perform
-  Appsignal::CheckIn.cron("transaction_engine_nightly_job") do
-    # ...
-  end
+  # ...the job's work...
+
+  Appsignal::CheckIn.cron("transaction_engine_nightly_job")
 end
 ```
 
-AppSignal only sends the finish event when the block returns, so a scheduled run that's interrupted, fails, or never runs shows up as a missed check-in. Name the check-in after the job's key in `config/schedule.yml`, and put it in the job (the scheduled unit), not in the services it calls, so ad-hoc runs from the console don't count as scheduled runs. To run one by hand and have it count, use `SomeJob.perform_now`.
+A scheduled run that fails, never runs, or doesn't finish within the monitor's window sends no check-in and shows up as missed.
+
+Use this finish-only form, not the block form (`Appsignal::CheckIn.cron(id) { ... }`). The block form also sends a start event, and every restart of an interrupted run sends another one. AppSignal counts each extra start as a separate unscheduled run, so the scheduled run is reported missed even when the job finishes in time.
+
+Name the check-in after the job's key in `config/schedule.yml`, and put it in the job (the scheduled unit), not in the services it calls, so ad-hoc runs from the console don't count as scheduled runs. To run one by hand and have it count, use `SomeJob.perform_now`.
 
 ## Shutdown timeout and cron
 
