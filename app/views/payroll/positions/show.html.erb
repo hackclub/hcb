@@ -192,8 +192,8 @@
                   <%= render_money invoice.amount_cents %>
 
                   <% if (fee_details = invoice.estimated_fee_details).present? %>
-                    <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details.reason %>">
-                      + <%= render_money fee_details.amount_cents %> fee
+                    <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details[:reason] %>">
+                      + <%= render_money fee_details[:amount_cents] %> fee
                     </span>
                   <% end %>
                 <% end %>

@@ -108,16 +108,13 @@ module Payroll
     end
 
     def estimated_fee_details
-      fee_cents = Payment.estimated_fee_cents(amount, payroll_position.event, payroll_position.legal_entity.default_payout_method)
+      payout_method = payroll_position.legal_entity&.default_payout_method
+      return nil if payout_method.nil?
 
-      if fee_cents.zero?
-        nil
-      else
-        {
-          amount_cents: fee_cents,
-          reason: fee_cents == 0 ? nil : payroll_position.legal_entity.default_payout_method.fee_reason
-        }
-      end
+      fee_cents = Payment.estimated_fee_cents(amount, payroll_position.event, payout_method)
+      return nil if fee_cents.zero?
+
+      { amount_cents: fee_cents, reason: payout_method.fee_reason }
     end
 
     private
