@@ -42,6 +42,25 @@ RSpec.describe Subscription::Detect do
     expect(charge(90, card: cards[1]).ledger_items.count).to eq(4)
   end
 
+  it "separates two subscriptions at the same price on one card" do
+    first = [0, 30, 60].map { |day| charge(day) }.last
+    second = [12, 42, 72].map { |day| charge(day) }.last
+
+    expect(first.ledger_items.count).to eq(3)
+    expect(second.ledger_items.count).to eq(3)
+    expect(second).not_to eq(first)
+  end
+
+  it "finds a subscription among one-off purchases at the same price" do
+    charge(0)
+    charge(37) # too far off to be the previous cycle
+    charge(67)
+    charge(81) # a one-off
+    charge(97)
+
+    expect(charge(127).ledger_items.count).to eq(4)
+  end
+
   it "ignores a cycle that isn't a known cadence" do
     [0, 43, 86, 129].each { |day| charge(day) }
 

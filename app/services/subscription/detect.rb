@@ -8,12 +8,15 @@ class Subscription
   # Idempotent: a charge that is already linked is left alone.
   class Detect
     MIN_CHARGES = 3
-    # Three yearly charges would need over two years of history.
     MIN_YEARLY_CHARGES = 2
-    # Closer together than this is a retry or a repeat purchase.
-    MIN_GAP_DAYS = 5
     # A gap may span this many cycles (two skipped months, say).
     MAX_CYCLES = 3
+    # How far a charge may be from a whole cycle to start a subscription, as a
+    # fraction. Tighter than Subscription::TOLERANCE, which is for charges
+    # joining one: at 20%, real data had chains forming among frequent purchases
+    # of one price. Only known cadences are tried for the same reason: free-form
+    # ones (every 43 days) were almost all coincidences.
+    CHAIN_TOLERANCE = 0.1
     # The card is a signal, not a requirement. Charges on someone else's card
     # can still form or join a subscription, but need stronger evidence: this
     # many charges, the exact amount, and no early or skipped cycles.
@@ -65,18 +68,18 @@ class Subscription
     end
 
     # Tries, in order: this cardholder's charges of this exact amount (a flat
-    # price), all of this cardholder's charges (usage billing, which has to fit
-    # strictly), then charges of this exact amount on any card.
+    # price), all of this cardholder's charges (usage billing), then charges of
+    # this exact amount on any card.
     def create_from_history
       mine = history.select { |item| same_cardholder?(item.linked_object.stripe_card) }
 
-      create(same_amount(mine), variable_amount: false) ||
-        create(mine, variable_amount: true) ||
-        create(same_amount(history), variable_amount: false, strict: true, min_charges: MIN_OTHER_CARD_CHARGES)
+      flat(same_amount(mine), max_cycles: MAX_CYCLES, min_charges: MIN_CHARGES) ||
+        variable(mine) ||
+        flat(same_amount(history), max_cycles: 1, min_charges: MIN_OTHER_CARD_CHARGES)
     end
 
     def same_amount(items)
-      without_repeats(items.select { |item| item.amount_cents == @item.amount_cents })
+      items.select { |item| item.amount_cents == @item.amount_cents }
     end
 
     # This merchant's unlinked online charges on the ledger, up to this one.
@@ -90,24 +93,66 @@ class Subscription
                                .reject { |item| item.linked_object.card_present? }
     end
 
-    def without_repeats(items)
-      items.each_with_object([]) do |item, kept|
-        kept << item if kept.empty? || days_between(kept.last, item) >= MIN_GAP_DAYS
+    # A flat price: the longest chain of same-amount charges ending at this one.
+    # A chain that skips a cycle at most steps is really a longer cadence, and
+    # between equally long chains the one that skips fewest wins, so a monthly
+    # charge isn't read as biweekly with gaps.
+    def flat(items, max_cycles:, min_charges:)
+      cadence_days, (chain, _skips) = Subscription::CADENCES.keys
+                                                            .map { |days| [days, chain(items, days, max_cycles)] }
+                                                            .reject { |_days, (chain, skips)| skips * 2 > chain.size - 1 }
+                                                            .max_by { |_days, (chain, skips)| [chain.size, -skips] }
+      return if chain.nil?
+
+      # Three yearly charges would need over two years of history.
+      min_charges = MIN_YEARLY_CHARGES if cadence_days == 365 && max_cycles > 1
+
+      create(chain, variable_amount: false, cadence_days:) if chain.size >= min_charges
+    end
+
+    # Walks back from this charge one cycle at a time, taking the charge closest
+    # to each step and skipping up to max_cycles - 1 cycles. Walking a chain,
+    # rather than requiring every charge to fit, finds a subscription among
+    # one-off purchases, retries, and a second subscription at the same price.
+    def chain(items, cadence_days, max_cycles)
+      chain = [@item]
+      skips = 0
+
+      loop do
+        earlier = items.select { |item| item.datetime < chain.first.datetime }
+        step, previous = (1..max_cycles).filter_map do |k|
+          closest = earlier.min_by { |item| off_by(item, chain.first, k * cadence_days) }
+          [k, closest] if closest && off_by(closest, chain.first, k * cadence_days) <= CHAIN_TOLERANCE * cadence_days
+        end.first
+        return [chain, skips] if previous.nil?
+
+        skips += 1 if step > 1
+        chain.unshift(previous)
       end
+    end
+
+    def off_by(earlier, later, days)
+      (days_between(earlier, later) - days).abs
+    end
+
+    # Usage billing: every charge from the merchant, each gap exactly one cycle
+    # of the same known cadence.
+    def variable(items)
+      return if items.size < MIN_CHARGES
+
+      gaps = items.each_cons(2).map { |a, b| days_between(a, b) }
+      cadence_days = Subscription::CADENCES.keys.find do |days|
+        gaps.all? { |gap| (gap - days).abs <= Subscription::TOLERANCE * days }
+      end
+
+      create(items, variable_amount: true, cadence_days:) if cadence_days
     end
 
     def days_between(a, b)
       (b.datetime - a.datetime) / 1.day
     end
 
-    # Strict allows no skipped cycles and no yearly-from-two-charges.
-    def create(items, variable_amount:, strict: variable_amount, min_charges: MIN_YEARLY_CHARGES)
-      return if items.size < min_charges
-
-      cadence_days = fit_cadence(items.each_cons(2).map { |a, b| days_between(a, b) }, strict:)
-      return if cadence_days.nil?
-      return if items.size < MIN_CHARGES && (strict || cadence_days != 365)
-
+    def create(items, variable_amount:, cadence_days:)
       subscription = Subscription.new(
         ledger: @ledger,
         merchant_key: @merchant_key,
@@ -128,21 +173,6 @@ class Subscription
       end
 
       subscription.tap(&:score!) if subscription.persisted?
-    end
-
-    # The cycle length in days, or nil. The typical (median) gap has to be close
-    # to a known cadence (31 days is monthly), and every gap within tolerance of
-    # a whole number of cycles. Strict allows no skipped cycles.
-    #
-    # Only known cadences: on real data, free-form ones (every 43 days) were
-    # almost all coincidences between unrelated purchases.
-    def fit_cadence(gaps, strict:)
-      typical = gaps.sort[(gaps.size - 1) / 2]
-      days = Subscription::CADENCES.keys.find { |known| (typical - known).abs <= Subscription::TOLERANCE * known }
-      return if days.nil?
-
-      cycles = strict ? [1] : 1..MAX_CYCLES
-      days if gaps.all? { |gap| cycles.any? { |k| (gap - (k * days)).abs <= Subscription::TOLERANCE * days } }
     end
 
   end

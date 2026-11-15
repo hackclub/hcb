@@ -48,8 +48,9 @@
 #
 # What is covered, and how
 #
-#   Flat price on a cadence     3 charges of one amount, evenly spaced
-#                               (2 for yearly). Up to 2 skipped cycles.
+#   Flat price on a cadence     A chain of 3 charges of one amount, each a
+#                               cycle (within 10%) before the next. 2 for
+#                               yearly. Up to 2 skipped cycles.
 #   Usage-based / foreign       3 charges of any amount, every gap exactly one
 #   currency                    cycle. Marked variable_amount.
 #   Late charge (locked card)   Any charge after the due date links. The due
@@ -62,8 +63,9 @@
 #                               else's card needs stronger evidence: the exact
 #                               amount on time to join a subscription, 4 exact
 #                               charges with no skipped cycle to start one.
-#   Several at one merchant     Each price is its own subscription.
-#   Retry / double charge       Charges within 5 days of the last are skipped.
+#   Several at one merchant     Each chain is its own subscription, even at
+#                               the same price on the same card.
+#   Retry, one-off purchase     Left out of the chain.
 #   In-person purchases         Chip, swipe and tap charges are ignored.
 #   Cancelled                   lapsed? once a whole cycle is missed.
 #
@@ -84,7 +86,6 @@
 # Not covered yet
 #
 #   ACH and other rails         The schema allows them; nothing detects them.
-#   Two subscriptions at one merchant for the same price on one card
 #   A usage-based subscription moved to a different person's card: found
 #   again as new.
 #   Cycles other than the seven above.
