@@ -199,4 +199,25 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(item.reload.memo).not_to eq("Nope")
     end
   end
+
+  context "as an auditor" do
+    before { create_session(create(:user, :make_auditor), verified: true) }
+
+    describe "GET #show" do
+      it "lists comments on the item and its HCB code, and posts new ones to the item" do
+        hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+        item = hcb_code.ledger_item
+        on_item = create(:comment, commentable: item, content: "On the item")
+        on_code = create(:comment, :legacy_on_hcb_code, commentable: hcb_code, content: "On the code")
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        page = Nokogiri::HTML5(response.body)
+        expect(page.at_css("#comment-#{on_item.hashid}")).to be_present
+        expect(page.at_css("#comment-#{on_code.hashid}")).to be_present
+        expect(page.at_css("form[action='#{ledger_item_comments_path(item)}']")).to be_present
+      end
+    end
+  end
 end

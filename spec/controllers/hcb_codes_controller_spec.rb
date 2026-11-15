@@ -35,6 +35,18 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
     end
 
+    it "posts comments to the code's ledger item" do
+      item_hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+      ledger_item = item_hcb_code.ledger_item
+
+      get :show, params: { id: item_hcb_code.hashid }
+
+      form = Nokogiri::HTML5(response.body).at_css("form[action='#{ledger_item_comments_path(ledger_item)}']")
+      expect(form).to be_present
+      expect(form.at_css("input[name='comment[commentable_type]']")["value"]).to eq("Ledger::Item")
+      expect(form.at_css("input[name='comment[commentable_id]']")["value"]).to eq(ledger_item.id.to_s)
+    end
+
     # Posting a comment in the popover reloads it, which is when the ledger row
     # behind it picks up the new comment count.
     it "updates the counts on the item's ledger row when shown in a popover" do

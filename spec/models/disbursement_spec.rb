@@ -461,7 +461,7 @@ RSpec.describe Disbursement, type: :model do
         outgoing_hcb_code.update!(ledger_item: create(:ledger_item))
 
         disbursement_comment = create(:comment, commentable: disbursement, user:)
-        outgoing_comment = create(:comment, commentable: outgoing_hcb_code, user:)
+        outgoing_comment = create(:comment, :legacy_on_hcb_code, commentable: outgoing_hcb_code, user:)
         outgoing_item_comment = create(:comment, commentable: outgoing_hcb_code.ledger_item, user:)
         incoming_comment = create(:comment, commentable: incoming_hcb_code, user:)
 

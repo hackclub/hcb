@@ -57,7 +57,7 @@
       </p>
     <% end %>
   <% end %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/form", commentable: @hcb_code.ledger_item || @hcb_code %>
 
   <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges) %>
   <% if @frame && @hcb_code.ledger_item.present? %>

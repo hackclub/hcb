@@ -75,10 +75,13 @@ class CommentsController < ApplicationController
         ]
 
         # Update the comment count on the item's ledger row, if it's behind the
-        # popover. A ledger item's comments are still stored on its HCB code;
-        # ones shared with the other side of a transfer aren't, and don't
-        # refresh the item's count yet, so there's nothing to stream for them.
-        ledger_item = commentable.ledger_item if commentable.is_a?(HcbCode)
+        # popover. Comments shared with the other side of a transfer live on the
+        # transfer and don't refresh the item's count yet, so there's nothing
+        # to stream for them.
+        ledger_item = case commentable
+                      when Ledger::Item then commentable
+                      when HcbCode then commentable.ledger_item
+                      end
         if ledger_item.present?
           streams << turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item })
         end

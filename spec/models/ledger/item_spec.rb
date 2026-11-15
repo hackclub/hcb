@@ -682,7 +682,7 @@ RSpec.describe Ledger::Item, type: :model do
       it "holds the comments left on the item itself, not on its HCB code" do
         hcb_code = create(:hcb_code, ledger_item: item)
         own = create(:comment, commentable: item)
-        create(:comment, commentable: hcb_code)
+        create(:comment, :legacy_on_hcb_code, commentable: hcb_code)
 
         expect(item.reload.comments).to contain_exactly(own)
       end
@@ -722,7 +722,7 @@ RSpec.describe Ledger::Item, type: :model do
 
       it "includes comments on the item, on its HCB code and shared with the other side of the transfer" do
         own = create(:comment, commentable: item)
-        on_code = create(:comment, commentable: hcb_code)
+        on_code = create(:comment, :legacy_on_hcb_code, commentable: hcb_code)
         shared = create(:comment, commentable: disbursement)
         create(:comment, commentable: disbursement.incoming_disbursement.local_hcb_code)
 
@@ -735,8 +735,8 @@ RSpec.describe Ledger::Item, type: :model do
       it "counts comments on both the item and its HCB code, split by admin visibility" do
         hcb_code = create(:hcb_code, ledger_item: item)
         create(:comment, commentable: item)
-        create(:comment, commentable: hcb_code)
-        create(:comment, commentable: hcb_code, admin_only: true)
+        create(:comment, :legacy_on_hcb_code, commentable: hcb_code)
+        create(:comment, :legacy_on_hcb_code, commentable: hcb_code, admin_only: true)
 
         item.refresh!
 
@@ -753,7 +753,7 @@ RSpec.describe Ledger::Item, type: :model do
         earlier_commenter = create(:user)
         create(:comment, commentable: item, user: earlier_commenter)
         code_commenter = create(:user)
-        create(:comment, commentable: create(:hcb_code, ledger_item: item), user: code_commenter)
+        create(:comment, :legacy_on_hcb_code, commentable: create(:hcb_code, ledger_item: item), user: code_commenter)
         comment = create(:comment, commentable: item, user: create(:user))
 
         expect(item.reload.comment_recipients_for(comment)).to contain_exactly(
