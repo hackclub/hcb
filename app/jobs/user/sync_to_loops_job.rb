@@ -6,7 +6,7 @@ class User
 
     def perform
       User.all.find_each(batch_size: 100) do |user|
-        user.sync_with_loops
+        UserService::SyncWithLoops.new(user_id: user.id).run
       end
     end
 

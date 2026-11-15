@@ -9,7 +9,7 @@ module GSuiteService
     end
 
     def run
-      raise ArgumentError, error_message if event.g_suites.present?
+      raise ArgumentError, error_message if event.g_suites.exists?
 
       ActiveRecord::Base.transaction do
         g_suite.save!
@@ -32,7 +32,7 @@ module GSuiteService
     private
 
     def notify_operations
-      OperationsMailer.with(g_suite_id: g_suite.id).g_suite_entering_created_state.deliver_now
+      GSuiteMailer.with(g_suite_id: g_suite.id).notify_operations_of_entering_created_state.deliver_now
     end
 
     def attrs

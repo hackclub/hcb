@@ -5,7 +5,7 @@
 # Table name: donations
 #
 #  id                                   :bigint           not null, primary key
-#  aasm_state                           :string
+#  aasm_state                           :string           not null
 #  amount                               :integer
 #  amount_received                      :integer
 #  anonymous                            :boolean          default(FALSE), not null
@@ -22,11 +22,17 @@
 #  payout_creation_balance_stripe_fee   :integer
 #  payout_creation_queued_at            :datetime
 #  payout_creation_queued_for           :datetime
+#  referrer                             :text
 #  status                               :string
 #  stripe_client_secret                 :string
 #  tax_deductible                       :boolean          default(TRUE), not null
 #  url_hash                             :string
 #  user_agent                           :text
+#  utm_campaign                         :text
+#  utm_content                          :text
+#  utm_medium                           :text
+#  utm_source                           :text
+#  utm_term                             :text
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  collected_by_id                      :bigint
@@ -53,10 +59,18 @@
 class Donation < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_mapping(in_transit: :deposited)
+
+  include Freezable
+  include UsersHelper
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -66,28 +80,39 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
+  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :fee_reimbursement, optional: true
   belongs_to :payout, class_name: "DonationPayout", optional: true
   belongs_to :recurring_donation, optional: true
   belongs_to :collected_by, class_name: "User", optional: true
 
-  before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
+  before_save :trim_utm_referrer_fields
+
+  before_create :create_stripe_payment_intent, unless: -> { recurring? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
-  after_commit :send_donation_notification
+  after_commit :send_notification
+
+  after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
-  validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
 
   scope :succeeded, -> { where(status: "succeeded") }
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
-  scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
+  scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
+  scope :tax_deductible, -> { where(tax_deductible: true) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -137,7 +162,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
@@ -148,9 +173,7 @@ class Donation < ApplicationRecord
   end
 
   def state
-    return :success if deposited?
-    return :success if in_transit? && event.can_front_balance?
-    return :info if in_transit?
+    return :success if deposited? || in_transit?
     return :warning if refunded?
     return :error if failed?
 
@@ -158,9 +181,7 @@ class Donation < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if deposited?
-    return "Deposited" if in_transit? && event.can_front_balance?
-    return "In Transit" if in_transit?
+    return "Deposited" if deposited? || in_transit?
     return "Refunded" if refunded?
     return "Failed" if failed?
 
@@ -168,9 +189,7 @@ class Donation < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (in_transit? && event.can_front_balance?)
-
-    "clock" if in_transit?
+    return "checkmark" if deposited? || in_transit?
   end
 
   def unpaid?
@@ -196,7 +215,7 @@ class Donation < ApplicationRecord
   end
 
   def arrival_date
-    arrival = self&.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and HCB processing time
     arrival + 1.day
@@ -258,16 +277,11 @@ class Donation < ApplicationRecord
   end
 
   def smart_memo
-    anonymous? ? "ANONYMOUS DONOR" : name.to_s.upcase
+    anonymous? ? "Anonymous Donor" : name.to_s
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
 
   def canonical_pending_transaction
     canonical_pending_transactions.first
@@ -289,24 +303,20 @@ class Donation < ApplicationRecord
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
   end
 
-  def remote_refunded?
-    remote_donation[:charges][:data][0][:refunded]
-  end
-
-  def amount_settled
-    canonical_transactions.sum(:amount_cents)
-  end
-
   def fee_reimbursed?
     fee_reimbursement.canonical_transaction.present?
   end
 
   def recurring?
-    recurring_donation.present?
+    recurring_donation_id.present?
   end
 
   def initial_recurring_donation?
     recurring? && recurring_donation.donations.order(created_at: :asc).first == self
+  end
+
+  def subsequent_recurring_donation?
+    recurring? && !initial_recurring_donation?
   end
 
   def name(show_anonymous: false)
@@ -315,6 +325,32 @@ class Donation < ApplicationRecord
 
   def email
     recurring_donation&.email || super
+  end
+
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
+  end
+
+  def referrer_domain
+    Addressable::URI.parse(referrer.presence)&.host
+  end
+
+  def referrer_favicon_url
+    return unless referrer_domain
+
+    "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
+  end
+
+  def avatar(size = 128)
+    gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
   end
 
   private
@@ -327,18 +363,28 @@ class Donation < ApplicationRecord
     @raw_pending_donation_transactions ||= ::RawPendingDonationTransaction.where(donation_transaction_id: id)
   end
 
-  def send_donation_notification
+  def refresh_ledger_item
+    return if ledger_item.nil?
+
+    # The item may hold a stale copy of this donation; make refresh! reread it.
+    ledger_item.association(:linked_object).reset
+    ledger_item.refresh!
+  end
+
+  def send_notification
     # only runs when status becomes succeeded, should not run on delete.
     return unless status_previously_changed?(to: "succeeded")
     # don't send for repeated recurring donations
-    return if recurring? && !initial_recurring_donation?
+    return if subsequent_recurring_donation?
 
     if first_donation?
       DonationMailer.with(donation: self).first_donation_notification.deliver_later
-    elsif includes_message?
-      DonationMailer.with(donation: self).donation_with_message_notification.deliver_later
     else
-      DonationMailer.with(donation: self).donation_notification.deliver_later
+      DonationMailer.with(donation: self).notification.deliver_later
+    end
+
+    if reached_donation_goal?
+      EventMailer.with(event:).donation_goal_reached.deliver_later
     end
   end
 
@@ -346,18 +392,36 @@ class Donation < ApplicationRecord
     self.event.donations.succeeded.size == 1
   end
 
-  def create_payment_intent_attrs
-    {
+  def reached_donation_goal?
+    return false unless event.donation_goal.present?
+    return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
+    # this prevents us from sending the email after the organization has already reached the goal
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
+
+    true
+  end
+
+  def create_payment_intent_attrs(customer)
+    attrs = {
       amount:,
+      customer: customer.id,
       currency: "usd",
       statement_descriptor: "HCB",
-      statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.name, as: :suffix),
+      statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs)
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
 
     self.stripe_payment_intent_id = payment_intent.id
 
@@ -366,6 +430,15 @@ class Donation < ApplicationRecord
 
   def assign_unique_hash
     self.url_hash = SecureRandom.hex(8)
+  end
+
+  def trim_utm_referrer_fields
+    self.referrer = referrer&.presence&.strip&.truncate(500)
+    self.utm_source = utm_source&.presence&.strip&.truncate(500)
+    self.utm_medium = utm_medium&.presence&.strip&.truncate(500)
+    self.utm_campaign = utm_campaign&.presence&.strip&.truncate(500)
+    self.utm_term = utm_term&.presence&.strip&.truncate(500)
+    self.utm_content = utm_content&.presence&.strip&.truncate(500)
   end
 
 end

@@ -6,9 +6,6 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
 
   context "when passing a raw pending donation transaction that is not yet processed" do
     it "processes into a CanonicalPendingTransaction" do
-      expect(RawPendingDonationTransaction.count).to eq(0)
-
-
       raw_pending_donation_transaction = create(:raw_pending_donation_transaction, date_posted: Date.current)
 
       expect do
@@ -39,7 +36,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
     end
 
     context "when processed" do
-      it "copies the attributes and sets fronted to true" do
+      it "copies the attributes, sets fronted to true, and sets the category to 'donations'" do
         expect do
           described_class.new(raw_pending_donation_transaction:).run
         end.to change { CanonicalPendingTransaction.count }.by(1)
@@ -49,6 +46,8 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
         expect(canonical_pending_transaction.memo).to eq(raw_pending_donation_transaction.memo)
         expect(canonical_pending_transaction.amount_cents).to eq(raw_pending_donation_transaction.amount_cents)
         expect(canonical_pending_transaction.fronted).to eq(true)
+        expect(canonical_pending_transaction.category.slug).to eq("donations")
+        expect(canonical_pending_transaction.category_mapping.assignment_strategy).to eq("automatic")
       end
     end
   end

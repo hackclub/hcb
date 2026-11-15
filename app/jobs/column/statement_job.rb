@@ -26,6 +26,9 @@ module Column
                          elsif transaction_id.start_with? "book"
                            book_transfer = ColumnService.get "/transfers/book/#{transaction_id}"
                            return book_transfer["description"]
+                         elsif transaction_id.start_with? "rttr_"
+                           realtime = ColumnService.get "/transfers/realtime/#{transaction_id}"
+                           return realtime["description"]
                          end
                          "TRANSACTION"
                        }],

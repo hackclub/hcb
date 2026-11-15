@@ -1,14 +1,6 @@
 # frozen_string_literal: true
 
 class PaypalTransferPolicy < ApplicationPolicy
-  def new?
-    admin_or_user?
-  end
-
-  def create?
-    user_who_can_transfer?
-  end
-
   def approve?
     user&.admin?
   end
@@ -17,11 +9,11 @@ class PaypalTransferPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
-  private
-
-  def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+  def mark_failed?
+    user&.admin?
   end
+
+  private
 
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?

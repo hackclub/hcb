@@ -12,7 +12,7 @@ class GsuiteService
 
   # this is a hack to work with the google library's requirement that tokens must be in files
   TOKEN_FILE = Tempfile.new("token")
-  TOKEN_FILE << Rails.application.credentials.dig(:gsuite, :token)
+  TOKEN_FILE << Credentials.fetch(:GSUITE, :TOKEN)
   TOKEN_FILE.rewind
   TOKEN_FILE.close
 
@@ -37,17 +37,6 @@ class GsuiteService
     service.authorization = authorize # calling the above method for authorization
 
     service
-  end
-
-  def get_gsuite_user(email)
-    begin
-      client.get_user(
-        email,
-        projection: "full"
-      )
-    rescue Google::Apis::ClientError
-      nil
-    end
   end
 
   def delete_gsuite_user(email)
@@ -78,7 +67,7 @@ class GsuiteService
   private
 
   def client_id
-    @client_id ||= Google::Auth::ClientId.from_hash JSON.parse(Rails.application.credentials.gsuite[:client_id_json])
+    @client_id ||= Google::Auth::ClientId.from_hash JSON.parse(Credentials.fetch(:GSUITE, :CLIENT_ID_JSON))
   end
 
   def token_store

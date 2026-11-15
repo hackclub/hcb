@@ -1,10 +1,26 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  # set Current.session - this should come first as
+  # a large portion of the code below this depends on this
+  before_action do
+    Current.session = find_current_session
+  end
+
+  # Rails falls back to every registered template format when the requested
+  # extension is unknown, so `/feed.atom~` (or `/anything.html~`) renders the
+  # real page with a 200 and scanners report it as a leftover backup file.
+  # Treat an unrecognised extension as a missing page. Limited to GET/HEAD:
+  # a few non-GET routes (e.g. donation tier deletes) abuse the format slot
+  # for an ID.
+  before_action :reject_unknown_format, if: -> { request.get? || request.head? }
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
+  include ThemeDetection
 
   protect_from_forgery
 
@@ -14,25 +30,61 @@ class ApplicationController < ActionController::Base
 
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
+  # PaperTrail registers this callback before `Current.session` is set above;
+  # re-registering moves it here so `info_for_paper_trail` can read the session.
+  before_action :set_paper_trail_controller_info
 
   # Redirect users to the onboarding page if they haven't completed it yet
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { Current.session&.update_session_timestamps }
 
-  # This cookie is used for Safari PWA prompts
+  before_action :attach_appsignal_tags
+
   before_action do
-    next if current_user.nil?
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
+  end
 
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
+  before_action do
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
+  end
+
+  # Enable Rack::MiniProfiler for auditors
+  before_action do
+    if current_user&.auditor?
+      Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
+    end
   end
 
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
+  rescue_from Rack::Timeout::RequestTimeoutException do |exception|
+    # Rack::Timeout raises wherever the request happens to be, which can be
+    # after a response has already been rendered or after another `respond_to`
+    # has negotiated a format. Calling `respond_to` again in that case raises
+    # `ActionController::RespondToMismatchError`, masking the actual timeout.
+    raise exception if performed? || response.media_type.present?
+
+    respond_to do |format|
+      format.html { render "errors/timeout" }
+      format.all { render plain: "This request timed out, sorry." }
+    end
+  end
 
   def hide_footer
     @hide_footer = true
@@ -46,7 +98,7 @@ class ApplicationController < ActionController::Base
   rescue_from ArgumentError do |exception|
     if request.format.html? && exception.message == "invalid base64"
       request.reset_session # reset your old existing session.
-      redirect_to auth_users_path # your login page.
+      redirect_to auth_users_path(require_reload: true) # your login page.
     else
       raise(exception)
     end
@@ -58,14 +110,20 @@ class ApplicationController < ActionController::Base
     if Rails.env.development?
       raise
     else
-      notify_airbrake(exception)
+      Rails.error.report(exception)
       redirect_to root_url
     end
   end
 
-  def find_current_auditor
-    current_user if admin_signed_in?
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
   end
+
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
 
   private
 
@@ -75,18 +133,25 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
-      redirect_to auth_users_path(return_to: request.url)
+      redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
+  end
+
+  def info_for_paper_trail
+    { impersonated_by_id: current_session&.impersonated_by_id }
   end
 
   def not_found
     raise ActionController::RoutingError.new("Not Found")
+  end
+
+  def reject_unknown_format
+    not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
   def set_streaming_headers
@@ -98,6 +163,21 @@ class ApplicationController < ActionController::Base
   def confetti!(emojis: nil)
     flash[:confetti] = true
     flash[:confetti_emojis] = emojis.join(",") if emojis
+  end
+
+  def attach_appsignal_tags
+    return unless defined?(Appsignal) && Appsignal.active?
+
+    error_reference = ErrorReference.from_request_id(request.uuid)
+    user_id = current_user(allow_unverified: true)&.id
+    session_id = Current.session&.id
+    ip_address = request.remote_ip
+    user_agent = request.user_agent
+    referrer = request.referrer
+    unverified_user = Current.session&.unverified?
+
+    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
+    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
   end
 
 end

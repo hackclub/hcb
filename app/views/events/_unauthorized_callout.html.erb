@@ -1,0 +1,15 @@
+<%# locals: (action: "") %>
+
+<%= render "application/callout", type: "info", title: "You can't #{action}" do %>
+  <% if @event.demo_mode? %>
+    <p class="m0">This is because this organization is in Playground Mode.</p>
+  <% else %>
+    <ul class="m0">
+      <li>This is because you're not a manager.</li>
+      <li>If you need to <%= action %>, ask your manager to change your role.</li>
+      <li>To learn more, visit
+        the <%= link_to "user roles explainer page", roles_path, data: { turbo_frame: "_top" } %>.
+      </li>
+    </ul>
+  <% end %>
+<% end %>

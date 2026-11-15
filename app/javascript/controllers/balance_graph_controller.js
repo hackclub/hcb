@@ -2,10 +2,12 @@ import { Controller } from '@hotwired/stimulus'
 import sparkline from '@fnando/sparkline'
 
 export default class extends Controller {
-  static targets = ['graph', 'stat', 'balance', 'label', 'sizing', 'size']
+  static targets = ['graph', 'stat', 'balance', 'label', 'sizing']
   static values = {
     available: Number,
+    slug: String,
   }
+
   renderBalance(amount) {
     return (
       '$' +
@@ -17,8 +19,23 @@ export default class extends Controller {
         .replace('$', '')
     )
   }
+
   connect() {
-    fetch(window.location.pathname + '/balance_by_date')
+    this.handleResize = this.handleResize.bind(this)
+
+    const getDates = (start, end) => {
+      const arr = []
+      for (
+        const day = new Date(start);
+        day <= new Date(end);
+        day.setDate(day.getDate() + 1)
+      ) {
+        arr.push(new Date(day))
+      }
+      return arr
+    }
+
+    fetch(`/${this.slugValue}/balance_by_date`)
       .then(r => r.json())
       .then(jsonData => {
         const { balanceTrend, balanceByDate: rawBalanceByDate } = jsonData
@@ -42,6 +59,19 @@ export default class extends Controller {
               ? this.availableValue
               : parseFloat(balanceByDate[date])
 
+          const mostRecentDate = balances[balances.length - 1]?.date
+          const range = getDates(new Date(date), new Date(mostRecentDate))
+          range.pop()
+          range.shift()
+          range.reverse()
+          for (const d of range) {
+            const date = d.toISOString().split('T')[0]
+            balances.push({
+              date,
+              value: value,
+            })
+          }
+
           balances.push({
             date,
             value,
@@ -50,21 +80,41 @@ export default class extends Controller {
           if (balanceByDate[date] > maxBalance) maxBalance = value
         }
 
-        this.sizingTarget.textContent = this.renderBalance(maxBalance)
-        this.graphTarget.setAttribute(
-          'width',
-          this.graphTarget.getBoundingClientRect().width + 'px'
-        )
-        this.statTarget.style.minWidth =
-          this.graphTarget.getBoundingClientRect().width + 'px'
-        this.graphTarget.classList.add(`sparkline--${balanceTrend}`)
-        sparkline(this.graphTarget, balances.reverse(), {
-          interactive: true,
-          onmousemove: this.update.bind(this),
-          onmouseout: this.clear.bind(this),
-        })
+        this.balanceTrend = balanceTrend
+        this.maxBalance = maxBalance
+        this.balances = balances.slice(0, 365).reverse()
+
+        this.drawGraph()
+        window.addEventListener('resize', this.handleResize)
       })
   }
+
+  disconnect() {
+    window.removeEventListener('resize', this.handleResize)
+  }
+
+  handleResize() {
+    if (!this.balances) return
+    this.drawGraph()
+  }
+
+  drawGraph() {
+    const width = this.graphTarget.getBoundingClientRect().width
+    this.graphTarget.setAttribute('width', width + 'px')
+    this.statTarget.style.minWidth = width + 'px'
+
+    this.sizingTarget.textContent = this.renderBalance(this.maxBalance)
+
+    this.graphTarget.innerHTML = ''
+    this.graphTarget.classList.add(`sparkline--${this.balanceTrend}`)
+
+    sparkline(this.graphTarget, this.balances, {
+      interactive: true,
+      onmousemove: this.update.bind(this),
+      onmouseout: this.clear.bind(this),
+    })
+  }
+
   update(_, { date, value }) {
     this.balanceTarget.textContent = this.renderBalance(value)
     this.labelTarget.textContent = `Account balance on ${new Date(
@@ -75,6 +125,7 @@ export default class extends Controller {
       year: 'numeric',
     })}`
   }
+
   clear() {
     this.labelTarget.textContent = 'Account balance'
     this.balanceTarget.textContent = this.initial.balance

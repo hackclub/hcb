@@ -13,4 +13,9 @@ class GSuiteMailerPreview < ActionMailer::Preview
     GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_verified
   end
 
+  def notify_operations_of_entering_created_state
+    g_suite = GSuite.last
+    GSuiteMailer.with(g_suite_id: g_suite.id).notify_operations_of_entering_created_state.deliver_now
+  end
+
 end

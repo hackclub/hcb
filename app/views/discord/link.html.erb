@@ -1,0 +1,30 @@
+<% title "Link your Discord account" %>
+
+<% page_xs %>
+<% no_app_shell if params[:no_app_shell] %>
+<% @hide_footer = true %>
+
+<div class="flex justify-center mt5">
+  <img class="w-20 h-20 mx-auto center rounded-lg" src="<%= @discord_user.avatar_url %>">
+</div>
+
+<h2 class="border-none center regular mb2">Connect Discord user <strong><%= @discord_user.username %></strong> to your HCB account?</h2>
+
+<section class="mb2">
+  <div class="flex items-start">
+    <span class="muted mr2"><%= inline_icon "important" %></span>
+
+    <p class="mt0">This Discord user will be able to see information about your organizations, but it cannot perform any action on its own.</p>
+  </div>
+</section>
+
+<div class="flex items-center justify-center g1">
+  <%= button_to "Connect", discord_create_link_path, class: "btn bg-success h2", params: { signed_discord_id: @signed_discord_id } %>
+  <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
+</div>
+
+<div class="center mt2">
+  <div class="flex items-center justify-center muted">Signed in as <%= user_mention current_user, class: "ml1" %></div>
+
+  <%= link_to "Switch accounts", auth_users_path(return_to: request.fullpath), class: "center" %>
+</div>

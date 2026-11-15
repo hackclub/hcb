@@ -2,8 +2,9 @@
 
 class AchTransfersController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
 
-  before_action :set_ach_transfer, except: [:new, :create, :index, :validate_routing_number]
+  before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
   skip_before_action :signed_in_user, except: [:validate_routing_number]
   skip_after_action :verify_authorized, only: [:validate_routing_number]
@@ -28,12 +29,12 @@ class AchTransfersController < ApplicationController
       end
 
       format.pdf do
-        render pdf: "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})", page_height: "11in", page_width: "8.5in"
+        render_pdf "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})"
       end
 
       # works, but not being used at the moment
       format.png do
-        send_data ::AchTransferService::PreviewTransferConfirmationLetter.new(ach_transfer: @ach_transfer, event: @event).run, filename: "transfer_confirmation_letter.png"
+        send_data ::DocumentPreviewService.new(type: :ach_transfer_confirmation, ach_transfer: @ach_transfer, event: @event).run, filename: "transfer_confirmation_letter.png"
       end
 
     end
@@ -43,6 +44,7 @@ class AchTransfersController < ApplicationController
   def new
     @ach_transfer = AchTransfer.new(event: @event)
     authorize @ach_transfer
+    render layout: "transfer"
   end
 
   # POST /ach_transfers
@@ -50,6 +52,10 @@ class AchTransfersController < ApplicationController
     @ach_transfer = @event.ach_transfers.build(ach_transfer_params.except(:file).merge(creator: current_user))
 
     authorize @ach_transfer
+
+    if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @ach_transfer.save
       if ach_transfer_params[:file]
@@ -62,7 +68,7 @@ class AchTransfersController < ApplicationController
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
-      render :new, status: :unprocessable_entity
+      render :new, layout: "transfer", status: :unprocessable_content
     end
   end
 
@@ -105,7 +111,7 @@ class AchTransfersController < ApplicationController
   rescue Faraday::BadRequestError
     return render json: { valid: false, hint: "Bank not found for this routing number." }
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
     render json: { valid: true }
   end
 
@@ -117,13 +123,13 @@ class AchTransfersController < ApplicationController
   end
 
   def ach_transfer_params
-    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id]
+    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id, :invoiced_at]
 
     if admin_signed_in?
       permitted_params << :scheduled_on
     end
 
-    params.require(:ach_transfer).permit(*permitted_params)
+    @ach_transfer_params ||= scope_payment_recipient!(params.require(:ach_transfer).permit(*permitted_params))
   end
 
 end

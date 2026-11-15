@@ -4,17 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string           not null
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module User
@@ -22,16 +29,7 @@ class Metric
       include Subject
 
       def calculate
-        count = 0
-
-        stripe_cards = user.stripe_cards.includes(:event)
-        emburse_cards = user.emburse_cards.includes(:event)
-
-        (stripe_cards + emburse_cards).each do |card|
-          card.hcb_codes.missing_receipt.receipt_required.count
-        end
-
-        count
+        user.transactions_missing_receipt_count
       end
 
     end

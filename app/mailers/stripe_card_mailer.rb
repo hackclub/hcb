@@ -5,7 +5,7 @@ class StripeCardMailer < ApplicationMailer
 
   def physical_card_ordered
     @has_multiple_events = @user.events.size > 1
-    @eta = params[:eta] || @card.stripe_obj.to_hash[:shipping][:eta]
+    @eta = @card.shipping_eta
 
     mail to: @recipient,
          subject: "Your new HCB card for #{@event.name} is on its way"

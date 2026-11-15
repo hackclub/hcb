@@ -2,18 +2,13 @@
 
 class TransactionPolicy < ApplicationPolicy
   def index?
-    user&.admin?
-  end
-
-  def export?
-    user&.admin? ||
-      record.all? { |r| r.event.users.include? user }
+    user&.auditor?
   end
 
   def show?
     # removing is_public check due to https://github.com/hackclub/hcb/issues/675
     # is_public || admin_or_teammember
-    admin_or_teammember
+    auditor_or_teammember
   end
 
   def edit?
@@ -26,12 +21,12 @@ class TransactionPolicy < ApplicationPolicy
 
   private
 
-  def admin_or_teammember
-    user&.admin? || record&.event&.users&.include?(user)
+  def auditor_or_teammember
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
-  def is_public
-    record&.event&.is_public?
+  def admin_or_teammember
+    OrganizerPosition.role_at_least?(user, record&.event, :member)
   end
 
 end

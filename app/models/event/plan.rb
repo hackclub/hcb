@@ -5,9 +5,9 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
-#  plan_type   :string
+#  type        :string
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #  event_id    :bigint           not null
@@ -22,6 +22,8 @@
 #
 class Event
   class Plan < ApplicationRecord
+    FALLBACK_REVENUE_FEE = 0.07
+
     has_paper_trail
 
     belongs_to :event
@@ -33,14 +35,34 @@ class Event
 
       event :mark_inactive do
         transitions from: :active, to: :inactive
-        after do |new_plan_type|
-          event.create_plan!(plan_type: new_plan_type)
+        after do |new_type|
+          event.reload
+          event.create_plan!(type: new_type)
+          unless event.plan.writeable?
+            event.update(financially_frozen: true)
+            event.stripe_cards.active.each do |card|
+              card.freeze!(frozen_by: User.system_user)
+            end
+          end
+          if event.plan.hidden?
+            event.update(hidden_at: Time.now)
+          end
         end
       end
     end
 
     def standard?
-      plan_type == Event::Plan::Standard.name
+      type == Event::Plan::Standard.name
+    end
+
+    def default_values
+      {}
+    end
+
+    # Organizations on plans that force transparency can't opt out of it while
+    # their parent organization is transparent.
+    def forces_transparency?
+      false
     end
 
     def was_backfilled?
@@ -53,7 +75,7 @@ class Event
 
     def self.available_features
       # this must contain every HCB feature that we want enable / disable with plans.
-      %w[cards invoices donations account_number check_deposits transfers promotions google_workspace documentation reimbursements]
+      %w[cards invoices donations account_number check_deposits transfers contractors promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
     end
 
     self.available_features.each do |feature|
@@ -66,6 +88,18 @@ class Event
       Event::Plan.descendants
     end
 
+    def self.available_plans_by_popularity
+      available_plans.sort_by { |p| plan_popularities[p].presence || 0 }.reverse!
+    end
+
+    def self.plan_popularities
+      Event::Plan.joins(:event).group(:type).select(:type, "count(*)").to_h { |p| [p.class, p.count] }
+    end
+
+    def self.that(method)
+      self.available_plans.select { |plan| plan.new.try(method) }
+    end
+
     validate do
       if Event::Plan.where(event_id:, aasm_state: :active).excluding(self).any?
         errors.add(:base, "An event can only have one active plan at a time.")
@@ -73,8 +107,8 @@ class Event
     end
 
     validate do
-      unless plan_type.in?(Event::Plan.descendants.map(&:name))
-        errors.add(:plan_type, "is invalid")
+      unless type.in?(Event::Plan.descendants.map(&:name))
+        errors.add(:type, "is invalid")
       end
     end
 

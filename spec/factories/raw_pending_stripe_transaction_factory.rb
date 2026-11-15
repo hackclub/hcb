@@ -8,6 +8,11 @@ FactoryBot.define do
   factory :raw_pending_stripe_transaction do
     amount_cents { Faker::Number.number(digits: 4) }
     sequence(:stripe_transaction_id) { |n| "iauth_#{n}" }
+
+    transient do
+      stripe_merchant_category { "bakeries" }
+    end
+
     stripe_transaction {
       {
         "id": stripe_transaction_id,
@@ -15,7 +20,10 @@ FactoryBot.define do
           "id": generate(:stripe_card_id)
         },
         "authorization_method": "online",
-        "merchant_data": { "name": "merchant 1" }
+        "merchant_data": {
+          "name": "merchant 1",
+          "category": stripe_merchant_category
+        }
       }
     }
   end

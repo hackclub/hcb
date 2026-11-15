@@ -3,15 +3,23 @@
 module Reimbursement
   class ReportPolicy < ApplicationPolicy
     def new?
-      admin || team_member
+      admin || reader
     end
 
     def create?
-      !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || team_member)
+      !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || OrganizerPosition.role_at_least?(user, record.event, :member))
     end
 
     def show?
-      admin || team_member || creator
+      admin || reader || creator || auditor
+    end
+
+    def wise_transfer_quote?
+      show?
+    end
+
+    def wise_transfer_breakdown?
+      show?
     end
 
     def edit?
@@ -20,6 +28,35 @@ module Reimbursement
 
     def update?
       admin || manager || (creator && open)
+    end
+
+    # Authorization for placing a report on `record.event` — either changing
+    # the event of an existing report (ReportsController#update) or building
+    # a fresh report on a destination event as part of moving an expense
+    # (ExpensesController#update). Callers must ensure `record.event` has
+    # been set to the destination event before authorizing (ActiveRecord
+    # FK-cache reset on `event_id=` takes care of this for the reports
+    # path).
+    #
+    # Card-grant-backed reports are locked to the grant's event: the grant's
+    # funds are sourced from that event, and moving the report elsewhere
+    # would decouple the funds from the grant. Admins cannot bypass this.
+    #
+    # TODO: currently requires manager because changing the event carries
+    # cascade side-effects (expenses reset to pending, stale approved_by_id
+    # on each expense, stale reviewer_id, etc.). The intended long-term
+    # behavior is to allow members to change the event provided approvals
+    # the destination event's managers wouldn't have granted are cleared.
+    #
+    # Exception: the creator of a still-eventless report (email, SMS, Discord)
+    # may place it on any event they could `create?` a report on. `persisted?`
+    # keeps the unsaved-report path in ExpensesController#update manager-only.
+    def change_event?
+      return false if record.card_grant_id.present?
+      return true if admin || manager
+
+      creator && record.persisted? && record.event_id_in_database.nil? &&
+        (record.event ? create? : record.event_id.nil?)
     end
 
     def submit?
@@ -34,11 +71,15 @@ module Reimbursement
       (admin || (manager && !creator)) && open
     end
 
+    def convert_to_wise_transfer?
+      admin && !record.event.financially_frozen?
+    end
+
     def request_changes?
       (admin || manager) && open
     end
 
-    def approve_all_expenses?
+    def approve?
       (admin || (manager && !creator)) && open
     end
 
@@ -46,12 +87,28 @@ module Reimbursement
       (admin || manager) && open
     end
 
+    def update_currency?
+      (admin || manager || creator) && open && record.mismatched_currency?
+    end
+
+    def update_payout_method?
+      (admin || creator) && record.can_change_payout_method?
+    end
+
     def admin_approve?
       admin && open
     end
 
+    def admin_send_wise_transfer?
+      admin
+    end
+
+    def reverse?
+      admin
+    end
+
     def destroy?
-      ((manager || creator) && record.initial_draft?) || (admin && !record.reimbursed?)
+      ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
     private
@@ -60,12 +117,16 @@ module Reimbursement
       user&.admin?
     end
 
-    def manager
-      record.event && OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    def auditor
+      user&.auditor?
     end
 
-    def team_member
-      record.event&.users&.include?(user)
+    def manager
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
+    end
+
+    def reader
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def creator

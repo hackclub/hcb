@@ -17,9 +17,15 @@ class CommentsController < ApplicationController
 
     if @comment.save
       flash[:success] = "Comment created."
-      redirect_to @commentable.is_a?(Event) ? edit_event_path(@commentable, tab: :admin) : @commentable
+      # Use return_to param if provided, otherwise fall back to the commentable
+      # url_from validates the URL is internal to prevent open redirect vulnerabilities
+      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
+    elsif turbo_frame_request?
+      # The new page has no matching frame, so surface the errors in the frame's flash instead
+      flash[:error] = @comment.errors.full_messages.to_sentence
+      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -42,20 +48,41 @@ class CommentsController < ApplicationController
       redirect_to @comment.commentable.is_a?(Event) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable
     else
       @commentable = @comment.commentable
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
   def destroy
     authorize @comment
+    commentable = @comment.commentable
     @comment.destroy!
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.remove(@comment)
+        streams = [
+          turbo_stream.replace(
+            "comments",
+            partial: "comments/list",
+            locals: {
+              comments: commentable.comments,
+              show_blankslate: commentable.comments.empty?
+            }
+          )
+        ]
+
+        # Update the comment count on the item's ledger row, if it's behind the
+        # popover. A ledger item's comments are still stored on its HCB code;
+        # ones shared with the other side of a transfer aren't, and don't
+        # refresh the item's count yet, so there's nothing to stream for them.
+        ledger_item = commentable.ledger_item if commentable.is_a?(HcbCode)
+        if ledger_item.present?
+          streams << turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item })
+        end
+
+        render turbo_stream: streams
       end
 
-      format.any { redirect_back_or_to @comment.commentable }
+      format.any { redirect_back_or_to commentable }
     end
   end
 
@@ -65,13 +92,25 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:content, :file, :admin_only)
   end
 
+  COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
+                          EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
+                          OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
+                          Ledger::Item, Payment].index_by(&:to_s).freeze
+
   # Given a route "/transactions/25/comments", this method sets @commentable to
   # Transaction with ID 25
   def set_commentable
     resource = params[:comment][:commentable_type] || request.path.split("/")[1]
     id =       params[:comment][:commentable_id]   || request.path.split("/")[2]
 
-    @commentable = resource.singularize.classify.constantize.find(id)
+    klass = COMMENTABLE_TYPE_MAP[resource.singularize.classify]
+    @commentable = klass.find(id)
+
+    # On a transfer between two organizations, the form can share the comment
+    # with the other side, which puts it on the transfer itself.
+    if params.dig(:comment, :comment_target) == "shared" && @commentable.shared_commentable?
+      @commentable = @commentable.shared_commentable
+    end
   end
 
   def set_comment

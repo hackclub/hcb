@@ -7,13 +7,13 @@
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This document was archived by <%= user_mention @document.archived_by %> on <%= format_date @document.archived_at %>.</span>
     <span class="block">It will display under the Archived section<span class="xs-hide"> on the Documents page</span>.</span>
-    <span>You can <%= link_to "unarchive it", document_toggle_path(@document), method: :post %>.</span>
+    <span>You can <%= link_to "unarchive it", document_toggle_path(@document), data: { turbo_method: :post } %>.</span>
   </div>
 <% end %>
 
 <h1 class="heading pb2">
   <%= @document.name %>
-  <% if (@document.user == current_user) || current_user.admin? %>
+  <% if (@document.user == current_user) || auditor_signed_in? %>
     <div class="flex items-center mt2" style="gap: 6px">
       <%= link_to document_download_path(@document), target: :_blank, class: "btn" do %>
         <%= inline_icon "download" %>
@@ -21,11 +21,11 @@
       <% end %>
       <%= link_to "Edit", edit_document_path(@document), class: "btn bg-info" %>
       <% if @document.archived? %>
-        <%= link_to "Unarchive", document_toggle_path(@document), method: :post, data: { confirm: "This will unarchive the document. Are you sure?" }, class: "btn bg-muted" %>
+        <%= link_to "Unarchive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will unarchive the document. Are you sure?" }, class: "btn bg-muted" %>
       <% else %>
-        <%= link_to "Archive", document_toggle_path(@document), method: :post, data: { confirm: "This will archive the document. Are you sure?" }, class: "btn bg-muted" %>
+        <%= link_to "Archive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will archive the document. Are you sure?", turbo_confirm_danger: true }, class: "btn bg-muted" %>
       <% end %>
-      <%= link_to "Destroy", @document, method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn--destroy" %>
+      <%= link_to "Destroy", @document, data: { turbo_method: :delete, turbo_confirm: "Are you sure?", turbo_confirm_danger: true }, class: "btn btn--destroy" %>
     </div>
   <% end %>
 </h1>
@@ -37,24 +37,28 @@
 <section class="details mb3 pt2">
 
   <p>
-    <strong>Added by</strong> <%= user_mention @document.user %>
+    <strong>Added by</strong> <span><%= user_mention @document.user %></span>
+  </p>
+
+  <p>
+    <strong>Category</strong> <%= @document.category.humanize %>
   </p>
 
 </section>
 
-<% admin_tool do %>
-  <%= turbo_frame_tag :downloads do %>
-    <% if @downloads.any? %>
-      <h2 class="my0">Download history</h2>
-      <ul class="list list--unlinked">
-        <% @downloads.each do |download| %>
-          <li>
-            <%= user_mention download.user %>
-            <%= content_tag :span, download.created_at %>
-          </li>
-        <% end %>
-        <%= paginate @downloads %>
-      </ul>
+<% if @downloads.any? %>
+  <% admin_tool do %>
+    <%= turbo_frame_tag :downloads do %>
+        <h2 class="my0">Download history</h2>
+        <ul class="list list--unlinked">
+          <% @downloads.each do |download| %>
+            <li>
+              <%= user_mention download.user %>
+              <%= content_tag :span, download.created_at %>
+            </li>
+          <% end %>
+          <%= paginate @downloads %>
+        </ul>
     <% end %>
   <% end %>
 <% end %>

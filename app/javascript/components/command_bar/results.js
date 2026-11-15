@@ -24,7 +24,6 @@ export function RenderResults() {
                 ? {
                     padding: '8px 16px',
                     color: 'rgba(0, 0, 0, 0.5)',
-                    borderTop: '0.7px solid #8492a6',
                   }
                 : {
                     padding: '8px 16px',
@@ -68,22 +67,15 @@ const ResultItem = React.forwardRef(
       <div
         ref={ref}
         style={{
-          padding: '12px 16px',
           background: active
-            ? 'var(--kbar-overlay)'
+            ? action.section == 'Admin Tools'
+              ? 'var(--kbar-admin-overlay)'
+              : 'var(--kbar-overlay)'
             : action.section == 'Admin Tools'
               ? 'var(--kbar-admin-overlay)'
               : 'transparent',
-          borderLeft: `2px solid ${
-            active && action.name != 'error'
-              ? 'var(--kbar-foreground)'
-              : 'transparent'
-          }`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: 'pointer',
         }}
+        className="command-bar-item"
       >
         <div
           style={{
@@ -93,7 +85,19 @@ const ResultItem = React.forwardRef(
             fontSize: 14,
           }}
         >
-          {action.icon && action.icon}
+          {action.icon && (
+            <div
+              style={{
+                opacity: active ? 1 : 0.6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: 'scale(1.2)',
+              }}
+            >
+              {action.icon}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div>
               {ancestors.length > 0 &&

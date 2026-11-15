@@ -7,8 +7,6 @@ class User
     end
 
     def suggested_receipt_pairings
-      return [] unless Flipper.enabled?(:receipt_bin_2023_04_07, @user)
-
       @receipts = Receipt.in_receipt_bin.where(user: @user)
       # Don't suggest receipts ignored more than twice
       ineligible_receipt_ids = SuggestedPairing.ignored.group("receipt_id").having("COUNT(*) >= 2").pluck(:receipt_id)

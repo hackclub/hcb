@@ -2,20 +2,35 @@
 
 class WiresController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
+  include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_wire, only: %i[approve reject send_wire]
+  before_action :set_wire, only: %i[show reject send_wire edit update]
+
+  def show
+    authorize @wire
+
+    redirect_to @wire.local_hcb_code
+  end
 
   def new
     @wire = @event.wires.build
 
     authorize @wire
+
+    render layout: "transfer"
   end
 
   def create
     @wire = @event.wires.build(wire_params.except(:file).merge(user: current_user))
 
     authorize @wire
+
+    if @wire.amount_cents > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @wire.save
       if wire_params[:file]
@@ -26,30 +41,54 @@ class WiresController < ApplicationController
           receiptable: @wire.local_hcb_code
         ).run!
       end
-      redirect_to @wire.local_hcb_code.url, flash: { success: "Your wire has been sent!" }
+      redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", layout: "transfer", status: :unprocessable_content
     end
   end
 
-  def approve
+  def edit
     authorize @wire
-
-    @wire.mark_approved!
-
-    redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
-
-  rescue => e
-    redirect_to wire_process_admin_path(@wire), flash: { error: e.message }
+    @event = @wire.event
   end
+
+  def update
+    authorize @wire
+    @event = @wire.event
+    if @wire.update(wire_params)
+      redirect_to wire_process_admin_path(@wire), flash: { success: "Edited the wire." }
+    else
+      redirect_to wire_process_admin_path(@wire), flash: { error: @wire.errors.full_messages.to_sentence }
+    end
+  end
+
 
   def send_wire
     authorize @wire
 
+    ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
+    ensure_legal_entity_payable!(@wire, classification: params[:classification])
+
     @wire.send_wire!
+
+    if params[:charge_fee] == "1"
+      disbursement = DisbursementService::Create.new(
+        name: "Low-value wire transfer fee",
+        destination_event_id: EventMappingEngine::EventIds::HACK_CLUB_BANK,
+        source_event_id: @wire.event.id,
+        amount: 25,
+        requested_by_id: current_user.id,
+        fronted: @wire.event.plan.front_disbursements_enabled?,
+        transfer_type: "transfer"
+      ).run
+
+      disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+    end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
 
+  rescue Faraday::Error => e
+    redirect_to wire_process_admin_path(@wire), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to wire_process_admin_path(@wire), flash: { error: e.message }
   end
@@ -59,13 +98,15 @@ class WiresController < ApplicationController
 
     @wire.mark_rejected!
 
+    @wire.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+
     redirect_back_or_to wire_process_admin_path(@wire), flash: { success: "Wire has been canceled." }
   end
 
   private
 
   def wire_params
-    params.require(:wire).permit(
+    permitted = params.require(:wire).permit(
       [:memo,
        :amount,
        :payment_for,
@@ -80,8 +121,11 @@ class WiresController < ApplicationController
        :address_city,
        :address_postal_code,
        :address_state,
+       :payment_recipient_id,
+       :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
+    @wire_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_wire

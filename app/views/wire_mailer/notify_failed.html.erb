@@ -1,0 +1,5 @@
+We're writing to let you know your <%= link_to "recent wire to #{@wire.recipient_name}", hcb_code_url(@wire.local_hcb_code) %> was rejected and failed to send. Here's the explanation given by the receiving bank / country:
+
+<pre><%= @reason %></pre>
+
+The funds will be returned to your account shortly <%= "(due to exchange rate fluctuations, some money may have been lost)" unless @wire.currency == "USD" %>. After verifying that the account details for the recipient are correct, you can re-attempt this transfer <%= link_to "here", new_event_wire_url(@wire.event) %>.

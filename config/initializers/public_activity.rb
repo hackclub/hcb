@@ -14,10 +14,19 @@ class PublicActivity::Activity
       .or(where(recipient_type: "Event", recipient_id: event.id))
   }
 
+  scope :before, ->(time) {
+    where(created_at: ..time)
+  }
+
   include Turbo::Broadcastable
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :act
+
+  has_one :discord_message, class_name: "Discord::Message", inverse_of: :activity
 
   after_create_commit -> {
     # this code has been tested
@@ -25,14 +34,18 @@ class PublicActivity::Activity
     # i don't want it to break other features
     # as it's non-critical, hence this.
     # - @sampoder
-    begin
+    Rails.error.handle do
       streams = []
 
       if event_id
-        Event.find(event_id).users.each do |user|
+        event = Event.find(event_id)
+
+        event.users.each do |user|
           streams << [user, "activities"]
           streams << [user, Event.find(event_id), "activities"]
         end
+
+        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
       end
 
       if recipient.is_a?(User)
@@ -59,8 +72,6 @@ class PublicActivity::Activity
           locals: { activity: self, current_user: stream.first }
         )
       end
-    rescue => e
-      Airbrake.notify(e)
     end
 
   }
@@ -73,12 +84,23 @@ class PublicActivity::Activity
     trackable_type.constantize.in?([Reimbursement::Report, WebauthnCredential, Comment])
   end
 
+  # An activity can be associated with an event through two columns.
+  # `event_id` is typically the org where the action occurred; when the
+  # recipient is itself an Event, that's the event the action targeted
+  # (for disbursements, `event_id` is the source and `recipient` is the
+  # destination — the two differ).
+  #
+  # `#event` returns the latter when present. Callers that need to know
+  # *which id* will be used (e.g. Api::ActivityPolicy, which must
+  # authorize against the same event the entity serializes) should use
+  # `#serialized_event_id` rather than re-deriving the precedence.
+  def serialized_event_id
+    recipient_type == "Event" ? recipient_id : event_id
+  end
+
   def event
-    if recipient_type == "Event"
-      return Event.find(recipient_id)
-    elsif event_id
-      return Event.find(event_id)
-    end
+    id = serialized_event_id
+    Event.find(id) if id
   end
 
   def user

@@ -4,17 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string           not null
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #
-#  index_metrics_on_subject  (subject_type,subject_id)
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module Hcb
@@ -22,9 +29,23 @@ class Metric
       include AppWide
 
       def calculate
-        ::User.includes(:organizer_positions)
-              .where.not(organizer_positions: { id: nil })
-              .count
+        organizers.or(card_grant_recipients).or(reimbursement_report_users).count
+      end
+
+      private
+
+      def included_models = %i[organizer_positions card_grants reimbursement_reports]
+
+      def organizers
+        ::User.includes(included_models).where.not(organizer_positions: { id: nil })
+      end
+
+      def card_grant_recipients
+        ::User.includes(included_models).where.not(card_grants: { id: nil })
+      end
+
+      def reimbursement_report_users
+        ::User.includes(included_models).where.not(reimbursement_reports: { id: nil })
       end
 
     end

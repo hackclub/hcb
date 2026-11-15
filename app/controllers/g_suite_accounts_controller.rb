@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class GSuiteAccountsController < ApplicationController
-  before_action :set_g_suite_account, only: [:edit, :update, :reset_password, :toggle_suspension]
+  before_action :set_g_suite_account, only: [:edit, :update, :reset_password, :toggle_suspension, :unmanage]
 
   def index
     authorize GSuiteAccount
@@ -27,8 +27,10 @@ class GSuiteAccountsController < ApplicationController
       ).run
 
       flash[:success] = "Google Workspace account created."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
     rescue => e
-      notify_airbrake(e)
+      Rails.error.report(e)
 
       flash[:error] = e.message
     end
@@ -52,7 +54,7 @@ class GSuiteAccountsController < ApplicationController
       flash[:success] = "Saved changes to Google Workspace account."
       redirect_to g_suite_accounts_path
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -99,6 +101,27 @@ class GSuiteAccountsController < ApplicationController
     end
   end
 
+  # Removes the account from HCB management, leaving the Google Workspace user
+  # (and its aliases) intact. See `GSuiteAccount#unmanage!`.
+  def unmanage
+    authorize @g_suite_account
+
+    @event = @g_suite_account.g_suite.event
+    address = @g_suite_account.address
+
+    begin
+      @g_suite_account.unmanage!(confirm: params[:confirm])
+
+      flash[:success] = "#{address} is no longer managed by HCB. The Google Workspace account still exists."
+    rescue => e
+      Rails.error.report(e)
+
+      flash[:error] = "Something went wrong while trying to unmanage #{address}."
+    end
+
+    redirect_to event_g_suite_overview_path(event_id: @event.slug)
+  end
+
   private
 
   def set_g_suite_account
@@ -106,7 +129,7 @@ class GSuiteAccountsController < ApplicationController
   end
 
   def g_suite_account_params
-    params.require(:g_suite_account).permit(:backup_email, :address, :accepted_at, :rejected_at, :initial_password, :g_suite_id, :first_name, :last_name)
+    params.require(:g_suite_account).permit(:backup_email, :address, :accepted_at, :initial_password, :g_suite_id, :first_name, :last_name)
   end
 
   def full_email_address(address, g_suite)

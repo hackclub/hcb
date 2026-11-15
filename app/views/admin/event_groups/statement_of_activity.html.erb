@@ -1,0 +1,6 @@
+<% content_for(:title, "Event Groups") %>
+
+<%= render(
+      partial: "events/statement_of_activity_contents",
+      locals: { statement_of_activity: @statement_of_activity }
+    ) %>

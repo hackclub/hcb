@@ -18,11 +18,10 @@ class CommentMailbox < ApplicationMailbox
 
   def process
     return unless @user
-    return unless @commentable
-    return unless ensure_permissions?
+    return bounce_missing_comment unless @comment && @commentable && ensure_permissions?
 
     comment = @commentable.comments.build({
-                                            content: EmailReplyParser.parse_reply(text || body),
+                                            content: EmailReplyParser.parse_reply(text || body).encode("utf-8", invalid: :replace, undef: :replace),
                                             file: @attachments&.first,
                                             admin_only: @comment.admin_only,
                                             user: @user
@@ -39,7 +38,7 @@ class CommentMailbox < ApplicationMailbox
   end
 
   def set_commentable
-    @commentable = @comment.commentable
+    @commentable = @comment&.commentable
   end
 
   def set_user
@@ -50,6 +49,10 @@ class CommentMailbox < ApplicationMailbox
     return false if @comment.nil?
 
     Pundit.policy(@user, @comment).new?
+  end
+
+  def bounce_missing_comment
+    bounce_with CommentMailer.with(mail: inbound_email).bounce_missing_comment
   end
 
 end

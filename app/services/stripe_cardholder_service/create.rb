@@ -2,14 +2,15 @@
 
 module StripeCardholderService
   class Create
-    def initialize(current_user:, current_session:, event_id:)
+    def initialize(current_user:, ip_address:, event_id:)
       @current_user = current_user
-      @current_session = current_session
+      @ip_address = ip_address
       @event_id = event_id
     end
 
     def run
       raise ArgumentError, "not permitted under spend only plan" if event.unapproved?
+      raise ArgumentError, "phone number must be verified before creating a cardholder" unless @current_user.phone_number_verified_or_bypassed?
 
       ActiveRecord::Base.transaction do
         stripe_cardholder = ::StripeCardholder.create!(attrs)
@@ -49,7 +50,7 @@ module StripeCardholderService
           card_issuing: {
             user_terms_acceptance: {
               date: DateTime.now.to_i,
-              ip: @current_session.ip
+              ip: @ip_address
             }
           }
         }
@@ -61,7 +62,7 @@ module StripeCardholderService
     end
 
     def phone_number
-      @current_user.phone_number
+      @current_user.phone_number_for_stripe
     end
 
     def name

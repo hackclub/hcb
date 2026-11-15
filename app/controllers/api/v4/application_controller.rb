@@ -5,29 +5,37 @@ module Api
     class ApplicationController < ActionController::API
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
+      include PublicActivity::StoreController
+      include ErrorHandling
+      include AdminScopeCheckable
+      include Pagination
+
+      attr_reader :current_user
 
       after_action :verify_authorized
 
       before_action :authenticate!
-
-      rescue_from Pundit::NotAuthorizedError do |e|
-        render json: { error: "not_authorized" }, status: :forbidden
-      end
-
-      rescue_from ActiveRecord::RecordNotFound do |e|
-        render json: { error: "resource_not_found", message: ("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model) }.compact_blank, status: :not_found
-      end
-
-      rescue_from ActiveRecord::RecordInvalid do |e|
-        render json: { error: "invalid_operation", messages: e.record.errors.full_messages }, status: :bad_request
-      end
+      before_action :set_expand
+      before_action :set_paper_trail_whodunnit
 
       def not_found
         skip_authorization
         render json: { error: "not_found" }, status: :not_found
       end
 
+      def self.require_oauth2_scope(required_scope, *actions)
+        @oauth_requirements ||= Hash.new { |h, k| h[k] = [] }
+
+        actions.each { |action| @oauth_requirements[action.to_sym] << required_scope }
+      end
+
+      append_before_action :check_restricted_scopes!
+
       private
+
+      def pundit_user
+        current_user && ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
+      end
 
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
@@ -36,9 +44,64 @@ module Api
         end
 
         @current_user = current_token&.user
+        current_token.touch_last_used_at
       end
 
-      attr_reader :current_token, :current_user
+      def require_admin_scope!(level)
+        unless can_admin?(level)
+          skip_authorization
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
+      end
+
+      def require_trusted_oauth_app!
+        unless current_token&.application&.trusted?
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
+      end
+
+      def check_restricted_scopes!
+        # only check scopes for tokens that have the "restricted" scope so as not to break existing apps
+        # this can roll out to all tokens later
+        return unless current_token&.scopes&.include?("restricted")
+
+        required_scopes = self.class.instance_variable_get(:@oauth_requirements)&.[](action_name.to_sym) || []
+
+        # restricted tokens shouldn't work on actions without explicit scopes (most of them)
+        if required_scopes.empty?
+          raise Pundit::NotAuthorizedError
+        end
+
+        current_scopes = current_token.scopes || []
+        has_required_scopes = required_scopes.all? { |scope| current_scopes.include?(scope) }
+
+        raise Pundit::NotAuthorizedError unless has_required_scopes
+      end
+
+      def set_expand
+        @expand = params[:expand].to_s.split(",").map { |e| e.strip.to_sym }
+      end
+
+      LEDGER_ENGINE_FLAG = :new_ledger_api_2026_09_28
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = current_user.present? && Flipper.enabled?(LEDGER_ENGINE_FLAG, current_user)
+      end
+
+      def resolve_engine(hcb_code)
+        resolve_engines([hcb_code]).first
+      end
+
+      def resolve_engines(hcb_codes)
+        return hcb_codes unless ledger_engine?
+
+        ActiveRecord::Associations::Preloader.new(records: hcb_codes, associations: :ledger_item).call
+        hcb_codes.map { |hcb_code| hcb_code.ledger_item || hcb_code }
+      end
+
+      attr_reader :current_token
 
     end
   end

@@ -4,17 +4,31 @@ module PendingTransactionEngine
   module CanonicalPendingTransactionService
     module ImportSingle
       class IncomingDisbursement
-        def initialize(raw_pending_incoming_disbursement_transaction:)
+        def initialize(raw_pending_incoming_disbursement_transaction:, category_assignment_strategy: "manual")
           @rpidt = raw_pending_incoming_disbursement_transaction
+          @category_assignment_strategy = category_assignment_strategy
         end
 
         def run
           return existing_canonical_pending_transaction if existing_canonical_pending_transaction
 
-          ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
-            # In-review disbursements shouldn't be fronted.
-            cpt.fronted = !@rpidt.disbursement.reviewing?
-            cpt.fee_waived = @rpidt.disbursement.fee_waived?
+          ActiveRecord::Base.transaction do
+            cpt = ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
+              # In-review disbursements shouldn't be fronted.
+              cpt.fronted = !@rpidt.disbursement.reviewing?
+              cpt.fee_waived = @rpidt.disbursement.fee_waived?
+            end
+
+            if @rpidt.disbursement.destination_transaction_category
+              TransactionCategoryService
+                .new(model: cpt)
+                .set!(
+                  slug: @rpidt.disbursement.destination_transaction_category.slug,
+                  assignment_strategy: @category_assignment_strategy
+                )
+            end
+
+            cpt
           end
         end
 

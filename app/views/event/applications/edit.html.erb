@@ -1,0 +1,35 @@
+<% title "Edit application" %>
+
+<div class="flex flex-col items-center flex-grow">
+  <div class="md:max-w-[600px] w-full my-3 space-y-8 pb-5">
+    <%= form_with model: @application, url: application_path(@application, return_to: submission_application_path(@application), confirm: true), method: :patch, id: "edit_application_#{@application.id}", class: "space-y-8" do |form| %>
+
+      <%= render "event/applications/edit_project_info_card", form:, application: @application %>
+
+      <%= render "event/applications/edit_personal_info_card", form:, application: @application %>
+
+    <% end %>
+
+    <%= turbo_frame_tag :affiliations_settings do %>
+      <h3 class="mb2">Affiliations</h3>
+
+      <div class="card mb3">
+        <% affiliation = Event::Affiliation.new(affiliable: @application) %>
+        <%= render "events/settings/affiliation_form", affiliation:, url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id) %>
+      </div>
+
+      <%= render partial: "events/settings/affiliation", collection: @application.affiliations.nonempty %>
+    <% end %>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<%= javascript_include_tag "phone_input.js" %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", submission_application_path(@application), class: "btn bg-muted" %>
+  <% admin_tool do %>
+    <button class="btn bg-blue" form="edit_application_<%= @application.id %>">Save changes</button>
+  <% end %>
+<% end %>

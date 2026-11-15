@@ -2,7 +2,12 @@
 
 class CommentMailer < ApplicationMailer
   def notification
-    @comment = params[:comment]
+    # re-fetch (rather than trust params[:comment] directly) since the comment
+    # may have been soft-deleted (acts_as_paranoid) between this job being
+    # enqueued and running - there's nothing worth notifying about then.
+    @comment = Comment.find_by(id: params[:comment]&.id)
+    return if @comment.nil?
+
     @commentable = @comment.commentable
 
     return if @commentable.comment_recipients_for(@comment).empty?
@@ -11,7 +16,7 @@ class CommentMailer < ApplicationMailer
     # for now, these automated comments won't notify users.
     # see OneTimeJobs::BackfillLostReceipts for an example
     # - @sampoder
-    return if @comment.user == User.find_by(email: "bank@hackclub.com")
+    return if @comment.user == User.system_user
 
     return unless @comment.content || @comment.file
 
@@ -24,6 +29,10 @@ class CommentMailer < ApplicationMailer
     }.merge(headers)
 
     mail(mail_settings)
+  end
+
+  def bounce_missing_comment
+    mail subject: @inbound_mail&.mail&.subject || "Unknown comment", to: @inbound_mail&.mail&.from&.first
   end
 
   private

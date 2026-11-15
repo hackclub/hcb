@@ -7,6 +7,7 @@
 #  id                 :bigint           not null, primary key
 #  amount_cents       :integer
 #  column_transaction :jsonb
+#  column_transfer    :jsonb
 #  date_posted        :date
 #  description        :text
 #  transaction_index  :integer
@@ -18,13 +19,25 @@ class RawColumnTransaction < ApplicationRecord
   has_one :canonical_transaction, as: :transaction_source
 
   after_create :canonize, if: -> { canonical_transaction.nil? }
+  after_create if: -> { transaction_id&.start_with?("admt_") } do
+    Rails.error.unexpected("Manual Column transfer (admt_) imported", context: { raw_column_transaction_id: id, transaction_id: })
+  end
 
   def canonize
-    create_canonical_transaction!(
+    ct = create_canonical_transaction!(
       amount_cents:,
       memo:,
       date: date_posted,
     )
+
+    raw_pending_column_transaction = RawPendingColumnTransaction.find_by(column_id: column_transaction["transaction_id"])
+
+    if raw_pending_column_transaction&.canonical_pending_transaction
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction: ct,
+        canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
+      ).run!
+    end
   end
 
   def memo
@@ -45,6 +58,12 @@ class RawColumnTransaction < ApplicationRecord
       wire = ColumnService.get "/transfers/international-wire/#{transaction_id}"
 
       return wire["originator_name"]
+    elsif transaction_id.start_with? "ipay_"
+      return "INTEREST"
+    elsif transaction_id.start_with? "rttr_"
+      realtime = ColumnService.get "/transfers/realtime/#{transaction_id}"
+
+      return realtime["description"]
     end
     raise
   rescue
@@ -61,6 +80,25 @@ class RawColumnTransaction < ApplicationRecord
 
   def transaction_id
     column_transaction["transaction_id"]
+  end
+
+  def remote_object
+    transaction_id = column_transaction["transaction_id"]
+    if transaction_id.start_with? "acht"
+      ColumnService.ach_transfer(transaction_id)
+    elsif transaction_id.start_with? "book"
+      ColumnService.get "/transfers/book/#{transaction_id}"
+    elsif transaction_id.start_with? "wire"
+      ColumnService.get "/transfers/wire/#{transaction_id}"
+    elsif transaction_id.start_with? "swft_"
+      ColumnService.get "/transfers/international-wire/#{transaction_id}"
+    elsif transaction_id.start_with? "rttr_"
+      ColumnService.get "/transfers/realtime/#{transaction_id}"
+    else
+      nil
+    end
+  rescue
+    nil
   end
 
 end

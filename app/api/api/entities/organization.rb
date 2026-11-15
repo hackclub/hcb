@@ -8,12 +8,20 @@ module Api
         expose :slug
         expose :website
         expose :category, documentation: {
-          values: Event.categories.keys.map(&:parameterize).map(&:underscore)
+          values: ["hack_club_hq", "robotics_team", "hackathon", "hack_club", "climate", "nonprofit"]
         } do |organization|
-          organization.category&.parameterize&.underscore
+          category = "nonprofit"
+          category = "climate" if organization.event_tags.where(name: EventTag::Tags::CLIMATE).exists?
+          category = "hack_club" if organization.event_tags.where(name: EventTag::Tags::HACK_CLUB).exists?
+          category = "hackathon" if organization.hackathon?
+          category = "robotics_team" if organization.robotics_team?
+          category = "hack_club_hq" if organization.plan.is_a?(Event::Plan::HackClubAffiliate)
+
+          category
         end
         expose :is_public, as: :transparent, documentation: { type: "boolean" }
         expose :demo_mode, documentation: { type: "boolean" }
+        expose :financially_frozen, documentation: { type: "boolean" }
         expose :logo do |organization|
           url_for_attached organization.logo
         end

@@ -2,7 +2,7 @@
 
 class GSuitePolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def create?
@@ -10,7 +10,7 @@ class GSuitePolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || record.event.users.include?(user)
+    user.auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.revocation.present?)
   end
 
   def edit?
@@ -23,10 +23,6 @@ class GSuitePolicy < ApplicationPolicy
 
   def destroy?
     user.admin?
-  end
-
-  def status?
-    user.admin? || record.event.users.include?(user)
   end
 
 end

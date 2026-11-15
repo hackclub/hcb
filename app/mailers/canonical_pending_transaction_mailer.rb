@@ -1,16 +1,15 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionMailer < ApplicationMailer
+  include HcbCodeHelper # for attach_receipt_url
+
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
     @user = @cpt.stripe_card.user
 
     return unless @user.email_charge_notifications_enabled?
 
-    @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
-      id: @cpt.local_hcb_code.hashid,
-      s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
-    )
+    @upload_url = attach_receipt_url(@cpt.local_hcb_code)
 
     to = @cpt.stripe_card.user.email_address_with_name
     subject = "#{@cpt.local_hcb_code.receipt_required? ? "Upload a receipt for your transaction" : "New transaction"} at #{@cpt.smart_memo}"
@@ -26,10 +25,7 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
 
     return unless @user.email_charge_notifications_enabled?
 
-    @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
-      id: @cpt.local_hcb_code.hashid,
-      s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
-    )
+    @upload_url = attach_receipt_url(@cpt.local_hcb_code)
 
     to = @cpt.stripe_card.user.email_address_with_name
     subject = "#{@cpt.smart_memo} settled at #{ApplicationController.helpers.render_money(@ct.amount)}."
@@ -45,9 +41,10 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     @user = @card.user
 
     return unless @user.email_charge_notifications_enabled?
+    return if @card.canceled? && @card.canceled_at < 1.month.ago
 
     @merchant = @cpt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]
-    @reason = @cpt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]["reason"]
+    @reason = @cpt.raw_pending_stripe_transaction.stripe_transaction["request_history"][0]&.[]("reason")
     @webhook_declined_reason = @cpt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason")
 
     @failed_verification_checks = @cpt.raw_pending_stripe_transaction.stripe_transaction["verification_data"].select { |k, v| k.end_with?("check") && v == "mismatch" }.keys

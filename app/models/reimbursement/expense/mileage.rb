@@ -5,9 +5,10 @@
 # Table name: reimbursement_expenses
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
+#  category                :integer
 #  deleted_at              :datetime
 #  description             :text
 #  expense_number          :integer          not null
@@ -33,11 +34,11 @@ module Reimbursement
   class Expense
     class Mileage < ::Reimbursement::Expense
       def rate
-        67
+        (event&.plan || Event::Plan::Standard.new).mileage_rate(created_at || Date.today) # rate may be used on creation, however, created_at isn't set at that point.
       end
 
       def value_label
-        "Miles (67¢/mile)"
+        "Miles (#{rate}¢/mile)"
       end
 
     end

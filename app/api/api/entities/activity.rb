@@ -14,15 +14,19 @@ module Api
       end
 
       expose_associated User do |activity, options|
-        activity.user
+        activity.owner.is_a?(User) ? activity.owner : activity.user
       end
 
       expose_associated Transaction do |activity, options|
-        if activity.trackable.try(:hcb_code).is_a?(HcbCode)
-          return activity.trackable.try(:hcb_code)
-        elsif activity.trackable.try(:hcb_code)
-          HcbCode.find_by_hcb_code(activity.trackable.try(:hcb_code))
-        end
+        hcb_code = if activity.trackable.try(:hcb_code).is_a?(HcbCode)
+                     activity.trackable.try(:hcb_code)
+                   elsif activity.trackable.try(:hcb_code)
+                     HcbCode.find_by_hcb_code(activity.trackable.try(:hcb_code))
+                   else
+                     activity.trackable.try(:canonical_pending_transaction)&.try(:local_hcb_code)
+                   end
+
+        Models::LedgerTransaction.resolve(hcb_code, options) if hcb_code
       end
 
     end

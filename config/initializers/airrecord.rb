@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
-Feedback = Airrecord.table(Rails.application.credentials.dig(:airtable, :pat), "appEzv7w2IBMoxxHe", "tblOmqLjWtJZWXn4O")
-GWaitlistTable = Airrecord.table(Rails.application.credentials.dig(:airtable, :pat), "appEzv7w2IBMoxxHe", "tbl9CkfZHKZYrXf1T")
-ApplicationsTable = Airrecord.table(Rails.application.credentials.dig(:airtable, :pat), "apppALh5FEOKkhjLR", "tblctmRFEeluG4do7")
+Feedback = Airrecord.table(Credentials.fetch(:AIRTABLE), "appEzv7w2IBMoxxHe", "tblOmqLjWtJZWXn4O")
+GWaitlistTable = Airrecord.table(Credentials.fetch(:AIRTABLE), "appEzv7w2IBMoxxHe", "tbl9CkfZHKZYrXf1T")
+ApplicationsTable = Airrecord.table(Credentials.fetch(:AIRTABLE), "apppALh5FEOKkhjLR", "tblctmRFEeluG4do7")
+EmailsTable = Airrecord.table(Credentials.fetch(:AIRTABLE), "appQBNxDANX2lKPtN", "tblNHTP2kP8TqpcZ4")
+OnboardersTable = Airrecord.table(Credentials.fetch(:AIRTABLE), "apppALh5FEOKkhjLR", "tblyFiB5SzSe1qysq")
+OrganizationRevenueTable = Airrecord.table(Credentials.fetch(:AIRTABLE), "applkI2sgCQL6MZrz", "tblWSppf3PNeKW0lh")

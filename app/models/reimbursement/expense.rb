@@ -5,9 +5,10 @@
 # Table name: reimbursement_expenses
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
+#  category                :integer
 #  deleted_at              :datetime
 #  description             :text
 #  expense_number          :integer          not null
@@ -33,18 +34,32 @@ module Reimbursement
   class Expense < ApplicationRecord
     include ApplicationHelper
     belongs_to :report, inverse_of: :expenses, foreign_key: "reimbursement_report_id", touch: true
-    monetize :amount_cents
-    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
+    monetize :amount_cents, as: "amount", with_model_currency: :currency
+    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }, integer_column: true
     attribute :expense_number, :integer
-    has_one :expense_payout
+    has_one :expense_payout, foreign_key: "reimbursement_expenses_id", inverse_of: :expense
     has_one :event, through: :report
     has_one :user, through: :report
     belongs_to :approved_by, class_name: "User", optional: true
     include AASM
     include Receiptable
+
     include Hashid::Rails
+    hashid_config salt: ""
+    def self.inherited(subclass)
+      # Force STI subclasses to use the same hashid configuration to ensure no
+      # salt is used.
+      super
+      subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
+    end
+
     has_paper_trail
     acts_as_paranoid
+
+    scope :to_sum, -> { where.not(type: Reimbursement::Expense::Fee.name) }
+
+    include PublicIdentifiable
+    set_public_id_prefix :rme
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event.id }, only: []
@@ -54,6 +69,26 @@ module Reimbursement
     validates :expense_number, uniqueness: { scope: :reimbursement_report_id }
     validate :valid_expense_type
 
+    enum :category, {
+      "Advertising / Marketing": 7000,
+      "Customs Fees": 7031,
+      "Dues & Subscriptions": 7042,
+      "Equipment & Furniture": 7053,
+      "Food & Entertainment": 8130,
+      "Gifts": 8805,
+      "Janitorial & Maintenance": 7050,
+      "Mileage": 8120,
+      "Office Supplies": 7044,
+      "Postage & Shipping": 7047,
+      "Prizes": 7030,
+      "Project Supplies": 7034,
+      "Software": 7045,
+      "Taxes & Licenses": 7041,
+      "Technical Infrastructure": 7035,
+      "Training": 8150,
+      "Travel": 8110
+    }, instance_methods: false
+
     before_validation do
       unless self.expense_number
         self.expense_number = (self.report.expenses.with_deleted.pluck(:expense_number).max || 0) + 1
@@ -61,6 +96,14 @@ module Reimbursement
     end
 
     include TouchHistory
+
+    # A reimbursement's receipts hang off the expense, not off the HCB code its
+    # payout creates, so the payout's ledger item can only learn about them from
+    # this side. `Receipt` touches its receiptable on create, update and destroy,
+    # which is what gets us here.
+    after_touch do
+      expense_payout&.ledger_item&.refresh!
+    end
 
     broadcasts_refreshes_to ->(expense) { expense.was_touched? ? :_noop : expense.report }
 
@@ -73,12 +116,9 @@ module Reimbursement
       event :mark_approved do
         transitions from: :pending, to: :approved
         after do |current_user|
-          if report.team_review_required?
-            ReimbursementMailer.with(report: self.report, expense: self).expense_approved.deliver_later
-            if current_user
-              update(approved_by: current_user)
-              create_activity(key: "reimbursement_expense.approved", owner: current_user)
-            end
+          if report.team_review_required? && current_user
+            update(approved_by: current_user)
+            create_activity(key: "reimbursement_expense.approved", owner: current_user)
           end
 
         end
@@ -88,8 +128,14 @@ module Reimbursement
         transitions from: :approved, to: :pending
         after do |current_user|
           update(approved_by: current_user) if current_user
-          ReimbursementMailer.with(report: self.report, expense: self).expense_unapproved.deliver_later
         end
+      end
+    end
+
+    before_update do
+      if approved? && (memo_changed? || amount_cents_changed? || category_changed? || description_changed?)
+        mark_pending!
+        self.approved_by = nil
       end
     end
 
@@ -112,11 +158,15 @@ module Reimbursement
 
     # multiplier for value -> amount_cents
     def rate
-      100
+      Money.from_amount(1, currency).cents
     end
 
+    delegate :conversion_rate, to: :report
+
     def value_label
-      "Amount"
+      label = "Amount"
+      label += " (#{currency})" unless currency == "USD"
+      label
     end
 
     def set_amount_cents
@@ -125,6 +175,16 @@ module Reimbursement
 
     def is_standard?
       type.nil? || type == "Reimbursement::Expense"
+    end
+
+    def is_fee?
+      type == "Reimbursement::Expense::Fee"
+    end
+
+    delegate :currency, to: :report
+
+    def missing_category?
+      !is_fee? && category.nil?
     end
 
     def card_label
@@ -148,8 +208,14 @@ module Reimbursement
     end
 
     def valid_expense_type
-      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name].include?(type)
+      unless type.nil? || [Reimbursement::Expense.name, Reimbursement::Expense::Mileage.name, Reimbursement::Expense::Fee.name].include?(type)
         errors.add(:type, "must be a valid expense type.")
+      end
+    end
+
+    before_validation do
+      if self.type.nil?
+        self.type = Reimbursement::Expense.name
       end
     end
 

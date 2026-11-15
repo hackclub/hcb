@@ -17,6 +17,7 @@ module Reimbursement
           receiver_bank_account_id = ColumnService::Accounts.id_of payout_holding.book_transfer_receiving_account
 
           ColumnService.post "/transfers/book",
+                             idempotency_key: payout_holding.public_id,
                              amount: amount_cents.abs,
                              currency_code: "USD",
                              sender_bank_account_id:,
@@ -42,7 +43,7 @@ module Reimbursement
       end
 
       def payout_holding
-        @payout_holding ||= Reimbursement::PayoutHolding.pending.find(@payout_holding_id)
+        @payout_holding ||= Reimbursement::PayoutHolding.find(@payout_holding_id)
       end
 
     end

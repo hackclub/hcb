@@ -20,7 +20,7 @@ class RawPendingOutgoingCheckTransaction < ApplicationRecord
   end
 
   def memo
-    "Check to #{raw_name} #{raw_memo}".strip.upcase
+    "Check to #{raw_name}".strip
   end
 
   def check_number
@@ -36,10 +36,6 @@ class RawPendingOutgoingCheckTransaction < ApplicationRecord
   end
 
   private
-
-  def raw_memo
-    check.memo
-  end
 
   def raw_name
     check.lob_address.name

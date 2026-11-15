@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class OrganizerPositionsController < ApplicationController
+  include ChangePositionRole
+
   def destroy
     @organizer_position = OrganizerPosition.find(params[:id])
     authorize @organizer_position
@@ -14,12 +16,12 @@ class OrganizerPositionsController < ApplicationController
     # also cancel all stripe cards from the organizer
     cards = @organizer_position.user.stripe_cards.where(event: @organizer_position.event)
     cards.each do |card|
-      card.cancel! unless card.stripe_status == "canceled"
+      card.cancel! unless card.canceled? || card.card_grant.present?
     end
     # ...and auto-close all deletion requests
     @organizer_position.organizer_position_deletion_requests.under_review.each { |opdt| opdt.close(current_user) }
 
-    flash[:success] = "Removed #{@organizer_position.user.email} from the team and cancelled their cards."
+    flash[:success] = "Removed #{@organizer_position.user.email} from the team and canceled their cards."
     redirect_back(fallback_location: event_team_path(@organizer_position.event))
   end
 
@@ -63,36 +65,6 @@ class OrganizerPositionsController < ApplicationController
     end
 
     redirect_to organizer_position.event
-  end
-
-  def toggle_signee_status
-    organizer_position = OrganizerPosition.find(params[:id])
-    authorize organizer_position
-    unless organizer_position.update(is_signee: !organizer_position.is_signee?)
-      flash[:error] = organizer_position.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(organizer_position.event))
-  end
-
-  def change_position_role
-    organizer_position = OrganizerPosition.find(params[:id])
-    authorize organizer_position
-
-    was = organizer_position.role
-    to = params[:to]
-
-    if was != to
-      organizer_position.update!(role: to)
-
-      flash[:success] = "Changed #{organizer_position.user.name}'s role from #{was} to #{to}."
-      OrganizerPositionMailer.with(organizer_position:, previous_role: was, changer: current_user).role_change.deliver_later
-    end
-
-  rescue => e
-    Airbrake.notify(e)
-    flash[:error] = organizer_position&.errors&.full_messages&.to_sentence.presence || "Failed to change the role."
-  ensure
-    redirect_back(fallback_location: event_team_path(organizer_position.event))
   end
 
 end

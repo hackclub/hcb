@@ -1,5 +1,8 @@
+/* global BK */
+
 import { Controller } from '@hotwired/stimulus'
 import { loadStripe } from '@stripe/stripe-js'
+import swal from 'sweetalert'
 
 import themes from '../common/stripeThemes'
 
@@ -18,10 +21,7 @@ export default class extends Controller {
 
     this.elements = this.stripe.elements({
       clientSecret: this.clientSecretValue,
-      appearance:
-        themes[this.themeValue][
-          localStorage.getItem('dark') === 'true' ? 'dark' : 'light'
-        ],
+      appearance: themes[this.themeValue][BK.isDark() ? 'dark' : 'light'],
     })
 
     const paymentElement = this.elements.create('payment', {
@@ -53,11 +53,11 @@ export default class extends Controller {
           ) {
             flash.textContent = `Something went wrong: your bank declined this transaction. Please contact them to approve it.`
           } else {
-            flash.textContent = `Something went wrong: ${result.error.message}`
+            flash.textContent = result.error.message
           }
           this.errorsTarget.appendChild(flash)
         } else {
-          alert(`Something went wrong: ${result.error.message}`)
+          swal('Payment error', result.error.message, 'error')
         }
       }
     }

@@ -1,0 +1,18 @@
+<% title "Payments" %>
+
+<%= form_with method: :get, class: "card" do |form| %>
+  <div class="flex items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "employee payments" %>
+  </div>
+</div>
+
+<%= render "employees/payments", payments: @payments, show_stats: false %>
+
+<%= paginate @payments %>

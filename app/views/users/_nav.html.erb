@@ -1,80 +1,83 @@
-<% content_for(:nav) do %>
-  <h1 class="flex items-center xs-hide border-none h1 mt0 mb0 pt2">
-    <%= avatar_for current_user, 36, { class: "mr1" } %>
-    <%= current_user.initial_name %>
-  </h1>
-
-  <div>
-    <button
-      class="btn h-10 bg-none bg-smoke shadow-none w-100 justify-start mt1 px-3 hover:shadow-none display-none-not-important md:flex"
-      style="border-radius: 8px"
-      id="command_bar_trigger">
-      <span class="flex-grow text-left font-medium">Jump to...</span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md mr-2 text-sm">
-        ⌘
-      </span>
-      <span class="bg-gray-300 dark:bg-gray-700 opacity-75 w-6 rounded-md text-sm">
-        K
-      </span>
-    </button>
+<% content_for(:header) do %>
+  <div class="flex items-center gap-3 mb-2 pt-4">
+    <%= render partial: "application/logo" %>
+    <h3 class="my-0">HCB</h3>
   </div>
+<% end %>
+
+<% content_for(:nav) do %>
+  <% if signed_in? %>
+    <div class="mt-3 mb-3">
+      <button
+        class="command-bar-trigger"
+        style="border-radius: 8px;box-shadow: none;"
+        data-behavior="command_bar_trigger">
+        <span class="flex-grow text-left font-medium opacity-75">Jump to...</span>
+        <span class="hidden sm:inline key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
+          <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
+        </span>
+        <span class="hidden sm:inline key opacity-75 w-6 rounded-md text-sm">
+          K
+        </span>
+      </button>
+    </div>
+  <% end %>
 
   <nav class="dock font-medium mt1">
-    <%= dock_item "Home",
-      root_path,
-      tooltip: "See all your organizations",
-      icon: "home",
-      selected: local_assigns[:selected] == :home %>
-    <%= dock_item "Cards",
-      my_cards_path,
-      tooltip: "See all your cards",
-      icon: "card",
-      selected: local_assigns[:selected] == :cards %>
-    <%= dock_item "Receipts",
-      my_inbox_path,
-      tooltip: "See transactions awaiting receipts",
-      icon: "payment-docs",
-      async_badge: my_missing_receipts_icon_path,
-      selected: local_assigns[:selected] == :receipts %>
-    <%= dock_item "Reimbursements",
-      my_reimbursements_path,
-      tooltip: "See expense reimbursements",
-      icon: "attachment",
-      async_badge: my_reimbursements_icon_path,
-      selected: local_assigns[:selected] == :reimbursements %>
-    <%= dock_item "Settings",
-      my_settings_path,
-      tooltip: "Edit account settings",
-      icon: "settings",
-      selected: local_assigns[:selected] == :settings %>
-    <% if @first_visit %>
-      <div class="pwa__prompt" style="position: relative">
-        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
-          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
-        </div>
-        <b>Looking for a mobile app?</b>
-        <br>
-        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
-        and then <%= inline_icon "plus", size: 18, class: "pwa__prompt__icon" %>
-        <i>Add To Home Screen</i>.
+    <% users_nav(selected: local_assigns[:selected]).each do |item| %>
+      <%= dock_item item[:name],
+        item[:path],
+        tooltip: item[:tooltip],
+        icon: item[:icon],
+        async_badge: item[:async_badge],
+        selected: item[:selected],
+        **item.slice(:method) %>
+    <% end %>
+    <div>
+      <% if signed_in? %>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
+      <% end %>
+    </div>
+    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+      <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <div>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
       </div>
     <% end %>
   </nav>
 
-  <% if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
-    <h4 class="w-100 mb0 text-left mt3 border-bottom pb1 activity">
-      <span class="flex items-center w-100">
-          <span class="flex-grow">Recent activity</span>
-          <% if admin_signed_in? %>
-            <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :POST } do %>
-              <% admin_tool("ml2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
-                👤 <%= User.currently_online.count %>
+  <% if signed_in? && (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
+    <% wrapped_style = "background-color: #ec3750; background-image: url('https://cdn.hackclub.com/019c256a-a202-774e-940a-b9ed1debc2bc/frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;" %>
+    <%= render layout: "application/dismissible_callout",
+               locals: { key: "hide_hcb_wrapped_2025", id: "bank-wrapped-dialog", article_style: wrapped_style } do %>
+      Check out your <%= link_to "/wrapped", target: "_blank", class: "primary nowrap", style: "color: white;", id: "bank-wrapped-link", data: { dismissible_target: "link" } do %><strong>HCB Wrapped</strong><% end %> for <%= Metric.year %>!
+    <% end %>
+  <% end %>
+
+  <% if (current_user&.is_teenager? && current_user&.only_card_grant_user?) %>
+    <%= render partial: "users/card_grant_conversion_callout" %>
+  <% end %>
+<% end %>
+
+<% content_for(:nav_footer) do %>
+  <div style="border-top: 1px solid;border-bottom:1px solid" class="!border-gray-200 dark:!border-neutral-700 flex flex-col h-full p-0 w-[288px]">
+    <% if @activities %>
+      <h4 class="p-3 pb-2 w-100 mb0 text-left mt-0 activity">
+        <span class="flex items-center w-100 justify-center">
+            <span>Recent activity</span>
+            <% if auditor_signed_in? %>
+              <%= link_to toggle_admin_activities_path, data: { turbo_frame: "activities-1", turbo: true, turbo_method: :post } do %>
+                <% admin_tool("ml-2 h6 badge bg-muted", style: "padding: 0.25rem 0.625rem; border-radius: 9999px;") do %>
+                  👤 <%= User.currently_online.count %>
+                <% end %>
               <% end %>
             <% end %>
-          <% end %>
-      </span>
-    </h4>
-
-    <%= render partial: "my/activities" if Flipper.enabled?(:recently_on_hcb_2024_05_23, current_user) && @activities %>
-  <% end %>
+        </span>
+      </h4>
+    <% end %>
+    <div class="h-full overflow-y-auto px-3">
+      <%= render partial: "my/activities" if @activities %>
+    </div>
+  </div>
 <% end %>

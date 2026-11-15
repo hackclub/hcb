@@ -6,5 +6,19 @@ FactoryBot.define do
     date { Faker::Date.backward(days: 14) }
     memo { Faker::Quote.matz }
     hashed_transactions { [association(:hashed_transaction, :plaid)] }
+
+    transient do
+      category_slug {}
+    end
+
+    after(:create) do |ct, context|
+      if context.category_slug.present?
+        TransactionCategoryService.new(model: ct).set!(slug: context.category_slug)
+      end
+
+      # When a spec passes `event:` (via the has_one :through association), map
+      # the ledger item onto that event's ledger. See FactoryLedgerMapping.
+      FactoryLedgerMapping.map_to_primary_ledger(ct)
+    end
   end
 end

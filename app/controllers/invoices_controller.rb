@@ -7,8 +7,8 @@ class InvoicesController < ApplicationController
   skip_before_action :signed_in_user
 
   def index
+    authorize @event, :invoices?
     relation = @event.invoices
-    authorize relation
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
@@ -26,7 +26,7 @@ class InvoicesController < ApplicationController
     voided = relation.void_v2.sum(:item_amount)
 
     @stats = {
-      # The calcluations for `total` and `unpaid` do not include archived invoices
+      # The calculations for `total` and `unpaid` do not include archived invoices
       total: relation.sum(:item_amount) - archived_unpaid - voided,
       # "paid" status invoices include manually paid invoices and
       # Stripe invoices that are paid, but for which the funds are in transit
@@ -35,7 +35,7 @@ class InvoicesController < ApplicationController
       unpaid: relation.unpaid.sum(:item_amount) - archived_unpaid,
     }
 
-    case params[:filter]
+    case params[:status]
     when "paid"
       relation = relation.paid_v2
     when "unpaid"
@@ -48,48 +48,39 @@ class InvoicesController < ApplicationController
       relation = relation.unarchived
     end
 
+    relation = relation.where("item_amount >= ?", params[:amount_greater_than].to_i * 100) if params[:amount_greater_than].present?
+    relation = relation.where("item_amount <= ?", params[:amount_less_than].to_i * 100) if params[:amount_less_than].present?
+    relation = relation.where("invoices.created_at >= ?", params[:created_after]) if params[:created_after].present?
+    relation = relation.where("invoices.created_at <= ?", params[:created_before]) if params[:created_before].present?
+
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc)
+    relation = helpers.sorted_relation(
+      relation,
+      INVOICE_COLUMNS,
+      sort: [params[:sort], params[:direction]]
+    )
+
+    if request.format.csv?
+      authorize @event, :export_invoices?
+      return stream_invoices_csv(relation)
+    end
+
+    if request.format.json?
+      authorize @event, :export_invoices?
+      return stream_invoices_json(relation)
+    end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
 
-    # @ma1ted: I have no clue how to use the above methods here.
-    # Reimplementing logic is okay if you apolgise to every
-    # future contributor. You can hold me to that.
-    if helpers.show_mock_data?
-      @invoices = []
-      @stats = { total: 0, paid: 0, pending: 0, unpaid: 0 }
+    @filter_options = filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
 
-      # Generate mock invoices data
-      (0..rand(10..30)).each do |_|
-        # State is either sent, deposited, or overdue
-        # Here, we'll only set deposited or overdue
-        deposited = rand > 0.25
-        invoice = OpenStruct.new(
-          state: deposited ? "success" : "error",
-          state_text: deposited ? "Deposited" : "Overdue",
-          created_at: Faker::Date.between(from: 30.days.ago, to: Date.today),
-          sponsor: OpenStruct.new(name: Faker::Name.name),
-          item_amount: rand(1..100) * 100,
-          local_hcb_code: OpenStruct.new(hashid: "")
-        )
-        @stats[:paid] += invoice.item_amount if deposited
-        @stats[:unpaid] += invoice.item_amount unless deposited
-        @stats[:total] += invoice.item_amount
-        @invoices << invoice
-      end
-      # Sort by date descending
-      @invoices.sort_by! { |invoice| invoice[:created_at] }.reverse!
-
-      # Set the most recent 0-3 invoices to be sent
-      (0..rand(-1..2)).each do |i|
-        @invoices[i].state = "muted"
-        @invoices[i].state_text = "Sent"
-        @stats[:pending] += @invoices[i].item_amount
-      end
-    end
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
@@ -104,13 +95,9 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.civil(filtered_params["due_date(1i)"].to_i,
-                          filtered_params["due_date(2i)"].to_i,
-                          filtered_params["due_date(3i)"].to_i)
-
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
-      due_date:,
+      due_date: parsed_due_date,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
       current_user:,
@@ -128,13 +115,20 @@ class InvoicesController < ApplicationController
 
     flash[:success] = "Invoice successfully created and emailed to #{@invoice.sponsor.contact_email}."
 
-    unless OrganizerPosition.find_by(user: @invoice.creator, event: @event)&.manager?
-      InvoiceMailer.with(invoice: @invoice).notify_organizers_sent.deliver_later
-    end
-
     redirect_to @invoice
+  rescue Pundit::NotAuthorizedError
+    raise
+  rescue ActiveRecord::RecordInvalid => e
+    # Bad sponsor or invoice details are a mistake in what was typed, not a bug,
+    # so re-render the form with the validation errors instead of reporting the
+    # exception and sending the organizer back to an empty form.
+    @sponsor = e.record.is_a?(Sponsor) ? e.record : sponsor_from_params
+    @invoice = e.record.is_a?(Invoice) ? e.record : invoice_from_params
+    @invoice.sponsor ||= @sponsor
+
+    render :new, status: :unprocessable_content
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor)
@@ -200,18 +194,7 @@ class InvoicesController < ApplicationController
     @invoice.sync_remote!
     @invoice.reload
 
-    redirect_to @invoice.hosted_invoice_url, allow_other_host: true
-  end
-
-  def pdf
-    @invoice = Invoice.find(params[:invoice_id])
-
-    authorize @invoice
-
-    @invoice.sync_remote!
-    @invoice.reload
-
-    redirect_to @invoice.invoice_pdf, allow_other_host: true
+    redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
   def refund
@@ -224,11 +207,56 @@ class InvoicesController < ApplicationController
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "This invoice hasn't settled, only settled invoices can be refunded." }
+      Invoice::RefundJob.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
+  def manually_mark_as_paid
+    @invoice = Invoice.friendly.find(params[:invoice_id])
+    @hcb_code = @invoice.local_hcb_code
+
+    authorize @invoice
+
+    ::InvoiceService::MarkVoid.new(invoice_id: @invoice.id, user: current_user).run
+
+    @invoice.update(manually_marked_as_paid_at: Time.now, manually_marked_as_paid_user: current_user, manually_marked_as_paid_reason: params[:manually_marked_as_paid_reason])
+
+    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Manually marked this invoice as paid." }
+  end
+
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
+
+  # A blank or malformed date would otherwise raise out of `Date.parse`; leaving
+  # it nil lets Invoice's presence validation report it on the form instead.
+  def parsed_due_date
+    Date.parse(filtered_params[:due_date].to_s)
+  rescue Date::Error
+    nil
+  end
+
+  # Rebuilds the submitted sponsor/invoice so a failed create can re-render the
+  # form with everything the organizer already filled in.
+  def sponsor_from_params
+    @event.sponsors.new(filtered_params[:sponsor_attributes])
+  end
+
+  def invoice_from_params
+    Invoice.new(
+      event: @event,
+      item_description: filtered_params[:item_description],
+      item_amount: Monetize.parse(filtered_params[:item_amount])&.cents,
+      due_date: parsed_due_date
+    )
+  end
 
   def filtered_params
     params.require(:invoice).permit(
@@ -238,6 +266,40 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def stream_invoices_csv(invoices)
+    by_sponsor = params[:report] == "sponsor_totals"
+    name = by_sponsor ? "invoices_sponsors" : "invoices"
+
+    headers["Content-Type"] = "text/csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run
+  end
+
+  def stream_invoices_json(invoices)
+    headers["Content-Type"] = "application/json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Json.new(invoices:).run
+  end
+
+  def filter_options
+    min_amount = @event.invoices.minimum(:item_amount) || 0
+    max_amount = @event.invoices.maximum(:item_amount) || 0
+
+    [
+      { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+      { key_base: "created", label: "Date", type: "date_range" },
+      { key_base: "amount", label: "Amount", type: "amount_range", range: [min_amount / 100, max_amount / 100] }
+    ]
   end
 
 end

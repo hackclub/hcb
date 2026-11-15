@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_before_action :signed_in_user, only: [:cards, :reimbursements]
+  before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
+  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
 
   def activities
-    if admin_signed_in? && cookies[:admin_activities] == "everyone"
-      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    @before = params[:before] || Time.now
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
+      @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).page(params[:page]).per(25)
     else
-      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).page(params[:page]).per(25)
     end
   end
 
@@ -17,12 +21,52 @@ class MyController < ApplicationController
   end
 
   def cards
+    unless signed_in?
+      @stripe_cards = []
+      return
+    end
+
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
+
+    @status = params[:status].presence_in(%w[active inactive frozen canceled])
+    @type = params[:type].presence_in(%w[virtual physical])
+    @filter_applied = @status || @type
+
+    @stripe_cards = case @status
+                    when "active"
+                      @stripe_cards.active
+                    when "inactive"
+                      @stripe_cards.inactive
+                    when "frozen"
+                      @stripe_cards.frozen
+                    when "canceled"
+                      @stripe_cards.canceled
+                    else
+                      @stripe_cards
+                    end
+
+    @stripe_cards = case @type
+                    when "virtual"
+                      @stripe_cards.virtual
+                    when "physical"
+                      @stripe_cards.physical
+                    else
+                      @stripe_cards
+                    end
+
+    @stripe_cards = @stripe_cards.order(
+      Arel.sql("stripe_status = 'active' DESC"),
+      Arel.sql("stripe_status = 'inactive' DESC")
+    )
   end
 
   def tasks
     @tasks = current_user.tasks
+    respond_to do |format|
+      format.html
+      format.json { render json: { count: @tasks.count } }
+    end
   end
 
   def missing_receipts_list
@@ -41,32 +85,79 @@ class MyController < ApplicationController
     emojis = {
       "🤡": 300,
       "💀": 200,
-      "😱": 100,
+      "😱": 100
     }
 
-    @missing_receipt_count = emojis.find { |emoji, value| count >= value }&.first || count
+    @missing_receipt_count = count
+    @missing_receipt_emoji = emojis.find { |emoji, value| count >= value }&.first
 
     render :missing_receipts_icon, layout: false
   end
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-    @hcb_codes = Kaminari.paginate_array(HcbCode.where(id: hcb_code_ids_missing_receipt)
-                 .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
-                 .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values)
-                         .page(params[:page]).per(params[:per] || 15)
-
-    @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }
-    @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                              # Order by cards with least transactions first
-                              .sort_by { |card| @card_hcb_codes[card.to_global_id.to_s].count }
-
-    if Flipper.enabled?(:receipt_bin_2023_04_07, current_user)
-      @mailbox_address = current_user.active_mailbox_address
-      @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
-      @pairings = current_user.receipt_bin.suggested_receipt_pairings
+    if CardLocking.enabled?
+      @locking_count = current_user.card_locking_overdue_charges.count
+      @locking_next_due_at = current_user.card_locking_next_due_at
     end
+    @now = Time.current
+
+    hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
+
+    hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
+                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
+                                       .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
+
+    # Deadlines only exist (and are only explained elsewhere on this page) for
+    # cardholders inside the card locking rollout, so don't group by them until
+    # there's at least one to group.
+    @groupable_by_due_date = CardLocking.enabled? &&
+                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    @grouping =
+      if @groupable_by_due_date
+        params[:group].presence_in(["due_date", "card"]) || "due_date"
+      else
+        "card"
+      end
+
+    hcb_codes_missing_receipt =
+      if @grouping == "due_date"
+        # Soonest deadline first, then charges still pending, then charges that
+        # never had a deadline; both undated groups newest first.
+        hcb_codes_missing_receipt.sort_by do |hcb_code|
+          if hcb_code.receipt_due_at
+            [0, hcb_code.receipt_due_at.to_i]
+          else
+            [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
+          end
+        end
+      else
+        hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+      end
+
+    if @grouping == "due_date"
+      # Counted over the whole pile, not the page, so a group spanning several
+      # pages still reports its real size.
+      @due_date_group_counts = hcb_codes_missing_receipt.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+                                                        .transform_values(&:count)
+    end
+
+    @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
+                         .page(params[:page]).per(safe_per(15))
+
+    if @grouping == "due_date"
+      # @hcb_codes is already in due date order, so group_by preserves it.
+      @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+    else
+      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
+      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
+                                # Order cards by created_at, newest first
+                                .sort_by(&:created_at).reverse!
+    end
+
+    @mailbox_address = current_user.active_mailbox_address
+    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
+    @pairings = current_user.receipt_bin.suggested_receipt_pairings
 
     if flash[:popover]
       @popover = flash[:popover]
@@ -75,17 +166,107 @@ class MyController < ApplicationController
   end
 
   def reimbursements
-    @my_reports = current_user.reimbursement_reports
-    @my_reports = @my_reports.search(params[:q]) if params[:q].present?
-    @reports_to_review = Reimbursement::Report.submitted.where(event: current_user.events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
-    @payout_method = current_user.payout_method
+    return unless signed_in?
+
+    @sections = reimbursement_sections
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def reimbursements_section
+    @section = params[:section].to_sym
+    @reports = reimbursement_sections.fetch(@section)
+                                     .order(created_at: :desc)
+                                     .includes(:user, :event, :payout_holding)
   end
 
   def reimbursements_icon
-    @draft_reimbursements_count = current_user.reimbursement_reports.draft.count
-    @review_requested_reimbursements_count = current_user.assigned_reimbursement_reports.submitted.count
+    @reports_count = @my_reports.draft.or(@reports_to_review).count
 
     render :reimbursements_icon, layout: false
+  end
+
+  def payroll
+    @jobs = current_user.jobs
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def pay
+    @legal_entities = current_user.legal_entities
+
+    if params[:legal_entity_id].present?
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
+      return redirect_to my_pay_path
+    end
+
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.page(params[:page] || 1).per(safe_per(10))
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
+
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+                                             .load
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
+    # Approved invoices are represented by their payment in the history table
+    # below, so only surface invoices still awaiting review here to avoid
+    # duplicating information.
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where(aasm_state: "submitted")
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
+  end
+
+  def feed
+    @event_follows = current_user.event_follows
+    @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
+    @announcements = @all_announcements.page(params[:page]).per(10)
+  end
+
+  private
+
+  def set_reimbursement_reports
+    return unless signed_in?
+
+    @my_reports = current_user.reimbursement_reports
+    # Managers can't approve their own reports, so those only appear under @my_reports
+    @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
+    reviewing_events = Event::ReimbursementReviewer::OptIn.joins(:organizer_position).where(organizer_positions: { user_id: current_user.id }).select(:event_id)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event_id: reviewing_events, reviewer_id: nil).where.not(user: current_user)
+    @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
+  end
+
+  def reimbursement_sections
+    {
+      assigned: @reports_assigned_to_me,
+      unassigned: @unassigned_reports_to_review,
+      mine: @my_reports,
+    }.transform_values do |reports|
+      params[:q].present? ? reports.search(params[:q]) : reports
+    end
   end
 
 end

@@ -1,4 +1,8 @@
-require: rubocop-rails
+plugins:
+  - rubocop-rails
+require:
+  - ./lib/rubocop/cop/hcb/turbo_confirm
+  - ./lib/rubocop/cop/hcb/turbo_method
 inherit_from: .rubocop_todo.yml
 
 AllCops:
@@ -6,8 +10,9 @@ AllCops:
     - 'db/**/*'
     - 'lib/tasks/**/*'
     - 'vendor/**/*'
+    - 'tmp/**/*'
 
-# The "offical" rubocop style guide is indeed quite strict. So intead, we use
+# The "official" rubocop style guide is indeed quite strict. So instead, we use
 # the Relaxed Ruby Style guide. https://relaxed.ruby.style/
 
 inherit_gem:
@@ -72,7 +77,7 @@ Layout/EmptyLines:
 Style/RaiseArgs:
   Enabled: false
 
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Enabled: false
 
 Style/ConditionalAssignment:
@@ -180,7 +185,10 @@ Rails/ApplicationController:
     - 'app/controllers/docs/api_controller.rb'
     - 'app/controllers/stripe_controller.rb'
     - 'app/controllers/twilio_controller.rb'
+    - 'app/controllers/docuseal_controller.rb'
     - 'app/controllers/column/webhooks_controller.rb'
+    - 'app/controllers/csp_violation_reports_controller.rb'
+    - 'app/controllers/taxbandits_controller.rb'
 
 Rails/HasAndBelongsToMany:
   Enabled: false
@@ -190,3 +198,6 @@ Rails/Validation:
 
 Rails/UniqueValidationWithoutIndex:
   Enabled: false
+
+Hcb/TurboConfirm:
+  Enabled: true

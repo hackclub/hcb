@@ -1,0 +1,16 @@
+<%= turbo_frame_tag :backup_codes_card do %>
+  <div class="card border b--info mt1 mb3 flex flex-col items-center justify-center text-center">
+    <p>
+      Save the following codes in a safe place. <span class="font-bold">You will not be able to see these codes again.</span>
+    </p>
+    <%= copy_to_clipboard(@previewed_backup_codes.join("\n")) do %>
+        <pre class="text-lg m-1 p-4 text-center bg-gray-100 rounded mx-auto fs-mask grid grid-cols-2">
+        <% @previewed_backup_codes.each do |code| %>
+          <div class="px-6"><%= code %></div>
+        <% end %>
+      </pre>
+    <% end %>
+    <p class="font-bold">After saving your backup codes, click the button below to activate them.</p>
+    <%= button_to "I have saved my codes", user_activate_backup_codes_path(@user), method: :post, class: "btn px2 h4", data: { turbo: false } %>
+  </div>
+<% end %>

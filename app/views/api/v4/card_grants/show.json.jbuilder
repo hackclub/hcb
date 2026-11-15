@@ -1,1 +1,3 @@
-json.partial! @card_grant, expand: [:user, :organization]
+expand :user, :organization do
+  json.partial! @card_grant
+end

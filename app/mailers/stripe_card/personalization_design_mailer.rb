@@ -8,7 +8,7 @@ class StripeCard
 
       return unless @event
 
-      mail to: @event.users.map(&:email_address_with_name), subject: "Your card logo was rejected by our card issuer"
+      mail to: @event.organizer_contact_emails, subject: "Your card logo was rejected by our card issuer"
     end
 
     private

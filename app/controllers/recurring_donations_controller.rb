@@ -2,6 +2,7 @@
 
 class RecurringDonationsController < ApplicationController
   include SetEvent
+  include TurnstileProtection
 
   before_action :set_event, only: [:create, :pay, :finished]
   before_action :set_recurring_donation_by_hashid, only: [:pay, :finished]
@@ -10,7 +11,10 @@ class RecurringDonationsController < ApplicationController
   skip_before_action :signed_in_user
   skip_before_action :redirect_to_onboarding
 
-  invisible_captcha only: [:create], honeypot: :subtitle
+  # The monthly half of the donation form, gated for the same reason as the
+  # one-time one: saving a RecurringDonation creates a Stripe subscription and
+  # with it a PaymentIntent for card testers to work against.
+  turnstile_protect only: [:create], action: TurnstileService::DONATION_ACTION
 
   def create
     params[:recurring_donation][:amount] = Monetize.parse(params[:recurring_donation][:amount]).cents
@@ -19,7 +23,7 @@ class RecurringDonationsController < ApplicationController
       params[:recurring_donation][:amount] = (params[:recurring_donation][:amount] / (1 - @event.revenue_fee)).ceil
     end
 
-    tax_deductible = params[:recurring_donation][:goods].nil? ? true : params[:recurring_donation][:goods] == "0"
+    tax_deductible = params[:recurring_donation][:goods].nil? || params[:recurring_donation][:goods] == "0"
 
     @recurring_donation = RecurringDonation.new(
       params.require(:recurring_donation).permit(:name, :email, :amount, :message, :anonymous, :fee_covered).merge(event: @event, tax_deductible:)
@@ -31,7 +35,10 @@ class RecurringDonationsController < ApplicationController
       redirect_to pay_event_recurring_donation_path(@event, @recurring_donation)
     else
       @monthly = true
-      render "donations/start_donation", status: :unprocessable_entity
+      @top_donors = []
+      @recent_donors = []
+
+      render "donations/start_donation", status: :unprocessable_content
     end
   end
 
@@ -78,10 +85,35 @@ class RecurringDonationsController < ApplicationController
   def cancel
     @recurring_donation.cancel!
 
-    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "Your donation has been canceled." }
+    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "This donation has been canceled." }
   end
 
   private
+
+  # Mirrors the failed-save path in `create`: the donation page hides flashes
+  # and the form sits in a Turbo frame, so the error belongs on the form. Keep
+  # what they'd already typed, since re-rendering the frame otherwise empties
+  # it.
+  def turnstile_failed
+    @recurring_donation = @event.recurring_donations.build(resubmitted_attributes)
+    @recurring_donation.errors.add(:base, TurnstileProtection::FAILURE_MESSAGE)
+    @monthly = true
+    @top_donors = []
+    @recent_donors = []
+    @hide_flash = true
+
+    render "donations/start_donation", status: :unprocessable_content
+  end
+
+  # A bot's POST needn't include the key at all, so don't assume it's there;
+  # the amount arrives from the form as dollars.
+  def resubmitted_attributes
+    submitted = params[:recurring_donation]
+    return {} unless submitted.is_a?(ActionController::Parameters)
+
+    attributes = submitted.permit(:name, :email, :message, :anonymous, :amount).to_h
+    attributes.merge("amount" => (Monetize.parse(attributes["amount"]).cents if attributes["amount"].present?))
+  end
 
   def set_recurring_donation_by_hashid
     @recurring_donation = @event.recurring_donations.find_by_hashid!(params[:id])

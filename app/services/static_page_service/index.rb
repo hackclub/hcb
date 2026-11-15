@@ -6,10 +6,6 @@ module StaticPageService
       @current_user = current_user
     end
 
-    def redirect_to_first_event?
-      !admin? && events.count == 1 && invites.count == 0
-    end
-
     def events
       @current_user.events.reorder("organizer_positions.sort_index ASC", "events.id ASC").includes(:stripe_cards, organizer_positions: :user)
     end
@@ -22,40 +18,12 @@ module StaticPageService
       @current_user.organizer_position_invites.pending
     end
 
-    # Counts
-
-    def checks_count
-      Check.in_transit.count
+    def invite_requests
+      @current_user.organizer_position_invite_requests.pending
     end
 
-    def ach_transfers_count
-      AchTransfer.pending.count
-    end
-
-    def fee_reimbursements_count
-      FeeReimbursement.unprocessed.count
-    end
-
-    def g_suites_needs_ops_review_count
-      GSuite.needs_ops_review.count
-    end
-
-    def organizer_position_deletion_requests_count
-      OrganizerPositionDeletionRequest.under_review.count
-    end
-
-    def transactions_count
-      Transaction.needs_action.count
-    end
-
-    def disbursements_count
-      Disbursement.pending.count
-    end
-
-    private
-
-    def admin?
-      @current_user.admin?
+    def applications
+      @current_user.applications.active
     end
 
   end

@@ -1,8 +1,9 @@
 import { Controller } from '@hotwired/stimulus'
 import { get } from '@github/webauthn-json'
-import UAParser from 'ua-parser-js'
+import { UAParser } from 'ua-parser-js'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import submitForm from '../common/submitForm'
+import { appsignal } from '../appsignal'
 
 export default class extends Controller {
   static targets = [
@@ -12,17 +13,25 @@ export default class extends Controller {
     'loginCode',
     'continueButton',
     'loginPreferenceWebauthnInput',
-    'rememberInput',
   ]
 
   static values = {
-    returnTo: String,
     requireWebauthnPreference: Boolean,
     loginId: String,
   }
 
   initialize() {
     this.submitting = false
+  }
+
+  connect() {
+    if (
+      this.hasLoginPreferenceWebauthnInputTarget &&
+      this.loginPreferenceWebauthnInputTarget.checked &&
+      location.pathname.includes('/security_key')
+    ) {
+      this.submit()
+    }
   }
 
   loginEmailInputTargetConnected() {
@@ -39,12 +48,12 @@ export default class extends Controller {
       return
     }
 
-    event.preventDefault()
-    event.stopImmediatePropagation()
+    event?.preventDefault?.()
+    event?.stopImmediatePropagation?.()
 
     this.disableForm()
 
-    const loginEmail = event.target.email.value
+    const loginEmail = this.loginEmailInputTarget.value
 
     try {
       const options = await this.fetchWebAuthnOptions(loginEmail)
@@ -66,10 +75,7 @@ export default class extends Controller {
           : `/logins/complete`,
         {
           credential: JSON.stringify(credential),
-          return_to: this.returnToValue,
           method: 'webauthn',
-          remember:
-            this.hasRememberInputTarget && this.rememberInputTarget.checked,
           ...(await this.fingerprint()),
         }
       )
@@ -79,13 +85,16 @@ export default class extends Controller {
         this.storeLoginEmail(loginEmail)
 
         this.submitting = true
-        event.target.requestSubmit()
+        event?.target?.requestSubmit?.()
       } else {
         // Show an error
         this.enableForm()
         this.continueButtonTarget.value = 'Continue'
 
         this.errorTarget.classList.remove('display-none')
+
+        console.error(e)
+        appsignal.sendError(e)
       }
     }
   }

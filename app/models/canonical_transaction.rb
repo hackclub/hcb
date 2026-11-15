@@ -11,22 +11,31 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
 #  index_canonical_transactions_on_date                (date)
 #  index_canonical_transactions_on_hcb_code            (hcb_code)
+#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
 #  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
-  include Commentable
   include Receiptable
+  include Categorizable
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -35,7 +44,6 @@ class CanonicalTransaction < ApplicationRecord
   scope :unmapped, -> { includes(:canonical_event_mapping).where(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_event_mapping).where.not(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
-  scope :has_pending, -> { includes(:canonical_pending_settled_mapping).where.not(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
   scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
@@ -43,10 +51,11 @@ class CanonicalTransaction < ApplicationRecord
   scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
   scope :ach_transfer_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}%'") }
   scope :check_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}%'") }
-  scope :disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}%'") }
+  scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
+  scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }
@@ -58,25 +67,31 @@ class CanonicalTransaction < ApplicationRecord
   scope :column_transaction,   -> { joins("INNER JOIN raw_column_transactions   ON transaction_source_type = 'RawColumnTransaction'   AND raw_column_transactions.id  =  transaction_source_id") }
 
   scope :likely_hack_club_bank_issued_cards, -> { where("memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'") }
-  scope :likely_clearing_checks, -> { where("memo ilike '%Withdrawal - Inclearing Check #%' or memo ilike '%Withdrawal - On-Us Deposited Ite #%'") }
   scope :likely_checks, -> { where("memo ilike '%Check TO ACCOUNT REDACTED'") }
-  scope :likely_increase_checks, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_transfer_intention'") }
-  scope :likely_disbursements, -> { where("memo ilike 'HCB DISBURSE%'") }
-  scope :likely_achs, -> { where("memo ilike '%BUSBILLPAY%'") }
-  scope :likely_increase_achs, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'ach_transfer_intention'") }
-  scope :likely_increase_account_number, -> { increase_transaction.joins("INNER JOIN increase_account_numbers ON increase_account_number_id = increase_route_id") }
-  scope :likely_increase_check_deposit, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_deposit_acceptance'") }
   scope :increase_interest, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'interest_payment'") }
-  scope :likely_column_interest, -> { with_column_transaction_type("ach").where(memo: "COLUMN*COLUMN NA INTEREST") }
+  scope :likely_column_interest, -> {
+    column_transaction.where("raw_column_transactions.column_transaction->>'transaction_type' = 'interest.payout.completed'")
+                      .or(where(memo: "COLUMN*COLUMN NA INTEREST"))
+  }
   scope :likely_column_account_number, -> { column_transaction.joins("INNER JOIN column_account_numbers ON column_transaction->>'account_number_id' = column_account_numbers.column_id") }
   scope :likely_hack_club_fee, -> { where("memo ilike '%Hack Club Bank Fee TO ACCOUNT%'") }
-  scope :old_likely_hack_club_fee, -> { where("memo ilike '% Fee TO ACCOUNT REDACTED%'") }
   scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'") }
   scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%' and memo not ilike '%STRIPE Stripe Top%') or memo is null") }
+  scope :hcb_sweep, -> { where("memo ilike '%COLUMN*THE HACK HCB-SWEEP%'") }
   scope :to_svb_sweep_account, -> { where(memo: "TF TO ICS SWP") }
   scope :from_svb_sweep_account, -> { where(memo: "TF FRM ICS SWP") }
+  scope :svb_sweep_account, -> { where(transaction_source_type: RawIntrafiTransaction.name) }
+  scope :svb_sweep_interest, -> { where(transaction_source_type: RawIntrafiTransaction.name, memo: "Interest Capitalization") }
   scope :mapped_by_human, -> { includes(:canonical_event_mapping).where("canonical_event_mappings.user_id is not null").references(:canonical_event_mapping) }
-  scope :included_in_stats, -> { includes(canonical_event_mapping: :event).where(events: { omit_stats: false }) }
+  scope :included_in_stats, -> {
+    includes(
+      canonical_event_mapping: { event: :plan }
+    ).where.not(
+      event_plans: {
+        type: Event::Plan.that(:omit_stats).collect(&:name)
+      }
+    )
+  }
 
   scope :with_column_transaction_type, ->(type) { column_transaction.where("raw_column_transactions.column_transaction->>'transaction_type' LIKE ?", "#{sanitize_sql_like(type)}%") }
 
@@ -86,6 +101,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
   has_one :event, through: :canonical_event_mapping
+  has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
@@ -100,6 +116,30 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
+
+  before_create do
+    self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
+                              li.id
+                            elsif linked_object.present?
+                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                            elsif raw_stripe_transaction&.stripe_authorization_id
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
+                              rpst&.canonical_pending_transaction&.ledger_item_id
+                            end
+  end
+
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
+  end
+
   after_create :write_hcb_code
   after_create_commit :write_system_event
   after_create_commit do
@@ -107,6 +147,14 @@ class CanonicalTransaction < ApplicationRecord
       PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run
       EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run
     end
+  end
+
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
   end
 
   def smart_memo
@@ -132,7 +180,13 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_card_transaction_refund?
-    likely_stripe_card_transaction? && amount_cents > 0
+    amount_cents > 0 && (likely_stripe_card_transaction? || likely_card_dispute_payout?)
+  end
+
+  # Won disputes are paid out from Stripe to Column with the card charge's
+  # short code, so they map back to the card charge as a RawColumnTransaction.
+  def likely_card_dispute_payout?
+    transaction_source_type == RawColumnTransaction.name && !!local_hcb_code&.card_charge?
   end
 
   def likely_stripe_card_transaction?
@@ -141,6 +195,14 @@ class CanonicalTransaction < ApplicationRecord
 
   def linked_object
     @linked_object ||= TransactionEngine::SyntaxSugarService::LinkedObject.new(canonical_transaction: self).run
+  end
+
+  def linked_object_v2
+    if column_id = column_transaction_id
+      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
+    else
+      transaction_source&.try(:card_charge)
+    end
   end
 
   def raw_plaid_transaction
@@ -209,16 +271,16 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transaction
+
+    raw_stripe_transaction.stripe_transaction_id
+  end
+
   def remote_stripe_iauth_id
     return nil unless raw_stripe_transaction
 
     raw_stripe_transaction.stripe_transaction["authorization"]
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   def likely_waveable_for_fee?
@@ -270,6 +332,18 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
+
+    nil
+  end
+
   def reimbursement_expense_payout
     return linked_object if linked_object.is_a?(Reimbursement::ExpensePayout)
 
@@ -314,6 +388,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(Wire)
   end
 
+  def wise_transfer
+    return linked_object if linked_object.is_a?(WiseTransfer)
+  end
+
   def check_deposit
     return linked_object if linked_object.is_a?(CheckDeposit)
 
@@ -331,7 +409,12 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_account_verification_related?
-    hcb_code.starts_with?("HCB-000-") && memo.downcase.include?("acctverify") && amount_cents.abs < 100
+    # Substring match (case-insensitive) for any of these identifiers in the
+    # memo indicating an account verification transaction. The majority use
+    # "ACCTVERIFY", however, it appears a few companies use other variants.
+    memo_matches = %w[acctverify verify validation sdv-vrfy amts:].any? { |s| memo.downcase.include?(s) }
+
+    hcb_code.starts_with?("HCB-000-") && amount_cents.abs < 100 && memo_matches
   end
 
   def short_code
@@ -357,21 +440,24 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    Rails.application.deprecators[:hcb].warn "CanonicalTransaction#disbursement accessed"
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
+  end
+
+  def outgoing_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Outgoing)
+
+    nil
+  end
+
+  def incoming_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Incoming)
 
     nil
   end
 
   def unique_bank_identifier
     @unique_bank_identifier ||= transaction_source.try(:unique_bank_identifier)
-  end
-
-  def memo_hcb_code_likely_donation?
-    memo.include?("HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}")
-  end
-
-  def memo_hcb_code_likely_invoice?
-    memo.include?("HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}")
   end
 
   def write_hcb_code
@@ -386,10 +472,28 @@ class CanonicalTransaction < ApplicationRecord
 
   private
 
+  def assign_ledger_item
+    safely do
+      reload_local_hcb_code
+      ActiveRecord::Base.transaction do
+        if calculated_ledger_item != local_hcb_code.ledger_item
+          Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
+        end
+
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+      end
+    end
+  end
+
+  def calculated_ledger_item
+    @calculated_ledger_item ||= Ledger::Item.find_by(short_code:) || linked_object_v2&.ledger_item
+  end
+
   def hashed_transaction
     @hashed_transaction ||= begin
-      Airbrake.notify("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
-      Airbrake.notify("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
+      Rails.error.unexpected("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
+      Rails.error.unexpected("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
 
       hashed_transactions.first
     end

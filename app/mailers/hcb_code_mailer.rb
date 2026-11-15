@@ -27,6 +27,7 @@ class HcbCodeMailer < ApplicationMailer
     @receipts_count = params[:receipts_count]
     @renamed_to = params[:renamed_to]
     @tagged_with = params[:tagged_with]
+    @reversed_pairing = params[:reversed_pairing]
 
     case @receipts_count
     when 0
@@ -37,7 +38,7 @@ class HcbCodeMailer < ApplicationMailer
   end
 
   def bounce_error
-    mail subject: @inbound_mail&.mail&.subject || "An unknown error occured"
+    mail subject: @inbound_mail&.mail&.subject || "An unknown error occurred"
   end
 
 end

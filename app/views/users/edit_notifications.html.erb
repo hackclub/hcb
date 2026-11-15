@@ -1,73 +1,104 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<% disabled = !policy(@user).update? %>
+
+<%= render "users/nav", selected: :settings_notifications %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "notifications" %>
+  <%= render "users/settings_header", active: "notifications" %>
   <section>
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
-      <fieldset class="field">
-        <%= form.label :receipt_report_option, "Receipt reminders" %>
-        <p class="h5 muted mt0 mb1">
-          Get a regular email roundup of your transactions awaiting receipts.
-        </p>
-        <%= form.select :receipt_report_option,
-                        (User.receipt_report_options.map { |k, v| [k.humanize, k] }) %>
-      </fieldset>
       <fieldset class="field">
         <legend class="font-medium">Transaction comments</legend>
         <p class="h5 muted mt-0 mb-3">
           Get an email when someone comments on a transaction or reimbursement report.
         </p>
         <div class="field field--options field--green trio">
-          <%= form.radio_button :comment_notifications, :all_threads %>
+          <%= form.radio_button :comment_notifications, :all_threads, disabled: %>
           <%= form.label :comment_notifications, value: :all_threads do %>
             <%= inline_icon "notification", size: 28 %>
             <strong>All transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :my_threads %>
+          <%= form.radio_button :comment_notifications, :my_threads, disabled: %>
           <%= form.label :comment_notifications, value: :my_threads do %>
             <%= inline_icon "person", size: 32 %>
             <strong>My transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :no_threads %>
+          <%= form.radio_button :comment_notifications, :no_threads, disabled: %>
           <%= form.label :comment_notifications, value: :no_threads do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>
           <% end %>
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset class="field">
         <legend class="font-medium">Card charges</legend>
         <p class="h5 muted mt-0 mb-3">
           Get a notification when there’s a charge on any of your cards.
         </p>
-        <div class="field field--options max-width-3 grid grid--narrow">
-          <%= form.radio_button :charge_notifications, :email_and_sms %>
+        <div class="field field--options max-w-3xl grid grid--narrow">
+          <%= form.radio_button :charge_notifications, :email_and_sms, disabled: %>
           <%= form.label :charge_notifications, value: :email_and_sms do %>
             <%= inline_icon "announcement", size: 28 %>
             <strong>Email & SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :email %>
+          <%= form.radio_button :charge_notifications, :email, disabled: %>
           <%= form.label :charge_notifications, value: :email do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Email</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :sms %>
+          <%= form.radio_button :charge_notifications, :sms, disabled: %>
           <%= form.label :charge_notifications, value: :sms do %>
             <%= inline_icon "message", size: 28 %>
             <strong>SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :nothing %>
+          <%= form.radio_button :charge_notifications, :nothing, disabled: %>
           <%= form.label :charge_notifications, value: :nothing do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>
           <% end %>
         </div>
       </fieldset>
-      <%= form.submit "Save settings", class: "mt2" %>
+      <fieldset class="field">
+        <legend class="font-medium">Monthly summaries</legend>
+        <p class="h5 muted mt-0 mb-3">
+          Get a regular email roundup of activity in your organizations.
+        </p>
+        <div class="card border">
+          <div class="field field--checkbox mt1">
+            <div class="flex flex-col">
+              <span style="font-weight: 700">Donation summary</span>
+              <p class="h5 muted m-0">
+                Contains a list of new donations and info on progress towards the donation goal if set.
+              </p>
+            </div>
+            <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+              <%= form.label :monthly_donation_summary do %>
+                <%= form.check_box :monthly_donation_summary,
+                  switch: true,
+                  disabled: %>
+                <span class="slider"></span>
+              <% end %>
+            </div>
+          </div>
+          <div class="field field--checkbox mt1">
+            <div class="flex flex-col">
+              <span style="font-weight: 700">Follower summary</span>
+              <p class="h5 muted m-0">
+                Contains a list of new followers and the date they followed.
+              </p>
+            </div>
+            <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+              <%= form.label :monthly_follower_summary do %>
+                <%= form.check_box :monthly_follower_summary,
+                  switch: true,
+                  disabled: %>
+                <span class="slider"></span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <%= form.submit "Save settings", class: "mt2", disabled: %>
     <% end %>
   </section>
 </turbo-frame>

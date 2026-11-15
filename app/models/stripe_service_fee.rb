@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: stripe_service_fees
+#
+#  id                            :bigint           not null, primary key
+#  amount_cents                  :integer          not null
+#  stripe_description            :string           not null
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  stripe_balance_transaction_id :string           not null
+#  stripe_topup_id               :bigint
+#
+# Indexes
+#
+#  index_stripe_service_fees_on_stripe_balance_transaction_id  (stripe_balance_transaction_id) UNIQUE
+#  index_stripe_service_fees_on_stripe_topup_id                (stripe_topup_id)
+#
+class StripeServiceFee < ApplicationRecord
+  include HasHcbCode
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
+
+  belongs_to :stripe_topup, optional: true
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+  has_one :raw_pending_stripe_service_fee_transaction
+
+  after_create_commit do
+    topup = StripeTopup.create(
+      amount_cents:,
+      statement_descriptor: "HCB-#{local_hcb_code.short_code}",
+      description: "Paying for: #{stripe_description}",
+      metadata: {
+        hcb_stripe_service_fee_id: id,
+        stripe_balance_transaction_id:
+      }
+    )
+    update!(stripe_topup_id: topup.id)
+  end
+
+  def event
+    Event.find(::EventMappingEngine::EventIds::HACK_CLUB_BANK)
+  end
+
+end

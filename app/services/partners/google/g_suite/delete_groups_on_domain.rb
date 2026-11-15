@@ -1,0 +1,38 @@
+# frozen_string_literal: true
+
+module Partners
+  module Google
+    module GSuite
+      class DeleteGroupsOnDomain
+        include Partners::Google::GSuite::Shared::DirectoryClient
+
+        def initialize(domain:)
+          @domain = domain
+        end
+
+        def run
+          unless Rails.env.production?
+            puts "☣️ In production, we would currently be updating the GSuite on Google Admin ☣️"
+            return
+          end
+          begin
+            res = directory_client.list_groups(customer: gsuite_customer_id, domain: @domain)
+            # we use a safe navigation operator here because res.groups could potentially still be nil
+            # despite the list_groups call not returning an error
+            res.groups&.each do |group|
+              directory_client.delete_group(group.id)
+            end
+          rescue => e
+            if e.message.include?("Domain not found")
+              return
+            end
+
+            Rails.error.report(e)
+            throw :abort
+          end
+        end
+
+      end
+    end
+  end
+end

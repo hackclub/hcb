@@ -17,6 +17,10 @@ module PendingTransactionEngine
 
           cpt.save!
 
+          TransactionCategoryService
+            .new(model: cpt)
+            .sync_from_stripe!
+
           return cpt
         end
 

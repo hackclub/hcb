@@ -1,0 +1,5 @@
+<%# locals: (announcement:) %>
+
+<div class="[&>*:first-child]:!mt-0 [&>*:last-child]:mb-0 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg">
+  <%= announcement.render.html_safe %> <%# erb_lint:disable ErbSafety %>
+</div>

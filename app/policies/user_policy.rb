@@ -2,7 +2,7 @@
 
 class UserPolicy < ApplicationPolicy
   def show?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def impersonate?
@@ -10,7 +10,7 @@ class UserPolicy < ApplicationPolicy
   end
 
   def edit?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def generate_totp?
@@ -25,28 +25,100 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
-  def edit_address?
+  def generate_backup_codes?
+    record == user
+  end
+
+  def activate_backup_codes?
+    record == user
+  end
+
+  def disable_backup_codes?
     user.admin? || record == user
+  end
+
+  def edit_address?
+    user.auditor? || record == user
   end
 
   def edit_payout?
-    user.admin? || record == user
+    user.auditor? || record == user
+  end
+
+  def edit_tax?
+    user.auditor? || record == user
   end
 
   def edit_featurepreviews?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_security?
-    user.admin? || record == user
+    user.auditor? || record == user
   end
 
   def edit_notifications?
-    user.admin? || record == user
+    user.auditor? || record == user
+  end
+
+  def edit_integrations?
+    user.auditor? || record == user
   end
 
   def edit_admin?
-    user.admin? || (record == user && user.admin_override_pretend?)
+    user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def admin_details?
+    user.auditor?
+  end
+
+  def admin_details_ach_transfers?
+    admin_details?
+  end
+
+  def admin_details_check_deposits?
+    admin_details?
+  end
+
+  def admin_details_disbursements?
+    admin_details?
+  end
+
+  def admin_details_emails?
+    admin_details?
+  end
+
+  def admin_details_emburse_cards?
+    admin_details?
+  end
+
+  def admin_details_increase_checks?
+    admin_details?
+  end
+
+  def admin_details_invoices?
+    admin_details?
+  end
+
+  def admin_details_lob_checks?
+    admin_details?
+  end
+
+  def admin_details_missing_receipts?
+    admin_details?
+  end
+
+  def admin_details_reimbursement_reports?
+    admin_details?
+  end
+
+  def admin_details_stripe_cards?
+    admin_details?
+  end
+
+  def admin_details_stripe_transactions?
+    admin_details?
   end
 
   def update?
@@ -54,6 +126,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def delete_profile_picture?
+    user.admin? || record == user
+  end
+
+  def reset_billing_address?
     user.admin? || record == user
   end
 
@@ -79,6 +155,22 @@ class UserPolicy < ApplicationPolicy
 
   def disable_feature?
     user.admin? || record == user
+  end
+
+  def logout_session?
+    user.admin? || record == user
+  end
+
+  def logout_all?
+    user.admin? || record == user
+  end
+
+  def toggle_pretend_is_not_admin?
+    user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def suppress_card_locking?
+    user.admin?
   end
 
 end

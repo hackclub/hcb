@@ -3,9 +3,9 @@
 module StaticPagesHelper
   extend ActionView::Helpers::NumberHelper
 
-  def card_to(name, path, options = {})
+  def card_to(name, path, **options)
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit" : "bg-accent h-fit")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
                 badge_for "⏳", class: "bg-muted"
@@ -13,11 +13,11 @@ module StaticPagesHelper
             else
               content_tag(:div, "") # Empty div if no badge is present
             end
-    pin = inline_icon("pin", class: "pin transition-opacity group-hover:opacity-100 absolute top-0 right-0", size: 24, ':color': "isPinned($el.closest('a').parentElement.id) ? 'orange' : 'var(--muted)'", '@click.prevent': "pin($el.closest('a').parentElement.id, $el.closest('.grid').id)", ":class": "isPinned($el.closest('a').parentElement.id) ? 'opacity-100' : 'opacity-0'")
-    content_tag(:div, id: "card-#{name.parameterize}", class: "group relative") do
+    pin = inline_icon("pin", class: "pin transition-opacity group-hover:opacity-100 absolute top-0 right-0 opacity-0", size: 24, "data-admin-tools-pinned-cards-target": "pin", "data-action": "click->admin-tools-pinned-cards#pin:prevent")
+    content_tag(:div, id: options[:id] || "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
                           [
-                            content_tag(:strong, name, class: "card-name"),
+                            content_tag(:strong, sanitize(name), class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
                             badge,
@@ -38,18 +38,6 @@ module StaticPagesHelper
 
   def airtable_info
     {
-      grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Github%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblsYQ54Rg1Pjz1xP/viwjETKo05TouqYev"
-      },
-      onboard_id: {
-        id: "app4Bs8Tjwvk5qcD4",
-        table: "Verifications",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/app4Bs8Tjwvk5qcD4/tblVZwB8QMUSDAd41/viwJ15CT6VHCZ0UZ4"
-      },
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
@@ -61,24 +49,6 @@ module StaticPagesHelper
         table: "Bank%20Stickers",
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblyhkntth4OyQxiO/viwHcxhOKMZnPXUUU"
-      },
-      stickermule: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "StickerMule",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblwYTdp2fiBv7JqA/viwET9tCYBwaZ3NIq"
-      },
-      replit: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Repl.it%20Hacker%20Plan",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl6cbpdId4iA96mD/viw2T8d98ZhhacHCf"
-      },
-      sendy: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Sendy",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl1MRaNpF4KphbOd/viwb7ELYyxpuAz6gQ"
       },
       domains: {
         id: "appEzv7w2IBMoxxHe",
@@ -104,12 +74,6 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblWlQxkf6L7mEjC4/viwzbku7oWsw5GFEa"
       },
-      first_grant: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Hackathon%20Grant",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblnNB5iMbidfB552/viwjF8iDPU3gAiXJU"
-      },
       wire_transfers: {
         id: "appEzv7w2IBMoxxHe",
         table: "Wire%20Transfers",
@@ -128,12 +92,6 @@ module StaticPagesHelper
         query: { filterByFormula: "Status='Pending'" },
         destination: "https://airtable.com/tblOmqLjWtJZWXn4O/viwuk2j4xsKJo5EqA"
       },
-      wallets: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Wallets",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblJtjtY9qAOG3FS8/viwUz9aheNAvXwzjg"
-      },
       google_workspace_waitlist: {
         id: "appEzv7w2IBMoxxHe",
         table: "Google%20Workspace%20Waitlist",
@@ -146,34 +104,12 @@ module StaticPagesHelper
         query: { filterByFormula: "{Verification Status}='Unknown'" },
         destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
       },
-      boba: {
-        id: "app05mIKwNPO2l1vT",
-        table: "Event%20Codes",
-        query: { filterByFormula: "Status='Under Review'" },
-        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
-      },
-      power_hour: {
-        id: "app1VxI7f3twOIs2g",
-        table: "tblKgmsperK0QHEQX",
-        query: { filterByFormula: "Status='Awaiting Fulfillment'" },
-        destination: "https://airtable.com/app1VxI7f3twOIs2g/tblKgmsperK0QHEQX"
-      },
-      arcade: {
-        id: "app4kCWulfB02bV8Q",
-        table: "tblNUDETwMdUlBCSM",
-        query: { filterByFormula: "AND(Status='Awaiting Fulfillment', OR({Verification Status (from YSWS Verification User)}='Eligible L1', {Verification Status (from YSWS Verification User)}='Eligible L2'))" },
-        destination: "https://airtable.com/app4kCWulfB02bV8Q/tblNUDETwMdUlBCSM/viwipTwk0hGHW10Py"
-      },
       marketing_shipment_request: {
         id: "appK53aN0fz3sgJ4w",
         table: "tblvSJMqoXnQyN7co",
         destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
-  end
-
-  def apply_form_url(user = current_user)
-    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form({ userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year }.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

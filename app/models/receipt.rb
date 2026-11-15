@@ -7,21 +7,22 @@
 #  id                              :bigint           not null, primary key
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
+#  extracted_currency              :string
 #  extracted_date                  :datetime
 #  extracted_merchant_name         :string
 #  extracted_merchant_url          :string
 #  extracted_merchant_zip_code     :string
 #  extracted_subtotal_amount_cents :integer
 #  extracted_total_amount_cents    :integer
-#  receiptable_type                :string
 #  suggested_memo                  :string
 #  textual_content_bidx            :string
 #  textual_content_ciphertext      :text
-#  textual_content_source          :integer          default("pdf_text")
+#  textual_content_source          :integer          default(0)
 #  upload_method                   :integer
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  receiptable_id                  :bigint
+#  receiptable_type                :string
 #  user_id                         :bigint
 #
 # Indexes
@@ -39,7 +40,13 @@ class Receipt < ApplicationRecord
   blind_index :textual_content
   has_encrypted :extracted_card_last4
 
+  monetize :extracted_subtotal_amount_cents, as: "extracted_subtotal_amount", with_model_currency: :extracted_currency, allow_nil: true
+  monetize :extracted_total_amount_cents, as: "extracted_total_amount", with_model_currency: :extracted_currency, allow_nil: true
+
   include StripeAuthorizationsHelper
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :rct
@@ -51,11 +58,21 @@ class Receipt < ApplicationRecord
   alias_method :transaction, :receiptable
 
   has_many :suggested_pairings, dependent: :destroy
-  has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings
 
-  has_one_attached :file
+  # add a size to this array for it to be preprocessed
+  # Receipt#preview first checks to see if a preprocessed
+  # variant exists before generating a new one.
+  # - @sampoder
+  PREPROCESSED_SIZES = ["1024x1024"].freeze
 
-  validates :file, attached: true
+  has_one_attached :file do |attachable|
+    PREPROCESSED_SIZES.each do |resize|
+      attachable.variant(resize.to_sym, resize:, preprocessed: true)
+    end
+  end
+
+  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -63,18 +80,22 @@ class Receipt < ApplicationRecord
     end
   end
 
-  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin email_hcb_code email_reimbursement sms_reimbursement].freeze
+  SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS = %w[quick_expense email_receipt_bin].freeze
 
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
     unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
       # certain interfaces run suggestions synchronously
-      # ReceiptJob::ExtractTextualContent.perform_later(self)
+      # Receipt::ExtractTextualContentJob.perform_later(self)
       # see https://github.com/hackclub/hcb/issues/7123
-      ReceiptJob::SuggestPairings.perform_later(self)
+      Receipt::SuggestPairingsJob.perform_later(self)
     end
   end
+
+  after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
+  after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
+
   validate :has_owner
 
   enum :upload_method, {
@@ -97,7 +118,13 @@ class Receipt < ApplicationRecord
     transaction_popover: 16,
     transaction_popover_drag_and_drop: 17,
     email_reimbursement: 18,
-    sms_reimbursement: 19
+    sms_reimbursement: 19,
+    employee_payment: 20,
+    duplicate: 21,
+    discord_bot_modal: 22,
+    payment_page: 23,
+    contractor_invoice: 24,
+    payment_page_drag_and_drop: 25
   }
 
   enum :textual_content_source, {
@@ -115,10 +142,23 @@ class Receipt < ApplicationRecord
     if file.previewable?
       Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:).processed, only_path:)
     elsif file.variable?
-      Rails.application.routes.url_helpers.rails_representation_url(file.variant(resize:).processed, only_path:)
+      Rails.application.routes.url_helpers.rails_representation_url(
+        (resize.in?(PREPROCESSED_SIZES) ? file.variant(resize.to_sym) : file.variant(resize:)).processed, only_path:
+      )
     end
   rescue
-    nil
+    # Occasionally ImageMagick has issues that cause images to not be converted.
+    # In these cases, we can't guarantee that the browser can render these image types.
+    # But we can try? Because otherwise we render nothing.
+    # View https://github.com/hackclub/hcb/issues/8551 for more context.
+    # - @sampoder
+    if file.content_type.start_with?("image/")
+      begin
+        Rails.application.routes.url_helpers.rails_representation_url(file, only_path:)
+      rescue
+        nil
+      end
+    end
   end
 
   def extract_textual_content
@@ -136,7 +176,7 @@ class Receipt < ApplicationRecord
   rescue => e
     # "ArgumentError: string contains null byte" is a known error
     unless e.is_a?(ArgumentError) && e.message.include?("string contains null byte")
-      Airbrake.notify(e, receipt_id: id)
+      Rails.error.report(e, context: { receipt_id: id })
     end
 
     # Since text extraction can be a resource intensive operation, saving an
@@ -169,6 +209,17 @@ class Receipt < ApplicationRecord
     end
 
     false
+  end
+
+  def self.reupload(old_receiptable:, new_receiptable:)
+    where(receiptable: old_receiptable).find_each do |receipt|
+      ::ReceiptService::Create.new(
+        receiptable: new_receiptable,
+        uploader: receipt.user,
+        attachments: [receipt.file.blob],
+        upload_method: :duplicate,
+      ).run!
+    end
   end
 
   def duplicated?

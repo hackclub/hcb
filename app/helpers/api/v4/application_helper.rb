@@ -5,27 +5,104 @@ module Api
     module ApplicationHelper
       include UsersHelper # for `profile_picture_for`
       include StripeAuthorizationsHelper
+      include AdminScopeCheckable
+      include ::ApplicationHelper
 
-      attr_reader :current_user
+      attr_reader :current_user, :current_token
+
+      def object_shape(json, object, object_name: nil, created_at: true, &block)
+        json.id object.public_id
+        json.object object_name || object.model_name.singular
+        block.call
+        json.created_at object.created_at if created_at
+      end
 
       def pagination_metadata(json)
         json.total_count @total_count
         json.has_more @has_more
       end
 
+      # Ledger::Item statuses for an item that didn't go through. Each of them
+      # declines the item's pending transaction, which is what the old engine
+      # reports as `declined`. That includes `released`, an approved card
+      # authorization that was never captured, which is also `reversed`.
+      #
+      # This mapping exists only for backwards compatibility with the old
+      # engine's `declined` and `reversed` booleans. It will not exist in v5.
+      LEDGER_DECLINED_STATUSES = %w[declined rejected failed canceled released].freeze
+      LEDGER_REVERSED_STATUSES = %w[reversed released].freeze
+
+      def ledger_item_declined?(item)
+        item.status.in?(LEDGER_DECLINED_STATUSES)
+      end
+
+      def ledger_item_reversed?(item)
+        item.status.in?(LEDGER_REVERSED_STATUSES)
+      end
+
       def transaction_amount(tx, event: nil)
+        return tx.amount_cents if tx.is_a?(Ledger::Item)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        if tx.disbursement? && event == tx.disbursement.source_event
-          return -tx.disbursement.amount
-        elsif tx.disbursement? && event == tx.disbursement.destination_event
-          return tx.disbursement.amount
+        if tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.source_event
+          return -tx.outgoing_disbursement.disbursement.amount
+        elsif tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.destination_event
+          return tx.outgoing_disbursement.disbursement.amount # incoming that needs a backfill
         end
 
+        # return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
+        return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
 
-        return tx.amount.cents
+        tx.amount.cents
+      end
+
+      def expand?(key)
+        @expand.include?(key)
+      end
+
+      # Returns a related object as either expanded or as an "_id" reference
+      def expand_association(json, key, record, partial:, as:, locals: {})
+        if expand?(key)
+          if record.present?
+            json.set!(key) do
+              json.partial! partial, locals: { as => record }.merge(locals)
+            end
+          else
+            json.set!(key, nil)
+          end
+        else
+          json.set!(:"#{key}_id", record&.public_id)
+        end
+      end
+
+      def expand(*keys)
+        before = @expand
+        @expand = @expand.dup + keys
+
+        yield
+      ensure
+        @expand = before
+      end
+
+      def shares_org_with?(user)
+        return false if current_user.nil? || user.nil?
+
+        # Events that the current user has access to view
+        @current_user_event_ids ||= current_user.readable_events.pluck(:id)
+        return false if @current_user_event_ids.empty?
+
+        # Does it overlap with events that the user has organizer positions in?
+        # We're explicitly checking for OPs instead of access because your email
+        # is not visible just because you have (read) access to an org. The
+        # emails addresses of organizers in a parent org is not visible to the
+        # organizers of a child org.
+        @current_user_event_ids.to_set.intersect?(user.organizer_positions.pluck(:event_id))
+      end
+
+      def expand_pii(override_if: false)
+        yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end
 
     end

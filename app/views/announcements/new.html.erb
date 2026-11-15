@@ -1,0 +1,9 @@
+<% title "Create a new announcement" %>
+<% page_md %>
+<%= render "events/nav", selected: :announcements %>
+
+<h1>Create a new announcement</h1>
+
+<%= turbo_frame_tag :create_announcement do %>
+  <%= render "announcements/announcement_form", announcement: @announcement, autosave: false, show_announcement_explanation: @show_announcement_explanation %>
+<% end %>

@@ -38,6 +38,7 @@
 #
 class RecurringDonation < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "subscriptions", :stripe_subscription_id
@@ -55,7 +56,9 @@ class RecurringDonation < ApplicationRecord
   before_update :update_amount, if: -> { amount_changed? }
   after_update :notify_amount_changed!, if: -> { amount_previously_changed? }
 
-  validates :name, :email, presence: true
+  validates :name, presence: true
+  validates :email, presence: true
+  validates_email_format_of :email, if: :email_changed?
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
   validates_uniqueness_of :stripe_subscription_id
   validates_uniqueness_of :email,
@@ -63,6 +66,8 @@ class RecurringDonation < ApplicationRecord
                           on: :create,
                           conditions: -> { where(stripe_status: "active") },
                           message: ->(recurring_donation, data) { "You're already donating to #{recurring_donation.event.name}." }
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
 
   enum :stripe_status, {
     active: "active",
@@ -133,6 +138,10 @@ class RecurringDonation < ApplicationRecord
     anonymous? && !show_anonymous ? "Anonymous" : super()
   end
 
+  def sync_stripe_customer!
+    StripeService::Customer.update(stripe_customer_id, name:)
+  end
+
   private
 
   def create_stripe_subscription
@@ -154,7 +163,7 @@ class RecurringDonation < ApplicationRecord
       currency: "usd",
       unit_amount: amount,
       recurring: { interval: "month" },
-      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.name) }
+      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.short_name) }
     )
 
     subscription = StripeService::Subscription.create(

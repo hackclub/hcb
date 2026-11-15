@@ -6,11 +6,14 @@
 
 <% title @event.name %>
 <% page_md %>
-<%= render "nav", selected: :home %>
+<%= render "events/nav", selected: :home %>
 
-<% if @event&.is_public %>
+<% if @event.is_public %>
+  <% auto_discover_feed(@event) %>
+  <% @skip_layout_og_tags = true # replaced by the organization-specific meta below %>
   <% content_for :head do %>
-    <% img = "https://hcb-og.hackclub.com/api/embeds/#{@event.slug}" %>
+    <%# Slack's link expander crops previews into a square thumbnail, so give it the square image %>
+    <% img = "https://hcb-og.hackclub.com/api/#{request.user_agent.to_s.include?("Slackbot-LinkExpanding") ? "square-embed" : "embeds"}/#{@event.slug}" %>
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta property="og:image" content="<%= img %>">
@@ -26,109 +29,114 @@
   <% end %>
 <% end %>
 
-<h1 class="flex items-center">
+<%= render "events/heading", event: @event, event_follow: @event_follow do %>
   <span class="flex-grow">Home</span>
-  <% admin_tool("p0 badge", "span") do %>
-    <span class="m0 badge bg-muted">
-      #<%= @event.id %>
-    </span>
-    <span class="m0 badge bg-muted ml1">
-      SL<%= @event.service_level %>
-    </span>
-  <% end %>
+<% end %>
+<hr class="mt-0.5 mb-4 opacity-0 sm:opacity-50">
 
-  <% if @event.increase_account_id != IncreaseService::AccountIds::FS_MAIN %>
-    <% admin_tool("p0 badge", "span") do %>
-      <%= link_to "https://dashboard.increase.com/accounts/#{@event.increase_account_id}" do %>
-        <span class="m0 badge bg-muted">
-          <%= @event.increase_account_id %>
-        </span>
+<div class="flex flex-col gap-4 -mt-3">
+  <% if organizer_signed_in?(as: :member) %>
+    <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden mt-3">
+      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+        <%= inline_icon "payment-transfer", size: 20 %>
+        Transfer money
       <% end %>
-    <% end %>
-  <% end %>
-</h1>
+      <%= render "events/transfers/modal" %>
+      <%= render "card_grants/create_modal" if @event.plan.card_grants_enabled? %>
 
-<% if organizer_signed_in? && @event.demo_mode %>
-  <div class="card border b--info pb0 mt3" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
-    <p class="mt0">
-      <strong>Welcome to Playground Mode</strong>
-      <br>
-      While in Playground mode, explore the dashboard with mock data, and invite your team.
-    </p>
-  </div>
-<% end %>
+      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+        <%= inline_icon "attachment", size: 20 %>
+        Get reimbursed
+      <% end %>
+      <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
 
-<% if organizer_signed_in? %>
-  <div class="flex mb2 max-w-full overflow-auto whitespace-nowrap scrollbar-hidden">
-    <%= link_to "#", class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
-      <%= inline_icon "briefcase", size: 16 %>
-      Send an invoice
-    <% end %>
-    <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
-      <%= inline_icon "payment-transfer", size: 16 %>
-      Transfer money
-    <% end %>
-    <%= link_to "#", class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
-      <%= inline_icon "attachment", size: 16 %>
-      Get reimbursed
-    <% end %>
-    <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action" do %>
-      <%= inline_icon "cheque", size: 16 %>
-      Deposit a check
-    <% end %>
-  </div>
-  <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
-  <%= render "transfer_modal" %>
-  <%= render "invoices/modal" %>
-<% end %>
+      <% if policy(@event.check_deposits.build).create? %>
+        <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
+          <%= inline_icon "cheque", size: 20 %>
+          Deposit a check
+        <% end %>
+        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+          <%= modal_header "Deposit a check" %>
+          <%= render "check_deposits/new", event: @event %>
+        </section>
+      <% end %>
 
-<%= render "events/public_message" %>
+      <% if policy(@event).account_number? %>
+        <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_number" } do %>
+          <%= inline_icon "bank-account", size: 20 %>
+          Account numbers
+        <% end %>
+        <%= render "events/account_number_modal" %>
+      <% end %>
 
-<div class="flex gap-4 flex-col sm:flex-row">
-  <%= render partial: "events/home/balance", event: @event %>
-  <%= render partial: "events/home/transactions", event: @event %>
-</div>
-
-<div class="flex gap-4 flex-col sm:flex-row my-4">
-  <%= render partial: "events/home/money_movement", event: @event %>
-</div>
-
-<div class="flex gap-4 flex-col sm:flex-row my-4" style="max-width:100%">
-  <%= render partial: "events/home/recent_activity", event: @event %>
-  <div class="flex gap-4 flex-col sm:max-w-[50%]" style="flex: 1">
-    <%= render partial: "events/home/team", event: @event %>
-    <%= render partial: "events/home/number_stats", event: @event %>
-  </div>
-</div>
-
-<div class="homepage-row mt-4">
-  <%= turbo_frame_tag "top_merchants", class: "flex-1", src: event_top_merchants_path(@event), loading: "lazy" do %>
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
+      <% if InvoicePolicy.new(current_user, @event).create? %>
+        <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+          <%= inline_icon "briefcase", size: 20 %>
+          Send an invoice
+        <% end %>
+        <%= render "invoices/modal" %>
+      <% end %>
     </div>
   <% end %>
-  <%= turbo_frame_tag "top_categories", class: "flex-1", src: event_top_categories_path(@event), loading: "lazy" do %>
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+
+  <% if policy(@event).request_call? %>
+    <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
+
+    <% unless @event.config.hide_onboarding_message %>
+      <div class="relative card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+        <div class="flex-1">
+          <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
+          <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform, or <%= link_to "hide this message", hide_onboarding_message_event_path(@event), data: { turbo_method: :post } %>.</p>
+        </div>
+        <% if (scheduling_link = @event.onboarding_scheduling_link).present? %>
+          <%= link_to scheduling_link, class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
+        <% else %>
+          <%= button_to request_call_event_path(@event), class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= render "events/public_message", event: @event %>
+
+  <%= render "events/mission_statement", event: @event %>
+
+  <%= turbo_frame_tag "balance_transactions", src: event_balance_transactions_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 mb-4", loading: "lazy", target: "_top" do %>
+    <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]">
+      <%= render partial: "application/loading_container" %>
+    </div>
+    <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]" style="flex: 1">
+      <%= render partial: "application/loading_container" %>
+    </div>
+  <% end %>
+
+  <div class="flex gap-4 flex-col sm:flex-row mb-4" style="max-width:100%">
+    <%= turbo_frame_tag "recent_activity", src: event_recent_activity_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", loading: "lazy", target: "_top" do %>
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height: 305px">
+        <%= render partial: "application/loading_container" %>
+      </div>
+    <% end %>
+    <%= turbo_frame_tag "team_stats", src: event_team_stats_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", style: "min-height: 305px", loading: "lazy", target: "_top" do %>
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+        <%= render partial: "application/loading_container" %>
+      </div>
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center">
+        <%= render partial: "application/loading_container" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "events/home/insights", event: @event %>
+
+  <%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), class: "homepage-row mb-4", loading: "lazy", target: "_top" do %>
+    <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height:223px">
       <%= render partial: "application/loading_container" %>
     </div>
   <% end %>
 </div>
-
-<%= turbo_frame_tag "tags_users", src: event_tags_users_path(@event), loading: "lazy" do %>
-  <div class="homepage-row mt-4">
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
-    </div>
-    <div class="card card--breakdown shadow-none p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
-    </div>
-  </div>
-<% end %>
-
-<%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), loading: "lazy" do %>
-  <div class="homepage-row mt-4">
-    <div class="card card--breakdown shadow-none p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;height:223px">
-      <%= render partial: "application/loading_container" %>
-    </div>
-  </div>
-<% end %>

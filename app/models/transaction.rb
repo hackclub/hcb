@@ -136,46 +136,6 @@ class Transaction < ApplicationRecord
     "#{plaid_id[0...4]}…#{plaid_id[-4..]}"
   end
 
-  def self.total_volume
-    self.includes(fee_relationship: :event).where(events: { omit_stats: false }).sum("abs(amount)").to_i
-  end
-
-  def self.during(start_time, end_time)
-    self.includes(fee_relationship: :event).where(events: { omit_stats: false })
-        .where(["transactions.date > ? and transactions.date < ?", start_time, end_time])
-  end
-
-  def self.volume_during(start_time, end_time)
-    self.during(start_time, end_time).sum("abs(amount)").to_i
-  end
-
-  def self.raised_during(start_time, end_time)
-    raised_during = self.during(start_time, end_time)
-                        .includes(:fee_relationship)
-                        .where(
-                          is_event_related: true,
-                          fee_relationships: {
-                            fee_applies: true,
-                          },
-                        )
-
-    raised_during.sum(:amount).to_i
-  end
-
-  def self.revenue_during(start_time, end_time)
-    fees_during = self.during(start_time, end_time)
-                      .includes(:fee_relationship)
-                      .where(
-                        is_event_related: true,
-                        fee_relationships: {
-                          is_fee_payment: true,
-                        },
-                      )
-
-    # revenue for Bank is expense for Events
-    -fees_during.sum(:amount).to_i
-  end
-
   delegate :url_helpers, to: "Rails.application.routes"
   def link
     host = Rails.application.config.action_mailer.default_url_options[:host]
@@ -195,7 +155,7 @@ class Transaction < ApplicationRecord
   # Utility method for getting the fee on the transaction if there is one. Used
   # in CSV export.
   def fee
-    is_event_related && fee_relationship&.fee_applies && fee_relationship&.fee_amount
+    is_event_related && fee_relationship&.fee_applies && fee_relationship.fee_amount
   end
 
   def fee_payment?
@@ -287,10 +247,6 @@ class Transaction < ApplicationRecord
     self.name.include?("GitHub Grant")
   end
 
-  def potential_expensify?
-    self.name.include?("Expensify")
-  end
-
   def potential_ach_transfer?
     self.name.include?("BUSBILLPAY")
   end
@@ -333,91 +289,9 @@ class Transaction < ApplicationRecord
     elsif potential_disbursement?
       # try_pair_disbursement
     end
-    # NOTE: we cannot curently auto-pair Expensify txs
+    # NOTE: we cannot currently auto-pair Expensify txs
   rescue => e
-    Airbrake.notify(e)
-  end
-
-  # Tries to recover transaction data from a previously paired / modified
-  # transaction that was pending, for a currently complete transaction.
-  # This is complicated by the fact that the pending? attribute Plaid
-  # returns from SVB is just a big fat lie ~because Plaid hates us~.
-  # So every TX shows as complete, and we can't disambiguate in code.
-  #
-  # This is a workaround for the issue highlighted in GH Issue #443.
-  # TL;DR - when a TX goes from pending -> complete, SVB deletes
-  # the old TX and creates a new one, but we want to persist our
-  # model data between them.
-  #
-  # NOTE: wrap calls to this in a SQL transaction to avoid
-  # broken states.
-  def try_recover_pending_tx_details!
-    # transactions that were deleted, that match in TX memo, date,
-    # and amount, are good candidates for a previously pending TX
-    # that is now complete as `self`.
-    matching_deleted_tx = Transaction.with_deleted
-                                     .where(date: self.date)
-                                     .where(amount: self.amount)
-                                     .where.not(deleted_at: nil)
-                                     .select { |t| self.name.start_with?(t.name) }
-
-    return unless matching_deleted_tx.count == 1
-
-    previous = matching_deleted_tx[0]
-
-    # if for some reason we've found the transaction itself,
-    # stop now.
-    return if self == previous
-
-    # copy over copyable details
-
-    # copy over old display name only if old one was renamed
-    # and new one was not
-    if self.display_name == self.name && previous.display_name != previous.name
-      self.display_name = previous.display_name
-    end
-
-    self.is_event_related = previous.is_event_related
-    previous.comments.each do |comment|
-      comment.update(commentable_id: self.id)
-    end
-    pfr = previous.fee_relationship
-    if !pfr.nil? # this is only true if previous was paired successfully
-      self.fee_relationship = FeeRelationship.new(
-        event_id: pfr.event_id,
-        fee_applies: pfr.fee_applies,
-        fee_amount: pfr.fee_amount,
-        is_fee_payment: pfr.is_fee_payment,
-      )
-    end
-
-    if self.invoice_payout.nil? && previous.invoice_payout
-      self.invoice_payout = previous.invoice_payout
-      previous.invoice_payout = nil
-    end
-
-    if self.donation_payout.nil? && previous.donation_payout
-      self.donation_payout = previous.donation_payout
-      previous.donation_payout = nil
-    end
-
-    if self.emburse_transfer.nil? && previous.emburse_transfer
-      self.emburse_transfer = previous.emburse_transfer
-      previous.emburse_transfer = nil
-    end
-
-    if self.fee_reimbursement.nil? && previous.fee_reimbursement
-      self.fee_reimbursement = previous.fee_reimbursement
-      previous.fee_reimbursement = nil
-    end
-
-    if self.check.nil? && previous.check
-      self.check = previous.check
-      previous.check = nil
-    end
-
-    self.save
-    previous.save
+    Rails.error.report(e)
   end
 
   def receipt_required?
@@ -694,10 +568,6 @@ class Transaction < ApplicationRecord
 
   def slug_text
     "#{date} #{name}"
-  end
-
-  def filter_for(text)
-    name&.downcase&.include? text
   end
 
 end

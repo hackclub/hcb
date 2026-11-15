@@ -4,14 +4,12 @@ module Admin
   module LedgerAudits
     class TasksController < AdminController
       def index
-        @tasks = Admin::LedgerAudit::Task.flagged
-        render layout: "admin"
+        @tasks = Admin::LedgerAudit::Task.flagged.page(params[:page]).per(safe_per(25))
       end
 
       def show
         @task = Admin::LedgerAudit::Task.find(params[:id])
         @ledger_audit = @task.admin_ledger_audit
-        render layout: "admin"
       end
 
       def reviewed
@@ -33,7 +31,8 @@ module Admin
       end
 
       def create
-        hcb_code = HcbCode.find(params[:hcb_code])
+        # TODO: rework this to use ledger items entirely
+        hcb_code = Ledger::Item.find(params[:ledger_item]).hcb_code
         if Admin::LedgerAudit::Task.where(hcb_code:, status: "flagged").none?
           @task = Admin::LedgerAudit::Task.create(hcb_code:, status: "flagged", reviewer: current_user)
           if @task.save

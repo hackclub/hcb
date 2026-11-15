@@ -27,7 +27,6 @@
 #
 class StripeAuthorization < ApplicationRecord
   include Receiptable
-  include Commentable
 
   before_validation :sync_from_stripe! # pull details from stripe if we're creating it for the first time. expensive in the webhook. TODO: adjust - ideally async after authorization approved or not
 
@@ -44,7 +43,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def declined?
-    approved == false
+    !approved
   end
 
   has_paper_trail
@@ -52,7 +51,7 @@ class StripeAuthorization < ApplicationRecord
   belongs_to :stripe_card, class_name: "StripeCard"
   alias_method :card, :stripe_card
   has_one :stripe_cardholder, through: :stripe_card, as: :cardholder
-  alias_attribute :cardholder, :stripe_cardholder
+  alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_one :event, through: :stripe_card
 
@@ -72,12 +71,6 @@ class StripeAuthorization < ApplicationRecord
     }
   end
 
-  def status_emoji
-    return "✔️" if approved?
-
-    "✖️"
-  end
-
   def status_text
     return "Declined" unless approved?
     return "Pending" if pending?
@@ -94,10 +87,6 @@ class StripeAuthorization < ApplicationRecord
     return :success if approved?
 
     :accent
-  end
-
-  def authorization_method_text
-    (stripe_obj[:wallet] || authorization_method).humanize
   end
 
   def merchant_name
@@ -126,7 +115,7 @@ class StripeAuthorization < ApplicationRecord
     # the status stripe is telling us and mark it as 'refunded' if all the
     # authorization's transactions sum to 0.
     # if (stripe_obj[:status] == 'closed' && stripe_obj[:transactions].size >= 1)
-    if stripe_obj[:transactions].size >= 1
+    if stripe_obj[:transactions].any?
       net_amount = -stripe_obj[:transactions].pluck(:amount).sum # must be negated since the rest of stripe_authorizations is treating positives as negatives in the interface
       self.amount = net_amount
       self.stripe_status = "reversed" if net_amount.zero?
@@ -144,7 +133,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def remote_stripe_transaction_amount_cents
-    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.map(&:amount).sum
+    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.sum(&:amount)
   end
 
   def date

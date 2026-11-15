@@ -2,27 +2,23 @@
 
 class HcbCodePolicy < ApplicationPolicy
   def show?
-    user&.admin? || present_in_events?
-  end
-
-  def memo_frame?
-    user&.admin?
+    user&.auditor? || present_in_events? || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
   end
 
   def edit?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def update?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def comment?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
   def attach_receipt?
-    user&.admin? || present_in_events? || user_made_purchase?
+    user&.admin? || gte_member_in_events? || user_made_purchase?
   end
 
   def send_receipt_sms?
@@ -30,27 +26,14 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def dispute?
-    user&.admin? || present_in_events?
+    gte_member_in_events?
   end
 
-  def pin?
-    user&.admin? || present_in_events?
-  end
-
-  def toggle_tag?
-    user&.admin? || present_in_events?
-  end
-
-  def invoice_as_personal_transaction?
-    user&.admin? || present_in_events?
-  end
-
-  def link_receipt_modal?
-    user&.admin? || present_in_events?
-  end
-
+  # `user` is nil for signed out requests, and a charge whose cardholder can't
+  # be resolved has a nil owner, so without the first clause the two compare
+  # equal and an anonymous request is treated as the purchaser.
   def user_made_purchase?
-    record.stripe_card? && record.stripe_cardholder&.user == user
+    user.present? && record.stripe_card? && record.stripe_cardholder&.user == user
   end
 
   alias receiptable_upload? user_made_purchase?
@@ -58,7 +41,17 @@ class HcbCodePolicy < ApplicationPolicy
   private
 
   def present_in_events?
-    record.events.select { |e| e.try(:users).try(:include?, user) }.present?
+    record.events.any? { |event| OrganizerPosition.role_at_least?(user, event, :reader) }
+  end
+
+  # if users have permissions greater than or equal to member in events
+  def gte_member_in_events?
+    return false if user.nil? # don't run checks if the user isn't signed in
+    return true if user&.admin?
+
+    record.events.any? do |e|
+      OrganizerPosition.role_at_least?(user, e, :member)
+    end
   end
 
 end

@@ -1,6 +1,6 @@
 <% title "Emburse cards for #{@event.name}" %>
 <% page_md %>
-<%= render "nav" %>
+<%= render "events/nav" %>
 
 <h1>
   Emburse cards
@@ -54,13 +54,13 @@ West Hollywood, CA 90069</pre>
 </h2>
 <% if @event.emburse_cards.any? %>
   <section class="mixed-grid grid--spacious mt2">
-    <%= render @event.emburse_cards.active %>
+    <%= render partial: "emburse_cards/emburse_card", collection: @event.emburse_cards.active %>
   </section>
-  <% if @event.emburse_cards.deactivated.size > 0 %>
-    <details class="w-100 left-align">
+  <% if @event.emburse_cards.deactivated.any? %>
+    <details class="w-100 text-left">
       <summary><h3 class="inline-block pb0 border-none">Deactivated cards</h3></summary>
       <section class="mixed-grid grid--spacious mt2">
-      <%= render @event.emburse_cards.deactivated %>
+        <%= render partial: "emburse_cards/emburse_card", collection: @event.emburse_cards.deactivated %>
       </section>
     </details>
   <% end %>
@@ -74,7 +74,7 @@ West Hollywood, CA 90069</pre>
 <h2 class="mt3 mb1">Card requests</h2>
   <% @emburse_card_requests.outstanding.each do |request| %>
     <%# Rails has link_to_if but that doesn't support blocks. I feel like there should be a better way to do this but couldn't find one. -Theo %>
-    <% if current_user&.admin? %>
+    <% if auditor_signed_in? %>
       <%= link_to request, class: "text-decoration-none mb2" do %>
         <%= creator_bar request, prefix: "requested " %>
         <div class="card">
@@ -127,7 +127,7 @@ West Hollywood, CA 90069</pre>
       </thead>
       <tbody>
         <% @event.emburse_transfers.each do |lcr| %>
-          <tr <%= "under-review" if lcr.under_review? || lcr.pending? %> id="lcr_row">
+          <tr <% if lcr.under_review? || lcr.pending? %> under-review<% end %> id="lcr_row">
             <td><%= format_datetime(lcr.created_at) %></td>
             <td><%= user_mention lcr.creator %></td>
             <td><%= status_badge lcr.status_badge_type %>  <%= lcr.status %></td>
@@ -140,12 +140,10 @@ West Hollywood, CA 90069</pre>
 <% end %>
 
 <% if @emburse_transactions.any? %>
-</main>
-<main class="container">
-  <h2 class="mt3 mb2">
-    Emburse card transactions
-  </h2>
-  <div class="table-container">
+<h2 class="mt3 mb2">
+  Emburse card transactions
+</h2>
+<div class="table-container">
   <table>
     <thead>
       <tr>
@@ -165,5 +163,5 @@ West Hollywood, CA 90069</pre>
                locals: { show_running_sum: true, show_card: true } %>
     </tbody>
   </table>
-  </div>
+</div>
 <% end %>

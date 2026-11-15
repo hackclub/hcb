@@ -2,19 +2,11 @@
 
 class CanonicalTransactionPolicy < ApplicationPolicy
   def show?
-    admin_or_teammember
+    auditor_or_teammember
   end
 
-  def edit?
-    admin_or_teammember
-  end
-
-  def set_custom_memo?
-    admin_or_teammember
-  end
-
-  def export?
-    admin_or_teammember
+  def set_category?
+    user&.admin?
   end
 
   def waive_fee?
@@ -25,14 +17,10 @@ class CanonicalTransactionPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def mark_bank_fee?
-    user&.admin?
-  end
-
   private
 
-  def admin_or_teammember
-    user&.admin? || record&.event&.users&.include?(user)
+  def auditor_or_teammember
+    user&.auditor? || record&.event&.users&.include?(user)
   end
 
 end

@@ -7,11 +7,12 @@
 #  id                                     :bigint           not null, primary key
 #  accepted_at                            :datetime
 #  cancelled_at                           :datetime
+#  deleted_at                             :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
 #  is_signee                              :boolean          default(FALSE)
 #  rejected_at                            :datetime
-#  role                                   :integer          default("manager"), not null
+#  role                                   :integer          default(100), not null
 #  slug                                   :string
 #  created_at                             :datetime         not null
 #  updated_at                             :datetime         not null
@@ -22,6 +23,7 @@
 #
 # Indexes
 #
+#  index_organizer_position_invites_on_deleted_at             (deleted_at)
 #  index_organizer_position_invites_on_event_id               (event_id)
 #  index_organizer_position_invites_on_organizer_position_id  (organizer_position_id)
 #  index_organizer_position_invites_on_sender_id              (sender_id)
@@ -55,13 +57,18 @@
 #     creation.
 #
 class OrganizerPositionInvite < ApplicationRecord
+  acts_as_paranoid
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ivt
 
   include FriendlyId
   include OrganizerPosition::HasRole
+  include Contractable
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, recipient: proc { |controller, record| record.user }, only: [:create]
@@ -69,16 +76,18 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include cancelled invites so that we can assign users to them
-  scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
+  has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
+
+  belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
+
   belongs_to :organizer_position, optional: true
 
-  validate :not_already_organizer
+  validate :not_already_organizer, on: :create
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
@@ -86,35 +95,57 @@ class OrganizerPositionInvite < ApplicationRecord
   validate :initial_control_allowance_amount_cents_nil_for_non_members
 
   after_create_commit do
-    user == sender ? accept : deliver
+    unless pending_signature?
+      user == sender ? accept : deliver
+    end
+  end
+
+  def contract
+    contracts.not_voided.last
+  end
+
+  def pending_signature?
+    is_signee && contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
     OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
   end
 
-  def accept(show_onboarding: true)
-    if cancelled?
-      self.errors.add(:base, "was canceled!")
-      return false
-    end
+  def accept(show_onboarding: true, application_contract: nil)
+    # Lock the invite so concurrent accepts (e.g. a double-click) can't each create an OrganizerPosition
+    with_lock do
+      if cancelled?
+        self.errors.add(:base, "was canceled!")
+        return false
+      end
 
-    if accepted?
-      self.errors.add(:base, "already accepted!")
-      return false
-    end
+      if accepted?
+        self.errors.add(:base, "already accepted!")
+        return false
+      end
 
-    self.organizer_position = OrganizerPosition.new(
-      event:,
-      user:,
-      role:,
-      is_signee:,
-      first_time: show_onboarding,
-    )
+      if user.unverified?
+        self.errors.add(:user, "must verify their email before accepting this invite")
+        return false
+      end
 
-    self.accepted_at = Time.current
+      if pending_signature? && application_contract.nil?
+        self.errors.add(:base, "requires a signed contract!")
+        return false
+      end
 
-    ActiveRecord::Base.transaction do
+      self.organizer_position = OrganizerPosition.new(
+        event:,
+        user:,
+        role:,
+        is_signee:,
+        first_time: show_onboarding,
+        fiscal_sponsorship_contract: contract || application_contract
+      )
+
+      self.accepted_at = Time.current
+
       self.save!
 
       if initial_control_allowance_amount_cents.present?
@@ -124,9 +155,14 @@ class OrganizerPositionInvite < ApplicationRecord
         # Create allowance
         organizer_position.active_spending_control.allowances.create!(authorized_by_id: sender_id, amount_cents: initial_control_allowance_amount_cents, memo: "Initial allowance") unless initial_control_allowance_amount_cents.zero?
       end
-
-      true
     end
+
+    # Don't send mailer if this is the first organizer
+    if self.event.users.size > 1
+      OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+    end
+
+    true
   end
 
   def accepted?
@@ -145,6 +181,8 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     self.rejected_at = Time.current
+
+    contract&.mark_voided! if contract&.may_mark_voided?
 
     self.save
   end
@@ -166,6 +204,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.cancelled_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -182,6 +222,65 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def signee?
     is_signee
+  end
+
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
+    fs_contract = nil
+
+    ActiveRecord::Base.transaction do
+      fs_contract = Contract::FiscalSponsorship.create!(
+        contractable: self,
+        include_videos:,
+        external_template_id: event.plan.contract_docuseal_template_id,
+        prefills: extra_prefills.merge({
+                                         "public_id"   => event.public_id,
+                                         "name"        => event.name,
+                                         "description" => event.airtable_record&.[]("Tell us about your event")
+                                       }),
+        reissue_of:
+      )
+      fs_contract.parties.create!(user:, role: :signee)
+      fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+
+      update!(is_signee: true) unless accepted?
+      organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
+    end
+
+    fs_contract.send!(reissue_messages:)
+
+    fs_contract
+  end
+
+  def on_contract_signed(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      accept if organizer_position.nil?
+
+      # Unfreeze the event if this is the first signed contract
+      if event.contracts.signed.count == 1
+        event.update!(financially_frozen: false)
+      end
+
+      organizer_position&.update!(fiscal_sponsorship_contract: contract)
+    end
+  end
+
+  def on_contract_voided(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      update(is_signee: false)
+      organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
+    end
+  end
+
+  def contract_redirect_path
+    Rails.application.routes.url_helpers.event_team_path(event)
+  end
+
+  def contractable_link_label
+    "organizer invite"
+  end
+
+  def contractable_link_path
+    Rails.application.routes.url_helpers.organizer_position_invite_path(self)
   end
 
   private

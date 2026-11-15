@@ -32,7 +32,7 @@ class OrganizerPosition
       validate :one_active_control
       validate :inactive_control_has_end_date
 
-      after_create :deactive_other_controls
+      after_create :deactivate_other_controls
 
       def balance_cents
         total_allowances_amount_cents - total_spent_cents
@@ -47,22 +47,22 @@ class OrganizerPosition
       end
 
       def transactions
-        card_ids = organizer_position.stripe_cards.pluck(:stripe_id)
+        card_ids = organizer_position.stripe_cards.on_main_ledger.pluck(:stripe_id)
         canonical_pending_transactions_hcb_codes = CanonicalPendingTransaction
                                                    .not_declined
                                                    .joins(:raw_pending_stripe_transaction)
-                                                   .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, (ended_at&.to_i || Time.now.to_i))
+                                                   .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, ended_at&.to_i || Time.now.to_i)
                                                    .pluck(:hcb_code)
         canonical_transactions_hcb_codes = CanonicalTransaction
                                            .stripe_transaction
-                                           .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, (ended_at&.to_i || Time.now.to_i))
+                                           .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, ended_at&.to_i || Time.now.to_i)
                                            .pluck(:hcb_code)
         all_hcb_codes = canonical_pending_transactions_hcb_codes + canonical_transactions_hcb_codes
         HcbCode.where(hcb_code: all_hcb_codes)
       end
 
       def deactivate
-        if allowances.count == 0
+        if allowances.none?
           destroy
         else
           update active: false, ended_at: Time.current
@@ -71,7 +71,7 @@ class OrganizerPosition
 
       private
 
-      def deactive_other_controls
+      def deactivate_other_controls
         organizer_position
           .spending_controls
           .where(active: true)

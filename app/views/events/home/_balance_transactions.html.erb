@@ -1,0 +1,6 @@
+<%= turbo_frame_tag "balance_transactions" do %>
+  <div class="flex gap-4 flex-col sm:flex-row w-full" style="min-height: 300px">
+    <%= render partial: "events/home/balance", event: @event %>
+    <%= render partial: "events/home/transactions", event: @event %>
+  </div>
+<% end %>

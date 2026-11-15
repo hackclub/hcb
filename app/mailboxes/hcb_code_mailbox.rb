@@ -38,6 +38,7 @@ class HcbCodeMailbox < ApplicationMailbox
       reply_to: @hcb_code.receipt_upload_email,
       renamed_to: @renamed_to,
       tagged_with: @tagged_with,
+      reversed_pairing: @reversed_pairing,
       receipts_count: result&.size || 0
     ).bounce_success.deliver_now
   end
@@ -60,18 +61,21 @@ class HcbCodeMailbox < ApplicationMailbox
     when "@rename"
       return unless command["argument"]
 
-      @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: command["argument"]) }
-      @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: command["argument"]) }
+      @hcb_code.update_custom_memo!(command["argument"])
       @renamed_to = command["argument"]
     when "@tag"
-      return unless command["argument"] && Flipper.enabled?(:transaction_tags_2022_07_29, @hcb_code.event)
+      return unless command["argument"]
 
       event = @hcb_code.event
       tag = event.tags.search_label(command["argument"]).first
       return unless tag
 
+      # Tags live on the ledger item; skip silently if this code has none.
+      ledger_item = @hcb_code.ledger_item
+      return unless ledger_item
+
       suppress(ActiveRecord::RecordNotUnique) do
-        @hcb_code.tags << tag
+        ledger_item.tags << tag
       end
       @tagged_with << tag.label
     end

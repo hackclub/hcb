@@ -2,32 +2,40 @@
 
 require "rails_helper"
 
-FactoryBot.define do
-  factory :stripe_authorization do
-    amount { 0 }
-    approved { true }
-    merchant_data do
-      {
-        category: "grocery_stores_supermarkets",
-        network_id: "1234567890",
-      }
-    end
-    pending_request do
-      {
-        amount: 1000,
-      }
-    end
-  end
-end
-
 RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest, type: :model do
+  include ActionMailer::TestHelper
+
   let(:event) { create(:event) }
   let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:) }
-  let(:service) { StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }) } }) }
+  let(:stripe_authorization) { build(:stripe_authorization, card: { id: stripe_card.stripe_id }) }
+  let(:service) do
+    StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(
+      stripe_event: { data: { object: stripe_authorization, } }
+    )
+  end
 
   it "declines with no funds" do
     expect(service.run).to be(false)
     expect(service.declined_reason).to eq("inadequate_balance")
+  end
+
+  describe "#metadata" do
+    it "includes the available balance and the reason when declining" do
+      expect(service.run).to be(false)
+
+      expect(service.metadata).to eq(
+        current_balance_available: "0",
+        declined_reason: "inadequate_balance"
+      )
+    end
+
+    it "includes the available balance when approving" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(true)
+
+      expect(service.metadata).to eq(current_balance_available: "1000")
+    end
   end
 
   it "declines when insufficient funds" do
@@ -41,12 +49,191 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.run).to be(true)
   end
 
+  it "declines when the cardholder's cards are locked and the event's plan is card-lockable" do
+    create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+    stripe_card.user.update!(cards_locked: true)
+
+    expect(service.run).to be(false)
+    expect(service.declined_reason).to eq("user_cards_locked")
+  end
+
+  context "forbidden merchants" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :gambling,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+  end
+
+  context "forbidden merchant network IDs" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :forbidden_network_id,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+
+    context "when user is admin" do
+      let(:user) { create(:user, :make_admin) }
+      let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
+      let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:) }
+
+      it "approves when sufficient funds" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+        expect(service.run).to be(true)
+      end
+    end
+  end
+
+  context "forbidden merchant name prefixes" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :forbidden_name_prefix,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+
+    context "when the merchant name only contains the prefix mid-name" do
+      let(:stripe_authorization) do
+        build(
+          :stripe_authorization,
+          :forbidden_name_prefix,
+          card: { id: stripe_card.stripe_id },
+          merchant_data: {
+            category: "employment_temp_agencies",
+            category_code: "7361",
+            network_id: "9999999999",
+            name: "TOTALLY NOT FAWRY*A1B2C3"
+          }
+        )
+      end
+
+      it "approves" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+        expect(service.run).to be(true)
+      end
+    end
+
+    context "when user is admin" do
+      let(:user) { create(:user, :make_admin) }
+      let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
+      let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:) }
+
+      it "approves when sufficient funds" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+        expect(service.run).to be(true)
+      end
+    end
+  end
+
+  context "allowlisted merchant network IDs" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :allowlisted_network_id,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "approves despite a forbidden category" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(true)
+    end
+
+    context "when the same network ID is on both the forbidden and allowlist" do
+      # Allowlist the forbidden (fraud) network ID to prove the forbidden list
+      # still wins — an explicitly blocked network ID is never allowlistable.
+      before do
+        stub_const(
+          "StripeAuthorizationService::ALLOWLISTED_MERCHANT_NETWORK_IDS",
+          Set.new(["8203300025"]).freeze
+        )
+      end
+
+      let(:stripe_authorization) do
+        build(
+          :stripe_authorization,
+          :allowlisted_network_id,
+          card: { id: stripe_card.stripe_id },
+          merchant_data: {
+            category: "non_fi_money_orders",
+            category_code: "6051",
+            network_id: "8203300025", # forbidden (fraud) network ID
+            name: "HEPTA PAY LTD"
+          }
+        )
+      end
+
+      it "declines because forbidden network IDs are never allowlisted" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+      end
+    end
+  end
+
   context "card grants" do
     let(:event) { create(:event, :card_grant_event) }
     before(:example) { create(:canonical_pending_transaction, amount_cents: 10000, event:, fronted: true ) }
 
     def create_service(stripe_card: card_grant.stripe_card, amount: 1000)
-      StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: attributes_for(:stripe_authorization, card: { id: stripe_card.stripe_id }, pending_request: { amount: }) } })
+      StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: { data: { object: build(:stripe_authorization, card: { id: stripe_card.stripe_id }, pending_request: { amount: }) } })
     end
 
     it "approves" do
@@ -89,6 +276,137 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["203948", "293847", "1234567890"])
         service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
         expect(service.run).to be(true)
+      end
+    end
+
+    context "when keyword locked" do
+      it "declines w/ an invalid merchant name" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, keyword_lock: "\\ASVB-[a-zA-Z]*\\z")
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+
+      it "approves w/ a valid merchant name" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, keyword_lock: "\\AHCB-[a-zA-Z]*\\z")
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+    end
+
+    context "when category and merchant locked" do
+      it "approve with a valid merchant and invalid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], category_lock: ["government_licensed_online_casions_online_gambling_us_region_only"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "approve with a valid category and invalid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["000737075554888"], category_lock: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with invalid category and invalid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["W9JEIROWXKO5PEO"], category_lock: ["wrecking_and_salvage_yards"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+
+    context "when restricted by merchant" do
+      it "approve with a valid merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_merchants: ["0987654321"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a banned merchant" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_merchants: ["1234567890"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+
+    context "when restricted by category" do
+      it "approve with a valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a banned category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, banned_categories: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+
+    context "when merchant locked and restricted by category" do
+      it "approve with a valid merchant and valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(true)
+      end
+
+      it "decline with a valid merchant and invalid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["1234567890"], banned_categories: ["grocery_stores_supermarkets"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+
+      it "decline with an invalid merchant and valid category" do
+        card_grant = create(:card_grant, event:, amount_cents: 1000, merchant_lock: ["0987654321"], banned_categories: ["fast_food_restaurants"])
+        service = create_service(amount: 1000, stripe_card: card_grant.stripe_card)
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed")
+      end
+    end
+  end
+
+  context "withdrawals" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :cash_withdrawal,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines by default" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("cash_withdrawals_not_allowed")
+    end
+
+    it "approves if allowed" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      stripe_card.update!(cash_withdrawal_enabled: true)
+
+      expect(service.run).to be(true)
+    end
+
+    context "with amount > $500" do
+      let(:stripe_authorization) do
+        build(
+          :stripe_authorization,
+          :cash_withdrawal,
+          card: { id: stripe_card.stripe_id },
+          pending_amount: 500_01,
+        )
+      end
+
+      it "declines" do
+        create(:canonical_pending_transaction, amount_cents: 1000_00, event:, fronted: true)
+        stripe_card.update!(cash_withdrawal_enabled: true)
+
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("exceeds_approval_amount_limit")
       end
     end
   end

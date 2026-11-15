@@ -1,12 +1,37 @@
-export const colors = Array.from(
-  { length: 11 },
-  (_, i) => `hsl(352, 83%, ${70 - i * 5}%)`
-)
+import { useEffect, useState } from 'react'
 
-export const shuffle = array => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[array[i], array[j]] = [array[j], array[i]]
-  }
-  return array
+export const generateColor = (index, length, isDark) => {
+  // Light max is 80, dark max is 40
+  // Light min is 40, dark min is 20
+
+  const lightness = isDark
+    ? 40 + (index / length) * 40
+    : 60 - (index / length) * 40
+  return `hsl(352, 83%, ${lightness}%)`
+}
+
+export const useDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    const currentTheme = document.documentElement.getAttribute('data-dark')
+    setIsDarkMode(currentTheme === 'true')
+
+    // Observer to watch for changes to data-theme attribute
+    const observer = new MutationObserver(() => {
+      const updatedTheme = document.documentElement.getAttribute('data-dark')
+      setIsDarkMode(updatedTheme === 'true')
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-dark'],
+    })
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
+  return isDarkMode
 }

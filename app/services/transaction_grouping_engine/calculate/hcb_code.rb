@@ -10,7 +10,7 @@ module TransactionGroupingEngine
       UNKNOWN_CODE = "000"
       # 001 — This type code exists in production to group transactions under
       # `000` while preventing from the TX Engine from trying to re-group them.
-      # For context, `TransactionGroupingEngineJob::Nightly` will try to group
+      # For context, `TransactionGroupingEngine::NightlyJob` will try to group
       # any CanonicalTransactions with a `000`. `001` was used to manually group
       # transactions together during an incident.
       INVOICE_CODE = "100"
@@ -19,12 +19,15 @@ module TransactionGroupingEngine
       ACH_TRANSFER_CODE = "300"
       WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
+      WISE_TRANSFER_CODE = "360"
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
-      DISBURSEMENT_CODE = "500"
+      OUTGOING_DISBURSEMENT_CODE = "500"
+      INCOMING_DISBURSEMENT_CODE = "550"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
+      STRIPE_SERVICE_FEE_CODE = "610"
       BANK_FEE_CODE = "700"
       INCOMING_BANK_FEE_CODE = "701" # short-lived and deprecated
       FEE_REVENUE_CODE = "702"
@@ -40,15 +43,19 @@ module TransactionGroupingEngine
         return increase_check_hcb_code if increase_check
         return paypal_transfer_hcb_code if paypal_transfer
         return wire_hcb_code if wire
+        return wise_transfer_hcb_code if wise_transfer
         return unknown_hcb_code if @ct_or_cp.is_a?(CanonicalTransaction) && @ct_or_cp.raw_increase_transaction&.increase_account_number.present? # Don't attempt to group transactions posted to an org's account/routing number
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
         return bank_fee_hcb_code if bank_fee
+        return stripe_service_fee_hcb_code if stripe_service_fee
+        return fee_revenue_hcb_code if fee_revenue
         return donation_hcb_code if donation
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
-        return disbursement_hcb_code if disbursement
+        return outgoing_disbursement_hcb_code if outgoing_disbursement
+        return incoming_disbursement_hcb_code if incoming_disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
@@ -90,6 +97,30 @@ module TransactionGroupingEngine
 
       def bank_fee
         @bank_fee ||= @ct_or_cp.bank_fee
+      end
+
+      def stripe_service_fee_hcb_code
+        [
+          HCB_CODE,
+          STRIPE_SERVICE_FEE_CODE,
+          stripe_service_fee.id
+        ].join(SEPARATOR)
+      end
+
+      def stripe_service_fee
+        @stripe_service_fee ||= @ct_or_cp.stripe_service_fee
+      end
+
+      def fee_revenue_hcb_code
+        [
+          HCB_CODE,
+          FEE_REVENUE_CODE,
+          fee_revenue.id
+        ].join(SEPARATOR)
+      end
+
+      def fee_revenue
+        @fee_revenue ||= @ct_or_cp.fee_revenue
       end
 
       def donation_hcb_code
@@ -164,6 +195,18 @@ module TransactionGroupingEngine
         @wire ||= @ct_or_cp.wire
       end
 
+      def wise_transfer_hcb_code
+        [
+          HCB_CODE,
+          WISE_TRANSFER_CODE,
+          wise_transfer.id
+        ].join(SEPARATOR)
+      end
+
+      def wise_transfer
+        @wise_transfer ||= @ct_or_cp.wise_transfer
+      end
+
       def check_deposit_hcb_code
         [
           HCB_CODE,
@@ -176,16 +219,28 @@ module TransactionGroupingEngine
         @check_deposit ||= @ct_or_cp.check_deposit
       end
 
-      def disbursement_hcb_code
+      def outgoing_disbursement_hcb_code
         [
           HCB_CODE,
-          DISBURSEMENT_CODE,
-          disbursement.id
+          OUTGOING_DISBURSEMENT_CODE,
+          outgoing_disbursement.id
         ].join(SEPARATOR)
       end
 
-      def disbursement
-        @disbursement ||= @ct_or_cp.disbursement
+      def outgoing_disbursement
+        @outgoing_disbursement ||= @ct_or_cp.outgoing_disbursement
+      end
+
+      def incoming_disbursement_hcb_code
+        [
+          HCB_CODE,
+          INCOMING_DISBURSEMENT_CODE,
+          incoming_disbursement.id
+        ].join(SEPARATOR)
+      end
+
+      def incoming_disbursement
+        @incoming_disbursement ||= @ct_or_cp.incoming_disbursement
       end
 
       def reimbursement_expense_payout
@@ -257,14 +312,14 @@ module TransactionGroupingEngine
       end
 
       def outgoing_fee_reimbursement?
-        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement")
+        @ct_or_cp.memo.downcase.include?("stripe fee reimbursement") || @ct_or_cp.memo.downcase.include?("fee reimburse") || @ct_or_cp.memo.downcase.include?("stripe fee reimbu") || @ct_or_cp.memo.downcase.include?("hckclb fee reimbu")
       end
 
       def unknown_hcb_code
         [
           HCB_CODE,
           UNKNOWN_CODE,
-          @ct_or_cp.id
+          @ct_or_cp.column_transaction_id || @ct_or_cp.id
         ].join(SEPARATOR)
       end
 

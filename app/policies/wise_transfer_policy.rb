@@ -1,0 +1,50 @@
+# frozen_string_literal: true
+
+class WiseTransferPolicy < ApplicationPolicy
+  def new?
+    auditor_or_user?
+  end
+
+  def create?
+    user_who_can_transfer?
+  end
+
+  def show?
+    user&.auditor?
+  end
+
+  def approve?
+    user&.admin?
+  end
+
+  def reject?
+    user&.admin?
+  end
+
+  def update?
+    user&.admin?
+  end
+
+  def mark_sent?
+    user&.admin?
+  end
+
+  def mark_failed?
+    user&.admin?
+  end
+
+  def generate_quote?
+    user&.auditor? || user.events.any?
+  end
+
+  private
+
+  def auditor_or_user?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+  end
+
+  def user_who_can_transfer?
+    EventPolicy.new(user, record.event).create_transfer?
+  end
+
+end

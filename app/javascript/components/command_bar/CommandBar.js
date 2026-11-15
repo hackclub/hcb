@@ -9,6 +9,7 @@ import {
   useRegisterActions,
   Priority,
   useKBar,
+  useMatches,
 } from 'kbar'
 import { initalActions, adminActions, generateEventActions } from './actions'
 import { KBarInput } from './input'
@@ -16,11 +17,23 @@ import { RenderResults } from './results'
 import { generateResultActions } from './search/results'
 import Icon from '@hackclub/icons'
 
-export default function CommandBar({ admin = false, adminUrls = {} }) {
+export default function CommandBar({
+  admin = false,
+  admin_override_pretend = false,
+  adminUrls = {},
+  has_followed_events = false,
+}) {
   return (
-    <div style={{ position: 'relative', zIndex: '1000' }}>
+    <div style={{ position: 'relative', zIndex: '100000000' }}>
       <KBarProvider
-        actions={[...initalActions, ...(admin ? adminActions(adminUrls) : [])]}
+        actions={[
+          ...initalActions.filter(
+            a => a.id !== 'my-feed' || has_followed_events
+          ),
+          ...(admin || admin_override_pretend
+            ? adminActions(adminUrls, !admin && admin_override_pretend)
+            : []),
+        ]}
         options={{
           disableScrollbarManagement: true,
           disableDocumentLock: true,
@@ -28,7 +41,9 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
       >
         <ButtonTrigger />
         <KBarPortal>
-          <KBarPositioner style={{ zIndex: 1000 }}>
+          <KBarPositioner
+            style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
+          >
             <SearchAndResults />
           </KBarPositioner>
         </KBarPortal>
@@ -39,11 +54,13 @@ export default function CommandBar({ admin = false, adminUrls = {} }) {
 
 const ButtonTrigger = () => {
   const { query } = useKBar()
-  if (document.getElementById('command_bar_trigger')) {
-    document.getElementById('command_bar_trigger').onclick = function () {
-      query.toggle()
-    }
-  }
+  document
+    .querySelectorAll(`[data-behavior="command_bar_trigger"]`)
+    .forEach(trigger => {
+      trigger.onclick = function () {
+        query.toggle()
+      }
+    })
 }
 
 const animatorStyle = {
@@ -51,11 +68,25 @@ const animatorStyle = {
   width: '100%',
   background: 'var(--kbar-background)',
   color: 'var(--kbar-foreground)',
-  borderRadius: '6px',
+  borderRadius: 'var(--radius-xl)',
   overflow: 'hidden',
-  boxShadow: '0px 6px 20px rgb(0 0 0 / 20%)',
-  fontFamily: `ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
-               Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif`,
+  boxShadow: 'var(--shadow-modal)',
+}
+
+function EmptyState() {
+  const { results } = useMatches()
+
+  return (
+    results.length === 0 && (
+      <div className="text-center font-semibold pt-4 pb-5">
+        <img
+          src="/dino_leaping_for_money.svg"
+          className="dino-svg mb-4 mx-auto w-100 block max-w-40"
+        />
+        No results found
+      </div>
+    )
+  )
 }
 
 function SearchAndResults() {
@@ -197,7 +228,7 @@ function SearchAndResults() {
   return (
     <KBarAnimator style={animatorStyle}>
       <KBarInput
-        defaultPlaceholder={'How can I help?'}
+        defaultPlaceholder={'Search for organizations, pages, actions...'}
         placeholder={
           searched && actions.filter(x => x.id == 'result').length > 0
             ? `Successfully found ${
@@ -219,6 +250,7 @@ function SearchAndResults() {
         searched={searched}
       />
       <RenderResults />
+      <EmptyState />
     </KBarAnimator>
   )
 }

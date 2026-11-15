@@ -5,7 +5,7 @@
 # Table name: checks
 #
 #  id                     :bigint           not null, primary key
-#  aasm_state             :string
+#  aasm_state             :string           not null
 #  amount                 :integer
 #  approved_at            :datetime
 #  check_number           :integer
@@ -46,15 +46,18 @@ class Check < ApplicationRecord
   has_paper_trail skip: [:description] # ciphertext columns will still be tracked
   has_encrypted :description
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :chk
 
   include AASM
-  include Commentable
 
   include PgSearch::Model
   pg_search_scope :search_recipient, associated_against: { lob_address: :name, event: :name }, against: [:memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "checks.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User"
   belongs_to :lob_address
   has_one :event, through: :lob_address
@@ -149,24 +152,8 @@ class Check < ApplicationRecord
     end
   end
 
-
-  # Can be ready to refund
-  def pending_void?
-    approved? && voided_at.present? && !deposited? && !voided?
-  end
-
-  # Ready to be refunded
-  def unfinished_void?
-    !refunded_at.present? && voided_at && voided_at + 1.day < DateTime.now && !deposited?
-  end
-
-  # Void requested & check deposited before it could go through
-  def failed_void?
-    approved? && voided_at.present? && t_transactions.size == 3 && t_transactions.sum(&:amount) < 0
-  end
-
   def admin_dropdown_description
-    "#{check_number.present? ? check_number : 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
+    "#{check_number.presence || 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
   end
 
   def sent?
@@ -181,13 +168,8 @@ class Check < ApplicationRecord
     lob_address.try(:name).try(:upcase)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
@@ -199,12 +181,6 @@ class Check < ApplicationRecord
 
   def recipient_name
     lob_address.name
-  end
-
-  private
-
-  def send_date_must_be_in_future
-    self.errors.add(:send_date, "must be at least 24 hours in the future") if send_date.nil? || send_date <= (Time.now.utc + 24.hours)
   end
 
 end

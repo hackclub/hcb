@@ -1,5 +1,8 @@
-<%= turbo_stream.remove tag_dom_id(hcb_code, tag) %>
-<%= turbo_stream.update_all tag_dom_class(hcb_code, tag, "_toggle") do %>
-  <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+<%= turbo_stream.update_all ".ledger_item_#{item.hashid}_tags" do %>
+  <%= render partial: "canonical_transactions/tag", collection: item.tags, locals: { item:, streamed: local_assigns[:streamed] } %>
+<% end %>
+
+<%= turbo_stream.update_all tag_dom_class(item, tag, "_toggle") do %>
+  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
   <%= tag.label %>
 <% end %>

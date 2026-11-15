@@ -4,7 +4,7 @@
   <div class="inline-block">
     <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
     <%= button_tag("Search") %>
-    <%= render partial: "events_filter", locals: { form:, submit_disable_with_false: true, show_new: false } %>
+    <%= render partial: "admin/events_filter", locals: { form:, submit_disable_with_false: true, show_new: false } %>
     <br><br>
 
     <div style="display: flex; justify-content: space-between; align-items: center; column-gap: 0.5rem;">
@@ -54,7 +54,7 @@
       <td><%= row[4] %></td>
 
       <% if !row[5] && !row[6] %>
-        <td colspan="2">All time</td>
+        <td colspan="2">All&nbsp;time</td>
       <% else %>
         <td><%= row[5] %></td>
         <td><%= row[6] %></td>

@@ -1,0 +1,20 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  Here's your monthly follower summary for <%= @event.name %>:
+</p>
+
+<ul>
+  <% @follows.each do |follow| %>
+    <li>
+      <%= follow.user.name %>: <%= follow.created_at.strftime("%B %-d, %Y") %>
+    </li>
+  <% end %>
+</ul>
+
+<p>In total, you got <strong><%= @total %></strong> new <%= "follower".pluralize(@total) %> last month - great job!</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

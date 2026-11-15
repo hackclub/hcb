@@ -16,14 +16,26 @@ export default class extends Controller {
     appendTo: String,
     placement: { type: String, default: 'bottom-start' },
     contentId: String,
+    updateOnResize: { type: Boolean, default: false }, // See https://github.com/hackclub/hcb/issues/8588
   }
 
   initialize() {
     this.isOpen = false
   }
 
+  connect() {
+    this._closeMenusHandler = () => this.isOpen && this.close()
+    document.addEventListener('hcb:close-menus', this._closeMenusHandler)
+  }
+
   disconnect() {
     this.cleanup && this.cleanup()
+    // remove cloned popup so it doesn't outlive turbo frame updates.
+    this.content && this.content.remove()
+    this.content = undefined
+    this.cleanup = undefined
+    this.isOpen = false
+    document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
   toggle(e) {
@@ -40,7 +52,14 @@ export default class extends Controller {
     if (this.isOpen) return
     if (!this.hasContentTarget) return
 
-    this.content = this.contentTarget.cloneNode(true)
+    // The content can be a <template> wrapping the menu, which keeps its links
+    // and forms out of the page until it opens (a menu inside a link can't
+    // otherwise hold links of its own: HTML doesn't nest them).
+    const source =
+      this.contentTarget instanceof HTMLTemplateElement
+        ? this.contentTarget.content.firstElementChild
+        : this.contentTarget
+    this.content = source.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
     ;(
@@ -58,7 +77,10 @@ export default class extends Controller {
     this.cleanup = autoUpdate(
       this.toggleTarget,
       this.content,
-      this.computePosition.bind(this, false)
+      this.computePosition.bind(this, false),
+      {
+        elementResize: this.updateOnResizeValue,
+      }
     )
   }
 
@@ -85,10 +107,17 @@ export default class extends Controller {
         $(e.target).closest('.menu__content').length
       )
         return
+    }
 
-      this.content && this.content.remove()
-    } else {
-      this.content && this.content.remove()
+    if (this.content) {
+      const content = this.content
+      if (e?.type == 'click') {
+        // let turbo resolve the target frame before removing the link
+        content.style.display = 'none'
+        setTimeout(() => content.remove(), 0)
+      } else {
+        content.remove()
+      }
     }
 
     this.toggleTarget.setAttribute('aria-expanded', false)
@@ -108,13 +137,14 @@ export default class extends Controller {
     computePosition(this.toggleTarget, this.content, {
       placement: this.placementValue,
       middleware: [
-        offset(5),
-        flip({ padding: 5 }),
+        offset(this.placementValue.includes('top') ? 0 : 10),
+        flip({ padding: 4 }),
         size({
           padding: 5,
-          apply({ availableHeight, elements }) {
+          apply({ availableHeight, availableWidth, elements }) {
             Object.assign(elements.floating.style, {
               maxHeight: `${availableHeight}px`,
+              maxWidth: `${availableWidth}px`,
             })
           },
         }),
@@ -127,9 +157,9 @@ export default class extends Controller {
       if (firstTime) {
         // Animate!
         gsap.from(this.content, {
-          y: placement.includes('top') ? -15 : 15,
-          opacity: 0,
-          duration: 0.25,
+          y: placement.includes('top') ? -12 : 12,
+          opacity: 0.75,
+          duration: 0.15,
         })
       }
 

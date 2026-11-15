@@ -5,7 +5,7 @@ class TopupStripeJob < ApplicationJob
 
   # Don't retry jobs w/ balance anomalies, reattempt at next run
   discard_on(Errors::StripeIssuingBalanceAnomaly) do |job, error|
-    Airbrake.notify(error)
+    Rails.error.report error
   end
 
   def perform
@@ -23,7 +23,7 @@ class TopupStripeJob < ApplicationJob
     # money on Stripe Issuing is at least two weeks.
     # Ex. The money from a top-up today will be spent in no earlier than two
     #     weeks from now (FIFO order).
-    buffer = 200_000 * 100
+    buffer = 250_000 * 100
 
     # amount of money currently in stripe
     balances = StripeService::Balance.retrieve
@@ -47,7 +47,7 @@ class TopupStripeJob < ApplicationJob
       # It appears we're spending our top-up money too quickly. Our ideal "age"
       # of money is at least two weeks (see above). This notification is a sign
       # we may need to increase our buffer.
-      Airbrake.notify(<<~MSG.squish)
+      Rails.error.unexpected <<~MSG.squish
         Stripe Issuing balance: Low age of money.
         We only have #{ActionController::Base.helpers.number_to_percentage((available / buffer.to_f) * 100, precision: 2)}
         of the buffer available for spending.
@@ -73,13 +73,8 @@ class TopupStripeJob < ApplicationJob
     topup_amount = buffer - pending - available - enroute_sum + expected_tx_sum
     # 200k - (current + pending + en route balance) + (expected_tx_sum)
 
-    StatsD.gauge("stripe_issuing_expected_tx_sum", expected_tx_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_enroute_issuing_topups_sum", enroute_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_available_issuing_balance", available, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_pending_issuing_balance", pending, sample_rate: 1.0)
-
-    puts "topup amount == #{topup_amount}"
-    return unless topup_amount > 0
+    Rails.logger.info "topup amount == #{topup_amount}"
+    return unless topup_amount >= 5_000 * 100
 
     # The maximum amount for a single top-up is $300k
     # ref: https://github.com/hackclub/hcb/issues/4462#issuecomment-1917940104
@@ -92,9 +87,7 @@ class TopupStripeJob < ApplicationJob
       statement_descriptor: "Stripe Top-up"
     )
 
-    puts "Just created a topup for #{limited_topup_amount}"
-
-    StatsD.increment("stripe_issuing_topup", limited_topup_amount)
+    Rails.logger.info "Just created a topup for #{limited_topup_amount}"
   end
 
 end

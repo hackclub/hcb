@@ -7,13 +7,20 @@ Doorkeeper.configure do
 
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_authenticator do
-    try(:current_user)
+    # Admins impersonating a user must not be able to grant OAuth apps (or
+    # devices) long-lived access to that user's account.
+    if try(:current_session)&.impersonated?
+      redirect_to root_path, flash: { error: "You can't authorize applications while impersonating a user." }
+      nil
+    else
+      try(:current_user)
+    end
   end
 
   access_token_class "::ApiToken"
   access_token_generator "::ApiToken"
 
-  access_token_expires_in nil
+  access_token_expires_in 2.hours
 
   # If you didn't skip applications controller from Doorkeeper routes in your application routes.rb
   # file then you need to declare this block in order to restrict access to the web interface for
@@ -34,7 +41,7 @@ Doorkeeper.configure do
   # migrations).
   #
   # If this option enabled, Doorkeeper will store not only Resource Owner primary key
-  # value, but also it's type (class name). See "Polymorphic Associations" section of
+  # value, but also its type (class name). See "Polymorphic Associations" section of
   # Rails guides: https://guides.rubyonrails.org/association_basics.html#polymorphic-associations
   #
   # [NOTE] If you apply this option on already existing project don't forget to manually
@@ -166,8 +173,10 @@ Doorkeeper.configure do
   # `client` - the OAuth client application (see Doorkeeper::OAuth::Client)
   # `grant_type` - the grant type of the request (see Doorkeeper::OAuth)
   # `scopes` - the requested scopes (see Doorkeeper::OAuth::Scopes)
-  #
-  # use_refresh_token
+
+  use_refresh_token
+
+  enable_application_owner confirmation: true
 
   # Provide support for an owner to be assigned to each registered application (disabled by default)
   # Optional parameter confirmation: true (default: false) if you want to enforce ownership of
@@ -182,7 +191,7 @@ Doorkeeper.configure do
   # https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes
   #
   # default_scopes  :public
-  optional_scopes :read, :write
+  optional_scopes :read, :write, :"admin:read", :"admin:write", :"admin:comments:read", :"admin:comments:write"
 
   # Allows to restrict only certain scopes for grant_type.
   # By default, all the scopes will be available for all the grant types.
@@ -225,7 +234,7 @@ Doorkeeper.configure do
   #
   # force_ssl_in_redirect_uri !Rails.env.development?
   #
-  # force_ssl_in_redirect_uri { |uri| uri.host != 'localhost' }
+  force_ssl_in_redirect_uri { |uri| uri.host != "localhost" }
 
   # Specify what redirect URI's you want to block during Application creation.
   # Any redirect URI is allowed by default.
@@ -298,7 +307,7 @@ Doorkeeper.configure do
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.2
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.3
   #
-  # grant_flows %w[authorization_code client_credentials]
+  grant_flows %w[authorization_code client_credentials device_code]
 
   # Allows to customize OAuth grant flows that +each+ application support.
   # You can configure a custom block (or use a class respond to `#call`) that must
@@ -338,9 +347,10 @@ Doorkeeper.configure do
   #
   # Be default all Resource Owners are authorized to any Client (application).
   #
-  # authorize_resource_owner_for_client do |client, resource_owner|
-  #   resource_owner.admin? || client.owners_allowlist.include?(resource_owner)
-  # end
+  # Block locked users from authorizing OAuth applications
+  authorize_resource_owner_for_client do |client, resource_owner|
+    !resource_owner.locked?
+  end
 
   # Allows additional data fields to be sent while granting access to an application,
   # and for this additional data to be included in subsequently generated access tokens.
@@ -370,6 +380,10 @@ Doorkeeper.configure do
   #   puts "AFTER HOOK FIRED! #{request}, #{response}"
   # end
 
+  after_successful_strategy_response do |_request, response|
+    response.token&.update_column(:ip_address, Current.request_ip)
+  end
+
   # Hook into Authorization flow in order to implement Single Sign Out
   # or add any other functionality. Inside the block you have an access
   # to `controller` (authorizations controller instance) and `context`
@@ -391,6 +405,21 @@ Doorkeeper.configure do
   #   Rails.logger.info(context.auth.inspect)
   #   Rails.logger.info(context.issued_token)
   # end
+
+  # `authorize_resource_owner_for_client` above only runs for new
+  # authorizations, and Doorkeeper's refresh grant only checks that the refresh
+  # token itself isn't revoked, so a refresh token that outlived `User#lock!`
+  # could keep minting access tokens for a locked user. Refuse those outright.
+  before_successful_authorization do |controller, _context|
+    next unless controller.params[:grant_type] == "refresh_token"
+
+    refresh_token = controller.params[:refresh_token]
+    next if refresh_token.blank?
+
+    if ApiToken.by_refresh_token(refresh_token)&.user&.locked?
+      raise Doorkeeper::Errors::InvalidGrant, Doorkeeper::OAuth::ErrorResponse.new(name: :invalid_grant)
+    end
+  end
 
   # Under some circumstances you might want to have applications auto-approved,
   # so that the user skips the authorization step.

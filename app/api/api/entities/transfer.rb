@@ -18,6 +18,12 @@ module Api
           ]
         }
 
+        with_options(if: ->(obj, options) { obj.source_event&.is_public? }) do
+          expose_associated Organization, as: :source_organization, hide: [API_LINKED_OBJECT_TYPE, Transaction] do |obj, options|
+            obj.source_event
+          end
+        end
+
       end
 
     end

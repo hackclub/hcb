@@ -4,41 +4,55 @@
 #
 # Table name: reimbursement_reports
 #
-#  id                         :bigint           not null, primary key
-#  aasm_state                 :string
-#  deleted_at                 :datetime
-#  expense_number             :integer          default(0), not null
-#  invite_message             :text
-#  maximum_amount_cents       :integer
-#  name                       :text
-#  reimbursed_at              :datetime
-#  reimbursement_approved_at  :datetime
-#  reimbursement_requested_at :datetime
-#  rejected_at                :datetime
-#  submitted_at               :datetime
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  event_id                   :bigint
-#  invited_by_id              :bigint
-#  reviewer_id                :bigint
-#  user_id                    :bigint           not null
+#  id                            :bigint           not null, primary key
+#  aasm_state                    :string           not null
+#  conversion_rate               :float            default(1.0), not null
+#  currency                      :string           default("USD"), not null
+#  deleted_at                    :datetime
+#  expense_number                :integer          default(0), not null
+#  invite_message                :text
+#  maximum_amount_cents          :integer
+#  name                          :text
+#  reimbursed_at                 :datetime
+#  reimbursement_approved_at     :datetime
+#  reimbursement_requested_at    :datetime
+#  rejected_at                   :datetime
+#  submitted_at                  :datetime
+#  created_at                    :datetime         not null
+#  updated_at                    :datetime         not null
+#  card_grant_id                 :bigint
+#  event_id                      :bigint
+#  invited_by_id                 :bigint
+#  legal_entity_payout_method_id :bigint
+#  reviewer_id                   :bigint
+#  user_id                       :bigint           not null
 #
 # Indexes
 #
-#  index_reimbursement_reports_on_event_id       (event_id)
-#  index_reimbursement_reports_on_invited_by_id  (invited_by_id)
-#  index_reimbursement_reports_on_reviewer_id    (reviewer_id)
-#  index_reimbursement_reports_on_user_id        (user_id)
+#  index_reimbursement_reports_on_card_grant_id                  (card_grant_id)
+#  index_reimbursement_reports_on_event_id                       (event_id)
+#  index_reimbursement_reports_on_invited_by_id                  (invited_by_id)
+#  index_reimbursement_reports_on_legal_entity_payout_method_id  (legal_entity_payout_method_id)
+#  index_reimbursement_reports_on_reviewer_id                    (reviewer_id)
+#  index_reimbursement_reports_on_user_id                        (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (invited_by_id => users.id)
+#  fk_rails_...  (legal_entity_payout_method_id => legal_entity_payout_methods.id) ON DELETE => nullify
 #  fk_rails_...  (user_id => users.id)
 #
 module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
+
+    include Hashid::Rails
+    hashid_config salt: ""
+
+    include PublicIdentifiable
+    set_public_id_prefix :rmr
+
     belongs_to :user
 
     belongs_to :event, optional: true
@@ -49,27 +63,42 @@ module Reimbursement
       end
     end
 
+    validate :cannot_change_event_when_card_grant_present, on: :update
+    validate :reviewer_must_be_eligible, if: -> { reviewer_id_changed? && reviewer.present? }
+
+    before_validation(if: -> { event_id_changed? && !reviewer_id_changed? && reviewer.present? }) { self.reviewer = nil }
+
+    validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
+    normalizes :name, with: ->(name) { name&.strip }
+
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
+    belongs_to :card_grant, optional: true
+    belongs_to :legal_entity_payout_method, class_name: "LegalEntity::PayoutMethod", optional: true
 
     has_paper_trail ignore: :expense_number
+    include HasPaperTrailHelpers
 
     monetize :maximum_amount_cents, allow_nil: true
-    monetize :amount_to_reimburse_cents, allow_nil: true
-    monetize :amount_cents, as: "amount", allow_nil: true
-    validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
-    has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
+    monetize :amount_to_reimburse_cents, allow_nil: true, with_model_currency: :currency
+    monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
+    validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true, integer_column: true
+    has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
     has_one :payout_holding, inverse_of: :report
     alias_attribute :report_name, :name
+
+    alias payout_method legal_entity_payout_method
+
     attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
 
-    scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+    scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR u2.email ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
     scope :to_calculate_total, -> { where.not(aasm_state: ["rejected"]) }
+    scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
+    # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
     include AASM
     include Commentable
-    include Hashid::Rails
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event&.id }, only: [:create]
@@ -80,9 +109,17 @@ module Reimbursement
 
     acts_as_paranoid
 
+    before_create :set_payout_method
+
     after_create_commit do
-      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      # Eventless draft reports (created via Discord, SMS, or email) have nobody
+      # to invite on behalf of; the invitation email is entirely event-scoped.
+      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user && event.present?
+      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
+      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
+
+    after_commit :invalidate_cached_data # do this after commit for expense touch-ing
 
     aasm timestamps: true do
       state :draft, initial: true
@@ -96,7 +133,9 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && expenses.any? && !missing_receipts?
+            payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+              expenses.any? && !missing_receipts? && !missing_categories? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
+              !mismatched_currency? && payout_method_allowed?
           end
         end
         after do
@@ -115,18 +154,18 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
+            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && (currency != "USD" || Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)) && !event.financially_frozen?
           end
         end
         after do
-          # ReimbursementJob::Nightly.perform_later
+          # Reimbursement::NightlyJob.perform_later
         end
       end
 
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)
+            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
           end
         end
         after do
@@ -138,13 +177,17 @@ module Reimbursement
 
       event :mark_rejected do
         transitions from: [:draft, :submitted, :reimbursement_requested], to: :rejected
-        after do
-          ReimbursementMailer.with(report: self).rejected.deliver_later
+        after do |skip_mailer: false|
+          ReimbursementMailer.with(report: self).rejected.deliver_later unless skip_mailer
         end
       end
 
       event :mark_draft do
         transitions from: [:submitted, :reimbursement_requested, :rejected], to: :draft
+        after do
+          # Once a report becomes unlocked, any changes would render existing fees outdated
+          expenses.where(type: Reimbursement::Expense::Fee.name).destroy_all
+        end
       end
 
       event :mark_reimbursed do
@@ -162,7 +205,7 @@ module Reimbursement
       return "⚠️ Processing" if reimbursed? && payout_holding&.failed?
       return "In Transit" if reimbursement_approved?
       return "In Transit" if reimbursed? && !payout_holding.sent?
-      return "Cancelled" if reversed?
+      return "Canceled" if reversed?
 
       aasm_state.humanize.titleize
     end
@@ -208,6 +251,10 @@ module Reimbursement
         return "PayPal transfer"
       when IncreaseCheck
         return "check"
+      when WiseTransfer
+        return "Wise transfer"
+      when Wire
+        return "international wire"
       end
 
       return "transfer"
@@ -217,8 +264,8 @@ module Reimbursement
       !draft?
     end
 
-    def unlockable?
-      submitted? || reimbursement_requested?
+    def can_change_payout_method?
+      draft?
     end
 
     def closed?
@@ -228,25 +275,17 @@ module Reimbursement
     def amount_cents
       return amount_to_reimburse_cents if reimbursement_requested? || reimbursement_approved? || reimbursed?
 
-      expenses.sum(:amount_cents)
+      expenses.to_sum.sum(:amount_cents)
     end
 
     def amount_to_reimburse_cents
-      return [expenses.approved.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents
+      return [expenses.approved.to_sum.sum(:amount_cents), maximum_amount_cents].min if maximum_amount_cents && currency == "USD"
 
-      expenses.approved.sum(:amount_cents)
+      expenses.approved.to_sum.sum(:amount_cents)
     end
 
-    def last_reimbursement_requested_by
-      last_user_change_to(aasm_state: "reimbursement_requested")
-    end
-
-    def last_reimbursement_approved_by
-      last_user_change_to(aasm_state: "reimbursement_approved")
-    end
-
-    def last_rejected_by
-      last_user_change_to(aasm_state: "rejected")
+    def fees_charged_cents
+      expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
     end
 
     def comment_recipients_for(comment)
@@ -258,7 +297,7 @@ module Reimbursement
 
       if comment.admin_only?
         users << self.event.point_of_contact if self.event
-        return users.uniq.select(&:admin?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+        return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
       end
 
       users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
@@ -283,7 +322,23 @@ module Reimbursement
     end
 
     def team_review_required?
-      !event.users.include?(user) || OrganizerPosition.find_by(user:, event:)&.member? || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+    end
+
+    def reviewer_selectable?
+      card_grant.blank? && !event.reviewer_selection_disabled?
+    end
+
+    def reviewer_assignable_by_creator?
+      card_grant.present? && !event.reviewer_selection_disabled?
+    end
+
+    def assigned_reviewer_required?
+      event.reviewer_selection_required?
+    end
+
+    def eligible_reviewers
+      event.eligible_reimbursement_reviewers
     end
 
     def reimbursement_confirmation_message
@@ -296,34 +351,165 @@ module Reimbursement
       expenses.complete.with_receipt.count != expenses.count
     end
 
+    def expenses_missing_category
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil)
+    end
+
+    def missing_categories?
+      expenses_missing_category.exists?
+    end
+
+    def mismatched_currency?
+      payout_method.present? && currency != payout_method.currency
+    end
+
+    def convert_report_currency!(new_currency)
+      old_currency = currency
+
+      ActiveRecord::Base.transaction do
+        update!(currency: new_currency)
+
+        expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
+      end
+    end
+
     def exceeds_maximum_amount?
-      maximum_amount_cents && amount_cents > maximum_amount_cents
+      maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
+    end
+
+    delegate :minimum_wire_amount_cents, to: :event
+
+    def below_minimum_amount?
+      payout_method&.details.is_a?(LegalEntity::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
+    end
+
+    def from_public_reimbursement_form?
+      invited_by_id.nil?
+    end
+
+    def wise_transfer_quote_amount
+      @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(amount)
+    rescue
+      Money.from_cents(0)
+    end
+
+    def cached_wise_transfer_quote_amount
+      Rails.cache.fetch("cached_wise_transfer_quote_amount_#{id}", expires_in: 3.days) do
+        wise_transfer_quote_amount
+      end
+    end
+
+    def wise_transfer_quote_without_fees_amount
+      @wise_transfer_quote_without_fees_amount ||= WiseTransfer.generate_detailed_quote(amount)[:without_fees_usd_amount]
+    rescue
+      Money.from_cents(0)
+    end
+
+    def wise_transfer_may_exceed_balance?
+      !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
+    end
+
+    def convert_to_wise_transfer!(as: User.system_user)
+      raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
+
+      payout_method = self.payout_method&.details
+
+      account_holder =
+        if payout_method.respond_to?(:account_holder)
+          payout_method.account_holder.presence
+        end
+
+      ActiveRecord::Base.transaction do
+        wise_transfer = WiseTransfer.create!(
+          user: as,
+          event:,
+          amount:,
+          currency:,
+          payment_for: name,
+          recipient_name: account_holder || user.full_name,
+          recipient_email: user.email,
+          address_city: payout_method.address_city,
+          address_line1: payout_method.address_line1,
+          address_line2: payout_method.address_line2,
+          address_postal_code: payout_method.address_postal_code,
+          address_state: payout_method.address_state,
+          bank_name: payout_method.bank_name,
+          recipient_country: payout_method.recipient_country,
+          recipient_information: payout_method.recipient_information,
+        )
+
+        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
+        wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
+
+        expenses.each do |expense|
+          expense.receipts.each do |receipt|
+            ::ReceiptService::Create.new(
+              receiptable: wise_transfer.local_hcb_code,
+              uploader: as,
+              attachments: [receipt.file.blob],
+              upload_method: :duplicate
+            ).run!
+          end
+        end
+
+        mark_rejected!(skip_mailer: true)
+
+        wise_transfer
+      end
     end
 
     private
 
-    def last_user_change_to(...)
-      user_id = versions.where_object_changes_to(...).last&.whodunnit
+    def cannot_change_event_when_card_grant_present
+      # `_was` catches a same-request card_grant_id nil-out paired with an event_id change.
+      if event_id_changed? && (card_grant_id_was.present? || card_grant_id.present?)
+        errors.add(:base, "You cannot change the organization of a card grant reimbursement.")
+      end
+    end
 
-      user_id && User.find(user_id)
+    def reviewer_must_be_eligible
+      unless event.present? && eligible_reviewers.exists?(reviewer.id)
+        errors.add(:reviewer, "must be a manager of this organization")
+      end
+    end
+
+    def set_payout_method
+      self.legal_entity_payout_method ||= user&.default_payout_method
     end
 
     def reimburse!
-      expense_payouts = []
+      ActiveRecord::Base.transaction do
+        expense_payouts = []
 
-      expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+        expenses.approved.each do |expense|
+          expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -(expense.amount_cents * expense.conversion_rate).floor, event: expense.report.event, expense:)
+        end
+
+        return if expense_payouts.empty?
+
+        Reimbursement::PayoutHolding.create!(
+          expense_payouts:,
+          amount_cents: expense_payouts.sum { |payout| -payout.amount_cents },
+          report: self
+        )
+
+        mark_reimbursed!
       end
+    end
 
-      return if expense_payouts.empty?
+    def payout_method_allowed?
+      payout_method.present? && !payout_method.unsupported?
+    end
 
-      Reimbursement::PayoutHolding.create!(
-        expense_payouts:,
-        amount_cents: expense_payouts.sum { |payout| -payout.amount_cents },
-        report: self
-      )
+    def invalidate_cached_data
+      Rails.cache.delete("cached_wise_transfer_quote_amount_#{id}")
 
-      mark_reimbursed!
+      true
     end
 
   end

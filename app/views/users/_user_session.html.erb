@@ -13,11 +13,11 @@
       <% end %>
     </span>
     <% if current_session == session && current_session&.impersonated? %>
-      <%= link_to unimpersonate_user_path(@user, return_to: request.url), data: { turbo_method: "post", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Exit this impersonated session" do %>
+      <%= link_to unimpersonate_user_path(@user, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Exit this impersonated session" do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
-    <% elsif !session.deleted? %>
-      <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: "delete", turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session" do %>
+    <% elsif !session.expired? %>
+      <%= link_to logout_session_users_path(user: @user, id: session.id), data: { turbo_method: :delete, turbo_frame: "_top" }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this session", disabled: !policy(@user).logout_session? do %>
         <%= inline_icon "door-leave", size: home_action_size %>
       <% end %>
     <% end %>
@@ -29,28 +29,39 @@
       No location available
     </div>
   <% end %>
-  <span class="flex items-center">
+  <span class="flex items-center flex-wrap gap-x-1 min-w-0" data-controller="wrapped-separator">
     <% if current_session.id == session.id %>
-      <span class="badge bg-success medium ml-0 mr1">Current&nbsp;Session</span>
+      <span class="badge bg-success medium ml-0 mr1">Current&nbsp;session</span>
     <% end %>
     <% if session.ip.present? %>
-      <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= session.timezone %>"><%= session.ip %></code>
-    <% end %>
-    <% if session.ip.present? &&  session.device_info.present? %>
-      <span class="mr1">
-        •
+      <span class="flex items-center gap-x-1 min-w-0">
+        <%= inline_icon "web", size: 20, class: "flex-shrink-0" %>
+        <code class="tooltipped tooltipped--n break-all" aria-label="<%= session.timezone %>"><%= session.ip %></code>
+        <% if session.device_info.present? %>
+          <span data-wrapped-separator-target="separator" aria-hidden="true">•</span>
+        <% end %>
       </span>
     <% end %>
     <% if session.device_info.present? %>
-      <%= inline_icon "compass", size: 20 %>&nbsp;<%= session.device_info %>
+      <span class="flex items-center gap-x-1 min-w-0" data-wrapped-separator-target="tail">
+        <%= inline_icon "compass", size: 20, class: "flex-shrink-0" %>
+        <span class="break-words"><%= session.device_info %></span>
+      </span>
     <% end %>
   </span>
 
   <p class="regular italic muted text-sm m-0 mt-1">
-    <% if session.deleted? %>
-      Expired <%= local_time_ago session.deleted_at %>
+    <% if session.signed_out_at.present? %>
+      Signed out at <%= local_time_ago session.signed_out_at %>
+    <% elsif session.expired? %>
+      Expired <%= local_time_ago session.expiration_at %>
     <% else %>
       Logged in <%= local_time_ago session.created_at %>
+      <% if session.last_reauthenticated_at %>
+        <span class="tooltipped tooltipped--n" aria-label="The last time you confirmed access">
+          (last authenticated <%= local_time_ago(session.last_reauthenticated_at) %>)
+        </span>
+      <% end %>
     <% end %>
   </p>
 </div>

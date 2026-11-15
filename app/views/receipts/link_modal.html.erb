@@ -1,9 +1,9 @@
 <%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
-  <%= form_with url: link_receipts_path, method: :post, data: {
+  <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
         controller: "receipt-select",
         turbo: @streams
       } do |form| %>
-    <% if @receipts.size == 0 %>
+    <% if @receipts.empty? %>
       <%= blankslate "Receipt Bin is empty." %>
     <% else %>
       <div class="receipt__search mb3 m0 p0">
@@ -17,8 +17,11 @@
       <%= form.hidden_field :receiptable_type, value: @receiptable.class %>
       <%= form.hidden_field :show_link, value: @show_link %>
       <%= (form.hidden_field :popover, value: @popover) if defined?(@popover) %>
+      <%= form.hidden_field :show_receipt_button, value: @show_receipt_button %>
+      <%= form.hidden_field :show_author_img, value: @show_author_img %>
+      <%= form.hidden_field :show_event_name, value: @show_event_name %>
 
-      <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
+      <ul class="grid grid--narrow text-left w-100 grid--spacious mt0 justify-center">
         <% @receipts.each do |receipt| %>
           <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>" id="modal_receipt_<%= receipt.id %>">
             <%= render partial: "receipts/receipt", locals: { receipt:, selectable: true, textual_content: true, pairing: @suggested_receipt_ids.include?(receipt.id), size: 169 } %>
@@ -29,13 +32,16 @@
       <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
     <% end %>
 
-    <footer class="modal__action-row pt1 flex justify-end <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
+    <% popover = defined?(@popover) && @popover %>
+    <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <%= "mt2" if popover %>" style="<%= "border-top: none;" if popover %>">
       <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
         Manage receipts
       <% end %>
       <%= form.submit "Add to transaction", class: "btn bg-success", style: "transition: 0.2s all;", data: {
-            "receipt-select-target" => "confirm"
-          }, onclick: "$.modal.close()", disabled: true %>
+            "receipt-select-target": "confirm",
+            controller: "turbo-frame-modal",
+            action: "turbo-frame-modal#close"
+          }, disabled: true %>
 
     </footer>
 

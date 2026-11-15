@@ -38,7 +38,7 @@ class GSuitesController < ApplicationController
       flash[:success] = "Google Workspace changes saved."
       redirect_to @g_suite
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   rescue => e
     redirect_to edit_event_g_suite_path(@g_suite, event_id: @g_suite.event.slug), flash: { error: e.message }
@@ -48,12 +48,12 @@ class GSuitesController < ApplicationController
   def destroy
     authorize @g_suite
 
-    if @g_suite.destroy
-      flash[:success] = "Google Workspace was successfully destroyed."
-      redirect_to g_suites_url
-    else
-      render :index, status: :unprocessable_entity
-    end
+    @g_suite.destroy!
+    flash[:success] = "Google Workspace was successfully destroyed."
+    redirect_to google_workspaces_admin_index_path
+  rescue => e
+    flash[:error] = "An error occurred: #{e.message}"
+    redirect_to google_workspaces_admin_index_path
   end
 
   private

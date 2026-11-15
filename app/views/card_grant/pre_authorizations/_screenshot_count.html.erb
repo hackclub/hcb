@@ -1,0 +1,10 @@
+<% url = clear_screenshots_card_grant_pre_authorizations_path(card_grant) %>
+
+<div id="screenshot_count">
+    <small class="muted">
+        <%= pluralize(count, "screenshot") %> uploaded
+        <% if count >= 1 && !disabled %>
+            • <%= link_to "Remove all", url, class: "remove-screenshots", data: { turbo_method: :post } %>
+        <% end %>
+    </small>
+</div>

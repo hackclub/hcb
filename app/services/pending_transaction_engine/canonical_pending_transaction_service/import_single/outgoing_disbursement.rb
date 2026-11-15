@@ -4,17 +4,31 @@ module PendingTransactionEngine
   module CanonicalPendingTransactionService
     module ImportSingle
       class OutgoingDisbursement
-        def initialize(raw_pending_outgoing_disbursement_transaction:)
+        def initialize(raw_pending_outgoing_disbursement_transaction:, category_assignment_strategy: "manual")
           @rpodt = raw_pending_outgoing_disbursement_transaction
+          @category_assignment_strategy = category_assignment_strategy
         end
 
         def run
           return existing_canonical_pending_transaction if existing_canonical_pending_transaction
 
-          ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
-            # In-review disbursements shouldn't be fronted.
-            # Since this is an outgoing transaction, fronting will only make the transaction appear settled.
-            cpt.fronted = !@rpodt.disbursement.reviewing?
+          ActiveRecord::Base.transaction do
+            cpt = ::CanonicalPendingTransaction.find_or_create_by!(attrs) do |cpt|
+              # In-review disbursements shouldn't be fronted.
+              # Since this is an outgoing transaction, fronting will only make the transaction appear settled.
+              cpt.fronted = !@rpodt.disbursement.reviewing?
+            end
+
+            if @rpodt.disbursement.source_transaction_category
+              TransactionCategoryService
+                .new(model: cpt)
+                .set!(
+                  slug: @rpodt.disbursement.source_transaction_category.slug,
+                  assignment_strategy: @category_assignment_strategy
+                )
+            end
+
+            cpt
           end
         end
 

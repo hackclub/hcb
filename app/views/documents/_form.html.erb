@@ -14,6 +14,11 @@
       <%= form.text_field :name, required: true, data: { target: "new-document.name" } %>
     </div>
 
+    <div class="field">
+      <%= form.label :category %>
+      <%= form.select :category, options_for_select(Document.categories.keys.map { |k| [k.humanize, k] }, form.object.category), { include_blank: "Select a category" }, required: false %>
+    </div>
+
     <div class="actions">
       <%= form.submit %>
     </div>

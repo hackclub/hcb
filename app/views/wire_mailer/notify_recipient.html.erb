@@ -1,0 +1,75 @@
+<p>
+  Hi <%= @wire.recipient_name %>,
+</p>
+
+<p>
+  <%= @wire.event.name %> has just sent you a
+  <%= Money.from_cents(@wire.amount_cents, @wire.currency).format %> (<%= @wire.currency %>) wire transfer for
+  <i>"<%= @wire.payment_for %>"</i>.
+</p>
+
+<% if (details = @wire.column_wire_details).present? %>
+  <h3>Wire Transfer Details</h3>
+  <table>
+    <tbody>
+      <% if details["uetr"].present? %>
+        <tr>
+          <td><strong>UETR:</strong></td>
+          <td><%= details["uetr"] %></td>
+        </tr>
+      <% end %>
+      <% if details["instruction_id"].present? %>
+        <tr>
+          <td><strong>Instruction ID:</strong></td>
+          <td><%= details["instruction_id"] %></td>
+        </tr>
+      <% end %>
+      <tr>
+        <td><strong>Created Date:</strong></td>
+        <td><%= Time.parse(details["created_at"]).strftime("%B %d, %Y at %I:%M %p UTC") rescue details["created_at"] %></td>
+      </tr>
+      <tr>
+        <td><strong>Instructed Amount:</strong></td>
+        <td><%= Money.from_cents(details["instructed_amount"], details["instructed_currency_code"]).format %></td>
+      </tr>
+      <tr>
+        <td><strong>Instructed Currency:</strong></td>
+        <td><%= details["instructed_currency_code"] %></td>
+      </tr>
+      <% if details["settled_amount"].present? %>
+        <tr>
+          <td><strong>Settlement Amount:</strong></td>
+          <td><%= Money.from_cents(details["settled_amount"], details["settled_currency_code"]).format %></td>
+        </tr>
+        <tr>
+          <td><strong>Settlement Currency:</strong></td>
+          <td><%= details["settled_currency_code"] %></td>
+        </tr>
+      <% end %>
+      <% if details["originator_fi"].present? %>
+        <tr>
+          <td><strong>Sender BIC:</strong></td>
+          <td><%= details["originator_fi"] %></td>
+        </tr>
+      <% end %>
+      <% if details["beneficiary_fi"].present? %>
+        <tr>
+          <td><strong>Receiver BIC:</strong></td>
+          <td><%= details["beneficiary_fi"] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<p>
+  If you have any questions about this transfer, please contact <%= @wire.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @wire.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

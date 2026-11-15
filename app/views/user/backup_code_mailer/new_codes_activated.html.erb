@@ -1,0 +1,16 @@
+<p>
+  Hey <%= @user.first_name %>,
+</p>
+
+<p>
+  You've just generated backup codes for HCB and have 10 codes available. Please make sure to save the codes in a safe place in case you lose access to your account. HCB staff will never ask for your backup codes.
+</p>
+
+<p>
+  If this was you, great! If you didn't do this, please <%= mail_to "hcb@hackclub.com", "contact us", subject: "Unauthorized backup codes generated" %> immediately.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

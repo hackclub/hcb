@@ -34,6 +34,8 @@
 #
 class EmburseCard < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   scope :deactivated, -> { where.not(emburse_state: "active") }
@@ -71,26 +73,8 @@ class EmburseCard < ApplicationRecord
   validates :expiration_year, numericality: { only_integer: true }
   validate :emburse_id_format
 
-  after_save :sync_to_emburse!
-  before_validation :sync_from_emburse!, unless: :persisted?
-
   def emburse_path
     "https://app.emburse.com/cards/#{emburse_id}"
-  end
-
-  def amount_spent
-    obj = emburse_obj
-    return (obj[:allowance][:balance].to_f * 100).round(2) if obj
-
-    nil
-  end
-
-  def department_id
-    emburse_obj&.department&.id
-  end
-
-  def suspected_subscriptions
-    emburse_transactions.group(:merchant_name).having("COUNT(*)>3").count.keys
   end
 
   # Emburse emburse_cards have three activation states:
@@ -119,87 +103,36 @@ class EmburseCard < ApplicationRecord
   end
 
   def requires_activation?
-    sync_from_emburse! && self.save if self.emburse_state.blank?
     self.emburse_state == "unactivated"
   end
 
   def active?
-    sync_from_emburse! && self.save if self.emburse_state.blank?
     self.emburse_state == "active"
   end
 
   def suspended?
-    sync_from_emburse! && self.save if self.emburse_state.blank?
     self.emburse_state == "suspended"
   end
 
   def canceled?
-    sync_from_emburse! && self.save if self.emburse_state.blank?
     self.emburse_state == "terminated"
   end
 
-  def sync_from_emburse!
-    self.is_virtual = emburse_obj[:is_virtual]
-
-    expiration = Date.parse(emburse_obj[:expiration])
-    self.expiration_month = expiration.month
-    self.expiration_year = expiration.year.to_s[-2..].to_i
-
-    self.emburse_state = emburse_obj[:state]
-
-    self.last_four = emburse_obj[:last_four]
-
-    first_name = emburse_obj[:assigned_to][:first_name]
-    last_name = emburse_obj[:assigned_to][:last_name]
-    self.full_name = "#{first_name} #{last_name}"
-
-    if emburse_obj[:shipping_address]
-      sa = emburse_obj[:shipping_address]
-      address = []
-      address << sa[:attn]
-      address << sa[:address_1]
-      address << sa[:address_2] if sa[:address_2].present?
-      address << "#{sa[:city]}, #{sa[:state]} #{sa[:zip_code]}"
-
-      self.address = address.join("/n").strip
-    end
-  end
-
-  def hcb_codes
+  def local_hcb_codes
     @emburse_transaction_emburse_ids ||= emburse_transactions.pluck(:emburse_id)
     @raw_emburse_transaction_ids ||= RawEmburseTransaction.where(emburse_transaction_id: @emburse_transaction_emburse_ids).pluck(:id)
 
     @canonical_transactions ||= CanonicalTransaction.emburse_transaction.where(transaction_source_id: @raw_emburse_transaction_ids)
     @canonical_transaction_hcb_codes ||= @canonical_transactions.pluck(:hcb_code)
-    @hcb_codes ||= ::HcbCode.where(hcb_code: @canonical_transaction_hcb_codes)
+    @local_hcb_codes ||= ::HcbCode.where(hcb_code: @canonical_transaction_hcb_codes)
   end
 
   private
-
-  def emburse_obj
-    @emburse_obj ||= ::EmburseClient::Card.get(self.emburse_id)
-    @emburse_obj
-  end
 
   def emburse_id_format
     emburse_id_regex = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/
     unless emburse_id_regex.match? emburse_id
       errors.add(:emburse_id, "is incorrectly formatted")
-    end
-  end
-
-  def sync_to_emburse!
-    if self.deactivated_at_changed?
-      if emburse_obj[:state] == "unactive"
-        errors.add(:emburse_card, "cannot be deactivated until it is first activated")
-        return
-      end
-
-      if self.deactivated_at.nil?
-        ::EmburseClient::Card.update(self.emburse_id, state: "active")
-      else
-        ::EmburseClient::Card.update(self.emburse_id, state: "suspended")
-      end
     end
   end
 

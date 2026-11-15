@@ -1,15 +1,10 @@
-<% title "Common Documents" %>
+<% title "Common documents" %>
 <% page_md %>
 
 <h1 class="heading">
   <span class="flex items-center flex-auto">
     Common documents
   </span>
-  <% admin_tool do %>
-    <%= link_to "Upload a common document",
-    new_document_path,
-    class: "btn bg-success my0 block" %>
-  <% end %>
 </h1>
 
 <p>
@@ -17,6 +12,15 @@
   that does not otherwise have event-specific documents uploaded for them.
   Common docs appear under "documents" for those events.
 </p>
+
+<div class="flex justify-center items-center">
+  <% admin_tool("w-fit") do %>
+    <%= link_to "Upload a common document",
+    new_document_path,
+    class: "btn bg-success my0",
+    disabled: !admin_signed_in? %>
+  <% end %>
+</div>
 
 <ul class="grid">
   <%= render @active_documents %>
@@ -26,8 +30,8 @@
   <ul class="list-reset">
     <li class="mb3">
       <details>
-        <summary class="cursor-pointer relative mb2">
-          <h3 class="inline mb1">Archived Documents</h3>
+        <summary class="relative mb2">
+          <h3 class="inline mb1">Archived documents</h3>
         </summary>
         <article>
           <ul class="grid">

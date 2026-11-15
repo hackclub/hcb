@@ -1,4 +1,6 @@
-<% current_user ||= local_assigns[:p][:current_user] %>
+<%# locals: (activity:, p:, current_user: nil, **) %>
+
+<% current_user ||= p[:current_user] %>
 
 <% if activity.trackable.present? && activity.trackable.commentable.present? %>
   <% if Pundit.policy(current_user, activity.trackable).show? %>

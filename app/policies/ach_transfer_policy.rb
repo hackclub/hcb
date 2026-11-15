@@ -2,11 +2,11 @@
 
 class AchTransferPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def new?
-    is_public? || user_who_can_transfer?
+    auditor_or_user?
   end
 
   def create?
@@ -14,8 +14,7 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def show?
-    # Semantically, this should be admin_or_manager?, right?
-    is_public? || user_who_can_transfer?
+    user&.auditor?
   end
 
   def view_account_routing_numbers?
@@ -28,10 +27,6 @@ class AchTransferPolicy < ApplicationPolicy
 
   def transfer_confirmation_letter?
     user_who_can_transfer?
-  end
-
-  def start_approval?
-    user&.admin?
   end
 
   def approve?
@@ -52,12 +47,12 @@ class AchTransferPolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).create_transfer?
   end
 
-  def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+  def auditor_or_user?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
-  def is_public?
-    record.event.is_public?
+  def admin_or_manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
 end

@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -18,26 +18,27 @@
 #  column_object           :jsonb
 #  column_status           :string
 #  increase_object         :jsonb
-#  increase_state          :string
 #  increase_status         :string
 #  memo                    :string
 #  payment_for             :string
-#  recipient_name          :string
 #  recipient_email         :string
+#  recipient_name          :string
 #  send_email_notification :boolean          default(FALSE)
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  column_id               :string
 #  event_id                :bigint           not null
 #  increase_id             :string
+#  payment_recipient_id    :bigint
 #  user_id                 :bigint
 #
 # Indexes
 #
-#  index_increase_checks_on_column_id       (column_id) UNIQUE
-#  index_increase_checks_on_event_id        (event_id)
-#  index_increase_checks_on_transaction_id  ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
-#  index_increase_checks_on_user_id         (user_id)
+#  index_increase_checks_on_column_id             (column_id) UNIQUE
+#  index_increase_checks_on_event_id              (event_id)
+#  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
+#  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
+#  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
@@ -52,19 +53,90 @@ class IncreaseCheck < ApplicationRecord
   has_paper_trail
 
   include AASM
+  include Payoutable
+  include Freezable
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
+  include PublicIdentifiable
+  set_public_id_prefix :ick
+
+  VALID_DURATION = 180.days
+  US_STATES = {
+    "Alabama"          => "AL",
+    "Alaska"           => "AK",
+    "Arizona"          => "AZ",
+    "Arkansas"         => "AR",
+    "California"       => "CA",
+    "Colorado"         => "CO",
+    "Connecticut"      => "CT",
+    "Delaware"         => "DE",
+    "Washington, D.C." => "DC",
+    "Florida"          => "FL",
+    "Georgia"          => "GA",
+    "Hawaii"           => "HI",
+    "Idaho"            => "ID",
+    "Illinois"         => "IL",
+    "Indiana"          => "IN",
+    "Iowa"             => "IA",
+    "Kansas"           => "KS",
+    "Kentucky"         => "KY",
+    "Louisiana"        => "LA",
+    "Maine"            => "ME",
+    "Maryland"         => "MD",
+    "Massachusetts"    => "MA",
+    "Michigan"         => "MI",
+    "Minnesota"        => "MN",
+    "Mississippi"      => "MS",
+    "Missouri"         => "MO",
+    "Montana"          => "MT",
+    "Nebraska"         => "NE",
+    "Nevada"           => "NV",
+    "New Hampshire"    => "NH",
+    "New Jersey"       => "NJ",
+    "New Mexico"       => "NM",
+    "New York"         => "NY",
+    "North Carolina"   => "NC",
+    "North Dakota"     => "ND",
+    "Ohio"             => "OH",
+    "Oklahoma"         => "OK",
+    "Oregon"           => "OR",
+    "Pennsylvania"     => "PA",
+    "Rhode Island"     => "RI",
+    "South Carolina"   => "SC",
+    "South Dakota"     => "SD",
+    "Tennessee"        => "TN",
+    "Texas"            => "TX",
+    "Utah"             => "UT",
+    "Vermont"          => "VT",
+    "Virginia"         => "VA",
+    "Washington"       => "WA",
+    "West Virginia"    => "WV",
+    "Wisconsin"        => "WI",
+    "Wyoming"          => "WY"
+  }.freeze
+
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
+  def payment_recipient_attributes
+    %i[address_line1 address_line2 address_city address_state address_zip]
+  end
+
   has_one :canonical_pending_transaction
-  has_one :grant, required: false
+  has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -72,6 +144,23 @@ class IncreaseCheck < ApplicationRecord
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
     canonical_pending_transaction.decline!
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "rejected") } do
+    canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -82,8 +171,8 @@ class IncreaseCheck < ApplicationRecord
     event :mark_approved do
       after do
         if self.send_email_notification
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: 30.days).perform_later(self)
-          IncreaseCheckJob::RemindUndepositedRecipient.set(wait: (180 - 30).days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: 30.days).perform_later(self)
+          IncreaseCheck::RemindUndepositedRecipientJob.set(wait: (180 - 30).days).perform_later(self)
         end
 
         canonical_pending_transaction.update(fronted: true)
@@ -91,7 +180,9 @@ class IncreaseCheck < ApplicationRecord
       transitions from: :pending, to: :approved
 
       after_commit do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
+        employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
     end
 
@@ -99,6 +190,8 @@ class IncreaseCheck < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
+        employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -109,11 +202,12 @@ class IncreaseCheck < ApplicationRecord
   validates :recipient_name, length: { in: 1..250 }
   validates_presence_of :memo, :payment_for, :recipient_name, :address_line1, :address_city, :address_zip
   validates_presence_of :address_state, message: "Please select a state!"
-  validates :address_state, inclusion: { in: ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"], message: "This isn't a valid US state!", allow_blank: true }
+  validates :address_state, inclusion: { in: US_STATES.values, message: "This isn't a valid US state!", allow_blank: true }
   validates :address_zip, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   validates_presence_of :recipient_email, on: :create
+  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
     if amount > event.balance_available_v2_cents
@@ -122,13 +216,14 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validate do
-    if (address_line1.length + address_line2.length) > 50
+    if (address_line1.to_s.length + address_line2.to_s.length) > 50
       errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end
 
-  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]) }
-  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)) }
+  scope :deposited, -> { where(increase_status: :deposited).or(where(column_status: :settled)) }
+  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]).or(where(column_status: [:initiated, :issued, :pending_deposit, :pending_first_return, :first_return, :pending_reclear, :pending_second_return, :second_return, :user_initiated_return_submitted, :user_initiated_returned, :user_initiated_return_dishonored, :manual_review])) }
+  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)).or(where(column_status: [:pending_stop, :stopped, :rejected])) }
 
   enum :increase_status, {
     pending_approval: "pending_approval",
@@ -145,10 +240,38 @@ class IncreaseCheck < ApplicationRecord
     requires_attention: "requires_attention"
   }, prefix: :increase
 
-  enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  # https://column.com/docs/checks/notifications-and-states#states-and-events
+  enum :column_status, %w[
+    initiated
+    issued
+    pending_deposit
+    settled
+    pending_first_return
+    first_return
+    pending_reclear
+    pending_second_return
+    second_return
+    user_initiated_return_submitted
+    user_initiated_returned
+    user_initiated_return_dishonored
+    pending_stop
+    stopped
+    manual_review
+    rejected
+  ].index_with(&:itself), prefix: :column
 
-  VALID_DURATION = 180.days
+  enum :column_delivery_status, %w[
+    created
+    rendered_pdf
+    mailed
+    in_transit
+    in_local_area
+    processed_for_delivery
+    delivered
+    rerouted
+    returned_to_sender
+    failed
+  ].index_with(&:itself), prefix: :column_delivery
 
   def column?
     column_id.present?
@@ -159,13 +282,11 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def state
-    if column?
-      :info
-    elsif pending?
+    if pending?
       :muted
-    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected?
+    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
-    elsif increase_deposited?
+    elsif increase_deposited? || column_settled?
       :success
     else
       :info
@@ -196,13 +317,8 @@ class IncreaseCheck < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE
 
   def sent?
     approved?
@@ -215,52 +331,48 @@ class IncreaseCheck < ApplicationRecord
   def send_check!
     return unless may_mark_approved?
 
-    if Flipper.enabled?(:column_check_transfers, event)
-      send_column!
-    else
-      send_increase!
-    end
+    send_column!
 
     mark_approved!
+  end
 
-    if grant.present?
-      grant.mark_fulfilled!
+  def can_cancel?
+    pending? || (approved? && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
     end
+  end
+
+  # https://column.com/docs/api/#check-transfer/stop
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
+
+  def stop!
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
+
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+
+    update!(
+      column_object: column_check,
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
+    )
   end
 
   private
 
-  def send_increase!
-    increase_check = Increase::CheckTransfers.create(
-      account_id: IncreaseService::AccountIds::FS_MAIN,
-      source_account_number_id: event.increase_account_number_id,
-      # Increase will print and mail the physical check for us
-      fulfillment_method: "physical_check",
-      physical_check: {
-        memo:,
-        note: "Check from #{event.name}",
-        recipient_name:,
-        mailing_address: {
-          line1: address_line1,
-          line2: address_line2.presence,
-          city: address_city,
-          state: address_state,
-          postal_code: address_zip,
-        }
-      },
-      unique_identifier: self.id.to_s,
-      amount:,
-    )
-
-    update!(increase_id: increase_check["id"], increase_status: increase_check["status"])
-  end
-
-  def send_column!
-    account_number_id = event.column_account_number&.column_id ||
-                        Rails.application.credentials.dig(:column, ColumnService::ENVIRONMENT, :default_account_number)
+  def send_column!(idempotency_key = self.id.to_s)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_check = ColumnService.post "/transfers/checks/issue",
-                                      idempotency_key: self.id.to_s,
+                                      idempotency_key:,
                                       account_number_id:,
                                       positive_pay_amount: amount,
                                       currency_code: "USD",

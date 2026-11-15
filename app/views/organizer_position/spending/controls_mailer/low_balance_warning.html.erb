@@ -1,0 +1,5 @@
+<p>Hey <%= @control.organizer_position.user.name %>!</p>
+
+<p>Your spending balance for <%= @control.organizer_position.event.name %> is getting low. Your current balance is <%= render_money @control.balance_cents %>.</p>
+
+<p>To top up your balance, please ask your manager to <%= link_to "create an allowance here", event_organizer_position_spending_controls_url(event_id: @control.organizer_position.event, organizer_position_id: @control.organizer_position) %>.</p>

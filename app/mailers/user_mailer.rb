@@ -1,16 +1,10 @@
 # frozen_string_literal: true
 
 class UserMailer < ApplicationMailer
-  def email_update_authorization(request)
-    @request = request
+  def onboarded(user:)
+    @user = user
 
-    mail to: @request.user.email_address_with_name, subject: "Authorize your new email address for HCB"
-  end
-
-  def email_update_verification(request)
-    @request = request
-
-    mail to: @request.replacement, subject: "Verify your new email address for HCB"
+    mail to: @user.email, subject: "Welcome to HCB!"
   end
 
 end

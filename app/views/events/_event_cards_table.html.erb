@@ -10,52 +10,38 @@
         <th>Type</th>
         <th>Status</th>
         <th>Issued on</th>
-        <th></th>
       </tr>
       </thead>
       <tbody>
-      <% stripe_cards.each do |d| %>
-        <tr>
+      <% stripe_cards.each do |c| %>
+        <tr class="clickable">
           <%# Cardholder %>
           <td>
-            <%= d.user.name || d.stripe_name || d.user.full_name %>
+            <%= c.user.name || c.stripe_name || c.user.full_name %>
           </td>
 
           <%# Card number %>
           <td class="fs-mask">
-            <%= d.hidden_card_number_with_last_four if organizer_signed_in? %>
-            <%= d.hidden_card_number unless organizer_signed_in? %>
+            <%= c.hidden_card_number_with_last_four if organizer_signed_in? %>
+            <%= c.hidden_card_number unless organizer_signed_in? %>
           </td>
 
           <%# Type %>
           <td>
-            <%= d.virtual? ? "Virtual" : "Physical" %>
+            <%= c.virtual? ? "Virtual" : "Physical" %>
           </td>
 
           <%# Status %>
           <td>
-            <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
+            <span class="ml0 badge bg-<%= c.state %>"><%= c.state_text %></span>
           </td>
 
           <%# Date issued %>
           <td>
-            <%= format_date d.created_at %>
-          </td>
-
-          <td>
-
-            <%= link_to "Details", stripe_card_path(d), data: @show_card_popovers && { behavior: "modal_trigger", modal: "card_popover_#{d.id}" } if organizer_signed_in? && !@event.demo_mode %>
+            <%= format_date c.created_at %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !@event.demo_mode %>
           </td>
         </tr>
-
-        <% if @show_card_popovers %>
-          <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= d.id %>">
-            <%= modal_header(d.initially_activated ? "Card #{d.last_four}" : "Inactive card", external_link: d.url) %>
-            <%= turbo_frame_tag "stripe_card_#{d.public_id}", src: d.popover_url, loading: :lazy do %>
-              <%= render partial: "application/loading_container" %>
-            <% end %>
-          </section>
-        <% end %>
 
       <% end %>
       </tbody>

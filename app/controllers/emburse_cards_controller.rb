@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class EmburseCardsController < ApplicationController
-  include SetEvent
-  before_action :set_event, only: [:status]
-
   before_action :set_emburse_card, only: :show
   skip_before_action :signed_in_user
 
@@ -18,11 +15,6 @@ class EmburseCardsController < ApplicationController
     authorize @emburse_card
     @emburse_transfers = @emburse_card.emburse_transfers
     @emburse_transactions = @emburse_card.emburse_transactions.order(transaction_time: :desc)
-  end
-
-  def status
-    @emburse_card_requests = @event.emburse_card_requests.under_review
-    @emburse_transfers = @event.emburse_transfers
   end
 
   private

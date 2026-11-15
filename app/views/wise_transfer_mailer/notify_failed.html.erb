@@ -1,0 +1,5 @@
+We're writing to let you know your <%= link_to "recent Wise transfer to #{@wise_transfer.recipient_name}", hcb_code_url(@wise_transfer.local_hcb_code) %> was rejected and failed to send. Here's the explanation given by our operations team:
+
+<pre><%= @reason %></pre>
+
+The funds will be returned to your account shortly. After verifying that the account details for the recipient are correct, you can re-attempt this transfer <%= link_to "here", new_event_wise_transfer_url(@wise_transfer.event) %>.

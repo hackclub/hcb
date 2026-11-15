@@ -3,6 +3,14 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require "spec_helper"
 ENV["RAILS_ENV"] ||= "test"
+# Set before Rails boots so the Rack::TwilioWebhookAuthentication middleware
+# (initialized in config/initializers/twilio.rb) uses a known auth token.
+ENV["TWILIO__AUTH_TOKEN"] ||= "test_twilio_auth_token"
+# Set before Rails boots so config/initializers/secure_headers.rb builds the
+# same policy on every machine, including fork PRs with no secrets.
+ENV["ASSET_HOST"] ||= "https://assets.test.invalid"
+ENV["S3__BUCKET"] ||= "test-bucket"
+ENV["S3__REGION"] ||= "us-east-1"
 require File.expand_path("../config/environment", __dir__)
 # PaperTrail helper to make it easier to use PaperTrail in specs
 require "paper_trail/frameworks/rspec"
@@ -10,7 +18,7 @@ require "paper_trail/frameworks/rspec"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 # Add additional requires below this line. Rails is not loaded until this point!
-require_relative "support/factory_bot"
+Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
 
 # see https://github.com/public-activity/public_activity#testing
 # for context around testing PublicActivity

@@ -23,12 +23,15 @@ class RawPendingStripeTransaction < ApplicationRecord
   monetize :amount_cents
 
   has_one :canonical_pending_transaction
+  has_one :card_charge
 
   scope :reversed, -> { where("stripe_transaction->>'status' = 'reversed'") }
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
 
+  after_create :link_card_charge!
+
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.find_by(email: "bank@hackclub.com") }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
+  tracked owner: proc{ |controller, record| record.stripe_card&.user || User.system_user }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
 
   def date
     date_posted
@@ -36,6 +39,18 @@ class RawPendingStripeTransaction < ApplicationRecord
 
   def memo
     stripe_transaction.dig("merchant_data", "name")
+  end
+
+  def merchant_category
+    stripe_transaction&.dig("merchant_data", "category")
+  end
+
+  def likely_event
+    Event.find(likely_event_id) if likely_event_id
+  end
+
+  def likely_card_grant
+    stripe_card&.card_grant
   end
 
   def likely_event_id
@@ -48,6 +63,10 @@ class RawPendingStripeTransaction < ApplicationRecord
 
   def authorization_method
     stripe_transaction["authorization_method"].humanize.downcase
+  end
+
+  def link_card_charge!
+    CardCharge.link_raw_pending_stripe_transaction!(self)
   end
 
   private

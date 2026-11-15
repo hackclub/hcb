@@ -1,0 +1,33 @@
+<p>Hi there,</p>
+
+<p>
+  On <%= @g_suite_revocation.created_at.strftime("%B %d, %Y") %>, we notified
+  you of issues we detected with your
+  <% if @g_suite_revocation.because_of_other? %>
+    Google Workspace.
+  <% else %>
+    Google Workspace and provided you
+    until <%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %> to
+    remedy them.
+  <% end %>
+</p>
+
+<p>
+  <% unless @g_suite_revocation.because_of_other? %>
+    As of today, we have noticed these issues have not been resolved.
+  <% end %>
+
+  We will be proceeding with the revocation of your Google Workspace for
+  <code><%= @g_suite.domain %></code>. Your data and accounts will be deleted
+  shortly, and you will no longer be able to access Google Workspace through
+  HCB.
+</p>
+
+<p>
+  Please don't hesitate to reply with any questions.
+</p>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>

@@ -4,30 +4,63 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :faq, :roles]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :faq, :roles]
+  skip_before_action :signed_in_user, only: [:index, :mobile, :branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
+
+  after_action only: [:index, :branding, :security] do
+    # Allow indexing home and branding pages
+    response.delete_header("X-Robots-Tag")
+  end
 
   def index
-    if signed_in?
-      @service = StaticPageService::Index.new(current_user:)
+    return redirect_to first_index_path if current_user(allow_unverified: true)&.redirect_to_first_dashboard?
 
-      @events = @service.events
-      @organizer_positions = @service.organizer_positions.not_hidden
-      @invites = @service.invites
+    return redirect_to auth_users_path(require_reload: true, signup: params[:signup]) unless signed_in?
 
-      if admin_signed_in? && cookies[:admin_activities] == "everyone"
-        @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
-      else
-        @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
-      end
+    @service = StaticPageService::Index.new(current_user:)
 
-      @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+    @events = @service.events
 
-      @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
+    featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
+    @featured_events = featured_event_ids.map do |id|
+      Event.find_by_public_id(id)
+    end.select do |event|
+      event&.is_public? && event.is_indexable?
+    end.sample(3)
+
+    @organizer_positions = @service.organizer_positions.not_hidden
+    @invites = @service.invites
+    @invite_requests = @service.invite_requests
+    @applications = @service.applications
+
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    else
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
     end
-    if admin_signed_in?
-      @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+
+    @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+
+    @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
+  end
+
+  def admin_tools
+    unless auditor_signed_in?
+      redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
+      return
+    end
+
+    @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def mobile
+    if request.user_agent&.match("iPhone")
+      redirect_to "https://apps.apple.com/us/app/hcb-by-hack-club/id6465424810", allow_other_host: true
+    elsif request.user_agent&.match("Android")
+      redirect_to "https://play.google.com/store/apps/details?id=com.hackclub.hcb", allow_other_host: true
+    else
+      redirect_to "https://hackclub.com/hcb", allow_other_host: true
     end
   end
 
@@ -44,6 +77,8 @@ class StaticPagesController < ApplicationController
     ]
     @event_name = signed_in? && current_user.events.first&.name || "Hack Pennsylvania"
     @event_slug = signed_in? && current_user.events.first&.slug || "hack-pennsylvania"
+
+    render layout: "docs"
   end
 
   def roles
@@ -54,35 +89,49 @@ class StaticPagesController < ApplicationController
         "Invite a user": :manager,
         "Request removal of a user": :manager,
         "Cancel invite made by another user": :manager,
-        "Cancel invite made by yourself": :member,
+        "Cancel invite made by yourself": :manager,
         "Change another user's role": :manager,
       },
       Transfers: {
         Checks: {
           "Send a mailed check": :manager,
-          "View a mailed check": :member,
+          "View a mailed check": :reader,
         },
-        "Check Deposit": {
+        "Check deposits": {
           "Deposit a check": :member,
-          "View a check deposit": :member,
+          "View a check deposit": :reader,
           "View images of a check deposit": :manager,
           _preface: "For depositing a check by taking a picture of it"
         },
-        "ACH Transfers": {
+        "ACH transfers": {
           "Send an ACH Transfer": :manager,
           "Cancel an ACH Transfer": :manager,
-          "View an ACH Transfer": :member,
+          "View an ACH Transfer": :reader,
           "View recipient's payment details": :manager,
         },
-        "Account & Routing numbers": {
+        "Account & routing numbers": {
           "View the organization's account & routing numbers": :manager
         },
-        "HCB Transfers": {
+        "HCB transfers": {
           "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
-          "View an HCB Transfer": :member
+          "View an HCB Transfer": :reader
+        },
+        Payments: {
+          "Send a payment": :manager,
+          "Cancel a payment": :manager,
+          "View a payment": :reader,
+          "View the organization's recipients": :manager,
+          "Add a recipient": :manager,
+          "Edit or archive a recipient": :manager,
+          _preface: "For paying people & vendors"
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
+      },
+      Contractors: {
+        "View the list of contractors": :reader,
+        "View a contractor's details, rate, and invoices": :reader,
+        "Invite a contractor": :manager,
+        "Approve or reject a contractor's invoice": :manager,
       },
       Cards: {
         "Order a card": :member,
@@ -90,28 +139,39 @@ class StaticPagesController < ApplicationController
         "Freeze/defrost another user's card": :manager,
         "Rename your own card": :member,
         "Rename another user's card": :manager,
-        "View another user's card number": :manager,
-        "View card expiration date": :member,
-        "View card billing address": :member,
+        "View card expiration date": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
-        "View reimbursement reports": :member,
+        "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
+      },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
       },
       "Google Workspace": {
         "Create an account": :manager,
         "Suspend an account": :manager,
         "Reset an account's password": :manager,
       },
+      Documents: {
+        "View documents": :reader
+      },
       "Settings": {
-        "View settings": :member,
+        "View settings": :reader,
         "Edit settings": :manager,
       }
     }
+
+    render layout: "docs"
   end
 
-  def faq
+  def security
+    render layout: "docs"
   end
 
   def suggested_pairings
@@ -136,15 +196,15 @@ class StaticPagesController < ApplicationController
       end
     end
 
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
 
   rescue => e
-    notify_airbrake(e)
+    Rails.error.report(e)
 
     flash[:error] = e.message
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
   end

@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions]
+  before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -12,27 +12,70 @@ class ExportsController < ApplicationController
     should_queue = @event.canonical_transactions.size > 300
 
     respond_to do |format|
-      format.any(*export_options.keys) do
+      format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
 
-        if should_queue
-          handle_large_export(file_extension)
+        # CSV exports **can** support date ranges
+        if file_extension == "csv" && params[:start_date].present?
+          set_date_range
+          return if performed?
+        end
+
+        @export = case file_extension
+                  when "csv"
+                    Export::Event::Transactions::Csv.new(
+                      requested_by: current_user,
+                      event_id: @event.id,
+                      start_date: @start,
+                      end_date: @end,
+                      public_only: !organizer_signed_in?
+                    )
+                  when "json"
+                    Export::Event::Transactions::Json.new(
+                      requested_by: current_user,
+                      event_id: @event.id,
+                      public_only: !organizer_signed_in?
+                    )
+                  when "ledger"
+                    Export::Event::Transactions::Ledger.new(
+                      requested_by: current_user,
+                      event_id: @event.id,
+                      public_only: !organizer_signed_in?
+                    )
+                  end
+
+        if @export.async?
+          # A signed-in user's export is always emailed to them. Only a
+          # signed-out requester (which `authorize` above limits to public
+          # orgs) may supply an address via `params[:email]`. Honoring the
+          # param for signed-in users would let a forged cross-site GET mail a
+          # private ledger to an attacker-chosen address.
+          @export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
+
+          if @export.requested_by.nil?
+            redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event]) and return
+          end
+
+          @export.save!
+
+          ExportJob.perform_later(export_id: @export.id)
+
+          flash[:success] = signed_in? ? "This export is too big, so we'll send you an email when it's ready." : "Your export will arrive in a few moments."
+
+          redirect_back fallback_location: @event and return
         else
-          send("stream_transactions_#{file_extension}")
+          @export.save!
+          headers["Content-Type"] = @export.mime_type
+          headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
+          response.status = 200
+          self.response_body = @export.content
         end
       end
 
       format.pdf do
-        @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month
-        if @start >= Date.today.beginning_of_month
-          flash[:error] = "Can not create a financial statement for #{@start.strftime("%B %Y")}"
-          redirect_back fallback_location: event_statements_path(@event) and return
-        end
-        @end = (params[:end_date] || @start).to_datetime.end_of_month
-        if @end < @start
-          flash[:error] = "End date cannot be before the start date."
-          redirect_back fallback_location: event_statements_path(@event) and return
-        end
+        set_date_range # PDF monthly statements require a date range
+        return if performed?
+
         all = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: all, event: @event).run!
 
@@ -61,7 +104,24 @@ class ExportsController < ApplicationController
           end
         end
 
-        render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
+        render_pdf "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement"
+      end
+    end
+  end
+
+  def reimbursements
+    authorize @event, :reimbursements?
+
+    respond_to do |format|
+      format.csv do
+        @export = Export::Event::Reimbursements::Csv.create(
+          requested_by: current_user,
+          event_id: @event.id
+        )
+        headers["Content-Type"] = @export.mime_type
+        headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
+        response.status = 200
+        self.response_body = @export.content
       end
     end
   end
@@ -76,85 +136,33 @@ class ExportsController < ApplicationController
 
   private
 
-  def export_options
-    {
-      "csv"    => ExportJob::Csv,
-      "json"   => ExportJob::Json,
-      "ledger" => ExportJob::Ledger
-    }
-  end
+  # Sets `@start` and `@end`, or renders a 400 when the requested range is
+  # invalid. Callers must `return if performed?`.
+  def set_date_range
+    start_date = params[:start_date].present? ? parse_date(params[:start_date]) : Date.today.prev_month.to_datetime
+    end_date = params[:end_date].present? ? parse_date(params[:end_date]) : start_date
 
-  def handle_large_export(file_extension)
-    if current_user
-      export_job = export_options[file_extension]
-      export_job.perform_later(event_id: @event.id, email: current_user.email, public_only: !organizer_signed_in?)
-      flash[:success] = "This export is too big, so we'll send you an email when it's ready."
-      redirect_back fallback_location: @event and return
-    elsif params[:email]
-      # this handles the second stage of large transparent exports
-      export_job = export_options[file_extension]
-      export_job.perform_later(event_id: @event.id, email: params[:email], public_only: true)
-      flash[:success] = "We'll send you an email when your export is ready."
-      redirect_to @event and return
-    else
-      # handles when large exports are requested by the non-signed-in users viewing transparent orgs
-      # this redirects them to a form that collects their email and then goes to the above statement
-      redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event]) and return
+    if start_date.nil? || end_date.nil?
+      return render plain: "Invalid date.", status: :bad_request
+    end
+
+    @start = start_date.beginning_of_month
+    if @start >= Date.today.beginning_of_month
+      return render plain: "Can not create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
+    end
+
+    @end = end_date.end_of_month
+    if @end < @start
+      render plain: "End date cannot be before the start date.", status: :bad_request
     end
   end
 
-  def stream_transactions_csv
-    set_file_headers_csv
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = transactions_csv
-  end
-
-  def stream_transactions_json
-    set_file_headers_json
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = transactions_json
-  end
-
-  def stream_transactions_ledger
-    set_file_headers_ledger
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = transactions_ledger
-  end
-
-  def set_file_headers_csv
-    headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
-  end
-
-  def set_file_headers_json
-    headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.json"
-  end
-
-  def set_file_headers_ledger
-    headers["Content-Type"] = "text/ledger"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_transactions_#{Time.now.strftime("%Y%m%d%H%M")}.ledger"
-  end
-
-  def transactions_csv
-    ::ExportService::Csv.new(event_id: @event.id, public_only: !organizer_signed_in?).run
-  end
-
-  def transactions_json
-    ::ExportService::Json.new(event_id: @event.id, public_only: !organizer_signed_in?).run
-  end
-
-  def transactions_ledger
-    ::ExportService::Ledger.new(event_id: @event.id, public_only: !organizer_signed_in?).run
+  # Returns nil for anything that isn't a date (e.g. `?start_date=foo` from a
+  # crawler) instead of raising `Date::Error`.
+  def parse_date(value)
+    value.to_s.to_datetime
+  rescue ArgumentError # Date::Error is a subclass of ArgumentError
+    nil
   end
 
 end

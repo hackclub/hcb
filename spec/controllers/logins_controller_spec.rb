@@ -1,40 +1,635 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "webauthn/fake_client"
 
-describe LoginsController do
+RSpec.describe LoginsController do
+  include SessionSupport
+  include WebAuthnSupport
+  render_views
+
+  describe "#new" do
+    it "shows the current user when logged in" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:new)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(
+        "You’re currently signed into HCB, would you like to head to your dashboard?"
+      )
+    end
+
+    it "renders a login form when logged out" do
+      get(:new)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Sign in to HCB")
+    end
+  end
+
+  describe "#create" do
+    it "creates a user if one doesn't and uses the login code factor" do
+      email = "test@example.com"
+      expect(User.find_by(email:)).to be_nil
+
+      expect { post(:create, params: { email: "test@example.com", login: { purpose: "" } }) }
+        .to( change { Login.count }.by(1).and(change { User.count }.by(1)) )
+
+      login = Login.last
+      expect(login.user.email).to eq(email)
+      expect(login).not_to be_reauthentication
+      expect(response).to redirect_to(email_login_path(login))
+    end
+
+    it "uses the existing user if the email matches" do
+      user = create(:user, email: "test@example.com")
+
+      expect { post(:create, params: { email: user.email, login: { purpose: "" } }) }
+        .to(change { Login.count }.by(1).and(change { User.count }.by(0)))
+
+      login = Login.last
+      expect(login.user).to eq(user)
+      expect(response).to redirect_to(email_login_path(login))
+    end
+    it "blocks creating more than 10 logins per user in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
+    it "allows logins again after the rate limit window expires" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+
+      travel(1.hour)
+      Rails.cache.clear
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(email_login_path(Login.last))
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  describe "set_login rate limit (session[:auth_email])" do
+    it "blocks creating more than 10 logins per user via session auth_email" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        session[:auth_email] = user.email
+        get(:choose_login_preference)
+      end
+
+      session[:auth_email] = user.email
+      get(:choose_login_preference)
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
   describe "#login_code" do
-    context "when not sent by sms" do
-      it "calls LoginCodeService::Request but does not call twilio" do
-        expect(LoginCodeService::Request).to receive(:new).and_call_original
-        expect(TwilioVerificationService).to_not receive(:new)
-        user = create(:user)
-        params = {
-          email: user.email,
-          id: user.logins.create.hashid,
-          method: :login_code
-        }
+    it "sends a code to the user's email and renders the form" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
 
-        post :login_code, params:
+      expect {
+        get(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Email code")
+      expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the login code when the user requests it" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+      expect(response.body).to include(email_login_path(login))
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+    end
+
+    it "sends an SMS code if the user has opted-in and verified their phone number" do
+      user = create(:user, phone_number: "+18556254225")
+      # This can't be done through the factory because we have validation logic
+      # that clears out `phone_number_verified` when the phone number changes.
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      # Stub out the SMS service
+      verification_service = instance_double(TwilioVerificationService)
+      expect(verification_service).to receive(:send_verification_request).with(user.phone_number)
+      expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("SMS code")
+      expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the SMS code when the user requests it" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      verification_service = instance_double(TwilioVerificationService)
+      expect(verification_service).to receive(:send_verification_request).with(user.phone_number).twice
+      expect(TwilioVerificationService).to receive(:new).twice.and_return(verification_service)
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+    end
+
+    # The UI never offers SMS for an unverified number, so this request only
+    # comes from a script POSTing at the endpoint directly to spend Twilio
+    # messages on made-up numbers.
+    it "sends no SMS if the phone number isn't verified" do
+      user = create(:user, phone_number: "+18556254225")
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("SMS login isn't available for this account.")
+      expect(response).to redirect_to(auth_users_path)
+    end
+
+    it "returns an error if the login is a reauthentication" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:, is_reauthentication: true)
+
+      get(:email, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("Please start again.")
+      expect(response).to redirect_to(auth_users_path)
+    end
+  end
+
+  describe "#complete" do
+    context "webauthn" do
+      it "signs the user in and redirects" do
+        user = create(:user, phone_number: "+18556254225")
+        login = create(:login, user:)
+        webauthn_credential = create_webauthn_credential(user:)
+
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
+
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+        expect {
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "webauthn",
+              credential: JSON.dump(credential)
+            }
+          )
+        }.to change { webauthn_credential.reload.sign_count }.by(1)
+
+        expect(response).to redirect_to(root_path)
+
+        login.reload
+        expect(login).to be_complete
+        expect(login.authenticated_with_webauthn).to eq(true)
+        expect(login.user_session).to be_present
+        expect(current_session!).to eq(login.user_session)
       end
     end
 
-    context "when sent by sms" do
-      it "calls LoginCodeService::Request service in bank (which in turns calls twilio)" do
-        expect(LoginCodeService::Request).to receive(:new).and_call_original
-        expect(TwilioVerificationService).to receive_message_chain(:new, :send_verification_request) # this also stubs the call so it won't actually call Twilio's API
+    context "when return_to points at a route guarded by a constraint that reads cookies" do
+      it "signs the user in and redirects to root instead of raising" do
+        user = create(:user, phone_number: "+18556254225")
+        # No route other than the AuditorConstraint-guarded `/schema` mount
+        # matches this path, so route recognition can't silently fall through
+        # to some unrelated wildcard route (unlike e.g. "/console", which also
+        # matches the catch-all `events#show` route).
+        login = create(:login, user:, state: { return_to: "/schema/foo/bar" })
+        create_webauthn_credential(user:)
 
-        user = create(:user, phone_number: "+18005555555")
-        # need to update after the fact because of User callback on_phone_number_update resetting this value
-        user.update(use_sms_auth: true)
-        params = {
-          email: user.email,
-          id: user.logins.create.hashid,
-          method: :login_code
-        }
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
 
-        post :login_code, params:
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "webauthn",
+            credential: JSON.dump(credential)
+          }
+        )
+
+        # Regression test: `return_to` is user-controlled and reaches
+        # `Rails.application.routes.recognize_path`, which evaluates route
+        # constraints (AuditorConstraint/AdminConstraint) against a synthetic
+        # request that bypasses the cookies middleware. That used to raise
+        # `NoMethodError: undefined method 'generate_key' for nil` instead of
+        # completing the login.
+        expect(response).to redirect_to(root_path)
+        expect(login.reload).to be_complete
       end
+    end
+
+    context "login_code" do
+      context "email" do
+        it "rejects invalid login codes" do
+          user = create(:user)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "email",
+              login_code: "123-456"
+            }
+          )
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(response.body).to include("Invalid login code")
+        end
+
+        it "counts a wrong code towards the per-IP ban" do
+          login = create(:login, user: create(:user))
+          key = Rack::Attack.login_complete_fail2ban_key(request.remote_ip)
+
+          expect(Rack::Attack::Fail2Ban).to receive(:filter).with(key, Rack::Attack::LOGIN_COMPLETE_FAIL2BAN)
+
+          post(:complete, params: { id: login.hashid, method: "email", login_code: "123-456" })
+        end
+
+        it "signs the user in and redirects" do
+          user = create( :user, phone_number: "+18556254225" )
+          login = create(:login, user:)
+          login_code = create(:login_code, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "email",
+              login_code: login_code.code
+            }
+          )
+
+          expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_email).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          login_code.reload
+          expect(login_code).not_to be_active
+        end
+      end
+
+      context "sms" do
+        it "rejects invalid sms codes" do
+          user = create(:user, phone_number: "+18556254225")
+          login = create(:login, user:)
+
+          # Stub out the SMS service
+          verification_service = instance_double(TwilioVerificationService)
+          expect(verification_service).to(
+            receive(:check_verification_token)
+              .with(user.phone_number, "123456")
+              .and_return(false)
+          )
+          expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "sms",
+              login_code: "123-456",
+            }
+          )
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(response.body).to include("Invalid login code")
+        end
+
+        it "signs the user in and redirects" do
+          user = create(:user, phone_number: "+18556254225")
+          login = create(:login, user:)
+
+          # Stub out the SMS service
+          verification_service = instance_double(TwilioVerificationService)
+          expect(verification_service).to(
+            receive(:check_verification_token)
+              .with(user.phone_number, "123456")
+              .and_return(true)
+          )
+          expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "sms",
+              login_code: "123-456",
+            }
+          )
+
+          expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_sms).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+        end
+      end
+    end
+
+    context "totp" do
+      it "rejects invalid totp codes" do
+        user = create(:user)
+        login = create(:login, user:)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "totp",
+            code: "123456"
+          }
+        )
+
+        expect(response).to redirect_to(totp_login_path(login))
+        expect(flash[:error]).to include("Invalid TOTP code")
+      end
+
+      it "signs the user in and redirects" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          totp = user.create_totp!
+          code = ROTP::TOTP.new(totp.secret, issuer: User::Totp::ISSUER).at(Time.now)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "totp",
+              code:
+            }
+          )
+
+          expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_totp).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          totp.reload
+          expect(totp.last_used_at).to eq(Time.now)
+        end
+      end
+    end
+
+    context "backup_code" do
+      it "rejects invalid backup codes" do
+        user = create(:user)
+        login = create(:login, user:)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "backup_code",
+            code: "AAAAAAAA"
+          }
+        )
+
+        expect(response).to redirect_to(backup_code_login_path(login))
+        expect(flash[:error]).to include("Invalid backup code")
+      end
+
+      it "signs the user in and redirects to home" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          codes = user.generate_backup_codes!
+          user.backup_codes.previewed.map(&:mark_active!)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "backup_code",
+              backup_code: codes.first
+            }
+          )
+
+          expect(response).to redirect_to(root_path)
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_backup_code).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          user.backup_codes.reload
+          expect(user.backup_codes.used.first.updated_at).to eq(Time.now)
+        end
+      end
+
+      it "signs the user in and redirects to security page if the user has no backup codes remaining" do
+        freeze_time do
+          user = create(:user, phone_number: "+18556254225")
+          code = SecureRandom.alphanumeric(10)
+          user.backup_codes.create!(code:)
+          user.backup_codes.previewed.map(&:mark_active!)
+          login = create(:login, user:)
+
+          post(
+            :complete,
+            params: {
+              id: login.hashid,
+              method: "backup_code",
+              backup_code: code
+            }
+          )
+
+          expect(response).to redirect_to(security_user_path(user))
+
+          login.reload
+          expect(login).to be_complete
+          expect(login.authenticated_with_backup_code).to eq(true)
+          expect(login.user_session).to be_present
+          expect(current_session!).to eq(login.user_session)
+
+          user.backup_codes.reload
+          expect(user.backup_codes.used.first.updated_at).to eq(Time.now)
+        end
+      end
+    end
+
+    context "2fa" do
+      it "requests a second factor if 2fa is enabled" do
+        user = create(:user,
+                      phone_number: "+18556254225",
+                      phone_number_verified: true,
+                      use_sms_auth: true,
+                      use_two_factor_authentication: true)
+        totp = user.create_totp!
+        login = create(:login, user:)
+        login_code = create(:login_code, user:)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "email",
+            login_code: login_code.code
+          }
+        )
+
+        expect(response).to redirect_to(choose_login_preference_login_path(login))
+
+        login.reload
+        expect(login).not_to be_complete
+        expect(login.authenticated_with_email).to be(true)
+
+        code = ROTP::TOTP.new(totp.secret, issuer: User::Totp::ISSUER).at(Time.now)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "totp",
+            code:
+          }
+        )
+
+        expect(response).to redirect_to(root_path)
+
+        login.reload
+        expect(login).to be_complete
+        expect(login.authenticated_with_totp).to eq(true)
+        expect(login.user_session).to be_present
+        expect(current_session!).to eq(login.user_session)
+      end
+    end
+
+    it "redirects to the user's settings page if they don't have a name or phone number" do
+      user = create(:user, full_name: nil, phone_number: nil)
+      login = create(:login, user:)
+      login_code = create(:login_code, user:)
+
+      post(
+        :complete,
+        params: {
+          id: login.hashid,
+          method: "email",
+          login_code: login_code.code
+        }
+      )
+
+      expect(response).to redirect_to(edit_user_path(user.slug))
+    end
+
+    it "redirects to the auth page with a flash message if the user's account is locked" do
+      user = create(:user)
+      user.lock!
+      login = create(:login, user:)
+      login_code = create(:login_code, user:)
+
+      post(
+        :complete,
+        params: {
+          id: login.hashid,
+          method: "email",
+          login_code: login_code.code
+        }
+      )
+
+      expect(flash[:error]).to eq("Your HCB account has been locked.")
+      expect(response).to redirect_to(auth_users_path)
+    end
+  end
+
+  describe "#reauthenticate" do
+    it "checks for sudo mode and redirects" do
+      user = create(:user)
+      Flipper.enable(:sudo_mode_2015_07_21, user)
+      create_session(user, verified: true)
+
+      travel(3.hours)
+
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).to include("Confirm Access")
+
+      post(
+        :reauthenticate,
+        params: {
+          return_to: "/test",
+          _sudo: {
+            submit_method: "email",
+            login_code: user.login_codes.last.code,
+            login_id: user.logins.last.hashid,
+          }
+        }
+      )
+
+      expect(response).to redirect_to("/test")
+    end
+
+    it "requires an active session" do
+      post(:reauthenticate, params: { return_to: "/test" })
+
+      expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: reauthenticate_logins_url))
     end
   end
 end

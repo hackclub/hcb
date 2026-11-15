@@ -1,0 +1,11 @@
+<%# locals: (block:, is_start_date_flexible: true) %>
+
+<div>
+  <%= label_tag :start_date, "Start date" %>
+  <%= date_field_tag :start_date, block.present? ? block.parameters["start_date"] : (is_start_date_flexible ? nil : 1.month.ago.to_date.to_s), data: { "announcement-modal-target": "input" } %>
+</div>
+
+<div>
+  <%= label_tag :end_date, "End date" %>
+  <%= date_field_tag :end_date, block.present? ? block.parameters["end_date"] : Date.today.to_s, data: { "announcement-modal-target": "input" } %>
+</div>

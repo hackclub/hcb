@@ -1,6 +1,7 @@
 <span id="total">
   <% if report.amount_cents > 0 %>
-    <%= render_money report.amount_cents %>
+    <%= report.amount.format %>
+    <%= report.currency unless report.currency == "USD" %>
   <% else %>
     reimbursement
   <% end %>
