@@ -12,12 +12,12 @@
 #  merchant_key      :string           not null
 #  name              :string           not null
 #  next_expected_at  :datetime         not null
-#  payment_rail_type :string           not null
 #  variable_amount   :boolean          default(FALSE), not null
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  ledger_id         :bigint           not null
 #  payment_rail_id   :bigint           not null
+#  payment_rail_type :string           not null
 #
 # Indexes
 #
