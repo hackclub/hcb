@@ -26,7 +26,8 @@ module SystemSessionSupport
   # spec driver blocks. Stand in for it so phone_input.js doesn't throw on load.
   # Call before the first `visit`.
   def stub_intl_tel_input
-    page.driver.browser.evaluate_on_new_document(<<~JS)
+    # Browser#evaluate_on_new_document skips pages that are already open
+    page.driver.browser.page.command("Page.addScriptToEvaluateOnNewDocument", source: <<~JS)
       window.intlTelInput = () => ({ getNumber: () => "" })
     JS
   end
