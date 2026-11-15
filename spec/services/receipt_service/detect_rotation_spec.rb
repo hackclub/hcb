@@ -19,7 +19,7 @@ RSpec.describe ReceiptService::DetectRotation do
   def stub_orientation_guess(output, success: true)
     status = instance_double(Process::Status, success?: success)
     allow(detector).to receive(:tesseract).and_call_original
-    allow(detector).to receive(:tesseract).with(anything, "--psm", "0").and_return([output, status])
+    allow(detector).to receive(:tesseract).with(anything, "--psm", "0", any_args).and_return([output, status])
   end
 
   # confident word count by how far the upload is turned
@@ -41,7 +41,7 @@ RSpec.describe ReceiptService::DetectRotation do
     stub_orientation_guess("Rotate: 180\nOrientation confidence: 6.85\n")
 
     expect(detector.run).to be_nil
-    expect(detector).to have_received(:tesseract).with(anything, "--psm", "0")
+    expect(detector).to have_received(:tesseract).with(anything, "--psm", "0", any_args)
   end
 
   it "accepts a proposal that reads clearly best" do

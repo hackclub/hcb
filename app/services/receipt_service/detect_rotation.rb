@@ -45,7 +45,8 @@ module ReceiptService
       # image_processing applies the EXIF orientation on load
       @image = ImageProcessing::MiniMagick.source(@path.to_s).resize_to_limit(MAX_SIDE, MAX_SIDE).convert("png").call
 
-      output, status = tesseract(@image.path, "--psm", "0")
+      # The default of 50 characters gives up on short receipts.
+      output, status = tesseract(@image.path, "--psm", "0", "-c", "min_characters_to_try=10")
       return nil if output.include?("Too few characters")
       # Anything else (e.g. missing orientation data file) means detection is
       # broken, which we want to hear about rather than silently never rotate.

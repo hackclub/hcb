@@ -228,18 +228,21 @@ class Receipt < ApplicationRecord
   # as `original_file`. Only ever runs once per receipt. Returns true if it
   # rotated the file.
   def auto_rotate!
-    return false unless file.image? && !original_file.attached?
+    # Only raster images ActiveStorage can process. Copies of receipts were
+    # already checked when first uploaded.
+    return false unless file.variable? && !original_file.attached? && !duplicate?
 
     file.blob.open do |upload|
       degrees = ::ReceiptService::DetectRotation.new(path: upload.path).run
       next false if degrees.nil?
 
-      # PNGs and JPEGs keep their format; anything else (HEIC, WebP, TIFF, ...)
-      # is written out as a JPEG since ImageMagick can't encode them all.
+      # PNGs and JPEGs keep their format; anything else (HEIC, WebP) is written
+      # out as a JPEG since ImageMagick can't encode them all. The format is
+      # always given: a file with no extension (SMS) would otherwise become a JPEG.
       keep_format = file.content_type.in?(%w[image/png image/jpeg])
-      pipeline = ImageProcessing::MiniMagick.source(upload.path).rotate(degrees)
-      pipeline = pipeline.convert("jpg") unless keep_format
-      rotated = pipeline.call # before touching the record, so a failure here changes nothing
+      format = file.content_type == "image/png" ? "png" : "jpg"
+      # before touching the record, so a failure here changes nothing
+      rotated = ImageProcessing::MiniMagick.source(upload.path).rotate(degrees).convert(format).call
 
       # One save, so we never end up with the original kept but the file not
       # rotated. The lock reloads, and raises if the receipt has been deleted.

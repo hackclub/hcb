@@ -93,6 +93,20 @@ RSpec.describe Receipt, type: :model do
       expect(receipt.original_file).not_to be_attached
     end
 
+    it "keeps a PNG a PNG when the upload has no file extension" do
+      # SMS receipts are named like this
+      receipt = new_receipt(io: ImageProcessing::MiniMagick.source(upright).rotate(90).call, filename: "SMS_2026-11-14").tap(&:save!)
+
+      expect(receipt.original_file).to be_attached
+      expect(MiniMagick::Image.read(receipt.file.download).type).to eq("PNG")
+    end
+
+    it "doesn't check copies of receipts again" do
+      expect(ReceiptService::DetectRotation).not_to receive(:new)
+
+      receipt_turned(90, upload_method: :duplicate)
+    end
+
     it "still saves a receipt whose image can't be read" do
       allow(Rails.error).to receive(:report)
       receipt = new_receipt(io: StringIO.new("not really a png"))
