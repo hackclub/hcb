@@ -40,23 +40,23 @@
 #                     charge, so it follows a replaced or swapped card.
 #   amount_cents      the last amount charged
 #   variable_amount   true when the amount changes every time (usage billing)
-#   cadence_days      cycle length: 7, 14, 30, 90, 365, or any other number
+#   cadence_days      cycle length: 7, 14, 30, 60, 90, 180 or 365
 #   next_expected_at  when the next charge is due
 #   charges           ledger_items.subscription_id
 #
 # What is covered, and how
 #
-#   Flat price on a cadence     3 charges of one amount, evenly spaced
-#                               (2 for yearly). Up to 2 skipped cycles.
-#   Usage-based / foreign       3 charges of any amount, every gap exactly one
-#   currency                    weekly-to-yearly cycle. Marked variable_amount.
+#   Flat price on a cadence     3 charges of one amount on one card, evenly
+#                               spaced (2 for yearly). Up to 2 skipped cycles.
+#   Usage-based / foreign       3 charges of any amount on one card, every gap
+#   currency                    exactly one cycle. Marked variable_amount.
 #   Late charge (locked card)   Any charge after the due date links. The due
 #                               date keeps its day of the month, so the next
 #                               on-time charge still links.
 #   Price change                A flat subscription takes a charge within 20%
 #                               of the last amount.
-#   Replaced or swapped card    A due subscription takes the charge from any
-#                               card on the ledger (same card preferred).
+#   Replaced or swapped card    A due subscription takes the charge from
+#                               another card of the same cardholder.
 #   Several at one merchant     Each price is its own subscription.
 #   Retry / double charge       Charges within 5 days of the last are skipped.
 #   In-person purchases         Chip, swipe and tap charges are ignored.
@@ -65,13 +65,18 @@
 # Not covered yet
 #
 #   ACH and other rails         The schema allows them; nothing detects them.
-#   Two subscriptions at one merchant for the same price
+#   Two subscriptions at one merchant for the same price on one card
+#   A subscription moved to a different person's card: found again as new.
+#   Cycles other than the seven above.
 #   A price change over 20%, or monthly to yearly: found again as a new one.
 #   Declined charges            Not recorded.
 class Subscription < ApplicationRecord
   has_paper_trail
 
-  CADENCES = { 7 => "weekly", 14 => "biweekly", 30 => "monthly", 90 => "quarterly", 365 => "yearly" }.freeze
+  CADENCES = {
+    7 => "weekly", 14 => "biweekly", 30 => "monthly", 60 => "every two months",
+    90 => "quarterly", 180 => "twice a year", 365 => "yearly"
+  }.freeze
   # How far a gap or a flat amount may be off, as a fraction.
   TOLERANCE = 0.2
 
@@ -85,7 +90,7 @@ class Subscription < ApplicationRecord
   validates :cadence_days, :amount_cents, numericality: { only_integer: true, greater_than: 0 }
 
   def cadence_label
-    CADENCES[cadence_days] || "every #{cadence_days} days"
+    CADENCES.fetch(cadence_days)
   end
 
   # Only a lower bound: a charge too soon after the last one is a repeat

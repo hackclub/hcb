@@ -38,13 +38,20 @@ class Subscription
 
     def link_to_existing
       amount_cents = @item.amount_cents.abs
-      subscription = @ledger.subscriptions.where(merchant_key: @merchant_key)
-                            .select { |s| s.due?(@item.datetime) && s.amount_fits?(amount_cents) }
+      subscription = @ledger.subscriptions.where(merchant_key: @merchant_key).includes(:payment_rail)
+                            .select { |s| s.due?(@item.datetime) && s.amount_fits?(amount_cents) && same_cardholder?(s.payment_rail) }
                             .min_by { |s| [s.payment_rail == @rail ? 0 : 1, (s.amount_cents - amount_cents).abs] }
       return unless subscription
 
       subscription.link!(@item, payment_rail: @rail)
       subscription
+    end
+
+    # Another card only counts when it is the same person's (a replaced or
+    # swapped card). On a ledger where many people hold cards, someone else's
+    # charge at the same merchant is their own subscription.
+    def same_cardholder?(card)
+      card == @rail || card.stripe_cardholder_id == @rail.stripe_cardholder_id
     end
 
     # Tries the charges of this exact amount first (a flat price), then every
@@ -54,11 +61,11 @@ class Subscription
       create(same_amount, variable_amount: false) || create(history, variable_amount: true)
     end
 
-    # This merchant's unlinked online charges on the ledger, up to this one.
+    # This merchant's unlinked online charges on this card, up to this one.
     def history
       @history ||= Ledger::Item.settled
                                .joins(:primary_mapping).where(ledger_mappings: { ledger_id: @ledger.id })
-                               .where(linked_object_type: CardCharge.name, linked_object_id: CardCharge.where(merchant_network_id: @merchant_key).select(:id))
+                               .where(linked_object_type: CardCharge.name, linked_object_id: CardCharge.where(merchant_network_id: @merchant_key, stripe_card: @rail).select(:id))
                                .where(subscription_id: nil, amount_cents: ...0, datetime: (@item.datetime - LOOKBACK)..@item.datetime)
                                .includes(linked_object: :raw_pending_stripe_transaction)
                                .order(:datetime, :id)
@@ -104,15 +111,16 @@ class Subscription
       subscription if subscription.persisted?
     end
 
-    # The cycle length in days, or nil. The typical (median) gap is one cycle,
-    # snapped to a named cadence when close (31 days is monthly). Every gap has
-    # to be within tolerance of a whole number of cycles. Strict allows only
-    # named cadences and no skipped cycles.
+    # The cycle length in days, or nil. The typical (median) gap has to be close
+    # to a known cadence (31 days is monthly), and every gap within tolerance of
+    # a whole number of cycles. Strict allows no skipped cycles.
+    #
+    # Only known cadences: on real data, free-form ones (every 43 days) were
+    # almost all coincidences between unrelated purchases.
     def fit_cadence(gaps, strict:)
       typical = gaps.sort[(gaps.size - 1) / 2]
-      days = Subscription::CADENCES.keys.find { |named| (typical - named).abs <= Subscription::TOLERANCE * named }
-      days ||= typical.round unless strict
-      return if days.nil? || days < MIN_GAP_DAYS
+      days = Subscription::CADENCES.keys.find { |known| (typical - known).abs <= Subscription::TOLERANCE * known }
+      return if days.nil?
 
       cycles = strict ? [1] : 1..MAX_CYCLES
       days if gaps.all? { |gap| cycles.any? { |k| (gap - (k * days)).abs <= Subscription::TOLERANCE * days } }

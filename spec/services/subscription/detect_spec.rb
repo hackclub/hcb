@@ -30,9 +30,15 @@ RSpec.describe Subscription::Detect do
   end
 
   it "detects other cadences, with a skipped cycle" do
-    [0, 45, 135].each { |day| charge(day) }
+    [0, 61, 181].each { |day| charge(day) }
 
-    expect(charge(180)).to have_attributes(cadence_days: 45, cadence_label: "every 45 days")
+    expect(charge(240)).to have_attributes(cadence_days: 60, cadence_label: "every two months")
+  end
+
+  it "ignores a cycle that isn't a known cadence" do
+    [0, 43, 86, 129].each { |day| charge(day) }
+
+    expect(Subscription.count).to eq(0)
   end
 
   it "detects a yearly subscription from two charges" do
@@ -88,6 +94,13 @@ RSpec.describe Subscription::Detect do
 
       expect(charge(90, card: replacement)).to eq(subscription)
       expect(subscription.reload.payment_rail).to eq(replacement)
+    end
+
+    it "leaves another cardholder's charge at the same merchant alone" do
+      someone_elses = create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder), event:)
+
+      expect(charge(90, card: someone_elses)).to be_nil
+      expect(charge(90)).to eq(subscription)
     end
 
     it "keeps a different price at the same merchant separate" do
