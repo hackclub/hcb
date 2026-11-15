@@ -2791,10 +2791,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120101) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.text "memo"
+    t.bigint "repayment_allocation_id"
     t.bigint "splittable_id", null: false
     t.string "splittable_type", null: false
     t.bigint "transaction_category_id"
     t.datetime "updated_at", null: false
+    t.index ["repayment_allocation_id"], name: "index_transaction_splits_on_repayment_allocation_id"
     t.index ["splittable_type", "splittable_id"], name: "index_transaction_splits_on_splittable"
     t.index ["transaction_category_id"], name: "index_transaction_splits_on_transaction_category_id"
   end

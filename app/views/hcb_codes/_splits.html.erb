@@ -1,18 +1,26 @@
-<%# locals: (hcb_code:) %>
+<%# locals: (hcb_code:, embedded: false) %>
 
 <%# A bar showing how the transaction is divided: one segment per split, and the rest of the bar for what's left. %>
 <%# Categories aren't shown: they're for reporting, not something users see on a transaction. %>
-<% splits = hcb_code.splits.to_a %>
+<% splits = hcb_code.splits.includes(repayment_allocation: { repayment: :disbursement }).to_a %>
 
-<% if splits.any? %>
+<%# Splits a repayment made are shown inside the transaction's details (see ledger/items/_repayments), not as a card of their own. %>
+<% if splits.any? && embedded == splits.any?(&:repayment_allocation_id) %>
   <% rest_cents = hcb_code.amount_cents - splits.sum(&:amount_cents) %>
   <%# A transaction that shrank after it was split can have splits adding up to more than it %>
   <% total_cents = [hcb_code.amount_cents.abs, splits.sum { |split| split.amount_cents.abs }].max %>
   <% colors = %w[bg-success bg-info bg-warning bg-primary] %>
-  <% parts = splits.each_with_index.map { |split, i| { label: split[:memo].presence || "Split", cents: split.amount_cents.abs, color: colors[i % colors.size] } } %>
-  <% parts << { label: "Rest of the transaction", cents: rest_cents.abs, color: "bg-gray-300 dark:bg-neutral-600" } unless rest_cents.zero? %>
+  <%# A part a repayment covers links to the transfer that repaid it, in place of a "Repaid by" row. %>
+  <% repaid_by = ->(split) {
+       allocation = split.repayment_allocation
+       next unless allocation && allocation.ledger_item_id == hcb_code.ledger_item&.id
 
-  <section class="card mt-3" id="splits">
+       render("ledger/items/repayment_link", item: allocation.disbursement.incoming_disbursement.ledger_item || allocation.disbursement.outgoing_disbursement.ledger_item)
+     } %>
+  <% parts = splits.each_with_index.map { |split, i| { label: repaid_by.call(split) || split[:memo].presence || "Split", cents: split.amount_cents.abs, color: colors[i % colors.size] } } %>
+  <% parts << { label: (splits.any? { |split| repaid_by.call(split) } ? "Not repaid" : "Rest of the transaction"), cents: rest_cents.abs, color: "bg-gray-300 dark:bg-neutral-600" } unless rest_cents.zero? %>
+
+  <%= tag.section class: ("card mt-3" unless embedded), id: "splits" do %>
     <%# The legend below says everything the bar does %>
     <div class="flex h-3 rounded overflow-hidden bg-gray-200 dark:bg-neutral-700" aria-hidden="true">
       <% parts.each do |part| %>
@@ -25,9 +33,10 @@
         <li class="flex items-center gap-2">
           <span class="shrink-0 w-3 h-3 rounded-full <%= part[:color] %>" aria-hidden="true"></span>
           <span class="flex-1 min-w-0"><%= part[:label] %></span>
-          <strong class="shrink-0"><%= render_money part[:cents] %></strong>
+          <%# Not <strong>: the details list styles that as a muted label %>
+          <span class="shrink-0 font-bold"><%= render_money part[:cents] %></span>
         </li>
       <% end %>
     </ul>
-  </section>
+  <% end %>
 <% end %>

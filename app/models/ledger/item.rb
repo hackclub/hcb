@@ -236,6 +236,10 @@ class Ledger
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
+
+      # A repaid expense is re-split when its amount changes. A failure here
+      # is reported, not raised: it mustn't stop the ledger from updating.
+      Rails.error.handle { Repayment.sync_splits!(self) } if saved_change_to_amount_cents?
     end
 
     def map!

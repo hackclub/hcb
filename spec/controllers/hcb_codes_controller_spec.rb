@@ -164,6 +164,31 @@ RSpec.describe HcbCodesController, type: :controller do
         expect(response.body).not_to include("Repay this")
       end
 
+      it "lists a repayment once under \"Repaid by\": as a link, or as a bar when it's split off" do
+        source = create(:event, :with_positive_balance, name: "Robotics Club")
+        create(:organizer_position, event: source, user:)
+        DisbursementService::Create.new(name: "Repaying 1 transaction", amount: "100.00", requested_by_id: user.id, source_event_id: source.id, destination_event_id: event.id,
+                                        transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id]).run
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+        page = Nokogiri::HTML(response.body)
+        expect(page.css("strong").map(&:text).count("Repaid by")).to eq(1)
+        expect(page.at_css("#splits")).to be_nil
+        expect(page.css("a").map(&:text).count("Transfer from Robotics Club")).to eq(1)
+
+        # The expense ends up costing more than was repaid, so the repaid part is split off
+        create(:canonical_transaction, ledger_item: expense.ledger_item, event:, amount_cents: -20_00).update_column(:hcb_code, expense.hcb_code)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+        page = Nokogiri::HTML(response.body)
+        expect(page.css("strong").map(&:text).count("Repaid by")).to eq(1)
+        expect(page.css("a").map(&:text).count("Transfer from Robotics Club")).to eq(1)
+        # The bar sits in the details list, not in a card of its own
+        expect(page.at_css("#splits a").text).to eq("Transfer from Robotics Club")
+        expect(page.at_css("#splits")["class"]).to be_nil
+        expect(page.at_css("#splits").text).to include("$100.00", "Not repaid", "$20.00")
+      end
+
       it "is hidden for income" do
         income = create(:canonical_transaction, event:, amount_cents: 100_00)
 

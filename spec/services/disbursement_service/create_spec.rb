@@ -673,7 +673,9 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense_item.amount_cents).to eq(-120_00)
       expect(repayment.reload).to be_valid
       expect(repayment.amount_cents + expense_item.amount_cents).to eq(-20_00)
-      expect(expense.reload.category.slug).to eq("repayment")
+      # The repaid part is split off, and the rest is back under its own category
+      expect(expense.reload.category.slug).to eq("food-fun")
+      expect(expense.splits.map { |split| [split.amount_cents, split.category.slug] }).to eq([[-100_00, "repayment"]])
 
       # The expense already counts as repaid, so the other $20 can't be.
       expect {
@@ -682,6 +684,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       disbursement.mark_rejected!(create(:user, :make_admin))
       expect(expense.reload.category.slug).to eq("food-fun")
+      expect(expense.splits).to be_empty
     end
 
     it "restores an automatic category as automatic" do

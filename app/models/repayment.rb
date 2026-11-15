@@ -37,8 +37,21 @@ class Repayment < ApplicationRecord
   def self.repayable_ledger_items(event) = Allocation.repayable_ledger_items(event)
   def self.unrepaid_ledger_items(event) = Allocation.unrepaid_ledger_items(event)
 
+  # Undoes what the repayment did to the expenses it repaid, for when it's
+  # rejected or errors.
   def revert_categories!
-    allocations.each(&:revert_categories!)
+    allocations.each do |allocation|
+      allocation.revert_categories!
+      allocation.splits.destroy_all
+    end
+  end
+
+  # Called when a transaction's amount changes: re-syncs the expenses it
+  # touches, whether it's a repaid expense or the payment repaying them.
+  def self.sync_splits!(ledger_item)
+    items = [ledger_item]
+    items += ledger_item.linked_object.disbursement.repaid_ledger_items if ledger_item.linked_object_type == "Disbursement::Incoming"
+    items.each { |item| Allocation.sync_splits!(item) }
   end
 
   private
