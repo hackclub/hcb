@@ -197,17 +197,6 @@ class InvoicesController < ApplicationController
     redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
-  def pdf
-    @invoice = Invoice.find(params[:invoice_id])
-
-    authorize @invoice
-
-    @invoice.sync_remote!
-    @invoice.reload
-
-    redirect_to URI.parse(@invoice.invoice_pdf).to_s, allow_other_host: true
-  end
-
   def refund
     @invoice = Invoice.find(params[:id])
     @hcb_code = @invoice.local_hcb_code

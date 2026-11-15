@@ -46,7 +46,7 @@
 
 <div class="flex justify-start gap-5 items-center">
   <% if entity_type_matches %>
-    <%= button_to "Switch to new TIN", replace_legal_entity_path(legal_entity), class: "btn", params: { new_tax_form_id: mismatched.hashid } %>
+    <%= button_to "Switch to new TIN", replace_legal_entity_path(legal_entity), class: "btn", params: { new_tax_form_id: mismatched.hashid }, form: { data: { turbo_frame: "_top" } } %>
   <% end %>
 
   <% if mismatched.entity_business? %>
@@ -61,7 +61,7 @@
         to the new legal entity.
       </p>
 
-      <%= form_with url: create_from_tax_form_legal_entities_path do |form| %>
+      <%= form_with url: create_from_tax_form_legal_entities_path, data: { turbo_frame: "_top" } do |form| %>
         <%= form.hidden_field :new_tax_form_id, value: mismatched.hashid %>
         <%= form.hidden_field :old_le_id, value: legal_entity.hashid %>
 
@@ -75,5 +75,5 @@
     </section>
   <% end %>
 
-  <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn" %>
+  <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn", form: { data: { turbo_frame: "_top" } } %>
 </div>

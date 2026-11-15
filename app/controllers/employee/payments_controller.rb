@@ -39,7 +39,7 @@ class Employee
     def stub
       @payment = Employee::Payment.find(params[:payment_id])
       authorize @payment
-      render pdf: "paystub", page_height: "11in", page_width: "8.5in"
+      render_pdf "paystub"
     end
 
     private

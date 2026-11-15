@@ -11,9 +11,10 @@
 # Event#balance — which now sums the ledger — reports $0.
 #
 # This bridges that gap for the test suite: once a factory has associated a
-# transaction with an event (and no subledger), place the transaction's ledger
-# item on that event's primary ledger so ledger balances match the canonical
-# transaction totals the specs were written against.
+# transaction with an event, place the transaction's ledger item on that
+# event's primary ledger (or, for a subledger transaction, its card grant's) so
+# ledger balances match the canonical transaction totals the specs were written
+# against.
 module FactoryLedgerMapping
   module_function
 
@@ -30,14 +31,10 @@ module FactoryLedgerMapping
     event = transaction.event
     return if event.nil?
 
-    # Subledger (e.g. card grant) transactions belong on a different ledger;
-    # leave those to the production flows that create them.
-    return if transaction.subledger.present?
-
     ledger_item = transaction.ledger_item
     return if ledger_item.nil?
 
-    ledger = event.ledger
+    ledger = transaction.subledger.present? ? transaction.subledger.card_grant&.ledger : event.ledger
     return if ledger.nil?
 
     Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: Ledger::Mapper::SYSTEM)

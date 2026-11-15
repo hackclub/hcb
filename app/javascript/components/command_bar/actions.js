@@ -388,6 +388,15 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/wires'),
     },
     {
+      id: 'admin-wire-lookup',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Wire lookup',
+      keywords: 'uetr swift tracking wire',
+      icon: <Icon glyph="web" size={16} />,
+      perform: navigate('/admin/wire_lookup'),
+    },
+    {
       id: 'admin-wise-transfers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -419,6 +428,14 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Pending ledger',
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/pending_ledger'),
+    },
+    {
+      id: 'admin-ledger-items',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Ledger items',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/ledger_items'),
     },
     {
       id: 'admin-raw-transactions',

@@ -1,9 +1,13 @@
-<%# locals: (user:, payout_method:, open: false, locking_reports: [], sole_method: false) %>
+<%# locals: (user:, payout_method:, locking_reports: [], sole_method: false, initial_row_id: payout_method.id.to_s) %>
+<%# herb:slots client %>
+<%# The list binds `selected_row` so only one row is open at a time. %>
+<%# herb:state (selected_row: "", row_id: initial_row_id) %>
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
+<% form_id = "payout_method_form_#{payout_method.id}" %>
 
-<div class="payout-methods__row" data-payout-methods-row>
+<div class="payout-methods__row">
   <div class="flex items-center" style="gap: 14px; padding: 16px 20px;">
     <div class="payout-methods__icon flex items-center justify-center flex-shrink-0"
          style="width: 40px; height: 40px; border-radius: 10px;">
@@ -22,7 +26,7 @@
       </div>
     </div>
 
-    <div class="flex items-center flex-shrink-0" style="gap: 8px;" data-pm-actions>
+    <div class="flex items-center flex-shrink-0" style="gap: 8px;">
       <% if locked %>
         <button type="button" class="btn btn-small tooltipped tooltipped--n flex items-center justify-center"
                 aria-label="Can't be edited while <%= pluralize(locking_reports.size, "reimbursement") %> using it <%= locking_reports.one? ? "is" : "are" %> being processed. Click to view."
@@ -30,9 +34,9 @@
           <%= inline_icon "private", size: 18, class: "!m-0" %>
         </button>
       <% else %>
-        <button type="button" class="btn btn-small pm-edit" data-action="payout-methods#editRow">Edit</button>
-        <button type="button" class="btn btn-small bg-success pm-save" data-action="payout-methods#saveRow">Save</button>
-        <button type="button" class="btn btn-small pm-cancel" data-action="payout-methods#cancelRow">Cancel</button>
+        <button type="button" class="btn btn-small" value="<%= payout_method.id %>" hidden="<%= selected_row == row_id %>" data-herb-set="selected_row=$value">Edit</button>
+        <button type="submit" form="<%= form_id %>" class="btn btn-small bg-success" hidden="<%= selected_row != row_id %>">Save</button>
+        <button type="button" class="btn btn-small" hidden="<%= selected_row != row_id %>" data-herb-set="selected_row=''">Cancel</button>
       <% end %>
     </div>
 
@@ -85,8 +89,8 @@
       <% end %>
     </section>
   <% else %>
-    <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
-      <%= render "users/payout_form/form", user:, editing: payout_method %>
+    <div style="padding: 0 20px 20px;" hidden="<%= selected_row != row_id %>">
+      <%= render "users/payout_form/form", user:, editing: payout_method, form_id: %>
     </div>
   <% end %>
 </div>
