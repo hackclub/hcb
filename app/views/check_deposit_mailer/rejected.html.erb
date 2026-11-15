@@ -1,3 +1,3 @@
 <%= link_to "Your #{render_money @check_deposit.amount_cents} check deposit", hcb_code_url(@check_deposit.local_hcb_code) %> to <strong><%= link_to @check_deposit.event.name, @check_deposit.event %></strong> was rejected.
 <br><br>
-<%= link_to "Click here", hcb_code_url(@check_deposit.local_hcb_code) %> to see why.
+<%= link_to "View the rejection reason", hcb_code_url(@check_deposit.local_hcb_code) %> on HCB.
