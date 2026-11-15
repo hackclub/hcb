@@ -118,7 +118,6 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
-  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
@@ -483,8 +482,6 @@ class Event < ApplicationRecord
                          .where("canonical_transactions.date >= ?", 6.months.ago)
                          .distinct)
   }
-
-  scope :dormant, -> { where.not(id: Event.engaged) }
 
   has_many :fees
   has_many :bank_fees
@@ -901,14 +898,6 @@ class Event < ApplicationRecord
     2
   end
 
-  def engaged?
-    canonical_transactions.where("date >= ?", 6.months.ago).any?
-  end
-
-  def dormant?
-    !engaged?
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -955,6 +944,12 @@ class Event < ApplicationRecord
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
+  end
+
+  # How donations and invoice payments show up on bank and card statements,
+  # e.g. "HCB* Hack Club".
+  def statement_descriptor
+    StripeService::StatementDescriptor.format(short_name, as: :full)
   end
 
   monetize :minimum_wire_amount_cents

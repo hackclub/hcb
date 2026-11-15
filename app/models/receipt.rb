@@ -59,6 +59,14 @@ class Receipt < ApplicationRecord
 
   attr_accessor :lost_receipt_statement
 
+  # The HCB code of the transaction this receipt is attached to, whether the
+  # receiptable is the HCB code itself or the transaction's ledger item. Nil in
+  # the receipt bin and on every other kind of receiptable (expenses, payments,
+  # canonical transactions). See Receiptable#receipt_hcb_code.
+  def hcb_code
+    receiptable.try(:receipt_hcb_code)
+  end
+
   has_many :suggested_pairings, dependent: :destroy
   has_one :lost_receipt_filing, class_name: "LostReceipt::Filing", dependent: :destroy
 
@@ -83,7 +91,16 @@ class Receipt < ApplicationRecord
     end
   end
 
-  # The no/lost mark stays until the last receipt is removed.
+  # A real receipt clears the no/lost mark, unless a lost receipt statement is on file.
+  before_create do
+    if !lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at) && !receiptable.receipts.lost_receipt_statement.exists?
+      receiptable.update(marked_no_or_lost_receipt_at: nil)
+      # An HCB code and its ledger item each keep a copy of the mark; clear both.
+      receiptable.try(:sync_no_or_lost_receipt!)
+    end
+  end
+
+  # A lost receipt statement is what marks the transaction no/lost.
   before_save do
     if lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable.update!(marked_no_or_lost_receipt_at: receiptable.marked_no_or_lost_receipt_at || Time.current)
@@ -91,8 +108,8 @@ class Receipt < ApplicationRecord
     end
   end
 
-  after_destroy { clear_lost_receipt_marker_if_empty(receiptable) }
-  after_update { clear_lost_receipt_marker_if_empty(previous_receiptable) }
+  after_destroy { clear_lost_receipt_marker_without_statement(receiptable) }
+  after_update { clear_lost_receipt_marker_without_statement(previous_receiptable) }
   after_update_commit do
     if (previous = previous_receiptable)
       CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
@@ -224,8 +241,8 @@ class Receipt < ApplicationRecord
   end
 
   def extracted_incorrect_merchant?
-    if receiptable.try(:stripe_merchant) && extracted_merchant_name
-      return WhiteSimilarity.similarity(humanized_merchant_name(receiptable.stripe_merchant), extracted_merchant_name) < 0.5
+    if hcb_code&.stripe_merchant && extracted_merchant_name
+      return WhiteSimilarity.similarity(humanized_merchant_name(hcb_code.stripe_merchant), extracted_merchant_name) < 0.5
     end
 
     false
@@ -272,8 +289,8 @@ class Receipt < ApplicationRecord
     receiptable_type_before_last_save&.constantize&.find_by(id: receiptable_id_before_last_save)
   end
 
-  def clear_lost_receipt_marker_if_empty(record)
-    return unless record&.has_attribute?(:marked_no_or_lost_receipt_at) && !record.receipts.exists?
+  def clear_lost_receipt_marker_without_statement(record)
+    return unless record&.has_attribute?(:marked_no_or_lost_receipt_at) && !record.receipts.lost_receipt_statement.exists?
 
     record.update!(marked_no_or_lost_receipt_at: nil)
     record.sync_no_or_lost_receipt!

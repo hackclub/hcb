@@ -1,0 +1,9 @@
+<%# locals: (title:, description:, icon:) %>
+
+<%# Body of one row in the grant controls list. The row itself is the button or link, so everything in here is inline. %>
+<span class="grant-icon"><%= inline_icon icon, size: 20 %></span>
+<span class="grant-action__text">
+  <span class="grant-action__title"><%= title %></span>
+  <span class="grant-action__desc"><%= description %></span>
+</span>
+<%= inline_icon "view-forward", size: 24, class: "grant-action__arrow" %>

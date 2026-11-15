@@ -20,10 +20,12 @@
 #  form_type                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
+#  source                         :string           default("taxbandits"), not null
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
 #  tin_type                       :string
+#  tin_verified                   :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
@@ -31,8 +33,9 @@
 #
 # Indexes
 #
-#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
-#  index_tax_forms_on_tin_hash         (tin_hash)
+#  index_tax_forms_on_legal_entity_id            (legal_entity_id)
+#  index_tax_forms_on_tin_hash                   (tin_hash)
+#  index_tax_forms_unique_live_tax1099_tin_hash  (tin_hash) UNIQUE WHERE (((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))
 #
 
 module Tax
@@ -50,8 +53,12 @@ module Tax
     belongs_to :legal_entity
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
-    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
     enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
+
+    # External service describes what service the form is currently linked to
+    # Source describes where the data initially came from
+    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
+    enum :source, { taxbandits: "taxbandits", tax1099: "tax1099", manual: "manual" }
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[
@@ -86,6 +93,15 @@ module Tax
       mark_completed! if may_mark_completed?
     end
 
+    # tin_verified is what payability reads (LegalEntity#pending_payable_requirements).
+    # For a form collected through TaxBandits it follows TaxBandits' TIN match.
+    # Tax1099 imports are never TIN-matched, so their status never changes:
+    # Tax1099ImportService sets tin_verified from the admin's answer when it
+    # creates them, without going through the match-status emails below.
+    before_save if: :will_save_change_to_taxbandits_tin_matching_status? do
+      self.tin_verified = taxbandits_tin_match_success?
+    end
+
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
       Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
 
@@ -97,18 +113,7 @@ module Tax
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      # Locked: a legal entity's TIN can never change once set, and two forms
-      # completing concurrently would otherwise both see a nil hash and race.
-      #
-      # A form whose entity type disagrees with the legal entity's is a filing
-      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
-      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
-      # flags it and the payee is prompted to discard it.
-      legal_entity.with_lock do
-        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
-          legal_entity.update!(tin_hash:)
-        end
-      end
+      adopt_tin_hash_on_legal_entity!
     end
 
     aasm timestamps: true do
@@ -154,6 +159,27 @@ module Tax
       end
 
       mark_sent!
+    end
+
+    # Gives the legal entity this form's TIN identity, if it has none yet. Runs
+    # when a form's tin_hash is first set; Tax1099ImportService, which creates
+    # its forms with a tin_hash already set, calls it once TaxBandits has
+    # accepted the form, so a TIN TaxBandits rejects never reaches the entity.
+    def adopt_tin_hash_on_legal_entity!
+      return if tin_hash.nil?
+
+      # Locked: a legal entity's TIN can never change once set, and two forms
+      # completing concurrently would otherwise both see a nil hash and race.
+      #
+      # A form whose entity type disagrees with the legal entity's is a filing
+      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
+      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
+      # flags it and the payee is prompted to discard it.
+      legal_entity.with_lock do
+        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
+          legal_entity.update!(tin_hash:)
+        end
+      end
     end
 
     def sync_with_taxbandits

@@ -2552,9 +2552,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
 
   create_table "repayments", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
+    t.bigint "created_by_id"
+    t.bigint "disbursement_id"
+    t.bigint "repaying_ledger_item_id"
     t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_repayments_on_created_by_id"
     t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id", unique: true
+    t.index ["repaying_ledger_item_id"], name: "index_repayments_on_repaying_ledger_item_id", unique: true
+    t.check_constraint "num_nonnulls(disbursement_id, repaying_ledger_item_id) = 1", name: "repayments_disbursement_or_repaying_ledger_item"
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -2751,13 +2756,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "signing_url"
+    t.string "source", default: "taxbandits", null: false
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
     t.string "tin_type"
+    t.boolean "tin_verified", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
     t.index ["tin_hash"], name: "index_tax_forms_on_tin_hash"
+    t.index ["tin_hash"], name: "index_tax_forms_unique_live_tax1099_tin_hash", unique: true, where: "(((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))"
   end
 
   create_table "tours", force: :cascade do |t|
@@ -3327,6 +3335,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "repayment_allocations", "ledger_items"
   add_foreign_key "repayment_allocations", "repayments"
   add_foreign_key "repayments", "disbursements"
+  add_foreign_key "repayments", "ledger_items", column: "repaying_ledger_item_id"
+  add_foreign_key "repayments", "users", column: "created_by_id"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

@@ -266,6 +266,29 @@ RSpec.describe ReceiptablesController do
     end
   end
 
+  # Receipts are moving onto ledger items (#14106), so the upload form can post
+  # the ledger item as the receiptable while still carrying the HCB code's secret.
+  describe "#mark_no_or_lost with a Ledger::Item receiptable" do
+    let(:ledger_item) { hcb_code.reload.ledger_item }
+
+    it "marks both sides using the HCB code's secret, without signing in" do
+      post(:mark_no_or_lost, params: { receiptable_type: "Ledger::Item", receiptable_id: ledger_item.id, s: secret, lost_receipt_statement: details })
+
+      expect(ledger_item.reload).to be_no_or_lost_receipt
+      expect(hcb_code.reload).to be_no_or_lost_receipt
+      expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
+    end
+
+    it "refuses a secret issued for a different transaction" do
+      other_secret = create(:canonical_pending_transaction).local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
+
+      post(:mark_no_or_lost, params: { receiptable_type: "Ledger::Item", receiptable_id: ledger_item.id, s: other_secret, lost_receipt_statement: details })
+
+      expect(ledger_item.reload).not_to be_no_or_lost_receipt
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
+
   context "models including Receiptable" do
     it "are explicitly registered" do
       Rails.application.eager_load!

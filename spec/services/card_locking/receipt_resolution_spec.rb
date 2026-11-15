@@ -10,13 +10,11 @@ require "rails_helper"
 #
 # NOTE: ReceiptsController's RECEIPTABLE_TYPE_MAP also allows Ledger::Item for
 # regular receipt uploads, and on_receipt_upsert/on_receipt_destroy had the
-# identical is_a?(HcbCode) gate - fixed the same way here for consistency -
-# but a receipt attached with receiptable_type: "Ledger::Item" is invisible
-# to HcbCode#receipts (a separate has_many :receipts, as: :receiptable, not
-# overridden the way Ledger::Item#receipts is), so
-# materialize_card_locking!'s own card_locking_resolved_at computation still
-# can't see it. That's a deeper gap in CardLocking::ChargeBehavior/HcbCode,
-# not in ReceiptResolution, and isn't covered here.
+# identical is_a?(HcbCode) gate - fixed the same way here for consistency.
+# HcbCode#receipts reads receipts attached to either the code or its ledger
+# item (see Receiptable#receipts), so materialize_card_locking!'s
+# card_locking_resolved_at sees a receipt uploaded to the ledger item too;
+# that's covered in spec/models/concerns/receiptable_spec.rb.
 RSpec.describe CardLocking::ReceiptResolution do
   include_context "card locking charges"
   include ActiveJob::TestHelper

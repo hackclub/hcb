@@ -689,6 +689,22 @@ class HcbCode < ApplicationRecord
     super
   end
 
+  # A payout's receipts live on its expense (see #receipts), which the ledger
+  # rows don't preload.
+  def preloaded_receipts
+    return if reimbursement_expense_payout?
+
+    super
+  end
+
+  # While receipts are split across an HCB code and its ledger item (see
+  # Receiptable#receipts), a code has a receipt if either side does. Keyed on
+  # the code's own columns so the receipt scopes and the raw transaction
+  # queries can use it without a join.
+  def self.receipts_exist_sql
+    "EXISTS (#{Receipt.select("1").where("(receipts.receiptable_type = 'HcbCode' AND receipts.receiptable_id = hcb_codes.id) OR (receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = hcb_codes.ledger_item_id)").to_sql})"
+  end
+
   def local_hcb_code
     self
   end

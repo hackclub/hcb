@@ -29,9 +29,17 @@ class Metric
       include Subject
 
       def calculate
-        Receipt.joins("JOIN hcb_codes h ON receipts.receiptable_id = h.id")
+        # A transaction's receipt may be attached to its HCB code or to its
+        # ledger item (see Receiptable#receipts); measure from the HCB code's
+        # creation either way.
+        hcb_codes_join = <<~SQL.squish
+          JOIN hcb_codes h
+            ON (receipts.receiptable_type = 'HcbCode' AND receipts.receiptable_id = h.id)
+            OR (receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = h.ledger_item_id)
+        SQL
+
+        Receipt.joins(hcb_codes_join)
                .where("EXTRACT(YEAR FROM receipts.created_at) = ?", Metric.year)
-               .where(receiptable_type: "HcbCode")
                .where(user_id: user.id)
                .average("EXTRACT(EPOCH FROM (receipts.created_at - h.created_at))")
       end
