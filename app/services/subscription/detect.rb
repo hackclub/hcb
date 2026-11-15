@@ -127,7 +127,7 @@ class Subscription
         raise ActiveRecord::Rollback if linked != items.size
       end
 
-      subscription if subscription.persisted?
+      subscription.tap(&:score!) if subscription.persisted?
     end
 
     # The cycle length in days, or nil. The typical (median) gap has to be close

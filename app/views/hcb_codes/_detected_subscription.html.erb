@@ -12,6 +12,10 @@
       Next charge expected around <%= subscription.next_expected_at.to_date.to_fs(:long) %>.
     <% end %>
   </p>
+  <p class="mt0 mb2 muted">
+    Confidence <%= subscription.confidence %>%:
+    <%= subscription.signals.map { |signal, value| "#{signal.to_s.humanize(capitalize: false)} #{(value * 100).round}%" }.to_sentence %>.
+  </p>
   <ul class="list-reset m0">
     <% subscription.ledger_items.includes(:hcb_code).order(datetime: :desc).each do |ledger_item| %>
       <li>

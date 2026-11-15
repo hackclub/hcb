@@ -10,6 +10,7 @@ class CreateSubscriptions < ActiveRecord::Migration[8.1]
       t.integer :amount_cents, null: false
       t.boolean :variable_amount, null: false, default: false
       t.integer :cadence_days, null: false
+      t.integer :confidence, null: false, default: 0
       t.datetime :last_charged_at, null: false
       t.datetime :next_expected_at, null: false
 

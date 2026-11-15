@@ -62,6 +62,15 @@ RSpec.describe Subscription::Detect do
     expect(charge(91, amount_cents: -7_00)).to eq(Subscription.sole)
   end
 
+  it "is more confident in a long, flat, regular subscription than a short, varying one" do
+    flat = [0, 30, 60, 90, 120, 150].map { |day| charge(day) }.last
+    varying = [0, 27, 62].map { |day| charge(day, amount_cents: -(10_00 + (day * 100)), network_id: "parts-1") }.last
+
+    expect(flat.confidence).to eq(85) # everything but the merchant category
+    expect(varying.signals).to include(charges: 0.4, amount: be_within(0.01).of(0.33), card: 1.0, no_skips: 1.0)
+    expect(varying.confidence).to be < 50
+  end
+
   it "ignores purchases that aren't on a cadence" do
     [0, 3, 6, 40, 47].each { |day| charge(day, amount_cents: -(5_00 + day)) }
     [0, 3, 6].each { |day| charge(day, network_id: "coffee-1") }

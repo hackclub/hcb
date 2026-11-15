@@ -2680,6 +2680,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120300) do
   create_table "subscriptions", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.integer "cadence_days", null: false
+    t.integer "confidence", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "last_charged_at", null: false
     t.bigint "ledger_id", null: false

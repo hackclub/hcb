@@ -7,6 +7,7 @@
 #  id                :bigint           not null, primary key
 #  amount_cents      :integer          not null
 #  cadence_days      :integer          not null
+#  confidence        :integer          default(0), not null
 #  last_charged_at   :datetime         not null
 #  merchant_key      :string           not null
 #  name              :string           not null
@@ -42,6 +43,7 @@
 #   variable_amount   true when the amount changes every time (usage billing)
 #   cadence_days      cycle length: 7, 14, 30, 60, 90, 180 or 365
 #   next_expected_at  when the next charge is due
+#   confidence        0 to 100: how sure we are this is a subscription
 #   charges           ledger_items.subscription_id
 #
 # What is covered, and how
@@ -65,6 +67,20 @@
 #   In-person purchases         Chip, swipe and tap charges are ignored.
 #   Cancelled                   lapsed? once a whole cycle is missed.
 #
+# Confidence
+#
+#   Detection decides what could be a subscription; confidence says how sure we
+#   are. It is a weighted sum of signals, each between 0 and 1, recomputed on
+#   every charge. The weights are first guesses, to be tuned against real data
+#   until one cut-off is safe to act on and a lower one is worth asking about.
+#
+#   charges (25)      more charges, up to 6
+#   regularity (20)   how close the gaps are to whole cycles
+#   amount (20)       share of charges at the most common amount
+#   category (15)     merchant sells subscriptions (software, utilities, ...)
+#   card (10)         share of charges on the most common cardholder
+#   no_skips (10)     share of gaps that are exactly one cycle
+#
 # Not covered yet
 #
 #   ACH and other rails         The schema allows them; nothing detects them.
@@ -83,6 +99,13 @@ class Subscription < ApplicationRecord
   }.freeze
   # How far a gap or a flat amount may be off, as a fraction.
   TOLERANCE = 0.2
+
+  WEIGHTS = { charges: 25, regularity: 20, amount: 20, category: 15, card: 10, no_skips: 10 }.freeze
+  SUBSCRIPTION_CATEGORIES = %w[
+    computer_software_stores computer_programming computer_network_services digital_goods_applications
+    digital_goods_media telecommunication_services cable_satellite_and_other_pay_television_and_radio
+    utilities insurance_default continuity_subscription_merchant
+  ].freeze
 
   belongs_to :ledger
   belongs_to :payment_rail, polymorphic: true
@@ -111,6 +134,29 @@ class Subscription < ApplicationRecord
     next_expected_at + cadence_days.days < Time.current
   end
 
+  # The confidence signals, each between 0 and 1. See WEIGHTS.
+  def signals
+    items = ledger_items.includes(linked_object: :stripe_card).order(:datetime, :id).to_a
+    charges = items.map(&:linked_object)
+    gaps = items.each_cons(2).map { |a, b| (b.datetime - a.datetime) / 1.day }
+    cycles = gaps.map { |gap| [(gap / cadence_days).round, 1].max }
+    off_by = gaps.zip(cycles).sum { |gap, k| (gap - (k * cadence_days)).abs } / [gaps.size, 1].max
+    share = ->(values) { values.tally.values.max.to_f / values.size }
+
+    {
+      charges: [items.size - 1, 5].min / 5.0,
+      regularity: [1 - (off_by / (TOLERANCE * cadence_days)), 0].max,
+      amount: share.call(items.map(&:amount_cents)),
+      category: charges.last.merchant_category.in?(SUBSCRIPTION_CATEGORIES) ? 1.0 : 0.0,
+      card: share.call(charges.map { |charge| charge.stripe_card&.stripe_cardholder_id }),
+      no_skips: cycles.empty? ? 1.0 : cycles.count(1).to_f / cycles.size,
+    }
+  end
+
+  def score!
+    update!(confidence: signals.sum { |signal, value| WEIGHTS.fetch(signal) * value }.round)
+  end
+
   # Updates the subscription for a charge, without saving.
   #
   # An on-time charge moves the due date one cycle past itself. A late one fills
@@ -135,7 +181,7 @@ class Subscription < ApplicationRecord
     return if Ledger::Item.where(id: ledger_item.id, subscription_id: nil).update_all(subscription_id: id).zero?
 
     record_charge(at: ledger_item.datetime, amount_cents: ledger_item.amount_cents.abs, payment_rail:)
-    save!
+    score!
   end
 
 end
