@@ -59,11 +59,13 @@ class AchTransfersController < ApplicationController
 
     if @ach_transfer.save
       if ach_transfer_params[:file]
+        # The transfer memoized its HCB code before its pending transaction
+        # assigned the code's ledger item, so re-read it.
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: ach_transfer_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @ach_transfer.local_hcb_code
+          receiptable: @ach_transfer.local_hcb_code.reload.ledger_item
         ).run!
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }

@@ -113,11 +113,11 @@ module Payroll
     # invoice triggers, so hand it over on approval. Payment::Attempt makes the
     # same hand-off from payment to transfer, but only at the moment it creates
     # the transfer — when the payee was ready to be paid straight away that
-    # already happened, so catch the transfer's HCB code up here too.
+    # already happened, so catch the transfer's ledger item up here too.
     def copy_receipts_to_payment!
       return if payment.nil?
 
-      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
+      [payment, payment.latest_payout&.local_hcb_code&.ledger_item].compact.each do |receiptable|
         Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
       end
     end

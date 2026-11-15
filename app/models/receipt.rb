@@ -82,22 +82,6 @@ class Receipt < ApplicationRecord
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
-  # A transaction's receipts live on its ledger item
-  # (https://github.com/hackclub/hcb/issues/14106), so a receipt handed an HCB
-  # code is attached to the code's item instead. The item is looked up afresh:
-  # a transfer memoizes its code before the pending transaction that creates
-  # the item commits, so the instance a controller hands over can predate it.
-  #
-  # A code with no item keeps the receipt, and nothing moves it later. The
-  # item is assigned when the transaction's pending transaction commits, so
-  # callers that attach a receipt to a transfer they just created must do so
-  # after that commit, not inside the transaction that creates the transfer.
-  # The codes left without an item are the empty HCB-000 ones.
-  before_validation if: -> { receiptable.is_a?(HcbCode) } do
-    ledger_item_id = receiptable.ledger_item_id || HcbCode.where(id: receiptable).pick(:ledger_item_id)
-    self.receiptable = receiptable.ledger_item || Ledger::Item.find(ledger_item_id) if ledger_item_id
-  end
-
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable.update(marked_no_or_lost_receipt_at: nil)

@@ -453,11 +453,13 @@ module Reimbursement
 
       # The receipts belong on the transfer's ledger item, which is only
       # assigned once its pending transaction commits, so copy them after the
-      # transaction above.
+      # transaction above. The transfer memoized its HCB code before the item
+      # was assigned, so re-read it.
+      ledger_item = wise_transfer.local_hcb_code.reload.ledger_item
       expenses.each do |expense|
         expense.receipts.each do |receipt|
           ::ReceiptService::Create.new(
-            receiptable: wise_transfer.local_hcb_code,
+            receiptable: ledger_item,
             uploader: as,
             attachments: [receipt.file.blob],
             upload_method: :duplicate

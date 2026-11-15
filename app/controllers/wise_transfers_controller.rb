@@ -33,11 +33,13 @@ class WiseTransfersController < ApplicationController
 
     if @wise_transfer.save
       if wise_transfer_params[:file]
+        # The transfer memoized its HCB code before its pending transaction
+        # assigned the code's ledger item, so re-read it.
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: wise_transfer_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @wise_transfer.local_hcb_code
+          receiptable: @wise_transfer.local_hcb_code.reload.ledger_item
         ).run!
       end
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }

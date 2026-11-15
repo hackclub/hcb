@@ -163,9 +163,10 @@ class Payment
             # is only assigned once its pending transaction commits. Attempts
             # are created inside their callers' transactions (the payment's
             # lock, a payee reassignment), so wait for the outermost one. A
-            # rolled-back savepoint drops the block.
+            # rolled-back savepoint drops the block. The transfer memoized its
+            # HCB code before the item was assigned, so re-read it.
             ActiveRecord.after_all_transactions_commit do
-              Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
+              Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code.reload.ledger_item)
             end
 
             mark_under_review!

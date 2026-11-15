@@ -30,11 +30,13 @@ class IncreaseChecksController < ApplicationController
 
     if @check.save
       if check_params[:file]
+        # The transfer memoized its HCB code before its pending transaction
+        # assigned the code's ledger item, so re-read it.
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: check_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @check.local_hcb_code
+          receiptable: @check.local_hcb_code.reload.ledger_item
         ).run!
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }

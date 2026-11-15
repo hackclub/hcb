@@ -206,7 +206,7 @@ RSpec.describe "Discord Webhook", type: :request do
         create(:organizer_position, user:, event:)
 
         expect { submit_modal }.to change(Receipt, :count).by(1)
-        expect(Receipt.last).to have_attributes(user:, receiptable: hcb_code, upload_method: "discord_bot_modal")
+        expect(Receipt.last).to have_attributes(user:, receiptable: hcb_code.ledger_item, upload_method: "discord_bot_modal")
       end
     end
   end

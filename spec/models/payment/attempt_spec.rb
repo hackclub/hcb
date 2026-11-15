@@ -362,7 +362,7 @@ RSpec.describe Payment::Attempt, type: :model do
       end
     end
 
-    it "calls Receipt.reupload to transfer payment receipts to the new transfer's hcb_code after the transaction commits" do
+    it "calls Receipt.reupload to transfer payment receipts to the new transfer's ledger item after the transaction commits" do
       payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
       attempt = build(:payment_attempt)
       allow(attempt).to receive(:create_transfer!).and_call_original
@@ -372,8 +372,10 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:payout=)
 
       payee_dbl = double("payee", display_name: "Alice", email: "alice@example.com")
-      hcb_code  = double("hcb_code")
-      check     = double("check", save!: nil, "payment_attempt=": nil, local_hcb_code: hcb_code)
+      ledger_item = double("ledger_item")
+      hcb_code = double("hcb_code", ledger_item:)
+      allow(hcb_code).to receive(:reload).and_return(hcb_code)
+      check = double("check", save!: nil, "payment_attempt=": nil, local_hcb_code: hcb_code)
       checks_rel = double("checks_rel", build: check)
       event_dbl  = double("event", increase_checks: checks_rel)
       payment_dbl = double("payment",
@@ -387,7 +389,7 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:payment).and_return(payment_dbl)
 
       allow(User).to receive(:system_user).and_return(double("system_user"))
-      expect(Receipt).to receive(:reupload).with(old_receiptable: payment_dbl, new_receiptable: hcb_code)
+      expect(Receipt).to receive(:reupload).with(old_receiptable: payment_dbl, new_receiptable: ledger_item)
       attempt.send(:create_transfer!)
     end
   end

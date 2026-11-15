@@ -39,15 +39,17 @@ module Api
 
         @ach_transfer.save!
 
-        # The receipt is attached after the save commits: a transfer's ledger
-        # item, which the receipt belongs on, is only assigned once its pending
-        # transaction commits (see Receipt's before_validation).
+        # The receipt belongs on the transfer's ledger item, which is only
+        # assigned once the pending transaction created with the transfer
+        # commits, so attach it after the save rather than in a transaction
+        # around both. The transfer memoized its HCB code before the item was
+        # assigned, so re-read it.
         if ach_transfer_params[:file]
           ::ReceiptService::Create.new(
             uploader: current_user,
             attachments: Array(ach_transfer_params[:file]),
             upload_method: :api,
-            receiptable: @ach_transfer.local_hcb_code
+            receiptable: @ach_transfer.local_hcb_code.reload.ledger_item
           ).run!
         end
 

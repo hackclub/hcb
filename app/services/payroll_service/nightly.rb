@@ -31,11 +31,13 @@ module PayrollService
             payment.payout = check
             payment.save!
 
+            # The check memoized its HCB code before its pending transaction
+            # assigned the code's ledger item, so re-read it.
             ::ReceiptService::Create.new(
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: check.local_hcb_code
+              receiptable: check.local_hcb_code.reload.ledger_item
             ).run!
 
             check.send_check! if payment.previously_paid?
@@ -64,7 +66,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: ach_transfer.local_hcb_code
+              receiptable: ach_transfer.local_hcb_code.reload.ledger_item
             ).run!
 
             if payment.previously_paid?

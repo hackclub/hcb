@@ -113,14 +113,16 @@
     <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
 
-  <div style="width: 250px;">
-    <%= render partial: "receipts/form_v3", locals: {
-          receiptable: @canonical_transaction.local_hcb_code,
-          upload_method: "attach_receipt_page",
-          turbo: false,
-          redirect_url: ledger_admin_index_path
-        } %>
-  </div>
+  <% if @hcb_code.ledger_item %>
+    <div style="width: 250px;">
+      <%= render partial: "receipts/form_v3", locals: {
+            receiptable: @hcb_code.ledger_item,
+            upload_method: "attach_receipt_page",
+            turbo: false,
+            redirect_url: ledger_admin_index_path
+          } %>
+    </div>
+  <% end %>
 <% end %>
 
 <h4 class="mb2">Comments</h4>
