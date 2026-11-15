@@ -1,17 +1,51 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: lost_receipt_statements
+#
+#  id                 :bigint           not null, primary key
+#  confirmed_at       :datetime         not null
+#  date               :date             not null
+#  items              :jsonb            not null
+#  merchant           :string           not null
+#  purpose            :text             not null
+#  signer_name        :string           not null
+#  total_amount_cents :integer          not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  event_id           :bigint
+#  receipt_id         :bigint           not null
+#  submitter_id       :bigint
+#
+# Indexes
+#
+#  index_lost_receipt_statements_on_event_id      (event_id)
+#  index_lost_receipt_statements_on_receipt_id    (receipt_id) UNIQUE
+#  index_lost_receipt_statements_on_submitter_id  (submitter_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (receipt_id => receipts.id)
+#  fk_rails_...  (submitter_id => users.id)
+#
 module LostReceipt
-  class Statement
-    include ActiveModel::Model
-    include ActiveModel::Attributes
-
+  # What someone said they bought, saved next to the PDF generated from it.
+  class Statement < ApplicationRecord
     CONFIRMATION = "I confirm these details are accurate and that I have made every effort possible to get the receipt."
 
-    attr_accessor :receipt, :receiptable, :submitter, :merchant, :purpose, :signer_name, :confirmed_at
+    belongs_to :receipt, inverse_of: :lost_receipt_statement
+    belongs_to :event, optional: true
+    belongs_to :submitter, class_name: "User", optional: true
 
-    attribute :date, :date
+    # The transaction being described. Not stored: the receipt records where it's attached.
+    attr_accessor :receiptable
+
     attribute :confirmed, :boolean
-    attribute :items, default: -> { [] }
+
+    # Only once the items are known to be valid numbers.
+    before_save { self[:total_amount_cents] = total_amount_cents }
 
     validates :date, :merchant, :purpose, :signer_name, presence: true
     validates :merchant, :signer_name, length: { maximum: 255 }
@@ -30,15 +64,26 @@ module LostReceipt
       self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
     end
 
+    # Stored as JSON, used as Items.
+    def items
+      @items ||= Array(self[:items]).map { |item| Item.new(item) }
+    end
+
+    def items=(items)
+      @items = items
+      self[:items] = items.map { |item| { description: item.description, quantity: Integer(item.quantity, exception: false) || item.quantity, unit_amount_cents: item.unit_amount_cents } }
+    end
+
     # The receipt is only saved once the PDF is stored, so a failed render or
     # upload leaves the transaction missing its receipt.
     def submit(receiptable: self.receiptable)
       self.receiptable = receiptable
+      self.event = receiptable.try(:event)
+      self.confirmed_at = Time.current
+      # A transaction's receipts live on its ledger item (#14106). Saving the receipt saves this statement.
+      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       return false unless valid?
 
-      self.confirmed_at = Time.current
-      # A transaction's receipts live on its ledger item (#14106).
-      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
       # Created before uploading so a partial upload can still be purged.
