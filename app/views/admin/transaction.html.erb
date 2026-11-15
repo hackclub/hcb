@@ -115,7 +115,7 @@
 
   <div style="width: 250px;">
     <%= render partial: "receipts/form_v3", locals: {
-          receiptable: @canonical_transaction.local_hcb_code.ledger_item_or_self,
+          receiptable: @canonical_transaction.local_hcb_code,
           upload_method: "attach_receipt_page",
           turbo: false,
           redirect_url: ledger_admin_index_path

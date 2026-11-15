@@ -699,14 +699,6 @@ class HcbCode < ApplicationRecord
     super
   end
 
-  # A transaction's receipts live on its ledger item
-  # (https://github.com/hackclub/hcb/issues/14106); this is the record to attach
-  # them to. A code with no ledger item yet (HCB-000 codes with no transactions
-  # never get one) holds them itself.
-  def ledger_item_or_self
-    ledger_item || self
-  end
-
   # Hands any receipt still attached to this code over to its ledger item once
   # the code is linked to one. A receipt can be attached before the item
   # exists: transfers attach one on creation and only get their item once their
