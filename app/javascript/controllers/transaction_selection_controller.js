@@ -37,7 +37,9 @@ export default class extends Controller {
     const transactions = this.transactionsValue.filter(
       transaction => transaction.id !== id
     )
-    if (target.checked) transactions.push({ id, memo, date, amount })
+    // `max` is what's left to repay; `amount` starts there and can be lowered.
+    if (target.checked)
+      transactions.push({ id, memo, date, amount, max: amount })
     this.transactionsValue = transactions
     this.refresh()
   }
@@ -57,6 +59,18 @@ export default class extends Controller {
     ).focus()
   }
 
+  // Repaying less than what's left of a transaction. The list isn't rebuilt,
+  // so the field being typed in keeps focus.
+  setAmount({ target }) {
+    const id = target.dataset.transactionSelectionIdParam
+    this.transactionsValue = this.transactionsValue.map(transaction =>
+      transaction.id === id
+        ? { ...transaction, amount: target.value || '0' }
+        : transaction
+    )
+    this.summarize()
+  }
+
   clear() {
     this.transactionsValue = []
     this.refresh()
@@ -67,19 +81,19 @@ export default class extends Controller {
       this.checkboxTargetConnected(checkbox)
     )
     const transactions = this.transactionsValue
-    const cents = transactions.reduce(
-      (sum, transaction) => sum + Math.round(Number(transaction.amount) * 100),
-      0
-    )
-    this.summaryTarget.textContent = `${transactions.length} selected · ${USDollar.format(cents / 100)}`
     this.reviewTarget.hidden = transactions.length === 0
     this.listTarget.replaceChildren(
       ...transactions.map(transaction => {
         const row = this.templateTarget.content.cloneNode(true)
         row.querySelector('[data-memo]').textContent = transaction.memo
         row.querySelector('[data-date]').textContent = transaction.date
-        row.querySelector('[data-amount]').textContent = USDollar.format(
-          transaction.amount
+        const amount = row.querySelector('[data-amount]')
+        amount.value = transaction.amount
+        amount.max = transaction.max || transaction.amount
+        amount.dataset.transactionSelectionIdParam = transaction.id
+        amount.setAttribute(
+          'aria-label',
+          `Amount to repay of ${transaction.memo}, up to ${USDollar.format(amount.max)}`
         )
         const remove = row.querySelector('button')
         remove.dataset.transactionSelectionIdParam = transaction.id
@@ -87,6 +101,16 @@ export default class extends Controller {
         return row
       })
     )
+    this.summarize()
+  }
+
+  summarize() {
+    const transactions = this.transactionsValue
+    const cents = transactions.reduce(
+      (sum, transaction) => sum + Math.round(Number(transaction.amount) * 100),
+      0
+    )
+    this.summaryTarget.textContent = `${transactions.length} selected · ${USDollar.format(cents / 100)}`
     this.dispatch('change', { detail: transactions })
   }
 }

@@ -196,6 +196,10 @@ class DisbursementsController < ApplicationController
       if @repaid_ledger_items.size != hashids.size
         raise DisbursementService::Create::UserError, "One or more selected transactions can no longer be repaid."
       end
+
+      # How much of each to repay; one without an amount is repaid for all that's left.
+      amounts = disbursement_params[:repaid_amounts].to_h
+      @repaid_amounts = @repaid_ledger_items.to_h { |item| [item.id, amounts[item.hashid].presence && Monetize.parse(amounts[item.hashid]).cents] }.compact
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
@@ -217,7 +221,8 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug:,
       category_assignment_strategy:,
       transfer_type:,
-      repaid_ledger_item_ids: @repaid_ledger_items.to_a.map(&:id)
+      repaid_ledger_item_ids: @repaid_ledger_items.to_a.map(&:id),
+      repaid_amounts: @repaid_amounts.to_h
     ).run
 
     if disbursement_params[:file]
@@ -338,7 +343,7 @@ class DisbursementsController < ApplicationController
 
     @repaid_ledger_items = [item]
     @disbursement.transfer_type = :repayment
-    @disbursement.amount = -item.amount_cents
+    @disbursement.amount = Repayment.unrepaid_cents(item)
     @disbursement.name = "Repaying 1 transaction" if @disbursement.name.blank?
   end
 
@@ -378,6 +383,7 @@ class DisbursementsController < ApplicationController
       :scheduled_on,
       :transfer_type,
       { repaid_ledger_item_ids: [] },
+      { repaid_amounts: {} },
       { file: [] }
     ]
 

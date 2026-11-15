@@ -30,8 +30,9 @@
 # Links a repayment instance to a transaction it repays. The destination
 # organization had the expense; the source organization is paying it back.
 #
-# Each allocation still covers one expense in full. Partial repayment needs
-# separate accounting and category-snapshot handling before it can be enabled.
+# An allocation can cover an expense in full or in part, and several can add up
+# on the same expense. The part of an expense that isn't repaid stays under
+# its own category (see .sync_splits!).
 class Repayment
   class Allocation < ApplicationRecord
     belongs_to :repayment, inverse_of: :allocations
@@ -54,39 +55,49 @@ class Repayment
            .not_likely_account_verification_related
     end
 
-    # Repayable items that no live repayment covers yet.
+    # Repayable items that live repayments don't yet cover in full.
     def self.unrepaid_ledger_items(event)
-      repayable_ledger_items(event).where.not(id: not_failed.select(:ledger_item_id))
+      repaid = not_failed.where("repayment_allocations.ledger_item_id = ledger_items.id").select("SUM(repayment_allocations.amount_cents)")
+      repayable_ledger_items(event).where("-ledger_items.amount_cents > COALESCE((#{repaid.to_sql}), 0)")
+    end
+
+    # How much of an expense no live repayment covers yet.
+    def self.unrepaid_cents(ledger_item, excluding: nil)
+      -ledger_item.amount_cents - ledger_item.repayment_allocations.not_failed.where.not(id: excluding).sum(:amount_cents)
     end
 
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
     # Ledger item amounts can change later (e.g. a partial refund), so these are
     # only checked when the repayment is made.
     validate :repaid_transaction_is_an_expense_of_the_destination, on: :create
-    validate :repays_in_full, on: :create
-    validate :repaid_transaction_not_already_repaid, on: :create
+    validate :repays_no_more_than_is_unrepaid, on: :create
 
-    # Brings an expense's categories and splits in line with what it costs now.
-    # An expense's amount can change after it's repaid (a tip at settlement, a
-    # partial refund), and the amount repaid doesn't:
+    # Brings an expense's categories and splits in line with what it costs now
+    # and how much of it is repaid. An expense's amount can change after it's
+    # repaid (a tip at settlement, a partial refund), and the amounts repaid
+    # don't:
     #
     # - Costs what was repaid: the whole expense is a repayment, with no splits.
-    # - Costs more: the repaid part becomes a repayment split and the rest goes
-    #   back to the expense's own category.
+    # - Costs more, or was only repaid in part: each repaid part is a repayment
+    #   split and the rest stays under the expense's own category.
     # - Costs less: the whole expense is a repayment, and the part of the
-    #   payment beyond its cost is split off as an internal transfer.
+    #   payments beyond its cost is split off as an internal transfer, taken
+    #   from the latest repayments first.
     #
     # Works from the current state alone, so it's safe to run at any time.
-    def self.sync_splits!(ledger_item)
-      allocations = ledger_item.repayment_allocations.not_failed.order(:id).to_a
-      return if allocations.empty?
+    # `excluding` leaves out allocations that are being undone.
+    def self.sync_splits!(ledger_item, excluding: [])
+      allocations = ledger_item.repayment_allocations.not_failed.where.not(id: excluding).order(:id).to_a
+      return if allocations.empty? && excluding.empty?
 
-      TransactionSplit.where(repayment_allocation: allocations).destroy_all
+      TransactionSplit.where(repayment_allocation: allocations + excluding).destroy_all
       cost = [-ledger_item.amount_cents, 0].max
 
-      if cost > allocations.sum(&:amount_cents)
+      if allocations.empty? || cost > allocations.sum(&:amount_cents)
+        # Whichever allocations marked the expense as a repayment put it back,
+        # the latest first.
+        ledger_item.repayment_allocations.where.not("previous_categories = '{}'::jsonb").order(id: :desc).each(&:revert_categories!)
         allocations.each do |allocation|
-          allocation.revert_categories!
           allocation.split!(ledger_item, -allocation.amount_cents, Repayment::CATEGORY_SLUG, "Repaid by #{allocation.disbursement.source_event.name}")
         end
       else
@@ -164,6 +175,8 @@ class Repayment
           )
         end
       end
+      # So that only an allocation with categories still applied holds any
+      update!(previous_categories: {})
     end
 
     private
@@ -187,18 +200,15 @@ class Repayment
       end
     end
 
-    def repays_in_full
-      return if repaid_ledger_item.nil? || disbursement.nil?
+    def repays_no_more_than_is_unrepaid
+      return if repaid_ledger_item.nil? || amount_cents.nil?
 
-      unless amount_cents == -repaid_ledger_item.amount_cents
-        errors.add(:amount_cents, "must match the full amount of the repaid transaction")
+      unrepaid = Allocation.unrepaid_cents(repaid_ledger_item, excluding: id)
+      if unrepaid <= 0
+        errors.add(:repaid_ledger_item, "has already been repaid")
+      elsif amount_cents > unrepaid
+        errors.add(:amount_cents, "can't be more than the #{ApplicationController.helpers.render_money(unrepaid)} left to repay")
       end
-    end
-
-    def repaid_transaction_not_already_repaid
-      return if repaid_ledger_item.nil?
-
-      errors.add(:repaid_ledger_item, "has already been repaid") if repaid_ledger_item.repayment_allocations.not_failed.where.not(id:).exists?
     end
 
   end

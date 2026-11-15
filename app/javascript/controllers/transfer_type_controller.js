@@ -64,14 +64,23 @@ export default class extends Controller {
 
   setRepaid(transactions) {
     this.transactionsValue = transactions
+    // Each picked transaction, and how much of it is being repaid.
     this.repaidInputsTarget.replaceChildren(
-      ...transactions.map(transaction => {
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = 'disbursement[repaid_ledger_item_ids][]'
-        input.value = transaction.id
-        return input
-      })
+      ...transactions.flatMap(transaction =>
+        [
+          ['disbursement[repaid_ledger_item_ids][]', transaction.id],
+          [
+            `disbursement[repaid_amounts][${transaction.id}]`,
+            transaction.amount,
+          ],
+        ].map(([name, value]) => {
+          const input = document.createElement('input')
+          input.type = 'hidden'
+          input.name = name
+          input.value = value
+          return input
+        })
+      )
     )
     const selected = transactions.length > 0
     const cents = transactions.reduce(

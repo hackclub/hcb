@@ -500,6 +500,48 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
+    it "repays part of a transaction, then offers the rest" do
+      post(:create, params: {
+             disbursement: {
+               name: "Paying back some pizza",
+               source_event_id: source_event.public_id,
+               event_id: destination_event.public_id,
+               amount: "40.00",
+               transfer_type: "repayment",
+               repaid_ledger_item_ids: [expense.ledger_item.hashid],
+               repaid_amounts: { expense.ledger_item.hashid => "40.00" }
+             }
+           })
+
+      expect(response).to redirect_to(event_transfers_path(source_event))
+      expect(Disbursement.last.repayment.allocations.sole.amount_cents).to eq(40_00)
+
+      get :repayable_transactions, params: { destination_event_id: destination_event.public_id }
+      row = Nokogiri::HTML(response.body).at_css("[data-transaction-selection-id-param='#{expense.ledger_item.hashid}']")
+      expect(row["data-transaction-selection-amount-param"]).to eq("60.00")
+      expect(response.body).to include("$60.00 left to repay")
+
+      get :new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid }
+      expect(Nokogiri::HTML(response.body).at_css("input[name='disbursement[repaid_amounts][#{expense.ledger_item.hashid}]']")["value"]).to eq("60.00")
+    end
+
+    it "keeps the amounts chosen when the transfer can't be made" do
+      post(:create, params: {
+             disbursement: {
+               name: "Paying back some pizza",
+               source_event_id: source_event.public_id,
+               event_id: destination_event.public_id,
+               amount: "45.00",
+               transfer_type: "repayment",
+               repaid_ledger_item_ids: [expense.ledger_item.hashid],
+               repaid_amounts: { expense.ledger_item.hashid => "40.00" }
+             }
+           })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Nokogiri::HTML(response.body).at_css("input[name='disbursement[repaid_amounts][#{expense.ledger_item.hashid}]']")["value"]).to eq("40.00")
+    end
+
     it "creates one repayment covering multiple picked transactions" do
       second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Stickers")
       post(:create, params: {

@@ -10,12 +10,17 @@
 </div>
 
 <template data-transaction-selection-target="template">
-  <li class="flex items-center gap-2 py-2 border-t border-slate/10">
-    <div class="flex-1 min-w-0">
+  <%# Wraps on narrow screens so the memo keeps a line to itself %>
+  <li class="flex flex-wrap items-center justify-end gap-2 py-2 border-t border-slate/10">
+    <div class="flex-1 min-w-[10rem]">
       <strong class="block break-words" data-memo></strong>
       <span class="muted text-sm" data-date></span>
     </div>
-    <span class="shrink-0" data-amount></span>
+    <%# What to repay of this transaction: everything still unrepaid, or less. %>
+    <div class="flex items-center input py-0 shrink-0 w-32">
+      <span class="bold muted">$</span>
+      <input type="number" class="!border-0 !shadow-none !max-w-full !min-w-0 text-right" step="0.01" min="0.01" data-amount data-action="input->transaction-selection#setAmount">
+    </div>
     <button type="button" class="btn btn-small shrink-0" data-action="transaction-selection#remove">Remove</button>
   </li>
 </template>

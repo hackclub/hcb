@@ -575,7 +575,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(disbursement.repayment.disbursement).to eq(disbursement)
     end
 
-    it "must repay the full amount" do
+    it "must send exactly what it repays" do
       expect {
         create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       }.to raise_error(ActiveRecord::RecordInvalid, /selected transaction total/)
@@ -677,14 +677,15 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense.reload.category.slug).to eq("food-fun")
       expect(expense.splits.map { |split| [split.amount_cents, split.category.slug] }).to eq([[-100_00, "repayment"]])
 
-      # The expense already counts as repaid, so the other $20 can't be.
-      expect {
-        create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense_item.id])
-      }.to raise_error(ActiveRecord::RecordInvalid, /selected transaction total/)
+      # A second repayment covers the other $20, making it a repayment in full.
+      create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense_item.id])
+      expect(expense.reload.category.slug).to eq("repayment")
+      expect(expense.splits).to be_empty
 
+      # Rejecting the first leaves only the $20 repaid.
       disbursement.mark_rejected!(create(:user, :make_admin))
       expect(expense.reload.category.slug).to eq("food-fun")
-      expect(expense.splits).to be_empty
+      expect(expense.splits.map { |split| [split.amount_cents, split.category.slug] }).to eq([[-20_00, "repayment"]])
     end
 
     it "restores an automatic category as automatic" do

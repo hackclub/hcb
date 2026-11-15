@@ -1,7 +1,8 @@
 <%# locals: (item:) %>
 
 <% date = item.datetime.strftime("%b %e, %Y") %>
-<% amount = item.amount.abs.format %>
+<% unrepaid = Repayment.unrepaid_cents(item) %>
+<% amount = render_money(unrepaid) %>
 
 <tr class="transaction transaction--<%= item.sign %> cursor-pointer hover:bg-blue/5" data-action="click->transaction-selection#toggleRow">
   <td>
@@ -12,7 +13,7 @@
            data-transaction-selection-id-param="<%= item.hashid %>"
            data-transaction-selection-memo-param="<%= item.memo %>"
            data-transaction-selection-date-param="<%= date %>"
-           data-transaction-selection-amount-param="<%= format("%.2f", -item.amount_cents / 100.0) %>">
+           data-transaction-selection-amount-param="<%= format("%.2f", unrepaid / 100.0) %>">
   </td>
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
@@ -30,5 +31,10 @@
       </div>
     </div>
   </td>
-  <td class="nowrap text-right"><%= item.amount.format %></td>
+  <td class="nowrap text-right">
+    <%= item.amount.format %>
+    <% if unrepaid != -item.amount_cents %>
+      <div class="muted text-sm"><%= amount %> left to repay</div>
+    <% end %>
+  </td>
 </tr>
