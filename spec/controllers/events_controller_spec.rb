@@ -398,6 +398,16 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
 
+    it "shows how donations will appear on donors' statements" do
+      event = create(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+      sign_in_organizer_of(event)
+
+      get(:edit, params: { id: event.slug, tab: "donations" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.css("#donations_settings strong").map(&:text)).to include("HCB* Assemble")
+    end
+
     it "lists managers as reimbursement reviewers, letting parent organization managers be opted in" do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")
