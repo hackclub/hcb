@@ -99,7 +99,7 @@ module PendingTransactionEngine
 
             if @category
               cpts = cpts.joins("LEFT JOIN transaction_category_mappings tcm on canonical_pending_transactions.id = tcm.categorizable_id AND tcm.categorizable_type = 'CanonicalPendingTransaction'")
-                         .where("tcm.transaction_category_id = ?", @category.id)
+                         .where("tcm.transaction_category_id = :id OR EXISTS (SELECT 1 FROM transaction_splits WHERE splittable_type = 'CanonicalPendingTransaction' AND splittable_id = canonical_pending_transactions.id AND transaction_category_id = :id)", id: @category.id)
             end
 
             if @merchant

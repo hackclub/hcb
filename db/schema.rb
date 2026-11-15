@@ -2787,6 +2787,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120101) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "transaction_splits", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.text "memo"
+    t.bigint "splittable_id", null: false
+    t.string "splittable_type", null: false
+    t.bigint "transaction_category_id"
+    t.datetime "updated_at", null: false
+    t.index ["splittable_type", "splittable_id"], name: "index_transaction_splits_on_splittable"
+    t.index ["transaction_category_id"], name: "index_transaction_splits_on_transaction_category_id"
+  end
+
   create_table "transactions", force: :cascade do |t|
     t.bigint "ach_transfer_id"
     t.bigint "amount"
@@ -3325,6 +3337,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120101) do
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
   add_foreign_key "transaction_category_mappings", "transaction_categories"
+  add_foreign_key "transaction_splits", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
   add_foreign_key "transactions", "checks"

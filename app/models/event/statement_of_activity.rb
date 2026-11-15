@@ -69,10 +69,18 @@ class Event
     memo_wise def category_totals
       totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
 
+      # Move each split's amount from its transaction's category to its own
+      categorized_splits.each do |split|
+        totals[split.splittable.category&.slug] -= split.amount_cents
+        totals[split.category.slug] = totals.fetch(split.category.slug, 0) + split.amount_cents
+      end
+
       # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers)
       if totals.key?(INTERNAL_TRANSFER_SLUG)
+        # Internal transfers that aren't a transfer between organizations keep
+        # the plain category, so its total is recomputed here too.
         virtual_totals = grouped_transactions
-                         .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
+                         .select { |category, _| category&.slug.in?([INTRA_ORG_TRANSFER.slug, INTER_ORG_TRANSFER.slug, INTERNAL_TRANSFER_SLUG]) }
                          .transform_keys(&:slug)
                          .transform_values { |txns| txns.sum(&:amount_cents) }
 
@@ -102,7 +110,13 @@ class Event
         transaction_category_id: TransactionCategory.where(slug: Repayment::CATEGORY_SLUG).select(:id)
       )
 
-      transactions.where("amount_cents > 0").where(id: repayment_mappings.select(:categorizable_id)).sum(:amount_cents)
+      whole = transactions.where("amount_cents > 0").where(id: repayment_mappings.select(:categorizable_id)).sum(:amount_cents)
+
+      # A split can move part of an incoming transaction into or out of the
+      # repayment category.
+      whole + categorized_splits.select { |split| split.amount_cents > 0 }.sum do |split|
+        [split.category, split.splittable.category].map { |category| category&.slug == Repayment::CATEGORY_SLUG ? split.amount_cents : 0 }.inject(:-)
+      end
     end
 
     memo_wise def xlsx
@@ -185,10 +199,30 @@ class Event
 
     attr_reader(:start_date_param, :end_date_param)
 
+    # Transactions grouped by the category they're reported under. A split with
+    # a category of its own is listed as a separate line under that category,
+    # and its transaction is listed for only what's left.
     memo_wise def grouped_transactions
-      transactions.includes(:category, :local_hcb_code, :event).group_by do |transaction|
-        reporting_category_for(transaction)
-      end
+      loaded = transactions.includes(:category, :local_hcb_code, :event).to_a
+      by_id = loaded.index_by(&:id)
+
+      # These records are only read for the statement and never saved
+      categorized_splits.each { |split| by_id[split.splittable_id].amount_cents -= split.amount_cents }
+
+      # A transaction that's split in full has nothing left to list
+      split_in_full = categorized_splits.map { |split| by_id[split.splittable_id] }.select { |transaction| transaction.amount_cents.zero? }
+
+      (loaded - split_in_full + categorized_splits).group_by { |line| reporting_category_for(line) }
+    end
+
+    # Splits of this statement's transactions that are reported under a
+    # category of their own. One without a category stays with its transaction.
+    memo_wise def categorized_splits
+      TransactionSplit
+        .where(splittable_type: "CanonicalTransaction", splittable_id: transactions.select(:id))
+        .where.not(transaction_category_id: nil)
+        .includes(:category, splittable: [:category, :local_hcb_code, :event])
+        .to_a
     end
 
     def reporting_category_for(transaction)

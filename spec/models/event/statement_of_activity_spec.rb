@@ -182,6 +182,50 @@ RSpec.describe Event::StatementOfActivity do
       expect(instance.category_totals["repayment"]).to eq(0)
     end
 
+    specify "a split is reported under its own category, and the rest under the transaction's" do
+      event = create(:event)
+
+      expense = create(:canonical_transaction, amount_cents: -100_00, category_slug: "rent", memo: "Hall hire")
+      repaid = create(:canonical_transaction, amount_cents: 60_00, category_slug: "repayment")
+      [expense, repaid].each { |transaction| create(:canonical_event_mapping, event:, canonical_transaction: transaction) }
+
+      split = expense.splits.create!(amount_cents: -60_00, memo: "Repaid half", category: repaid.category)
+      # Without a category of its own, a split stays under its transaction's
+      expense.splits.create!(amount_cents: -5_00, memo: "Deposit")
+
+      instance = described_class.new(event, start_date_param: "1970-01-01")
+
+      expect(instance.category_totals).to eq("rent" => -40_00, "repayment" => 0)
+      expect(instance.total_revenue).to eq(0)
+      expect(instance.total_expense).to eq(-40_00)
+      expect(instance.net_asset_change).to eq(-40_00)
+
+      lines = instance.transactions_by_category.transform_keys(&:slug).transform_values { |rows| rows.map { |row| [row.memo, row.amount_cents] } }
+      expect(lines["rent"]).to eq([["Hall hire", -40_00]])
+      expect(lines["repayment"]).to contain_exactly([repaid.memo, 60_00], ["Repaid half", -60_00])
+      expect(instance.transactions_by_category[repaid.category]).to include(split)
+      expect { instance.xlsx }.not_to raise_error
+    end
+
+    specify "a fully repaid expense that went down in cost sends the excess repayment to internal transfers" do
+      event = create(:event)
+
+      expense = create(:canonical_transaction, amount_cents: -80_00, category_slug: "rent")
+      payment = create(:canonical_transaction, amount_cents: 100_00, category_slug: "repayment")
+      [expense, payment].each { |transaction| create(:canonical_event_mapping, event:, canonical_transaction: transaction) }
+
+      expense.splits.create!(amount_cents: -80_00, category: payment.category)
+      payment.splits.create!(amount_cents: 20_00, category: TransactionCategory.find_or_create_by!(slug: "internal-transfer"))
+
+      instance = described_class.new(event, start_date_param: "1970-01-01")
+
+      expect(instance.category_totals).to eq("rent" => 0, "repayment" => 0, "internal-transfer" => 20_00)
+      expect(instance.total_revenue).to eq(20_00)
+      expect(instance.total_expense).to eq(0)
+      # The expense is repaid in full, so nothing of it is left under rent
+      expect(instance.transactions_by_category.keys.map(&:slug)).to contain_exactly("repayment", "internal-transfer")
+    end
+
     specify "single event" do
       event = create(:event)
 
