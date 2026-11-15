@@ -171,14 +171,12 @@ class AchTransfer < ApplicationRecord
     event :mark_rejected do
       after do |processed_by = nil|
         canonical_pending_transaction&.decline!
-        # A scheduled transfer has no pending transaction to decline, so its
-        # intended ledger item learns of the rejection here instead.
-        ledger_item&.refresh! if canonical_pending_transaction.nil?
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
         payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
+      after_commit :refresh_ledger_item
       transitions from: [:pending, :scheduled], to: :rejected
     end
 
@@ -207,6 +205,7 @@ class AchTransfer < ApplicationRecord
         end
         create_activity(key: "ach_transfer.failed", owner: nil)
       end
+      after_commit :refresh_ledger_item
       transitions from: [:in_transit, :deposited], to: :failed
     end
   end
@@ -416,6 +415,14 @@ class AchTransfer < ApplicationRecord
   end
 
   private
+
+  # A ledger item with no transactions yet (a scheduled transfer not yet sent
+  # and imported) takes its status from the transfer, so it's refreshed
+  # whenever the transfer's outcome changes. A transfer with no ledger item has
+  # nothing to refresh.
+  def refresh_ledger_item
+    safely { reload_ledger_item&.refresh! }
+  end
 
   def scheduled_on_must_be_in_the_future
     if scheduled_on.present? && scheduled_on.before?(Date.today)

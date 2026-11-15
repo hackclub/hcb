@@ -462,15 +462,13 @@ class Ledger
 
     def calculate_status
       # An item that has a linked object but no transactions yet (e.g. an invoice
-      # that has been created but not paid). The linked object keeps it from being
-      # pruned once orphaned-item pruning exists. One that was rejected or
-      # canceled before any transaction existed (a scheduled ACH transfer that
-      # was canceled, a voided invoice) is no longer intended.
+      # that has been created but not paid) is intended, unless the linked object
+      # records an outcome of its own (#status_from_linked_object), such as a
+      # voided invoice or a scheduled ACH transfer rejected before it was sent.
+      # The linked object keeps it from being pruned once orphaned-item pruning
+      # exists.
       if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
-        return :rejected if linked_object.try(:rejected?)
-        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
-
-        return :intended
+        return status_from_linked_object || :intended
       end
 
       unless canonical_pending_transactions.declined.any?
@@ -492,10 +490,9 @@ class Ledger
         return :canceled if linked_object.rejected? && linked_object.transferred_at.present?
       end
 
-      return :rejected if linked_object.try(:rejected?)
-      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
-      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
-      return :reversed if linked_object.try(:reversed?)
+      if (status = status_from_linked_object)
+        return status
+      end
 
       # A declined CPT — determine why it never settled (may have CTs)
       if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
@@ -508,6 +505,18 @@ class Ledger
 
       # Nothing has mapped to this item yet
       :pending
+    end
+
+    # The outcome the linked object records for itself, if it has one. Shared
+    # by both branches of #calculate_status so an item with and without
+    # transactions reads its linked object the same way.
+    def status_from_linked_object
+      return :rejected if linked_object.try(:rejected?)
+      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+      return :reversed if linked_object.try(:reversed?)
+
+      nil
     end
 
     def calculate_special_appearance
