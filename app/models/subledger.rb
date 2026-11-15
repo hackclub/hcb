@@ -34,10 +34,10 @@ class Subledger < ApplicationRecord
   # Ledger::AssertCorrectLedgerBalancesJob. Use CardGrant#balance_cents instead.
   #
   # It drifts whenever a transaction's event mapping and its settlement land in
-  # different jobs. E.g. a grant top-up's canonical transaction is imported and
-  # mapped by TransactionEngine::NightlyJob, but its pending transaction is only
-  # settled by the next PendingEventMappingEngine::NightlyJob, so it counts twice
-  # in between.
+  # different jobs. Settlement now happens in the same database transaction
+  # that creates the canonical transaction (PendingEventMappingEngine::Settle::Single::All),
+  # but anything that only matches in the PendingEventMappingEngine::NightlyJob
+  # backstop still counts twice until that job runs.
   def legacy_balance_cents
     canonical_transactions.sum(:amount_cents) +
       canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents) +

@@ -30,6 +30,8 @@ class RawColumnTransaction < ApplicationRecord
       date: date_posted,
     )
 
+    # This runs in the after_create callback, so the settled mapping commits in
+    # the same database transaction as the canonical transaction.
     raw_pending_column_transaction = RawPendingColumnTransaction.find_by(column_id: column_transaction["transaction_id"])
 
     if raw_pending_column_transaction&.canonical_pending_transaction
@@ -37,6 +39,8 @@ class RawColumnTransaction < ApplicationRecord
         canonical_transaction: ct,
         canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
       ).run!
+    else
+      ::PendingEventMappingEngine::Settle::Single::All.new(canonical_transaction: ct).run
     end
   end
 
