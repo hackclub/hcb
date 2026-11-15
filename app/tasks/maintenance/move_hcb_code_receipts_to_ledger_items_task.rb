@@ -19,8 +19,8 @@ module Maintenance
   # The hand-over is an update_all rather than update!: the receipt isn't
   # changing, only which of the transaction's two records it hangs off, so the
   # pairing and card-locking receipt callbacks (an unlock job per charge) have
-  # nothing to do. The item's cached receipt_count is refreshed by hand since
-  # nothing touches it.
+  # nothing to do. It also skips the touch that would refresh the item, so
+  # refresh it by hand.
   class MoveHcbCodeReceiptsToLedgerItemsTask < MaintenanceTasks::Task
     def collection
       HcbCode
@@ -31,7 +31,7 @@ module Maintenance
 
     def process(hcb_code)
       moved = Receipt.where(receiptable: hcb_code).update_all(receiptable_type: "Ledger::Item", receiptable_id: hcb_code.ledger_item_id)
-      hcb_code.ledger_item.refresh_receipt_count! if moved.positive?
+      hcb_code.ledger_item.refresh! if moved.positive?
     end
 
   end
