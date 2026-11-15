@@ -31,8 +31,6 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
       expect(described_class.new(reader, item).show?).to be(true)
     end
 
-    # The grantee holds no position in the event, but a non-auditor who opens
-    # an item lands on its HCB code page, and that page is theirs to see.
     it "permits the grantee for a charge on their own grant" do
       expect(described_class.new(grantee, item).show?).to be(true)
     end
@@ -45,11 +43,18 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
       expect(described_class.new(nil, item).show?).to be(false)
     end
 
-    it "refuses the grantee for an item with no HCB code to fall back on" do
-      bare_item = create(:ledger_item)
-      Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: bare_item, mapped_by: create(:user, :make_admin))
+    it "refuses the grantee for an item on their grant's ledger that isn't a card charge" do
+      transfer = create(:ledger_item)
+      Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: transfer, mapped_by: create(:user, :make_admin))
 
-      expect(described_class.new(grantee, bare_item).show?).to be(false)
+      expect(described_class.new(grantee, transfer).show?).to be(false)
+    end
+
+    it "refuses the grantee of another grant" do
+      other_grantee = create(:user)
+      create(:card_grant, event:, user: other_grantee)
+
+      expect(described_class.new(other_grantee, item).show?).to be(false)
     end
   end
 

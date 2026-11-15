@@ -4,7 +4,7 @@ class Ledger
   class ItemPolicy < ApplicationPolicy
     def show?
       if record.primary_ledger
-        LedgerPolicy.new(user, record.primary_ledger).show? || hcb_code_show?
+        LedgerPolicy.new(user, record.primary_ledger).show? || grantee?
       else
         # Item is unampped, only admins can see it
         user&.admin?
@@ -40,12 +40,12 @@ class Ledger
 
     private
 
-    # Non-auditors who open an item are sent to its HCB code page (see
-    # Ledger::ItemsController#show), so whoever can view that page can show the
-    # item too. That's how a grantee, who holds no position in the grant's
-    # event, gets to the charges on their own grant.
-    def hcb_code_show?
-      record.hcb_code.present? && HcbCodePolicy.new(user, record.hcb_code).show?
+    # A grantee holds no position in the grant's event, but the charges on
+    # their own card are theirs to see, as HcbCodePolicy#show? already lets the
+    # cardholder in. The event's topups and withdrawals sit on the same ledger
+    # and stay the event's.
+    def grantee?
+      user.present? && record.linked_object_type == "CardCharge" && record.primary_ledger.card_grant&.user == user
     end
 
     def event

@@ -649,8 +649,6 @@ RSpec.describe CardGrantsController do
       expect(page.at_css(".transaction__receipt-action")).to be_nil
     end
 
-    # The grantee holds no position in the event, so the row only links out
-    # because they can open the charge's own page (see Ledger::ItemPolicy#show?).
     it "links each charge to its transaction page for the grantee" do
       create_session(grantee, verified: true)
 
