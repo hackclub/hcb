@@ -9,6 +9,8 @@ FactoryBot.define do
       stripe_card { create(:stripe_card, :with_stripe_id) }
       stripe_merchant_category { "bakeries" }
       stripe_transaction_type { "capture" }
+      stripe_merchant_network_id { nil }
+      stripe_created { nil }
     end
 
     trait :refund do
@@ -23,11 +25,13 @@ FactoryBot.define do
         "authorization" => stripe_authorization_id,
         "amount"        => -amount_cents,
         "cardholder"    => stripe_card.stripe_cardholder.id,
+        "created"       => stripe_created,
         "merchant_data" => {
-          "name"     => Faker::Company.name,
-          "category" => stripe_merchant_category,
-        },
-      }
+          "name"       => Faker::Company.name,
+          "category"   => stripe_merchant_category,
+          "network_id" => stripe_merchant_network_id,
+        }.compact,
+      }.compact
     end
   end
 end

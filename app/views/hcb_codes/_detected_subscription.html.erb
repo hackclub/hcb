@@ -1,0 +1,29 @@
+<%# locals: (subscription:) %>
+
+<% admin_tool("mt2 p-3") do %>
+  <h3 class="mt0 mb1">Detected as a subscription</h3>
+  <p class="mt0 mb2 muted">
+    <%= subscription.name %>,
+    <%= subscription.variable_amount? ? "a varying amount" : render_money(subscription.amount_cents) %>
+    <%= subscription.cadence_label %>.
+    <% if subscription.lapsed? %>
+      No charge since <%= subscription.last_charged_at.to_date.to_fs(:long) %>.
+    <% else %>
+      Next charge expected around <%= subscription.next_expected_at.to_date.to_fs(:long) %>.
+    <% end %>
+  </p>
+  <ul class="list-reset m0">
+    <% subscription.ledger_items.includes(:hcb_code).order(datetime: :desc).each do |ledger_item| %>
+      <li>
+        <% if ledger_item.hcb_code == @hcb_code %>
+          <strong><%= ledger_item.datetime.to_date.to_fs(:long) %> (this charge)</strong>
+        <% elsif ledger_item.hcb_code %>
+          <%= link_to ledger_item.datetime.to_date.to_fs(:long), hcb_code_path(ledger_item.hcb_code), data: { turbo_frame: "_top" } %>
+        <% else %>
+          <%= ledger_item.datetime.to_date.to_fs(:long) %>
+        <% end %>
+        &middot; <%= render_money ledger_item.amount_cents.abs %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

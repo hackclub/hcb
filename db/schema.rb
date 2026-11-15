@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_120300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1651,6 +1651,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.text "short_code"
     t.string "special_appearance"
     t.string "status", default: "pending", null: false
+    t.bigint "subscription_id"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -1660,6 +1661,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
+    t.index ["subscription_id"], name: "index_ledger_items_on_subscription_id"
   end
 
   create_table "ledger_items_tags", primary_key: ["ledger_item_id", "tag_id"], force: :cascade do |t|
@@ -2675,6 +2677,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
     t.index ["event_id"], name: "index_subledgers_on_event_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.integer "cadence_days", null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_charged_at", null: false
+    t.bigint "ledger_id", null: false
+    t.string "merchant_key", null: false
+    t.string "name", null: false
+    t.datetime "next_expected_at", null: false
+    t.bigint "payment_rail_id", null: false
+    t.string "payment_rail_type", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "variable_amount", default: false, null: false
+    t.index ["ledger_id", "merchant_key"], name: "index_subscriptions_on_ledger_id_and_merchant_key"
+    t.index ["payment_rail_type", "payment_rail_id"], name: "index_subscriptions_on_payment_rail"
+  end
+
   create_table "suggested_pairings", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "accepted_at"
@@ -3236,6 +3255,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_items", "subscriptions", on_delete: :nullify
   add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_items_tags", "ledger_items"
   add_foreign_key "ledger_items_tags", "tags"
@@ -3312,6 +3332,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_10_120001) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "subscriptions", "ledgers"
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"

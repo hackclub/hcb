@@ -51,6 +51,11 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_data")
   end
 
+  # Paid in person (chip, swipe or tap), going by the authorization.
+  def card_present?
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method").in?(%w[chip swipe contactless])
+  end
+
   def merchant_currency
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
