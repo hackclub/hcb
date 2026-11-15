@@ -62,7 +62,7 @@ class LegalEntity
     end
 
     # type-specific presentation lives on the detail record
-    delegate :kind, :icon, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+    delegate :kind, :icon, :human_kind, :title_kind, :currency, :short_label, :detail_summary, :fee_reason, to: :details
 
     def display_name
       name.presence || title_kind
