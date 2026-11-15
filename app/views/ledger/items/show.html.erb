@@ -106,7 +106,7 @@
 
     <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true %>
     <%= begin receipt_upload_form_config = {
-          receiptable: @item.hcb_code,
+          receiptable: @item,
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,

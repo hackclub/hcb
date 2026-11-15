@@ -9,7 +9,8 @@ module Twilio
       @params = webhook_params.with_indifferent_access
       @user = find_user
       @attachments = fetch_attachments
-      @receiptable = find_receiptable
+      @hcb_code = find_hcb_code
+      @receiptable = @hcb_code&.ledger_item
       @report = find_reimbursement_report
 
       if @user.nil?
@@ -50,7 +51,7 @@ module Twilio
       elsif reimbursement?
         send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to your report named: #{@report.name}! #{reimbursement_report_url(@report)}")
       elsif @receiptable
-        send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@receiptable.memo}! #{hcb_code_url(@receiptable)}")
+        send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@hcb_code.memo}! #{hcb_code_url(@hcb_code)}")
       else
         send_reply("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin! https://hcb.hackclub.com/my/inbox")
       end
@@ -86,7 +87,7 @@ module Twilio
       end
     end
 
-    def find_receiptable
+    def find_hcb_code
       return nil if reimbursement?
 
       if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
