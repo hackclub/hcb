@@ -16,7 +16,7 @@ module ReceiptService
   # text upright, or nil when the image is upright or we aren't sure.
   class DetectRotation
     # Checked on a sample of 152 real receipt uploads, each as uploaded and
-    # turned 90, 180 and 270 degrees: 69% of turned copies fixed, and no
+    # turned 90, 180 and 270 degrees: 68% of turned copies fixed, and no
     # upright receipt touched. Missing a sideways receipt is fine; rotating a
     # good one isn't.
     #
