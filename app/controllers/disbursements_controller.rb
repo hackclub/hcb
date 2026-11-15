@@ -221,13 +221,11 @@ class DisbursementsController < ApplicationController
     ).run
 
     if disbursement_params[:file]
-      # The disbursement memoized its HCB code before its pending transaction
-      # assigned the code's ledger item, so re-read it.
       ::ReceiptService::Create.new(
         uploader: current_user,
         attachments: disbursement_params[:file],
         upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code.reload.ledger_item
+        receiptable: disbursement.outgoing_disbursement.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
       ).run!
     end
 

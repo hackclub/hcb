@@ -32,17 +32,15 @@ module Api
 
         @wire.save!
 
-        # The receipt belongs on the transfer's ledger item, which is only
-        # assigned once the pending transaction created with the transfer
-        # commits, so attach it after the save rather than in a transaction
-        # around both. The transfer memoized its HCB code before the item was
-        # assigned, so re-read it.
+        # The receipt belongs on the transfer's ledger item, which only exists
+        # once the pending transaction created with the transfer commits, so
+        # attach it after the save rather than in a transaction around both.
         if wire_params[:file]
           ::ReceiptService::Create.new(
             uploader: current_user,
             attachments: Array(wire_params[:file]),
             upload_method: :api,
-            receiptable: @wire.local_hcb_code.reload.ledger_item
+            receiptable: @wire.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
           ).run!
         end
 

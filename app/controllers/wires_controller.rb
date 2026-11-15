@@ -34,13 +34,11 @@ class WiresController < ApplicationController
 
     if @wire.save
       if wire_params[:file]
-        # The transfer memoized its HCB code before its pending transaction
-        # assigned the code's ledger item, so re-read it.
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: wire_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @wire.local_hcb_code.reload.ledger_item
+          receiptable: @wire.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
         ).run!
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }

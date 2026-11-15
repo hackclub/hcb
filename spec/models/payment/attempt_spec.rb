@@ -318,7 +318,7 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:payment).and_return(payment_double)
       # Stub the external-service boundary directly so each branch skips real
       # API calls; we only care that mark_under_review! is called at the end.
-      transfer_double = double("transfer", save!: true, "payment_attempt=": nil, local_hcb_code: double("hcb_code").as_null_object)
+      transfer_double = double("transfer", save!: true, "payment_attempt=": nil, reload_ledger_item: double("ledger_item"))
       allow(payout_method).to receive(:create_transfer).and_return(transfer_double)
       allow(attempt).to receive(:payout=)
       allow(attempt).to receive(:save!)
@@ -373,9 +373,7 @@ RSpec.describe Payment::Attempt, type: :model do
 
       payee_dbl = double("payee", display_name: "Alice", email: "alice@example.com")
       ledger_item = double("ledger_item")
-      hcb_code = double("hcb_code", ledger_item:)
-      allow(hcb_code).to receive(:reload).and_return(hcb_code)
-      check = double("check", save!: nil, "payment_attempt=": nil, local_hcb_code: hcb_code)
+      check = double("check", save!: nil, "payment_attempt=": nil, reload_ledger_item: ledger_item)
       checks_rel = double("checks_rel", build: check)
       event_dbl  = double("event", increase_checks: checks_rel)
       payment_dbl = double("payment",

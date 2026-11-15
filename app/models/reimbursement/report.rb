@@ -451,15 +451,13 @@ module Reimbursement
         transfer
       end
 
-      # The receipts belong on the transfer's ledger item, which is only
-      # assigned once its pending transaction commits, so copy them after the
-      # transaction above. The transfer memoized its HCB code before the item
-      # was assigned, so re-read it.
-      ledger_item = wise_transfer.local_hcb_code.reload.ledger_item
+      # The receipts belong on the transfer's ledger item, which only exists
+      # once its pending transaction commits, so copy them after the
+      # transaction above.
       expenses.each do |expense|
         expense.receipts.each do |receipt|
           ::ReceiptService::Create.new(
-            receiptable: ledger_item,
+            receiptable: wise_transfer.reload_ledger_item, # the association was cached as nil while the transfer's pending transaction was being created
             uploader: as,
             attachments: [receipt.file.blob],
             upload_method: :duplicate
