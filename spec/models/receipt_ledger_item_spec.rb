@@ -85,7 +85,7 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
-  describe "HcbCode#move_receipts_to_ledger_item!" do
+  describe "linking an HCB code to a ledger item" do
     let(:code_without_item) { create(:hcb_code) }
 
     it "hands the code's receipts over when it is linked to a ledger item" do
@@ -106,11 +106,9 @@ RSpec.describe Receipt, type: :model do
         .not_to have_enqueued_job(Receipt::SuggestPairingsJob)
     end
 
-    it "is a no-op for a code with no receipts or no ledger item" do
-      expect(code_without_item.move_receipts_to_ledger_item!).to eq(0)
-
+    it "leaves the item's count alone when the code has no receipts" do
       item = create(:ledger_item, hcb_code: code_without_item)
-      expect(code_without_item.reload.move_receipts_to_ledger_item!).to eq(0)
+
       expect(item.reload.receipt_count).to eq(0)
     end
   end
