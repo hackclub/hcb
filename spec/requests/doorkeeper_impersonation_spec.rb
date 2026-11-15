@@ -6,7 +6,7 @@ RSpec.describe "Doorkeeper authorizations while impersonating", type: :request d
   let(:admin) { create(:user, :make_admin) }
   let(:user) { create(:user) }
   let(:application) do
-    Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "read")
+    Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: create(:user), scopes: "read")
   end
 
   before do

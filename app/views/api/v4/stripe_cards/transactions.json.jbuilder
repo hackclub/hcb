@@ -2,10 +2,10 @@
 
 pagination_metadata(json)
 
-json.data @hcb_codes do |hcb_code|
-  if hcb_code.canonical_transactions.any?
-    json.partial! "api/v4/transactions/transaction", tx: hcb_code
+json.data @transactions do |tx|
+  if tx.is_a?(HcbCode) && tx.canonical_transactions.none?
+    json.partial! "api/v4/transactions/transaction", tx: tx.pt
   else
-    json.partial! "api/v4/transactions/transaction", tx: hcb_code.pt
+    json.partial! "api/v4/transactions/transaction", tx:
   end
 end

@@ -394,6 +394,8 @@ class Event
     end
 
     def activate_event!(risk_level:, tags: [], point_of_contact: nil)
+      raise "Application must be approved before activation" unless approved?
+
       contract.party(:hcb).sync_with_docuseal
       contract.reload
       raise "Contract must be signed before activation" unless contract.signed?

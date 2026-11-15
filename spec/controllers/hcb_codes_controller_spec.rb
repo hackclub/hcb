@@ -27,12 +27,47 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).not_to include("Cancel transfer")
     end
 
+    it "renders a charge on a card grant for its grantee" do
+      grantor = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      grantee = create(:user)
+      card = create(:stripe_card, :with_stripe_id, event: grantor, stripe_cardholder: create(:stripe_cardholder, user: grantee))
+      card_grant = create(:card_grant, event: grantor, user: grantee, stripe_card: card)
+      charge = create(:canonical_pending_transaction, event: grantor, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card, stripe_merchant_category_code: "5462"))
+      Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: charge.local_hcb_code.ledger_item, mapped_by: create(:user, :make_admin))
+      create_session(grantee, verified: true)
+
+      get :show, params: { id: charge.local_hcb_code.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(charge.local_hcb_code.public_id)
+      expect(response.body).to include("Bakeries (bakeries)")
+
+      # The grant page's ledger rows open the charge in a popover.
+      get :show, params: { id: charge.local_hcb_code.hashid, frame: true }
+
+      expect(response).to be_successful
+      expect(response.body).to include("Address check")
+    end
+
     it "links each CPT to its own page" do
       cpt = hcb_code.canonical_pending_transactions.sole
 
       get :show, params: { id: hcb_code.hashid }
 
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
+    end
+
+    # Posting a comment in the popover reloads it, which is when the ledger row
+    # behind it picks up the new comment count.
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      item_hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item_hcb_code.ledger_item.id}']"
+
+      get :show, params: { id: item_hcb_code.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item_hcb_code.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
     end
 
     context "for a Wise transfer whose pending transaction is not grouped under its HCB code" do
@@ -103,7 +138,9 @@ RSpec.describe HcbCodesController, type: :controller do
 
       it "is hidden once the expense has been repaid" do
         disbursement = create(:disbursement, event:)
-        Repayment.new(disbursement:, repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+        repayment = disbursement.build_repayment
+        repayment.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
+        repayment.save!(validate: false)
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
