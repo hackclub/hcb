@@ -25,13 +25,13 @@
         <% end %>
         <% viewing_commentable = local_assigns[:viewing_commentable] %>
         <% if viewing_commentable.is_a?(HcbCode) && comment.shared? %>
-          <% viewing_disbursement = viewing_commentable.outgoing_disbursement || viewing_commentable.incoming_disbursement %>
+          <% viewing_disbursement = disbursement_side_of(viewing_commentable) %>
           <span class="muted right">shared with <%= viewing_disbursement.counterparty_label %></span>
         <% elsif viewing_commentable.is_a?(Disbursement) %>
           <% if comment.shared? %>
             <span class="muted right">visible to both organizations</span>
           <% else %>
-            <% comment_disbursement = comment.commentable.outgoing_disbursement || comment.commentable.incoming_disbursement %>
+            <% comment_disbursement = disbursement_side_of(comment.commentable) %>
             <span class="muted right">only visible to <%= comment_disbursement.self_label %></span>
           <% end %>
         <% end %>

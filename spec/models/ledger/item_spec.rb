@@ -671,4 +671,96 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.reload.receipt_count).to eq(0)
     end
   end
+
+  describe "as a commentable" do
+    let(:event) { create(:event) }
+    let(:item) { create(:ledger_item) }
+
+    before { create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item) }
+
+    describe "#comments" do
+      it "holds the comments left on the item itself, not on its HCB code" do
+        hcb_code = create(:hcb_code, ledger_item: item)
+        own = create(:comment, commentable: item)
+        create(:comment, commentable: hcb_code)
+
+        expect(item.reload.comments).to contain_exactly(own)
+      end
+
+      it "keeps the item from being destroyed while it has comments" do
+        item = create(:ledger_item)
+        create(:comment, commentable: item)
+
+        expect(item.reload.destroy).to be(false)
+        expect(item.errors[:base]).to be_present
+        expect(item.reload).to be_persisted
+      end
+    end
+
+    describe "#shared_commentable" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "is the transfer for the item on either side of it" do
+        outgoing = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+
+        expect(outgoing.shared_commentable).to eq(disbursement)
+        expect(incoming.shared_commentable).to eq(disbursement)
+        expect(outgoing).to be_shared_commentable
+      end
+
+      it "is nil for any other item" do
+        expect(item.shared_commentable).to be_nil
+        expect(item).not_to be_shared_commentable
+      end
+    end
+
+    describe "#comment_recipients_for" do
+      let(:organizer) { create(:user).tap { |u| create(:organizer_position, user: u, event:) } }
+
+      it "notifies the event's organizers and earlier commenters, except whoever left the comment" do
+        organizer
+        earlier_commenter = create(:user)
+        create(:comment, commentable: item, user: earlier_commenter)
+        comment = create(:comment, commentable: item, user: create(:user))
+
+        expect(item.reload.comment_recipients_for(comment)).to contain_exactly(
+          organizer.email_address_with_name,
+          earlier_commenter.email_address_with_name
+        )
+      end
+
+      it "skips organizers who only want threads they're part of" do
+        organizer.update!(comment_notifications: :my_threads)
+        comment = create(:comment, commentable: item, user: create(:user))
+
+        expect(item.reload.comment_recipients_for(comment)).to be_empty
+      end
+
+      it "only notifies auditors about an admin-only comment" do
+        organizer
+        admin = create(:user, :make_admin)
+        create(:comment, commentable: item, user: admin)
+        comment = create(:comment, commentable: item, user: create(:user, :make_admin), admin_only: true)
+
+        expect(item.reload.comment_recipients_for(comment)).to contain_exactly(admin.email_address_with_name)
+      end
+    end
+
+    describe "#comment_mentionable" do
+      it "offers the event's organizers and earlier commenters" do
+        organizer = create(:user).tap { |u| create(:organizer_position, user: u, event:) }
+        commenter = create(:user)
+        create(:comment, commentable: item, user: commenter)
+
+        expect(item.reload.comment_mentionable).to include(organizer, commenter)
+      end
+    end
+
+    describe "#comment_mailer_subject" do
+      it "names the transaction" do
+        expect(item.comment_mailer_subject).to eq("New comment on #{item.memo}.")
+      end
+    end
+  end
 end

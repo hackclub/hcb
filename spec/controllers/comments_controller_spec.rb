@@ -57,6 +57,23 @@ RSpec.describe CommentsController do
     end
   end
 
+  describe "#edit" do
+    render_views
+
+    it "renders the nav for the ledger item's event" do
+      create_session(create(:user, :make_admin), verified: true)
+      event = create(:event, name: "Daydream Denver")
+      item = create(:ledger_item)
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+      comment = create(:comment, commentable: item)
+
+      get(:edit, params: { id: comment.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Daydream Denver")
+    end
+  end
+
   describe "#destroy" do
     render_views
 

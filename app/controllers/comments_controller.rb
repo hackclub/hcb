@@ -31,7 +31,11 @@ class CommentsController < ApplicationController
 
   def edit
     @commentable = @comment.commentable
-    @event = @commentable.is_a?(Event) ? @commentable : @commentable.event
+    @event = case @commentable
+             when Event then @commentable
+             when Ledger::Item then @commentable.primary_ledger&.event
+             else @commentable.event
+             end
 
     authorize @comment
   end

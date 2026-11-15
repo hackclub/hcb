@@ -21,5 +21,22 @@ RSpec.describe CommentMailer do
 
       expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
+
+    it "notifies the organizers of a ledger item's event about a comment on the item" do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      event = create(:event, name: "Daydream")
+      organizer = create(:user, email: "organizer@example.com")
+      create(:organizer_position, event:, user: organizer)
+      item = create(:ledger_item, custom_memo: "Pizza for the hackathon")
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+      comment = Comment.create!(commentable: item, user: create(:user, full_name: "Commenter Person"), content: "hi")
+
+      mail = described_class.with(comment:).notification
+      expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
+
+      expect(mail.bcc).to include("organizer@example.com")
+      expect(mail.subject).to eq("New comment on Pizza for the hackathon.")
+      expect(mail.html_part.body.to_s).to include("Pizza for the hackathon", "Daydream", "#comment-#{comment.hashid}")
+    end
   end
 end

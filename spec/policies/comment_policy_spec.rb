@@ -27,6 +27,31 @@ RSpec.describe CommentPolicy, type: :policy do
       end
     end
 
+    context "when commentable is a Ledger::Item" do
+      it "includes both direct users and ancestor users of the item's event" do
+        parent_event = create(:event)
+        ancestor_user = create(:user)
+        create(:organizer_position, event: parent_event, user: ancestor_user)
+
+        child_event = create(:event, parent: parent_event)
+        direct_user = create(:user)
+        create(:organizer_position, event: child_event, user: direct_user)
+
+        item = create(:ledger_item)
+        create(:ledger_mapping, :on_primary, ledger: child_event.ledger, ledger_item: item)
+        comment = create(:comment, commentable: item)
+        policy = described_class.new(direct_user, comment)
+
+        expect(policy.send(:users)).to include(direct_user, ancestor_user)
+      end
+
+      it "returns no users for an unmapped item" do
+        comment = create(:comment, commentable: create(:ledger_item))
+
+        expect(described_class.new(create(:user), comment).send(:users)).to be_empty
+      end
+    end
+
     context "when commentable is a Reimbursement::Report" do
       it "includes the report user and event organizers" do
         event = create(:event)
