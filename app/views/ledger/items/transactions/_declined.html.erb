@@ -1,28 +1,28 @@
-<%# locals: (transaction:) %>
+<%# locals: (transaction:, ledger_item:) %>
 <%# The decline of a pending transaction, dated by when its declined mapping was recorded. %>
 
 <% mapping = transaction.canonical_pending_declined_mapping %>
 
-<div class="flex flex-col md:flex-row justify-start items-center gap-5">
-  <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
-    <span class="flex items-center gap-1">
-      <span class="muted" aria-hidden="true">↳</span>
-      Declined
-    </span>
-    <span class="text-sm muted">
-      <%= mapping.created_at.strftime("%b %e, %Y") %>
-    </span>
-  </div>
+<%# Only card authorizations carry a decline reason. Anything else that gets
+    declined (a rejected wire, a canceled check...) is explained by whatever
+    the transfer itself recorded. %>
+<% reason = if transaction.raw_pending_stripe_transaction.present?
+              decline_reason_label(transaction)
+            else
+              linked_object = ledger_item.linked_object
+              linked_object.try(:return_reason).presence || linked_object.try(:rejection_reason)&.humanize || linked_object.try(:state_text)
+            end %>
 
-  <div class="card flex flex-grow w-full justify-between items-center">
-    <div class="flex flex-row justify-start items-center gap-3">
-      <%= inline_icon "forbidden" %>
-      <% admin_tool("badge p-0.5 m-0", "span") do %>
-        <%= badge_for mapping.id, class: "bg-muted m-0" %>
-      <% end %>
+<%= render layout: "ledger/items/transactions/row", locals: { label: "Declined", date: mapping.created_at, nested: true } do %>
+  <div class="flex flex-row justify-start items-center gap-3">
+    <%= inline_icon "forbidden" %>
+    <% admin_tool("badge p-0.5 m-0", "span") do %>
+      <%= badge_for mapping.id, class: "bg-muted m-0" %>
+    <% end %>
+    <% if reason.present? %>
       <span>
-        <%= transaction.decline_reason.present? ? transaction.decline_reason.to_s.humanize : "No decline reason recorded" %>
+        <%= reason %>
       </span>
-    </div>
+    <% end %>
   </div>
-</div>
+<% end %>

@@ -1,9 +1,15 @@
 <%# locals: (ledger_item:) %>
 
-<% pending_transactions = ledger_item.canonical_pending_transactions.includes(:canonical_pending_declined_mapping, :canonical_transactions).to_a %>
-<% settled_transaction_ids = pending_transactions.flat_map { |pt| pt.canonical_transactions.map(&:id) } %>
+<% pending_transactions = ledger_item.canonical_pending_transactions.includes(:canonical_pending_declined_mapping, :canonical_transactions, :raw_pending_stripe_transaction).to_a %>
 <%# Transactions that settled from one of this item's pending transactions are
-    rendered nested under that pending transaction rather than on their own. %>
+    rendered nested under that pending transaction rather than on their own. A
+    settled transaction can be moved to another ledger item afterwards, so only
+    this item's own transactions are nested; the rest are shown on their
+    ledger item instead. %>
+<% settled_transactions = pending_transactions.to_h do |pt|
+     [pt.id, pt.canonical_transactions.select { |ct| ct.ledger_item_id == ledger_item.id }.sort_by { |ct| [ct.date, ct.created_at] }]
+   end %>
+<% settled_transaction_ids = settled_transactions.values.flatten.map(&:id) %>
 <% standalone_transactions = ledger_item.canonical_transactions.reject { |ct| settled_transaction_ids.include?(ct.id) } %>
 <% timeline = (standalone_transactions + pending_transactions).sort_by { |t| [t.date, t.created_at] } %>
 
@@ -20,19 +26,19 @@
                    "Settled"
                  end %>
       <% settled = true %>
-      <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: } %>
+      <%= render partial: "ledger/items/transactions/transaction", locals: { transaction:, label: } %>
     <% else %>
       <%# A pending transaction and what became of it (the transaction(s) it settled into, or its decline) are packed together as one group. %>
       <div class="flex flex-col gap-1">
-        <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: index.zero? ? "Created" : "Updated" } %>
+        <%= render partial: "ledger/items/transactions/transaction", locals: { transaction:, label: index.zero? ? "Created" : "Updated" } %>
 
-        <% transaction.canonical_transactions.sort_by { |ct| [ct.date, ct.created_at] }.each do |settled_transaction| %>
+        <% settled_transactions[transaction.id].each do |settled_transaction| %>
           <% settled = true %>
-          <%= render partial: "ledger/items/transactions/row", locals: { transaction: settled_transaction, label: "Settled", nested: true } %>
+          <%= render partial: "ledger/items/transactions/transaction", locals: { transaction: settled_transaction, label: "Settled", nested: true } %>
         <% end %>
 
         <% if transaction.canonical_pending_declined_mapping.present? %>
-          <%= render partial: "ledger/items/transactions/declined", locals: { transaction: } %>
+          <%= render partial: "ledger/items/transactions/declined", locals: { transaction:, ledger_item: } %>
         <% end %>
       </div>
     <% end %>

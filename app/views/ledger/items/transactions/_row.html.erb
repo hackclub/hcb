@@ -1,7 +1,6 @@
-<%# locals: (transaction:, label:, nested: false) %>
-<%# `nested` rows are canonical transactions rendered under the pending transaction they settled from. %>
-
-<% pending = transaction.is_a?(CanonicalPendingTransaction) %>
+<%# locals: (label:, date:, nested: false) %>
+<%# One row of the transactions list: a label and date on the left, and a card
+    whose contents the caller yields. `nested` rows hang off the row above them. %>
 
 <div class="flex flex-col md:flex-row justify-start items-center gap-5">
   <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
@@ -12,30 +11,11 @@
       <%= label %>
     </span>
     <span class="text-sm muted">
-      <%= transaction.date.strftime("%b %e, %Y") %>
+      <%= date.strftime("%b %e, %Y") %>
     </span>
   </div>
 
   <div class="card flex flex-grow w-full justify-between items-center">
-    <div class="flex flex-row justify-start items-center gap-3">
-      <%= inline_icon(pending ? "transfers-horizontal" : "transactions") %>
-      <% admin_tool("badge p-0.5 m-0", "span") do %>
-        <%= badge_for transaction.id, class: "bg-muted m-0" %>
-      <% end %>
-      <span>
-        <%= transaction.amount.format %>
-      </span>
-      <span>
-        <%= transaction.memo %>
-      </span>
-    </div>
-    <% admin_tool("m-0 p-0.5") do %>
-      <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
-    <% end %>
-    <% admin_tool("-m-0.5 p-0.5") do %>
-      <%= link_to (pending ? canonical_pending_transaction_path(transaction) : canonical_transaction_path(transaction)), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
-        <%= inline_icon "external", size: 30, class: "!m-0" %>
-      <% end %>
-    <% end %>
+    <%= yield %>
   </div>
 </div>
