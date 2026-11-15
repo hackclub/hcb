@@ -76,7 +76,6 @@ gem "business_time"
 
 
 gem "poppler" # PDF parsing
-gem "wicked_pdf" # HTML to PDF conversion
 
 gem "write_xlsx" # Export Excel files
 gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
@@ -169,7 +168,6 @@ end
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
-gem "wkhtmltopdf-binary", "0.12.6.8"
 
 group :development do
   gem "annotaterb" # comment models with database schema
