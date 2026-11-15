@@ -48,11 +48,11 @@
 <% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
-    <% current_user.card_grants.not_activated.each do |grant| %>
+    <% current_user.card_grants.includes(:event).not_activated.each do |grant| %>
       <% time_left = grant.percent_time_remaining %>
       <li class="list-none card relative overflow-hidden mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
         <div class="flex-1">
-          <p class="my-0 text-sm muted">From <%= grant.event.name %></p>
+          <p class="my-0 text-sm text-muted">From <%= grant.event.name %></p>
           <p class="my-0 text-md flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span class="text-2xl font-[700]"><%= render_money grant.amount %></span>
             <span class="badge m-0 <%= grant.expiration_badge_color %>">
