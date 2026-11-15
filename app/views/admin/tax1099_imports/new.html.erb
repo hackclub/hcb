@@ -17,7 +17,8 @@
   data-tax1099-import-legal-entities-url-value="<%= legal_entities_admin_tax1099_imports_path %>"
   data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>"
   data-tax1099-import-imported-row-keys-value="<%= @imported_row_keys.to_json %>"
-  data-tax1099-import-us-states-value="<%= @us_states.to_json %>">
+  data-tax1099-import-us-states-value="<%= @us_states.to_json %>"
+  data-tax1099-import-country-codes-by-name-value="<%= @country_codes_by_name.to_json %>">
   <div class="card mb-4">
     <h2 class="mt-0">Load the Tax1099 export</h2>
     <%# Same picker as comment attachments (file_upload_controller.js). %>
@@ -97,8 +98,9 @@
               <% when :ftin_not_legally_required %>
                 <input type="checkbox" data-field="ftin_not_legally_required" value="1">
               <% when :country %>
-                <input type="text" class="w-full max-w-sm" data-field="country" autocomplete="off" maxlength="2"
-                       style="text-transform: uppercase">
+                <%# A code or a name; a name is turned into its code when the row is
+                    loaded, and by the server. %>
+                <input type="text" class="w-full max-w-sm" data-field="country" autocomplete="off">
               <% when :tin_type %>
                 <select class="w-full max-w-sm" data-field="tin_type" data-action="change->tax1099-import#entityShapeChanged">
                   <% @tin_types.each do |tin_type| %>

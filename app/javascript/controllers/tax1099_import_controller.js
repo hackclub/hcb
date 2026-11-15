@@ -71,6 +71,31 @@ function usStateCode(usStates, value) {
   return match ? match[0] : ''
 }
 
+// Mirrors Tax1099ImportService.normalize_name, character for character.
+function normalizeName(value) {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Mn}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+// Mirrors Tax1099ImportService.country_code: the 2-letter code for a country
+// given as its code or any of its names, in any case (Tax1099's exports often
+// have "INDIA"), or '' when it's neither. codesByName maps each normalized name
+// to its code.
+function countryCode(codesByName, value) {
+  const trimmed = value.trim()
+  if (
+    trimmed.length === 2 &&
+    Object.values(codesByName).includes(trimmed.toUpperCase())
+  ) {
+    return trimmed.toUpperCase()
+  }
+
+  return codesByName[normalizeName(trimmed)] ?? ''
+}
+
 // Mirrors Tax1099ImportService.normalize_postal_code.
 function normalizePostalCode(value) {
   const normalized = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()
@@ -196,6 +221,7 @@ export default class extends Controller {
     fields: Array,
     importedRowKeys: Array,
     usStates: Object,
+    countryCodesByName: Object,
   }
 
   async loadCsv(event) {
@@ -509,7 +535,12 @@ export default class extends Controller {
           ? usStateCode(this.usStatesValue, cell('state')) || cell('state')
           : cell('state'),
       zip_code: cell('zipCode'),
-      country: cell('country').toUpperCase(),
+      // Sent as its code. One that isn't a recognisable country is left as it
+      // is for the admin to fix, which the server insists on. A W-9's is
+      // always US, and not used.
+      country:
+        countryCode(this.countryCodesByNameValue, cell('country')) ||
+        cell('country'),
       email: cell('email'),
       // When the form was actually completed, so the imported form ranks
       // correctly against any the payee completes later. Received is the

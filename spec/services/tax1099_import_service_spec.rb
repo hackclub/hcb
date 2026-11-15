@@ -335,6 +335,37 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "a W-8's country" do
+    it "is stored, sent, and used for the TIN's namespace as its 2-letter code when given as a name" do
+      result = run(data: w8ben_data.merge(country: "INDIA"))
+
+      expect(result.form.address_country).to eq("IN")
+      expect(result.form.tin_hash).to eq(
+        Tax::IdentificationNumber::Hasher.hash_tin("ABCDE1234F", tin_type: :foreign, country: "IN")
+      )
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW8Ben" => hash_including("CitizenOfCountry" => "IN")))
+    end
+
+    it "matches the all-caps and alternate names Tax1099 exports use" do
+      {
+        "UNITED KINGDOM" => "GB", "VIET NAM" => "VN", "VIETNAM" => "VN", "KOREA, REPUBLIC OF" => "KR",
+        "SOUTH KOREA" => "KR", "TURKIYE" => "TR", "Türkiye" => "TR", "COTE D'IVOIRE" => "CI",
+        "IVORY COAST" => "CI", "RUSSIAN FEDERATION" => "RU", "  germany " => "DE", "in" => "IN"
+      }.each do |given, code|
+        expect(described_class.country_code(given)).to eq(code), "#{given.inspect} should be #{code}"
+      end
+    end
+
+    it "refuses anything that isn't a country, before contacting TaxBandits" do
+      ["XX", "Atlantis", "UAE"].each do |country|
+        expect { run(data: w8ben_data.merge(country:)) }
+          .to raise_error(described_class::ValidationError, /country must be a country/)
+      end
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+  end
+
   describe "archived legal entities" do
     let(:user) { create(:user, email: "ada@example.com") }
 
@@ -808,9 +839,9 @@ RSpec.describe Tax1099ImportService do
       expect { run(data: w8ben_data.merge(state: "", zip_code: "")) }.not_to raise_error
     end
 
-    it "needs a 2-letter country" do
-      expect { run(data: w8ben_data.merge(country: "India")) }
-        .to raise_error(described_class::ValidationError, /2-letter/)
+    it "needs a recognisable country" do
+      expect { run(data: w8ben_data.merge(country: "Indiaa")) }
+        .to raise_error(described_class::ValidationError, /country must be a country/)
     end
 
     it "only takes a foreign TIN" do

@@ -77,6 +77,29 @@ class Tax1099ImportService
 
   TIN_TYPES = %w[SSN EIN FTIN].freeze
 
+  # Folds a country name for matching: accents stripped, lowercased, letters and
+  # digits only, so "TURKIYE", "Türkiye" and "türkiye" agree, as do "KOREA,
+  # REPUBLIC OF" and "Korea, Republic of". Mirrors normalizeName() in
+  # tax1099_import_controller.js, character for character.
+  def self.normalize_name(name)
+    name.to_s.unicode_normalize(:nfd).gsub(/\p{Mn}/, "").downcase.gsub(/[^a-z0-9]/, "")
+  end
+
+  # Normalized name => 2-letter code, for every name the countries gem knows a
+  # country by: its ISO names, its common and English names, and its unofficial
+  # names (which cover exports' "VIET NAM", "SOUTH KOREA", "IVORY COAST"...).
+  # Built once here and shipped to the page, so the server and the page match
+  # exactly the same names.
+  COUNTRY_CODES_BY_NAME = ISO3166::Country.all.each_with_object({}) { |country, codes|
+    names = [country.iso_short_name, country.iso_long_name, country.common_name, country.translations["en"]] +
+            Array(country.unofficial_names)
+
+    names.each do |name|
+      key = normalize_name(name)
+      codes[key] ||= country.alpha2 if key.present?
+    end
+  }.freeze
+
   # Two-letter code => the names it goes by, for every US state, DC, and
   # territory: what a W-9's state is validated against, and what the page uses
   # to turn the full names some Tax1099 rows have ("Massachusetts") into codes.
@@ -131,7 +154,7 @@ class Tax1099ImportService
     { key: :zip_code, label: "Zip / Postal Code", required: [W9] },
     # The country of residence (or, for a W-8BEN-E, of organization). Ignored for
     # a W-9, which is always US.
-    { key: :country, label: "Country (2-letter code)", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES },
+    { key: :country, label: "Country", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES },
     {
       key: :signer_name, label: "Signer Name", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES,
       hint: "The name printed in the signature section at the bottom of the form " \
@@ -319,6 +342,16 @@ class Tax1099ImportService
     normalized.match?(/\A\d{9}\z/) ? normalized[0, 5] : normalized
   end
 
+  # The 2-letter code for a country given as its code or any of its names, in
+  # any case; nil for anything else. Mirrors countryCode() in
+  # tax1099_import_controller.js.
+  def self.country_code(value)
+    value = value.to_s.strip
+    return value.upcase if value.length == 2 && ISO3166::Country[value.upcase]
+
+    COUNTRY_CODES_BY_NAME[normalize_name(value)]
+  end
+
   # The 2-letter code for a US state given as its code or any of its names, in
   # any case; nil for anything else. Mirrors usStateCode() in
   # tax1099_import_controller.js.
@@ -372,8 +405,8 @@ class Tax1099ImportService
       raise ValidationError, "chapter 3 status must be one of: #{CH3_STATUSES.join(", ")}"
     end
 
-    if W8_FORM_TYPES.include?(form_type) && !country.match?(/\A[A-Z]{2}\z/)
-      raise ValidationError, "country must be a 2-letter country code"
+    if W8_FORM_TYPES.include?(form_type) && country.nil?
+      raise ValidationError, "country must be a country, as its 2-letter code (e.g. IN) or its name"
     end
 
     raise ValidationError, "a signed form PDF is required" if @pdf.blank?
@@ -392,8 +425,9 @@ class Tax1099ImportService
 
   # A W-9 payee is always in the US. For a W-8 it's the country of residence
   # (or organization), which is also the country that issued its foreign TIN.
+  # As its 2-letter code; nil for a W-8 country that isn't one (see #validate!).
   def country
-    form_type == W9 ? "US" : @data[:country].to_s.strip.upcase
+    form_type == W9 ? "US" : self.class.country_code(@data[:country])
   end
 
   # A W-8 either gives a foreign TIN or says, with the box on the form, that the
