@@ -238,18 +238,23 @@ class Tax1099ImportService
     Result.new(form:, legal_entity: form.legal_entity)
   end
 
-  # The business legal entities an admin has to choose between before a row can
-  # be imported. Empty when the choice is unambiguous: a personal form always
-  # goes on the user's personal legal entity, and a payee with no business
-  # entity yet gets a new one. Called on its own (without a TIN or a PDF) so the
-  # page can ask the question before anything sensitive is submitted.
+  # The legal entities an admin has to choose between before a row can be
+  # imported: the payee's entities of the form's type. Empty when the choice is
+  # unambiguous: a personal form always goes on the user's personal legal
+  # entity, and a payee with no entity of the form's type yet gets a new one.
+  # Called on its own (without a TIN or a PDF) so the page can ask the question
+  # before anything sensitive is submitted.
   def self.legal_entity_candidates(email:, entity_type:)
     return [] if entity_type.to_s == "person"
 
     user = User.find_by(email:)
     return [] if user.nil?
 
-    user.legal_entities.where.not(entity_type: :person).to_a
+    # Only entities of the form's own type. A form on an entity of another type
+    # (a corporation's W-9 on a business entity, say) never gives the entity its
+    # TIN and is flagged by LegalEntity#entity_type_mismatched_tax_form, which
+    # leaves the payee unpayable, after a submission that can't be taken back.
+    user.legal_entities.where(entity_type:).to_a
   end
 
   # Keys for every live Tax1099 import, so the page can hide CSV rows that an
@@ -407,10 +412,10 @@ class Tax1099ImportService
       # Guard against a stale or hand-edited id pointing at somebody else's
       # entity: the form would otherwise attach a payee's TIN to a stranger.
       unless candidates.include?(@legal_entity)
-        raise ValidationError, "the selected legal entity is not one of #{@data[:email]}'s business legal entities"
+        raise ValidationError, "the selected legal entity is not one of #{@data[:email]}'s #{entity_type} legal entities"
       end
     elsif candidates.any? && !@new_legal_entity
-      raise ValidationError, "#{@data[:email]} already has business legal entities; pick one, or choose to create a new one"
+      raise ValidationError, "#{@data[:email]} already has #{entity_type} legal entities; pick one, or choose to create a new one"
     end
   end
 

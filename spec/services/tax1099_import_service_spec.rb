@@ -225,6 +225,39 @@ RSpec.describe Tax1099ImportService do
         expect { run(data: business_data, legal_entity: user.personal_legal_entity) }
           .to raise_error(described_class::ValidationError, /not one of/)
       end
+
+      it "refuses their business entity for a corporation form, before contacting TaxBandits" do
+        corporation_data = business_data.merge(federal_tax_classification: "C Corporation")
+
+        expect { run(data: corporation_data, legal_entity: existing) }
+          .to raise_error(described_class::ValidationError, /not one of ada@example.com's corporation legal entities/)
+        expect(TaxbanditsService).not_to have_received(:create_from_data)
+      end
+
+      it "doesn't make a corporation form pick between business entities" do
+        result = run(data: business_data.merge(federal_tax_classification: "C Corporation"))
+
+        expect(result.legal_entity).to have_attributes(entity_type: "corporation")
+        expect(result.legal_entity).not_to eq(existing)
+      end
+    end
+  end
+
+  describe ".legal_entity_candidates for an entity type" do
+    let(:user) { create(:user, email: "ada@example.com") }
+    let!(:business) { create(:legal_entity, entity_type: :business, users: [user]) }
+    let!(:corporation) { create(:legal_entity, entity_type: :corporation, users: [user]) }
+
+    it "offers only entities of that type" do
+      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :business)).to contain_exactly(business)
+      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :corporation)).to contain_exactly(corporation)
+    end
+
+    it "leaves the payee payable after importing a corporation form onto their corporation entity" do
+      result = run(data: business_data.merge(federal_tax_classification: "C Corporation"), legal_entity: corporation)
+
+      expect(result.legal_entity.reload.entity_type_mismatched_tax_form).to be_nil
+      expect(result.legal_entity.tin_hash).to eq(result.form.tin_hash)
     end
   end
 
