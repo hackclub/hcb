@@ -502,25 +502,7 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
-    it "creates one repayment covering multiple picked transactions in the same category" do
-      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Stickers", category_slug: "food-fun")
-      post(:create, params: {
-             disbursement: {
-               name: "Paying back pizza and stickers",
-               source_event_id: source_event.public_id,
-               event_id: destination_event.public_id,
-               amount: "123.45",
-               transfer_type: "repayment",
-               repaid_ledger_item_ids: [expense.ledger_item.hashid, second.ledger_item.hashid]
-             }
-           })
-
-      expect(response).to redirect_to(event_transfers_path(source_event))
-      expect(Disbursement.last.amount).to eq(123_45)
-      expect(Disbursement.last.repaid_ledger_items).to contain_exactly(expense.ledger_item, second.ledger_item)
-    end
-
-    describe "of expenses in different categories" do
+    describe "of several transactions" do
       let!(:snacks) { create(:canonical_transaction, event: destination_event, amount_cents: -10_00, memo: "Snacks", category_slug: "food-fun") }
       let!(:venue) { create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Hall", category_slug: "venue") }
       let!(:uncategorized) { create(:canonical_transaction, event: destination_event, amount_cents: -5_00, memo: "Misc") }
@@ -539,21 +521,22 @@ RSpec.describe DisbursementsController do
              })
       end
 
-      it "creates a transfer per category, each with its category" do
-        expect { repay }.to change(Disbursement, :count).by(3)
+      it "creates a transfer per transaction, each with its category" do
+        expect { repay }.to change(Disbursement, :count).by(4)
 
-        expect(flash[:success]).to eq("3 transfers requested, one for each category of expense.")
-        expect(Disbursement.last(3).map { |d| [d.source_transaction_category&.slug, d.amount, d.name, d.repaid_ledger_items.map(&:id).sort] }).to contain_exactly(
-          ["food-fun", 110_00, "Repaying 2 transactions", [expense, snacks].map { |t| t.ledger_item.id }.sort],
-          ["venue", 23_45, "Repaying 1 transaction", [venue.ledger_item.id]],
-          [nil, 5_00, "Repaying 1 transaction", [uncategorized.ledger_item.id]]
+        expect(response).to redirect_to(event_transfers_path(source_event))
+        expect(flash[:success]).to eq("4 transfers requested, one for each transaction.")
+        expect(Disbursement.last(4).map { |d| [d.source_transaction_category&.slug, d.amount, d.name, d.repaid_ledger_items.map(&:id)] }).to contain_exactly(
+          *[[expense, "food-fun", 100_00], [snacks, "food-fun", 10_00], [venue, "venue", 23_45], [uncategorized, nil, 5_00]].map do |transaction, slug, cents|
+            [slug, cents, "Repaying #{transaction.ledger_item.memo}", [transaction.ledger_item.id]]
+          end
         )
       end
 
       it "attaches an uploaded receipt to each transfer" do
         repay(file: [fixture_file_upload("receipt.png", "image/png")])
 
-        receipts = Disbursement.last(3).map { |d| d.outgoing_disbursement.ledger_item.receipts.sole }
+        receipts = Disbursement.last(4).map { |d| d.outgoing_disbursement.ledger_item.receipts.sole }
         expect(receipts.map { |receipt| receipt.file.byte_size }).to all(eq(File.size(file_fixture("receipt.png"))))
       end
 

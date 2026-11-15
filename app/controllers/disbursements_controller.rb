@@ -204,11 +204,10 @@ class DisbursementsController < ApplicationController
     # admin overrode, is manual.
     category_assignment_strategy = transfer_type == "transfer" && source_transaction_category_slug.nil? && destination_transaction_category_slug.nil? ? "automatic" : "manual"
 
-    # A transfer has one category, so expenses in different categories are
-    # repaid by separate transfers, each taking its expenses' category. A
-    # category an admin chose applies to them all, so nothing is separated.
-    repaid_groups = @repaid_ledger_items.to_a.group_by { |item| Repayment::Allocation.new(repaid_ledger_item: item).repaid_category&.slug }.values
-    repaid_groups = [@repaid_ledger_items.to_a] if repaid_groups.size < 2 || source_transaction_category_slug.present?
+    # A transfer has one category, so each expense is repaid by a transfer of
+    # its own, which takes that expense's category.
+    repaid_groups = @repaid_ledger_items.to_a.map { |item| [item] }
+    repaid_groups = [[]] if repaid_groups.empty? # not a repayment
     separated = repaid_groups.size > 1
     if separated
       total_cents = -@repaid_ledger_items.sum(&:amount_cents)
@@ -226,7 +225,7 @@ class DisbursementsController < ApplicationController
     disbursements = ActiveRecord::Base.transaction do
       repaid_groups.map do |items|
         DisbursementService::Create.new(
-          name: separated ? "Repaying #{helpers.pluralize(items.size, "transaction")}" : disbursement_params[:name],
+          name: separated ? "Repaying #{items.first.memo}".truncate(60) : disbursement_params[:name], # the name field's limit
           destination_event_id: @destination_event.id,
           source_event_id: @source_event.id,
           amount: separated ? format("%.2f", -items.sum(&:amount_cents) / 100.0) : disbursement_params[:amount],
@@ -255,7 +254,7 @@ class DisbursementsController < ApplicationController
       end
     end
 
-    flash[:success] = separated ? "#{disbursements.size} transfers requested, one for each category of expense." : "Transfer successfully requested."
+    flash[:success] = separated ? "#{disbursements.size} transfers requested, one for each transaction." : "Transfer successfully requested."
 
     if admin_signed_in?
       redirect_to disbursements_admin_index_path
