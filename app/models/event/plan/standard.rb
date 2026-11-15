@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -43,15 +43,11 @@ class Event
         Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
-      def receipts_required?
+      def receipt_required?
         true
       end
 
       def exempt_from_wire_minimum?
-        false
-      end
-
-      def requires_reimbursement_expense_categorization?
         false
       end
 
@@ -85,6 +81,10 @@ class Event
 
       def contract_docuseal_template_id
         487784
+      end
+
+      def contract_skip_prefills
+        {}
       end
 
     end

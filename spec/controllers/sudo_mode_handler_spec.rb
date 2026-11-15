@@ -25,7 +25,7 @@ RSpec.describe SudoModeHandler do
       user ||= create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user) if feature_enabled
 
-      user_session = sign_in(user)
+      user_session = create_session(user, verified: true)
 
       { user:, user_session: }
     end
@@ -280,7 +280,7 @@ RSpec.describe SudoModeHandler do
       expect(ProcessLoginService).to(
         receive(:new)
           .and_invoke(
-            ->(login:) {
+            ->(login:, ip_address:, user_agent:) {
               instance_double(ProcessLoginService).tap do |instance|
                 yield(instance, login)
               end

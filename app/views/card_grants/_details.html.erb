@@ -14,7 +14,6 @@
       <span class="regular"><%= render_money hcb_code.amount_cents_by_event(card_grant.event).abs %></span>
     </span>
   <% end %>
-  </h2>
   <section class="hcb-code--details">
     <div>
       <strong>Sent by</strong>
@@ -46,9 +45,8 @@
     </p>
     <p>
       <strong>Expires on</strong>
-      <span><%= format_date card_grant.expires_on %></span>
+      <span><%= format_date card_grant.expiration_at %></span>
     </p>
-
     <p>
       <strong>Email</strong>
       <span><%= mail_to card_grant.email %></span>
@@ -56,13 +54,17 @@
     <p>
       <strong>Allowed merchants</strong>
       <% if card_grant.allowed_merchants.any? %>
-        <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %><br>
-          (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
-    <% else %>
+        <span class="font-mono h5"><%= card_grant.allowed_merchant_names.to_sentence %></span>
+      <% else %>
         <span>All merchants allowed</span>
       <% end %>
     </p>
-
+    <% if card_grant.allowed_merchants.any? %>
+      <p>
+        <strong>Merchant IDs</strong>
+        <span class="font-mono h5"><%= card_grant.allowed_merchants.join(", ") %></span>
+      </p>
+    <% end %>
     <p>
       <strong>Allowed categories</strong>
       <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>

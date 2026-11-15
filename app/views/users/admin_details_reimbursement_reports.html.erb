@@ -1,0 +1,40 @@
+<%= turbo_frame_tag :admin_details_reimbursement_reports do %>
+  <h3 class="mb2 mt1">Reimbursement reports</h3>
+  <% if @reimbursement_reports.present? %>
+    <table>
+      <thead>
+      <tr>
+        <th>Status</th>
+        <th>Report</th>
+        <th>Event</th>
+        <th>Amount</th>
+        <th>Created</th>
+      </tr>
+      </thead>
+      <tbody>
+        <% @reimbursement_reports.order(created_at: :desc).each do |report| %>
+          <tr>
+            <td>
+              <%= report.status_text %>
+            </td>
+            <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+              <%= link_to report.name, report, data: { turbo_frame: "_top" } %>
+            </td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+              <%= report.event&.name || "No event" %>
+            </td>
+            <td>
+              <%= render_money report.amount_cents %>
+            </td>
+            <td>
+              <%= format_date report.created_at %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= paginate @reimbursement_reports %>
+  <% else %>
+    <%= blankslate "No reimbursement reports" %>
+  <% end %>
+<% end %>

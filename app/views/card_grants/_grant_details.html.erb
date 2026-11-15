@@ -3,7 +3,15 @@
 <% if (stripe_card = card_grant.stripe_card).present? %>
   <div>
     <div class="card container--md pt-0">
-      <p>This is information about your grant:</p>
+      <p>
+        This is information about your grant:
+        <br>
+        <i class="muted">
+          If there are any issues with your grant amount, spend by, or allowed merchants,
+          please reach out to the <%= card_grant.event.name %> team. HCB staff are unable
+          to provide assistance with these requests.
+        </i>
+      </p>
 
       <section class="details">
         <p>
@@ -13,7 +21,7 @@
               <%= inline_icon "important", size: 18, style: "position: unset;" %>
             </span>
           </strong>
-          <span><%= format_date card_grant.expires_on %></span>
+          <span><%= format_date card_grant.expiration_at %></span>
         </p>
 
         <% if card_grant.one_time_use %>
@@ -31,12 +39,18 @@
         <p>
           <strong>Allowed merchants</strong>
           <% if card_grant.allowed_merchants.any? %>
-            <span><%= card_grant.allowed_merchant_names.join(", ") %><br>
-              (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
+            <span><%= card_grant.allowed_merchant_names.to_sentence %></span>
           <% else %>
             <span>All merchants allowed</span>
           <% end %>
         </p>
+
+        <% if card_grant.allowed_merchants.any? && organizer_signed_in? %>
+          <p>
+            <strong>Merchant IDs</strong>
+            <span><%= card_grant.allowed_merchants.join(", ") %></span>
+          </p>
+        <% end %>
 
         <p>
           <strong>Allowed categories</strong>

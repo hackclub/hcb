@@ -1,0 +1,21 @@
+<p>Hi there! 👋</p>
+
+<% if @message.present? %>
+  <p>
+    We have reviewed the agreement you signed for your child's organization on HCB, <%= @contract.event_name %>.
+    However, we could not finalize this agreement due to an issue in your submission:
+  </p>
+  <blockquote><%= MarkdownService.instance.render @message %></blockquote>
+<% else %>
+  <p>
+    We have reviewed the agreement you signed for your child's organization on HCB, <%= @contract.event_name %>.
+    However, we could not finalize this agreement due to an issue in your child's submission.
+  </p>
+<% end %>
+
+<p><%= link_to "Click here", contract_party_url(@party) %> to sign a new agreement, <%= @message.present? ? "addressing the above issue" : "using the same information you initially entered" %>.</p>
+
+<p>
+  Best,<br>
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> Team
+</p>

@@ -53,7 +53,7 @@
   </p>
 
   <p>
-    ⚠️ Warning: this action is permanent and irreversable. If you do this in error, a new invoice will have to be created for the sponsor, which will send them another email. Please exercise caution. Your account will be associated with this action.
+    ⚠️ Warning: this action is permanent and irreversible. If you do this in error, a new invoice will have to be created for the sponsor, which will send them another email. Please exercise caution. Your account will be associated with this action.
   </p>
 
   <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(@invoice.id), method: :post) do |form| %>
@@ -71,7 +71,7 @@
     </fieldset>
 
     <p>
-      <%= form.submit "Mark Paid", data: { confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
+      <%= form.submit "Mark Paid", data: { turbo_confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
     </p>
   <% end %>
 <% else %>

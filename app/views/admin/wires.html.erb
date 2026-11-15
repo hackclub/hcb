@@ -1,9 +1,17 @@
 <% title "Wires" %>
 
-<%= form_with local: true, url: wires_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-  <%= form.submit "Search" %>
+<%= form_with local: true, class: "card overflow-visible", url: wires_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", selected: @event %>
+    <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :exclude_reimbursements do %>
+      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+    <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
@@ -20,6 +28,7 @@
       <th class="w-32">Date</th>
       <th>Event</th>
       <th>Recipient</th>
+      <th>Payment</th>
       <th>Sent by</th>
       <th>Sent with Column</th>
       <th class="w-32">Amount</th>
@@ -34,6 +43,13 @@
         <td><%= wire.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wire.event.name %></td>
         <td><%= wire.recipient_name %></td>
+        <td>
+          <% if wire.payment.present? %>
+            <%= render partial: "admin/payment_link", locals: { payout: wire } %>
+          <% else %>
+            None
+          <% end %>
+        </td>
         <td><%= wire.last_user_change_to(aasm_state: :approved)&.name || "None / unknown" %></td>
         <td><%= wire.column_id.present? ? "TRUE" : "FALSE" %></td>
         <td><%= Money.from_cents(wire.amount_cents, wire.currency).format %></td>

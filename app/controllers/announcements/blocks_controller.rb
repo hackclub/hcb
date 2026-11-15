@@ -13,13 +13,13 @@ module Announcements
         return render json: { errors: block.errors.map(&:full_message) }, status: :bad_request
       end
 
-      render json: { id: block.id, html: block.rendered_html }
+      render json: { id: block.id, html: block.render }
     end
 
     def show
       authorize @block, policy_class: Announcement::BlockPolicy
 
-      render json: { id: @block.id, html: @block.rendered_html }
+      render json: { id: @block.id, html: @block.render }
     end
 
     def edit
@@ -36,14 +36,6 @@ module Announcements
       end
 
       render turbo_stream: turbo_stream.replace("block_#{@block.id}", partial: @block.partial, locals: @block.locals)
-    end
-
-    def refresh
-      authorize @block, policy_class: Announcement::BlockPolicy
-
-      @block.refresh!
-
-      render html: @block.render
     end
 
     private

@@ -5,6 +5,8 @@ require_relative "boot"
 require "rails/all"
 require_relative "../app/lib/credentials"
 require_relative "../lib/active_storage/previewer/document_previewer"
+require_relative "../app/middleware/set_current_request_ip"
+require_relative "../app/middleware/opt_out_csp_for_mounted_engines"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -15,7 +17,7 @@ Dotenv.load if Rails.env.development?
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.2
+    config.load_defaults 8.0
 
     Credentials.load if ENV["DOPPLER_TOKEN"]
 
@@ -50,7 +52,7 @@ module Bank
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    config.autoload_lib(ignore: %w[assets tasks rubocop])
     config.eager_load_paths << "#{config.root}/spec/mailers/previews"
 
     config.action_view.form_with_generates_remote_forms = false
@@ -60,6 +62,13 @@ module Bank
     config.to_prepare do
       Doorkeeper::AuthorizationsController.layout "application"
     end
+
+    # Track request IP for all requests
+    config.middleware.insert_after ActionDispatch::RemoteIp, SetCurrentRequestIp
+
+    # Must sit inside SecureHeaders::Middleware (which is at position 0) so the
+    # opt-out is recorded before the CSP header is built on the way out.
+    config.middleware.insert_after ActionDispatch::RemoteIp, OptOutCspForMountedEngines
 
     config.active_storage.variant_processor = :mini_magick
 
@@ -117,6 +126,10 @@ module Bank
 
     # CSV previews
     config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
+
+    config.active_support.deprecation = :notify
+
+    config.action_controller.include_all_helpers = false
 
   end
 end

@@ -4,18 +4,21 @@ A core part of HCB's onboarding process is the fiscal sponsorship contract. The 
 
 `Contract` implements single-table inheritance to support other types of contracts, such as termination contracts. Currently, only `Contract::FiscalSponsorship` is implemented and overrides `payload` (what HCB sends to DocuSeal to create the contract) and `required_roles` (the party roles that must exist on the contract before sending).
 
-`Contract` also has a couple important associations:
+`Contract` also has a couple of important associations:
 
-- `contractable` - polymorphic association to the source of the contract, which is expected to implement the `Contractable` concern. Currently, only `OrganizerPositionInvite` does this.
+- `contractable` - polymorphic association to the source of the contract, which is expected to implement the `Contractable` concern. `OrganizerPositionInvite` and `Event::Application` implement this.
 - `parties` - each signing party has a `Contract::Party` method linked to its `Contract`. Each party stores its own signing state and a role, which can be `signee`, `cosigner`, or `hcb`.
 
-Callbacks on `Contract::Party` and `Contract` ensure that data is always kept in sync and allows the `Contractable` to perform additional tasks when its contract's status changes.
+Callbacks on `Contract::Party` and `Contract` ensure that data is always kept in sync and allow the `Contractable` to perform additional tasks when its contract's status changes. Additionally, `Contract::Party#sync_with_docuseal` allows us to safely update the party with the up-to-date data from DocuSeal in cases where we might be reading right after signing.
 
 ## Creating contracts
 
-Currently, all contracts are created from an `OrganizerPositionInvite`. When an admin invites someone to an organization (such as when activating the organization), they have the option to invite them as a contract signee. If they are under 18 years old, they will have to provide a cosigner email (a parent or guardian).
+All contracts are created from an `OrganizerPositionInvite` or an `Event::Application`.
 
-This calls `OrganizerPositionInvite#send_contract`, which handles the logic of creating the relevant `Contract` and `Contract::Party` models. It then calls `Contract#send!` to finalize the contract and send it to DocuSeal.
+- `OrganizerPositionInvite`: When an admin invites someone to an organization, they have the option to invite them as a contract signee. If they are under 18 years old, they will have to provide a cosigner email (a parent or guardian).
+- `Event::Application`: The contract is created immediately after submitting for teen-led applications and after HCB approval for adult applications.
+
+Both models implement a `send_contract` method, which handles the logic of creating the relevant `Contract` and `Contract::Party` models. It then calls `Contract#send!` to finalize the contract and send it to DocuSeal. When called on an `OrganizerPositionInvite`, `send_contract` uses the `cosigner_email` and `include_videos` parameters. Both implementations optionally accept `reissue_signee_message` and `reissue_cosigner_message` parameters. If provided, these parameters will be passed to `Contract` to send the email for reissuing a contract that was filled out badly instead of the typical notification email.
 
 Contracts should never be created outside of their `Contractable`'s model to ensure that they are always created with the correct information before sending.
 
@@ -29,7 +32,9 @@ When a custom contract template will be used for a large number of organizations
   end
 ```
 
-Any contracts created for organizations with that plan will automatically use that template. Make sure the template uses the same fields as the main fiscal sponsorship contract template.
+Any contracts created for organizations with that plan will automatically use that template. If the template does not use the same fields as the main fiscal sponsorship contract template, define a `contract_skip_prefills` method on the plan, which should be a hash mapping DocuSeal roles to a list of prefill field names to not include in the creation payload.
+
+For events with subevents, the `subevent_plan` column on `Event::Configuration` (configurable via the event admin settings) can be used to choose what plan its subevents will use. This is useful if subevents should use a different contract than the parent event.
 
 ### Sending manual contracts
 
@@ -59,7 +64,7 @@ contract = Contract::FiscalSponsorship.create!(contractable: invite, include_vid
 
 contract.parties.create!(user: invite.user, role: :signee)
 
-# If the contract had a cosigner, uncomment and add their email here here
+# If the contract had a cosigner, uncomment and add their email here
 # contract.parties.create!(external_email: "", role: :cosigner)
 
 contract.mark_signed!

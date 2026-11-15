@@ -1,0 +1,13 @@
+<%# locals: (party:, klass: "") %>
+
+<div data-contract-target="outerContainer" class="relative top-0 left-0 overflow-hidden z-10 <%= klass %>">
+  <button class="btn absolute top-5 right-5 z-[60] aspect-square" data-action="contract#toggleFullscreen"><%= inline_icon :expand, class: "!m-0" %></button>
+  <div class="bg-white overflow-scroll mb-6 max-h-[50vh] md:max-h-[75vh] rounded-md" data-contract-target="innerContainer">
+    <docuseal-form
+      id="docusealForm"
+      data-src="<%= party.docuseal_signature_url %>"
+      data-with-title="false"
+      data-action="completed->contract#completed declined->contract#void">
+    </docuseal-form>
+  </div>
+</div>

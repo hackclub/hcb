@@ -21,6 +21,28 @@ RSpec.describe Comment, type: :model, versioning: true do
     expect(comment.versions.size).to eq(2)
   end
 
+  describe "#shared?" do
+    it "returns true when commentable is a Disbursement" do
+      disbursement = create(:disbursement)
+      comment = create(:comment, commentable: disbursement)
+
+      expect(comment.shared?).to be true
+    end
+
+    it "returns false when commentable is an HcbCode" do
+      hcb_code = create(:hcb_code)
+      comment = create(:comment, commentable: hcb_code)
+
+      expect(comment.shared?).to be false
+    end
+
+    it "returns false when commentable is an Event" do
+      comment = create(:comment, commentable: event)
+
+      expect(comment.shared?).to be false
+    end
+  end
+
   context "when missing content" do
     before do
       comment.content = ""

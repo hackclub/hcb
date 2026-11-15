@@ -4,18 +4,18 @@
 #
 # Table name: announcement_blocks
 #
-#  id                  :bigint           not null, primary key
-#  parameters          :jsonb
-#  rendered_email_html :text
-#  rendered_html       :text
-#  type                :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  announcement_id     :bigint           not null
+#  id              :bigint           not null, primary key
+#  deleted_at      :datetime
+#  parameters      :jsonb
+#  type            :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  announcement_id :bigint           not null
 #
 # Indexes
 #
 #  index_announcement_blocks_on_announcement_id  (announcement_id)
+#  index_announcement_blocks_on_deleted_at       (deleted_at)
 #
 # Foreign Keys
 #
@@ -26,6 +26,10 @@ class Announcement
     class TopUsers < ::Announcement::Block
       include HasFlexibleStartDate
       include HasEndDate
+
+      def partial_name
+        "top_spenders"
+      end
 
       delegate :empty?, to: :users
 

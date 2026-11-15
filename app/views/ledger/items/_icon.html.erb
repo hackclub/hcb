@@ -1,0 +1,7 @@
+<%# locals: (ledger_item:) %>
+
+<% if ledger_item.icon.is_a?(YellowPages::Merchant) %>
+  <%= merchant_icon(ledger_item.icon, style: "height: 1.2em") %>
+<% else %>
+  <%= inline_icon(ledger_item.icon, size: 32) %>
+<% end %>

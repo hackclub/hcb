@@ -3,7 +3,7 @@
 class CanonicalPendingTransactionMailerPreview < ActionMailer::Preview
   def notify_approved
     # @cpt = CanonicalPendingTransaction.stripe.last
-    @cpt = CanonicalPendingTransaction.stripe.where("amount_cents < ?", -1_000_00).last
+    @cpt = CanonicalPendingTransaction.stripe.last
 
     CanonicalPendingTransactionMailer.with(
       canonical_pending_transaction_id: @cpt.id,
@@ -12,7 +12,7 @@ class CanonicalPendingTransactionMailerPreview < ActionMailer::Preview
 
   def notify_declined
     # @cpt = CanonicalPendingTransaction.stripe.last
-    @cpt = CanonicalPendingTransaction.stripe.where("amount_cents < ?", -1_000_00).last
+    @cpt = CanonicalPendingTransaction.stripe.last
 
     CanonicalPendingTransactionMailer.with(
       canonical_pending_transaction_id: @cpt.id,
@@ -21,7 +21,7 @@ class CanonicalPendingTransactionMailerPreview < ActionMailer::Preview
 
   def notify_settled
     # @cpt = CanonicalPendingTransaction.stripe.last
-    @cpt = CanonicalPendingTransaction.stripe.where("amount_cents < ?", -1_000_00).first
+    @cpt = CanonicalPendingTransaction.stripe.first
     @ct = @cpt.local_hcb_code.ct
 
     CanonicalPendingTransactionMailer.with(

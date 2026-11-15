@@ -18,6 +18,7 @@
 # Indexes
 #
 #  index_column_account_numbers_on_account_number_bidx  (account_number_bidx) UNIQUE
+#  index_column_account_numbers_on_column_id            (column_id) UNIQUE
 #  index_column_account_numbers_on_event_id             (event_id) UNIQUE
 #
 # Foreign Keys
@@ -35,6 +36,8 @@ module Column
     before_create :create_column_account_number
 
     validate :event_is_not_demo_mode
+
+    validates_uniqueness_of :account_number_bidx
     validates :event, uniqueness: true
 
     has_paper_trail

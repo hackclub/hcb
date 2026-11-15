@@ -32,7 +32,11 @@ class Export
       end
 
       def filename
-        "hcb_balances_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+        [
+          "hcb_balances",
+          end_date.present? ? "ending_#{end_date}" : nil,
+          "exported_#{Time.now.strftime("%Y-%m-%d_%H-%M")}.csv"
+        ].compact.join("_")
       end
 
       def mime_type
@@ -58,11 +62,11 @@ class Export
       end
 
       def header
-        ::CSV::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "total raised", "omitted?"], true)
+        SafeCsv::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "total raised", "omitted?"], true)
       end
 
       def row(event)
-        ::CSV::Row.new(
+        SafeCsv::Row.new(
           headers,
           [
             event.id,

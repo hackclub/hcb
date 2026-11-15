@@ -25,7 +25,7 @@ class CardGrant
     private
 
     def user_in_event?
-      record.event.users.include?(user)
+      OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def manager_in_event?

@@ -7,6 +7,7 @@
 #  id                 :bigint           not null, primary key
 #  amount_cents       :integer
 #  column_transaction :jsonb
+#  column_transfer    :jsonb
 #  date_posted        :date
 #  description        :text
 #  transaction_index  :integer

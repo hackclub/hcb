@@ -11,6 +11,7 @@ import Image from '@tiptap/extension-image'
 import { mountReactNode } from './tiptap/mount_react_node'
 
 import csrf from '../common/csrf'
+import showConfirm from '../confirm'
 import { DonationGoalNode } from './tiptap/nodes/donation_goal_node'
 import { HcbCodeNode } from './tiptap/nodes/hcb_code_node'
 import { DonationSummaryNode } from './tiptap/nodes/donation_summary_node'
@@ -94,16 +95,16 @@ export default class extends Controller {
     this.editor.destroy()
   }
 
-  submit(autosave) {
+  async submit(autosave) {
     if (autosave !== true && !this.publishedValue) {
       const data = new FormData(this.formTarget)
       const draft = data.get('announcement[draft]')
 
       if (draft === 'false') {
-        let confirmed = confirm(
-          `Are you sure you would like to publish this announcement and notify ${this.followersValue} follower${this.followersValue === 1 ? '' : 's'}?`
+        const confirmed = await showConfirm(
+          `Are you sure you would like to publish this announcement and notify ${this.followersValue} follower${this.followersValue === 1 ? '' : 's'}?`,
+          { confirmText: 'Publish' }
         )
-
         if (!confirmed) return
       }
     }
@@ -146,6 +147,7 @@ export default class extends Controller {
   }
 
   link() {
+    // eslint-disable-next-line no-alert
     const url = window.prompt('Link URL')
 
     if (url === null) {
@@ -185,6 +187,7 @@ export default class extends Controller {
   }
 
   image() {
+    // eslint-disable-next-line no-alert
     const url = window.prompt('Image URL')
 
     if (url === null || url === '') {

@@ -43,7 +43,7 @@ class BankAccountsController < ApplicationController
     if @bank_account.update(bank_account_update_params)
       redirect_back_or_to bank_accounts_admin_index_path
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 

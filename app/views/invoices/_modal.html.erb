@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new_invoice">
   <%= modal_header "Send an invoice" %>
   <% if @event.invoices.none? && !@event.demo_mode %>

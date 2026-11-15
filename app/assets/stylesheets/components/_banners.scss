@@ -27,18 +27,3 @@
     border-color: map-get($palette, info);
   }
 }
-
-.banner-content {
-  grid-template-columns: 1fr 2fr 1fr;
-  place-items: center;
-
-  @media (max-width: 660px) {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 1rem;
-
-    .playground-desc {
-      order: 1;
-    }
-  }
-}

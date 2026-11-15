@@ -8,15 +8,19 @@ module Referral
       @link = Referral::Link.find_by(slug: params[:id]).presence
 
       if @link
-        unless signed_in?
-          skip_authorization
-          return redirect_to auth_users_path(referral: @link.slug)
-        end
+        authorize @link
 
-        authorize(@link)
+        # An anonymous visitor needs a session for the attribution to hang off
+        # of, so it can be bound to a user once they sign up. This is the only
+        # place that creates one; every other reader of an anonymous session
+        # only cares about a session a referral click already created.
+        #
+        # Created only once the link is known to be real, so bogus slugs don't
+        # mint throwaway sessions.
+        ensure_created_session
 
         Rails.error.handle do
-          Referral::Attribution.create!(user: current_user, program: @link.program, link: @link)
+          Referral::Attribution.create!(user: current_user, user_session: current_session, program: @link.program, link: @link)
         end
 
         # This is only configurable by admins

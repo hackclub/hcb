@@ -23,6 +23,7 @@
 class Event
   class Follow < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     belongs_to :user
     belongs_to :event

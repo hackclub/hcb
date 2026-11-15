@@ -56,6 +56,19 @@ RSpec.describe AchTransfer, type: :model do
     end
   end
 
+  describe "public activity" do
+    it "attributes creation to the transfer creator when no controller is present" do
+      creator = create(:user)
+
+      transfer = PublicActivity.with_tracking do
+        create(:ach_transfer, event:, creator:)
+      end
+
+      activity = PublicActivity::Activity.find_by!(trackable: transfer, key: "ach_transfer.create")
+      expect(activity.owner).to eq(creator)
+    end
+  end
+
   describe "invoiced_at validation" do
     it "allows invoiced_at to be nil" do
       ach_transfer = build(:ach_transfer, event:, invoiced_at: nil)

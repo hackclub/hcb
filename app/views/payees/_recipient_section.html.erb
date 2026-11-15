@@ -1,0 +1,38 @@
+<%# locals: (event:, payee: nil, destination: "payments", manual_title: "Manual payment", manual_subtitle: "Recipient & payout details entered directly", initial_panel: event.payees.any? ? "list" : "new") %>
+<%# herb:slots client %>
+<%# Bound to the picker's `selected_panel`: while adding a new recipient the summary
+    is hidden, so the section can't be collapsed. %>
+<%# herb:state (selected_panel: initial_panel) %>
+
+<div data-scroll-seek-target="section">
+  <h3 class="mb-2">Recipient</h3>
+  <% if payee || params[:manual] %>
+    <details class="group card card--nested-flush mb-4 p-0 overflow-hidden">
+      <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" hidden="<%= selected_panel == "new" %>">
+        <div class="flex-1 min-w-0">
+          <% if payee %>
+            <div class="flex gap-3 items-center">
+              <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+              <div>
+                <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                <p class="muted text-sm m-0"><%= payee.email %></p>
+              </div>
+            </div>
+
+          <% else %>
+
+            <p class="font-bold text-lg m-0"><%= manual_title %></p>
+            <p class="muted text-sm m-0"><%= manual_subtitle %></p>
+
+          <% end %>
+        </div>
+        <span class="muted ml-auto shrink-0 text-sm group-open:hidden">Edit</span>
+        <span class="muted ml-auto shrink-0 text-sm hidden group-open:inline">Close</span>
+      </summary>
+      <div class="menu__divider my-0" hidden="<%= selected_panel == "new" %>"></div>
+      <%= render "payments/payee_picker", event:, destination:, state: { selected_panel: selected_panel } %>
+    </details>
+  <% else %>
+    <%= render "payments/payee_picker", event:, destination:, state: { selected_panel: selected_panel } %>
+  <% end %>
+</div>

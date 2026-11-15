@@ -21,12 +21,12 @@
       <li>We only accept checks from U.S. financial institutions, in U.S.
         dollars.
       </li>
-      <li>For information on how to physically deposit checks, <%= link_to "view our Help Center", "https://help.hcb.hackclub.com/article/42-how-do-i-deposit-checks" %>.</li>
+      <li>For information on how to physically deposit checks, <%= link_to "view our Help Center", "https://help.hcb.hackclub.com/en/articles/15409994-how-do-i-receive-and-deposit-checks" %>.</li>
     </ul>
   <% end %>
 </div>
 
-<% if @check_deposits.count > 0 %>
+<% if @check_deposits.any? %>
   <hr>
 
   <h3 class="mt3 center">Deposit history</h3>

@@ -34,6 +34,8 @@
 #
 class EmburseCard < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   scope :deactivated, -> { where.not(emburse_state: "active") }
@@ -73,14 +75,6 @@ class EmburseCard < ApplicationRecord
 
   def emburse_path
     "https://app.emburse.com/cards/#{emburse_id}"
-  end
-
-  def department_id
-    emburse_obj&.department&.id
-  end
-
-  def suspected_subscriptions
-    emburse_transactions.group(:merchant_name).having("COUNT(*)>3").count.keys
   end
 
   # Emburse emburse_cards have three activation states:

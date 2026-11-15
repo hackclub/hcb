@@ -247,10 +247,6 @@ class Transaction < ApplicationRecord
     self.name.include?("GitHub Grant")
   end
 
-  def potential_expensify?
-    self.name.include?("Expensify")
-  end
-
   def potential_ach_transfer?
     self.name.include?("BUSBILLPAY")
   end
@@ -293,91 +289,9 @@ class Transaction < ApplicationRecord
     elsif potential_disbursement?
       # try_pair_disbursement
     end
-    # NOTE: we cannot curently auto-pair Expensify txs
+    # NOTE: we cannot currently auto-pair Expensify txs
   rescue => e
     Rails.error.report(e)
-  end
-
-  # Tries to recover transaction data from a previously paired / modified
-  # transaction that was pending, for a currently complete transaction.
-  # This is complicated by the fact that the pending? attribute Plaid
-  # returns from SVB is just a big fat lie ~because Plaid hates us~.
-  # So every TX shows as complete, and we can't disambiguate in code.
-  #
-  # This is a workaround for the issue highlighted in GH Issue #443.
-  # TL;DR - when a TX goes from pending -> complete, SVB deletes
-  # the old TX and creates a new one, but we want to persist our
-  # model data between them.
-  #
-  # NOTE: wrap calls to this in a SQL transaction to avoid
-  # broken states.
-  def try_recover_pending_tx_details!
-    # transactions that were deleted, that match in TX memo, date,
-    # and amount, are good candidates for a previously pending TX
-    # that is now complete as `self`.
-    matching_deleted_tx = Transaction.with_deleted
-                                     .where(date: self.date)
-                                     .where(amount: self.amount)
-                                     .where.not(deleted_at: nil)
-                                     .select { |t| self.name.start_with?(t.name) }
-
-    return unless matching_deleted_tx.count == 1
-
-    previous = matching_deleted_tx[0]
-
-    # if for some reason we've found the transaction itself,
-    # stop now.
-    return if self == previous
-
-    # copy over copyable details
-
-    # copy over old display name only if old one was renamed
-    # and new one was not
-    if self.display_name == self.name && previous.display_name != previous.name
-      self.display_name = previous.display_name
-    end
-
-    self.is_event_related = previous.is_event_related
-    previous.comments.each do |comment|
-      comment.update(commentable_id: self.id)
-    end
-    pfr = previous.fee_relationship
-    if !pfr.nil? # this is only true if previous was paired successfully
-      self.fee_relationship = FeeRelationship.new(
-        event_id: pfr.event_id,
-        fee_applies: pfr.fee_applies,
-        fee_amount: pfr.fee_amount,
-        is_fee_payment: pfr.is_fee_payment,
-      )
-    end
-
-    if self.invoice_payout.nil? && previous.invoice_payout
-      self.invoice_payout = previous.invoice_payout
-      previous.invoice_payout = nil
-    end
-
-    if self.donation_payout.nil? && previous.donation_payout
-      self.donation_payout = previous.donation_payout
-      previous.donation_payout = nil
-    end
-
-    if self.emburse_transfer.nil? && previous.emburse_transfer
-      self.emburse_transfer = previous.emburse_transfer
-      previous.emburse_transfer = nil
-    end
-
-    if self.fee_reimbursement.nil? && previous.fee_reimbursement
-      self.fee_reimbursement = previous.fee_reimbursement
-      previous.fee_reimbursement = nil
-    end
-
-    if self.check.nil? && previous.check
-      self.check = previous.check
-      previous.check = nil
-    end
-
-    self.save
-    previous.save
   end
 
   def receipt_required?
@@ -654,10 +568,6 @@ class Transaction < ApplicationRecord
 
   def slug_text
     "#{date} #{name}"
-  end
-
-  def filter_for(text)
-    name&.downcase&.include? text
   end
 
 end

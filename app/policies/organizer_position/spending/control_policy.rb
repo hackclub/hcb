@@ -11,12 +11,12 @@ class OrganizerPosition
 
       def create?
         user.admin? || (
-           current_user_manager? &&
-           !record.organizer_position.manager?
-           # Don't have to make sure you're not setting the control on yourself as
-           # if you're here it means you're a manager, but you can't set controls
-           # against managers; so it's okay.
-         )
+          current_user_manager? &&
+          !record.organizer_position.manager?
+          # Don't have to make sure you're not setting the control on yourself as
+          # if you're here it means you're a manager, but you can't set controls
+          # against managers; so it's okay.
+        )
       end
 
       def destroy?
@@ -26,7 +26,7 @@ class OrganizerPosition
       private
 
       def current_user_manager?
-        OrganizerPosition.find_by(user:, event: record.organizer_position.event)&.manager?
+        OrganizerPosition.role_at_least?(user, record.organizer_position.event, :manager)
       end
 
       def own_control?

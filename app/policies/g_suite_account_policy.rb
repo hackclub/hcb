@@ -10,7 +10,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def show?
-    user.auditor? || (record.event.users.include?(user) && !record.g_suite.revocation.present?)
+    user.auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.g_suite.revocation.present?)
   end
 
   def reset_password?
@@ -26,7 +26,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.admin?
+    admin_or_manager?
   end
 
   def reject?
@@ -37,13 +37,17 @@ class GSuiteAccountPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def unmanage?
+    user&.admin? && Flipper.enabled?(:unmanage_gsuite_account, user)
+  end
+
   private
 
   def admin_or_manager?
     return true if user&.admin?
 
     revocation = record.is_a?(GSuite) ? record.revocation : record&.g_suite&.revocation
-    OrganizerPosition.find_by(user:, event: record.event)&.manager? && !revocation&.revoked?
+    OrganizerPosition.role_at_least?(user, record.event, :manager) && !revocation&.revoked?
   end
 
 end

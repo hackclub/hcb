@@ -90,12 +90,6 @@
       </p>
     <% end %>
 
-    <% if @transaction.emburse_transfer %>
-      <p>
-        <strong>Transfer Request</strong>
-        <%= link_to "View", emburse_transfer_path(@transaction.emburse_transfer) %>
-      </p>
-    <% end %>
   </section>
 
   <% admin_tool("py0") do %>

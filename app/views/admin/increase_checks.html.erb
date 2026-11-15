@@ -1,5 +1,14 @@
 <% title "Checks" %>
 
+<%= form_with local: true, class: "card overflow-visible", url: increase_checks_admin_index_path, method: :get do |form| %>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :exclude_reimbursements do %>
+      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+    <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
 <div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @checks, entry_name: "check" %>
@@ -14,6 +23,7 @@
       <th class="w-32">Date</th>
       <th>Event</th>
       <th>Recipient</th>
+      <th>Payment</th>
       <th class="w-32">Amount</th>
       <th>Status</th>
       <th class="w-24">Actions</th>
@@ -26,6 +36,13 @@
         <td><%= check.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= check.event.name %></td>
         <td><%= check.recipient_name %></td>
+        <td>
+          <% if check.payment.present? %>
+            <%= render partial: "admin/payment_link", locals: { payout: check } %>
+          <% else %>
+            None
+          <% end %>
+        </td>
         <td><%= render_money(check.amount) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
         <td>

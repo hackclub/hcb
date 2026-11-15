@@ -21,7 +21,7 @@ class OrganizerPositionInvite
     end
 
     def manager?
-      OrganizerPosition.find_by(user:, event: record.link.event)&.manager?
+      OrganizerPosition.role_at_least?(user, record.link.event, :manager)
     end
 
     def admin_or_manager?

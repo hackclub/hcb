@@ -2,18 +2,18 @@
 <button id="linkButton">Reauthenticate</button>
 
 <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
-<script>
+<script nonce="<%= content_security_policy_script_nonce %>">
 var linkHandler = Plaid.create({
   token: <%= @link_token.to_json.html_safe %>,
   onSuccess: function(public_token, metadata) {
     // Don't need to do anything, access token remains the same
-    alert('Done! Feel free to continue using Bank.')
+    swal('Done!', 'Feel free to continue using HCB.', 'success')
   },
   onExit: function(err, metadata) {
     if (err != null) {
       console.log('error metadata:', metadata)
 
-      alert('Ran into an error while authenticating! Please try again. Check console for metadata like request_id or link_session_id and report to Plaid.')
+      swal('Authentication error', 'Ran into an error while authenticating! Please try again. Check the console for metadata like request_id or link_session_id and report to Plaid.', 'error')
     }
   },
 });

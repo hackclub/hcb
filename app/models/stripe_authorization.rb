@@ -43,7 +43,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def declined?
-    approved == false
+    !approved
   end
 
   has_paper_trail
@@ -71,12 +71,6 @@ class StripeAuthorization < ApplicationRecord
     }
   end
 
-  def status_emoji
-    return "✔️" if approved?
-
-    "✖️"
-  end
-
   def status_text
     return "Declined" unless approved?
     return "Pending" if pending?
@@ -93,10 +87,6 @@ class StripeAuthorization < ApplicationRecord
     return :success if approved?
 
     :accent
-  end
-
-  def authorization_method_text
-    (stripe_obj[:wallet] || authorization_method).humanize
   end
 
   def merchant_name
@@ -125,7 +115,7 @@ class StripeAuthorization < ApplicationRecord
     # the status stripe is telling us and mark it as 'refunded' if all the
     # authorization's transactions sum to 0.
     # if (stripe_obj[:status] == 'closed' && stripe_obj[:transactions].size >= 1)
-    if stripe_obj[:transactions].size >= 1
+    if stripe_obj[:transactions].any?
       net_amount = -stripe_obj[:transactions].pluck(:amount).sum # must be negated since the rest of stripe_authorizations is treating positives as negatives in the interface
       self.amount = net_amount
       self.stripe_status = "reversed" if net_amount.zero?
@@ -143,7 +133,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def remote_stripe_transaction_amount_cents
-    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.map(&:amount).sum
+    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.sum(&:amount)
   end
 
   def date

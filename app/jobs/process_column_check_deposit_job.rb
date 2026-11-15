@@ -16,7 +16,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
 
     # Upload front
     front = check_deposit.front.open do |file|
-      conn.post("/transfers/checks/image/front", { file: Faraday::Multipart::FilePart.new(file.path, check_deposit.front.content_type) }).body
+      conn.post("/transfers/checks/image/front", { file: Faraday::Multipart::FilePart.new(file.path, check_deposit.front.content_type), bypass_doc_cropping: true }).body
     end
 
     raise UnconfidentError, "could not confidently parse payment details from check. confidence was #{front["micr_line_confidence"]}" if validate && front["micr_line_confidence"] < 0.8

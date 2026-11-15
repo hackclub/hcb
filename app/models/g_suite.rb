@@ -10,6 +10,7 @@
 #  dkim_key             :text
 #  domain               :citext
 #  immune_to_revocation :boolean          default(FALSE), not null
+#  max_accounts         :integer          default(75), not null
 #  remote_org_unit_path :text
 #  verification_key     :text
 #  created_at           :datetime         not null
@@ -90,6 +91,7 @@ class GSuite < ApplicationRecord
   scope :needs_ops_review, -> { where(aasm_state: ["creating", "verifying"]) }
 
   validates :domain, presence: true, format: { with: VALID_DOMAIN }
+  validates :max_accounts, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates_uniqueness_of_without_deleted :domain
 
   before_validation :clean_up_verification_key

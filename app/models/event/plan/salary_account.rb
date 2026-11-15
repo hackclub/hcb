@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -31,15 +31,15 @@ class Event
         "Used for living expense reimbursement. Has access to all standard features (except perks); and receipts are not required."
       end
 
+      def features
+        super + %w[unrestricted_disbursements]
+      end
+
       def omit_stats
         true
       end
 
       def card_lockable?
-        false
-      end
-
-      def receipts_required?
         false
       end
 

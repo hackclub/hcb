@@ -1,9 +1,10 @@
 <% unless stripe_card.canceled? || !policy(stripe_card).cancel? %>
   <div class="tooltipped tooltipped--n">
-    <%= link_to cancel_stripe_card_path(stripe_card),
-                method: :post,
-                class: "btn bg-error btn--list-item",
-                data: { confirm: "Are you sure you want to do this? Unlike freezing a card, this can't be reversed." } do %>
+    <%= button_to cancel_stripe_card_path(stripe_card),
+                  method: :post,
+                  form_class: "contents",
+                  class: "btn bg-error btn--list-item",
+                  data: { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure you want to do this? Unlike freezing a card, this can't be reversed.", turbo_confirm_danger: true } do %>
       <%= inline_icon "flame" %>
       <div>
         <p><strong>Burn</strong></p>

@@ -4,18 +4,28 @@ set -e
 # Check if lint is to be run concurrently
 if [[ $@ =~ "-c" ]]; then
   echo "=== Running Linters with Concurrently ==="
-  yarn run concurrently "bundle exec rubocop -a" "bundle exec erb_lint app/views/ -a" "yarn lint --fix" "yarn format" --raw --group
+  yarn run concurrently "bundle exec rubocop -a" "bin/erb_lint -a" "yarn lint --fix" "yarn format" --raw --group
+
+  # Herb runs check-only because its fix for this rule is unsafe. CI runs it as
+  # its own job, and a failure here would stop "Suggest lint changes" posting.
+  if [[ -z "$GITHUB_ACTIONS" ]]; then
+    echo "=== Running Herb ==="
+    yarn lint:herb
+  fi
 else
   echo "=== Running Rubocop ==="
   bundle exec rubocop -a
   # To run potentially unsafe cops, use: bundle exec rubocop -A
 
   echo "=== Running ERB Lint ==="
-  bundle exec erb_lint app/views/ -a
+  bin/erb_lint -a
 
   echo "=== Running ESLint ==="
   yarn lint --fix
 
   echo "=== Running Prettier ==="
   yarn format
+
+  echo "=== Running Herb ==="
+  yarn lint:herb
 fi

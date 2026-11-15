@@ -26,7 +26,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def cancel?
-    admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
+    admin_or_manager?
   end
 
   def destroy?
@@ -34,7 +34,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def resend?
-    admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
+    admin_or_manager?
   end
 
   def change_position_role?
@@ -48,7 +48,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   private
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
 end

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class TagPolicy < ApplicationPolicy
+  def show?
+    reader? || auditor?
+  end
+
   def create?
     OrganizerPosition.role_at_least?(user, record, :member)
   end

@@ -11,11 +11,9 @@ module TransactionEngine
       FEE_REFUND_MEMO_PART2 = "FROM ACCOUNT"
       DONATION_MEMO_PART1 = "HACKC DONATE"
       DONATION_MEMO_PART2 = "HACK CLUB BANK DONATE"
-      DISBURSEMENT_MEMO_PART1 = "HCB DISBURSE"
       CLEARING_CHECK_MEMO_PART1 = "WITHDRAWAL - INCLEARING CHECK #"
       CLEARING_CHECK_MEMO_PART2 = "WITHDRAWAL - ON-US DEPOSITED ITE #"
       DDA_CHECK_MEMO_PART1 = "FROM DDA#80007609524 ON"
-      DDA_CHECK_MEMO_PART2 = "AT"
       OUTGOING_BANK_FEE_MEMO = "HACK CLUB BANK FEE"
 
       private
@@ -101,10 +99,6 @@ module TransactionEngine
         memo_upcase.gsub(INCOMING_INVOICE_MEMO_PART1, "").gsub(INCOMING_INVOICE_MEMO_PART2, "").split(" ")[0]
       end
 
-      def likely_invoice_for_fee_refund_hex_random_id
-        memo_upcase.gsub(FEE_REFUND_MEMO_PART1, "").gsub(FEE_REFUND_MEMO_PART2, "").split(" ")[0]
-      end
-
       def fee_refund?
         memo_upcase.include?(FEE_REFUND_MEMO_PART1) && memo_upcase.include?(FEE_REFUND_MEMO_PART2)
       end
@@ -121,13 +115,14 @@ module TransactionEngine
         memo_upcase.gsub(FEE_REFUND_MEMO_PART1, "").gsub(FEE_REFUND_MEMO_PART2, "").split(" ")[0]
       end
 
-      def disbursement?
-        memo_upcase.include?(DISBURSEMENT_MEMO_PART1)
+      def outgoing_disbursement?
+        @canonical_transaction.local_hcb_code&.outgoing_disbursement?
       end
 
-      def likely_disbursement_id
-        memo_upcase.gsub(DISBURSEMENT_MEMO_PART1, "").split(" ")[0]
+      def incoming_disbursement?
+        @canonical_transaction.local_hcb_code&.incoming_disbursement?
       end
+
     end
   end
 end

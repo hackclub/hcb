@@ -12,7 +12,6 @@ module TransactionEngine
       # (1) Import transactions
       safely { import_raw_plaid_transactions! }
       safely { import_raw_stripe_transactions! }
-      safely { import_raw_csv_transactions! }
       safely { import_raw_column_transactions! }
 
       # (2) Hash transactions
@@ -35,7 +34,7 @@ module TransactionEngine
     def import_raw_plaid_transactions!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
         Rails.error.handle do
-          puts "raw_plaid_transactions: #{bank_account_id}"
+          Rails.logger.info "raw_plaid_transactions: #{bank_account_id}"
 
           ::TransactionEngine::RawPlaidTransactionService::Plaid::Import.new(bank_account_id:, start_date: @start_date).run
         end
@@ -44,10 +43,6 @@ module TransactionEngine
 
     def import_raw_stripe_transactions!
       ::TransactionEngine::RawStripeTransactionService::Stripe::Import.new(start_date: @start_date).run
-    end
-
-    def import_raw_csv_transactions!
-      ::TransactionEngine::RawCsvTransactionService::Import.new.run
     end
 
     def import_raw_column_transactions!

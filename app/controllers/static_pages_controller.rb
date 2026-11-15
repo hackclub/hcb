@@ -4,7 +4,7 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:mobile, :branding, :roles, :security]
+  skip_before_action :signed_in_user, only: [:index, :mobile, :branding, :roles, :security]
   skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
 
   after_action only: [:index, :branding, :security] do
@@ -13,34 +13,36 @@ class StaticPagesController < ApplicationController
   end
 
   def index
-    if signed_in?
-      @service = StaticPageService::Index.new(current_user:)
+    return redirect_to first_index_path if current_user(allow_unverified: true)&.redirect_to_first_dashboard?
 
-      @events = @service.events
+    return redirect_to auth_users_path(require_reload: true, signup: params[:signup]) unless signed_in?
 
-      featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
+    @service = StaticPageService::Index.new(current_user:)
 
-      @featured_events = featured_event_ids.map do |id|
-        Event.find_by_public_id(id)
-      end.select do |event|
-        event&.is_public? && event.is_indexable?
-      end.sample(6)
+    @events = @service.events
 
-      @organizer_positions = @service.organizer_positions.not_hidden
-      @invites = @service.invites
-      @invite_requests = @service.invite_requests
+    featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
-      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-        @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
-      else
-        @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
-      end
+    @featured_events = featured_event_ids.map do |id|
+      Event.find_by_public_id(id)
+    end.select do |event|
+      event&.is_public? && event.is_indexable?
+    end.sample(3)
 
-      @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+    @organizer_positions = @service.organizer_positions.not_hidden
+    @invites = @service.invites
+    @invite_requests = @service.invite_requests
+    @applications = @service.applications
 
-      @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
-
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    else
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
     end
+
+    @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+
+    @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
   end
 
   def admin_tools
@@ -87,7 +89,7 @@ class StaticPagesController < ApplicationController
         "Invite a user": :manager,
         "Request removal of a user": :manager,
         "Cancel invite made by another user": :manager,
-        "Cancel invite made by yourself": :member,
+        "Cancel invite made by yourself": :manager,
         "Change another user's role": :manager,
       },
       Transfers: {
@@ -111,11 +113,25 @@ class StaticPagesController < ApplicationController
           "View the organization's account & routing numbers": :manager
         },
         "HCB transfers": {
-          "Create a HCB Transfer": :manager,
-          "Cancel a HCB Transfer": :manager,
-          "View a HCB Transfer": :reader
+          "Create an HCB Transfer": :manager,
+          "View an HCB Transfer": :reader
+        },
+        Payments: {
+          "Send a payment": :manager,
+          "Cancel a payment": :manager,
+          "View a payment": :reader,
+          "View the organization's recipients": :manager,
+          "Add a recipient": :manager,
+          "Edit or archive a recipient": :manager,
+          _preface: "For paying people & vendors"
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
+      },
+      Contractors: {
+        "View the list of contractors": :reader,
+        "View a contractor's details, rate, and invoices": :reader,
+        "Invite a contractor": :manager,
+        "Approve or reject a contractor's invoice": :manager,
       },
       Cards: {
         "Order a card": :member,
@@ -123,9 +139,7 @@ class StaticPagesController < ApplicationController
         "Freeze/defrost another user's card": :manager,
         "Rename your own card": :member,
         "Rename another user's card": :manager,
-        "View another user's card number": :manager,
         "View card expiration date": :reader,
-        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
@@ -182,7 +196,7 @@ class StaticPagesController < ApplicationController
       end
     end
 
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
 
@@ -190,7 +204,7 @@ class StaticPagesController < ApplicationController
     Rails.error.report(e)
 
     flash[:error] = e.message
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
   end

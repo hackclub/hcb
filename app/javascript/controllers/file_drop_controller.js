@@ -42,7 +42,7 @@ function extractId(dataTransfer) {
 export default class extends Controller {
   static targets = ['fileInput', 'dropzone', 'form', 'uploadMethod']
   static values = {
-    title: String,
+    title: { type: String, default: 'Drop to add a receipt' },
     linking: { type: Boolean, default: false },
     globalPaste: { type: Boolean, default: false },
     receiptable: String,
@@ -98,7 +98,11 @@ export default class extends Controller {
     this.fileInputTarget.dispatchEvent(new Event('change'))
     if (!this.fileInputTarget.files.length) return
 
-    if (this.hasUploadMethodTarget && !this.submitting) {
+    if (
+      this.hasUploadMethodTarget &&
+      !this.submitting &&
+      !this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
       // Append `_drag_and_drop` to the upload method
       this.uploadMethodTarget.value += '_drag_and_drop'
     }
@@ -113,6 +117,18 @@ export default class extends Controller {
 
     if (e.clipboardData && this.dropzoneTarget.contains(e.target))
       e.stopImmediatePropagation()
+
+    if (
+      this.hasUploadMethodTarget &&
+      this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
+      this.uploadMethodTarget.value = this.uploadMethodTarget.value.slice(
+        0,
+        -'_drag_and_drop'.length
+      )
+    }
+
+    this.submitting = false
   }
 
   dragenter() {

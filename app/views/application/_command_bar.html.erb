@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if signed_in? %>
    <% @admin_urls = auditor_signed_in? ? {
         "Applications"              => "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a",
@@ -13,5 +15,5 @@
         "Google Workspace Waitlist" => "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
       } : {} %>
 
-   <%= react_component "command_bar/CommandBar", { admin: auditor_signed_in?, admin_override_pretend: current_user.admin_override_pretend?, adminUrls: @admin_urls }, { camelize_props: false } %>
+   <%= react_component "command_bar/CommandBar", { admin: auditor_signed_in?, admin_override_pretend: current_user.admin_override_pretend?, adminUrls: @admin_urls, has_followed_events: current_user.followed_events.any? }, { camelize_props: false } %>
 <% end %>

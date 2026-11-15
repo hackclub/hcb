@@ -24,17 +24,17 @@ class EmburseTransactionsController < ApplicationController
     result_params[:amount] = result_params[:amount].to_f * 100.0
     if @emburse_transaction.update(result_params)
       if result_params[:amount] > 0 && @emburse_transaction.event.present?
-        # it's generally a emburse_transfer
+        # it's generally an emburse_transfer
         flash[:success] = "Emburse Transaction updated."
         flash[:error] = "You should update the Emburse budget now."
         redirect_to event_emburse_cards_overview_path(@emburse_transaction.event.slug)
       else
-        # it's generally a emburse_card transaction
+        # it's generally an emburse_card transaction
         flash[:success] = "Emburse Transaction successfully updated."
         redirect_to emburse_transactions_path
       end
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

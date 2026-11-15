@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -23,6 +23,10 @@
 class Event
   class Plan
     class SpendOnly < Standard
+      def revenue_fee
+        0.00
+      end
+
       def label
         "spend-only"
       end
@@ -32,7 +36,7 @@ class Event
       end
 
       def features
-        %w[cards transfers promotions google_workspace documentation reimbursements]
+        %w[cards transfers contractors promotions google_workspace documentation reimbursements]
       end
 
     end

@@ -27,8 +27,7 @@ class SuggestedPairingsController < ApplicationController
 
     if params[:memo] == "true"
       custom_memo = @receipt.suggested_memo
-      @receiptable.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      @receiptable.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      @receiptable.update_custom_memo!(custom_memo)
     end
 
     respond_to do |format|
@@ -61,7 +60,7 @@ class SuggestedPairingsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: { ct:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
                          ))
         end
       else
@@ -69,7 +68,7 @@ class SuggestedPairingsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true, updated_via_turbo_stream: true }
+                           locals: { pt:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
                          ))
         end
       end

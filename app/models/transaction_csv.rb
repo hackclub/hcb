@@ -5,7 +5,7 @@
 # Table name: transaction_csvs
 #
 #  id         :bigint           not null, primary key
-#  aasm_state :string
+#  aasm_state :string           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #

@@ -1,10 +1,147 @@
-/* global BK, $ */
+/* global BK, $, Turbo */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+const clearElement = id => {
+  const element = document.getElementById(id)
+  if (element) element.innerHTML = ''
+}
+
+const populateSharedPopover = trigger => {
+  const popover = document.getElementById('shared_popover')
+  if (!popover) return
+
+  const title = trigger.dataset.popoverTitle || ''
+  const src = trigger.dataset.popoverSrc || ''
+  const frameId = trigger.dataset.popoverFrameId || ''
+  const stateUrl = trigger.dataset.popoverStateUrl || ''
+  const stateTitle = trigger.dataset.popoverStateTitle || title
+  const externalLink = trigger.dataset.popoverExternalLink || ''
+  const size = trigger.dataset.popoverSize || ''
+
+  popover.dataset.stateUrl = stateUrl
+  popover.dataset.stateTitle = stateTitle
+
+  const titleEl = document.getElementById('shared_popover_title')
+  if (titleEl) titleEl.textContent = title
+
+  const extLink = document.getElementById('shared_popover_external_link')
+  if (extLink) {
+    if (externalLink) {
+      extLink.href = externalLink
+      extLink.style.display = ''
+    } else {
+      extLink.style.display = 'none'
+    }
+  }
+
+  popover.classList.toggle('modal--popover--sm', size === 'sm')
+
+  clearElement('shared_popover_flash')
+
+  const body = document.getElementById('shared_popover_body')
+  if (body) {
+    body.innerHTML = ''
+    if (src && frameId) {
+      const frame = document.createElement('turbo-frame')
+      frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
+      frame.id = frameId
+      frame.src = src
+      frame.dataset.popoverSrc = src
+      frame.setAttribute('target', '_top')
+      body.appendChild(frame)
+    }
+  }
+}
+
+// Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
+const openPopoverFromUrl = () => {
+  const link = new URL(location.href).searchParams.get('popover')
+  if (!link) return true
+
+  const trigger = document.querySelector(
+    `[data-popover-state-url="${CSS.escape(link)}"]`
+  )
+  if (!trigger) return false
+
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+  })
+  return true
+}
+
+const openPopoverWhenFrameLoads = () => {
+  if (openPopoverFromUrl()) {
+    document.removeEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+}
+
+document.addEventListener('turbo:load', () => {
+  // A popover left open across a Turbo visit never closes, so its saved title is stale
+  delete document.documentElement.dataset.returnToStateTitle
+
+  if (!openPopoverFromUrl()) {
+    document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+})
+
+// Pages loaded with ?popover= echo it into links built from the query string
+document.addEventListener('turbo:before-visit', event => {
+  const url = new URL(event.detail.url)
+  if ($.modal.isActive() || !url.searchParams.has('popover')) return
+
+  event.preventDefault()
+  url.searchParams.delete('popover')
+  Turbo.visit(url.href)
+})
+
+document.addEventListener('turbo:before-fetch-response', async event => {
+  // Turbo submits data-turbo-method links from a form appended to <body>
+  const { target } = event
+  const frame =
+    target.closest?.('turbo-frame') ??
+    document.getElementById(target.dataset?.turboFrame ?? '')
+  if (!frame) return
+
+  // Set by the flash partial, so frame responses without one skip the parse
+  const response = event.detail.fetchResponse.response
+  if (!response.headers.get('X-Flash')) return
+
+  const flash = new DOMParser()
+    .parseFromString(await response.clone().text(), 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+  if (!flash) return
+
+  const container = document.getElementById(
+    frame.closest('#shared_popover')
+      ? 'shared_popover_flash'
+      : 'flash-container'
+  )
+  if (container) container.innerHTML = flash
+})
+
+// Redirects out of a popover lose its frame, so reload it in place once (so errors can't loop)
+document.addEventListener('turbo:frame-missing', event => {
+  const frame = event.target
+  if (!frame.dataset.popoverSrc || frame.dataset.retried) return
+
+  event.preventDefault()
+  frame.dataset.retried = 'true'
+  frame.src = frame.dataset.popoverSrc
+  frame.reload()
+})
+
+document.addEventListener('turbo:frame-load', event => {
+  delete event.target.dataset.retried
+})
+
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
     const controlOrCommandClick = e.ctrlKey || e.metaKey
@@ -13,6 +150,10 @@ const loadModals = element => {
       e.preventDefault()
       e.stopPropagation()
     }
+    document.dispatchEvent(new CustomEvent('hcb:close-menus'))
+    if ($(this).data('modal') === 'shared_popover') {
+      populateSharedPopover(this)
+    }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
       fadeDelay: 0.75,
@@ -20,9 +161,11 @@ const loadModals = element => {
         ? 'turbo-frame-modal'
         : undefined,
     })
-    BK.s('modal', '#' + $(this).data('modal')).find('iframe[data-src]').each((i, iframe) => {
-      iframe.src ||= iframe.dataset.src
-    })
+    BK.s('modal', '#' + $(this).data('modal'))
+      .find('iframe[data-src]')
+      .each((i, iframe) => {
+        iframe.src ||= iframe.dataset.src
+      })
     return this.blur()
   })
 
@@ -41,20 +184,20 @@ $(document).on('click', '[data-behavior~=flash]', function () {
 })
 
 loadModals(document)
-  ; (() => {
-    let autoModals = $('[data-modal-auto-open~=true]')
+;(() => {
+  let autoModals = $('[data-modal-auto-open~=true]')
 
-    if (autoModals.length < 1) return
+  if (autoModals.length < 1) return
 
-    let element = autoModals.first()
+  let element = autoModals.first()
 
-    BK.s('modal', '#' + $(element).data('modal')).modal({
-      modalClass: $(element).parents('turbo-frame').length
-        ? 'turbo-frame-modal'
-        : undefined,
-      closeExisting: false,
-    })
-  })()
+  BK.s('modal', '#' + $(element).data('modal')).modal({
+    modalClass: $(element).parents('turbo-frame').length
+      ? 'turbo-frame-modal'
+      : undefined,
+    closeExisting: false,
+  })
+})()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -122,94 +265,115 @@ $(document).keydown(function (e) {
 })
 
 window.attachTooltipListener = () => {
-  const tooltip = document.getElementById("tooltip-container");
-  let mutationObserver = null;
+  const tooltip = document.getElementById('tooltip-container')
+  let mutationObserver = null
 
   const removeTooltips = () => {
-    tooltip.className = "";
+    tooltip.className = ''
     // Stop observing when tooltip is closed
     if (mutationObserver) {
-      mutationObserver.disconnect();
-      mutationObserver = null;
+      mutationObserver.disconnect()
+      mutationObserver = null
     }
   }
 
-  const updateTooltipPosition = (trigger) => {
-    const triggerRect = trigger.getBoundingClientRect();
-    const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
-    const offset = 5;
-    const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
-    const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+  const updateTooltipPosition = trigger => {
+    const triggerRect = trigger.getBoundingClientRect()
+    const placement =
+      [...trigger.classList]
+        .find(c => c.startsWith('tooltipped--'))
+        ?.split('--')[1] || 'n'
+    const offset = 5
+    const centerX =
+      triggerRect.left +
+      window.scrollX +
+      (triggerRect.width - tooltip.offsetWidth) / 2
+    const centerY =
+      triggerRect.top +
+      window.scrollY +
+      (triggerRect.height - tooltip.offsetHeight) / 2
 
     const positions = {
       s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
-      n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+      n: () => [
+        centerX,
+        triggerRect.top + window.scrollY - tooltip.offsetHeight - offset,
+      ],
       e: () => [triggerRect.right + window.scrollX + offset, centerY],
-      w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
-    };
+      w: () => [
+        triggerRect.left + window.scrollX - tooltip.offsetWidth - offset,
+        centerY,
+      ],
+    }
 
-    const [left, top] = (positions[placement] || positions.n)();
-    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+    const [left, top] = (positions[placement] || positions.n)()
+    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` })
   }
 
-  const showTooltip = (trigger) => {
-    if (!trigger.classList.contains("tooltipped")) return;
-    const label = trigger.getAttribute("aria-label").trim();
-    if (!label) return;
+  const showTooltip = trigger => {
+    if (!trigger.classList.contains('tooltipped')) return
+    const label = trigger.getAttribute('aria-label')?.trim()
+    if (!label) return
 
-    tooltip.className = "active";
-    tooltip.textContent = label;
+    tooltip.className = 'active'
+    tooltip.textContent = label
 
     // Sync size classes
-    ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
-      if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
-    });
+    ;['tooltipped--lg', 'tooltipped--xl'].forEach(cls => {
+      if (trigger.classList.contains(cls)) tooltip.classList.add(cls)
+    })
 
-    updateTooltipPosition(trigger);
+    updateTooltipPosition(trigger)
 
     // Observe trigger for aria-label changes
-    if (mutationObserver) mutationObserver.disconnect();
+    if (mutationObserver) mutationObserver.disconnect()
     mutationObserver = new MutationObserver(() => {
-      const updatedLabel = trigger.getAttribute("aria-label").trim();
+      const updatedLabel = trigger.getAttribute('aria-label').trim()
       if (updatedLabel) {
-        tooltip.textContent = updatedLabel;
-        updateTooltipPosition(trigger);
+        tooltip.textContent = updatedLabel
+        updateTooltipPosition(trigger)
       }
-    });
-    mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
-  };
+    })
+    mutationObserver.observe(trigger, {
+      attributes: true,
+      attributeFilter: ['aria-label'],
+    })
+  }
 
-  $(".tooltipped").on({
+  $('.tooltipped').on({
     mouseenter(event) {
-      if (window.innerWidth < 768) return;
-      const trigger = event.currentTarget;
-      showTooltip(trigger);
+      if (window.innerWidth < 768) return
+      const trigger = event.currentTarget
+      showTooltip(trigger)
     },
     touchstart(event) {
-      const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped--tappable")) return;
-      showTooltip(trigger);
+      const trigger = event.currentTarget
+      if (!trigger.classList.contains('tooltipped--tappable')) return
+      showTooltip(trigger)
     },
-    mouseleave: removeTooltips
-  });
+    mouseleave: removeTooltips,
+  })
 
-  $(document).on("click", function (event) {
+  $(document).on('click', function (event) {
     // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
-    if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
-      removeTooltips();
+    if (
+      !$(event.target).closest('.tooltipped--tappable').length &&
+      !$(event.target).closest('#tooltip-container').length
+    ) {
+      removeTooltips()
     }
-  });
+  })
   // on unload turbo
-  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('turbo:before-visit', removeTooltips)
   $(document).on('beforeunload', removeTooltips)
-  $(document).on('turbo:frame-load', removeTooltips);
+  $(document).on('turbo:frame-load', removeTooltips)
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)
 $(document).on('turbo:after-stream-render', window.attachTooltipListener)
 
 $(document).on('turbo:load', function () {
-  window.attachTooltipListener();
+  window.attachTooltipListener()
 
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
@@ -273,28 +437,30 @@ $(document).on('turbo:load', function () {
   // and only permit numbers to be entered
 
   function attachMoneyInputListener() {
-    $('input[data-behavior~="money"]').off('input').on('input', function () {
-      let value = $(this)
-        .val()
-        .replace(/,/g, '') // remove all commas
-        .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ','); // add commas for thousands
+    $('input[data-behavior~="money"]')
+      .off('input')
+      .on('input', function () {
+        let value = $(this)
+          .val()
+          .replace(/,/g, '') // remove all commas
+          .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // add commas for thousands
 
-      if (value.includes('.')) {
-        let parts = value.split('.');
-        value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '');
-      }
+        if (value.includes('.')) {
+          let parts = value.split('.')
+          value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '')
+        }
 
-      $(this).val(value);
-    });
+        $(this).val(value)
+      })
   }
 
-  attachMoneyInputListener();
+  attachMoneyInputListener()
 
   // Used to attach the money input listener to inputs inside of menus / popups.
 
-  const observer = new MutationObserver(() => attachMoneyInputListener());
-  observer.observe(document.body, { childList: true, subtree: true });
+  const observer = new MutationObserver(() => attachMoneyInputListener())
+  observer.observe(document.body, { childList: true, subtree: true })
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
@@ -307,8 +473,8 @@ $(document).on('turbo:load', function () {
 
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
-      event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch { }
+      event.target.value = new URL(event.target.value).pathname.split('/')[1]
+    } catch {}
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -362,36 +528,36 @@ $(document).on('turbo:load', function () {
 
   if (BK.thereIs('accounts_list')) {
     $('.account-header').on('click', function () {
-      var accountContainer = $(this).closest('.account-container');
-      var aliasesContainer = accountContainer.find('.account-aliases');
-      aliasesContainer.slideToggle();
-      $(this).toggleClass('rotated');
-    });
+      var accountContainer = $(this).closest('.account-container')
+      var aliasesContainer = accountContainer.find('.account-aliases')
+      aliasesContainer.slideToggle()
+      $(this).toggleClass('rotated')
+    })
     $('.alias-new').on('click', function () {
-      var accountContainer = $(this).closest('.account-container');
-      var newAliasForm = accountContainer.find('.alias-form');
-      var creationAlias = accountContainer.find('.alias-creation');
-      newAliasForm.slideDown();
-      creationAlias.slideUp();
-    });
+      var accountContainer = $(this).closest('.account-container')
+      var newAliasForm = accountContainer.find('.alias-form')
+      var creationAlias = accountContainer.find('.alias-creation')
+      newAliasForm.slideDown()
+      creationAlias.slideUp()
+    })
     $('.alias-cancel').on('click', function () {
-      var accountContainer = $(this).closest('.account-container');
-      var newAliasForm = accountContainer.find('.alias-form');
-      newAliasForm.slideUp();
-      var creationAlias = accountContainer.find('.alias-creation');
-      creationAlias.slideDown();
+      var accountContainer = $(this).closest('.account-container')
+      var newAliasForm = accountContainer.find('.alias-form')
+      newAliasForm.slideUp()
+      var creationAlias = accountContainer.find('.alias-creation')
+      creationAlias.slideDown()
     })
     $('.alias-save').on('click', function () {
-      var accountContainer = $(this).closest('.account-container');
-      var creationAlias = accountContainer.find('.alias-creation');
-      var newAliasForm = accountContainer.find('.alias-form');
-      creationAlias.slideDown();
-      newAliasForm.slideUp();
-    });
+      var accountContainer = $(this).closest('.account-container')
+      var creationAlias = accountContainer.find('.alias-creation')
+      var newAliasForm = accountContainer.find('.alias-form')
+      creationAlias.slideDown()
+      newAliasForm.slideUp()
+    })
     $('.alias-delete').on('click', function () {
-      var thisAlias = $(this).closest('.alias-container');
-      thisAlias.toggleClass('error');
-      thisAlias.slideUp();
+      var thisAlias = $(this).closest('.alias-container')
+      thisAlias.toggleClass('error')
+      thisAlias.slideUp()
     })
   }
 
@@ -401,6 +567,7 @@ $(document).on('turbo:load', function () {
     const emailInput = $('#reimbursement_report_email')
     const emailInputLabel = $('label[for="reimbursement_report_email"]')
     const maxInput = $('#reimbursement_report_maximum_amount_wrapper')
+    const reviewerInput = $('#reimbursement_report_reviewer_id')
     const inviteInput = $('#reimbursement_report_invite_message_wrapper')
 
     const forMyselfInput = $('#reimbursement_report_for_myself')
@@ -423,6 +590,18 @@ $(document).on('turbo:load', function () {
 
     externalInputWrapper.slideUp()
 
+    // Invitations default to the inviter as reviewer, but you shouldn't review your own report
+    const setReviewerDefault = forSomeoneElse => {
+      const inviteDefault = reviewerInput.data('invite-default')
+      if (!inviteDefault) return
+
+      if (forSomeoneElse && !reviewerInput.val()) {
+        reviewerInput.val(inviteDefault)
+      } else if (!forSomeoneElse && reviewerInput.val() === inviteDefault) {
+        reviewerInput.val('')
+      }
+    }
+
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
         externalInputWrapper.slideUp({
@@ -430,12 +609,14 @@ $(document).on('turbo:load', function () {
         })
         currencyWrapper.slideDown()
         emailInput.val(emailInput[0].attributes['value'].value)
+        setReviewerDefault(false)
       }
     })
 
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val())
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             dropdownInputLabel.show()
@@ -453,6 +634,7 @@ $(document).on('turbo:load', function () {
 
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             emailInput.val('')
@@ -476,7 +658,8 @@ $(document).on('turbo:load', function () {
 
   $('[data-behavior~=mention]').on('click', e => {
     BK.s('comment').val(
-      `${BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
+      `${
+        BK.s('comment').val() + (BK.s('comment').val().length > 0 ? ' ' : '')
       }${e.target.dataset.mentionValue || e.target.innerText}`
     )
     BK.s('comment')[0].scrollIntoView()
@@ -521,7 +704,7 @@ $(document).on('turbo:load', function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return disableTilt()
     } else {
-      disableTilt() // disable it, then enable it. 
+      disableTilt() // disable it, then enable it.
       return enableTilt()
     }
   }
@@ -530,89 +713,6 @@ $(document).on('turbo:load', function () {
     .matchMedia('(prefers-reduced-motion: reduce)')
     .addListener(() => setTilt())
 })
-
-const initPayoutMethodToggles = function () {
-  if (
-    BK.thereIs('check_payout_method_inputs') &&
-    BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('paypal_transfer_payout_method_inputs') &&
-    BK.thereIs('wire_payout_method_inputs') &&
-    BK.thereIs('wise_transfer_payout_method_inputs')
-  ) {
-    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s(
-      'ach_transfer_payout_method_inputs'
-    )
-    const paypalTransferPayoutMethodInputs = BK.s(
-      'paypal_transfer_payout_method_inputs'
-    )
-    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
-    const wiseTransferPayoutMethodInputs = BK.s('wise_transfer_payout_method_inputs')
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodcheck',
-      e => {
-        if (e.target.checked)
-          checkPayoutMethodInputs.slideDown() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodachtransfer',
-      e => {
-        if (e.target.checked)
-          achTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodpaypaltransfer',
-      e => {
-        if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodwire',
-      e => {
-        if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideUp() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodwisetransfer',
-      e => {
-        if (e.target.checked)
-          wiseTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
-      }
-    )
-  }
-}
-
-$(document).on('turbo:load', initPayoutMethodToggles)
-$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',
@@ -625,9 +725,8 @@ $(document).on(
 )
 
 $(document).on('click', '[data-behavior~=clear_input]', function (event) {
-  $(event.target).parent().find('input').get(0).value = ""
-}
-)
+  $(event.target).parent().find('input').get(0).value = ''
+})
 
 $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
   if (event.target.value === '0.00') {
@@ -645,9 +744,12 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   $(e.target)
     .parents('.modal--popover')
     .addClass('modal--popover--receipt-expanded')
-  $(e.target).parents('.receipt').find('iframe[data-src]').each((i, iframe) => {
-    iframe.src ||= iframe.dataset.src
-  })
+  $(e.target)
+    .parents('.receipt')
+    .find('iframe[data-src]')
+    .each((i, iframe) => {
+      iframe.src ||= iframe.dataset.src
+    })
   let selected_receipt = document.querySelectorAll(
     `.hidden_except_${e.originalEvent.target.dataset.receiptId}`
   )[0]
@@ -698,6 +800,8 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
+    } else if (streamElement.action == 'open_modal') {
+      BK.s('modal', '#' + streamElement.target).modal({ closeExisting: false })
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -727,36 +831,89 @@ $(document).on('wheel', 'input[type=number]', e => {
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateUrl) {
-      document.documentElement.dataset.returnToStateUrl = window.location.href;
-      document.documentElement.dataset.returnToStateTitle = document.title;
+    if (!document.documentElement.dataset.returnToStateTitle) {
+      document.documentElement.dataset.returnToStateTitle = document.title
     }
-    document.title = modal.elm[0].dataset.stateTitle;
-    window.history.pushState({ modal: modal.elm[0].id }, '', modal.elm[0].dataset.stateUrl);
+    document.title = modal.elm[0].dataset.stateTitle
+
+    const url = new URL(location.href)
+    if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
+      url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
+      window.history.pushState({ modal: modal.elm[0].id }, '', url)
+    }
   }
-});
+})
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (document.documentElement.dataset.returnToStateUrl) {
-    window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
-    document.title = document.documentElement.dataset.returnToStateTitle;
-  }
-});
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    // Closing via the back button has already removed the param
+    const url = new URL(location.href)
+    if (url.searchParams.has('popover')) {
+      url.searchParams.delete('popover')
+      window.history.pushState(null, '', url)
+    }
 
-window.addEventListener("popstate", (e) => {
-  if (e.state?.modal) {
-    $(`#${e.state.modal}`).modal();
-  } else {
-    $.modal.close();
+    if (document.documentElement.dataset.returnToStateTitle) {
+      document.title = document.documentElement.dataset.returnToStateTitle
+    }
   }
-});
+})
+
+$(document).on($.modal.AFTER_CLOSE, function (event, modal) {
+  if (modal?.elm?.[0]?.id === 'shared_popover') {
+    delete document.documentElement.dataset.returnToStateTitle
+
+    clearElement('shared_popover_body')
+    clearElement('shared_popover_flash')
+
+    const popoverEl = modal.elm[0]
+    if (popoverEl && popoverEl.classList) {
+      popoverEl.classList.remove('modal--popover--receipt-expanded')
+      popoverEl.classList.remove('modal--popover--sm')
+    }
+  }
+})
+
+window.addEventListener('popstate', e => {
+  if (e.state?.modal) {
+    openPopoverFromUrl()
+  } else {
+    $.modal.close()
+  }
+})
 
 if (navigator.setAppBadge) {
-  window.addEventListener("load", async () => {
-    const response = await fetch("/my/tasks.json")
-    if (!response.redirected) { // redirected == the user isn't signed in.
+  window.addEventListener('load', async () => {
+    const response = await fetch('/my/tasks.json')
+    if (!response.redirected) {
+      // redirected == the user isn't signed in.
       const { count } = await response.json()
       navigator.setAppBadge(count)
     }
   })
 }
+
+function updateScrollFadeClasses(el) {
+  if (el.scrollHeight > el.clientHeight) {
+    const isScrolledToBottom =
+      el.scrollHeight < el.clientHeight + el.scrollTop + 1
+    const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
+    el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
+    el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+  }
+}
+
+function attachScrollFadeListeners() {
+  document.querySelectorAll('.scroll-fade').forEach(scrollable => {
+    scrollable.addEventListener('scroll', e => {
+      const el = e.currentTarget
+      updateScrollFadeClasses(el)
+    })
+
+    updateScrollFadeClasses(scrollable)
+  })
+}
+
+$(document).on('turbo:load', attachScrollFadeListeners)
+$(document).on('turbo:frame-load', attachScrollFadeListeners)
+$(document).on('turbo:after-stream-render', attachScrollFadeListeners)

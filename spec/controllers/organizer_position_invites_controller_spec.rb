@@ -16,7 +16,7 @@ RSpec.describe OrganizerPositionInvitesController do
       user = create(:user)
       event = create(:event, organizers: [user])
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -51,17 +51,24 @@ RSpec.describe OrganizerPositionInvitesController do
         receive(:all)
           .with(filter: include(event.id.to_s))
           .and_return([])
-          .twice
+          .once
       )
-      docuseal_request =
+      create_docuseal_request =
         stub_request(:post, "https://api.docuseal.co/submissions")
         .to_return(
           status: 201,
           body: [{ submission_id: "STUBBED" }].to_json,
           headers: { content_type: "application/json" }
         )
+      fetch_docuseal_request =
+        stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(
+          status: 200,
+          body: { submitters: [{ role: "HCB", slug: "STUBBED" }, { role: "Contract Signee", slug: "STUBBED" }, { role: "Cosigner", slug: "STUBBED" }] }.to_json,
+          headers: { content_type: "application/json" }
+        )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -78,7 +85,8 @@ RSpec.describe OrganizerPositionInvitesController do
         }
       )
 
-      expect(docuseal_request).to(have_been_made.once)
+      expect(create_docuseal_request).to(have_been_made.once)
+      expect(fetch_docuseal_request).to(have_been_made.once)
 
       expect(response).to redirect_to(event_team_path(event))
       expect(flash[:success]).to eq("Invite successfully sent to orpheus@hackclub.com")
@@ -92,6 +100,7 @@ RSpec.describe OrganizerPositionInvitesController do
       expect(contract.include_videos).to eq(true)
       expect(contract.external_service).to eq("docuseal")
       expect(contract.external_id).to eq("STUBBED")
+      expect(contract.party(:signee)&.external_id).to eq("STUBBED")
     end
   end
 end

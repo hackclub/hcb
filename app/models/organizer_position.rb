@@ -8,13 +8,13 @@
 #  deleted_at                     :datetime
 #  first_time                     :boolean          default(TRUE)
 #  is_signee                      :boolean          default(FALSE)
-#  role                           :integer          default("manager"), not null
+#  role                           :integer          default(100), not null
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
-#  event_id                       :bigint
+#  event_id                       :bigint           not null
 #  fiscal_sponsorship_contract_id :bigint
-#  user_id                        :bigint
+#  user_id                        :bigint           not null
 #
 # Indexes
 #
@@ -34,6 +34,11 @@ class OrganizerPosition < ApplicationRecord
   include OrganizerPosition::HasRole
   include OrganizerPosition::HasSpending
 
+  include Hashid::Rails
+
+  include PublicIdentifiable
+  set_public_id_prefix :opn
+
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 
   belongs_to :user
@@ -43,8 +48,10 @@ class OrganizerPosition < ApplicationRecord
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
   has_many :tours, as: :tourable, dependent: :destroy
+  has_many :reimbursement_reviewer_opt_ins, class_name: "Event::ReimbursementReviewer::OptIn", dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
+  validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
@@ -53,6 +60,14 @@ class OrganizerPosition < ApplicationRecord
   alias_attribute :signee, :is_signee
 
   after_create_commit :autofollow_event
+
+  after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
+  after_destroy :remove_payroll_managers
+  after_create :opt_in_to_reimbursement_reviews, if: :manager?
+  after_update :opt_in_to_reimbursement_reviews, if: -> { role_previously_changed?(to: :manager) }
+  after_update :opt_out_of_reimbursement_reviews, if: -> { role_previously_changed?(from: :manager) }
+
+  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
 
   def tourable_options
     {
@@ -96,6 +111,28 @@ class OrganizerPosition < ApplicationRecord
 
   rescue ActiveRecord::RecordNotUnique
     # Do nothing. The user already follows this event.
+  end
+
+  def user_must_be_verified
+    if user&.unverified?
+      errors.add(:user, "must verify their email before becoming an organizer")
+    end
+  end
+
+  # Managers review their own organization's reimbursement reports unless
+  # they opt out in its settings
+  def opt_in_to_reimbursement_reviews
+    reimbursement_reviewer_opt_ins.find_or_create_by!(event:)
+  end
+
+  def opt_out_of_reimbursement_reviews
+    reimbursement_reviewer_opt_ins.destroy_all
+  end
+
+  def remove_payroll_managers
+    user.managing_payroll_positions.joins(:payee).where(payee: { event: }).find_each do |position|
+      position.update!(manager: nil)
+    end
   end
 
 end

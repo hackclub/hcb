@@ -166,6 +166,22 @@ RSpec.describe Event::StatementOfActivity do
   end
 
   describe "#category_totals, #net_asset_change, #total_revenue, #total_expense" do
+    specify "repayments lower expenses instead of counting as revenue" do
+      event = create(:event)
+
+      [[100_00, "donations"], [-40_00, "repayment"], [-10_00, "rent"], [40_00, "repayment"]].each do |amount_cents, category_slug|
+        transaction = create(:canonical_transaction, amount_cents:, category_slug:)
+        create(:canonical_event_mapping, event:, canonical_transaction: transaction)
+      end
+
+      instance = described_class.new(event, start_date_param: "1970-01-01")
+
+      expect(instance.total_revenue).to eq(100_00)
+      expect(instance.total_expense).to eq(-10_00)
+      expect(instance.net_asset_change).to eq(90_00)
+      expect(instance.category_totals["repayment"]).to eq(0)
+    end
+
     specify "single event" do
       event = create(:event)
 
@@ -242,6 +258,87 @@ RSpec.describe Event::StatementOfActivity do
       expect(instance.net_asset_change).to eq(-88_88)
       expect(instance.total_revenue).to eq(24_68)
       expect(instance.total_expense).to eq(-113_56)
+    end
+  end
+
+  describe "internal transfer splitting" do
+    def create_disbursement_transaction(disbursement:, event:, hcb_code:, amount_cents:)
+      ct = create(:canonical_transaction, amount_cents:, category_slug: "internal-transfer")
+      create(:canonical_event_mapping, event:, canonical_transaction: ct)
+      # Must set hcb_code after all after_create_commit callbacks have completed,
+      # since write_hcb_code overwrites it based on the transaction source.
+      CanonicalTransaction.where(id: ct.id).update_all(hcb_code:)
+      ct.reload
+    end
+
+    it "classifies a disbursement as inter-org when only one side is in the statement" do
+      event_a = create(:event)
+      event_b = create(:event)
+      disbursement = create(:disbursement, source_event: event_a, event: event_b)
+
+      outgoing = create_disbursement_transaction(
+        disbursement:, event: event_a,
+        hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00
+      )
+
+      instance = described_class.new(event_a, start_date_param: "1970-01-01")
+      result = instance.transactions_by_category
+
+      inter_org = described_class::INTER_ORG_TRANSFER
+      expect(result.keys).to include(inter_org)
+      expect(result[inter_org]).to eq([outgoing])
+      expect(instance.category_totals["inter-organization-transfer"]).to eq(-10_00)
+    end
+
+    it "classifies both sides as intra-org when both events are in the statement" do
+      group = create(:event_group)
+      event_a = create(:event)
+      event_b = create(:event)
+      group.memberships.create!(event: event_a)
+      group.memberships.create!(event: event_b)
+
+      disbursement = create(:disbursement, source_event: event_a, event: event_b)
+
+      outgoing = create_disbursement_transaction(
+        disbursement:, event: event_a,
+        hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00
+      )
+      incoming = create_disbursement_transaction(
+        disbursement:, event: event_b,
+        hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00
+      )
+
+      instance = described_class.new(group, start_date_param: "1970-01-01")
+      result = instance.transactions_by_category
+
+      intra_org = described_class::INTRA_ORG_TRANSFER
+      expect(result.keys).to include(intra_org)
+      expect(result[intra_org]).to contain_exactly(outgoing, incoming)
+      expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
+    end
+
+    it "classifies as intra-org for parent/child with include_descendants" do
+      event_a = create(:event)
+      event_b = create(:event, parent: event_a)
+
+      disbursement = create(:disbursement, source_event: event_a, event: event_b)
+
+      outgoing = create_disbursement_transaction(
+        disbursement:, event: event_a,
+        hcb_code: disbursement.outgoing_hcb_code, amount_cents: -5_00
+      )
+      incoming = create_disbursement_transaction(
+        disbursement:, event: event_b,
+        hcb_code: disbursement.incoming_hcb_code, amount_cents: 5_00
+      )
+
+      instance = described_class.new(event_a, start_date_param: "1970-01-01", include_descendants: true)
+      result = instance.transactions_by_category
+
+      intra_org = described_class::INTRA_ORG_TRANSFER
+      expect(result.keys).to include(intra_org)
+      expect(result[intra_org]).to contain_exactly(outgoing, incoming)
+      expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
     end
   end
 end

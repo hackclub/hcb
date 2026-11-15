@@ -9,13 +9,13 @@ class Donation
       authorize @event, :update?
 
       if @event.donation_goal.present?
-        redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: "Please delete your existing goal first" }
+        redirect_to edit_event_path(@event.slug, tab: "donations"), flash: { error: "Please delete your existing goal first" }
       else
         amount_cents = Money.from_amount(goal_params[:amount_cents].to_f).cents
         @goal = @event.build_donation_goal(amount_cents: amount_cents)
         @goal.save!
 
-        redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation goal created successfully." }
+        redirect_to edit_event_path(@event.slug, tab: "donations"), flash: { success: "Donation goal created successfully." }
       end
     end
 
@@ -24,7 +24,7 @@ class Donation
 
       if params[:donation_goal_enabled] == "0"
         @event.donation_goal.destroy
-        return redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation goal removed successfully." }
+        return redirect_to edit_event_path(@event.slug, tab: "donations"), flash: { success: "Donation goal removed successfully." }
       end
 
       amount_cents = Money.from_amount(params[:amount_cents].to_f).cents
@@ -34,9 +34,9 @@ class Donation
         @event.donation_goal.update!(tracking_since: Time.current)
       end
 
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation goal updated successfully." }
+      redirect_to edit_event_path(@event.slug, tab: "donations"), flash: { success: "Donation goal updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"), flash: { error: e.message }
     end
 
     private

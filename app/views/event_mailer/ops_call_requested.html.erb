@@ -1,0 +1,12 @@
+<p>Hi there! 👋</p>
+
+<p>
+  <%= link_to @requesting_user.name.to_s, admin_user_url(@requesting_user) %> (<%= @requesting_user.email %>)
+  has requested an onboarding call for <%= link_to @event.name, @event %><%= " with #{@event.point_of_contact.name}" if @event.point_of_contact.present? %>.
+</p>
+
+<p>Email <%= mail_to @requesting_user.email %> to schedule an onboarding call!</p>
+
+<p>
+  Thanks!
+</p>

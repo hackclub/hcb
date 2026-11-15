@@ -61,8 +61,7 @@ class HcbCodeMailbox < ApplicationMailbox
     when "@rename"
       return unless command["argument"]
 
-      @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: command["argument"]) }
-      @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: command["argument"]) }
+      @hcb_code.update_custom_memo!(command["argument"])
       @renamed_to = command["argument"]
     when "@tag"
       return unless command["argument"]
@@ -71,8 +70,12 @@ class HcbCodeMailbox < ApplicationMailbox
       tag = event.tags.search_label(command["argument"]).first
       return unless tag
 
+      # Tags live on the ledger item; skip silently if this code has none.
+      ledger_item = @hcb_code.ledger_item
+      return unless ledger_item
+
       suppress(ActiveRecord::RecordNotUnique) do
-        @hcb_code.tags << tag
+        ledger_item.tags << tag
       end
       @tagged_with << tag.label
     end

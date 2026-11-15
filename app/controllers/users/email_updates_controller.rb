@@ -15,6 +15,7 @@ module Users
         return redirect_to root_path, flash: { success: "Authorized; please check your new email's inbox (#{@request.replacement}) to verify this change." }
       end
     rescue ActiveRecord::RecordNotFound => e
+      skip_authorization
       flash[:error] = "This authorization token has expired, please request another."
       redirect_to root_path
     rescue ActiveRecord::RecordInvalid => e
@@ -32,12 +33,13 @@ module Users
       if @request.confirmed?
         return redirect_to root_path, flash: { success: "We've updated your email address to #{@request.user.email}." }
       else
-        return redirect_to root_path, flash: { success: "Verified; please check your old email's inbox (#{@request.replacement}) to authorize this change." }
+        return redirect_to root_path, flash: { success: "Verified; please check your old email's inbox (#{@request.original}) to authorize this change." }
       end
     rescue ActiveRecord::RecordNotFound => e
-      flash[:error] = "This authorization token has expired, please request another."
+      skip_authorization
+      return redirect_to root_path, flash: { error: "This authorization token has expired, please request another." }
     rescue ActiveRecord::RecordInvalid => e
-      flash[:error] = @request.errors.full_messages.to_sentence
+      return redirect_to root_path, flash: { error: @request.errors.full_messages.to_sentence }
     end
 
   end

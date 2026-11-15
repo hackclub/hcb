@@ -21,18 +21,17 @@ class EventPolicy < ApplicationPolicy
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
-  alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
   alias_method :merchants_chart?, :show?
   alias_method :categories_chart?, :show?
-  alias_method :top_categories?, :show?
   alias_method :tags_chart?, :show?
   alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
-  alias_method :ledger?, :transactions?
+  alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
+  alias_method :stats?, :show?
 
   def toggle_hidden?
     user&.admin?
@@ -50,12 +49,19 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  # Readers may view settings; every settings form is disabled unless
+  # `update?` passes, and mutations are gated on `update?` server-side.
   def edit?
-    auditor_or_member?
+    auditor_or_reader?
   end
 
   # pinning a transaction to an event
   def pin?
+    admin_or_member?
+  end
+  alias_method :unpin?, :pin?
+
+  def permit_merchant?
     admin_or_member?
   end
 
@@ -135,12 +141,16 @@ class EventPolicy < ApplicationPolicy
     sub_organizations?
   end
 
+  def async_sub_organization_balances?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
 
   def new_transfer?
-    admin_or_manager? && !record.demo_mode?
+    auditor_or_reader? && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -157,6 +167,30 @@ class EventPolicy < ApplicationPolicy
 
   def transfers?
     show? && record.plan.transfers_enabled?
+  end
+
+  def payments?
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def contractors?
+    # The contractors list is visible in transparency mode (public events),
+    # but only shows status/name/period/purpose to the public. Sensitive
+    # details (email, rate, totals, invoices) are gated by contractor_details?.
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled? && record.plan.contractors_enabled?
+  end
+
+  def contractor_details?
+    # Contractor PII, pay rates, payment totals, and invoices — org members only.
+    contractors? && auditor_or_reader?
+  end
+
+  def new_payment?
+    payments? && new_transfer?
+  end
+
+  def create_payment?
+    payments? && create_transfer?
   end
 
   def transfers_in_v4?
@@ -179,6 +213,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def contractors_pending_review_icon?
+    show?
+  end
+
   def reimbursements?
     auditor_or_reader? && record.plan.reimbursements_enabled?
   end
@@ -188,35 +226,46 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
+    # Gating on the sub-organizations this viewer may see, rather than on all of
+    # them: a page that exists only for organizations with a private roster
+    # gives away that the roster is there.
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.visible_subevents(user).exists?)
   end
+
+  alias async_sub_organization_rows? sub_organizations?
 
   def sub_organizations_in_v4?
     auditor_or_reader? && sub_organizations?
   end
 
   def create_sub_organization?
-    admin_or_manager? && record.subevents_enabled?
+    return false unless record.subevents_enabled?
+
+    admin_or_manager? || (Flipper.enabled?(:member_subevent_creation, record) && member?)
   end
 
   def donation_overview?
     show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
+  def donation_page?
+    record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
+  end
+
   def invoices?
-    show? && record.approved? && record.plan.invoices_enabled?
+    show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
+  end
+
+  def export_invoices?
+    invoices? && auditor_or_reader?
   end
 
   def account_number?
-    (auditor? || member?) && record.plan.account_number_enabled?
+    (auditor? || manager?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
     user.admin?
-  end
-
-  def receive_grant?
-    record.users.include?(user)
   end
 
   def audit_log?
@@ -247,6 +296,20 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def request_call?
+    signee?
+  end
+
+  def ledger?
+    is_public || auditor_or_reader?
+  end
+
+  def toggle_new_ledger?
+    is_public || auditor_or_reader?
+  end
+
+  alias hide_onboarding_message? request_call?
+
   private
 
   def admin_or_member?
@@ -255,10 +318,6 @@ class EventPolicy < ApplicationPolicy
 
   def auditor_or_reader?
     auditor? || reader?
-  end
-
-  def auditor_or_member?
-    auditor? || member?
   end
 
   def admin?
@@ -281,12 +340,12 @@ class EventPolicy < ApplicationPolicy
     OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
-  def admin_or_manager?
-    admin? || manager?
+  def signee?
+    OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 
-  def admin_or_reader?
-    admin? || reader?
+  def admin_or_manager?
+    admin? || manager?
   end
 
   def is_not_demo_mode?

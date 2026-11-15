@@ -10,10 +10,6 @@ class Announcement
       admin_or_manager?
     end
 
-    def refresh?
-      admin_or_manager?
-    end
-
     def edit?
       (manager? && record.announcement.author == user) || admin?
     end
@@ -33,7 +29,7 @@ class Announcement
     end
 
     def manager?
-      OrganizerPosition.find_by(user:, event: record.event)&.manager?
+      OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
   end

@@ -9,12 +9,16 @@
 #  banned_merchants                  :string
 #  block_suspected_fraud             :boolean          default(TRUE), not null
 #  category_lock                     :string
-#  expiration_preference             :integer          default("1 year"), not null
+#  expiration_preference             :integer          default(365), not null
 #  invite_message                    :string
 #  keyword_lock                      :string
 #  merchant_lock                     :string
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
+#  support_message                   :string
+#  support_url                       :string
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
 #  event_id                          :bigint           not null
 #
 # Indexes
@@ -45,5 +49,17 @@ class CardGrantSetting < ApplicationRecord
     "1 year": 365,
     "2 years": 365 * 2
   }, prefix: :expires_after
+
+  def slack_support?
+    return false unless support_url.present?
+
+    URI.parse(support_url)&.host&.end_with?(".slack.com") || false
+  rescue URI::Error, ArgumentError
+    false
+  end
+
+  def email_support?
+    support_url&.start_with?("mailto:")
+  end
 
 end

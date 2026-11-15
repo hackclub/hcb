@@ -15,9 +15,9 @@ module StripeCardService
       def carrier_text
         {
           header_title: carrier_text_header_title,
-          header_body: "Visit hack.af/activate to activate your new card#{" for #{@event.name}" if @event.present?} from any device",
-          footer_title: "https://hack.af/activate",
-          footer_body: "Visit hack.af/activate to activate from any device"
+          header_body: "Visit hack.club/activate to activate your new card#{" for #{@event.name}" if @event.present?} from any device",
+          footer_title: "https://hack.club/activate",
+          footer_body: "Visit hack.club/activate to activate from any device"
         }
       end
 
@@ -36,7 +36,7 @@ module StripeCardService
         @file.rewind
         pd = nil
         ActiveRecord::Base.transaction do
-          pd = StripeCard::PersonalizationDesign.create!(event: @event, common: @common)
+          pd = StripeCard::PersonalizationDesign.create!(event: @event, common: @common, color: @color.to_s)
           pd.logo.attach(io: @file, filename: "#{Time.now.to_i}.png")
           pd.stripe_id = Stripe::Issuing::PersonalizationDesign.create({
                                                                          name: "#{@event&.name || @name || "Shared"} #{@color.to_s.titleize} Card (#{pd.id})",

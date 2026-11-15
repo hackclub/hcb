@@ -17,7 +17,7 @@ module BreakdownEngine
           true
         end
 
-        amount_cents_sum = transactions.sum { |hcb_code| hcb_code.amount_cents.abs }
+        amount_cents_sum = transactions.sum(&:amount_cents).abs
         next if amount_cents_sum == 0
 
         array << {
@@ -34,10 +34,6 @@ module BreakdownEngine
       return [] if total_amount.zero?
 
       threshold = total_amount * 0.05
-
-      # if you do not care about threshold when there are very few tags,
-      # you can early return here:
-      # return tags if tags.size < 10
 
       if threshold > 0
         big_tags, small_tags = tags.partition { |tag| tag[:value] >= threshold }

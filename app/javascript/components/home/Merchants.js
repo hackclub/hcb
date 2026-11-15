@@ -10,7 +10,8 @@ import {
   YAxis,
 } from 'recharts'
 import { CustomTooltip } from './components'
-import { generateColor, USDollarNoCents, useDarkMode } from './utils'
+import { USDollarNoCents } from '../../common/money'
+import { generateColor, useDarkMode } from './utils'
 
 export default function Merchants({ data }) {
   const isDark = useDarkMode()
@@ -66,7 +67,11 @@ export default function Merchants({ data }) {
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[5, 5, 0, 0]}>
           {data.map((c, i) => (
-            <Cell key={c.name} fill={generateColor(i, data.length, isDark)} />
+            <Cell
+              key={c.name}
+              style={{ outline: 'none' }}
+              fill={generateColor(i, data.length, isDark)}
+            />
           ))}
         </Bar>
       </BarChart>
