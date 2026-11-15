@@ -111,7 +111,6 @@ Rails.application.routes.draw do
     post "receipt_report", to: "users#receipt_report", as: :trigger_receipt_report
 
     get "cards", to: "my#cards", as: :my_cards
-    get "cards/events/:event_id", to: "my#event_cards", as: :my_event_cards
     get "cards/shipping", to: "stripe_cards#shipping", as: :my_cards_shipping
   end
 
@@ -639,6 +638,9 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      resource :repayment, only: [:create] do
+        get :candidates
+      end
       post "toggle_tag", to: "items#toggle_tag"
     end
   end

@@ -398,6 +398,16 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
 
+    it "shows how donations will appear on donors' statements" do
+      event = create(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+      sign_in_organizer_of(event)
+
+      get(:edit, params: { id: event.slug, tab: "donations" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.css("#donations_settings strong").map(&:text)).to include("HCB* Assemble")
+    end
+
     it "lists managers as reimbursement reviewers, letting parent organization managers be opted in" do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")
@@ -788,6 +798,27 @@ RSpec.describe EventsController do
       create_session(organizer, verified: true)
     end
 
+    it "lets organizers search by the last four digits" do
+      create_card(organizer, name: "Organizer Card")
+
+      expect(page_for(q: "9876").text).to include("Organizer Card")
+    end
+
+    it "keeps the filter menu beside the search when a filter is applied" do
+      page = page_for(status: "active")
+
+      expect(page.css("form + [data-controller='menu']")).to be_present
+    end
+
+    it "renders the cards directly on the page" do
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(status: "active")
+
+      expect(page.text).to include("Organizer Card")
+      expect(page.at_css("turbo-frame#stripe_cards")).to be_nil
+    end
+
     it "treats LIKE wildcards in the search literally" do
       create_card(organizer, name: "snake_case")
       create_card(organizer, name: "snakeXcase")
@@ -812,7 +843,7 @@ RSpec.describe EventsController do
       create_card(former_member, name: "Former Member Card")
       create_card(organizer, name: "Organizer Card")
 
-      page = page_for(user: former_member.slug)
+      page = page_for(user: former_member.public_id)
 
       expect(page.text).to include("Former Member Card")
       expect(page.text).not_to include("Organizer Card")
@@ -836,6 +867,85 @@ RSpec.describe EventsController do
 
       expect(toggle["href"]).to include("status=active")
       expect(toggle["href"]).not_to include("page=")
+    end
+  end
+
+  describe "#card_overview for auditors" do
+    render_views
+
+    it "shows them the last four digits and card links in the list view", :aggregate_failures do
+      event = create(:event)
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder), initially_activated: true, last4: "4242")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.text).to include("•••• •••• •••• 4242")
+      expect(page.css("a[href='#{stripe_card_path(card)}']")).to be_present
+    end
+  end
+
+  describe "#card_overview for viewers without access to cards" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+    # The slug is built at sign up, before the preferred name is set
+    let(:cardholder) { create(:user, full_name: "Legal Name").tap { |user| user.update!(preferred_name: "Chosen Name") } }
+    let!(:stripe_card) do
+      create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder), name: "Snacks")
+    end
+
+    def page_for(**params)
+      get(:card_overview, params: { event_id: event.slug, **params })
+      Nokogiri::HTML5(response.body)
+    end
+
+    it "doesn't let the public find cards by their hidden last four digits" do
+      expect(page_for(q: stripe_card.last4).text).not_to include("Snacks")
+    end
+
+    it "doesn't reveal a cardholder's legal name, even through their slug", :aggregate_failures do
+      page_for
+
+      expect(cardholder.slug).to eq("legal-name")
+      expect(response.body).not_to include("Legal Name")
+      expect(response.body).not_to include(cardholder.slug)
+    end
+
+    it "doesn't find cardholders by slug" do
+      expect(page_for(user: cardholder.slug).text).not_to include("Snacks")
+    end
+
+    context "when signed in without a role on the organization" do
+      before { create_session(create(:user), verified: true) }
+
+      it "doesn't wrap cards in a link", :aggregate_failures do
+        cards = page_for.css(".stripe-card")
+
+        expect(cards).to be_present
+        expect(cards.flat_map { |card| card.ancestors("a").to_a }).to be_empty
+      end
+
+      it "doesn't make list rows clickable", :aggregate_failures do
+        page = page_for(view: "list")
+
+        expect(page.text).to include("Chosen Name")
+        expect(page.css("tr.clickable, a[href='#{stripe_card_path(stripe_card)}']")).to be_empty
+      end
+    end
+
+    context "on a private organization" do
+      let(:event) { create(:event, is_public: false) }
+
+      before { create_session(create(:user), verified: true) }
+
+      it "turns outsiders away before touching their view preference", :aggregate_failures do
+        page_for(view: "list", q: stripe_card.last4)
+
+        expect(response).to redirect_to(root_path)
+        expect(response.cookies).not_to have_key("card_overview_view")
+      end
     end
   end
 

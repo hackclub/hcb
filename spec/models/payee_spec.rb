@@ -89,7 +89,7 @@ RSpec.describe Payee, type: :model do
 
       mail = Contract::PartyMailer.with(party: new_contract.party(:organizer), message: +"hi").reissued
       expect(mail.to).to eq([organizer.email])
-      expect(mail.body.encoded).to include("sign a new agreement")
+      expect(mail.body.encoded).to include("Sign a new agreement")
     end
   end
 

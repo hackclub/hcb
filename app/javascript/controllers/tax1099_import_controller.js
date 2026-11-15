@@ -102,6 +102,9 @@ function normalizePostalCode(value) {
   return /^\d{9}$/.test(normalized) ? normalized.slice(0, 5) : normalized
 }
 
+// An SSN as Tax1099 formats one.
+const SSN_FORMAT = /^\d{3}-\d{2}-\d{4}$/
+
 // Mirrors Tax1099ImportService.entity_type_for, reduced to the one distinction
 // the row key needs.
 function isPerson(data) {
@@ -527,7 +530,15 @@ export default class extends Controller {
       last_name: moveLastToFirst ? '' : cell('lastName'),
       suffix: suffix === EMPTY_SUFFIX ? '' : suffix,
       tin,
-      tin_type: isW8Export ? 'FTIN' : isBusiness ? 'EIN' : 'SSN',
+      // A W-8BEN can carry the payee's SSN instead of a foreign TIN; one
+      // formatted as an SSN is taken for one. The admin can still change it.
+      tin_type: isW8Export
+        ? formType === 'W8BEN' && SSN_FORMAT.test(tin)
+          ? 'SSN'
+          : 'FTIN'
+        : isBusiness
+          ? 'EIN'
+          : 'SSN',
       // An SSN filer can still be a sole proprietor rather than an individual,
       // so this is only prefilled when Tax1099's Filer Type agrees. Everything
       // else is left blank for the admin to pick.
