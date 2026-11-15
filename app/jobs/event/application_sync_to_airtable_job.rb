@@ -62,6 +62,8 @@ class Event
         airrecord["Org Type"] = "Robotics"
       elsif @application.affiliations.any?(&:is_hack_club?)
         airrecord["Org Type"] = "Hack Club"
+      elsif @application.affiliations.any?(&:is_destination_imagination?)
+        airrecord["Org Type"] = "Destination Imagination"
       end
 
       if @application.event.present?

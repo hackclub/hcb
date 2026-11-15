@@ -61,6 +61,10 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
+    # The Insights timeframe links only navigate their own frame, so there's
+    # no need to render the rest of the page for them.
+    return render partial: "events/home/insights", locals: { event: @event } if turbo_frame_request_id == "insights"
+
     render_tour @organizer_position, :welcome
     @requesting_call = params[:request_call] == "true" && policy(@event).request_call?
   end
@@ -1201,7 +1205,7 @@ class EventsController < ApplicationController
         redirect_to @event
       end
       format.pdf do
-        render pdf: "Termination Letter for #{@event.name}", page_height: "11in", page_width: "8.5in"
+        render_pdf "Termination Letter for #{@event.name}"
       end
     end
   end
