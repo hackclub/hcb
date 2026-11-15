@@ -24,11 +24,7 @@ module Receiptable
     end
 
     def without_receipt?
-      (preloaded_receipts || receipts).none?
-    end
-
-    def receipts_count
-      (preloaded_receipts || receipts).size
+      receipts.none?
     end
 
     def no_or_lost_receipt?
@@ -65,8 +61,8 @@ module Receiptable
     # ledger item's code. Nil for every other receiptable, including the
     # transaction-like records (CanonicalTransaction, Transaction, ...) that have
     # a `local_hcb_code`, so a receipt on those keeps the generic behavior.
-    # TODO: drop alongside #receipt_counterpart once receipts only live on
-    # ledger items.
+    # TODO: drop alongside #receipt_counterpart once the HCB code pages have
+    # been replaced by the ledger item's.
     def receipt_hcb_code
       case self
       when HcbCode then self
@@ -95,37 +91,10 @@ module Receiptable
   class_methods do
     # SQL that holds when the row has a receipt, for the scopes above and for
     # the raw queries that filter transactions by receipt. Keyed on the row's
-    # own id; HcbCode overrides it to also look at the ledger item's id while
-    # receipts are split across the two (see #receipts).
+    # own id; HcbCode overrides it to look at its ledger item's id instead,
+    # since that is where a transaction's receipts live (see HcbCode#receipts).
     def receipts_exist_sql
       "EXISTS (#{Receipt.select("1").where("receipts.receiptable_type = ? AND receipts.receiptable_id = #{table_name}.id", polymorphic_name).to_sql})"
     end
-  end
-
-  # Receipts are moving from HCB codes onto their ledger items
-  # (https://github.com/hackclub/hcb/issues/14106). Until the backfill has run,
-  # a transaction's receipts can sit on either record, so each side reads both.
-  # Every other receiptable reads its own association as before.
-  #
-  # TODO: once receipts only live on ledger items, make this the ledger item's
-  # own association and read HcbCode's through it.
-  def receipts
-    counterpart = receipt_counterpart
-    return super if counterpart.nil?
-
-    Receipt.where(receiptable: [self, counterpart])
-  end
-
-  # The receipts that have been preloaded, or nil when they haven't. Lets the
-  # ledger rows, which eager load both sides, count and check receipts without
-  # a query per row while #receipts can't be preloaded as an association.
-  def preloaded_receipts
-    return unless association(:receipts).loaded?
-
-    counterpart = receipt_counterpart
-    return association(:receipts).target if counterpart.nil?
-    return unless counterpart.association(:receipts).loaded?
-
-    association(:receipts).target + counterpart.association(:receipts).target
   end
 end

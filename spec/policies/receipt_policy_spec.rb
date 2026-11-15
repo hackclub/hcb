@@ -6,7 +6,7 @@ RSpec.describe ReceiptPolicy, type: :policy do
   describe "#destroy?" do
     context "when the receipt is on a Ledger::Item" do
       def receipt_on(ledger_item)
-        Receipt.new(receiptable: ledger_item, user: create(:user))
+        Receipt.new(receiptable: ledger_item, user: create(:user), upload_method: :api)
       end
 
       context "whose primary ledger belongs to an event" do

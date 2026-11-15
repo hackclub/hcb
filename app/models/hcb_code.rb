@@ -67,6 +67,11 @@ class HcbCode < ApplicationRecord
   # `belongs_to :ledger_item` since a `through:` needs its association defined
   # first. Nested through, so read-only — write via `ledger_item.tags`.
   has_many :tags, through: :ledger_item, source: :tags, class_name: "::Tag"
+  # Receipts live on the ledger item as well
+  # (https://github.com/hackclub/hcb/issues/14106); this reads through to them,
+  # replacing the `has_many` Receiptable declared. A code with no ledger item
+  # has none. Read-only like `tags` — attach via the ledger item.
+  has_many :receipts, through: :ledger_item, source: :receipts
 
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
@@ -689,20 +694,11 @@ class HcbCode < ApplicationRecord
     super
   end
 
-  # A payout's receipts live on its expense (see #receipts), which the ledger
-  # rows don't preload.
-  def preloaded_receipts
-    return if reimbursement_expense_payout?
-
-    super
-  end
-
-  # While receipts are split across an HCB code and its ledger item (see
-  # Receiptable#receipts), a code has a receipt if either side does. Keyed on
-  # the code's own columns so the receipt scopes and the raw transaction
-  # queries can use it without a join.
+  # A code's receipts live on its ledger item (see `has_many :receipts`), so a
+  # code has a receipt when its item does. Keyed on the code's own columns so
+  # the receipt scopes and the raw transaction queries can use it without a join.
   def self.receipts_exist_sql
-    "EXISTS (#{Receipt.select("1").where("(receipts.receiptable_type = 'HcbCode' AND receipts.receiptable_id = hcb_codes.id) OR (receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = hcb_codes.ledger_item_id)").to_sql})"
+    "EXISTS (#{Receipt.select("1").where("receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = hcb_codes.ledger_item_id").to_sql})"
   end
 
   def local_hcb_code

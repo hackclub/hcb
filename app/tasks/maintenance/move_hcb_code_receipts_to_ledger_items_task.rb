@@ -4,13 +4,13 @@ module Maintenance
   # Moves the receipts still attached to an HCB code onto its ledger item,
   # finishing the move of receipts from HcbCode to Ledger::Item
   # (https://github.com/hackclub/hcb/issues/14106). New receipts already go to
-  # the ledger item (Receipt's before_validation), and a code hands its
-  # receipts over the moment it is linked to an item (HcbCode's after_commit);
-  # this catches the pairs linked before either existed.
+  # the ledger item, every caller attaches to it directly; this catches the
+  # rows attached to a code before it had an item.
   #
   # HCB codes with no ledger item are left alone. In production those are the
-  # empty HCB-000 codes with no transactions, which will never get one; their
-  # receipts stay on the code, where Receiptable#receipts still reads them.
+  # empty HCB-000 codes with no transactions, which will never get one. Their
+  # receipt rows stay on the code, though HcbCode#receipts, which reads through
+  # the ledger item, no longer surfaces them.
   #
   # The collection only holds codes that still have a receipt of their own, so
   # it shrinks as the task runs: reruns are cheap and an interrupted run can be
