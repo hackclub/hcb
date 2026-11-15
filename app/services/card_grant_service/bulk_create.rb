@@ -22,7 +22,6 @@ module CardGrantService
 
     REQUIRED_HEADERS = %w[email amount_cents].freeze
     OPTIONAL_HEADERS = %w[purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories].freeze
-    ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
     MAX_ERRORS_TO_DISPLAY = 10
     MAX_FILE_SIZE_BYTES = 1.megabyte
 

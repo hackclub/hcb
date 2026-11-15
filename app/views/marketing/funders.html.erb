@@ -638,7 +638,7 @@
         <% recipients.each_with_index do |org, i| %>
           <button type="button" class="mk-portfolio__item" role="tab" id="mk-port-tab-<%= i %>"
                   aria-controls="mk-port-panel-<%= i %>" aria-selected="<%= i.zero? %>"
-                  <%= 'tabindex="-1"'.html_safe unless i.zero? %> data-index="<%= i %>"
+                  <% unless i.zero? %> tabindex="-1"<% end %> data-index="<%= i %>"
                   data-funders-portfolio-target="tab"
                   data-action="click->funders-portfolio#choose mouseenter->funders-portfolio#choose focus->funders-portfolio#choose">
             <span class="mk-portfolio__item-icon mk-portfolio__item-icon--logo">

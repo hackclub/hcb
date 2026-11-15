@@ -92,4 +92,63 @@ RSpec.describe Payee, type: :model do
       expect(mail.body.encoded).to include("sign a new agreement")
     end
   end
+
+  describe "#assign_legal_entity!" do
+    let(:event) { create(:event) }
+    let(:legal_entity) { create(:legal_entity) }
+    let(:payee) { create(:payee, event:, legal_entity: nil) }
+
+    it "assigns the legal entity when no other payee on the event has it" do
+      expect(payee.assign_legal_entity!(legal_entity)).to eq(payee)
+      expect(payee.reload.legal_entity).to eq(legal_entity)
+    end
+
+    context "when another payee on the event already has the legal entity" do
+      let!(:existing) { create(:payee, event:, legal_entity:, email: payee.email) }
+
+      it "moves payments and payroll positions to the existing payee and archives the duplicate" do
+        payment = create(:payment, payee:)
+        position = create(:payroll_position, payee:)
+
+        expect(payee.assign_legal_entity!(legal_entity)).to eq(existing)
+
+        expect(payment.reload.payee).to eq(existing)
+        expect(position.reload.payee).to eq(existing)
+        expect(payee.reload).to be_archived
+        expect(payee.legal_entity).to be_nil
+      end
+
+      it "does not duplicate or delete any payments or payroll positions" do
+        payments = create_list(:payment, 2, payee:) + [create(:payment, payee: existing)]
+        positions = create_list(:payroll_position, 2, payee:) + [create(:payroll_position, payee: existing)]
+
+        payment_count = Payment.count
+        position_count = Payroll::Position.count
+
+        payee.assign_legal_entity!(legal_entity)
+
+        expect(Payment.count).to eq(payment_count)
+        expect(Payroll::Position.count).to eq(position_count)
+
+        expect(existing.payments.reload).to match_array(payments)
+        expect(existing.payroll_positions.reload).to match_array(positions)
+        expect(payee.payments.reload).to be_empty
+        expect(payee.payroll_positions.reload).to be_empty
+      end
+    end
+
+    it "does not merge into a payee with a different email" do
+      create(:payee, event:, legal_entity:, email: "other@example.com")
+
+      expect { payee.assign_legal_entity!(legal_entity) }.to raise_error(ActiveRecord::RecordInvalid, /has already been taken/)
+      expect(payee.reload).not_to be_archived
+    end
+
+    it "ignores archived payees with the legal entity" do
+      create(:payee, event:, legal_entity:).archive!
+
+      expect(payee.assign_legal_entity!(legal_entity)).to eq(payee)
+      expect(payee.reload.legal_entity).to eq(legal_entity)
+    end
+  end
 end

@@ -64,8 +64,8 @@ module Reimbursement
           uploader: current_user,
           attachments: params[:reimbursement_report][:file],
           upload_method: :quick_expense
-        ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt&.first&.suggested_memo
+        ).run!&.first&.reload # extraction persists to a separate instance, so refresh ours
+        @expense.update(memo: receipt.suggested_memo, amount_cents: receipt.extracted_total_amount_cents) if receipt&.suggested_memo
         redirect_to reimbursement_report_path(@report, edit: @expense.id)
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
@@ -481,7 +481,7 @@ module Reimbursement
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
       reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
-      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
+      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager) || (@report.reviewer_assignable_by_creator? && @report.user == current_user && (@report.draft? || @report.submitted?))
       reimbursement_report_params
     end
 

@@ -35,7 +35,7 @@ class CardGrantsController < ApplicationController
     ]
     @has_filter = CardGrant::FILTERABLE_STATES.key?(params[:status])
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :ledger, :reimbursement_report).order(created_at: :desc)
     if params[:q].present?
       @card_grants = if organizer_signed_in?
                        @card_grants.search(params[:q])

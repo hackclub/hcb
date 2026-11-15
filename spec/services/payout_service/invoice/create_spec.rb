@@ -3,6 +3,10 @@
 require "rails_helper"
 
 RSpec.describe PayoutService::Invoice::Create do
+  # The fee reimbursement is grouped on create, and its group's ledger item is
+  # mapped to the Hack Club Bank event, which must exist.
+  let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+
   before do
     expect_any_instance_of(InvoicePayout).to receive(:create_stripe_payout).and_return(true)
     expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)

@@ -16,22 +16,15 @@ class DocumentPreviewService
   private
 
   def pdf_string
-    @pdf_string ||= ActionController::Base.new.tap do |c|
-      c.instance_variable_set(:@event, @event)
-      c.instance_variable_set(:@contract_signers, @contract_signers) if @contract_signers
-      c.instance_variable_set(:@ach_transfer, @ach_transfer) if @ach_transfer
-      c.instance_variable_set(:@disbursement, @disbursement) if @disbursement
-    end.render_to_string pdf: template_name, template: template_path, encoding: "UTF-8", formats: :pdf
+    @pdf_string ||= CloudflareBrowserRun.pdf(html)
   end
 
-  def template_name
-    case @type
-    when :verification_letter then "verification_letter"
-    when :fiscal_sponsorship_letter then "fiscal_sponsorship_letter"
-    when :ach_transfer_confirmation then "transfer_confirmation_letter"
-    when :disbursement_confirmation then "transfer_confirmation_letter"
-    else raise "Unknown document type"
-    end
+  def html
+    # ApplicationController's renderer brings in the app helpers (e.g. pdf_asset_base64)
+    ApplicationController.render(
+      template: template_path, formats: :pdf, layout: false,
+      assigns: { event: @event, contract_signers: @contract_signers, ach_transfer: @ach_transfer, disbursement: @disbursement }.compact
+    )
   end
 
   def template_path
@@ -39,7 +32,7 @@ class DocumentPreviewService
     when :verification_letter then "documents/verification_letter"
     when :fiscal_sponsorship_letter then "documents/fiscal_sponsorship_letter"
     when :ach_transfer_confirmation then "ach_transfers/transfer_confirmation_letter"
-    when :disbursement_confirmation then "disbursement/transfer_confirmation_letter"
+    when :disbursement_confirmation then "disbursements/transfer_confirmation_letter"
     else raise "Unknown document type"
     end
   end

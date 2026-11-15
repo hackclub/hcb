@@ -68,7 +68,8 @@ class Ledger
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
-    has_many :tags, through: :hcb_code
+    has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
+    has_many :tags, through: :ledger_item_tags, source: :tag
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -77,7 +78,8 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
-    has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayments, through: :repayment_allocations
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
 
     enum :status, {
@@ -121,23 +123,23 @@ class Ledger
     def status_css
       case status.to_sym
       when :pending
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "bg-transparent border border-dashed border-muted m0"
       when :settled
         nil
       when :intended
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "bg-transparent border border-dashed border-muted m0"
       when :reversed
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :released
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :rejected
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :failed
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :canceled
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :declined
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       end
     end
 
@@ -180,6 +182,21 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # Tags are event-scoped. When this item is remapped to a different event, any
+    # tag belonging to an event it no longer touches is orphaned (hidden on the
+    # new org's event-filtered views and impossible to remove via `toggle_tag`),
+    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap,
+    # which saves the new mapping on a separate row — so reload the associations
+    # before reading the (now-current) event off the primary ledger.
+    def prune_tags_outside_event!
+      reload
+
+      event = primary_ledger&.event || primary_ledger&.card_grant&.event
+      return if event.nil?
+
+      ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
     end
 
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
@@ -271,6 +288,8 @@ class Ledger
         "Fiscal sponsorship fee"
       when "FeeRevenue"
         "Fee revenue"
+      when "FeeReimbursementGroup"
+        "Stripe fee reimbursements"
       when "Reimbursement::PayoutHolding"
         "Reimbursement payout holding"
       when "Reimbursement::ExpensePayout"
@@ -283,7 +302,7 @@ class Ledger
     end
 
     def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee", "FeeReimbursementGroup"].include?(linked_object_type) ? "of" : "for"
 
       amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
 
@@ -332,6 +351,8 @@ class Ledger
         "bank-icon"
       when "FeeRevenue"
         "bank-icon"
+      when "FeeReimbursementGroup"
+        "cash"
       when "Reimbursement::PayoutHolding"
         "reimbursement"
       when "Reimbursement::ExpensePayout"
@@ -436,7 +457,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
     end
 
     def calculate_status
@@ -544,6 +565,8 @@ class Ledger
         end
       when "FeeRevenue"
         "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "FeeReimbursementGroup"
+        linked_object.memo
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"

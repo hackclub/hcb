@@ -23,8 +23,4 @@ class TwilioMessage < ApplicationRecord
 
   has_many_attached :files
 
-  def twilio_log_url
-    "https://www.twilio.com/console/sms/logs/#{twilio_account_sid}/#{twilio_sid}"
-  end
-
 end
