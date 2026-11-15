@@ -482,11 +482,12 @@ class EventsController < ApplicationController
     # Derived from cards rather than @event.users so removed members' cards stay filterable
     cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
     sorted_cardholders = cardholders.sort_by(&:name)
-    @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
+    # Public ids, since slugs are built from the name a user signed up with
+    @user = cardholders.find_by_public_id(params[:user]) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
-      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.slug] } },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.public_id] } },
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
 

@@ -843,7 +843,7 @@ RSpec.describe EventsController do
       create_card(former_member, name: "Former Member Card")
       create_card(organizer, name: "Organizer Card")
 
-      page = page_for(user: former_member.slug)
+      page = page_for(user: former_member.public_id)
 
       expect(page.text).to include("Former Member Card")
       expect(page.text).not_to include("Organizer Card")
@@ -870,11 +870,28 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview for auditors" do
+    render_views
+
+    it "shows them the last four digits and card links in the list view", :aggregate_failures do
+      event = create(:event)
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder), initially_activated: true, last4: "4242")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.text).to include("•••• •••• •••• 4242")
+      expect(page.css("a[href='#{stripe_card_path(card)}']")).to be_present
+    end
+  end
+
   describe "#card_overview for viewers without access to cards" do
     render_views
 
     let(:event) { create(:event, is_public: true) }
-    let(:cardholder) { create(:user, full_name: "Legal Name", preferred_name: "Chosen Name") }
+    # The slug is built at sign up, before the preferred name is set
+    let(:cardholder) { create(:user, full_name: "Legal Name").tap { |user| user.update!(preferred_name: "Chosen Name") } }
     let!(:stripe_card) do
       create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder), name: "Snacks")
     end
@@ -888,10 +905,16 @@ RSpec.describe EventsController do
       expect(page_for(q: stripe_card.last4).text).not_to include("Snacks")
     end
 
-    it "doesn't reveal a cardholder's legal name" do
+    it "doesn't reveal a cardholder's legal name, even through their slug", :aggregate_failures do
       page_for
 
+      expect(cardholder.slug).to eq("legal-name")
       expect(response.body).not_to include("Legal Name")
+      expect(response.body).not_to include(cardholder.slug)
+    end
+
+    it "doesn't find cardholders by slug" do
+      expect(page_for(user: cardholder.slug).text).not_to include("Snacks")
     end
 
     context "when signed in without a role on the organization" do
@@ -910,7 +933,6 @@ RSpec.describe EventsController do
         expect(page.text).to include("Chosen Name")
         expect(page.css("tr.clickable, a[href='#{stripe_card_path(stripe_card)}']")).to be_empty
       end
-
     end
 
     context "on a private organization" do
