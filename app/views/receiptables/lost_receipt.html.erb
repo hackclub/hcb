@@ -1,97 +1,99 @@
 <% title "Lost receipt statement" %>
-<% page_sm %>
-
-<h1>Lost receipt statement</h1>
-
-<% frame_id = "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}" %>
 <% charged = @receiptable.try(:amount_cents)&.abs %>
+<% subtitle [@receiptable.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
 
-<%= turbo_frame_tag frame_id, target: "_top" do %>
-  <%# paste stops here so the page's paste-to-upload-a-receipt handler ignores text pasted into this form %>
-  <%= form_with model: @statement, scope: :lost_receipt_statement, namespace: frame_id, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update paste->lost-receipt#update:stop" } do |form| %>
-    <%= form_errors @statement, "statement" %>
-    <%= hidden_field_tag :s, params[:s], id: nil %>
-    <%= hidden_field_tag :return_to, params[:return_to], id: nil, data: { lost_receipt_target: "returnTo" } %>
-
-    <div class="card mb-4 flex flex-col gap-3">
-      <div class="flex flex-wrap gap-2">
-        <div class="flex-1 min-w-[12rem]">
-          <%= form.label :merchant, class: "bold" %>
-          <%= form.text_field :merchant, required: true, class: "!max-w-full" %>
-        </div>
-        <div class="flex-1 min-w-[10rem]">
-          <%= form.label :date, "Purchase date", class: "bold" %>
-          <%= form.date_field :date, required: true, max: Date.current.iso8601, class: "!max-w-full" %>
-        </div>
-      </div>
-      <div>
-        <div class="flex flex-row items-center justify-between flex-wrap gap-x-3">
-          <%= form.label :purpose, "Purpose", class: "bold" %>
-          <span class="h5 muted mt0 mb0">What was this purchase for?</span>
-        </div>
-        <%= form.text_area :purpose, required: true, placeholder: "Snacks for our weekly club meeting", class: "!max-w-full w-100 min-h-[72px]" %>
-      </div>
-    </div>
-
-    <h3 class="mb-0">Items</h3>
-    <p class="muted mt-0 mb-2">List tax, tips, and fees as their own items.</p>
-    <div class="flex flex-col gap-2" data-lost-receipt-target="items">
-      <%= form.fields_for :items do |item_form| %>
-        <%= render "receiptables/lost_receipt_item", form: item_form %>
-      <% end %>
-    </div>
-    <template data-lost-receipt-target="template">
-      <%= form.fields_for :items, LostReceipt::Item.new(quantity: 1), child_index: "NEW_ITEM" do |item_form| %>
-        <%= render "receiptables/lost_receipt_item", form: item_form %>
-      <% end %>
-    </template>
-    <button type="button" class="btn bg-success mt-3" data-action="lost-receipt#add" data-lost-receipt-target="addButton">
-      <%= inline_icon "plus" %>
-      Add item
-    </button>
-
-    <div class="statset pb-6 mt-4">
-      <div class="stat shrink-0">
-        <span class="stat__label">Statement total</span>
-        <span class="stat__value"><output data-lost-receipt-target="total" aria-live="polite">0.00</output></span>
-      </div>
-      <% if charged %>
-        <div class="stat stat--small shrink-0">
-          <span class="stat__label">Transaction</span>
-          <span class="stat__value"><%= render_money charged, unit: "" %></span>
-        </div>
-      <% end %>
-      <div class="stat stat--small stat--plain shrink-0">
-        <span class="stat__label">Items</span>
-        <span class="stat__value" data-lost-receipt-target="count">1</span>
-      </div>
-    </div>
-    <div class="card -mt-2 rounded-t-none text-center mb-4">
-      Lost receipt statements are reviewed by HCB operations. We'll contact you if we need more details.
-    </div>
-
-    <div class="card mb-4 flex flex-col gap-3">
-      <div class="field field--checkbox !items-start mb-0">
-        <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
-        <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
-      </div>
-      <% if (sentence = @statement.required_acknowledgement) %>
-        <div>
-          <%= form.label :acknowledgement, "Type this sentence to submit", class: "bold" %>
-          <span class="block mb-1"><%= sentence %></span>
-          <%= form.text_area :acknowledgement, required: true, rows: 3, autocomplete: "off", spellcheck: false, class: "!max-w-full", data: { lost_receipt_target: "acknowledgement", sentence: } %>
-        </div>
-      <% end %>
-      <div>
-        <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
-        <%# Not prefilled or autofilled: typing the name is the signature. %>
-        <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full" %>
-      </div>
-    </div>
-
-    <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } do %>
-      Submit statement
-      <%= inline_icon "send" %>
-    <% end %>
+<% content_for :sidebar_footer do %>
+  <%= render "application/callout", type: "info", title: "Before you submit", class: "mt-2 mb-0" do %>
+    <ul>
+      <li>Ask the merchant for a copy of the receipt first.</li>
+      <li>List everything you bought, with tax, tips, and fees as their own items.</li>
+      <li>The total should match the transaction.</li>
+    </ul>
   <% end %>
+<% end %>
+
+<%= form_with model: @statement, scope: :lost_receipt_statement, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update" } do |form| %>
+  <%= form_errors @statement, "statement" %>
+  <%= hidden_field_tag :s, params[:s], id: nil %>
+  <%= hidden_field_tag :return_to, @return_to, id: nil %>
+
+  <h3 class="mb-2">Purchase details</h3>
+  <div class="card mb-4 flex flex-col gap-3">
+    <div class="flex flex-wrap gap-2">
+      <div class="flex-1 min-w-[12rem]">
+        <%= form.label :merchant, class: "bold" %>
+        <%= form.text_field :merchant, required: true, class: "!max-w-full" %>
+      </div>
+      <div class="flex-1 min-w-[10rem]">
+        <%= form.label :date, "Purchase date", class: "bold" %>
+        <%= form.date_field :date, required: true, max: Date.current.iso8601, class: "!max-w-full" %>
+      </div>
+    </div>
+    <div>
+      <div class="flex flex-row items-center justify-between flex-wrap gap-x-3">
+        <%= form.label :purpose, "Purpose", class: "bold" %>
+        <span class="h5 muted mt0 mb0">What was this purchase for?</span>
+      </div>
+      <%= form.text_area :purpose, required: true, placeholder: "Snacks for our weekly club meeting", class: "!max-w-full w-100 min-h-[72px]" %>
+    </div>
+  </div>
+
+  <h3 class="mb-2">Items</h3>
+  <div class="flex flex-col gap-2" data-lost-receipt-target="items">
+    <%= form.fields_for :items do |item_form| %>
+      <%= render "receiptables/lost_receipt_item", form: item_form %>
+    <% end %>
+  </div>
+  <template data-lost-receipt-target="template">
+    <%= form.fields_for :items, LostReceipt::Item.new(quantity: 1), child_index: "NEW_ITEM" do |item_form| %>
+      <%= render "receiptables/lost_receipt_item", form: item_form %>
+    <% end %>
+  </template>
+  <button type="button" class="btn bg-success mt-3" data-action="lost-receipt#add" data-lost-receipt-target="addButton">
+    <%= inline_icon "plus" %>
+    Add item
+  </button>
+
+  <div class="statset mt-4 mb-4">
+    <div class="stat shrink-0">
+      <span class="stat__label">Statement total</span>
+      <span class="stat__value"><output data-lost-receipt-target="total" aria-live="polite">0.00</output></span>
+    </div>
+    <% if charged %>
+      <div class="stat stat--small shrink-0">
+        <span class="stat__label">Transaction</span>
+        <span class="stat__value"><%= render_money charged, unit: "" %></span>
+      </div>
+    <% end %>
+    <div class="stat stat--small stat--plain shrink-0">
+      <span class="stat__label">Items</span>
+      <span class="stat__value" data-lost-receipt-target="count">1</span>
+    </div>
+  </div>
+
+  <h3 class="mb-2">Confirmation</h3>
+  <div class="card mb-4 flex flex-col gap-3">
+    <div class="field field--checkbox !items-start mb-0">
+      <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
+      <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
+    </div>
+    <% if (sentence = @statement.required_acknowledgement) %>
+      <div>
+        <%= form.label :acknowledgement, "Type this sentence to submit", class: "bold" %>
+        <span class="block mb-1"><%= sentence %></span>
+        <%= form.text_area :acknowledgement, required: true, rows: 3, autocomplete: "off", spellcheck: false, class: "!max-w-full", data: { lost_receipt_target: "acknowledgement", sentence: } %>
+      </div>
+    <% end %>
+    <div>
+      <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
+      <%# Not prefilled or autofilled: typing the name is the signature. %>
+      <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full" %>
+    </div>
+  </div>
+
+  <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } do %>
+    Submit statement
+    <%= inline_icon "send" %>
+  <% end %>
+  <p class="muted mt-3 text-center text-sm">Lost receipt statements are reviewed by HCB operations. We'll contact you if we need more details.</p>
 <% end %>
