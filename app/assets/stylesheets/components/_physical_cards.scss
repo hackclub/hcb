@@ -309,17 +309,6 @@
   filter: drop-shadow(1em 0 0px #000);
 }
 
-// Doubled class beats `.stripe-card.virtual`'s gradient
-.stripe-card.stripe-card--skeleton {
-  background: $smoke;
-  box-shadow: none;
-  pointer-events: none;
-
-  html[data-dark='true'] & {
-    background: $darkless;
-  }
-}
-
 // Fixed columns keep each organization's table aligned with the others
 .stripe-cards-table {
   table-layout: fixed;

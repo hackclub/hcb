@@ -59,73 +59,47 @@
       <% end %>
     <% end %>
 
-    <%= turbo_frame_tag :stripe_cards, src: (request.url unless turbo_frame_request?), target: "_top" do %>
-      <% if !turbo_frame_request? %>
-        <% if @view == "list" %>
-          <%= render "stripe_cards/table_skeleton", count: @skeleton_card_count, first_column: "Cardholder", clickable: organizer_signed_in? && !@event.demo_mode %>
-          <div aria-hidden="true" class="pointer-events-none"><%= paginate @skeleton_page %></div>
-        <% elsif @skeleton_group_counts %>
-          <% @skeleton_group_counts.each do |count| %>
-            <section class="mt-3" aria-hidden="true">
-              <div class="flex items-center gap-2">
-                <span class="block size-6 rounded-full bg-smoke dark:bg-darkless"></span>
-                <span class="block h-4 w-32 rounded-full bg-smoke dark:bg-darkless"></span>
-                <%= badge_for count, class: "bg-muted flex-shrink-0 mx-0" %>
+    <% if @view == "list" %>
+      <%= render "events/event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
+      <%= paginate @paginated_stripe_cards %>
+    <% elsif @cards_by_user %>
+      <% preview_count = 3 %>
+      <% if @cards_by_user.any? %>
+        <% @cards_by_user.each do |user, cards| %>
+          <section class="mt-3">
+            <div class="flex items-center gap-2">
+              <%= link_to upsert_query_params(user: user.slug, page: nil), class: "flex items-center gap-2 text-decoration-none text-inherit hover:text-inherit flex-1 min-w-0" do %>
+                <%= user_mention user %>
+                <%= badge_for cards.count, class: "bg-muted flex-shrink-0 mx-0" %>
                 <div class="menu__divider flex-1 ml-2"></div>
-              </div>
-              <%= render "stripe_cards/skeleton", count: [count, 3].min %>
-              <% if count > 3 %>
-                <div class="flex mt-3">
-                  <span class="block h-9 w-24 ml-auto rounded bg-smoke dark:bg-darkless"></span>
-                </div>
               <% end %>
-            </section>
-          <% end %>
-        <% else %>
-          <%= render "stripe_cards/skeleton", count: @skeleton_card_count, headless: false %>
-        <% end %>
-      <% elsif @view == "list" %>
-        <%= render "events/event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
-        <%= paginate @paginated_stripe_cards %>
-      <% elsif @cards_by_user %>
-        <% preview_count = 3 %>
-        <% if @cards_by_user.any? %>
-          <% @cards_by_user.each do |user, cards| %>
-            <section class="mt-3">
-              <div class="flex items-center gap-2">
-                <%= link_to upsert_query_params(user: user.slug, page: nil), class: "flex items-center gap-2 text-decoration-none text-inherit hover:text-inherit flex-1 min-w-0" do %>
-                  <%= user_mention user %>
-                  <%= badge_for cards.count, class: "bg-muted flex-shrink-0 mx-0" %>
-                  <div class="menu__divider flex-1 ml-2"></div>
+            </div>
+            <article class="mixed-grid grid--spacious">
+              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true, show_purpose: true } %>
+            </article>
+            <% if cards.count > preview_count %>
+              <div class="flex mt-3">
+                <%= link_to upsert_query_params(user: user.slug, page: nil), class: "btn ml-auto" do %>
+                  +<%= cards.count - preview_count %> more
                 <% end %>
               </div>
-              <article class="mixed-grid grid--spacious">
-                <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true, show_purpose: true } %>
-              </article>
-              <% if cards.count > preview_count %>
-                <div class="flex mt-3">
-                  <%= link_to upsert_query_params(user: user.slug, page: nil), class: "btn ml-auto" do %>
-                    +<%= cards.count - preview_count %> more
-                  <% end %>
-                </div>
-              <% end %>
-            </section>
-          <% end %>
-          <%= paginate @paginated_user_groups %>
-        <% else %>
-          <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
+            <% end %>
+          </section>
         <% end %>
+        <%= paginate @paginated_user_groups %>
       <% else %>
-        <article class="mixed-grid grid--spacious">
-          <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true } %>
-        </article>
-
-        <% if @paginated_stripe_cards.blank? %>
-          <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
-        <% end %>
-
-        <%= paginate @paginated_stripe_cards %>
+        <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
       <% end %>
+    <% else %>
+      <article class="mixed-grid grid--spacious">
+        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true } %>
+      </article>
+
+      <% if @paginated_stripe_cards.blank? %>
+        <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
+      <% end %>
+
+      <%= paginate @paginated_stripe_cards %>
     <% end %>
 
     <% if organizer_signed_in? || @event.used_emburse? %>
