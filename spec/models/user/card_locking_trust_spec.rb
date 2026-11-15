@@ -15,7 +15,7 @@ RSpec.describe User, type: :model do
   # CardLocking::Deadline deliberately floors so it cannot land already overdue.
   def materialize_all
     Ledger::Item.card_locking_relevant_for_cardholder(user.id).distinct
-                .find_each { |charge| charge.materialize_card_locking!(now: charge.card_locking_settled_at || now) }
+                .find_each { |charge| charge.materialize_card_locking!(now: charge.settled_at) }
   end
 
   describe "#receipt_trusted?" do
@@ -71,7 +71,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#last_settled_charge_at" do
-    it "returns the max card_charge_settled_at across the cardholder's charges" do
+    it "returns the latest settled_at across the cardholder's charges" do
       create_settled_card_charge(user:, settled_at: 20.days.ago, uploaded_at: 19.days.ago)
       create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 4.days.ago)
       materialize_all

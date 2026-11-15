@@ -6,7 +6,6 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
-#  card_charge_settled_at       :datetime
 #  comment_count                :integer          default(0), not null
 #  cpt_count                    :integer          default(0), not null
 #  ct_count                     :integer          default(0), not null
@@ -36,7 +35,6 @@
 #
 #  index_ledger_items_on_amount_cents            (amount_cents)
 #  index_ledger_items_on_author_id               (author_id)
-#  index_ledger_items_on_card_charge_settled_at  (card_charge_settled_at)
 #  index_ledger_items_on_datetime                (datetime)
 #  index_ledger_items_on_linked_object           (linked_object_type,linked_object_id)
 #  index_ledger_items_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))

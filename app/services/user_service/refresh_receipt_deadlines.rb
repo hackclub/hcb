@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 module UserService
-  # Maintains card_charge_settled_at / receipt_due_at on a cardholder's outstanding
-  # charges. Idempotent; safe to run every few minutes. The shortening floor
+  # Maintains receipt_due_at on a cardholder's outstanding charges. Idempotent; safe to run every few minutes. The shortening floor
   # (inside CardLocking::Deadline) protects the pile when trust is lost.
   class RefreshReceiptDeadlines
     def initialize(user:, now: Time.current)
@@ -29,7 +28,7 @@ module UserService
     def outstanding_charges
       Ledger::Item.card_locking_candidates
                   .where(stripe_cardholders: { user_id: @user.id })
-                  .includes(:canonical_transactions, :receipts)
+                  .includes(:receipts)
     end
 
   end

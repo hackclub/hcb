@@ -41,12 +41,11 @@ RSpec.describe Ledger::Item do
   end
 
   describe "#materialize_card_locking!" do
-    it "sets card_charge_settled_at and receipt_due_at on a fresh untrusted charge" do
+    it "sets receipt_due_at on a fresh untrusted charge" do
       charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
 
       charge.materialize_card_locking!(now:, trusted: false)
 
-      expect(charge.card_charge_settled_at).to be_within(1.second).of(1.day.ago)
       expect(charge.receipt_due_at).to be_within(1.second).of(1.day.ago + 7.days)
       expect(charge.receipt_resolved_at).to be_nil
     end
@@ -57,7 +56,6 @@ RSpec.describe Ledger::Item do
 
       charge.materialize_card_locking!(now:, trusted: false)
 
-      expect(charge.card_charge_settled_at).to be_within(1.second).of(1.day.ago)
       expect(charge.receipt_due_at).to be_nil
     end
 
@@ -86,16 +84,14 @@ RSpec.describe Ledger::Item do
       expect(charge.receipt_resolved_at).to be_within(1.second).of(2.days.ago)
     end
 
-    it "does not move card_charge_settled_at or receipt_resolved_at on repeated calls" do
+    it "does not move receipt_resolved_at on repeated calls" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
       charge.materialize_card_locking!(now:, trusted: false)
 
-      settled_at = charge.card_charge_settled_at
       resolved_at = charge.receipt_resolved_at
 
       charge.materialize_card_locking!(now:, trusted: true, last_settled_charge_at: now - 1.hour)
 
-      expect(charge.card_charge_settled_at).to eq(settled_at)
       expect(charge.receipt_resolved_at).to eq(resolved_at)
     end
 
@@ -105,18 +101,16 @@ RSpec.describe Ledger::Item do
 
       charge.materialize_card_locking!(now:, trusted: false)
 
-      expect(charge.card_charge_settled_at).to be_within(1.second).of(pre_enforcement_settled_at)
       expect(charge.receipt_due_at).to be_nil
     end
 
-    it "clears all three columns when the charge stops being receipt-required" do
+    it "clears both columns when the charge stops being receipt-required" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      charge.update!(card_charge_settled_at: 5.days.ago, receipt_due_at: 2.days.from_now, receipt_resolved_at: 1.day.ago)
+      charge.update!(receipt_due_at: 2.days.from_now, receipt_resolved_at: 1.day.ago)
       allow(charge).to receive(:receipt_required?).and_return(false)
 
       charge.materialize_card_locking!(now:, trusted: false)
 
-      expect(charge.card_charge_settled_at).to be_nil
       expect(charge.receipt_due_at).to be_nil
       expect(charge.receipt_resolved_at).to be_nil
     end

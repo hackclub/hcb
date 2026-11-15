@@ -15,7 +15,6 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
     described_class.new(user:).run
 
     charge.reload
-    expect(charge.card_charge_settled_at).to be_within(2.seconds).of(1.day.ago)
     expect(charge.receipt_due_at).to be_within(2.seconds).of(1.day.ago + 7.days)
   end
 
@@ -45,7 +44,7 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
 
   it "does not shorten an outstanding charge below 72h when trust is lost", :card_locking_trust, skip: "Trust is disabled" do
     charge = create_settled_card_charge(user:, settled_at: 6.days.ago)
-    charge.update_columns(card_charge_settled_at: 6.days.ago, receipt_due_at: now + 5.days)
+    charge.update_columns(receipt_due_at: now + 5.days)
 
     allow_any_instance_of(User).to receive(:receipt_trusted?).and_return(false)
     allow_any_instance_of(User).to receive(:last_settled_charge_at).and_return(6.days.ago)
@@ -58,7 +57,7 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
 
   it "leaves an already-overdue charge frozen" do
     charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-    charge.update_columns(card_charge_settled_at: 10.days.ago, receipt_due_at: 2.days.ago)
+    charge.update_columns(receipt_due_at: 2.days.ago)
 
     described_class.new(user:).run
 

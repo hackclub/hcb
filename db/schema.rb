@@ -1632,7 +1632,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_200002) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.bigint "author_id"
-    t.datetime "card_charge_settled_at"
     t.integer "comment_count", default: 0, null: false
     t.integer "cpt_count", default: 0, null: false
     t.datetime "created_at", null: false
@@ -1658,7 +1657,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_200002) do
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["author_id"], name: "index_ledger_items_on_author_id"
-    t.index ["card_charge_settled_at"], name: "index_ledger_items_on_card_charge_settled_at"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"

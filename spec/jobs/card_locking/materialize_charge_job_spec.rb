@@ -13,7 +13,6 @@ RSpec.describe CardLocking::MaterializeChargeJob do
     described_class.perform_now(ledger_item_id: charge.id)
 
     charge.reload
-    expect(charge.card_charge_settled_at).to be_present
     expect(charge.receipt_due_at).to be_present
   end
 

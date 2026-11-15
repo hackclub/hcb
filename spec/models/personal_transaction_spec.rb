@@ -12,7 +12,7 @@ RSpec.describe PersonalTransaction, type: :model do
   describe "after_create" do
     it "marks the ledger item's receipt no/lost, materializing card-locking state and syncing the HCB code" do
       charge = create_settled_card_charge(user:, settled_at: 12.days.ago)
-      charge.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 12.days.ago + 7.days)
+      charge.update!(receipt_due_at: 12.days.ago + 7.days)
       # invoice passed explicitly (as the backfill task does) so send_invoice
       # never runs and this doesn't touch InvoiceService::Create/Stripe.
       expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)

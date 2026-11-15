@@ -17,13 +17,12 @@ class CopyCardLockingReceiptTimingToLedgerItems < ActiveRecord::Migration[8.1]
 
   def up
     HcbCode.where.not(ledger_item_id: nil)
-           .where("card_charge_settled_at IS NOT NULL OR receipt_due_at IS NOT NULL OR receipt_resolved_at IS NOT NULL")
+           .where("receipt_due_at IS NOT NULL OR receipt_resolved_at IS NOT NULL")
            .in_batches(of: 1_000) do |batch|
       safety_assured do
         execute(<<~SQL.squish)
           UPDATE ledger_items
-          SET card_charge_settled_at = hcb_codes.card_charge_settled_at,
-              receipt_due_at = hcb_codes.receipt_due_at,
+          SET receipt_due_at = hcb_codes.receipt_due_at,
               receipt_resolved_at = hcb_codes.receipt_resolved_at
           FROM hcb_codes
           WHERE hcb_codes.ledger_item_id = ledger_items.id

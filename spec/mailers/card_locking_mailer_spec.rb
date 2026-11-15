@@ -16,7 +16,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
   describe "#cards_locked" do
     it "names the overdue count and avoids countdown/violation language" do
       charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      charge.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_locked(user:)
 
@@ -30,7 +30,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
   describe "#cards_unlocked" do
     it "does not promise a lasting unlock when it came from a suppression" do
       charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      charge.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
       suppressed_until = Time.zone.parse("2026-10-12 15:00:00")
 
       mail = described_class.cards_unlocked(user:, suppressed_until:)
@@ -45,7 +45,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
     # their cards actually lock at.
     it "renders the deadline in the cardholder's assumed timezone" do
       charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      charge.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_unlocked(user:, suppressed_until: Time.zone.parse("2026-10-12 15:00:00"))
 
@@ -54,9 +54,9 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
     it "lists the oldest outstanding charge first" do
       older = create_settled_card_charge(user:, settled_at: 12.days.ago, amount_cents: -11_00)
-      older.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 3.days.ago)
+      older.update!(receipt_due_at: 3.days.ago)
       newer = create_settled_card_charge(user:, settled_at: 10.days.ago, amount_cents: -22_00)
-      newer.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      newer.update!(receipt_due_at: 1.day.ago)
 
       body = described_class.cards_unlocked(user:, suppressed_until: 1.day.from_now).body.encoded
 
@@ -67,7 +67,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
     # the exception exists to remove.
     it "links each overdue charge to a signed upload URL" do
       charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      charge.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_unlocked(user:, suppressed_until: 1.day.from_now)
 

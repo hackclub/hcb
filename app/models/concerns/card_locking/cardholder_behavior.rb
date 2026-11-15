@@ -27,7 +27,7 @@ module CardLocking
     def last_settled_charge_at
       return nil unless stripe_cardholder
 
-      Ledger::Item.card_locking_relevant_for_cardholder(id).maximum(:card_charge_settled_at)
+      Ledger::Item.card_locking_relevant_for_cardholder(id).maximum(:settled_at)
     end
 
     # Trusted iff on-time rate >= 80% over the last 6 months AND the most recent
@@ -38,9 +38,9 @@ module CardLocking
       return false unless stripe_cardholder
 
       rows = Ledger::Item.card_locking_relevant_for_cardholder(id)
-                         .where("ledger_items.card_charge_settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
+                         .where("ledger_items.settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
                          .distinct
-                         .pluck(:id, :card_charge_settled_at, :receipt_due_at, :receipt_resolved_at)
+                         .pluck(:id, :settled_at, :receipt_due_at, :receipt_resolved_at)
 
       considered = rows.filter_map do |id, settled, due, resolved|
         next if settled.nil?

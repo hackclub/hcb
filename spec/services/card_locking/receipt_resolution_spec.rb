@@ -20,7 +20,7 @@ RSpec.describe CardLocking::ReceiptResolution do
   describe "on_no_or_lost_receipt" do
     it "freezes receipt_resolved_at when marked no/lost via the HCB code, same as via the ledger item" do
       charge = create_settled_card_charge(user:, settled_at: 12.days.ago)
-      charge.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 12.days.ago + 7.days)
+      charge.update!(receipt_due_at: 12.days.ago + 7.days)
 
       charge.hcb_code.no_or_lost_receipt!
 
@@ -29,7 +29,7 @@ RSpec.describe CardLocking::ReceiptResolution do
 
     it "unlocks the cardholder when marked no/lost via the HCB code, same as via the ledger item" do
       charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      charge.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago) # overdue
+      charge.update!(receipt_due_at: 1.day.ago) # overdue
       user.update!(cards_locked: true)
       Flipper.enable(:card_locking)
 

@@ -12,11 +12,11 @@
   <tbody>
     <%# Oldest first: the charge that has been outstanding longest is the most %>
     <%# overdue, so it is the one to upload first. %>
-    <% items.sort_by { |item| item.card_charge_settled_at || item.created_at }.each do |item| %>
+    <% items.sort_by(&:settled_at).each do |item| %>
       <tr>
         <td><%= link_to render_money(item.amount_cents.abs.to_s), attach_receipt_url(item.hcb_code) %></td>
         <td><%= item.linked_object.stripe_merchant_data&.dig("name") %></td>
-        <td><%= time_ago_in_words(item.card_charge_settled_at || item.created_at) %> ago</td>
+        <td><%= time_ago_in_words(item.settled_at) %> ago</td>
         <% if show_org %>
           <td><%= (item.primary_ledger&.event || item.primary_ledger&.card_grant&.event)&.name %></td>
         <% end %>
