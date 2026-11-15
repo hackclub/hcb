@@ -68,9 +68,7 @@ class StripeCard < ApplicationRecord
   validate :within_card_limit, on: :create
   validates :subledger, uniqueness: true, allow_nil: true
 
-  after_create_commit :notify_user, unless: :skip_notify_user
-
-  attr_accessor :skip_notify_user
+  after_create_commit :notify_user
 
   scope :deactivated, -> { where.not(stripe_status: "active") }
   scope :canceled, -> { where(stripe_status: "canceled") }
