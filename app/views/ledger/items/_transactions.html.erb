@@ -1,90 +1,29 @@
 <%# locals: (ledger_item:) %>
 
+<%
+  pending_transactions = ledger_item.canonical_pending_transactions.includes(:canonical_pending_declined_mapping, :canonical_transactions).to_a
+  settled_transaction_ids = pending_transactions.flat_map { |pt| pt.canonical_transactions.map(&:id) }
+  # Transactions that settled from one of this item's pending transactions are
+  # rendered nested under that pending transaction rather than on their own.
+  standalone_transactions = ledger_item.canonical_transactions.reject { |ct| settled_transaction_ids.include?(ct.id) }
+  timeline = (standalone_transactions + pending_transactions).sort_by { |t| [t.date, t.created_at] }
+%>
+
 <section class="my-5 flex flex-col gap-3">
-  <% cts = 0 %>
-  <% pts = 0 %>
+  <% settled = false %>
 
-  <% [ledger_item.canonical_transactions, ledger_item.canonical_pending_transactions].flatten.sort_by { |t| [t.date, t.created_at] }.each do |transaction| %>
-    <% index = cts + pts %>
-
+  <% timeline.each_with_index do |transaction, index| %>
     <% if transaction.is_a?(CanonicalTransaction) %>
-      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
-        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
-          <% if index.zero? %>
-            Created
-          <% elsif cts.zero? %>
-            Settled
-          <% else %>
-            Updated
-          <% end %>
-          <span class="text-sm muted">
-            <%= transaction.date.strftime("%b %e, %Y") %>
-          </span>
-        </div>
-
-        <div class="card flex flex-grow w-full justify-between items-center">
-          <div class="flex flex-row justify-start items-center gap-3">
-            <%= inline_icon "transactions" %>
-            <% admin_tool("badge p-0.5 m-0", "span") do %>
-              <%= badge_for transaction.id, class: "bg-muted m-0" %>
-            <% end %>
-            <span>
-              <%= transaction.amount.format %>
-            </span>
-            <span>
-              <%= transaction.memo %>
-            </span>
-          </div>
-          <% admin_tool("m-0 p-0.5") do %>
-            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
-          <% end %>
-          <% admin_tool("-m-0.5 p-0.5") do %>
-            <%= link_to canonical_transaction_path(transaction), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
-              <%= inline_icon "external", size: 30, class: "!m-0" %>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-
-      <% cts += 1 %>
+      <% label = if index.zero? then "Created" elsif settled then "Updated" else "Settled" end %>
+      <% settled = true %>
+      <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: } %>
     <% else %>
-      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
-        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
-          <% if index.zero? %>
-            Created
-          <% else %>
-            Updated
-          <% end %>
-          <span class="text-sm muted">
-            <%= transaction.date.strftime("%b %e, %Y") %>
-          </span>
-        </div>
+      <%= render partial: "ledger/items/transactions/row", locals: { transaction:, label: index.zero? ? "Created" : "Updated" } %>
 
-        <div class="card flex flex-grow w-full justify-between items-center">
-          <div class="flex flex-row justify-start items-center gap-3">
-            <%= inline_icon "transfers-horizontal" %>
-            <% admin_tool("badge p-0.5 m-0", "span") do %>
-              <%= badge_for transaction.id, class: "bg-muted m-0" %>
-            <% end %>
-            <span>
-              <%= transaction.amount.format %>
-            </span>
-            <span>
-              <%= transaction.memo %>
-            </span>
-          </div>
-          <% admin_tool("m-0 p-0.5") do %>
-            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
-          <% end %>
-          <% admin_tool("-m-0.5 p-0.5") do %>
-            <%= link_to canonical_pending_transaction_path(transaction), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
-              <%= inline_icon "external", size: 30, class: "!m-0" %>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-
-      <% pts += 1 %>
+      <% transaction.canonical_transactions.sort_by { |ct| [ct.date, ct.created_at] }.each do |settled_transaction| %>
+        <% settled = true %>
+        <%= render partial: "ledger/items/transactions/row", locals: { transaction: settled_transaction, label: "Settled", nested: true } %>
+      <% end %>
     <% end %>
   <% end %>
 </section>
