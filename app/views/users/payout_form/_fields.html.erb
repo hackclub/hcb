@@ -1,4 +1,6 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?", required: false) %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?", required: false, initial_wire_country: (payout_method.recipient_country.to_s if payout_method.is_a?(LegalEntity::PayoutMethod::Wire)).to_s, initial_wise_currency: payout_method.try(:currency).to_s, initial_wise_account_type: payout_method.try(:account_type).to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_recipient_country: initial_wire_country, selected_currency: initial_wise_currency, selected_account_type: initial_wise_account_type) %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
@@ -77,7 +79,7 @@
       International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
     </p>
 
-    <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: } %>
+    <%= render "transfers/recipient_details", form:, disabled: false, required:, state: { selected_recipient_country: selected_recipient_country } %>
 
     <div class="field">
       <%= form.label :recipient_name, "Name on account" %>
@@ -99,8 +101,7 @@
   <% end %>
 </section>
 
-<% wise_transfer_x_data = { currency: payout_method.try(:currency), amount: nil, account_type: payout_method.try(:account_type), use_same_email_for_interac: (payout_method.try(:use_same_email_for_interac) ? payout_method.use_same_email_for_interac.to_s : false), email: nil } %>
-<section data-behavior="wise_transfer_payout_method_inputs" data-payout-method-type="<%= LegalEntity::PayoutMethod::WiseTransfer.name %>" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="<%= wise_transfer_x_data.to_json %>">
+<section data-behavior="wise_transfer_payout_method_inputs" data-payout-method-type="<%= LegalEntity::PayoutMethod::WiseTransfer.name %>" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
     <p class="muted mt-2 mb-5">
       We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
@@ -111,12 +112,13 @@
 
     <div class="field">
       <%= form.label :currency, "Currency" %>
-      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { data: { herb_set: "selected_currency=$value" } } %>
     </div>
 
     <%= form.hidden_field :wise_recipient_id, value: "" %>
 
-    <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: LegalEntity::PayoutMethod::WiseTransfer } %>
+    <%= render "wise_transfers/currency_specific_details", form:, disabled: false, model: LegalEntity::PayoutMethod::WiseTransfer, initial_currency: initial_wise_currency, initial_account_type: initial_wise_account_type,
+                                                         state: { selected_currency: selected_currency, selected_account_type: selected_account_type } %>
 
     <% unless embedded %>
       <div class="actions inline-block mt1">
