@@ -7,6 +7,8 @@
   <head>
     <meta charset="utf-8">
     <title>Statement in lieu of lost receipt</title>
+    <%# Same handwriting font the check UI uses. %>
+    <link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
     <style>
       body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1f2d3d; margin: 0; padding: 20pt 28pt; }
       .muted { color: #8492a6; }
@@ -26,17 +28,17 @@
       .items tr { page-break-inside: avoid; }
       .amount { text-align: right !important; white-space: nowrap; }
       .text { white-space: pre-wrap; overflow-wrap: break-word; }
-      .signature { page-break-inside: avoid; margin-top: 22pt; display: flex; gap: 24pt; }
+      .signature { page-break-inside: avoid; margin-top: 18pt; display: flex; gap: 24pt; }
       .signature div { flex: 1; }
-      .signature .line { border-bottom: 1px solid #1f2d3d; min-height: 26pt; display: flex; align-items: flex-end; padding-bottom: 3pt; }
-      .signature .name { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 18pt; line-height: 1; }
+      .signature .line { border-bottom: 1px solid #1f2d3d; min-height: 30pt; display: flex; align-items: flex-end; padding-bottom: 3pt; }
+      .signature .name { font-family: Damion, cursive; font-size: 24pt; line-height: 1; }
       .signature small { display: block; margin-top: 3pt; font-size: 8.5pt; color: #8492a6; }
       .footer { margin-top: 26pt; padding-top: 8pt; border-top: 1px solid #e0e6ed; font-size: 8.5pt; color: #8492a6; }
     </style>
   </head>
   <body>
     <div class="header">
-      <div class="logo"><%= image_tag pdf_asset_base64("logo-production.svg"), width: 34, height: 34 %> HCB</div>
+      <div class="logo"><%= image_tag pdf_asset_base64("logo-production.png"), width: 34, height: 34 %> HCB</div>
       <p>
         <strong>The Hack Foundation</strong><br>
         8605 Santa Monica Boulevard #86294<br>
@@ -89,7 +91,7 @@
     </table>
 
     <h2>Certification</h2>
-    <p><%= LostReceipt::Statement::CONFIRMATION %></p>
+    <p style="margin: 0"><%= LostReceipt::Statement::CONFIRMATION %></p>
     <div class="signature">
       <div>
         <div class="line"><span class="name"><%= @statement.signer_name %></span></div>
