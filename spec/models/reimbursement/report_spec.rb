@@ -122,6 +122,45 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe "submitting" do
+    let(:user) { create(:user) }
+    let(:report) do
+      user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
+      create(:reimbursement_report, user:)
+    end
+
+    def add_expense(**attributes)
+      expense = report.expenses.create!(value: 12.34, memo: "Stickers", **attributes)
+      ReceiptService::Create.new(
+        receiptable: expense,
+        uploader: user,
+        attachments: [file_fixture("receipt.png")],
+        upload_method: :receipts_page
+      ).run!
+      expense
+    end
+
+    it "requires every expense to have a category" do
+      add_expense(category: "Project Supplies")
+      uncategorized = add_expense
+
+      expect(report.missing_categories?).to be(true)
+      expect(report.may_mark_submitted?).to be(false)
+
+      uncategorized.update!(category: "Prizes")
+
+      expect(report.missing_categories?).to be(false)
+      expect(report.may_mark_submitted?).to be(true)
+    end
+
+    it "does not require a category on fees" do
+      add_expense(category: "Project Supplies")
+      report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)
+
+      expect(report.missing_categories?).to be(false)
+    end
+  end
+
   describe "the invitation email" do
     it "is sent when somebody else invited the user" do
       inviter = create(:user)
@@ -146,6 +185,26 @@ RSpec.describe Reimbursement::Report, type: :model do
       expect {
         create(:reimbursement_report, user: create(:user), event: nil, inviter: nil)
       }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+  end
+
+  describe "#expenses_missing_category" do
+    it "returns non-fee expenses without a category" do
+      report = create(:reimbursement_report)
+      uncategorized = create(:reimbursement_expense, report:, category: nil)
+      create(:reimbursement_expense, report:, category: "Software")
+
+      expect(report.expenses_missing_category).to contain_exactly(uncategorized)
+      expect(report.missing_categories?).to be(true)
+      expect(uncategorized.missing_category?).to be(true)
+    end
+
+    it "is empty when every expense has a category" do
+      report = create(:reimbursement_report)
+      create(:reimbursement_expense, report:, category: "Travel")
+
+      expect(report.expenses_missing_category).to be_empty
+      expect(report.missing_categories?).to be(false)
     end
   end
 end

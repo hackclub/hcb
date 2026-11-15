@@ -1,0 +1,154 @@
+import { Controller } from '@hotwired/stimulus'
+
+import { USDollar } from '../common/money'
+
+// Drives the transfer form, which asks what kind of transfer it is first and
+// then shows that type's questions: a repayment picks the recipient's
+// transactions and takes its name and total from them, while a transfer asks
+// for them directly.
+export default class extends Controller {
+  static targets = [
+    'types',
+    'panel',
+    'repaymentRadio',
+    'repaymentHint',
+    'repaymentName',
+    'repaymentAmount',
+    'repaidInputs',
+    'repaidCard',
+    'pickHint',
+    'pickButton',
+    'repaidEmpty',
+    'repaidSummary',
+    'repaidCount',
+    'repaidAmount',
+    'chooseLabel',
+    'changeLabel',
+    'repaidError',
+  ]
+  static values = { transactions: Array }
+  static outlets = ['repayment-picker']
+
+  connect() {
+    // A name the server filled in from the picked transaction still follows
+    // the pick; one passed in from elsewhere is kept.
+    if (
+      this.transactionsValue.length &&
+      this.repaymentNameTarget.value ===
+        this.repaymentName(this.transactionsValue)
+    )
+      this.autofilledName = this.repaymentNameTarget.value
+    this.setRepaid(this.transactionsValue)
+    this.select()
+  }
+
+  get type() {
+    return this.element.querySelector(
+      'input[name="disbursement[transfer_type]"]:checked'
+    )?.value
+  }
+
+  select() {
+    // Disabling the inactive panels keeps their fields out of validation and
+    // out of the submitted params, since both panels have a name and amount.
+    for (const panel of this.panelTargets) {
+      const active = panel.dataset.type === (this.type || '')
+      panel.hidden = !active
+      panel.disabled = !active
+    }
+  }
+
+  repaymentPicked({ detail }) {
+    this.setRepaid(detail)
+  }
+
+  setRepaid(transactions) {
+    this.transactionsValue = transactions
+    this.repaidInputsTarget.replaceChildren(
+      ...transactions.map(transaction => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = 'disbursement[repaid_ledger_item_ids][]'
+        input.value = transaction.id
+        return input
+      })
+    )
+    const selected = transactions.length > 0
+    const cents = transactions.reduce(
+      (sum, transaction) => sum + Math.round(Number(transaction.amount) * 100),
+      0
+    )
+    this.repaymentAmountTarget.value = selected ? (cents / 100).toFixed(2) : ''
+
+    this.repaidEmptyTarget.hidden = selected || this.pickButtonTarget.disabled
+    this.repaidSummaryTarget.hidden = !selected
+    this.repaidAmountTarget.hidden = !selected
+    this.chooseLabelTarget.hidden = selected
+    this.changeLabelTarget.hidden = !selected
+    this.repaidCountTarget.textContent = `${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`
+    this.repaidAmountTarget.textContent = USDollar.format(cents / 100)
+    if (selected) this.repaidErrorTarget.hidden = true
+
+    this.fillName(transactions)
+  }
+
+  // Names the transfer after what it repays, unless a name was passed in.
+  fillName(transactions) {
+    const name = this.repaymentNameTarget.value
+    if (name && name !== this.autofilledName) return
+
+    this.autofilledName = transactions.length
+      ? this.repaymentName(transactions)
+      : ''
+    this.repaymentNameTarget.value = this.autofilledName
+  }
+
+  // Matches the server's count-based default.
+  repaymentName(transactions) {
+    return `Repaying ${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`
+  }
+
+  comboboxChanged({ target, detail: { option } }) {
+    if (!target.querySelector('input[name="disbursement[event_id]"]')) return
+
+    // A new destination means a new set of transactions to pick from, and
+    // there's nothing to pick from until one is chosen.
+    this.pickButtonTarget.disabled = !option
+    this.pickHintTarget.hidden = !!option
+    this.setRepaid([])
+    if (this.hasRepaymentPickerOutlet)
+      this.repaymentPickerOutlet.setDestination(option?.value)
+    this.setRepayable(option?.repayable !== false)
+  }
+
+  // Only members of the recipient can see, and so repay, its transactions.
+  setRepayable(repayable) {
+    this.repaymentRadioTarget.disabled = !repayable
+    this.repaymentHintTarget.hidden = repayable
+    if (!repayable && this.repaymentRadioTarget.checked) {
+      this.repaymentRadioTarget.checked = false
+      this.select()
+    }
+  }
+
+  submit(event) {
+    // The radios are hidden behind their labels, so the browser can't point
+    // at them when none is picked.
+    if (!this.type) {
+      event.preventDefault()
+      this.typesTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+
+    // The pick lives in a hidden field, which the browser won't validate.
+    const missing = this.type === 'repayment' && !this.transactionsValue.length
+    this.repaidErrorTarget.hidden = !missing
+    if (missing) {
+      event.preventDefault()
+      this.repaidCardTarget.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }
+}

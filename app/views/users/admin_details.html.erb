@@ -27,7 +27,7 @@
             <li>
               <%= update.created_at %>:
               <%= render_audit_log_value("Email", update.original, color: "primary") %> →
-              <%= render_audit_log_value("Email", update.replacement, color: "success") %></li>
+              <%= render_audit_log_value("Email", update.replacement, color: "success") %>
             </li>
           <% end %>
         </ul>
@@ -100,7 +100,7 @@
 
         <ul>
           <% @permissions_overview.event_graph.each do |node| %>
-            <%= render(partial: "event_permissions", locals: { node: }) %>
+            <%= render(partial: "users/event_permissions", locals: { node: }) %>
           <% end %>
         </ul>
       <% end %>

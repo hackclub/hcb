@@ -54,7 +54,49 @@ RSpec.describe MyController do
 
       expect(response.status).to eq(200)
       expect(response.body).to include("Verify your email")
-      expect(response.body).not_to include("To review")
+      expect(response.body).not_to include("Your reports")
+    end
+
+    it "separates reports assigned to the user, reports open to any manager, and the user's own reports" do
+      user = sign_in_verified
+      event = create(:event)
+      create(:organizer_position, user:, event:, role: :manager)
+
+      other_manager = create(:user)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+
+      assigned = create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
+      unassigned = create(:reimbursement_report, event:, aasm_state: :submitted)
+      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: other_manager, aasm_state: :submitted)
+      own_submitted = create(:reimbursement_report, user:, event:, aasm_state: :submitted)
+      own_draft = create(:reimbursement_report, user:, event:)
+
+      get :reimbursements
+
+      expect(response.body).to include("Assigned to you for review", "Awaiting review", "Your reports")
+
+      sections = controller.instance_variable_get(:@sections)
+      expect(sections[:assigned]).to contain_exactly(assigned)
+      expect(sections[:unassigned]).to contain_exactly(unassigned)
+      expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
+      expect(sections.values.flatten).not_to include(assigned_to_someone_else)
+    end
+
+    it "shows unassigned reports from the organizations the manager reviews for" do
+      user = sign_in_verified
+      reviewing_event = create(:event)
+      opted_out_event = create(:event)
+      sub_event = create(:event, parent: reviewing_event)
+      create(:organizer_position, user:, event: reviewing_event, role: :manager).reimbursement_reviewer_opt_ins.create!(event: sub_event)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
+
+      visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
+      opted_in = create(:reimbursement_report, event: sub_event, aasm_state: :submitted)
+      create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible, opted_in)
     end
   end
 

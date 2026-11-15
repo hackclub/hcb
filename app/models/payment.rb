@@ -39,15 +39,17 @@ class Payment < ApplicationRecord
   has_one :event, through: :payee
   has_one :legal_entity, through: :payee
   has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
-  has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
+  has_one :payroll_position, through: :payroll_invoice
 
   monetize :amount_cents, with_model_currency: :currency
 
   enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", general_services: "general_services" }, prefix: :for
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  # For viewers who can't see the payee's email (see `EventsController#payments`).
+  pg_search_scope :public_search_recipient, associated_against: { payee: [:display_name] }
   pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
 
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
@@ -104,15 +106,21 @@ class Payment < ApplicationRecord
 
     if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif payable
-      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
-      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      send_initial_email
     end
   end
 
   after_create_commit do
     schedule_acceptance_reminders if awaiting_recipient_onboarding?
+  end
+
+  def send_initial_email
+    if legal_entity&.payable?
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
+    else
+      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+    end
   end
 
   def retry!
@@ -125,10 +133,6 @@ class Payment < ApplicationRecord
 
   def popover_path
     Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
-  end
-
-  def estimate_usd_amount_cents
-    MoneyService.convert_to_usd(amount_cents, currency)
   end
 
   # Idempotent: safe to call any number of times, from any code path that
@@ -206,6 +210,7 @@ class Payment < ApplicationRecord
   def create_payment_attempt!
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "this payment was canceled" if canceled?
       raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
       raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 

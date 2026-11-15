@@ -53,10 +53,6 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
-  def pay?
-    user.auditor? || record == user
-  end
-
   def edit_notifications?
     user.auditor? || record == user
   end
@@ -82,6 +78,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def admin_details_disbursements?
+    admin_details?
+  end
+
+  def admin_details_emails?
     admin_details?
   end
 

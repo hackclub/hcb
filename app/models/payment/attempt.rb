@@ -112,6 +112,20 @@ class Payment
 
     after_create :create_transfer!
 
+    def state_color
+      return "info" if pending? || under_review? || sent?
+      return "success" if successful?
+      return "error" if rejected? || failed?
+
+      "muted" # canceled
+    end
+
+    def state_text
+      return "Processing" if pending? || under_review?
+
+      return aasm_state.humanize
+    end
+
     private
 
     def create_transfer!
@@ -122,30 +136,41 @@ class Payment
         end
 
         begin
-          transfer = payout_method.create_transfer(
-            payment.event,
-            amount: payment.amount_cents,
-            memo: "Payment for \"#{payment.purpose}\".",
-            payment_for: "Payment for \"#{payment.purpose}\".",
-            recipient_name: payment.payee.display_name,
-            recipient_email: payment.payee.email,
-            currency: payment.currency,
-            user: payment.creator,
-            purpose: :payment
-          )
+          # Savepoint so a failure here rolls back only the transfer (and its
+          # pending transaction), leaving the attempt itself persisted so it
+          # can be marked as failed below.
+          transaction(requires_new: true) do
+            transfer = payout_method.create_transfer(
+              payment.event,
+              amount: payment.amount_cents,
+              memo: "Payment for \"#{payment.purpose}\".",
+              payment_for: "Payment for \"#{payment.purpose}\".",
+              recipient_name: payment.payee.display_name,
+              recipient_email: payment.payee.email,
+              currency: payment.currency,
+              user: payment.creator,
+              purpose: :payment
+            )
 
-          transfer.save!
+            # Attach the attempt before saving so the transfer's create
+            # callbacks (and any failure handling in them) can see it.
+            transfer.payment_attempt = self
+            self.payout = transfer
+            transfer.save!
+            save!
 
-          self.payout = transfer
-          save!
+            Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
 
-          Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-
-          mark_under_review!
+            mark_under_review!
+          end
         rescue => e
-          mark_failed!
-
           Rails.error.report(e)
+
+          # Discard in-memory changes from the rolled-back savepoint (e.g. the
+          # unsaved payout) so they aren't autosaved by mark_failed!.
+          reload
+          payment.reload
+          mark_failed!
         end
       end
     end

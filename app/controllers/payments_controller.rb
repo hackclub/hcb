@@ -4,7 +4,7 @@ class PaymentsController < ApplicationController
   include SetEvent
 
   before_action :set_event, only: [:new, :create]
-  before_action :set_payment, only: [:show, :cancel]
+  before_action :set_payment, only: [:show, :cancel, :retry]
 
   def show
     authorize @payment
@@ -35,6 +35,11 @@ class PaymentsController < ApplicationController
 
     if payment_params[:file].blank?
       flash.now[:error] = "Please attach a receipt or invoice for this payment."
+      return render :new, layout: "transfer", status: :unprocessable_content
+    end
+
+    if @legal_entity&.managed? && @legal_entity.default_payout_method.nil? && LegalEntity::PayoutMethod.details_class_for(params.dig(:user, :payout_method_type).presence).nil?
+      flash.now[:error] = "Please choose a payout method for this payment."
       return render :new, layout: "transfer", status: :unprocessable_content
     end
 
@@ -72,6 +77,18 @@ class PaymentsController < ApplicationController
 
     flash[:success] = "Payment canceled"
     redirect_back_or_to payment_path(@payment)
+  end
+
+  def retry
+    authorize @payment
+
+    begin
+      @payment.retry!
+    rescue ArgumentError => e
+      flash[:error] = e.message
+    end
+
+    redirect_to @payment
   end
 
   private

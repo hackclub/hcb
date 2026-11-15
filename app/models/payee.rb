@@ -15,10 +15,10 @@
 #
 # Indexes
 #
-#  index_payees_on_archived_at                   (archived_at)
-#  index_payees_on_event_id                      (event_id)
-#  index_payees_on_legal_entity_id               (legal_entity_id)
-#  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
+#  index_payees_on_archived_at                                (archived_at)
+#  index_payees_on_event_id                                   (event_id)
+#  index_payees_on_legal_entity_id                            (legal_entity_id)
+#  index_payees_on_legal_entity_id_and_event_id_not_archived  (legal_entity_id,event_id) UNIQUE WHERE (archived_at IS NULL)
 #
 class Payee < ApplicationRecord
   include PgSearch::Model
@@ -36,9 +36,10 @@ class Payee < ApplicationRecord
   has_many :payments
   has_many :payroll_positions, class_name: "Payroll::Position"
 
-  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
+  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true, conditions: -> { not_archived }, unless: :archived?
 
   validate :managed_legal_entity_constraints
+  validate :email_frozen, if: -> { email_frozen? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -52,8 +53,18 @@ class Payee < ApplicationRecord
     end
   end
 
-  def search_avatar
-    User.find_by(email:)
+  # Set when the email change reissued a contract the organizer must sign
+  attr_reader :organizer_resign_position
+
+  after_update_commit do
+    @organizer_resign_position = nil
+    if email_previously_changed?
+      payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
+
+      payroll_positions.where(aasm_state: [:under_review, :onboarding]).find_each do |position|
+        reissue_contract_for_new_email(position)
+      end
+    end
   end
 
   def total_paid_cents
@@ -78,7 +89,57 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
+  # If another active payee on this event with the same email already has the
+  # legal entity, this payee is a duplicate: its payments and payroll positions
+  # move onto the existing payee and this one is archived. Returns the payee
+  # that ends up holding the legal entity.
+  def assign_legal_entity!(le)
+    existing = event.payees.not_archived.where.not(id:).find_by(legal_entity: le, email:)
+
+    if existing.nil?
+      update!(legal_entity: le)
+      return self
+    end
+
+    transaction do
+      payments.find_each do |payment|
+        payment.update!(payee: existing)
+        payment.refresh_legal_entity_state!
+      end
+
+      payroll_positions.find_each do |position|
+        position.update!(payee: existing)
+        position.refresh_onboarding_state!
+      end
+
+      archive!
+    end
+
+    existing
+  end
+
+  def email_frozen?
+    legal_entity.present? && !legal_entity.managed?
+  end
+
   private
+
+  def reissue_contract_for_new_email(position)
+    contract = position.contract
+    return if contract.nil?
+    return unless contract.party(:contractor)&.pending?
+
+    contract.mark_voided!(reissuing: true)
+    position.send_contract(
+      reissue_of: contract,
+      reissue_messages: { organizer: "The contractor's email address was updated, so the agreement was reissued with the new email." }
+    )
+    # The reissued contract needs HCB's signature again
+    position.mark_under_review! if position.may_mark_under_review?
+    @organizer_resign_position = position
+  rescue Faraday::Error => e
+    Rails.error.report(e, context: { payroll_position_id: position.id })
+  end
 
   def managed_legal_entity_constraints
     return unless managed?
@@ -89,6 +150,12 @@ class Payee < ApplicationRecord
 
     if legal_entity.payees.where.not(id:).exists?
       errors.add(:legal_entity, "is managed and can only have one payee")
+    end
+  end
+
+  def email_frozen
+    if persisted? && email_changed?
+      errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
 

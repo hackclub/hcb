@@ -37,11 +37,33 @@ class Ledger
     end
 
     def calculate_event
-      event_from_canonical_transactions ||
+      event_from_linked_object ||
+        event_from_fee_reimbursement_group ||
+        event_from_canonical_transactions ||
         event_from_stripe_top_up ||
         event_from_interest ||
         event_from_svb_sweep ||
         event_from_canonical_pending_transactions
+    end
+
+    # An intended item (a linked object but no transactions yet, e.g. an invoice
+    # that's been created but not paid) can still be placed on its event's
+    # ledger. Once transactions exist, they — not the linked object — determine
+    # the ledger.
+    def event_from_linked_object
+      return unless @ledger_item.intended?
+
+      @ledger_item.linked_object.try(:event)
+    end
+
+    # The exception to the above: a fee reimbursement group stays on its event's
+    # ledger once its top-ups' bank debits are on it. Nothing on those debits
+    # points back to the group, so the transaction rules would otherwise send
+    # them to NOEVENT via the Stripe top-up rule.
+    def event_from_fee_reimbursement_group
+      return unless @ledger_item.linked_object_type == "FeeReimbursementGroup"
+
+      @ledger_item.linked_object.event
     end
 
     def calculate_ledger
@@ -101,6 +123,7 @@ class Ledger
     def event_from_svb_sweep
       return unless @ledger_item.canonical_transactions.to_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
+                    @ledger_item.canonical_transactions.hcb_sweep.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
       Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)

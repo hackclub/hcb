@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <div data-controller="menu" data-menu-append-to-value="turbo-frame#ledger" data-menu-placement-value="bottom-start" class="ml-auto">
   <button
     type="button"
@@ -6,7 +8,7 @@
     data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
-  <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 320px; padding: 0.5rem;" data-menu-target="content" data-controller="filter">
+  <div class="menu__content menu__content--2 menu__content--compact h5" style="width: 320px; padding: 0.5rem;" data-menu-target="content">
     <div data-controller="tabs" data-tabs-default-tab-value="status">
       <button id="status" data-tabs-target="btn" data-action="click->tabs#select">Status</button>
       <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>

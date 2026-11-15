@@ -7,4 +7,4 @@
 <p>
   Any subscriptions or recurring charges on this card will also be declined until you upload.
 </p>
-<%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
+<%= render "card_locking_mailer/transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>

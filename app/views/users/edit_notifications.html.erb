@@ -4,7 +4,7 @@
 
 <%= render "users/nav", selected: :settings_notifications %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "notifications" %>
+  <%= render "users/settings_header", active: "notifications" %>
   <section>
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
       <fieldset class="field">
@@ -74,7 +74,6 @@
             <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
               <%= form.label :monthly_donation_summary do %>
                 <%= form.check_box :monthly_donation_summary,
-                  data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                   switch: true,
                   disabled: %>
                 <span class="slider"></span>
@@ -91,7 +90,6 @@
             <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
               <%= form.label :monthly_follower_summary do %>
                 <%= form.check_box :monthly_follower_summary,
-                  data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                   switch: true,
                   disabled: %>
                 <span class="slider"></span>

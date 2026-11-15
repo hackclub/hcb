@@ -80,6 +80,8 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
+  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
@@ -95,6 +97,8 @@ class Donation < ApplicationRecord
 
   after_commit :send_notification
 
+  after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
+
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
@@ -107,7 +111,6 @@ class Donation < ApplicationRecord
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
-  scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
   scope :tax_deductible, -> { where(tax_deductible: true) }
 
@@ -300,14 +303,6 @@ class Donation < ApplicationRecord
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
   end
 
-  def remote_refunded?
-    remote_donation[:charges][:data][0][:refunded]
-  end
-
-  def amount_settled
-    canonical_transactions.sum(:amount_cents)
-  end
-
   def fee_reimbursed?
     fee_reimbursement.canonical_transaction.present?
   end
@@ -332,6 +327,18 @@ class Donation < ApplicationRecord
     recurring_donation&.email || super
   end
 
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
+  end
+
   def referrer_domain
     Addressable::URI.parse(referrer.presence)&.host
   end
@@ -354,6 +361,14 @@ class Donation < ApplicationRecord
 
   def raw_pending_donation_transactions
     @raw_pending_donation_transactions ||= ::RawPendingDonationTransaction.where(donation_transaction_id: id)
+  end
+
+  def refresh_ledger_item
+    return if ledger_item.nil?
+
+    # The item may hold a stale copy of this donation; make refresh! reread it.
+    ledger_item.association(:linked_object).reset
+    ledger_item.refresh!
   end
 
   def send_notification

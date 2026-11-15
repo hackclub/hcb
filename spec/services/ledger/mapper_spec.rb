@@ -47,6 +47,35 @@ RSpec.describe Ledger::Mapper do
       end
     end
 
+    context "when the item has a linked object but no transactions" do
+      before do
+        allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      end
+
+      it "maps to the linked object's event" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice, status: :intended)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to eq(invoice.event.ledger)
+      end
+
+      it "ignores the linked object's event once a transaction exists" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice)
+        # A CPT with no resolvable event; because a transaction now exists, the
+        # linked object must not be consulted, so the item stays unmapped.
+        create(:canonical_pending_transaction, ledger_item_id: item.id)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to be_nil
+      end
+    end
+
     it "reuses an existing ledger for the same event" do
       event = create(:event)
       existing_ledger = event.ledger # Event automatically creates a ledger
@@ -155,6 +184,52 @@ RSpec.describe Ledger::Mapper do
       expect(non_primary.on_primary_ledger).to be false
       expect(non_primary.ledger).to eq(non_primary_ledger)
       expect(item.reload.primary_ledger).to eq(event.ledger)
+    end
+
+    context "when the item has an SVB sweep transaction" do
+      let!(:svb_sweeps) { create(:event, id: EventMappingEngine::EventIds::SVB_SWEEPS) }
+
+      [
+        "TF TO ICS SWP",
+        "TF FRM ICS SWP",
+        "COLUMN*THE HACK HCB-SWEEP 250108"
+      ].each do |memo|
+        it "maps a transaction with memo #{memo.inspect} to the SVB sweeps event" do
+          create(:canonical_transaction, memo:, ledger_item: item)
+
+          mapper.run
+          item.reload
+
+          expect(item.primary_ledger.event).to eq(svb_sweeps)
+        end
+      end
+    end
+
+    context "when the item has a Stripe top-up transaction" do
+      let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+      let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
+
+      # A fee reimbursement group's item stays on Hack Club Bank's ledger once
+      # its top-ups' bank debits are on it; other Stripe top-ups go to NOEVENT.
+      it "maps a fee reimbursement top-up to Hack Club Bank" do
+        group = create(:fee_reimbursement_group)
+        group_item = group.ledger_item
+        create(:canonical_transaction, memo: "STRIPE Stripe Top HCB-#{group.local_hcb_code.short_code}", ledger_item: group_item)
+
+        described_class.new(ledger_item: group_item).run
+        group_item.reload
+
+        expect(group_item.primary_ledger.event).to eq(hack_club_bank)
+      end
+
+      it "maps an Issuing balance top-up to NOEVENT" do
+        create(:canonical_transaction, memo: "STRIPE Stripe Top-up", ledger_item: item)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger.event).to eq(noevent)
+      end
     end
   end
 end
