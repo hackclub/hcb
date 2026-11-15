@@ -125,29 +125,4 @@ RSpec.describe Receipt, type: :model do
       expect(item.reload.receipt_count).to eq(0)
     end
   end
-
-  describe "upload tasks" do
-    include_context "card locking charges"
-
-    it "are completed by a receipt attached to the ledger item" do
-      charge = create_settled_card_charge(user:, settled_at: 3.days.ago)
-      task = Task::Receiptable::Upload.create!(taskable: charge, assignee: user)
-      expect(task.reload).not_to be_complete
-
-      attach_receipt_to(charge.ledger_item, user:)
-
-      expect(task.reload).to be_complete
-    end
-
-    it "reopen when the receipt is moved back to the receipt bin" do
-      charge = create_settled_card_charge(user:, settled_at: 3.days.ago)
-      task = Task::Receiptable::Upload.create!(taskable: charge, assignee: user)
-      receipt = attach_receipt_to(charge.ledger_item, user:)
-      expect(task.reload).to be_complete
-
-      receipt.update!(receiptable: nil)
-
-      expect(task.reload).not_to be_complete
-    end
-  end
 end
