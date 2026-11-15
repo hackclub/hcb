@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
@@ -12,10 +14,11 @@
     </div>
   </section>
 
+  <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
   <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
   <section class="card__banner secondary border-top">
-    <p class="my0">
+    <div class="my0">
       <table>
         <thead>
           <tr>
@@ -33,7 +36,7 @@
           <% end %>
         </tbody>
       </table>
-    </p>
+    </div>
   </section>
 
 </article>

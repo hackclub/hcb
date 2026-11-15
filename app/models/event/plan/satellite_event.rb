@@ -22,7 +22,7 @@
 #
 class Event
   class Plan
-    class SatelliteEvent < Standard
+    class SatelliteEvent < FeeWaived
       def label
         "Hack Club satellite event"
       end

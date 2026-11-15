@@ -1,12 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 import { gsap } from 'gsap'
+import { USDollar as usd } from '../common/money'
 
-const usd = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 const count = new Intl.NumberFormat('en-US')
 
 // The stats cron runs on 15-minute wall-clock boundaries (:00/:15/:30/:45) and

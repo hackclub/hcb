@@ -71,6 +71,10 @@ module FlipperGroups
     in_set?(actor, Event, hq_event_ids)
   end
 
+  def event_in_plan?(actor, plan)
+    in_set?(actor, Event, plan_event_ids(plan))
+  end
+
   def in_set?(actor, klass, ids)
     actor.is_a?(klass) && ids.include?(actor.id)
   end
@@ -103,6 +107,12 @@ module FlipperGroups
 
         [event.id] + event.descendant_ids
       }.uniq.to_set
+    end
+  end
+
+  def plan_event_ids(plan)
+    fetch_id_set("flipper_groups/plan_event_ids/#{plan.name.demodulize.underscore}") do
+      Event.joins(:plan).where({ plan: { type: plan.name } }).pluck(:id).to_set
     end
   end
 

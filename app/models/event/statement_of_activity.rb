@@ -86,12 +86,23 @@ class Event
       transactions.sum(:amount_cents)
     end
 
+    # Repayments pay an expense back, so they lower expenses rather than count
+    # as revenue.
     memo_wise def total_revenue
-      transactions.where("amount_cents > 0").sum(:amount_cents)
+      transactions.where("amount_cents > 0").sum(:amount_cents) - repayments_received
     end
 
     memo_wise def total_expense
-      transactions.where("amount_cents < 0").sum(:amount_cents)
+      transactions.where("amount_cents < 0").sum(:amount_cents) + repayments_received
+    end
+
+    memo_wise def repayments_received
+      repayment_mappings = TransactionCategoryMapping.where(
+        categorizable_type: "CanonicalTransaction",
+        transaction_category_id: TransactionCategory.where(slug: Repayment::CATEGORY_SLUG).select(:id)
+      )
+
+      transactions.where("amount_cents > 0").where(id: repayment_mappings.select(:categorizable_id)).sum(:amount_cents)
     end
 
     memo_wise def xlsx

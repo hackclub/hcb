@@ -4,7 +4,7 @@ module Admin
   class PayrollPositionsController < Admin::BaseController
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
 
       relation = Payroll::Position.includes(:payee, :event)
 
@@ -18,7 +18,7 @@ module Admin
     end
 
     def reject
-      position = Payroll::Position.find(params[:id])
+      position = Payroll::Position.find_by_hashid!(params[:id])
       position.mark_rejected!
       redirect_back fallback_location: admin_payroll_positions_path, flash: { success: "Contractor rejected." }
     rescue AASM::InvalidTransition

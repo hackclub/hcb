@@ -4,7 +4,7 @@ module Admin
   class LegalEntitiesController < Admin::BaseController
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
 
       relation = LegalEntity.includes(:users, :managing_event, :latest_tax_form)
 

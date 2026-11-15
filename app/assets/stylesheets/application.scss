@@ -227,6 +227,22 @@ tr.clickable {
   }
 }
 
+.contractor-review-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background-color: map-get($palette, primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 thead {
   table-layout: fixed;
 }
@@ -303,6 +319,7 @@ summary {
 @import 'components/banners';
 @import 'components/buttons';
 @import 'components/cards';
+@import 'components/card_grants';
 @import 'components/checks';
 @import 'components/comments';
 @import 'components/conversation';
@@ -356,15 +373,10 @@ summary {
 @import 'components/sweetalert';
 @import 'components/dual_range_slider';
 @import 'components/integrations';
-@import 'components/combobox';
 
 .turbo-progress-bar {
   height: 0.25rem;
   background-color: map-get($palette, primary);
-}
-
-html[data-ai-loading='true'] > .turbo-progress-bar {
-  background-color: map-get($palette, ai);
 }
 
 #HW_badge_cont {
@@ -416,6 +428,26 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     right: -2.5px;
     bottom: -2.5px;
     left: -2.5px;
+  }
+}
+
+// When multiple admin-tools rows are stacked back-to-back inside a .details
+// list (e.g. several admin_tool blocks in a row), merge their dotted outlines
+// into a single continuous box instead of each row drawing its own rounded
+// border and overlapping its neighbor.
+.details > .admin-tools {
+  &:has(+ .admin-tools)::before {
+    bottom: 0;
+    border-bottom: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  & + .admin-tools::before {
+    top: 0;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
   }
 }
 
@@ -474,44 +506,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
-// sourced from yours truly, W3Schools: https://www.w3schools.com/howto/howto_css_shake_image.asp
-
-@keyframes shake {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-  10% {
-    transform: translate(-1px, -2px) rotate(-1deg);
-  }
-  20% {
-    transform: translate(-3px, 0px) rotate(1deg);
-  }
-  30% {
-    transform: translate(3px, 2px) rotate(0deg);
-  }
-  40% {
-    transform: translate(1px, -1px) rotate(1deg);
-  }
-  50% {
-    transform: translate(-1px, 2px) rotate(-1deg);
-  }
-  60% {
-    transform: translate(-3px, 1px) rotate(0deg);
-  }
-  70% {
-    transform: translate(3px, 1px) rotate(-1deg);
-  }
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-  90% {
-    transform: translate(1px, 2px) rotate(0deg);
-  }
-  100% {
-    transform: translate(1px, -2px) rotate(-1deg);
-  }
-}
-
 // Make mobile views nice. Full-bleed separator lines
 @media screen and (max-width: 32em) {
   td,
@@ -563,7 +557,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
-[x-cloak],
 [hidden] {
   display: none !important;
 }
@@ -607,22 +600,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
       0 1px 2px rgba(0, 0, 0, 0.25),
       0 2px 4px rgba(0, 0, 0, 0.125);
   }
-}
-
-.suggested_tag {
-  font-style: italic;
-}
-
-.suggested_tag > a {
-  overflow: hidden;
-  max-width: 125px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.suggested_tag::after {
-  transform: translateY(0px) translateX(-4px);
 }
 
 .rotated {

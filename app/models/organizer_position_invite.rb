@@ -76,8 +76,6 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
-  scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event
   belongs_to :user
@@ -85,7 +83,6 @@ class OrganizerPositionInvite < ApplicationRecord
 
   has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
 
-  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true
@@ -116,38 +113,39 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def accept(show_onboarding: true, application_contract: nil)
-    if cancelled?
-      self.errors.add(:base, "was canceled!")
-      return false
-    end
+    # Lock the invite so concurrent accepts (e.g. a double-click) can't each create an OrganizerPosition
+    with_lock do
+      if cancelled?
+        self.errors.add(:base, "was canceled!")
+        return false
+      end
 
-    if accepted?
-      self.errors.add(:base, "already accepted!")
-      return false
-    end
+      if accepted?
+        self.errors.add(:base, "already accepted!")
+        return false
+      end
 
-    if user.unverified?
-      self.errors.add(:user, "must verify their email before accepting this invite")
-      return false
-    end
+      if user.unverified?
+        self.errors.add(:user, "must verify their email before accepting this invite")
+        return false
+      end
 
-    if pending_signature? && application_contract.nil?
-      self.errors.add(:base, "requires a signed contract!")
-      return false
-    end
+      if pending_signature? && application_contract.nil?
+        self.errors.add(:base, "requires a signed contract!")
+        return false
+      end
 
-    self.organizer_position = OrganizerPosition.new(
-      event:,
-      user:,
-      role:,
-      is_signee:,
-      first_time: show_onboarding,
-      fiscal_sponsorship_contract: contract || application_contract
-    )
+      self.organizer_position = OrganizerPosition.new(
+        event:,
+        user:,
+        role:,
+        is_signee:,
+        first_time: show_onboarding,
+        fiscal_sponsorship_contract: contract || application_contract
+      )
 
-    self.accepted_at = Time.current
+      self.accepted_at = Time.current
 
-    ActiveRecord::Base.transaction do
       self.save!
 
       if initial_control_allowance_amount_cents.present?
@@ -226,7 +224,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -234,11 +232,11 @@ class OrganizerPositionInvite < ApplicationRecord
         contractable: self,
         include_videos:,
         external_template_id: event.plan.contract_docuseal_template_id,
-        prefills: {
-          "public_id"   => event.public_id,
-          "name"        => event.name,
-          "description" => event.airtable_record&.[]("Tell us about your event")
-        },
+        prefills: extra_prefills.merge({
+                                         "public_id"   => event.public_id,
+                                         "name"        => event.name,
+                                         "description" => event.airtable_record&.[]("Tell us about your event")
+                                       }),
         reissue_of:
       )
       fs_contract.parties.create!(user:, role: :signee)
@@ -255,7 +253,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def on_contract_signed(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      deliver if organizer_position.nil?
+      accept if organizer_position.nil?
 
       # Unfreeze the event if this is the first signed contract
       if event.contracts.signed.count == 1
@@ -275,6 +273,14 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def contract_redirect_path
     Rails.application.routes.url_helpers.event_team_path(event)
+  end
+
+  def contractable_link_label
+    "organizer invite"
+  end
+
+  def contractable_link_path
+    Rails.application.routes.url_helpers.organizer_position_invite_path(self)
   end
 
   private

@@ -1,0 +1,28 @@
+<%# locals: (transaction:, label:, nested: false) %>
+<%# A canonical or pending transaction. `nested` ones are canonical transactions
+    rendered under the pending transaction they settled from. %>
+
+<% pending = transaction.is_a?(CanonicalPendingTransaction) %>
+
+<%= render layout: "ledger/items/transactions/row", locals: { label:, date: transaction.date, nested: } do %>
+  <div class="flex flex-row justify-start items-center gap-3">
+    <%= inline_icon(pending ? "transfers-horizontal" : "transactions") %>
+    <% admin_tool("badge p-0.5 m-0", "span") do %>
+      <%= badge_for transaction.id, class: "bg-muted m-0" %>
+    <% end %>
+    <span>
+      <%= transaction.amount.format %>
+    </span>
+    <span>
+      <%= transaction.memo %>
+    </span>
+  </div>
+  <% admin_tool("m-0 p-0.5") do %>
+    <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
+  <% end %>
+  <% admin_tool("-m-0.5 p-0.5") do %>
+    <%= link_to (pending ? canonical_pending_transaction_path(transaction) : canonical_transaction_path(transaction)), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
+      <%= inline_icon "external", size: 30, class: "!m-0" %>
+    <% end %>
+  <% end %>
+<% end %>

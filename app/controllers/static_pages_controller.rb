@@ -19,15 +19,24 @@ class StaticPagesController < ApplicationController
 
     @service = StaticPageService::Index.new(current_user:)
 
-    @events = @service.events
+    # Load once and split in Ruby; the view previously re-queried (and
+    # re-preloaded) the relation for each of any?/size/not_hidden/hidden.
+    @events = @service.events.to_a
+    @visible_events, @hidden_events = @events.partition { |event| event.hidden_at.nil? }
 
     featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
-    @featured_events = featured_event_ids.map do |id|
-      Event.find_by_public_id(id)
-    end.select do |event|
-      event&.is_public? && event.is_indexable?
-    end.sample(3)
+    if current_user.is_teenager? # Only rendered for teenagers (see _explore partial)
+      @featured_events = Event.where_public_id(featured_event_ids)
+                              .where(is_public: true, is_indexable: true)
+                              .preload(:event_tags, *StaticPageService::Index::EVENT_CARD_PRELOADS)
+                              .to_a
+                              .sample(3)
+    else
+      @featured_events = []
+    end
+
+    @active_card_counts = @service.active_card_counts(@events)
 
     @organizer_positions = @service.organizer_positions.not_hidden
     @invites = @service.invites
@@ -35,17 +44,14 @@ class StaticPagesController < ApplicationController
     @applications = @service.applications
 
     if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     else
-      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     end
 
     @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
 
     @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
-  end
-
-  def first
   end
 
   def admin_tools
@@ -92,7 +98,7 @@ class StaticPagesController < ApplicationController
         "Invite a user": :manager,
         "Request removal of a user": :manager,
         "Cancel invite made by another user": :manager,
-        "Cancel invite made by yourself": :member,
+        "Cancel invite made by yourself": :manager,
         "Change another user's role": :manager,
       },
       Transfers: {
@@ -117,7 +123,6 @@ class StaticPagesController < ApplicationController
         },
         "HCB transfers": {
           "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
           "View an HCB Transfer": :reader
         },
         Payments: {
@@ -143,9 +148,7 @@ class StaticPagesController < ApplicationController
         "Freeze/defrost another user's card": :manager,
         "Rename your own card": :member,
         "Rename another user's card": :manager,
-        "View another user's card number": :manager,
         "View card expiration date": :reader,
-        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,

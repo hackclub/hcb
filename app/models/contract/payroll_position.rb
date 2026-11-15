@@ -52,42 +52,61 @@ class Contract
           {
             role: "Organizer",
             email: organizer.email,
-            fields: [
-              { name: "Project Name", default_value: prefills["title"], readonly: true },
-              { name: "Description", default_value: prefills["description"], readonly: true },
-              { name: "Start Date", default_value: prefills["start_date"], readonly: true },
-              { name: "End Date", default_value: prefills["end_date"], readonly: true },
-              { name: "Rate", default_value: prefills["rate"], readonly: true },
-            ]
+            fields: if has_standard_contract?
+                      [
+                        { name: "Project Name", default_value: prefills["title"], readonly: true },
+                        { name: "Description", default_value: prefills["description"], readonly: true },
+                        { name: "Start Date", default_value: prefills["start_date"], readonly: true },
+                        { name: "End Date", default_value: prefills["end_date"], readonly: true },
+                        { name: "Rate", default_value: prefills["rate"], readonly: true },
+                      ]
+                    else
+                      []
+                    end
           },
           {
             role: "HCB",
             email: hcb.email,
             send_email: false,
-            fields: [
-              {
-                name: "Signature",
-                default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
-                readonly: false
-              }
-            ]
+            fields: if has_standard_contract?
+                      [
+                        {
+                          name: "Signature",
+                          default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
+                          readonly: false
+                        }
+                      ]
+                    else
+                      []
+                    end
           },
           {
             role: "Contractor",
             email: contractor.email,
-            fields: [
-              { name: "Name", default_value: prefills["payee_name"] }
-            ]
+            fields: if has_standard_contract?
+                      [
+                        { name: "Name", default_value: prefills["payee_name"] }
+                      ]
+                    else
+                      []
+                    end
           }
         ]
       }
 
-      # Attach user's uploaded PDF contract onto the template
       if inline_documents?
-        base.merge(name: document_name, template_ids: [external_template_id], documents: prefills["documents"])
+        if prefills["combine_documents"]
+          base.merge(name: document_name, template_ids: [external_template_id], documents: prefills["documents"])
+        else
+          base.merge(name: document_name, documents: prefills["documents"])
+        end
       else
         base.merge(template_id: external_template_id)
       end
+    end
+
+    def has_standard_contract?
+      !inline_documents? || (inline_documents? && prefills["combine_documents"])
     end
 
     def agreement_name

@@ -1,1 +1,3 @@
+<%# locals: (current_page:, url:, remote:, **) %>
+
 <%= link_to_unless current_page.last?, raw("Next" + inline_icon("view-forward")), url, rel: "next", remote:, class: "btn bg-info pr-1 gap-1" %>

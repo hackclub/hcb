@@ -28,6 +28,25 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#total_raised and #total_spent_cents" do
+    def add_item(amount_cents, category_slug: nil)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.current, memo: "Transaction of #{amount_cents}", category_slug:)
+      create(:canonical_event_mapping, canonical_transaction: ct, event:)
+      item = create(:ledger_item, amount_cents:, datetime: Time.current, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    end
+
+    it "takes repayments off both totals instead of counting them as revenue" do
+      add_item(2500)
+      add_item(-500, category_slug: Repayment::CATEGORY_SLUG) # the expense that was repaid
+      add_item(-300)
+      add_item(500, category_slug: Repayment::CATEGORY_SLUG) # the money paying it back
+
+      expect(event.total_raised).to eq(2500)
+      expect(event.total_spent_cents).to eq(300)
+    end
+  end
+
   describe "private" do
     before do
       create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
@@ -418,15 +437,131 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#can_front_balance" do
-    it "enqueues a job to refresh the event's ledgers when changed" do
-      expect { event.update!(can_front_balance: !event.can_front_balance) }
-        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
+  describe "description validation" do
+    it "requires a description when an app-backed event is created" do
+      event = build(:event, description: nil)
+      event.application = build(:event_application, description: "Run the best hackathon")
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
     end
 
-    it "does not enqueue a job when unchanged" do
-      expect { event.update!(name: "Renamed") }
-        .not_to have_enqueued_job(Event::RefreshLedgersJob)
+    it "allows a blank description without an application" do
+      expect(create(:event, description: nil)).to be_valid
+    end
+
+    it "allows an app-backed event with a legacy blank description to save unrelated fields" do
+      event = create(:event, description: nil)
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.name = "Renamed"
+
+      expect(event).to be_valid
+    end
+
+    it "blocks clearing an existing description on an app-backed event" do
+      event = create(:event, description: "Run the best hackathon")
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.description = ""
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
+    end
+  end
+  describe "#statement_descriptor" do
+    it "uses the name when it's short enough" do
+      event = build(:event, name: "Hack Club")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club")
+    end
+
+    it "uses the nickname for a long name" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+
+      expect(event.statement_descriptor).to eq("HCB* Assemble")
+    end
+
+    it "truncates a long name without a nickname" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club Assemb")
+    end
+
+    it "drops characters Stripe doesn't allow" do
+      event = build(:event, name: "Café's Club!")
+
+      expect(event.statement_descriptor).to eq("HCB* Cafes Club")
+    end
+  end
+
+  describe "#wire_fee_waived?" do
+    let(:plan_type) { Event::Plan::Standard }
+    let(:event) { create(:event, plan_type:) }
+
+    def raise_money(cents)
+      tx = create(:canonical_transaction, amount_cents: cents)
+      create(:canonical_event_mapping, canonical_transaction: tx, event:)
+    end
+
+    it "is false when the organization has raised under $50,000 in the past year" do
+      raise_money(49_999_00)
+
+      expect(event.wire_fee_waived?).to be false
+    end
+
+    it "is true when the organization has raised over $50,000 in the past year" do
+      raise_money(50_001_00)
+
+      expect(event.wire_fee_waived?).to be true
+    end
+
+    context "with a Hack Club project" do
+      let(:plan_type) { Event::Plan::HackClubHQ }
+
+      it "is false however much the organization has raised" do
+        raise_money(50_001_00)
+
+        expect(event.wire_fee_waived?).to be false
+      end
+
+      it "still exempts the organization from the wire minimum" do
+        expect(event.minimum_wire_amount_cents).to eq 100
+      end
+    end
+  end
+
+  # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
+  # still be charged a fee by hand (Fee's `manual` reason), and that balance is
+  # real money it owes. Each fee commit keeps a single pending bank fee, and its
+  # pending transaction, in step with the balance.
+  describe "#update_pending_bank_fee" do
+    # The event factory's default plan is fee-waived — a zero revenue fee.
+    let(:event) { create(:event) }
+
+    it "opens a pending bank fee for a manually charged fee an organization still owes" do
+      expect(event.revenue_fee).to eq(0)
+      event.fees.create!(memo: "Manually charged fee", amount_cents_as_decimal: 500, event_sponsorship_fee: 0, reason: :manual)
+
+      bank_fee = event.reload.pending_bank_fee
+      # A regular bank fee is negative; see `HasBookTransfer`.
+      expect(bank_fee.amount_cents).to eq(-500)
+      expect(bank_fee.canonical_pending_transaction.amount_cents).to eq(-500)
+    end
+
+    it "keeps the one pending bank fee at the running balance" do
+      event.fees.create!(memo: "First", amount_cents_as_decimal: 200, event_sponsorship_fee: 0, reason: :manual)
+      event.fees.create!(memo: "Second", amount_cents_as_decimal: 300, event_sponsorship_fee: 0, reason: :manual)
+
+      expect(event.bank_fees.pending.count).to eq(1)
+      expect(event.reload.pending_bank_fee.amount_cents).to eq(-500)
+      expect(event.pending_bank_fee.canonical_pending_transaction.amount_cents).to eq(-500)
+    end
+
+    it "opens nothing when there's no fee outstanding" do
+      event.fees.create!(memo: "Waived fee", amount_cents_as_decimal: 0, event_sponsorship_fee: 0, reason: :manual)
+
+      expect(event.reload.pending_bank_fee).to be_nil
     end
   end
 end

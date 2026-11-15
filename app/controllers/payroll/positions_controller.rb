@@ -4,17 +4,18 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
-    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description].freeze
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description combine_contract_attachment].freeze
 
-    before_action :set_event, except: [:onboarding]
-    before_action :set_position, only: [:edit, :update, :contract, :terminate]
+    before_action :set_event, only: [:new, :create]
+    before_action :set_position, only: [:show, :edit, :update, :contract, :terminate]
 
     def show
-      @position = @event.payroll_positions.find(params[:id])
       authorize @position
       @frame = params[:frame].present?
-      @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
-      @invoices = @position.invoices.order(created_at: :desc)
+      invoice_policy = policy(@position.invoices.build)
+      @can_review = invoice_policy.approve?
+      @can_upload_invoice = invoice_policy.on_behalf?
+      @invoices = @position.invoices.includes(:reviewed_by).order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
 
       @position.contract&.party(:organizer)&.sync_with_docuseal
@@ -47,7 +48,9 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment].nil? || position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
       )
 
       if @payee.nil?
@@ -61,9 +64,9 @@ module Payroll
 
       if @position.save
         if send_contract_for_position!
-          redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+          redirect_to contract_payroll_position_path(@position)
         else
-          redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+          redirect_to edit_payroll_position_path(@position)
         end
       else
         flash[:error] = @position.errors.full_messages.to_sentence
@@ -80,7 +83,7 @@ module Payroll
 
       if @contract.nil?
         flash[:error] = "We couldn't send this contract for signing. Please review the details and save again to retry."
-        redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id) and return
+        redirect_to edit_payroll_position_path(@position) and return
       end
 
       @organizer_party = @contract.party(:organizer)
@@ -103,7 +106,9 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
       }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
@@ -115,9 +120,9 @@ module Payroll
         void_pending_contract! if will_void_contract
 
         if send_contract_for_position!
-          redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+          redirect_to contract_payroll_position_path(@position)
         else
-          redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+          redirect_to edit_payroll_position_path(@position)
         end
       else
         @payee = @position.payee
@@ -133,13 +138,14 @@ module Payroll
 
       flash[:success] = "Contractor position successfully terminated"
 
-      redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
+      redirect_to payroll_position_path(@position)
     end
 
     private
 
     def set_position
-      @position = @event.payroll_positions.find(params[:id])
+      @position = Payroll::Position.find_by_hashid!(params[:id])
+      @event = @position.event
     end
 
     def contract_terms_changed?(attachment_changed:)
@@ -174,7 +180,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, :manager_id, file: [])
     end
 
   end

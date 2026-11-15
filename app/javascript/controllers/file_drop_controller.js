@@ -80,7 +80,10 @@ export default class extends Controller {
     if (this.linkingValue) {
       const receiptId = extractId(e.dataTransfer)
 
-      const [receiptableType, receiptableId] = this.receiptableValue.split(':')
+      // "Ledger::Item:123": the type is namespaced, so split on the last colon
+      const separator = this.receiptableValue.lastIndexOf(':')
+      const receiptableType = this.receiptableValue.slice(0, separator)
+      const receiptableId = this.receiptableValue.slice(separator + 1)
       const linkPath = this.modalValue
 
       if (receiptId && receiptableType && receiptableId) {
@@ -98,7 +101,11 @@ export default class extends Controller {
     this.fileInputTarget.dispatchEvent(new Event('change'))
     if (!this.fileInputTarget.files.length) return
 
-    if (this.hasUploadMethodTarget && !this.submitting) {
+    if (
+      this.hasUploadMethodTarget &&
+      !this.submitting &&
+      !this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
       // Append `_drag_and_drop` to the upload method
       this.uploadMethodTarget.value += '_drag_and_drop'
     }
@@ -113,6 +120,18 @@ export default class extends Controller {
 
     if (e.clipboardData && this.dropzoneTarget.contains(e.target))
       e.stopImmediatePropagation()
+
+    if (
+      this.hasUploadMethodTarget &&
+      this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
+      this.uploadMethodTarget.value = this.uploadMethodTarget.value.slice(
+        0,
+        -'_drag_and_drop'.length
+      )
+    }
+
+    this.submitting = false
   }
 
   dragenter() {

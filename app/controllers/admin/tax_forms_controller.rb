@@ -4,7 +4,7 @@ module Admin
   class TaxFormsController < Admin::BaseController
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
 
       relation = Tax::Form.includes(:legal_entity)
 

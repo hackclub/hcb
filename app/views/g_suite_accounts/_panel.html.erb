@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <h2 class="mt0 mb0">Your accounts</h2>
 
 <% if @g_suite.accounts.any? %>
@@ -47,6 +49,9 @@
                 <%= link_to "Delete",
                   account,
                   data: { turbo_method: :delete, turbo_confirm: "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Are you sure you want to continue?", turbo_confirm_danger: true } if policy(account).destroy? %>
+                <%= link_to "Unmanage",
+                  g_suite_account_unmanage_path(account.id, confirm: account.address),
+                  data: { turbo_method: :put, turbo_confirm: "Unmanaging #{account.address} removes it and its aliases from HCB, but leaves the Google Workspace account and its aliases intact. This can’t be undone. Are you sure you want to continue?", turbo_confirm_danger: true } if policy(account).unmanage? %>
               </div>
             </action>
           </div>
@@ -71,7 +76,7 @@
             <% end %>
             <div class="flex flex-col justify-between">
               <div class="flex alias-creation">
-                <% if account.g_suite_aliases.count < 30 && policy(account).create? %>
+                <% if account.g_suite_aliases.size < 30 && policy(account).create? %>
                   <div
                     class="pop success pointer tooltipped tooltipped--e line-height-0 m-2 alias-new"
                     aria-label="Create Alias">
@@ -80,13 +85,13 @@
                 <% else %>
                   <div
                     class="tooltipped tooltipped--e"
-                    aria-label="<%= account.g_suite_aliases.count >= 30 ? "You can’t create more than 30 aliases." : "You don't have permission to create aliases." %>">
+                    aria-label="<%= account.g_suite_aliases.size >= 30 ? "You can’t create more than 30 aliases." : "You don't have permission to create aliases." %>">
                     <div class="pop success line-height-0 m-2 disabled" disabled>
                       <%= inline_icon "plus", size: home_action_size %>
                     </div>
                   </div>
                 <% end %>
-                <p class="m-auto muted"><%= 30 - account.g_suite_aliases.count %> / 30 aliases remaining</p>
+                <p class="m-auto muted"><%= 30 - account.g_suite_aliases.size %> / 30 aliases remaining</p>
               </div>
               <div class="alias-form" data-behavior="autohide">
                 <%= form_with(url: g_suite_account_g_suite_aliases_path(g_suite_account_id: account.id), method: :post, data: { turbo: false }) do |form| %>

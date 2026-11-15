@@ -28,11 +28,22 @@ class ColumnService
     end
   end
 
+  # Paths are built by interpolating ids, so only allow plain segments. This
+  # stops a caller-supplied value from traversing (`../`) to another endpoint
+  # or smuggling in a query string. Query params belong in `params`.
+  PATH_FORMAT = /\A(\/[A-Za-z0-9_-]+)+\z/
+
+  def self.validate_path!(url)
+    raise ArgumentError, "invalid Column path: #{url.inspect}" unless url.is_a?(String) && url.match?(PATH_FORMAT)
+  end
+
   def self.get(url, params = {})
+    validate_path!(url)
     conn.get(url, params).body
   end
 
   def self.post(url, params = {})
+    validate_path!(url)
     raise ArgumentError, "missing idempotency_key: #{url}" if params[:idempotency_key].nil?
 
     idempotency_key = params.delete(:idempotency_key)
@@ -120,7 +131,7 @@ class ColumnService
   def self.balance_over_time(from_date: 1.month.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
     if report = bank_account_summary_report(from_date:, to_date:)
       url = get("/documents/#{report["json_document_id"]}")["url"]
-      account = JSON.parse(Faraday.get(url).body).select { |t| t["bank_account_id"] == bank_account }.first
+      account = JSON.parse(Faraday.get(url).body).find { |t| t["bank_account_id"] == bank_account }
       return { starting: account["available_balance_open"], closing: account["available_balance_close"] }
     else
       return { starting: nil, closing: nil }

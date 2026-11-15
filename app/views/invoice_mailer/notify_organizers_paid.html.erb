@@ -1,25 +1,14 @@
-<% can_front_balance = @invoice.sponsor.event.can_front_balance? %>
-
 <p>
   Hi there,
 </p>
 
 <p>
-  The funds from <%= link_to "a recently paid invoice to #{@invoice.sponsor.name}", @invoice %>
-  <% if can_front_balance %>
-    have transferred
-    <% else %>
-    are transferring
-  <% end %>
+  The funds from <%= link_to "a recently paid invoice to #{@invoice.sponsor.name}", @invoice %> have transferred
   into <%= link_to @invoice.sponsor.event.name, @invoice.sponsor.event %> on HCB.
 </p>
 
 <p>
-  <% if can_front_balance %>
-      The funds (<strong><%= render_money @invoice.amount_paid %></strong>) are now available to spend.
-  <% else %>
-    The funds (<strong><%= render_money @invoice.amount_paid %></strong>) will be available on approximately <strong><%= @invoice.payout.arrival_date.to_date %></strong>.
-  <% end %>
+  The funds (<strong><%= render_money @invoice.amount_paid %></strong>) are now available to spend.
   Please don't hesitate to reach out to us if you have any questions!
 </p>
 

@@ -277,10 +277,57 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: create(:user)) }
+
     it "locks" do
       user = create(:user, locked_at: nil)
       user.lock!
       expect(user).to be_locked
+    end
+
+    it "revokes every API token, including expired ones that still hold a refresh token" do
+      user = create(:user)
+      live = create(:api_token, user:, application:, use_refresh_token: true)
+      expired = create(:api_token, user:, application:, use_refresh_token: true, expires_in: 1, created_at: 3.hours.ago)
+      personal = create(:api_token, user:, expires_in: nil)
+
+      user.lock!
+
+      expect([live, expired, personal].each(&:reload)).to all(be_revoked)
+    end
+
+    it "revokes outstanding authorization codes and device codes" do
+      user = create(:user)
+      grant = Doorkeeper::AccessGrant.create!(application:, resource_owner_id: user.id, expires_in: 600, redirect_uri: application.redirect_uri, scopes: "read")
+      device_grant = Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.create!(application:, resource_owner_id: user.id, expires_in: 300, scopes: "read")
+
+      user.lock!
+
+      expect(grant.reload).to be_revoked
+      expect(Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.exists?(device_grant.id)).to be(false)
+    end
+
+    it "freezes every active card and leaves frozen and canceled ones alone" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:)
+      active_cards = create_list(:stripe_card, 2, :with_stripe_id, stripe_cardholder: cardholder, initially_activated: true)
+      frozen_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "inactive", initially_activated: true)
+      canceled_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "canceled")
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      active_cards.each do |card|
+        expect(StripeService::Issuing::Card).to receive(:update).with(card.stripe_id, status: :inactive)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).with(id: card.stripe_id).and_return(
+          Stripe::Issuing::Card.construct_from(id: card.stripe_id, status: "inactive", brand: "Visa", exp_month: 2, exp_year: 2030, last4: card.last4, type: "virtual", shipping: nil, spending_controls: { spending_limits: [] })
+        )
+      end
+
+      user.lock!
+
+      expect(active_cards.each(&:reload)).to all(be_frozen)
+      expect(active_cards.map(&:last_frozen_by)).to all(eq(User.system_user))
+      expect(frozen_card.reload.last_frozen_by).to be_nil
+      expect(canceled_card.reload).to be_canceled
     end
   end
 
@@ -329,6 +376,34 @@ RSpec.describe User, type: :model do
           expect(user.errors[:full_name]).not_to be_empty
         end
       end
+    end
+  end
+
+  describe "#pretend_is_not_admin" do
+    it "is cleared on save for users without an admin role" do
+      user = create(:user)
+      user.pretend_is_not_admin = true
+
+      user.save!
+
+      expect(user.pretend_is_not_admin).to eq(false)
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "is kept for auditors and admins" do
+      auditor = create(:user, access_level: :auditor, pretend_is_not_admin: true)
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+      expect(admin.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "is cleared when an admin is demoted" do
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      admin.update!(access_level: :user)
+
+      expect(admin.reload.pretend_is_not_admin).to eq(false)
     end
   end
 
@@ -426,6 +501,59 @@ RSpec.describe User, type: :model do
       cardholder.reload
 
       expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "does not send a phone number outside +1/+44 to stripe even when verified" do
+      user = create(:user, phone_number: "+919876543210", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_not_including(:phone_number))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "clears a synced US number once the verified number is no longer on +1/+44" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+      user.update_column(:phone_number, "+919876543210")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_including(phone_number: ""))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+  end
+
+  describe "#phone_number_for_stripe" do
+    it "returns the phone number when it is verified and on a supported country code" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to eq("18556254225")
+    end
+
+    it "returns nil when the phone number is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when the phone number is outside +1/+44" do
+      user = create(:user, phone_number: "+919876543210")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when there is no phone number" do
+      user = create(:user, phone_number: nil, phone_number_verified: true)
+
+      expect(user.phone_number_for_stripe).to be_nil
     end
   end
 
@@ -556,6 +684,15 @@ RSpec.describe User, type: :model do
         expect(user.reload.personal_legal_entity).to be_person
         expect(user.personal_legal_entity).not_to eq(business)
       end
+
+      it "ignores archived person entities" do
+        original = user.personal_legal_entity
+        original.archive!
+        replacement = create(:legal_entity, :person, name: user.full_name)
+        user.legal_entity_users.create!(legal_entity: replacement)
+
+        expect(user.reload.personal_legal_entity).to eq(replacement)
+      end
     end
 
     describe "#person_legal_entity_user" do
@@ -585,6 +722,36 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#unassociated_payments_received" do
+    let(:user) { create(:user) }
+
+    it "includes pending payments to a payee with the user's email and no legal entity" do
+      payment = create(:payment, payee: create(:payee, legal_entity: nil, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "includes pending payments to a payee with the user's email and a managed legal entity" do
+      event = create(:event)
+      managed = create(:legal_entity, managing_event: event)
+      payment = create(:payment, payee: create(:payee, event:, legal_entity: managed, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "excludes payments to a payee with an unmanaged legal entity" do
+      create(:payment, payee: create(:payee, email: user.email))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+
+    it "excludes payments to a payee with a different email" do
+      create(:payment, payee: create(:payee, legal_entity: nil))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
@@ -600,6 +767,26 @@ RSpec.describe User, type: :model do
       results = User.search_name("999999999")
 
       expect(results).to be_empty
+    end
+  end
+
+  describe "activity" do
+    let(:user) { create(:user) }
+
+    it "counts usage of trusted OAuth apps (e.g. the mobile app) as activity" do
+      trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true, owner: create(:user))
+      create(:api_token, user:, application: trusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).to include(user)
+      expect(user.last_seen_at).to be_within(1.second).of(1.day.ago)
+    end
+
+    it "does not count usage of untrusted OAuth apps as activity" do
+      untrusted_app = Doorkeeper::Application.create!(name: "Untrusted App", redirect_uri: "https://hcb.hackclub.com", owner: create(:user))
+      create(:api_token, user:, application: untrusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).not_to include(user)
+      expect(user.last_seen_at).to be_nil
     end
   end
 end

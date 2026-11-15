@@ -102,14 +102,8 @@ class Disbursement
 
       # State methods
       def state
-        if fulfilled?
+        if fulfilled? || processed? || pending?
           :success
-        elsif processed? || pending?
-          if destination_event.can_front_balance?
-            :success
-          else
-            :muted
-          end
         elsif rejected?
           :error
         elsif scheduled?
@@ -125,14 +119,8 @@ class Disbursement
       alias_method :status, :state
 
       def state_text
-        if fulfilled?
+        if fulfilled? || processed? || pending?
           "fulfilled"
-        elsif processed? || pending?
-          if destination_event.can_front_balance?
-            "fulfilled"
-          else
-            "processing"
-          end
         elsif rejected? && approved_at.present? # Disbursements that were approved, then rejected
           "canceled"
         elsif rejected?
@@ -149,7 +137,7 @@ class Disbursement
       end
 
       def state_icon
-        "checkmark" if fulfilled? || processed? || (pending? && destination_event.can_front_balance?)
+        "checkmark" if fulfilled? || processed? || pending?
       end
 
       # Special appearance methods

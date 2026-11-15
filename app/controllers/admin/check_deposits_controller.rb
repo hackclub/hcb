@@ -9,7 +9,7 @@ module Admin
 
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
       @check_deposits = CheckDeposit.page(@page).per(@per).order(Arel.sql("column_id IS NULL AND increase_id IS NULL DESC, created_at DESC"))
     end
 
@@ -29,6 +29,10 @@ module Admin
         # error, but rather return a string (301 status code), when given an
         # empty string.
         flash.now[:error] = "Column ID is required."
+        return render :show, status: :unprocessable_content
+      end
+      unless params[:column_id].match?(/\A[a-z]+_[A-Za-z0-9]+\z/)
+        flash.now[:error] = "Column ID is not valid."
         return render :show, status: :unprocessable_content
       end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"

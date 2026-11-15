@@ -6,6 +6,11 @@ ENV["RAILS_ENV"] ||= "test"
 # Set before Rails boots so the Rack::TwilioWebhookAuthentication middleware
 # (initialized in config/initializers/twilio.rb) uses a known auth token.
 ENV["TWILIO__AUTH_TOKEN"] ||= "test_twilio_auth_token"
+# Set before Rails boots so config/initializers/secure_headers.rb builds the
+# same policy on every machine, including fork PRs with no secrets.
+ENV["ASSET_HOST"] ||= "https://assets.test.invalid"
+ENV["S3__BUCKET"] ||= "test-bucket"
+ENV["S3__REGION"] ||= "us-east-1"
 require File.expand_path("../config/environment", __dir__)
 # PaperTrail helper to make it easier to use PaperTrail in specs
 require "paper_trail/frameworks/rspec"
@@ -80,7 +85,10 @@ RSpec.configure do |config|
 
   # Use a new in memory version of flipper per test (so every flag is disabled)
   # per instructions at https://www.flippercloud.io/docs/testing#starting-fresh
-  config.before(:each) do
+  config.before(:each) do |example|
+    # System specs keep Flipper's shared test adapter so the app server thread sees their flags
+    next if example.metadata[:type] == :system
+
     Flipper.instance = Flipper.new(Flipper::Adapters::Memory.new)
   end
 end
