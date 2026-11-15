@@ -603,16 +603,20 @@ class Tax1099ImportService
       return
     end
 
-    validate_tin_matches!(@legal_entity)
-
     candidates = self.class.legal_entity_candidates(email: @data[:email], entity_type:)
 
     if @legal_entity
       # Guard against a stale or hand-edited id pointing at somebody else's
       # entity: the form would otherwise attach a payee's TIN to a stranger.
+      #
+      # This must come before the TIN comparison. Otherwise any entity's id
+      # could be posted with a guessed TIN, and which of the two errors came
+      # back would say whether the guess was that entity's TIN.
       unless candidates.include?(@legal_entity)
         raise ValidationError, "the selected legal entity is not one of #{@data[:email]}'s #{entity_type} legal entities"
       end
+
+      validate_tin_matches!(@legal_entity)
     elsif candidates.any? && !@new_legal_entity
       raise ValidationError, "#{@data[:email]} already has #{entity_type} legal entities; pick one, or choose to create a new one"
     end

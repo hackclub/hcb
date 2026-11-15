@@ -273,6 +273,18 @@ RSpec.describe Tax1099ImportService do
       expect(user.personal_legal_entity.reload.mismatched_tax_form).to be_nil
     end
 
+    # Otherwise the two errors would tell a guessed TIN apart from a wrong one
+    # for any entity whose id is posted.
+    it "refuses somebody else's entity the same way whether or not the TIN matches" do
+      create(:user, email: "ada@example.com")
+      stranger = create(:legal_entity, entity_type: :business, users: [create(:user)], tin_hash: fingerprint("98-7654321", :entity))
+
+      expect { run(data: business_data.merge(tin: "98-7654321"), legal_entity: stranger) }
+        .to raise_error(described_class::ValidationError, /not one of/)
+      expect { run(data: business_data.merge(tin: "12-3456789"), legal_entity: stranger) }
+        .to raise_error(described_class::ValidationError, /not one of/)
+    end
+
     it "allows a new business entity, which has no TIN yet" do
       user = create(:user, email: "ada@example.com")
       create(:legal_entity, entity_type: :business, users: [user], tin_hash: fingerprint("98-7654321", :entity))
