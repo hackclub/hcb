@@ -239,7 +239,9 @@ class ReceiptsController < ApplicationController
 
   private
 
-  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+  # A transaction's receipts are attached to its ledger item, never its HCB code
+  # (https://github.com/hackclub/hcb/issues/14106).
+  RECEIPTABLE_TYPE_MAP = [CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
                           Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item, Payment,
                           Payroll::Invoice].index_by(&:to_s).freeze
