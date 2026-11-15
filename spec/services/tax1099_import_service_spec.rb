@@ -21,6 +21,7 @@ RSpec.describe Tax1099ImportService do
 
   let(:person_data) do
     {
+      form_type: "W9",
       first_name: "Ada", middle_name: "", last_name: "Lovelace", suffix: "",
       tin: "123-45-6789", tin_type: "SSN", federal_tax_classification: "Individual",
       address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482", completed_on: "2025-03-07",
@@ -34,6 +35,21 @@ RSpec.describe Tax1099ImportService do
       tin: "12-3456789", tin_type: "EIN", federal_tax_classification: "Partnership",
       email: "ada@example.com"
     )
+  end
+
+  let(:w8ben_data) do
+    {
+      form_type: "W8BEN",
+      first_name: "Sommaiya Angrish", middle_name: "", last_name: "", suffix: "",
+      tin: "ABCDE1234F", tin_type: "FTIN", federal_tax_classification: "",
+      address1: "SKA 809, Shipra Krishna Vista", city: "Ghaziabad", state: "Uttar Pradesh",
+      zip_code: "201014", country: "in", completed_on: "2025-07-22",
+      signer_name: "Sommaiya Angrish", email: "sommaiya@example.com"
+    }
+  end
+
+  let(:w8bene_data) do
+    w8ben_data.merge(form_type: "W8BENE", first_name: "Krishna Studios Pvt Ltd", ch3_status: "CORPORATION", signer_name: "Ravi Krishna")
   end
 
   def run(data: person_data, legal_entity: nil, new_legal_entity: false, file: :default)
@@ -377,6 +393,168 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "a W-8BEN row" do
+    it "creates a completed W-8BEN on the payee's personal legal entity, addressed in their country" do
+      result = run(data: w8ben_data)
+
+      expect(result.form).to have_attributes(
+        form_type: "W8BEN", entity_type: "person", tin_type: "foreign", aasm_state: "completed",
+        address_city: "Ghaziabad", address_state: "Uttar Pradesh", address_postal_code: "201014",
+        address_country: "IN"
+      )
+      expect(result.legal_entity).to eq(User.find_by(email: "sommaiya@example.com").personal_legal_entity)
+    end
+
+    it "fingerprints the foreign TIN within its country" do
+      result = run(data: w8ben_data)
+
+      expect(result.form.tin_hash).to eq(
+        Tax::IdentificationNumber::Hasher.hash_tin("ABCDE1234F", tin_type: :foreign, country: "IN")
+      )
+    end
+
+    it "sends the W-8BEN data" do
+      result = run(data: w8ben_data)
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including(
+          "FormType"  => "W8BEN",
+          "PayeeRef"  => result.form.public_id,
+          "FormW8Ben" => hash_including(
+            "NmOfIndividual" => "Sommaiya Angrish", "CitizenOfCountry" => "IN",
+            "ForeignTIN" => "ABCDE1234F",
+            "PermanentAddress" => hash_including("City" => "Ghaziabad", "Country" => "IN", "PostalCd" => "201014"),
+            "Signature" => { "SignerNm" => "Sommaiya Angrish" }
+          )
+        )
+      )
+    end
+
+    it "doesn't need a federal tax classification, state, or postal code" do
+      expect { run(data: w8ben_data.merge(state: "", zip_code: "")) }.not_to raise_error
+    end
+
+    it "needs a 2-letter country" do
+      expect { run(data: w8ben_data.merge(country: "India")) }
+        .to raise_error(described_class::ValidationError, /2-letter/)
+    end
+
+    it "only takes a foreign TIN" do
+      expect { run(data: w8ben_data.merge(tin_type: "SSN")) }
+        .to raise_error(described_class::ValidationError, /FTIN/)
+    end
+
+    it "is a duplicate of an earlier import of the same foreign TIN from the same country" do
+      run(data: w8ben_data)
+
+      expect { run(data: w8ben_data.merge(email: "other@example.com")) }.to raise_error(described_class::DuplicateError)
+    end
+
+    it "isn't a duplicate of the same foreign TIN from another country" do
+      run(data: w8ben_data)
+
+      expect { run(data: w8ben_data.merge(country: "GB")) }.not_to raise_error
+    end
+  end
+
+  describe "a W-8 without a foreign TIN" do
+    let(:tinless_data) { w8ben_data.merge(tin: "", tin_type: "", ftin_not_legally_required: "1") }
+
+    it "imports when the form says an FTIN isn't legally required, with no fingerprint" do
+      result = run(data: tinless_data)
+
+      expect(result.form).to have_attributes(form_type: "W8BEN", tin_hash: nil, tin_type: nil, aasm_state: "completed")
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including("FormW8Ben" => hash_including("ForeignTIN" => nil, "IsFTINNotLegallyRequired" => true))
+      )
+    end
+
+    it "works for a W-8BEN-E too" do
+      run(data: w8bene_data.merge(tin: "", tin_type: "", ftin_not_legally_required: "1"))
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including("FormW8BENE" => hash_including("Part1" => hash_including("ForeignTIN" => nil, "IsFTINNotLegallyRequired" => true)))
+      )
+    end
+
+    it "isn't taken for a duplicate of another TIN-less import" do
+      run(data: tinless_data)
+
+      expect { run(data: tinless_data.merge(email: "someone-else@example.com")) }.not_to raise_error
+    end
+
+    it "needs the box ticked when there's no TIN" do
+      expect { run(data: tinless_data.merge(ftin_not_legally_required: "")) }
+        .to raise_error(described_class::ValidationError, /enter the foreign TIN/)
+    end
+
+    it "can't both give a TIN and say one isn't required" do
+      expect { run(data: w8ben_data.merge(ftin_not_legally_required: "1")) }
+        .to raise_error(described_class::ValidationError, /can't also say/)
+    end
+
+    it "sends IsFTINNotLegallyRequired false when a TIN is given" do
+      run(data: w8ben_data)
+
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW8Ben" => hash_including("IsFTINNotLegallyRequired" => false)))
+    end
+  end
+
+  it "still needs a TIN on a W-9" do
+    expect { run(data: person_data.merge(tin: "")) }
+      .to raise_error(described_class::ValidationError, /TIN \(EIN\/SSN\/FTIN\)/)
+  end
+
+  describe "a W-8BEN-E row" do
+    it "creates a business legal entity named after the organization" do
+      result = run(data: w8bene_data)
+
+      expect(result.form).to have_attributes(form_type: "W8BENE", entity_type: "business")
+      expect(result.legal_entity).to have_attributes(name: "Krishna Studios Pvt Ltd", entity_type: "business")
+    end
+
+    it "sends the W-8BEN-E data" do
+      run(data: w8bene_data)
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including(
+          "FormType"   => "W8BENE",
+          "FormW8BENE" => {
+            "Part1"  => hash_including(
+              "NmOfOrganization" => "Krishna Studios Pvt Ltd", "CountryOfOrganization" => "IN",
+              "Ch3Status" => "CORPORATION", "ForeignTIN" => "ABCDE1234F",
+              "MailAdd" => hash_including("Country" => "IN")
+            ),
+            "Part30" => {
+              "IsCapacityToSign" => true, "SignerNm" => "Ravi Krishna", "SignDate" => "2025-07-22T00:00:00"
+            }
+          }
+        )
+      )
+    end
+
+    it "needs a signer name" do
+      expect { run(data: w8bene_data.merge(signer_name: "")) }
+        .to raise_error(described_class::ValidationError, /Signer Name/)
+    end
+
+    it "needs a chapter 3 status" do
+      expect { run(data: w8bene_data.merge(ch3_status: "")) }
+        .to raise_error(described_class::ValidationError, /Chapter 3 Status/)
+    end
+  end
+
+  it "rejects an unknown form type" do
+    expect { run(data: person_data.merge(form_type: "W8ECI")) }
+      .to raise_error(described_class::ValidationError, /form type/)
+  end
+
+  it "doesn't take a foreign TIN on a W-9" do
+    expect { run(data: person_data.merge(tin_type: "FTIN")) }
+      .to raise_error(described_class::ValidationError, /SSN, EIN/)
+  end
+
   describe ".imported_row_keys" do
     it "is empty when nothing has been imported" do
       expect(described_class.imported_row_keys).to be_empty
@@ -392,6 +570,12 @@ RSpec.describe Tax1099ImportService do
       run(data: business_data.merge(email: " Ada@Example.com ", zip_code: "05482-1234"))
 
       expect(described_class.imported_row_keys).to eq(["ada@example.com|2025-03-07|business|05482"])
+    end
+
+    it "keys a W-8BEN import as a person, keeping a non-US postal code whole" do
+      run(data: w8ben_data.merge(zip_code: "sw1a 1aa"))
+
+      expect(described_class.imported_row_keys).to eq(["sommaiya@example.com|2025-07-22|person|SW1A1AA"])
     end
 
     it "leaves out discarded imports" do

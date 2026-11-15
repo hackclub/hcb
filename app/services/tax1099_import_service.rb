@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Imports a single W-9 that was collected through Tax1099 into TaxBandits, from
+# Imports a single W-9, W-8BEN or W-8BEN-E that was collected through Tax1099
+# into TaxBandits, from
 # data an admin has reviewed in the browser (see Admin::Tax1099ImportsController
 # and the tax1099_import Stimulus controller, which parse the Tax1099 CSV export
 # client-side so it is never uploaded anywhere).
@@ -36,31 +37,73 @@ class Tax1099ImportService
     "LLC S Corporation", "LLC Partnership", "Others"
   ].freeze
 
-  TIN_TYPES = %w[SSN EIN].freeze
+  W9 = "W9"
+  W8BEN = "W8BEN"
+  W8BENE = "W8BENE"
+  FORM_TYPES = [W9, W8BEN, W8BENE].freeze
+  W8_FORM_TYPES = [W8BEN, W8BENE].freeze
+
+  TIN_TYPES = %w[SSN EIN FTIN].freeze
+
+  # A W-9 is only ever filed with a US TIN, and these W-8s are imported with the
+  # payee's foreign TIN.
+  TIN_TYPES_BY_FORM_TYPE = {
+    W9     => %w[SSN EIN],
+    W8BEN  => %w[FTIN],
+    W8BENE => %w[FTIN],
+  }.freeze
+
+  # TaxBandits' Ch3Status values for a W-8BEN-E. Tax1099's export doesn't carry
+  # it, so an admin always picks it from the signed form.
+  CH3_STATUSES = %w[
+    CORPORATION PARTNERSHIP DISREGARDED_ENTITY SIMPLE_TRUST GRANTOR_TRUST COMPLEX_TRUST ESTATE
+    TAX_EXEMPT_ORGANIZATION PRIVATE_FOUNDATION INTERNATIONAL_ORGANIZATION CENTRAL_BANK_OF_ISSUE
+    FOREIGN_GOVERNMENT_CONTROLLED_ENTITY FOREIGN_GOVERNMENT_INTEGRAL_PART
+  ].freeze
 
   # Enforces at most one live tax1099 form per TIN; see the migration that adds it.
   UNIQUE_TIN_INDEX = "index_tax_forms_unique_live_tax1099_tin_hash"
 
+  # :required is true, or the form types the field is required for. :only_for,
+  # when present, is the form types the field applies to at all; the page hides
+  # it for the rest. :hint, when present, is shown as a tooltip on the label.
   FIELDS = [
+    { key: :form_type, label: "Form Type", required: true },
     { key: :first_name, label: "Payee First Name (or business name)", required: true },
     { key: :middle_name, label: "Payee Middle Name", required: false },
     { key: :last_name, label: "Payee Last Name", required: false },
     { key: :suffix, label: "Payee Suffix", required: false },
-    { key: :tin, label: "TIN (EIN/SSN)", required: true },
-    { key: :tin_type, label: "TIN Type", required: true },
-    { key: :federal_tax_classification, label: "Federal Tax Classification", required: true },
+    # A W-9 always has a TIN. A W-8 may not: its payee can instead tick "FTIN
+    # not legally required"; see #validate_w8_tin!.
+    { key: :tin, label: "TIN (EIN/SSN/FTIN)", required: [W9] },
+    { key: :tin_type, label: "TIN Type", required: [W9] },
+    { key: :ftin_not_legally_required, label: "FTIN not legally required (box ticked on the form)", required: false, only_for: W8_FORM_TYPES },
+    { key: :federal_tax_classification, label: "Federal Tax Classification", required: [W9], only_for: [W9] },
+    {
+      key: :ch3_status, label: "Chapter 3 Status", required: [W8BENE], only_for: [W8BENE],
+      hint: "On the W-8BEN-E, copy the one box ticked in Part I, line 4 (\"Chapter 3 Status (entity type)\"). " \
+            "Ignore line 4's \"hybrid entity\" yes/no question, and don't use line 5: that's the Chapter 4 (FATCA) status."
+    },
     { key: :address1, label: "Address", required: true },
     { key: :city, label: "City", required: true },
-    { key: :state, label: "State", required: true },
-    { key: :zip_code, label: "Zip Code", required: true },
+    { key: :state, label: "State / Province", required: [W9] },
+    { key: :zip_code, label: "Zip / Postal Code", required: [W9] },
+    # The country of residence (or, for a W-8BEN-E, of organization). Ignored for
+    # a W-9, which is always US.
+    { key: :country, label: "Country (2-letter code)", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES },
+    {
+      key: :signer_name, label: "Signer Name", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES,
+      hint: "The name printed in the signature section at the bottom of the form " \
+            "(\"Print name of signer\"). On a W-8BEN this is usually the payee themselves."
+    },
     { key: :email, label: "Email Address", required: true },
-    { key: :completed_on, label: "W-9 Completed Date", required: true },
+    { key: :completed_on, label: "Form Completed Date", required: true },
   ].freeze
 
   Result = Struct.new(:form, :legal_entity, keyword_init: true)
 
   # data                  — the reviewed row, keyed by FIELDS' :key values.
-  # pdf                   — the uploaded W-9 PDF (anything responding to #read).
+  # pdf                   — the uploaded signed form PDF (anything responding to #read).
   # legal_entity          — the LegalEntity an admin picked when the payee
   #                         already had business entities to choose from.
   # new_legal_entity      — true when the admin chose to create a new business
@@ -174,13 +217,25 @@ class Tax1099ImportService
       email.to_s.strip.downcase,
       completed_on,
       kind,
-      # Digits only, ZIP+4 dropped, so "11385" and "11385-1234" agree.
-      zip_code.to_s.gsub(/\D/, "")[0, 5],
+      normalize_postal_code(zip_code),
     ].join("|")
   end
 
-  def self.entity_type_for(tin_type:, federal_tax_classification:)
-    if tin_type == "SSN"
+  # Mirrors Tax::Form#entity_type_from, so an imported form gets the same entity
+  # type a TaxBandits sync of the same form would give it.
+  # Letters and digits only, uppercased, so "sw1a 1aa" and "SW1A 1AA" agree. A
+  # ZIP+4 is cut to its ZIP so "11385" and "11385-1234" agree too.
+  def self.normalize_postal_code(postal_code)
+    normalized = postal_code.to_s.gsub(/[^0-9A-Za-z]/, "").upcase
+    normalized.match?(/\A\d{9}\z/) ? normalized[0, 5] : normalized
+  end
+
+  def self.entity_type_for(form_type:, tin_type:, federal_tax_classification:)
+    if form_type == W8BEN
+      :person
+    elsif form_type == W8BENE
+      :business
+    elsif tin_type == "SSN"
       :person
     elsif federal_tax_classification.to_s.include?("Corporation")
       :corporation
@@ -192,26 +247,78 @@ class Tax1099ImportService
   private
 
   def validate!
-    missing = FIELDS.select { |field| field[:required] && @data[field[:key]].blank? }
-    raise ValidationError, "missing required field(s): #{missing.map { _1[:label] }.join(", ")}" if missing.any?
-
-    unless TIN_TYPES.include?(@data[:tin_type])
-      raise ValidationError, "TIN type must be one of: #{TIN_TYPES.join(", ")}"
+    unless FORM_TYPES.include?(form_type)
+      raise ValidationError, "form type must be one of: #{FORM_TYPES.join(", ")}"
     end
 
-    unless FEDERAL_TAX_CLASSIFICATIONS.include?(@data[:federal_tax_classification])
+    missing = FIELDS.select { |field| required?(field) && @data[field[:key]].blank? }
+    raise ValidationError, "missing required field(s): #{missing.map { _1[:label] }.join(", ")}" if missing.any?
+
+    validate_w8_tin! if W8_FORM_TYPES.include?(form_type)
+
+    tin_types = TIN_TYPES_BY_FORM_TYPE.fetch(form_type)
+    if tin? && !tin_types.include?(@data[:tin_type])
+      raise ValidationError, "TIN type for a #{form_type} must be one of: #{tin_types.join(", ")}"
+    end
+
+    if form_type == W9 && !FEDERAL_TAX_CLASSIFICATIONS.include?(@data[:federal_tax_classification])
       raise ValidationError, "federal tax classification must be one of: #{FEDERAL_TAX_CLASSIFICATIONS.join(", ")}"
     end
 
-    raise ValidationError, "a W-9 PDF is required" if @pdf.blank?
+    if form_type == W8BENE && !CH3_STATUSES.include?(@data[:ch3_status])
+      raise ValidationError, "chapter 3 status must be one of: #{CH3_STATUSES.join(", ")}"
+    end
 
-    raise ValidationError, "W-9 completed date must be a date (YYYY-MM-DD)" if completed_on.nil?
-    raise ValidationError, "W-9 completed date can't be in the future" if completed_on > Time.zone.today
+    if W8_FORM_TYPES.include?(form_type) && !country.match?(/\A[A-Z]{2}\z/)
+      raise ValidationError, "country must be a 2-letter country code"
+    end
+
+    raise ValidationError, "a signed form PDF is required" if @pdf.blank?
+
+    raise ValidationError, "form completed date must be a date (YYYY-MM-DD)" if completed_on.nil?
+    raise ValidationError, "form completed date can't be in the future" if completed_on > Time.zone.today
   end
 
-  # When the payee actually completed the W-9 in Tax1099, not when it was
+  def required?(field)
+    field[:required] == true || (field[:required].is_a?(Array) && field[:required].include?(form_type))
+  end
+
+  def form_type
+    @data[:form_type].to_s
+  end
+
+  # A W-9 payee is always in the US. For a W-8 it's the country of residence
+  # (or organization), which is also the country that issued its foreign TIN.
+  def country
+    form_type == W9 ? "US" : @data[:country].to_s.strip.upcase
+  end
+
+  # A W-8 either gives a foreign TIN or says, with the box on the form, that the
+  # payee's country doesn't require one. Exactly one, so the admin is copying
+  # what the signed form says rather than HCB assuming it from a blank TIN.
+  def validate_w8_tin!
+    if !tin? && !ftin_not_legally_required?
+      raise ValidationError, "enter the foreign TIN, or tick \"FTIN not legally required\" if the form does"
+    elsif tin? && ftin_not_legally_required?
+      raise ValidationError, "a form with a foreign TIN can't also say an FTIN isn't legally required"
+    end
+  end
+
+  def tin?
+    @data[:tin].present?
+  end
+
+  def ftin_not_legally_required?
+    ActiveModel::Type::Boolean.new.cast(@data[:ftin_not_legally_required]) || false
+  end
+
+  def foreign_tin?
+    tin? && @data[:tin_type] == "FTIN"
+  end
+
+  # When the payee actually completed the form in Tax1099, not when it was
   # imported. LegalEntity#latest_completed_tax_form and friends rank forms by
-  # completed_at, so stamping an old W-9 with the import time would let it
+  # completed_at, so stamping an old form with the import time would let it
   # outrank a newer form the payee has since completed through TaxBandits.
   def completed_on
     return @completed_on if defined?(@completed_on)
@@ -244,20 +351,37 @@ class Tax1099ImportService
 
   def entity_type
     @entity_type ||= self.class.entity_type_for(
+      form_type:,
       tin_type: @data[:tin_type],
       federal_tax_classification: @data[:federal_tax_classification]
     )
   end
 
+  # A foreign TIN is only unique within the country that issued it, so it's
+  # namespaced by the country of residence, the same way Tax::Form#identify_tin
+  # namespaces one from a TaxBandits sync.
   def tin_hash
     @tin_hash ||= Tax::IdentificationNumber::Hasher.hash_tin(
       @data[:tin],
-      tin_type: Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:),
-      country: "US"
+      tin_type: tin_namespace,
+      country: foreign_tin? ? country : "US"
     )
   end
 
+  # The TIN space (individual, entity or foreign) the fingerprint and the form's
+  # tin_type use, as opposed to @data[:tin_type] (SSN, EIN or FTIN).
+  # nil without a TIN, same as a TIN-less W-8 synced from TaxBandits.
+  def tin_namespace
+    return nil unless tin?
+
+    Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: foreign_tin?)
+  end
+
+  # A TIN-less W-8 has no fingerprint to check, and find_by(tin_hash: nil) would
+  # match every other TIN-less import.
   def duplicate_tax1099_form
+    return nil if tin_hash.nil?
+
     Tax::Form.tax1099.not_discarded.find_by(tin_hash:)
   end
 
@@ -269,15 +393,15 @@ class Tax1099ImportService
   # Runs before the submission, inside the same transaction; see #run.
   def complete_form!(form)
     form.update!(
-      form_type: :W9,
+      form_type:,
       entity_type:,
-      tin_type: Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:),
+      tin_type: tin_namespace,
       tin_hash:,
       address_line1: @data[:address1],
       address_city: @data[:city],
-      address_state: @data[:state],
-      address_postal_code: @data[:zip_code],
-      address_country: "US",
+      address_state: @data[:state].presence,
+      address_postal_code: @data[:zip_code].presence,
+      address_country: country,
       aasm_state: "completed",
       completed_at: completed_on.in_time_zone
     )
@@ -285,27 +409,94 @@ class Tax1099ImportService
 
   def build_payload(form, pdf_url)
     {
-      "FormType"      => "W9",
+      "FormType"      => form_type,
       "IsTinMatching" => false,
       "PayeeRef"      => form.public_id,
       "PdfUrl"        => pdf_url,
-      "FormW9"        => {
-        "FirstNm"                  => @data[:first_name],
-        "Line1Nm"                  => [@data[:first_name], @data[:middle_name], @data[:last_name], @data[:suffix]].compact_blank.join(" "),
-        "MiddleNm"                 => @data[:middle_name],
-        "LastNm"                   => @data[:last_name],
-        "Suffix"                   => @data[:suffix],
-        "TINType"                  => @data[:tin_type],
-        "TIN"                      => @data[:tin],
-        "Address"                  => {
-          "Address1" => @data[:address1],
-          "City"     => @data[:city],
-          "State"    => @data[:state],
-          "ZipCd"    => @data[:zip_code]
-        },
-        "FederalTaxClassification" => @data[:federal_tax_classification]
+    }.merge(
+      case form_type
+      when W9 then { "FormW9" => w9_payload }
+      when W8BEN then { "FormW8Ben" => w8ben_payload }
+      when W8BENE then { "FormW8BENE" => w8bene_payload }
+      end
+    )
+  end
+
+  def w9_payload
+    {
+      "FirstNm"                  => @data[:first_name],
+      "Line1Nm"                  => full_name,
+      "MiddleNm"                 => @data[:middle_name],
+      "LastNm"                   => @data[:last_name],
+      "Suffix"                   => @data[:suffix],
+      "TINType"                  => @data[:tin_type],
+      "TIN"                      => @data[:tin],
+      "Address"                  => {
+        "Address1" => @data[:address1],
+        "City"     => @data[:city],
+        "State"    => @data[:state],
+        "ZipCd"    => @data[:zip_code]
+      },
+      "FederalTaxClassification" => @data[:federal_tax_classification]
+    }
+  end
+
+  # Tax1099's export has a single country, so it is used for citizenship as well
+  # as residence. TaxBandits requires the signer's name on a W-8, which an admin
+  # copies from the signed PDF.
+  def w8ben_payload
+    {
+      "NmOfIndividual"           => full_name,
+      "FirstNm"                  => @data[:first_name],
+      "MiddleNm"                 => @data[:middle_name],
+      "LastNm"                   => @data[:last_name],
+      "Suffix"                   => @data[:suffix],
+      "CitizenOfCountry"         => country,
+      "ForeignTIN"               => @data[:tin].presence,
+      "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
+      "PermanentAddress"         => w8_address,
+      "MailingAddress"           => w8_address,
+      "Signature"                => { "SignerNm" => @data[:signer_name] }
+    }
+  end
+
+  def w8bene_payload
+    {
+      "Part1"  => {
+        "NmOfOrganization"         => @data[:first_name],
+        "CountryOfOrganization"    => country,
+        "Ch3Status"                => @data[:ch3_status],
+        "ForeignTIN"               => @data[:tin].presence,
+        "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
+        "PermanentAdd"             => w8_address,
+        "MailAdd"                  => w8_address
+      },
+      # The certification the signer made by signing the PDF (line 30), dated
+      # when the form was completed.
+      "Part30" => {
+        "IsCapacityToSign" => true,
+        "SignerNm"         => @data[:signer_name],
+        # The format of TaxBandits' sample request; it documents no other.
+        "SignDate"         => completed_on.strftime("%Y-%m-%dT00:00:00")
       }
     }
+  end
+
+  # TaxBandits' W-8BEN sample names the region ProvinceOrStateNm while its field
+  # reference (and the W-8BEN-E) call it State, so both are sent.
+  def w8_address
+    {
+      "Address1"          => @data[:address1],
+      "City"              => @data[:city],
+      "State"             => @data[:state].presence,
+      "ProvinceOrStateNm" => @data[:state].presence,
+      "Country"           => country,
+      "PostalCd"          => @data[:zip_code].presence
+    }
+  end
+
+  def full_name
+    [@data[:first_name], @data[:middle_name], @data[:last_name], @data[:suffix]].compact_blank.join(" ")
   end
 
   # Finds the legal entity the form belongs on by email, same as the console

@@ -1,26 +1,73 @@
 import { Controller } from '@hotwired/stimulus'
 import csrf from '../common/csrf'
 
-// Column positions in Tax1099's W-9 export. Its header row is:
+// Columns are looked up by header name, because Tax1099's W-9 and W-8 exports
+// put them in different positions. Their header rows are:
 //
-//   Payer Name, Payer TIN, Payee First Name, Payee Middle Name, Payee Last Name,
-//   Payee Suffix, EIN/SSN, W9 Requested Date, W9 Received Date, Email Address,
-//   Mail Status, Business Type, Filer Type, Address, City, State, Zip Code,
-//   Country, W9 Request, W9 Count, W9 Completed Date, W9 Cancel Date
+//   W-9: Payer Name, Payer TIN, Payee First Name, Payee Middle Name,
+//        Payee Last Name, Payee Suffix, EIN/SSN, W9 Requested Date,
+//        W9 Received Date, Email Address, Mail Status, Business Type, Filer Type,
+//        Address, City, State, Zip Code, Country, W9 Request, W9 Count,
+//        W9 Completed Date, W9 Cancel Date
+//   W-8: Payer Name, Payer TIN, Payee First Name, Payee Middle Name,
+//        Payee Last Name, Payee Suffix, EIN/SSN, W8 Requested Date,
+//        W8 Received Date, Email Address, Mail Status (...), Filer Type, Address,
+//        City, State, Zip Code, Country, W8 Request, W8 FormType
+//
+// Each entry lists the header names that column goes by; the first one present
+// wins.
 const COLUMN = {
-  firstName: 2,
-  middleName: 3,
-  lastName: 4,
-  suffix: 5,
-  tin: 6,
-  w9ReceivedDate: 8,
-  email: 9,
-  filerType: 12,
-  address: 13,
-  city: 14,
-  state: 15,
-  zipCode: 16,
-  w9CompletedDate: 20,
+  firstName: ['Payee First Name'],
+  middleName: ['Payee Middle Name'],
+  lastName: ['Payee Last Name'],
+  suffix: ['Payee Suffix'],
+  tin: ['EIN/SSN'],
+  receivedDate: ['W9 Received Date', 'W8 Received Date'],
+  completedDate: ['W9 Completed Date'],
+  email: ['Email Address'],
+  filerType: ['Filer Type'],
+  address: ['Address'],
+  city: ['City'],
+  state: ['State'],
+  zipCode: ['Zip Code'],
+  country: ['Country'],
+  w8FormType: ['W8 FormType'],
+}
+
+// Maps each COLUMN key to its index in this CSV's header row, or -1.
+function columnIndexes(header) {
+  const names = header.map(name => name.trim().toLowerCase())
+
+  return Object.fromEntries(
+    Object.entries(COLUMN).map(([key, candidates]) => [
+      key,
+      candidates
+        .map(candidate => names.indexOf(candidate.toLowerCase()))
+        .find(index => index !== -1) ?? -1,
+    ])
+  )
+}
+
+// Tax1099 writes W-8 form types like "FormW8-BEN" and "FormW8-BEN-E".
+function w8FormType(value) {
+  const normalized = value.toUpperCase().replace(/[^0-9A-Z]/g, '')
+  if (normalized === 'FORMW8BEN') return 'W8BEN'
+  if (normalized === 'FORMW8BENE') return 'W8BENE'
+  return ''
+}
+
+// Mirrors Tax1099ImportService.normalize_postal_code.
+function normalizePostalCode(value) {
+  const normalized = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()
+  return /^\d{9}$/.test(normalized) ? normalized.slice(0, 5) : normalized
+}
+
+// Mirrors Tax1099ImportService.entity_type_for, reduced to the one distinction
+// the row key needs.
+function isPerson(data) {
+  if (data.form_type === 'W8BEN') return true
+  if (data.form_type === 'W8BENE') return false
+  return data.tin_type === 'SSN'
 }
 
 // Turns a Tax1099 date (M/D/YYYY, optionally followed by a time) or an ISO date
@@ -44,9 +91,8 @@ function rowKey(data) {
   return [
     data.email.trim().toLowerCase(),
     data.completed_on,
-    data.tin_type === 'SSN' ? 'person' : 'business',
-    // Digits only, ZIP+4 dropped, so "11385" and "11385-1234" agree.
-    data.zip_code.replace(/\D/g, '').slice(0, 5),
+    isPerson(data) ? 'person' : 'business',
+    normalizePostalCode(data.zip_code),
   ].join('|')
 }
 
@@ -150,8 +196,7 @@ export default class extends Controller {
       return
     }
 
-    // Drop the header row.
-    rows.shift()
+    this.columns = columnIndexes(rows.shift() ?? [])
 
     if (rows.length === 0) {
       this.showCsvError('That CSV has no data rows.')
@@ -183,6 +228,10 @@ export default class extends Controller {
 
     this.summaryTarget.hidden = false
     this.updateSummary()
+
+    // ui.js only binds tooltips that exist when it runs, and these rows were
+    // just built from the template.
+    window.attachTooltipListener?.()
   }
 
   toggleRow(event) {
@@ -197,7 +246,7 @@ export default class extends Controller {
     if (!body.hidden) this.refreshLegalEntities(row)
   }
 
-  // The email, TIN type and tax classification together decide which legal
+  // The form type, email, TIN type and tax classification together decide which legal
   // entity a form lands on, so any of them changing invalidates the answer.
   entityShapeChanged(event) {
     this.refreshLegalEntities(event.target.closest('[data-row]'))
@@ -309,10 +358,36 @@ export default class extends Controller {
 
     this.fieldsValue.forEach(key => {
       const input = row.querySelector(`[data-field="${key}"]`)
-      if (input) input.value = data[key] ?? ''
+      if (!input) return
+
+      if (input.type === 'checkbox') {
+        input.checked = Boolean(data[key])
+      } else {
+        input.value = data[key] ?? ''
+      }
     })
 
+    this.showFieldsForFormType(row)
+
     return row
+  }
+
+  formTypeChanged(event) {
+    const row = event.target.closest('[data-row]')
+
+    this.showFieldsForFormType(row)
+    this.refreshLegalEntities(row)
+  }
+
+  // Hides the fields that don't apply to the row's form type, e.g. federal tax
+  // classification on a W-8. Their values are left alone; the server ignores
+  // them for form types they don't apply to.
+  showFieldsForFormType(row) {
+    const formType = row.querySelector('[data-field="form_type"]').value
+
+    row.querySelectorAll('[data-only-for]').forEach(element => {
+      element.hidden = !element.dataset.onlyFor.split(' ').includes(formType)
+    })
   }
 
   // Mirrors Tax1099ImportService's expectations. Tax1099's export puts a
@@ -321,38 +396,64 @@ export default class extends Controller {
   // it's moved here rather than at submission time — that way the admin reviews
   // it in the field it will actually be sent as.
   prefill(cells) {
-    const cell = index => (cells[index] ?? '').trim()
+    const cell = key => (cells[this.columns[key]] ?? '').trim()
 
-    const tin = cell(COLUMN.tin)
+    // Only the W-8 export has a W8 FormType column.
+    const isW8Export = this.columns.w8FormType !== -1
+    const formType = isW8Export ? w8FormType(cell('w8FormType')) : 'W9'
+
+    const tin = cell('tin')
     // A formatted SSN (123-45-6789) has two dashes; an EIN (12-3456789) has one.
-    const isBusiness = (tin.match(/-/g) || []).length !== 2
-    const suffix = cell(COLUMN.suffix)
+    const isBusiness = isW8Export
+      ? formType === 'W8BENE'
+      : (tin.match(/-/g) || []).length !== 2
+    const suffix = cell('suffix')
+
+    // The W-8 export can put an individual's whole name in the last name
+    // column, so it moves to first name when that's empty.
+    const moveLastToFirst = isBusiness || (isW8Export && !cell('firstName'))
 
     return {
-      first_name: isBusiness ? cell(COLUMN.lastName) : cell(COLUMN.firstName),
-      middle_name: cell(COLUMN.middleName),
-      last_name: isBusiness ? '' : cell(COLUMN.lastName),
+      form_type: formType,
+      first_name: moveLastToFirst ? cell('lastName') : cell('firstName'),
+      middle_name: cell('middleName'),
+      last_name: moveLastToFirst ? '' : cell('lastName'),
       suffix: suffix === EMPTY_SUFFIX ? '' : suffix,
       tin,
-      tin_type: isBusiness ? 'EIN' : 'SSN',
+      tin_type: isW8Export ? 'FTIN' : isBusiness ? 'EIN' : 'SSN',
       // An SSN filer can still be a sole proprietor rather than an individual,
       // so this is only prefilled when Tax1099's Filer Type agrees. Everything
       // else is left blank for the admin to pick.
       federal_tax_classification:
-        !isBusiness && cell(COLUMN.filerType).toLowerCase() === 'individual'
+        !isW8Export &&
+        !isBusiness &&
+        cell('filerType').toLowerCase() === 'individual'
           ? 'Individual'
           : '',
-      address1: cell(COLUMN.address),
-      city: cell(COLUMN.city),
-      state: cell(COLUMN.state),
-      zip_code: cell(COLUMN.zipCode),
-      email: cell(COLUMN.email),
-      // When the W-9 was actually completed, so the imported form ranks
+      // Not in either export; always picked from the signed W-8BEN-E.
+      ch3_status: '',
+      // Never assumed from a blank TIN; ticked by the admin from the signed W-8.
+      ftin_not_legally_required: '',
+      // An individual usually signs their own W-8BEN; a W-8BEN-E's signer isn't
+      // in the export, so it's left for the admin to copy from the PDF.
+      signer_name:
+        formType === 'W8BEN'
+          ? [cell('firstName'), cell('middleName'), cell('lastName')]
+              .filter(Boolean)
+              .join(' ')
+          : '',
+      address1: cell('address'),
+      city: cell('city'),
+      state: cell('state'),
+      zip_code: cell('zipCode'),
+      country: cell('country').toUpperCase(),
+      email: cell('email'),
+      // When the form was actually completed, so the imported form ranks
       // correctly against any the payee completes later. Received is the
-      // fallback for rows Tax1099 never stamped as completed.
+      // fallback for rows Tax1099 never stamped as completed, and the only
+      // date the W-8 export has.
       completed_on:
-        toIsoDate(cell(COLUMN.w9CompletedDate)) ||
-        toIsoDate(cell(COLUMN.w9ReceivedDate)),
+        toIsoDate(cell('completedDate')) || toIsoDate(cell('receivedDate')),
     }
   }
 
@@ -361,7 +462,13 @@ export default class extends Controller {
 
     this.fieldsValue.forEach(key => {
       const input = row.querySelector(`[data-field="${key}"]`)
-      data[key] = input ? input.value.trim() : ''
+      if (!input) {
+        data[key] = ''
+      } else if (input.type === 'checkbox') {
+        data[key] = input.checked ? '1' : ''
+      } else {
+        data[key] = input.value.trim()
+      }
     })
 
     return data
@@ -377,13 +484,21 @@ export default class extends Controller {
     const picker = row.querySelector('[data-legal-entity-picker]')
     const select = row.querySelector('[data-legal-entity-select]')
 
-    if (!data.email || !data.tin_type || !data.federal_tax_classification) {
+    // Only a W-9 needs the TIN type and classification to know the entity
+    // shape; a W-8's form type alone decides it.
+    if (
+      !data.email ||
+      !data.form_type ||
+      (data.form_type === 'W9' &&
+        (!data.tin_type || !data.federal_tax_classification))
+    ) {
       picker.hidden = true
       return
     }
 
     const url = new URL(this.legalEntitiesUrlValue, window.location.origin)
     url.searchParams.set('email', data.email)
+    url.searchParams.set('form_type', data.form_type)
     url.searchParams.set('tin_type', data.tin_type)
     url.searchParams.set(
       'federal_tax_classification',

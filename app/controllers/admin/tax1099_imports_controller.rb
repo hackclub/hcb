@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 module Admin
-  # Migrates W-9s collected through Tax1099 into TaxBandits, one row at a time.
+  # Migrates W-9s and W-8s collected through Tax1099 into TaxBandits, one row at
+  # a time.
   #
   # The Tax1099 CSV export is parsed entirely in the browser (see the
   # tax1099_import Stimulus controller) and is never uploaded: only the row an
   # admin has actually reviewed and pressed Import on is ever sent here, and only
-  # once. The signed W-9 PDF that goes with it is held in memory for TaxBandits
+  # once. The signed form PDF that goes with it is held in memory for TaxBandits
   # to fetch once and is never persisted — see Tax::W9PdfStore.
   class Tax1099ImportsController < Admin::BaseController
     # The legal entity picker's value for "create a new business legal entity".
@@ -15,6 +16,8 @@ module Admin
     def new
       @federal_tax_classifications = Tax1099ImportService::FEDERAL_TAX_CLASSIFICATIONS
       @tin_types = Tax1099ImportService::TIN_TYPES
+      @form_types = Tax1099ImportService::FORM_TYPES
+      @ch3_statuses = Tax1099ImportService::CH3_STATUSES
       @fields = Tax1099ImportService::FIELDS
       @imported_row_keys = Tax1099ImportService.imported_row_keys
     end
@@ -26,6 +29,7 @@ module Admin
       candidates = Tax1099ImportService.legal_entity_candidates(
         email: params[:email].to_s.strip,
         entity_type: Tax1099ImportService.entity_type_for(
+          form_type: params[:form_type].to_s,
           tin_type: params[:tin_type].to_s,
           federal_tax_classification: params[:federal_tax_classification].to_s
         )
