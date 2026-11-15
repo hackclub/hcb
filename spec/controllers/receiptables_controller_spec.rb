@@ -196,6 +196,26 @@ RSpec.describe ReceiptablesController do
       expect(response).to redirect_to(hcb_code_path(hcb_code))
     end
 
+    it "ignores a javascript: return_to" do
+      user = create(:user, full_name: "Alex Example")
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:lost_receipt, params: base_params.merge(return_to: "javascript://test.host/%0aalert(1)"))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("javascript:")
+    end
+
+    it "refuses receiptables that can't be marked no/lost" do
+      create_session(create(:user, :make_admin), verified: true)
+      expense = create(:reimbursement_expense)
+
+      expect do
+        get(:lost_receipt, params: { receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id })
+      end.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
     it "refuses a signed in user who isn't on the organization" do
       create_session(create(:user, full_name: "Alex Example"), verified: true)
       post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details))

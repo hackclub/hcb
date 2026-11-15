@@ -6,6 +6,7 @@ class ReceiptablesController < ApplicationController
   skip_before_action :signed_in_user, only: [:lost_receipt, :mark_no_or_lost]
   before_action :set_receiptable
   before_action :authorize_receiptable
+  before_action :require_markable_receiptable
 
   def lost_receipt
     # First ask whether they've really looked for the receipt.
@@ -27,7 +28,7 @@ class ReceiptablesController < ApplicationController
 
     if @statement.submit(receiptable:)
       flash[:success] = "Lost receipt statement added."
-      redirect_to url_from(params[:return_to]) || fallback_location
+      redirect_to safe_url(params[:return_to]) || fallback_location
     else
       render_page :lost_receipt, status: :unprocessable_entity
     end
@@ -39,10 +40,20 @@ class ReceiptablesController < ApplicationController
 
   def render_page(template, **options)
     # The link can sit inside a frame or popover, so the referer is the only reliable way back.
-    @return_to = url_from(params[:return_to]) || (url_from(request.referrer) if request.get?)
+    @return_to = safe_url(params[:return_to]) || (safe_url(request.referrer) unless request.post?)
     @back_url = @return_to || url_for(fallback_location)
     @hide_transfer_notes = true
     render template, layout: "transfer", **options
+  end
+
+  # url_from only checks the host, which a javascript: URL can fake, and this ends up in an href.
+  def safe_url(url)
+    url_from(url) if url.to_s.start_with?("/", "http://", "https://")
+  end
+
+  # Payments, reimbursement expenses and the like can't be marked no/lost, and aren't always in USD.
+  def require_markable_receiptable
+    raise ActiveRecord::RecordNotFound unless @receiptable.try(:has_attribute?, :marked_no_or_lost_receipt_at)
   end
 
   # Signed link visitors can't view the transaction itself.
