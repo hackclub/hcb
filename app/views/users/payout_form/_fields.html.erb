@@ -109,7 +109,7 @@
 
     <div class="field">
       <%= form.label :currency, "Currency" %>
-      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { data: { herb_set: "selected_currency=$value" } } %>
+      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys - [form.object.currency] }, { data: { herb_set: "selected_currency=$value" } } %>
     </div>
 
     <%= form.hidden_field :wise_recipient_id, value: "" %>

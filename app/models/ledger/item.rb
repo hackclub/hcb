@@ -67,7 +67,6 @@ class Ledger
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
-    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
 
@@ -81,6 +80,7 @@ class Ledger
     has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayments, through: :repayment_allocations
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -182,6 +182,13 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # A reimbursement payout's receipts are uploaded to the expense it pays out,
+    # not to the payout itself, so read them from there (as HcbCode#receipts
+    # does for the payout's HCB code). Every other item reads its own.
+    def receipts
+      expense_payout_receipts || super
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any
@@ -450,8 +457,14 @@ class Ledger
       end
     end
 
+    # The receipts on the expense this item pays out, when it is a reimbursement
+    # payout; nil for every other item.
+    def expense_payout_receipts
+      linked_object&.expense&.receipts if linked_object_type == "Reimbursement::ExpensePayout"
+    end
+
     def calculate_receipt_count
-      return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+      return expense_payout_receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
 
       receipts.size
     end
@@ -463,8 +476,15 @@ class Ledger
     def calculate_status
       # An item that has a linked object but no transactions yet (e.g. an invoice
       # that has been created but not paid). The linked object keeps it from being
-      # pruned once orphaned-item pruning exists.
-      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      # pruned once orphaned-item pruning exists. One that was rejected or
+      # canceled before any transaction existed (a scheduled ACH transfer that
+      # was canceled, a voided invoice) is no longer intended.
+      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+        return :rejected if linked_object.try(:rejected?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :intended
+      end
 
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"

@@ -8,7 +8,7 @@
     <% if @event %>
       <%= user_mention stripe_card.user, class: style ? "smoke" : "", disable_tooltip: true %>
     <% else %>
-      <%= link_to stripe_card.event.name, stripe_card.event, class: style ? "smoke" : "" %>
+      <%= link_to_if policy(stripe_card.event).show?, stripe_card.event.name, stripe_card.event, class: style ? "smoke" : "" %>
     <% end %>
     is on the way!
   </h3>

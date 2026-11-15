@@ -112,7 +112,7 @@ RSpec.describe Receipt, type: :model do
       copy_to = create(:hcb_code)
 
       described_class.reupload(old_receiptable: receipt.receiptable, new_receiptable: copy_to)
-      copy = copy_to.receipts.sole
+      copy = described_class.where(receiptable: copy_to).sole
 
       expect(copy.file.blob).to eq(receipt.file.blob)
       expect(copy).to be_auto_rotated
