@@ -79,22 +79,33 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(Payment.sole.amount_cents).to eq(50_00)
     end
 
-    it "rejects only after the confirmation, which shows above the modal" do
+    it "rejects only once a reason is given, then shows that reason on the invoice" do
       invoice = create_invoice("Week 1 hours")
       visit_without_animations position_page
       open_invoice(invoice)
 
-      within_invoice_modal(invoice) { click_button "Reject" }
-      within(".swal-modal") { click_button "Cancel" }
-      expect(page).to have_no_css(".swal-modal")
-      expect(invoice.reload).to be_submitted
+      within_invoice_modal(invoice) do
+        click_button "Reject"
+        expect(page).to have_no_button("Approve")
+        click_button "Cancel"
+        expect(page).to have_button("Approve")
+        expect(invoice.reload).to be_submitted
 
-      within_invoice_modal(invoice) { click_button "Reject" }
-      within(".swal-modal") { click_button "Confirm" }
+        click_button "Reject"
+        click_button "Reject invoice"
+        expect(invoice.reload).to be_submitted
+
+        fill_in "rejection_reason", with: "<b>Wrong</b> hours"
+        click_button "Reject invoice"
+      end
 
       expect(page).to have_invoice_status("Rejected")
       expect(invoice.reload).to be_rejected
       expect(Payment.count).to eq(0)
+
+      page.execute_script("jQuery.fx.off = true")
+      open_invoice(invoice)
+      within_invoice_modal(invoice) { expect(page).to have_text("<b>Wrong</b> hours") }
     end
 
     it "pays nothing when the invoice was reviewed while the modal was open" do

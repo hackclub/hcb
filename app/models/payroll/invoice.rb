@@ -12,6 +12,7 @@
 #  description         :text
 #  name                :text             not null
 #  rejected_at         :datetime
+#  rejection_reason    :text
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  payment_id          :bigint
@@ -64,9 +65,9 @@ module Payroll
         transitions from: :submitted, to: :approved
       end
 
-      event :mark_rejected do
-        after do |reviewed_by|
-          update!(reviewed_by:)
+      event :mark_rejected, after_commit: :notify_contractor do
+        after do |reviewed_by, rejection_reason|
+          update!(reviewed_by:, rejection_reason:)
         end
         transitions from: :submitted, to: :rejected
       end
@@ -127,6 +128,10 @@ module Payroll
       return if approved?
 
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
+    end
+
+    def notify_contractor
+      Payroll::InvoiceMailer.with(invoice: self).rejected.deliver_later
     end
 
     def currency_matches_position

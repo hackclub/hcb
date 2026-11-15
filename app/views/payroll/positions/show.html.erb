@@ -154,12 +154,34 @@
           <% @invoices.each do |invoice| %>
             <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
             <% preview_receipt = receipts.find(&:preview) %>
-            <% review_actions = capture do %>
-              <div class="flex gap-2">
-                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
-                <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-              </div>
-            <% end if @can_review && invoice.submitted? %>
+            <% reviewable = @can_review && invoice.submitted? %>
+            <% review_footer = capture do %>
+              <% if reviewable %>
+                <div data-controller="panel-swap">
+                  <div class="flex gap-2" data-panel-swap-target="select">
+                    <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
+                    <button type="button" class="btn bg-muted flex-1" data-action="panel-swap#showForm">Reject</button>
+                  </div>
+                  <%= form_with url: reject_payroll_invoice_path(invoice), style: "display: none;", data: { turbo_frame: "_top", panel_swap_target: "form" } do |form| %>
+                    <label class="block">
+                      <strong>Why are you rejecting this invoice?</strong>
+                      <span class="muted block h5 mb-2">We'll email this to <%= @position.payee.display_name %> so they can submit a corrected invoice.</span>
+                      <%= form.text_area :rejection_reason, id: nil, rows: 3, required: true, placeholder: "e.g. The hours don't match your timesheet", class: "w-full max-w-full min-h-20" %>
+                    </label>
+                    <div class="flex gap-2 mt-2">
+                      <button type="button" class="btn bg-muted" data-action="panel-swap#showSelect">Cancel</button>
+                      <%= form.button "Reject invoice", class: "btn bg-error flex-1 nowrap" %>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <strong class="error flex items-center gap-1">
+                  <%= inline_icon "important", size: 20 %>
+                  Reason for rejection
+                </strong>
+                <%= simple_format h(invoice.rejection_reason), class: "mt-1 mb-0 break-words" %>
+              <% end %>
+            <% end if reviewable || invoice.rejection_reason.present? %>
             <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
@@ -178,7 +200,7 @@
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">
                     <% receipts.each do |receipt| %>
-                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_footer && tag.div(review_footer, class: "px-6 py-4") %>
                     <% end %>
                   </div>
                 <% else %>
@@ -192,7 +214,7 @@
                   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">
                     <%= modal_header invoice.name %>
                     <p class="muted mt0">This <%= render_money invoice.amount_cents %> invoice has no attachment to preview.</p>
-                    <%= review_actions %>
+                    <%= review_footer %>
                   </section>
                 <% end %>
               </td>

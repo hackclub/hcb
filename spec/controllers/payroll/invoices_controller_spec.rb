@@ -191,25 +191,97 @@ RSpec.describe Payroll::InvoicesController do
       end
 
       it "can't reject the invoice" do
-        post :reject, params: { id: invoice.hashid }
+        expect { post :reject, params: { id: invoice.hashid, rejection_reason: "Wrong amount" } }
+          .not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
 
         expect(invoice.reload).to be_submitted
+        expect(invoice.rejection_reason).to be_nil
       end
     end
   end
 
   describe "POST #reject" do
-    before { create_session(organizer, verified: true) }
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency) }
 
-    # Invoices created before amounts had to be positive must still be reviewable.
-    it "rejects a legacy invoice with a non-positive amount" do
-      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
-      invoice.update_column(:amount_cents, 0)
+    def reject!(rejection_reason: "The hours don't match your timesheet")
+      post :reject, params: { id: invoice.hashid, rejection_reason: }
+    end
 
-      post :reject, params: { id: invoice.hashid }
+    context "as an organizer" do
+      before { create_session(organizer, verified: true) }
 
-      expect(invoice.reload).to be_rejected
-      expect(invoice.reviewed_by).to eq(organizer)
+      it "records the reason and emails it to the contractor" do
+        expect { reject!(rejection_reason: "  Wrong amount  ") }
+          .to have_enqueued_mail(Payroll::InvoiceMailer, :rejected).with(params: { invoice: }, args: [])
+
+        expect(invoice.reload).to be_rejected
+        expect(invoice.rejection_reason).to eq("Wrong amount")
+        expect(invoice.reviewed_by).to eq(organizer)
+      end
+
+      it "refuses a missing or whitespace-only reason" do
+        [nil, "", " \n\t "].each do |rejection_reason|
+          expect { reject!(rejection_reason:) }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+          expect(invoice.reload).to be_submitted
+          expect(flash[:error]).to eq("Please explain why you're rejecting this invoice.")
+        end
+      end
+
+      it "doesn't look invoices up by numeric id" do
+        expect { post :reject, params: { id: invoice.id, rejection_reason: "Wrong amount" } }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+
+      it "keeps the original reason and sends one email when rejected twice" do
+        reject!(rejection_reason: "First reason")
+
+        expect { reject!(rejection_reason: "Second reason") }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+        expect(invoice.reload.rejection_reason).to eq("First reason")
+        expect(flash[:error]).to eq("This invoice has already been reviewed.")
+      end
+
+      it "can't reject an invoice that was already approved and paid" do
+        stub_balance(100_00)
+        invoice.approve(reviewed_by: organizer)
+
+        expect { reject! }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+        expect(invoice.reload).to be_approved
+        expect(invoice.rejection_reason).to be_nil
+      end
+
+      # Invoices created before amounts had to be positive must still be reviewable.
+      it "rejects a legacy invoice with a non-positive amount" do
+        invoice.update_column(:amount_cents, 0)
+
+        reject!
+
+        expect(invoice.reload).to be_rejected
+      end
+    end
+
+    context "as an organizer who is also the contractor" do
+      before do
+        create(:legal_entity_user, legal_entity:, user: organizer)
+        create_session(organizer, verified: true)
+      end
+
+      it "can't reject their own invoice" do
+        expect { reject! }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+        expect(invoice.reload).to be_submitted
+      end
+    end
+
+    context "as an organizer who isn't a manager" do
+      before do
+        member = create(:user)
+        create(:organizer_position, event:, user: member, role: :member)
+        create_session(member, verified: true)
+      end
+
+      it "can't reject the invoice" do
+        expect { reject! }.not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+        expect(invoice.reload).to be_submitted
+      end
     end
   end
 end

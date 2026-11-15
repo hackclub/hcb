@@ -158,7 +158,7 @@
   </div>
 
   <% if @invoices.any? %>
-    <h2 class="mt-0 mb-2">Pending invoices</h2>
+    <h2 class="mt-0 mb-2">Invoices</h2>
     <article class="table-container mb-4">
       <table>
         <thead>
@@ -176,8 +176,11 @@
               <td><span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span></td>
               <td><%= format_date invoice.created_at %></td>
               <td><strong><%= invoice.event.name %></strong></td>
-              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
-                <%= invoice.name %>
+              <td style="max-width: 25ch;">
+                <div class="overflow-hidden truncate" title="<%= invoice.name %>"><%= invoice.name %></div>
+                <% if invoice.rejection_reason.present? %>
+                  <div class="muted text-xs whitespace-normal break-words"><%= invoice.rejection_reason %></div>
+                <% end %>
               </td>
               <td class="text-right"><%= render_money invoice.amount_cents %></td>
             </tr>

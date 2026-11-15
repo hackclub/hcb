@@ -1,0 +1,24 @@
+<p>Hello,</p>
+
+<p>
+  <%= @event.name %> rejected your invoice "<%= @invoice.name %>" for
+  <%= @invoice.amount.format(with_currency: true) %>, so it won't be paid.
+</p>
+
+<p><strong>Reason from <%= @invoice.reviewed_by&.name || @event.name %>:</strong></p>
+
+<blockquote>
+  <%= simple_format h(@invoice.rejection_reason) %>
+</blockquote>
+
+<p>
+  Once you've addressed this, you can
+  <%= link_to "submit a new invoice on HCB", my_pay_url %>.
+  If you have any questions, just reply to this email.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
