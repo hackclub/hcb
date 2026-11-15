@@ -54,12 +54,28 @@ module Admin
         form_id: result.form.public_id,
         legal_entity: { id: result.legal_entity.id, name: result.legal_entity.name }
       }
+    rescue Tax1099ImportService::UncertainSubmissionError => e
+      # Neither a success nor a clean failure: the form was kept, and the row
+      # must not be retried as-is. See Tax1099ImportService#run.
+      render json: { status: "uncertain", message: e.message, form_id: e.form.public_id }, status: :accepted
     rescue Tax1099ImportService::DuplicateError => e
       render json: { status: "duplicate", message: e.message, form_id: e.existing_form.public_id }, status: :conflict
     rescue Tax1099ImportService::ValidationError, Tax::W9PdfStore::TooLarge, Tax::W9PdfStore::NotAPdf => e
       render json: { status: "invalid", message: e.message }, status: :unprocessable_entity
     rescue Tax1099ImportService::SubmissionError, Tax::W9PdfStore::CacheUnavailable => e
       render json: { status: "failed", message: e.message }, status: :bad_gateway
+    rescue => e
+      # Answered as JSON rather than left to become a 500 page, so the page can
+      # tell this apart from a request that never got an answer. Only the class
+      # is shown: the message could carry the TIN. That nothing was submitted
+      # is guaranteed by Tax1099ImportService#run, which lets no other error
+      # escape once a form exists.
+      Rails.error.report(e, handled: true)
+      render json: {
+        status: "failed",
+        message: "Something went wrong before anything was submitted to TaxBandits (#{e.class}). " \
+                 "Nothing was imported; you can try again."
+      }, status: :internal_server_error
     end
 
     private

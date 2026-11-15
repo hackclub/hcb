@@ -107,6 +107,7 @@ const STATUS = {
   importing: { label: 'Importing…', className: 'bg-muted' },
   imported: { label: 'Imported', className: 'bg-success' },
   duplicate: { label: 'Duplicate', className: 'bg-muted' },
+  uncertain: { label: 'Unconfirmed', className: 'bg-warning' },
   skipped: { label: 'Skipped', className: 'bg-muted' },
   failed: { label: 'Failed', className: 'bg-error' },
 }
@@ -302,6 +303,11 @@ export default class extends Controller {
     this.setMessage(row, null)
     row.querySelector('[data-import]').disabled = true
 
+    // A network error or a response that isn't the controller's JSON (a proxy
+    // timeout, an error page) says nothing about how far the import got: the
+    // server may have kept going after the connection dropped, all the way to
+    // TaxBandits. So it's never reported as "nothing was submitted", and the
+    // row isn't offered for a retry that could submit it twice.
     let response
     let payload
     try {
@@ -312,13 +318,23 @@ export default class extends Controller {
       })
       payload = await response.json()
     } catch {
-      this.setStatus(row, 'failed')
+      payload = null
+    }
+
+    if (!payload || typeof payload.status !== 'string') {
+      this.setStatus(row, 'uncertain')
       this.setMessage(
         row,
-        'The request never completed. Nothing was submitted; try again.',
+        "No answer came back from HCB, so it isn't known whether this row was imported. " +
+          "Don't retry it here. Reload the page and load the CSV again: if a form was " +
+          'created for this row it will be hidden. If the row still shows, importing it is ' +
+          'safe when it has a TIN (a second import of the same TIN is refused). Without a ' +
+          "TIN, or if you'd edited its email, date or postal code, check the payee's tax " +
+          'forms in HCB first.',
         true
       )
-      row.querySelector('[data-import]').disabled = false
+      this.disableRow(row)
+      this.updateSummary()
       return
     }
 
@@ -331,6 +347,12 @@ export default class extends Controller {
       this.disableRow(row)
       row.querySelector('[data-body]').hidden = true
       row.querySelector('[data-toggle]').textContent = 'Review'
+    } else if (payload.status === 'uncertain') {
+      // TaxBandits may have accepted it, so this row must not be resubmitted;
+      // the message says how to resolve it.
+      this.setStatus(row, 'uncertain')
+      this.setMessage(row, payload.message, true)
+      this.disableRow(row)
     } else if (payload.status === 'duplicate') {
       this.setStatus(row, 'duplicate')
       this.setMessage(row, payload.message, true)

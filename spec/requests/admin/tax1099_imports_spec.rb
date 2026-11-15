@@ -32,6 +32,7 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
 
   let(:row) do
     {
+      form_type: "W9",
       first_name: "Ada", middle_name: "", last_name: "Lovelace", suffix: "",
       tin: "123-45-6789", tin_type: "SSN", federal_tax_classification: "Individual",
       address1: "8 Fake St", city: "Shelburne", state: "VT", zip_code: "05482", completed_on: "2025-03-07",
@@ -127,12 +128,50 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
 
     it "keeps the payee's TIN out of a TaxBandits rejection" do
       allow(TaxbanditsService).to receive(:create_from_data)
-        .and_raise("422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
+        .and_raise(Faraday::UnprocessableEntityError, "422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
 
       post "/admin/tax1099_imports", params: row.merge(pdf:)
 
       expect(response).to have_http_status(:bad_gateway)
       expect(json["message"]).not_to include("123-45-6789")
+    end
+
+    it "reports an unconfirmed outcome, naming the form it kept" do
+      allow(TaxbanditsService).to receive(:create_from_data).and_raise(Faraday::TimeoutError, "Net::ReadTimeout")
+
+      post "/admin/tax1099_imports", params: row.merge(pdf:)
+
+      expect(json["status"]).to eq("uncertain")
+      expect(Tax::Form.find_by_public_id(json["form_id"])).to be_sent
+    end
+
+    # The page treats anything that isn't this JSON as "no answer", which it
+    # can't tell the admin is safe to retry.
+    it "answers an unexpected error with JSON saying nothing was submitted" do
+      allow(User).to receive(:find_or_create_by!).and_raise(ActiveRecord::RecordInvalid)
+
+      post "/admin/tax1099_imports", params: row.merge(pdf:)
+
+      expect(response).to have_http_status(:internal_server_error)
+      expect(json).to include("status" => "failed")
+      expect(json["message"]).to match(/before anything was submitted/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "keeps the payee's TIN out of an unexpected error" do
+      allow(User).to receive(:find_or_create_by!).and_raise(RuntimeError, "TIN 123-45-6789 broke something")
+
+      post "/admin/tax1099_imports", params: row.merge(pdf:)
+
+      expect(json["message"]).not_to include("123-45-6789")
+    end
+
+    it "reports a success even if refreshing the payee's payments fails afterwards" do
+      allow_any_instance_of(LegalEntity).to receive(:refresh_pending_contractors_payments!).and_raise("boom")
+
+      post "/admin/tax1099_imports", params: row.merge(pdf:)
+
+      expect(json["status"]).to eq("imported")
     end
 
     context "when a business payee already has business legal entities" do

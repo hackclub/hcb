@@ -26,8 +26,39 @@ class Tax1099ImportService
   class ValidationError < Error; end
 
   # Raised when TaxBandits rejects the submission. Its message is scrubbed of the
-  # submitted TIN before it is built; see #submission_error.
+  # submitted TIN before it is built; see #submit!.
   class SubmissionError < Error; end
+
+  # Raised when the form's fate at TaxBandits is unknown to HCB: the call failed
+  # in a way that doesn't say whether the submission was accepted (a timeout, a
+  # dropped connection, a 5xx), or it was accepted without a submission id, or
+  # recording the acceptance failed. The form has been kept, as sent rather than
+  # completed, so that it can't be submitted a second time; see #run.
+  class UncertainSubmissionError < Error
+    attr_reader :form
+
+    def initialize(form, submission_id: nil)
+      @form = form
+
+      super(
+        if submission_id
+          "TaxBandits accepted this form as submission #{submission_id}, but HCB couldn't record that, " \
+          "so #{form.public_id} is still saved as sent, not completed. It needs its external_id set " \
+          "to #{submission_id} and marking completed. Don't import this row again."
+        else
+          "TaxBandits didn't confirm whether it accepted this form, so it has been saved as " \
+          "#{form.public_id} (sent, not completed) to keep it from being submitted twice. " \
+          "Look up PayeeRef #{form.public_id} in TaxBandits: if the submission is there, the form " \
+          "still needs marking completed; if it isn't, discard #{form.public_id} and import this row again."
+        end
+      )
+    end
+
+  end
+
+  # Internal: signals an uncertain outcome from #submit! to #run.
+  class UncertainOutcome < StandardError; end
+  private_constant :UncertainOutcome
 
   # Tax1099's export has no column we can trust for this, so it is never
   # prefilled from the CSV and an admin always picks it by hand.
@@ -135,38 +166,31 @@ class Tax1099ImportService
     # not a PDF) doesn't leave an orphaned user, legal entity, or form behind.
     pdf_token = Tax::W9PdfStore.store(@pdf)
 
-    # The user, legal entity, and completed form all exist before TaxBandits is
-    # contacted, so that once it has accepted the submission there is nothing
-    # left that could fail and strand it. The TaxBandits call happens inside the
-    # transaction so that a rejected submission rolls all of them back.
+    # Past this point, every outcome is reported as one of: success, a
+    # SubmissionError or other error (nothing was accepted, and nothing is kept),
+    # or an UncertainSubmissionError (the form is kept). No other exception can
+    # escape once the form exists, which is what lets the controller tell the
+    # admin that any other error means nothing was submitted.
     #
-    # complete_form! is what sets tin_hash, which is what
-    # index_tax_forms_unique_live_tax1099_tin_hash keys on. Doing it before the
-    # submission is what makes double imports impossible: a second import of the
-    # same TIN racing this one blocks on that index until this transaction ends,
-    # then fails there, before it has sent anything to TaxBandits.
-    submitted = false
-    form, legal_entity = begin
-      ActiveRecord::Base.transaction do
-        legal_entity = find_or_create_legal_entity!
-        form = Tax::Form.create!(external_service: :taxbandits, source: :tax1099, legal_entity:)
-        complete_form!(form)
-
-        response = submit!(form, pdf_token)
-        submitted = true
-        form.update!(external_id: response["SubmissionId"])
-
-        [form, legal_entity]
-      end
+    # The form is committed, as sent, before TaxBandits is contacted, and the
+    # call is made outside any transaction. Whatever TaxBandits does, HCB
+    # already has the record for it: nothing that fails after an accepted
+    # submission (recording its id, a commit) can roll the form back and leave
+    # a certificate at TaxBandits that HCB knows nothing about. It also keeps
+    # the transaction, and the locks it takes, from being held open for the
+    # length of an HTTP call.
+    #
+    # The form is created with its tin_hash already set, which is what
+    # index_tax_forms_unique_live_tax1099_tin_hash keys on, so from that commit
+    # on a second import of the same TIN fails as a duplicate before it has sent
+    # anything to TaxBandits.
+    form = begin
+      claim_form!
     rescue => e
-      # Nothing will ever fetch this PDF now, so don't leave it sitting out its
-      # TTL in the cache. Once TaxBandits has accepted the submission it may
-      # still re-read the PDF within the grace window, so leave it alone then.
-      Tax::W9PdfStore.discard(pdf_token) unless submitted
+      # Nothing was sent, so nothing will ever fetch this PDF.
+      Tax::W9PdfStore.discard(pdf_token)
 
-      # Lost the race to a concurrent import of the same TIN. That import has
-      # committed by now (the index made this one wait for it), so it can be
-      # reported like any other duplicate.
+      # Lost the race to a concurrent import of the same TIN.
       if e.is_a?(ActiveRecord::RecordNotUnique) && e.message.include?(UNIQUE_TIN_INDEX) && (duplicate = duplicate_tax1099_form)
         raise DuplicateError, duplicate
       end
@@ -174,9 +198,43 @@ class Tax1099ImportService
       raise
     end
 
-    legal_entity.refresh_pending_contractors_payments!
+    response = begin
+      submit!(form, pdf_token)
+    rescue UncertainOutcome
+      # It may have accepted it: keep the form, as sent, and the PDF for its
+      # fetch. The held tin_hash makes a retry fail as a duplicate.
+      raise UncertainSubmissionError, form
+    rescue
+      # Either TaxBandits answered and said no, or the request was never sent.
+      # Either way nothing exists there to keep a record of.
+      release!(form)
+      Tax::W9PdfStore.discard(pdf_token)
+      raise
+    end
 
-    Result.new(form:, legal_entity:)
+    # Anything without a submission id can't be tied back to a certificate,
+    # and webhooks find forms by that id.
+    submission_id = response["SubmissionId"].presence if response.is_a?(Hash)
+    raise UncertainSubmissionError, form if submission_id.nil?
+
+    begin
+      record_acceptance!(form, submission_id)
+    rescue => e
+      Rails.logger.error("Tax1099ImportService: TaxBandits accepted #{form.public_id} as #{submission_id}, but recording it failed (#{e.class})")
+      raise UncertainSubmissionError.new(form, submission_id:)
+    end
+
+    # The import has succeeded by now, so a failure here mustn't be reported as
+    # if it hadn't. It's reported instead: the refresh runs again the next time
+    # the payee's tax forms, payees or payout methods change, but nothing
+    # guarantees that happens soon.
+    begin
+      form.legal_entity.refresh_pending_contractors_payments!
+    rescue => e
+      Rails.error.report(e, handled: true, context: { form: form.public_id })
+    end
+
+    Result.new(form:, legal_entity: form.legal_entity)
   end
 
   # The business legal entities an admin has to choose between before a row can
@@ -385,26 +443,73 @@ class Tax1099ImportService
     Tax::Form.tax1099.not_discarded.find_by(tin_hash:)
   end
 
-  # Populates what Tax::Form#import_taxbandits_data would otherwise have derived
-  # from a TaxBandits sync, and marks the form completed directly: the recipient
-  # never visits TaxBandits themselves (create_from_data submits the completed
-  # form data on their behalf), so these forms are already complete the moment
-  # TaxBandits accepts them and nothing will ever import their data afterwards.
-  # Runs before the submission, inside the same transaction; see #run.
-  def complete_form!(form)
-    form.update!(
-      form_type:,
-      entity_type:,
-      tin_type: tin_namespace,
-      tin_hash:,
-      address_line1: @data[:address1],
-      address_city: @data[:city],
-      address_state: @data[:state].presence,
-      address_postal_code: @data[:zip_code].presence,
-      address_country: country,
-      aasm_state: "completed",
-      completed_at: completed_on.in_time_zone
-    )
+  # Creates the user, legal entity, and form, and commits them. The form is
+  # populated with what Tax::Form#import_taxbandits_data would otherwise have
+  # derived from a TaxBandits sync (the payee never visits TaxBandits, so
+  # nothing will import it afterwards), and starts out sent: it only becomes
+  # completed once TaxBandits has accepted it; see #record_acceptance!.
+  #
+  # Created with tin_hash already set, rather than updated to it, so the legal
+  # entity doesn't adopt the TIN yet: if TaxBandits rejects it (a mistyped
+  # TIN, say), the entity must not be left with an identity it can never
+  # change.
+  def claim_form!
+    ActiveRecord::Base.transaction do
+      legal_entity = find_or_create_legal_entity!
+
+      Tax::Form.create!(
+        external_service: :taxbandits,
+        source: :tax1099,
+        legal_entity:,
+        form_type:,
+        entity_type:,
+        tin_type: tin_namespace,
+        tin_hash:,
+        address_line1: @data[:address1],
+        address_city: @data[:city],
+        address_state: @data[:state].presence,
+        address_postal_code: @data[:zip_code].presence,
+        address_country: country,
+        aasm_state: "sent",
+        sent_at: Time.current,
+        # When the payee completed the paper form, which stays true whether or
+        # not TaxBandits has accepted it yet.
+        completed_at: completed_on.in_time_zone
+      )
+    end
+  end
+
+  # Written directly rather than through mark_completed!, so none of its
+  # callbacks run: no "completed" email to a payee who never visited
+  # TaxBandits, and no import of data HCB already has.
+  def record_acceptance!(form, submission_id)
+    ActiveRecord::Base.transaction do
+      form.update!(external_id: submission_id, aasm_state: "completed")
+      form.adopt_tin_hash_on_legal_entity!
+    end
+  end
+
+  # Undoes #claim_form! after a definite rejection. The form, and a business
+  # legal entity this import created, go; the user stays. HCB never deletes
+  # users, and the payee's account will be needed when the row is retried.
+  def release!(form)
+    ActiveRecord::Base.transaction do
+      legal_entity = form.legal_entity
+      form.destroy_fully!
+
+      if @created_legal_entity
+        # Through a relation, not the association: legal_entity_users has no
+        # :dependent option, so the association's delete_all would only null
+        # out the foreign key and leave the rows behind.
+        LegalEntityUser.where(legal_entity:).delete_all
+        legal_entity.destroy!
+      end
+    end
+  rescue => e
+    # The rejection is what the admin needs to hear about. A form left behind
+    # here is still sent and has no submission id; a retry reports it as a
+    # duplicate, and it can be discarded.
+    Rails.logger.error("Tax1099ImportService: couldn't release #{form.public_id} after a rejection (#{e.class})")
   end
 
   def build_payload(form, pdf_url)
@@ -509,14 +614,32 @@ class Tax1099ImportService
     if entity_type == :person
       user.personal_legal_entity
     else
-      @legal_entity || LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
+      @legal_entity || begin
+        @created_legal_entity = true
+        LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
+      end
     end
   end
 
+  # Only a 4xx is a definite rejection: TaxBandits answered, and said no. Any
+  # other failure (a timeout, a dropped connection, a 5xx, a response that
+  # couldn't be parsed) leaves open whether it accepted the submission.
+  #
+  # Anything that goes wrong building the payload happens before a byte is
+  # sent, so it propagates as an ordinary error.
   def submit!(form, pdf_token)
-    TaxbanditsService.create_from_data(build_payload(form, @pdf_url_builder.call(pdf_token)))
-  rescue => e
-    raise SubmissionError, "TaxBandits rejected the submission: #{scrub(e.message)}", cause: nil
+    payload = build_payload(form, @pdf_url_builder.call(pdf_token))
+
+    begin
+      TaxbanditsService.create_from_data(payload)
+    rescue Faraday::ClientError => e
+      raise SubmissionError, "TaxBandits rejected the submission: #{scrub(e.message)}", cause: nil
+    rescue => e
+      # Nothing from the exception is kept: like a rejection's, its message could
+      # carry the TIN, and here there's nothing in it the admin can act on.
+      Rails.logger.warn("Tax1099ImportService: uncertain TaxBandits outcome for #{form.public_id} (#{e.class})")
+      raise UncertainOutcome, cause: nil
+    end
   end
 
   # Faraday's raise_error middleware puts the whole response body in the error

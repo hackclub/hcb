@@ -336,7 +336,7 @@ RSpec.describe Tax1099ImportService do
   describe "when TaxBandits rejects the submission" do
     before do
       allow(TaxbanditsService).to receive(:create_from_data)
-        .and_raise("422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
+        .and_raise(Faraday::UnprocessableEntityError, "422: {\"Errors\":[{\"Message\":\"TIN 123-45-6789 is invalid\"}]}")
     end
 
     it "keeps the payee's TIN out of the error it raises" do
@@ -353,14 +353,34 @@ RSpec.describe Tax1099ImportService do
       expect { run rescue nil }.not_to change(Tax::Form.with_deleted, :count)
     end
 
-    it "leaves no user or legal entity behind" do
-      users = User.count
-      legal_entities = LegalEntity.count
-
+    it "removes the business legal entity it created, but keeps the payee's user" do
       run(data: business_data) rescue nil
 
-      expect(User.count).to eq(users)
-      expect(LegalEntity.count).to eq(legal_entities)
+      user = User.find_by(email: "ada@example.com")
+      expect(user).to be_present
+      expect(user.legal_entities).to contain_exactly(user.personal_legal_entity)
+    end
+
+    it "leaves a legal entity the admin picked alone" do
+      user = create(:user, email: "ada@example.com")
+      existing = create(:legal_entity, name: "Engines Co", entity_type: :business, users: [user])
+
+      run(data: business_data, legal_entity: existing) rescue nil
+
+      expect(existing.reload.users).to contain_exactly(user)
+    end
+
+    it "never gives the legal entity the rejected TIN" do
+      run rescue nil
+
+      expect(User.find_by(email: "ada@example.com").personal_legal_entity.reload.tin_hash).to be_nil
+    end
+
+    it "lets the corrected row be imported afterwards" do
+      run rescue nil
+      allow(TaxbanditsService).to receive(:create_from_data).and_return({ "SubmissionId" => "sub-2" })
+
+      expect(run.form).to have_attributes(aasm_state: "completed", external_id: "sub-2")
     end
 
     it "discards the staged PDF instead of leaving it to sit out its TTL" do
@@ -369,6 +389,154 @@ RSpec.describe Tax1099ImportService do
       run rescue nil
 
       expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
+  describe "the TaxBandits call" do
+    it "is made outside any transaction, after the form is committed" do
+      baseline = ActiveRecord::Base.connection.open_transactions
+      open_during_call = nil
+      committed_form = nil
+      allow(TaxbanditsService).to receive(:create_from_data) do |payload|
+        open_during_call = ActiveRecord::Base.connection.open_transactions
+        committed_form = Tax::Form.find_by_public_id(payload["PayeeRef"])
+        { "SubmissionId" => "sub-1" }
+      end
+
+      run
+
+      expect(open_during_call).to eq(baseline)
+      expect(committed_form).to have_attributes(aasm_state: "sent")
+    end
+  end
+
+  describe "on success" do
+    it "gives the legal entity the form's TIN identity" do
+      result = run
+
+      expect(result.legal_entity.reload.tin_hash).to eq(result.form.tin_hash)
+    end
+
+    it "sends no completion email" do
+      expect { run }.not_to have_enqueued_mail(Tax::FormMailer, :completed)
+    end
+  end
+
+  describe "when the payload can't be built" do
+    before { allow_any_instance_of(described_class).to receive(:build_payload).and_raise(NoMethodError) }
+
+    it "sends nothing, keeps no form, and discards the PDF" do
+      allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+      expect { run }.to raise_error(NoMethodError)
+
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+      expect(Tax::Form.with_deleted.count).to eq(0)
+      expect(Tax::W9PdfStore).to have_received(:discard)
+    end
+  end
+
+  it "still succeeds if refreshing the payee's payments fails afterwards" do
+    allow_any_instance_of(LegalEntity).to receive(:refresh_pending_contractors_payments!).and_raise("boom")
+
+    expect(run.form).to have_attributes(aasm_state: "completed", external_id: "sub-1")
+  end
+
+  describe "when TaxBandits accepts the submission without a submission id" do
+    before { allow(TaxbanditsService).to receive(:create_from_data).and_return({ "StatusCode" => 200 }) }
+
+    it "keeps the form as sent and reports the outcome as unconfirmed" do
+      expect { run }.to raise_error(described_class::UncertainSubmissionError) { |error|
+        expect(error.form.reload).to have_attributes(aasm_state: "sent", external_id: nil)
+      }
+    end
+  end
+
+  describe "when recording an accepted submission fails" do
+    before do
+      allow_any_instance_of(Tax::Form).to receive(:adopt_tin_hash_on_legal_entity!).and_raise(ActiveRecord::ConnectionFailed)
+    end
+
+    it "keeps the form as sent and tells the admin the submission id" do
+      expect { run }.to raise_error(described_class::UncertainSubmissionError) { |error|
+        expect(error.message).to include("sub-1")
+        expect(error.form.reload).to have_attributes(aasm_state: "sent", external_id: nil)
+      }
+    end
+  end
+
+  describe "when TaxBandits doesn't say whether it accepted the submission" do
+    [
+      Faraday::TimeoutError.new("Net::ReadTimeout with #<TCPSocket:(closed)>"),
+      Faraday::ConnectionFailed.new("Connection reset by peer"),
+      Faraday::ServerError.new("the server responded with status 503"),
+    ].each do |error|
+      context "(#{error.class})" do
+        before { allow(TaxbanditsService).to receive(:create_from_data).and_raise(error) }
+
+        it "keeps the form, as sent rather than completed, with no submission id" do
+          expect { run }.to raise_error(described_class::UncertainSubmissionError) { |raised|
+            expect(raised.form.reload).to have_attributes(
+              source: "tax1099", aasm_state: "sent", external_id: nil,
+              completed_at: Time.zone.local(2025, 3, 7), tin_hash: be_present
+            )
+            expect(raised.message).to include(raised.form.public_id)
+          }
+        end
+      end
+    end
+
+    before do
+      allow(TaxbanditsService).to receive(:create_from_data)
+        .and_raise(Faraday::TimeoutError, "Net::ReadTimeout with #<TCPSocket:(closed)>")
+    end
+
+    it "keeps the user and legal entity too" do
+      form = begin
+        run(data: business_data)
+      rescue described_class::UncertainSubmissionError => e
+        e.form
+      end
+
+      expect(form.legal_entity.reload).to have_attributes(name: "Analytical Engines LLC")
+      expect(User.find_by(email: "ada@example.com")).to be_present
+    end
+
+    it "leaves the staged PDF for TaxBandits to fetch" do
+      allow(Tax::W9PdfStore).to receive(:discard).and_call_original
+
+      run rescue nil
+
+      expect(Tax::W9PdfStore).not_to have_received(:discard)
+    end
+
+    it "sends no completion email" do
+      expect { run rescue nil }.not_to have_enqueued_mail(Tax::FormMailer, :completed)
+    end
+
+    it "catches a retry of the same row as a duplicate instead of submitting it again" do
+      first = begin
+        run
+      rescue described_class::UncertainSubmissionError => e
+        e.form
+      end
+
+      expect { run }.to raise_error(described_class::DuplicateError) { |error|
+        expect(error.existing_form).to eq(first)
+      }
+      expect(TaxbanditsService).to have_received(:create_from_data).once
+    end
+
+    it "doesn't give the legal entity the TIN yet" do
+      run rescue nil
+
+      expect(User.find_by(email: "ada@example.com").personal_legal_entity.reload.tin_hash).to be_nil
+    end
+
+    it "keeps the row hidden next session" do
+      run rescue nil
+
+      expect(described_class.imported_row_keys).to eq(["ada@example.com|2025-03-07|person|05482"])
     end
   end
 

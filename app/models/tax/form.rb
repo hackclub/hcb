@@ -103,18 +103,7 @@ module Tax
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      # Locked: a legal entity's TIN can never change once set, and two forms
-      # completing concurrently would otherwise both see a nil hash and race.
-      #
-      # A form whose entity type disagrees with the legal entity's is a filing
-      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
-      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
-      # flags it and the payee is prompted to discard it.
-      legal_entity.with_lock do
-        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
-          legal_entity.update!(tin_hash:)
-        end
-      end
+      adopt_tin_hash_on_legal_entity!
     end
 
     aasm timestamps: true do
@@ -160,6 +149,27 @@ module Tax
       end
 
       mark_sent!
+    end
+
+    # Gives the legal entity this form's TIN identity, if it has none yet. Runs
+    # when a form's tin_hash is first set; Tax1099ImportService, which creates
+    # its forms with a tin_hash already set, calls it once TaxBandits has
+    # accepted the form, so a TIN TaxBandits rejects never reaches the entity.
+    def adopt_tin_hash_on_legal_entity!
+      return if tin_hash.nil?
+
+      # Locked: a legal entity's TIN can never change once set, and two forms
+      # completing concurrently would otherwise both see a nil hash and race.
+      #
+      # A form whose entity type disagrees with the legal entity's is a filing
+      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
+      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
+      # flags it and the payee is prompted to discard it.
+      legal_entity.with_lock do
+        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
+          legal_entity.update!(tin_hash:)
+        end
+      end
     end
 
     def sync_with_taxbandits
