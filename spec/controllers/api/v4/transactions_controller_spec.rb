@@ -7,7 +7,7 @@ RSpec.describe Api::V4::TransactionsController do
   let(:event) { create(:event) }
 
   def authenticate(as_user)
-    trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true)
+    trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true, owner: as_user)
     token = create(:api_token, user: as_user, application: trusted_app)
     request.headers["Authorization"] = "Bearer #{token.token}"
   end
