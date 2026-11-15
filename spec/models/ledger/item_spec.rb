@@ -643,6 +643,15 @@ RSpec.describe Ledger::Item, type: :model do
     let(:report) { create(:reimbursement_report, event:) }
     let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
 
+    it "reads #receipts from the reimbursed expense, ignoring any preloaded copies" do
+      receipt = attach_receipt_to(expense)
+
+      item = Ledger::Item.preload(:receipts, hcb_code: :receipts).find(payout_for(expense).reload.ledger_item.id)
+
+      expect(item.preloaded_receipts).to be_nil
+      expect(item.receipts).to contain_exactly(receipt)
+    end
+
     it "counts the receipts uploaded to the reimbursed expense" do
       attach_receipt_to(expense)
       attach_receipt_to(expense)

@@ -239,7 +239,9 @@ class ReceiptsController < ApplicationController
 
   private
 
-  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+  # A transaction's receipts are attached to its ledger item, never its HCB code
+  # (https://github.com/hackclub/hcb/issues/14106).
+  RECEIPTABLE_TYPE_MAP = [CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
                           Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item, Payment,
                           Payroll::Invoice].index_by(&:to_s).freeze
@@ -253,7 +255,7 @@ class ReceiptsController < ApplicationController
     @receiptable = @klass.find(params[:receiptable_id])
     # The transaction's HCB code, whether the receipt is being attached to the
     # code itself or to its ledger item. Nil for every other receiptable.
-    @hcb_code = @receiptable.try(:local_hcb_code)
+    @hcb_code = @receiptable.try(:receipt_hcb_code)
   end
 
   def generate_streams

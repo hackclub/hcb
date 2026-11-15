@@ -59,9 +59,10 @@ class Receipt < ApplicationRecord
 
   # The HCB code of the transaction this receipt is attached to, whether the
   # receiptable is the HCB code itself or the transaction's ledger item. Nil in
-  # the receipt bin and on every other kind of receiptable (expenses, payments).
+  # the receipt bin and on every other kind of receiptable (expenses, payments,
+  # canonical transactions). See Receiptable#receipt_hcb_code.
   def hcb_code
-    receiptable.try(:local_hcb_code)
+    receiptable.try(:receipt_hcb_code)
   end
 
   has_many :suggested_pairings, dependent: :destroy
@@ -80,19 +81,6 @@ class Receipt < ApplicationRecord
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
-
-  # A transaction's receipts live on its ledger item
-  # (https://github.com/hackclub/hcb/issues/14106), so a receipt handed an HCB
-  # code is attached to the code's item instead. The item is looked up afresh:
-  # a transfer memoizes its code before the pending transaction that creates
-  # the item commits, so the instance a controller hands over can predate it.
-  # A code with no item yet (a scheduled or uncommitted transfer, an empty
-  # HCB-000 code) keeps the receipt until it is linked to one (HcbCode's
-  # after_commit hands it over).
-  before_validation if: -> { receiptable.is_a?(HcbCode) } do
-    ledger_item_id = receiptable.ledger_item_id || HcbCode.where(id: receiptable).pick(:ledger_item_id)
-    self.receiptable = receiptable.ledger_item || Ledger::Item.find(ledger_item_id) if ledger_item_id
-  end
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
