@@ -190,8 +190,7 @@ class Ledger
     # which saves the new mapping on a separate row — so reload the associations
     # before reading the (now-current) event off the primary ledger.
     def prune_tags_outside_event!
-      association(:primary_mapping).reload
-      association(:primary_ledger).reload
+      reload
 
       event = primary_ledger&.event || primary_ledger&.card_grant&.event
       return if event.nil?
