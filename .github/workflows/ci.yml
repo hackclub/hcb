@@ -107,6 +107,9 @@ jobs:
       - uses: ./.github/actions/setup-ruby
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/setup-db
+      # Receipt previews are resized by ActiveStorage via MiniMagick, which shells out to `convert`
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends imagemagick
       - name: Build Assets
         run: yarn build && yarn build:css
       - name: Run RSpec

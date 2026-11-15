@@ -54,7 +54,7 @@
           <% contract.parties.order(role: :desc).each do |party| %>
             <% if party.user.present? %>
               <%= link_to party.email, party.user %>
-            <% elsif %>
+            <% else %>
               <span class="error"><%= party.email %></span>
             <% end %>
             (<%= party.role %>):
