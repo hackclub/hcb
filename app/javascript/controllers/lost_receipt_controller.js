@@ -9,6 +9,9 @@ export default class extends Controller {
     'addButton',
     'removeButton',
     'returnTo',
+    'number',
+    'title',
+    'count',
   ]
 
   connect() {
@@ -50,9 +53,14 @@ export default class extends Controller {
       return total + (Number.isFinite(itemCents) ? itemCents : 0)
     }, 0)
     this.totalTarget.value = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      minimumFractionDigits: 2,
     }).format(cents / 100)
+    this.countTarget.textContent = this.itemTargets.length
+    this.itemTargets.forEach((item, index) => {
+      this.numberTargets[index].textContent = `#${index + 1}`
+      this.titleTargets[index].textContent =
+        item.querySelector('[data-description]').value || 'Untitled item'
+    })
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
     this.removeButtonTargets.forEach(button => {
       button.disabled = this.itemTargets.length <= 1
