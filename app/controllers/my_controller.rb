@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :event_cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
@@ -26,39 +26,24 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
+    @stripe_cards = filtered_stripe_cards
+    cookies[:my_cards_view] = params[:view] if params[:view].in?(%w[grid list])
+    @view = cookies[:my_cards_view] || "grid"
 
-    @status = params[:status].presence_in(%w[active inactive frozen canceled])
-    @type = params[:type].presence_in(%w[virtual physical])
-    @filter_applied = @status || @type
+    # Each organization's cards are lazy-loaded by `event_cards`, so only load the groups and their counts here
+    @card_counts = @stripe_cards.unscope(:order).group("stripe_cards.event_id").count
+    @events = Event.where(id: @card_counts.keys)
+                   .includes(:plan, logo_attachment: :blob)
+                   .reorder(Arel.sql("LOWER(events.name)"))
+  end
 
-    @stripe_cards = case @status
-                    when "active"
-                      @stripe_cards.active
-                    when "inactive"
-                      @stripe_cards.inactive
-                    when "frozen"
-                      @stripe_cards.frozen
-                    when "canceled"
-                      @stripe_cards.canceled
-                    else
-                      @stripe_cards
-                    end
+  def event_cards
+    event = Event.find(params[:event_id])
+    @stripe_cards = filtered_stripe_cards.includes(:card_grant, :event).where(event:)
+    @view = cookies[:my_cards_view] || "grid"
 
-    @stripe_cards = case @type
-                    when "virtual"
-                      @stripe_cards.virtual
-                    when "physical"
-                      @stripe_cards.physical
-                    else
-                      @stripe_cards
-                    end
-
-    @stripe_cards = @stripe_cards.order(
-      Arel.sql("stripe_status = 'active' DESC"),
-      Arel.sql("stripe_status = 'inactive' DESC")
-    )
+    render partial: "my/event_cards", locals: { event:, stripe_cards: @stripe_cards }
   end
 
   def tasks
@@ -248,16 +233,57 @@ class MyController < ApplicationController
 
   private
 
+  def filtered_stripe_cards
+    @q = params[:q].presence
+    @status = params[:status].presence_in(%w[active inactive frozen canceled])
+    @type = params[:type].presence_in(%w[virtual physical])
+    @filter_applied = @status || @type
+
+    stripe_cards = current_user.stripe_cards
+
+    stripe_cards = case @status
+                   when "active"
+                     stripe_cards.active
+                   when "inactive"
+                     stripe_cards.inactive
+                   when "frozen"
+                     stripe_cards.frozen
+                   when "canceled"
+                     stripe_cards.canceled
+                   else
+                     stripe_cards
+                   end
+
+    stripe_cards = case @type
+                   when "virtual"
+                     stripe_cards.virtual
+                   when "physical"
+                     stripe_cards.physical
+                   else
+                     stripe_cards
+                   end
+
+    if @q
+      stripe_cards = stripe_cards.left_joins(:card_grant).where(
+        "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q",
+        q: "%#{StripeCard.sanitize_sql_like(@q)}%"
+      )
+    end
+
+    stripe_cards.order(
+      Arel.sql("stripe_status = 'active' DESC"),
+      Arel.sql("stripe_status = 'inactive' DESC")
+    )
+  end
+
   def set_reimbursement_reports
     return unless signed_in?
 
     @my_reports = current_user.reimbursement_reports
-    manager_events = current_user.events
-                                 .joins(:organizer_positions)
-                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
     # Managers can't approve their own reports, so those only appear under @my_reports
     @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
-    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
+    reviewing_events = Event::ReimbursementReviewer::OptIn.joins(:organizer_position).where(organizer_positions: { user_id: current_user.id }).select(:event_id)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event_id: reviewing_events, reviewer_id: nil).where.not(user: current_user)
     @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
   end
 

@@ -8,8 +8,6 @@
   --combobox-option-padding: 0.375rem 0.75rem;
 }
 
-// The wrapper owns the width so the dropdown, sized to it, always matches the
-// visible field. It also anchors the absolutely positioned listbox and handle.
 .combobox {
   position: relative;
   width: 100%;
@@ -20,28 +18,50 @@
     box-sizing: border-box;
   }
 
-  // Outranks the base `input[type='text']` rules, which would otherwise draw a
-  // second border inside the field and cap the text area at 24rem even where
-  // the field itself is wider.
+  // Override the base `input[type='text']` border and max-width.
   & .combobox__input {
     border: 0 !important;
     box-shadow: none !important;
     padding: 0;
     margin: 0;
     width: 100%;
+    min-width: 0;
     max-width: none;
   }
 
-  // Scoped, so it outranks the `.input` rule `@extend` splices this class into
-  // further down the sheet. The wrapper alone decides how wide the control is.
+  // Scoped to outrank the `.input` rule it `@extend`s.
   & .combobox__field {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     max-width: none;
+  }
+
+  // Outranks kbar's `!important` listbox font reset.
+  & .combobox__badge {
+    font-family: theme('fontFamily.mono') !important;
   }
 }
 
 .combobox__field {
   @extend .input;
-  padding: 0 0.25rem !important;
+  padding: 0
+    calc(var(--combobox-handle-offset-right) + var(--combobox-handle-width)) 0
+    0.25rem !important;
+}
+
+.combobox__badge {
+  @apply text-xs rounded;
+  background-color: rgba($muted, 0.2);
+  border: 0;
+  color: $muted;
+  flex-shrink: 0;
+  padding: 0.0625rem 0.375rem;
+  white-space: nowrap;
+
+  &:empty {
+    display: none;
+  }
 }
 
 .combobox__handle {
@@ -82,6 +102,11 @@
     display: none;
   }
 
+  &.combobox__listbox--up {
+    top: auto;
+    bottom: calc(100% + 0.2rem);
+  }
+
   & li {
     margin: 0 !important;
   }
@@ -91,7 +116,7 @@
   @apply bg-gray-100 dark:bg-neutral-800;
   padding: var(--combobox-option-padding);
   user-select: none;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   margin-top: 0;
   cursor: pointer;
 
@@ -109,12 +134,13 @@
   }
 }
 
-// Hover is handled by `mouseover->combobox#onOptionHover`, which moves the
-// keyboard cursor under the pointer, so the two never disagree about which
-// row a click will commit.
-.combobox__option--navigated,
-.combobox__option--selected {
+// No :hover; hovering moves the keyboard cursor instead.
+.combobox__option--navigated {
   @apply bg-gray-200 dark:bg-neutral-700;
+}
+
+.combobox__option--selected {
+  font-weight: 600;
 }
 
 .combobox__option--status {
@@ -126,7 +152,7 @@
   }
 }
 
-// Status messages are shown in the listbox and announced from here, off-screen.
+// Visually hidden live region.
 .combobox__announcer {
   position: absolute;
   width: 1px;

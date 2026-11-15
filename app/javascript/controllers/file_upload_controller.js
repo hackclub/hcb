@@ -14,7 +14,8 @@ export default class extends Controller {
   static xIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32"><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"/></g></svg>`
 
   resetPreview() {
-    this.previewTarget.innerHTML = `${this.constructor.cloudIcon} ${this.placeholderValue}`
+    this.previewTarget.innerHTML = this.constructor.cloudIcon
+    this.previewTarget.append(` ${this.placeholderValue}`)
   }
 
   connect() {
@@ -22,11 +23,35 @@ export default class extends Controller {
     this.previewTarget.classList.add('tooltipped')
     this.previewTarget.onclick = () => this.inputTarget.click()
     this.inputTarget.onchange = () => this.render()
+    this.inputTarget.oninvalid = e => this.showInvalid(e)
     window.addEventListener('turbo:morph', this.connect.bind(this))
+  }
+
+  showInvalid(event) {
+    event.preventDefault()
+    this.element.classList.add('file-upload--invalid')
+
+    const form = this.inputTarget.form
+    const firstInvalid = form
+      ? Array.from(form.elements).find(
+          el => el.willValidate && !el.validity.valid
+        )
+      : this.inputTarget
+    if (firstInvalid === this.inputTarget) {
+      this.element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }
+
+  clearInvalid() {
+    this.element.classList.remove('file-upload--invalid')
   }
 
   render() {
     const input = this.inputTarget
+    if (input.files.length > 0) this.clearInvalid()
     const fileName = input.files.length > 0 ? input.files[0].name : ''
 
     if (!fileName) {
@@ -40,7 +65,15 @@ export default class extends Controller {
 
     this._savedFile = input.files[0]
     this.previewTarget.setAttribute('aria-label', fileName)
-    this.previewTarget.innerHTML = `<img class="-ml-0.5 mr-2 w-4" src="https://cdn.jsdelivr.net/npm/file-icon-vectors@1.0.0/dist/icons/classic/${fileName.split('.').pop()}.svg" /> ${this.truncateMiddle(fileName)}`
+    // The file name is chosen by whoever named the file (often not the person
+    // picking it), so it's only ever used as text, never parsed as HTML.
+    const icon = document.createElement('img')
+    icon.className = '-ml-0.5 mr-2 w-4'
+    icon.src = `https://cdn.jsdelivr.net/npm/file-icon-vectors@1.0.0/dist/icons/classic/${encodeURIComponent(fileName.split('.').pop())}.svg`
+    this.previewTarget.replaceChildren(
+      icon,
+      ` ${this.truncateMiddle(fileName)}`
+    )
     this.clearTarget.style.display = 'flex'
     this.previewTarget.classList.add('active')
     this.clearTarget.innerHTML = this.constructor.xIcon

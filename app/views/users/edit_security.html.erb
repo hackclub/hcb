@@ -20,7 +20,6 @@
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
                   <%= form.label :use_sms_auth do %>
                     <%= form.check_box :use_sms_auth,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
                       disabled: %>
                     <span class="slider"></span>
@@ -32,7 +31,6 @@
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
                   <%= form.label :use_two_factor_authentication do %>
                     <%= form.check_box :use_two_factor_authentication,
-                      data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
                       disabled: %>
                     <span class="slider"></span>
@@ -55,8 +53,8 @@
               </p>
             <% end %>
           <% end %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     <% end %>
 
       <%= turbo_frame_tag :totp_auth_card do %>
@@ -71,7 +69,7 @@
                 Disable TOTP
               <% end %>
             <% end %>
-            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, onclick: "this.style.display='none'", disabled: do %>
+            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post, controller: "element", action: "click->element#hide" }, disabled: do %>
               <%= inline_icon "plus", size: home_action_size %>
               <%= @user.totp.present? ? "Reset secret" : "Set up" %>
             <% end %>
@@ -108,7 +106,7 @@
       </button>
       <%= render "webauthn_credentials/modal" %>
     </div>
-    <% if @user.webauthn_credentials.length > 0 %>
+    <% if @user.webauthn_credentials.any? %>
       <div class="grid grid--split mb3">
         <%= render @user.webauthn_credentials.order(created_at: :desc) %>
       </div>
@@ -129,7 +127,7 @@
             Disable backup codes
           <% end %>
         <% end %>
-        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'", disabled: do %>
+        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card, controller: "element", action: "click->element#hide" }, disabled: do %>
           <%= inline_icon "plus", size: home_action_size %>
           <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
         <% end %>
@@ -154,7 +152,7 @@
         <%= badge_for @all_sessions.count, class: "bg-muted" %>
       </legend>
       <%= link_to logout_all_user_path(@user), data: { turbo_method: :delete },
-              class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
+              class: "btn bg-error py1 px2 h4", disabled: @sessions.size <= (current_user == @user ? 1 : 0) || disabled do %>
         <%= inline_icon "door-leave", size: home_action_size %>
         Sign out everywhere else
       <% end %>
@@ -193,7 +191,7 @@
     <% if @expired_sessions.any? %>
       <h3 class="inline-flex items-center">
         Recently logged out
-        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+        <%= badge_for @expired_sessions.size, class: "bg-muted" %>
       </h3>
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>

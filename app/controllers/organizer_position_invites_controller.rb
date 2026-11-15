@@ -20,7 +20,7 @@ class OrganizerPositionInvitesController < ApplicationController
   def create
     user_email = invite_params[:email]
     role = invite_params[:role]
-    is_signee = invite_params[:is_signee] || false
+    is_signee = (role == "manager" && invite_params[:is_signee]) || false
 
     enable_spending_controls = (invite_params[:enable_controls] == "true") && (role != "manager")
     initial_control_allowance_amount = invite_params[:initial_control_allowance_amount]

@@ -1,16 +1,22 @@
+<%# locals: (filters:, append_to: "turbo-frame#ledger", toggle_label: "Add filters") %>
+<% active_filter_count = filters.count { |filter| active_filter_params(filter, params).any? } %>
+
 <div
   data-controller="menu"
   class="inline-flex items-center"
-  data-menu-append-to-value="turbo-frame#ledger"
+  data-menu-append-to-value="<%= append_to %>"
   data-menu-placement-value="bottom-start">
 
   <button
     type="button"
-    class="pop my-2 cursor-pointer tooltipped tooltipped--s"
-    aria-label="Add filters..."
+    class="pop my-2 cursor-pointer tooltipped tooltipped--s relative overflow-visible"
+    aria-label="<%= active_filter_count > 0 ? "#{toggle_label} (#{active_filter_count} applied)" : toggle_label %>"
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
+    <% if active_filter_count > 0 %>
+      <span class="filter-menu__count" aria-hidden="true"><%= active_filter_count %></span>
+    <% end %>
   </button>
 
   <div
@@ -23,9 +29,13 @@
       <% filters.each do |filter| %>
         <button
           id="<%= filter[:label] %>"
+          class="filter-menu__tab"
           data-tabs-target="btn"
           data-action="tabs#select">
-          <%= filter[:label].humanize %>
+          <span class="filter-menu__tab-label"><%= filter[:label].humanize %></span>
+          <% if active_filter_params(filter, params).any? %>
+            <span class="filter-menu__tab-dot" aria-hidden="true"></span><span class="sr-only">(active)</span>
+          <% end %>
         </button>
       <% end %>
 
@@ -39,8 +49,8 @@
               <p class="p-1 text-center">No <%= filter[:label].pluralize %> found</p>
             <% end %>
             <% filter[:options].each do |option| %>
-              <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
-              <%= link_to label,
+              <% value = option.is_a?(Array) ? option.last : option %>
+              <%= link_to filter_option_label(filter, value),
                           upsert_query_params(filter[:key] => value, page: 1),
                           class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
             <% end %>

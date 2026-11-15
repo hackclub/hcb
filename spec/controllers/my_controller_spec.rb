@@ -44,6 +44,139 @@ RSpec.describe MyController do
 
       expect(response).to have_http_status(:ok)
     end
+
+    context "for a verified user" do
+      let(:user) { create(:user) }
+      let(:cardholder) { create(:stripe_cardholder, user:) }
+      let(:zebra) { create(:event, name: "Zebra Club") }
+      let(:aardvark) { create(:event, name: "aardvark Society") }
+
+      before { sign_in_verified(user) }
+
+      def ivar(name) = controller.instance_variable_get(:"@#{name}")
+
+      def create_card(event: zebra, **attributes)
+        create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, event:, **attributes)
+      end
+
+      def searched_cards
+        ivar(:stripe_cards).to_a
+      end
+
+      it "lists the user's organizations, sorted by name, with lazy-loaded cards" do
+        create_card(name: "Zebra card")
+        create_card(event: aardvark)
+        create_card(event: aardvark, stripe_status: "canceled")
+        create(:stripe_card, :with_stripe_id, event: zebra)
+
+        get :cards
+
+        expect(response).to have_http_status(:ok)
+        expect(ivar(:events)).to eq([aardvark, zebra])
+        expect(ivar(:card_counts)).to eq(aardvark.id => 2, zebra.id => 1)
+        expect(response.body).to include("Zebra Club", "aardvark Society")
+
+        frame = response.parsed_body.at_css("turbo-frame#my_cards_event_#{aardvark.id}")
+        expect(frame["src"]).to eq(my_event_cards_path(event_id: aardvark.id))
+        expect(frame["loading"]).to eq("lazy")
+      end
+
+      it "passes the search and filters to each organization's frame" do
+        create_card(name: "Laptop fund", stripe_status: "canceled", card_type: "virtual")
+
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        frame = response.parsed_body.at_css("turbo-frame#my_cards_event_#{zebra.id}")
+        expect(frame["src"]).to eq(my_event_cards_path(event_id: zebra.id, q: "laptop", status: "canceled", type: "virtual"))
+      end
+
+      describe "GET #event_cards" do
+        it "renders only the user's cards in that organization" do
+          card = create_card(name: "Zebra card")
+          create_card(event: aardvark)
+          create(:stripe_card, :with_stripe_id, event: zebra)
+
+          get :event_cards, params: { event_id: zebra.id }
+
+          expect(response).to have_http_status(:ok)
+          expect(searched_cards).to eq([card])
+          expect(response.parsed_body.at_css("turbo-frame#my_cards_event_#{zebra.id}")).to be_present
+        end
+
+        it "applies the search" do
+          laptop = create_card(name: "Laptop fund")
+          create_card(name: "Snacks")
+
+          get :event_cards, params: { event_id: zebra.id, q: "laptop" }
+
+          expect(searched_cards).to eq([laptop])
+        end
+
+        it "renders a table when list view is selected" do
+          create_card(name: "Laptop fund")
+          cookies[:my_cards_view] = "list"
+
+          get :event_cards, params: { event_id: zebra.id }
+
+          expect(response.parsed_body.at_css("table")).to be_present
+          expect(response.body).to include("Laptop fund")
+        end
+      end
+
+      it "remembers the selected view" do
+        get :cards, params: { view: "list" }
+        expect(ivar(:view)).to eq("list")
+        expect(cookies[:my_cards_view]).to eq("list")
+
+        get :cards, params: { view: "bogus" }
+        expect(ivar(:view)).to eq("list")
+      end
+
+      it "searches cards by name but not last four digits" do
+        laptop = create_card(name: "Laptop fund", last4: "1234")
+        create_card(name: "Snacks", last4: "5678")
+
+        get :cards, params: { q: "laptop" }
+        expect(searched_cards).to eq([laptop])
+
+        get :cards, params: { q: "5678" }
+        expect(searched_cards).to be_empty
+
+        get :cards, params: { q: "nothing matches this" }
+        expect(searched_cards).to be_empty
+        expect(response.body).to include("No cards found!")
+      end
+
+      it "searches cards by card grant purpose" do
+        event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+        card = create_card(event:, name: "Generic card")
+        create(:card_grant, event:, user:, email: user.email, stripe_card: card, purpose: "Hackathon pizza")
+        create_card(name: "Other card")
+
+        get :cards, params: { q: "pizza" }
+
+        expect(response).to have_http_status(:ok)
+        expect(searched_cards).to eq([card])
+      end
+
+      it "treats LIKE wildcards in the search as literal text" do
+        percent = create_card(name: "100% done")
+        create_card(name: "1000 club")
+
+        get :cards, params: { q: "100%" }
+
+        expect(searched_cards).to eq([percent])
+      end
+
+      it "keeps the status and type filters when searching" do
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        expect(response).to have_http_status(:ok)
+        form = response.parsed_body.css("form").find { |f| f.at_css("input[name='q']") }
+        expect(form.at_css("input[type='hidden'][name='status']")["value"]).to eq("canceled")
+        expect(form.at_css("input[type='hidden'][name='type']")["value"]).to eq("virtual")
+      end
+    end
   end
 
   describe "GET #reimbursements" do
@@ -62,21 +195,41 @@ RSpec.describe MyController do
       event = create(:event)
       create(:organizer_position, user:, event:, role: :manager)
 
+      other_manager = create(:user)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+
       assigned = create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
       unassigned = create(:reimbursement_report, event:, aasm_state: :submitted)
-      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: other_manager, aasm_state: :submitted)
       own_submitted = create(:reimbursement_report, user:, event:, aasm_state: :submitted)
       own_draft = create(:reimbursement_report, user:, event:)
 
       get :reimbursements
 
-      expect(response.body).to include("Assigned to you for review", "Awaiting review by any manager", "Your reports")
+      expect(response.body).to include("Assigned to you for review", "Awaiting review", "Your reports")
 
       sections = controller.instance_variable_get(:@sections)
       expect(sections[:assigned]).to contain_exactly(assigned)
       expect(sections[:unassigned]).to contain_exactly(unassigned)
       expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
       expect(sections.values.flatten).not_to include(assigned_to_someone_else)
+    end
+
+    it "shows unassigned reports from the organizations the manager reviews for" do
+      user = sign_in_verified
+      reviewing_event = create(:event)
+      opted_out_event = create(:event)
+      sub_event = create(:event, parent: reviewing_event)
+      create(:organizer_position, user:, event: reviewing_event, role: :manager).reimbursement_reviewer_opt_ins.create!(event: sub_event)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
+
+      visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
+      opted_in = create(:reimbursement_report, event: sub_event, aasm_state: :submitted)
+      create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible, opted_in)
     end
   end
 

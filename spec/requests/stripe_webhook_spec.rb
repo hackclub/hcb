@@ -50,6 +50,51 @@ RSpec.describe "Stripe Webhook", type: :request do
       end
     end
 
+    context "with an issuing_authorization.request event" do
+      let(:event) { create(:event) }
+      let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:) }
+      let(:authorization) { build(:stripe_authorization, card: { id: stripe_card.stripe_id }) }
+      let(:payload) do
+        {
+          id: "evt_test",
+          object: "event",
+          type: "issuing_authorization.request",
+          data: { object: authorization }
+        }.to_json
+      end
+
+      def post_webhook
+        post "/stripe/webhook",
+             params: payload,
+             headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
+      end
+
+      it "responds with the metadata to set on a declined authorization" do
+        post_webhook
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq(
+          "approved" => false,
+          "metadata" => {
+            "current_balance_available" => "0",
+            "declined_reason"           => "inadequate_balance"
+          }
+        )
+      end
+
+      it "responds with the metadata to set on an approved authorization" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+        post_webhook
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq(
+          "approved" => true,
+          "metadata" => { "current_balance_available" => "1000" }
+        )
+      end
+    end
+
     context "with no Stripe signature" do
       it "returns 400 and does not process the webhook" do
         expect(StripeController.private_method_defined?(:handle_charge_updated)).to be(true)

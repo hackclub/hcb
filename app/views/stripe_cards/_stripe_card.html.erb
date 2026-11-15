@@ -1,4 +1,4 @@
-<% sc_href = (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>
+<% sc_href = (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : nil %>
 <% sc_data = { turbo_frame: "_top" } %>
 <% sc_data.merge!(stripe_card_popover_data(stripe_card)) if @show_card_popovers %>
 <%= link_to sc_href, class: "text-decoration-none", data: sc_data do %>
