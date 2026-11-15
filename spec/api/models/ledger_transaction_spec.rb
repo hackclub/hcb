@@ -176,7 +176,7 @@ RSpec.describe Api::Models::LedgerTransaction do
     # returns for the payout's HCB code.
     it "reads a reimbursement payout's receipts from its expense" do
       report = create(:reimbursement_report, event:)
-      expense = create(:reimbursement_expense, report:)
+      expense = create(:reimbursement_expense, report:, memo: "Snacks")
       receipt = attach_receipt_to(expense, user: report.user, upload_method: :expense_report)
 
       expense.update_column(:aasm_state, "approved")
