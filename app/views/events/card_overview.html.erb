@@ -62,7 +62,8 @@
     <%= turbo_frame_tag :stripe_cards, src: (request.url unless turbo_frame_request?), target: "_top" do %>
       <% if !turbo_frame_request? %>
         <% if @view == "list" %>
-          <%= render "stripe_cards/table_skeleton", count: @skeleton_card_count, first_column: "Cardholder" %>
+          <%= render "stripe_cards/table_skeleton", count: @skeleton_card_count, first_column: "Cardholder", clickable: organizer_signed_in? && !@event.demo_mode %>
+          <div aria-hidden="true" class="pointer-events-none"><%= paginate @skeleton_page %></div>
         <% elsif @skeleton_group_counts %>
           <% @skeleton_group_counts.each do |count| %>
             <section class="mt-3" aria-hidden="true">

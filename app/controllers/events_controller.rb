@@ -529,7 +529,9 @@ class EventsController < ApplicationController
     unless turbo_frame_request?
       # Counts only, so the skeleton matches the layout the frame loads into
       card_counts = all_stripe_cards.group("users.id").count
-      @skeleton_card_count = [card_counts.values.sum, per_page].min
+      # Empty stand-in with the real total, so the skeleton gets the same row count and pagination bar
+      @skeleton_page = Kaminari.paginate_array([], total_count: card_counts.values.sum).page(page).per(per_page)
+      @skeleton_card_count = (@skeleton_page.total_count - @skeleton_page.offset_value).clamp(0, per_page)
       @skeleton_group_counts = [current_user, *sorted_cardholders].compact.uniq.filter_map { |u| card_counts[u.id] }.first(10) if grouped
       return
     end

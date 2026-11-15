@@ -1,5 +1,6 @@
-<%# locals: (count:, first_column: "Name") %>
+<%# locals: (count:, first_column: "Name", clickable: true) %>
 
+<%# Same shape as a loaded row (`clickable` changes line height and borders, plus a real badge sizing the status cell) so swapping in the real table doesn't shift the page %>
 <article class="table-container" aria-busy="true" aria-label="Loading cards">
   <table class="stripe-cards-table">
     <thead>
@@ -13,10 +14,12 @@
     </thead>
     <tbody>
       <% count.times do %>
-        <tr>
-          <% %w[w-1/2 w-3/4 w-1/2 w-1/2 w-2/3].each do |width| %>
-            <td><span class="block h-4 my-1 <%= width %> rounded-full bg-smoke dark:bg-darkless"></span></td>
+        <tr class="<%= "clickable" if clickable %> pointer-events-none" aria-hidden="true">
+          <% %w[w-1/2 w-3/4 w-1/2].each do |width| %>
+            <td><span class="block h-5 <%= width %> rounded-full bg-smoke dark:bg-darkless"></span></td>
           <% end %>
+          <td><span class="ml0 badge bg-smoke dark:bg-darkless text-transparent">Active</span></td>
+          <td><span class="block h-5 w-2/3 rounded-full bg-smoke dark:bg-darkless"></span></td>
         </tr>
       <% end %>
     </tbody>
