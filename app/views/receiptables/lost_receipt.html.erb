@@ -4,15 +4,6 @@
 
 <%= render "receiptables/lost_receipt_steps", form: true %>
 
-<% content_for :sidebar_footer do %>
-  <%= render "application/callout", type: "info", title: "Before you submit", class: "mt-2 mb-0" do %>
-    <ul>
-      <li>List everything you bought, with tax, tips, and fees as their own items.</li>
-      <li>The total should match the transaction.</li>
-    </ul>
-  <% end %>
-<% end %>
-
 <%= form_with model: @statement, scope: :lost_receipt_statement, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update" } do |form| %>
   <%= form_errors @statement, "statement" %>
   <%= hidden_field_tag :s, params[:s], id: nil %>
