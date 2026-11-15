@@ -268,7 +268,7 @@ module Payroll
 
     # The moment after which a final invoice can no longer be submitted.
     def final_invoice_deadline
-      expiration_time + FINAL_INVOICE_GRACE_PERIOD
+      (expiration_time.to_date + FINAL_INVOICE_GRACE_PERIOD).end_of_day
     end
 
     # True while an expired position is within its grace period and the
