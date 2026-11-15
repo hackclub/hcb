@@ -68,9 +68,7 @@ class StripeCard < ApplicationRecord
   validate :within_card_limit, on: :create
   validates :subledger, uniqueness: true, allow_nil: true
 
-  after_create_commit :notify_user, unless: :skip_notify_user
-
-  attr_accessor :skip_notify_user
+  after_create_commit :notify_user
 
   scope :deactivated, -> { where.not(stripe_status: "active") }
   scope :canceled, -> { where(stripe_status: "canceled") }
@@ -401,10 +399,6 @@ class StripeCard < ApplicationRecord
 
   def canonical_transaction_hcb_codes
     @canonical_transaction_hcb_codes ||= canonical_transactions.pluck(:hcb_code)
-  end
-
-  def issued?
-    stripe_id.present?
   end
 
   def notify_user

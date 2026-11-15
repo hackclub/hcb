@@ -24,7 +24,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this._closeMenusHandler = () => this.close()
+    this._closeMenusHandler = () => this.isOpen && this.close()
     document.addEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
@@ -120,7 +120,8 @@ export default class extends Controller {
       }
     }
 
-    this.toggleTarget.setAttribute('aria-expanded', false)
+    if (this.hasToggleTarget)
+      this.toggleTarget.setAttribute('aria-expanded', false)
     this.cleanup && this.cleanup()
 
     this.content = undefined

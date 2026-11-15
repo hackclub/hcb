@@ -2528,16 +2528,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120300) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
-  create_table "repayments", force: :cascade do |t|
+  create_table "repayment_allocations", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
     t.bigint "ledger_item_id", null: false
     t.jsonb "previous_categories", default: {}, null: false
+    t.bigint "repayment_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
-    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
-    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_repayment_allocations_on_ledger_item_id"
+    t.index ["repayment_id", "ledger_item_id"], name: "index_repayment_allocations_on_repayment_id_and_ledger_item_id", unique: true
+    t.index ["repayment_id"], name: "index_repayment_allocations_on_repayment_id"
+    t.check_constraint "amount_cents > 0", name: "repayment_allocations_positive_amount"
+  end
+
+  create_table "repayments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "disbursement_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id", unique: true
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -2752,13 +2760,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120300) do
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "signing_url"
+    t.string "source", default: "taxbandits", null: false
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
     t.string "tin_type"
+    t.boolean "tin_verified", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
     t.index ["tin_hash"], name: "index_tax_forms_on_tin_hash"
+    t.index ["tin_hash"], name: "index_tax_forms_unique_live_tax1099_tin_hash", unique: true, where: "(((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))"
   end
 
   create_table "tours", force: :cascade do |t|
@@ -3323,8 +3334,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120300) do
   add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "repayment_allocations", "ledger_items"
+  add_foreign_key "repayment_allocations", "repayments"
   add_foreign_key "repayments", "disbursements"
-  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

@@ -138,7 +138,7 @@ class EventsController < ApplicationController
 
     @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
+    render partial: "events/home/spenders_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
   def stats
@@ -406,6 +406,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
+        @settings_tab = params[:event][:tab]
         render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
@@ -1205,7 +1206,7 @@ class EventsController < ApplicationController
         redirect_to @event
       end
       format.pdf do
-        render pdf: "Termination Letter for #{@event.name}", page_height: "11in", page_width: "8.5in"
+        render_pdf "Termination Letter for #{@event.name}"
       end
     end
   end
