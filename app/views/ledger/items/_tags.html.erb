@@ -13,7 +13,7 @@
 <% event = @event || item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
 <% if event.present? && !event.demo_mode? %>
   <% tags = @event ? item.tags.select { |tag| tag.event_id == @event.id } : item.tags %>
-  <div class="flex flex-wrap tags ledger_item_<%= item.hashid %>_tags" style="gap: 0.25rem">
+  <div class="flex flex-wrap order-last w-full tags ledger_item_<%= item.hashid %>_tags" style="gap: 0.25rem">
     <%= render partial: "ledger/items/tag", collection: tags, as: :tag, locals: { item: } %>
   </div>
 <% end %>
