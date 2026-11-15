@@ -27,8 +27,16 @@ class TaxbanditsService
     response.body
   end
 
+  # Bounded under Rack::Timeout's 30s (config/initializers/rack_timeout.rb), so
+  # a slow TaxBandits (which may fetch the PdfUrl mid-request) raises a
+  # Faraday::TimeoutError the caller can treat as an uncertain outcome, rather
+  # than Rack::Timeout's exception, which descends from Exception and skips
+  # every `rescue => e`.
+  CREATE_TIMEOUT = 20
+
   def self.create_from_data(payload)
     response = taxbandits_client.post("WhCertificate/Create") do |req|
+      req.options.timeout = CREATE_TIMEOUT
       req.body = payload.to_json
     end
 
