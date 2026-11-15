@@ -124,7 +124,10 @@ class Payment < ApplicationRecord
         0
       end
     when LegalEntity::PayoutMethod::WiseTransfer
-      (WiseTransfer.generate_quote(amount) - WiseTransfer.generate_detailed_quote(amount)[:without_fees_usd_amount]).cents
+      Rails.cache.fetch("payment_estimated_wise_fee_cents/#{amount.currency}/#{amount.cents}", expires_in: 1.hour) do
+        quote = WiseTransfer.generate_detailed_quote(amount)
+        (quote[:with_fees_usd_amount] - quote[:without_fees_usd_amount]).cents
+      end
     else
       0
     end
