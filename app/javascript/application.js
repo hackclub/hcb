@@ -55,16 +55,6 @@ window.Turbo = Turbo
 import { Runtime } from 'reactionview'
 Runtime.start({ state: { debounce: 150 } })
 
-import persist from '@alpinejs/persist'
-import Alpine from './alpine'
-import registerData from './datas'
-
-window.Alpine = Alpine
-Alpine.plugin(persist)
-registerData(Alpine)
-
-Alpine.start()
-
 import LocalTime from 'local-time'
 LocalTime.start()
 
