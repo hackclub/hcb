@@ -8,5 +8,5 @@ case "$path" in
 esac
 [ -e "$path" ] && exit 0
 
-echo "Don't hand-write migration files. Generate it with a Rails generator (e.g. \`bin/rails generate migration AddFooToBars foo:string\` or \`bin/rails generate model ...\`) so it gets a correct timestamp, then edit the generated file." >&2
+echo "Don't hand-write migration files. Generate it with a Rails generator (e.g. \`bin/rails generate migration AddFooToBars foo:string\` or \`bin/rails generate model ...\`) so it gets a correct timestamp, then edit the generated file. See https://guides.rubyonrails.org/active_record_migrations.html#generating-migration-files for more information." >&2
 exit 2
