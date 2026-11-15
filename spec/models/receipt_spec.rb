@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Receipt, type: :model do
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
   def build_receipt(receiptable:, **attributes)
     described_class.new(receiptable:, upload_method: :api, **attributes).tap do |receipt|
       receipt.file.attach(
@@ -16,8 +18,7 @@ RSpec.describe Receipt, type: :model do
   it "rejects an ordinary PDF upload claiming to be a lost receipt statement" do
     charge = create(:canonical_pending_transaction).local_hcb_code
     charge.no_or_lost_receipt!
-    pdf = WickedPdf.new.pdf_from_string("<p>An ordinary uploaded PDF</p>")
-    file = Rack::Test::UploadedFile.new(StringIO.new(pdf), "application/pdf", original_filename: "receipt.pdf")
+    file = Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4"), "application/pdf", original_filename: "receipt.pdf")
 
     expect {
       ReceiptService::Create.new(receiptable: charge, uploader: create(:user), attachments: [file], upload_method: "lost_receipt_statement").run!

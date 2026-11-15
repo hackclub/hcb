@@ -11,6 +11,8 @@ RSpec.describe LostReceipt::Statement do
 }
   end
 
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
   it "generates an itemized PDF with exact integer-cent totals" do
     statement = described_class.new(details.merge(items_attributes: {
                                                     "0" => { description: "Notebooks", quantity: "3", unit_amount: "1.27" },
@@ -21,9 +23,9 @@ RSpec.describe LostReceipt::Statement do
     expect(statement.total_amount_cents).to eq(879)
     expect(statement.items.map(&:total_amount_cents)).to eq([381, 498])
     expect(statement.receipt.file.download).to start_with("%PDF")
-    pdf = Poppler::Document.new(data: statement.receipt.file.download)
-    expect(pdf.first.text).to include("View transaction", "Notebooks", "Pens", "$8.79")
-    expect(pdf.first.link_mapping.map { |link| link.action.uri }).to include(Rails.application.routes.url_helpers.hcb_code_url(hcb_code))
+    expect(CloudflareBrowserRun).to have_received(:pdf).with(
+      a_string_including("View transaction", "Notebooks", "Pens", "$8.79", Rails.application.routes.url_helpers.hcb_code_url(hcb_code))
+    )
     expect(statement.confirmed_at).to be_present
     expect(statement.receipt.reload).to be_lost_receipt_statement
   end
@@ -43,11 +45,11 @@ RSpec.describe LostReceipt::Statement do
   end
 
   it "does not resolve the missing receipt if PDF generation fails" do
-    allow_any_instance_of(WickedPdf).to receive(:pdf_from_string).and_raise(RuntimeError, "PDF generation failed")
+    allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
 
     statement = described_class.new(details)
     expect(statement.submit(receiptable: hcb_code)).to eq(false)
-    expect(statement.errors[:base]).to include("The statement could not be created. Please try again.")
+    expect(statement.errors[:base]).to include("The PDF couldn't be generated. Please try again.")
     expect(hcb_code.receipts).to be_empty
   end
 

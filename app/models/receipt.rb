@@ -78,11 +78,11 @@ class Receipt < ApplicationRecord
   validates :file, content_type: "application/pdf", if: :lost_receipt_statement?
   validate do
     if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.valid?
-      errors.add(:lost_receipt_statement, "must be generated from valid statement details")
+      errors.add(:lost_receipt_statement, "must come from the lost receipt form")
     end
   end
 
-  # Preserve statement history (and legacy marks) until the last receipt leaves.
+  # The no/lost mark stays until the last receipt is removed.
   before_save do
     if lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable.update!(marked_no_or_lost_receipt_at: receiptable.marked_no_or_lost_receipt_at || Time.current)

@@ -5,7 +5,7 @@ module LostReceipt
     include ActiveModel::Model
     include ActiveModel::Attributes
 
-    CONFIRMATION = "I confirm that these purchase details are accurate to the best of my knowledge and that I cannot obtain the original receipt."
+    CONFIRMATION = "I confirm these details are accurate and that I can't get the original receipt."
 
     attr_accessor :receipt, :submitter, :merchant, :purpose, :signer_name, :confirmed_at
 
@@ -22,23 +22,22 @@ module LostReceipt
 
     def items_attributes=(attributes)
       attributes = attributes.values if attributes.is_a?(Hash)
-      # Keep the existing nested-form request limit before constructing items.
+      # Checked before building items so a huge request can't allocate them all.
       raise ActiveRecord::NestedAttributes::TooManyRecords if attributes.size > 50
 
       self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
     end
 
-    # Generate and store the PDF before attaching it so storage failures cannot
-    # resolve the missing receipt.
+    # The receipt is only saved once the PDF is stored, so a failed render or
+    # upload leaves the transaction missing its receipt.
     def submit(receiptable:)
       return false unless valid?
 
       self.confirmed_at = Time.current
       self.receipt = Receipt.new(receiptable:, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
-      pdf = WickedPdf.new.pdf_from_string(html, page_size: "Letter", encoding: "UTF-8", disable_javascript: true)
-      io = StringIO.new(pdf)
-      # Retain the blob before uploading so even a partial upload can be purged.
+      io = StringIO.new(CloudflareBrowserRun.pdf(html))
+      # Created before uploading so a partial upload can still be purged.
       blob = ActiveStorage::Blob.create_after_unfurling!(io:, filename: "lost-receipt-statement.pdf", content_type: "application/pdf")
       blob.upload(io)
       receipt.file.attach(blob)
@@ -47,9 +46,9 @@ module LostReceipt
     rescue ActiveRecord::RecordInvalid => error
       errors.add(:base, error.record.errors.full_messages.to_sentence)
       false
-    rescue RuntimeError, ActiveStorage::Error => error
+    rescue Faraday::Error, ActiveStorage::Error => error
       Rails.error.report(error)
-      errors.add(:base, "The statement could not be created. Please try again.")
+      errors.add(:base, "The PDF couldn't be generated. Please try again.")
       false
     ensure
       blob&.purge if blob && !receipt&.persisted?

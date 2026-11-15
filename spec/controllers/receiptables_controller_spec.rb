@@ -18,6 +18,7 @@ RSpec.describe ReceiptablesController do
   end
 
   before { create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:) }
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
 
   describe "#mark_no_or_lost" do
     it "generates a statement using the receipt request link without claiming an authenticated signer" do
@@ -26,7 +27,7 @@ RSpec.describe ReceiptablesController do
       receipt = hcb_code.receipts.sole
       expect(receipt).to be_lost_receipt_statement
       expect(receipt.file.download).to start_with("%PDF")
-      expect(Poppler::Document.new(data: receipt.file.download).first.text).to include("Alex Example", "Receipt request link (not signed in)")
+      expect(CloudflareBrowserRun).to have_received(:pdf).with(a_string_including("Alex Example", "Receipt request link (not signed in)"))
       expect(receipt.user).to be_nil
       expect(hcb_code.reload).to be_no_or_lost_receipt
       expect(flash[:success]).to eq("Lost receipt statement added.")
