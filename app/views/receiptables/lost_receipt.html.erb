@@ -88,7 +88,8 @@
     <div class="sm:flex items-center justify-between gap-3">
       <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
       <%# Not prefilled or autofilled: typing the name is the signature. %>
-      <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full sm:!max-w-[250px]" %>
+      <%# Only a signed-in user's own name is put in the page; the emailed link is checked on the server. %>
+      <%= form.text_field :signer_name, required: true, autocomplete: "off", placeholder: current_user&.full_name, class: "!max-w-full sm:!max-w-[250px]", data: { lost_receipt_target: "signature", name: current_user&.full_name } %>
     </div>
   </div>
 

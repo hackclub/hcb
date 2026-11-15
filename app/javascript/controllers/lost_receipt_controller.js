@@ -12,6 +12,7 @@ export default class extends Controller {
     'count',
     'mismatch',
     'submit',
+    'signature',
   ]
   static values = { charged: Number }
 
@@ -66,6 +67,14 @@ export default class extends Controller {
         ? `Add ${money} more to match the transaction.`
         : `Remove ${money} to match the transaction.`
     this.submitTarget.disabled = off !== 0
+    const signature = this.signatureTarget
+    const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase()
+    signature.setCustomValidity(
+      !signature.dataset.name ||
+        normalize(signature.value) === normalize(signature.dataset.name)
+        ? ''
+        : 'Type your name as it appears on your HCB account.'
+    )
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
     if (this.hasAcknowledgementTarget) {
       // Same comparison as the server: case, spacing, and punctuation don't matter.

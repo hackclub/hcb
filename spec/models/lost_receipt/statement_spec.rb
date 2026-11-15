@@ -46,7 +46,7 @@ RSpec.describe LostReceipt::Statement do
 
   context "on an organization's transaction" do
     let(:event) { create(:event) }
-    let(:cardholder) { create(:user) }
+    let(:cardholder) { create(:user, full_name: "Alex Example") }
     let(:hcb_code) do
       transaction = create(:canonical_pending_transaction, amount_cents: -879)
       create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event:)
@@ -80,7 +80,7 @@ RSpec.describe LostReceipt::Statement do
           .to include("1st receipt my organization has lost, and the 2nd receipt I have lost.")
       end
 
-      statement = described_class.new(details.merge(receiptable: hcb_code, submitter: create(:user)))
+      statement = described_class.new(details.merge(receiptable: hcb_code, submitter: create(:user, full_name: "Alex Example")))
       expect(statement.required_acknowledgement).to eq(sentence)
       statement.acknowledgement = sentence
       expect(statement.submit).to eq(true)

@@ -21,6 +21,7 @@ module LostReceipt
     validate :items_are_valid
     validate :total_matches_transaction
     validate :acknowledgement_matches
+    validate :signer_name_matches_account
 
     def items_attributes=(attributes)
       attributes = attributes.values if attributes.is_a?(Hash)
@@ -74,6 +75,12 @@ module LostReceipt
         "Continually losing receipts will result in termination of my organization."
     end
 
+    # The name the signature has to match. Someone signed in signs as themselves;
+    # the emailed link goes to the cardholder. Nil when we know neither.
+    def expected_signer_name
+      (submitter || cardholder)&.full_name.presence
+    end
+
     private
 
     def event
@@ -95,6 +102,13 @@ module LostReceipt
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current
+    end
+
+    def signer_name_matches_account
+      return if expected_signer_name.nil? || signer_name.blank?
+      return if signer_name.squish.casecmp?(expected_signer_name.squish)
+
+      errors.add(:signer_name, "must match the name on your HCB account")
     end
 
     def total_matches_transaction
