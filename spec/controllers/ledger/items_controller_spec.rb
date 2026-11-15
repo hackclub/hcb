@@ -34,6 +34,28 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "POST #toggle_tag" do
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+
+      it "adds the tag and then removes it on a second toggle" do
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).to include(tag)
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).not_to include(tag)
+      end
+
+      it "refuses a tag from another organization" do
+        other_event = create(:event)
+        create(:organizer_position, user: member_user, event: other_event, role: :member)
+        other_tag = other_event.tags.create!(label: "Other", emoji: "🎉", color: "red")
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: other_tag.id }
+
+        expect(item.reload.tags).to be_empty
+      end
+    end
+
     describe "POST #invoice_as_personal_transaction" do
       before { create(:hcb_code, ledger_item: item) }
 
@@ -79,6 +101,17 @@ RSpec.describe Ledger::ItemsController, type: :controller do
 
         expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
       end
+    end
+
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      create_session(create(:user, :make_auditor), verified: true)
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
+
+      get :show, params: { id: item.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
     end
 
     it "links each CPT to its own page for an auditor" do
@@ -146,7 +179,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include(group.memo)
       expect(response.body).to include("Stripe fee reimbursements")
-      expect(response.body).to include(invoice.event.name)
+      expect(response.body).to include(ERB::Util.html_escape(invoice.event.name))
       expect(response.body).to include("$1.23")
     end
   end

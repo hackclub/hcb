@@ -517,6 +517,8 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense.reload.category.slug).to eq("repayment")
       expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
       expect(expense.ledger_item.repayment_disbursements).to eq([disbursement])
+      expect(disbursement.repayment.allocations.sole.amount_cents).to eq(100_00)
+      expect(disbursement.repayment.disbursement).to eq(disbursement)
     end
 
     it "must repay the full amount" do
@@ -539,16 +541,27 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       expect {
         create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: other_expense.ledger_item.id)
-      }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
+      }.to raise_error(ActiveRecord::RecordInvalid, /must be an expense/)
     end
 
-    it "can't repay a pending transaction" do
-      pending_expense = create(:canonical_pending_transaction, event: destination_event, amount_cents: -100_00)
-
+    it "repays a pending transaction and restores its category after it settles" do
+      # Factory transactions fall back to an `HCB-000-<id>` code, and CTs and
+      # CPTs have separate id sequences. If this CPT's id matched the source
+      # event's funding CT, they'd share a ledger item and the source event's
+      # balance would move to the destination. Pick an id no CT can share.
+      pending_expense = create(:canonical_pending_transaction, id: [CanonicalTransaction.maximum(:id).to_i, CanonicalPendingTransaction.maximum(:id).to_i].max + 1_000, event: destination_event, amount_cents: -100_00, category_slug: "food-fun")
       expect(pending_expense.ledger_item.reload).to be_pending
-      expect {
-        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: pending_expense.ledger_item.id)
-      }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
+
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: pending_expense.ledger_item.id)
+      expect(pending_expense.reload.category.slug).to eq("repayment")
+
+      settled = create(:canonical_transaction, ledger_item: pending_expense.ledger_item, amount_cents: -100_00)
+      CanonicalPendingTransactionService::Settle.new(canonical_transaction: settled, canonical_pending_transaction: pending_expense).run!
+      expect(settled.reload.category.slug).to eq("repayment")
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect([settled.reload.category.slug, pending_expense.reload.category.slug]).to eq(["food-fun", "food-fun"])
     end
 
     it "restores the expense's category when the repayment is rejected" do
@@ -597,7 +610,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "keeps the repayment when the expense grows afterward, leaving the difference unrepaid" do
       disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
-      repayment = disbursement.repayments.sole
+      repayment = disbursement.repayment.allocations.sole
 
       # e.g. a tip settling on top of a card charge
       expense.update!(amount_cents: -120_00)
