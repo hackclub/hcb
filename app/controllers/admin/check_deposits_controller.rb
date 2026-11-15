@@ -31,6 +31,10 @@ module Admin
         flash.now[:error] = "Column ID is required."
         return render :show, status: :unprocessable_content
       end
+      unless params[:column_id].match?(/\A[a-z]+_[A-Za-z0-9]+\z/)
+        flash.now[:error] = "Column ID is not valid."
+        return render :show, status: :unprocessable_content
+      end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"
 
       @check_deposit.update!(column_id: params[:column_id], status: :submitted)

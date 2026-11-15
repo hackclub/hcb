@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module InvoicesHelper
+  include PaymentMethodsHelper
+
   def invoice_sent_at(invoice = @invoice)
     format_datetime invoice.created_at
   end
@@ -22,40 +24,7 @@ module InvoicesHelper
   end
 
   def invoice_payment_method_mention(invoice = @invoice, **options)
-    return "–" unless invoice&.manually_marked_as_paid? || invoice&.payment_method_type
-
-    if invoice.manually_marked_as_paid?
-      size = 20
-      icon_name = "post-fill"
-      description_text = "Manually marked as paid"
-    elsif invoice&.payment_method_card_brand
-      brand = invoice&.payment_method_card_brand
-      last4 = invoice&.payment_method_card_last4
-
-      icon_name = {
-        "amex"       => "card-amex",
-        "mastercard" => "card-mastercard",
-        "visa"       => "card-visa",
-        "discover"   => "card-discover"
-      }[brand] || "card-other"
-      description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
-      icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
-    else
-      icon_name = "bank-account"
-      size = 20
-
-      if invoice&.payment_method_type == "ach_credit_transfer"
-        description_text = "ACH transfer"
-      elsif invoice&.payment_method_type == "us_bank_account"
-        description_text = "US bank account"
-      else
-        description_text = invoice.payment_method_type.humanize
-      end
-    end
-
-    description = content_tag :span, description_text, class: "ml1"
-    icon ||= inline_icon icon_name, width: size, height: size, class: "slate"
-    content_tag(:span, class: "inline-flex items-center #{options[:class]}") { icon + description }
+    payment_method_mention(invoice, **options, manually_marked_as_paid: invoice&.manually_marked_as_paid?)
   end
 
   def invoice_card_country_mention(invoice = @invoice)
