@@ -9,8 +9,6 @@ export default class extends Controller {
     'addButton',
     'removeButton',
     'acknowledgement',
-    'number',
-    'title',
     'count',
     'mismatch',
     'submit',
@@ -68,11 +66,6 @@ export default class extends Controller {
         ? `Add ${money} more to match the transaction.`
         : `Remove ${money} to match the transaction.`
     this.submitTarget.disabled = off !== 0
-    this.itemTargets.forEach((item, index) => {
-      this.numberTargets[index].textContent = `#${index + 1}`
-      this.titleTargets[index].textContent =
-        item.querySelector('[data-description]').value || 'Untitled item'
-    })
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
     if (this.hasAcknowledgementTarget) {
       // Same comparison as the server: case, spacing, and punctuation don't matter.

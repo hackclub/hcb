@@ -1,16 +1,8 @@
-<%# Borrows the reimbursement expense card styles (.expense, .click_to_mention). %>
-<article class="expense card pt0 border" data-lost-receipt-target="item" data-index="<%= form.index %>">
-  <div class="card__banner secondary mb2 border-bottom flex items-center" style="gap: 8px">
-    <code class="bg-white click_to_mention" data-lost-receipt-target="number">#1</code>
-    <div class="bold flex-grow truncate" data-lost-receipt-target="title">Untitled item</div>
-    <button type="button" class="pop pointer tooltipped tooltipped--w" aria-label="Remove item" data-action="lost-receipt#remove" data-lost-receipt-target="removeButton">
-      <%= inline_icon "view-close", size: 24 %>
-    </button>
-  </div>
+<article class="card border" data-lost-receipt-target="item" data-index="<%= form.index %>">
   <div class="flex flex-wrap items-end gap-2">
     <div class="basis-full sm:basis-0 flex-1 min-w-0">
       <%= form.label :description, class: "bold" %>
-      <%= form.text_field :description, required: true, placeholder: "Drip coffee", class: "!max-w-full", data: { description: true } %>
+      <%= form.text_field :description, required: true, placeholder: "Drip coffee", class: "!max-w-full" %>
     </div>
     <div class="flex-1 sm:flex-none sm:w-20 min-w-0">
       <%= form.label :quantity, class: "bold" %>
@@ -21,5 +13,8 @@
       <%= form.label :unit_amount, "Price each", class: "bold" %>
       <%= form.number_field :unit_amount, value: form.object.unit_amount_cents.nil? ? nil : form.object.unit_amount.to_s, required: true, min: 0, max: 1_000_000, step: "0.01", placeholder: "5.00", class: "!max-w-full", data: { amount: "price", controller: "truncate-decimal", action: "truncate-decimal#truncate" } %>
     </div>
+    <button type="button" class="pop pointer shrink-0 tooltipped tooltipped--w" style="background: #ec375020; color: #ec3750" aria-label="Remove item" data-action="lost-receipt#remove" data-lost-receipt-target="removeButton">
+      <%= inline_icon "delete", size: 24 %>
+    </button>
   </div>
 </article>
