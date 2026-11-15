@@ -222,4 +222,31 @@ RSpec.describe Tax::Form, type: :model do
       expect(form.errors[:tin_hash]).to include("cannot change once set")
     end
   end
+  describe "tin_verified" do
+    let(:form) { create(:tax_form, :sent) }
+
+    it "follows a successful TaxBandits TIN match" do
+      form.update!(taxbandits_tin_matching_status: :success)
+
+      expect(form).to be_tin_verified
+    end
+
+    it "is cleared by a failed TIN match" do
+      form.update!(taxbandits_tin_matching_status: :success)
+      form.update!(taxbandits_tin_matching_status: :failed)
+
+      expect(form).not_to be_tin_verified
+    end
+
+    it "is left alone when the TIN-match status doesn't change" do
+      form.update!(tin_verified: true)
+      form.update!(taxbandits_status: :opened)
+
+      expect(form).to be_tin_verified
+    end
+
+    it "starts out unverified for a form collected through TaxBandits" do
+      expect(create(:tax_form)).not_to be_tin_verified
+    end
+  end
 end

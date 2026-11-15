@@ -451,6 +451,28 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    render_views
+
+    let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
+
+    before { sign_in_organizer_of(event) }
+
+    it "keeps donation settings and the submitted message visible with an actionable length error" do
+      message = "a" * 501
+
+      patch(:update, params: { id: event.slug, event: { tab: "donations", donation_thank_you_message: message } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      page = Nokogiri::HTML5(response.body)
+      settings = page.at_css("#donations_settings")
+      expect(settings).to be_present
+      expect(settings.at_css(".error-card").text).to include("Donation thank you message is too long (maximum is 500 characters)")
+      expect(settings.at_css("textarea[name='event[donation_thank_you_message]']").text).to eq(message)
+      expect(event.reload.donation_thank_you_message).to eq("Thank you!")
+    end
+  end
+
+  describe "#update" do
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -742,6 +764,78 @@ RSpec.describe EventsController do
         expect(rows.size).to eq(1)
         expect(rows.first.text).to include("Casey Contractor")
       end
+    end
+  end
+
+  describe "#card_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:organizer) { create(:user, full_name: "Zed Organizer") }
+
+    def create_card(user, **attrs)
+      cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
+      create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: cardholder, **attrs)
+    end
+
+    def page_for(**params)
+      get(:card_overview, params: { event_id: event.slug, **params })
+      Nokogiri::HTML5(response.body)
+    end
+
+    before do
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+    end
+
+    it "treats LIKE wildcards in the search literally" do
+      create_card(organizer, name: "snake_case")
+      create_card(organizer, name: "snakeXcase")
+
+      page = page_for(q: "_")
+
+      expect(page.text).to include("snake_case")
+      expect(page.text).not_to include("snakeXcase")
+    end
+
+    it "shows no cards for an unknown cardholder instead of all of them" do
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: "not-a-real-person")
+
+      expect(page.text).not_to include("Organizer Card")
+      expect(page.text).to include("doesn’t have any")
+    end
+
+    it "still filters by a cardholder who has left the team" do
+      former_member = create(:user, full_name: "Former Member")
+      create_card(former_member, name: "Former Member Card")
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: former_member.slug)
+
+      expect(page.text).to include("Former Member Card")
+      expect(page.text).not_to include("Organizer Card")
+    end
+
+    it "groups cards by user with the viewer first and previews three per user", :aggregate_failures do
+      other = create(:user, full_name: "Aaron Aardvark")
+      create_card(other)
+      4.times { create_card(organizer) }
+
+      page = page_for
+
+      sections = page.css("section .mention")
+      expect(sections.map { |s| s.text.squish }).to eq([organizer.initial_name, other.initial_name])
+      expect(page.css(".mixed-grid").first.css(".stripe-card").count).to eq(3)
+      expect(page.text).to include("+1 more")
+    end
+
+    it "drops the page number when toggling between grid and list" do
+      toggle = page_for(page: 2, status: "active").at_css("a.pop[href*='view=list']")
+
+      expect(toggle["href"]).to include("status=active")
+      expect(toggle["href"]).not_to include("page=")
     end
   end
 

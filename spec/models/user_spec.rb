@@ -684,6 +684,15 @@ RSpec.describe User, type: :model do
         expect(user.reload.personal_legal_entity).to be_person
         expect(user.personal_legal_entity).not_to eq(business)
       end
+
+      it "ignores archived person entities" do
+        original = user.personal_legal_entity
+        original.archive!
+        replacement = create(:legal_entity, :person, name: user.full_name)
+        user.legal_entity_users.create!(legal_entity: replacement)
+
+        expect(user.reload.personal_legal_entity).to eq(replacement)
+      end
     end
 
     describe "#person_legal_entity_user" do
@@ -710,6 +719,36 @@ RSpec.describe User, type: :model do
         expect(user.default_payout_method.details).to eq(pm.details)
         expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       end
+    end
+  end
+
+  describe "#unassociated_payments_received" do
+    let(:user) { create(:user) }
+
+    it "includes pending payments to a payee with the user's email and no legal entity" do
+      payment = create(:payment, payee: create(:payee, legal_entity: nil, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "includes pending payments to a payee with the user's email and a managed legal entity" do
+      event = create(:event)
+      managed = create(:legal_entity, managing_event: event)
+      payment = create(:payment, payee: create(:payee, event:, legal_entity: managed, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "excludes payments to a payee with an unmanaged legal entity" do
+      create(:payment, payee: create(:payee, email: user.email))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+
+    it "excludes payments to a payee with a different email" do
+      create(:payment, payee: create(:payee, legal_entity: nil))
+
+      expect(user.unassociated_payments_received).to be_empty
     end
   end
 
