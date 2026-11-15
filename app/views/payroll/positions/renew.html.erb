@@ -1,6 +1,6 @@
 <% title "Renew contract" %>
 <% subtitle "For #{@position.payee_display_name}" %>
-<% @back_url = event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
+<% @back_url = payroll_position_path(@position) %>
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Contract details", seek: false, current: true %>

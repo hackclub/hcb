@@ -42,6 +42,14 @@ module Payroll
       mail to: @position.event.organizer_contact_emails(only_managers: true), subject:
     end
 
+    def expiring_soon
+      @position = params[:position]
+      @event = @position.event
+
+      mail to: @position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true),
+           subject: "#{@position.payee.display_name}'s contract for #{@event.name} expires on #{@position.end_date.to_fs(:long)}"
+    end
+
     def terminated
       @position = params[:position]
       @payee = @position.payee
@@ -68,7 +76,7 @@ module Payroll
     end
 
     def reply_to_addresses
-      manager_emails = @event.organizer_positions.where(role: :manager).includes(:user).map { |op| op.user.email_address_with_name }
+      manager_emails = @event.managers.map(&:email_address_with_name)
       creator_email = @position.contracts.not_voided.first&.party(:organizer)&.user&.email_address_with_name
 
       [*manager_emails, creator_email].compact.uniq

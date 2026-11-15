@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe "OAuth tokens of locked users", type: :request do
   let(:user) { create(:user) }
   let(:application) do
-    Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "read")
+    Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: create(:user), scopes: "read")
   end
   # Access tokens expire after two hours, so by the time staff lock an account
   # most of its OAuth tokens look like this: expired, unrevoked, and still

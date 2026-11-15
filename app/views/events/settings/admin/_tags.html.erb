@@ -17,7 +17,7 @@
       <% end %>
 
       <div class="overflow-visible relative line-height-0" data-controller="menu" data-menu-append-to-value="turbo-frame#organization_tags">
-        <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" <%= "disabled" unless admin_signed_in? %>>+
+        <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" <% unless admin_signed_in? %> disabled<% end %>>+
           Add tag
         </button>
         <% if admin_signed_in? %>

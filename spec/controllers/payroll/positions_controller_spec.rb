@@ -51,7 +51,7 @@ RSpec.describe Payroll::PositionsController do
       post :create, params: position_params
 
       position = event.payroll_positions.last
-      expect(response).to redirect_to(contract_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response).to redirect_to(contract_payroll_position_path(position))
       expect(position.contracts.sole).to be_sent
     end
 
@@ -96,7 +96,7 @@ RSpec.describe Payroll::PositionsController do
       post :create, params: position_params
 
       position = event.payroll_positions.last
-      expect(response).to redirect_to(edit_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response).to redirect_to(edit_payroll_position_path(position))
       expect(flash[:error]).to be_present
       expect(position.contracts.not_voided).to be_empty
     end
@@ -115,8 +115,7 @@ RSpec.describe Payroll::PositionsController do
       original_contract = position.contracts.sole
 
       patch :update, params: {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "25.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -132,8 +131,7 @@ RSpec.describe Payroll::PositionsController do
       stub_docuseal_fetch(submission_id: "REISSUED")
 
       patch :update, params: {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -152,8 +150,7 @@ RSpec.describe Payroll::PositionsController do
       # resend to DocuSeal fails — nothing not-voided exists afterwards, and
       # the failed attempt itself is left voided (linked back to the original).
       patch :update, params: {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
       expect(original_contract.reload).to be_voided
@@ -169,8 +166,7 @@ RSpec.describe Payroll::PositionsController do
       stub_docuseal_fetch(submission_id: "REISSUED")
 
       patch :update, params: {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -182,8 +178,7 @@ RSpec.describe Payroll::PositionsController do
       position.contracts.sole.update_column(:aasm_state, "signed")
 
       patch :update, params: {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: { title: "New title", rate: "999.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
       }
 
@@ -206,7 +201,7 @@ RSpec.describe Payroll::PositionsController do
     it "shows the signing embed to the user who created the invite" do
       position.send_contract(organizer_user: user)
 
-      get :contract, params: { event_id: event.slug, id: position.id }
+      get :contract, params: { id: position.hashid }
 
       expect(response.body).to include("docuseal-form")
     end
@@ -216,16 +211,20 @@ RSpec.describe Payroll::PositionsController do
       create(:organizer_position, user: other_organizer, event:, role: :manager)
       position.send_contract(organizer_user: other_organizer)
 
-      get :contract, params: { event_id: event.slug, id: position.id }
+      get :contract, params: { id: position.hashid }
 
       expect(response.body).not_to include("docuseal-form")
       expect(response.body).to include("Waiting on")
     end
 
-    it "redirects to edit when no active contract exists yet" do
-      get :contract, params: { event_id: event.slug, id: position.id }
+    it "doesn't look positions up by numeric id" do
+      expect { get :contract, params: { id: position.id } }.to raise_error(ActiveRecord::RecordNotFound)
+    end
 
-      expect(response).to redirect_to(edit_event_payroll_position_path(event_id: event.slug, id: position.id))
+    it "redirects to edit when no active contract exists yet" do
+      get :contract, params: { id: position.hashid }
+
+      expect(response).to redirect_to(edit_payroll_position_path(position))
       expect(flash[:error]).to be_present
     end
   end
@@ -240,8 +239,7 @@ RSpec.describe Payroll::PositionsController do
 
     let(:renewal_params) do
       {
-        event_id: event.slug,
-        id: position.id,
+        id: position.hashid,
         contractor: {
           title: "Senior engineer",
           rate: "40.00",
@@ -259,23 +257,23 @@ RSpec.describe Payroll::PositionsController do
     end
 
     it "offers to renew from the position's menu" do
-      get :show, params: { event_id: event.slug, id: position.id }
+      get :show, params: { id: position.hashid }
 
-      expect(response.body).to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response.body).to include(renew_payroll_position_path(position))
       expect(response.body).not_to include("Update position")
     end
 
     it "offers to update, rather than renew, a position that's still onboarding" do
       position.update!(aasm_state: "onboarding", onboarded_at: nil)
 
-      get :show, params: { event_id: event.slug, id: position.id }
+      get :show, params: { id: position.hashid }
 
       expect(response.body).to include("Update position")
-      expect(response.body).not_to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response.body).not_to include(renew_payroll_position_path(position))
     end
 
     it "prefills the renewal with the current terms, starting after the current contract" do
-      get :renew, params: { event_id: event.slug, id: position.id }
+      get :renew, params: { id: position.hashid }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(position.title)
@@ -287,9 +285,9 @@ RSpec.describe Payroll::PositionsController do
       post :create_renewal, params: renewal_params
 
       renewal = position.reload.renewal
-      expect(response).to redirect_to(contract_event_payroll_position_path(event_id: event.slug, id: renewal.id))
+      expect(response).to redirect_to(contract_payroll_position_path(renewal))
       expect(renewal).to have_attributes(title: "Senior engineer", rate_cents: 4_000, start_date: position.end_date + 1.day, end_date: position.end_date + 6.months)
-      expect(renewal).to be_under_review
+      expect(renewal).to be_draft # until the organizer signs
       expect(renewal.contracts.sole).to be_sent
       expect(position).to be_onboarded
     end
@@ -317,7 +315,7 @@ RSpec.describe Payroll::PositionsController do
       renewal = position.reload.renewal
       stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED").to_return(status: 200, body: "")
 
-      patch :update, params: renewal_params.merge(id: renewal.id)
+      patch :update, params: renewal_params.merge(id: renewal.hashid)
 
       expect(renewal.reload.start_date).to eq(position.end_date + 1.day)
     end
@@ -326,13 +324,13 @@ RSpec.describe Payroll::PositionsController do
       post :create_renewal, params: renewal_params
       renewal = position.reload.renewal
 
-      get :show, params: { event_id: event.slug, id: position.id }
+      get :show, params: { id: position.hashid }
       expect(response.body).to include("Renewal for #{renewal.period_label}")
-      expect(response.body).not_to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response.body).not_to include(renew_payroll_position_path(position))
 
-      get :show, params: { event_id: event.slug, id: renewal.id }
+      get :show, params: { id: renewal.hashid }
       expect(response.body).to include("Cancel renewal")
-      expect(response.body).to include("Update position")
+      expect(response.body).to include("Edit and sign")
     end
 
     it "explains the renewal to the contractor on their onboarding page" do
@@ -363,7 +361,7 @@ RSpec.describe Payroll::PositionsController do
       post :create_renewal, params: renewal_params
       renewal = position.reload.renewal
 
-      get :show, params: { event_id: event.slug, id: renewal.id }
+      get :show, params: { id: renewal.hashid }
 
       expect(response.body).to include(invoice.name)
     end
@@ -373,7 +371,7 @@ RSpec.describe Payroll::PositionsController do
     it "terminates the position" do
       position = create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago)
 
-      post :terminate, params: { event_id: event.slug, id: position.id }
+      post :terminate, params: { id: position.hashid }
 
       expect(position.reload).to be_terminated
       expect(flash[:success]).to eq("Contractor position successfully terminated")
@@ -382,11 +380,40 @@ RSpec.describe Payroll::PositionsController do
     it "doesn't claim success when there's nothing left to terminate" do
       position = create(:payroll_position, payee:, aasm_state: "expired", onboarded_at: 1.month.ago)
 
-      post :terminate, params: { event_id: event.slug, id: position.id }
+      post :terminate, params: { id: position.hashid }
 
       expect(position.reload).to be_expired
       expect(flash[:error]).to eq("This contractor position can't be terminated")
-      expect(response).to redirect_to(event_payroll_position_path(event:, payroll_position: position))
+      expect(response).to redirect_to(payroll_position_path(position))
+    end
+  end
+
+  # These routes aren't nested under an event, so the position's own event must gate access.
+  context "when the position belongs to an organization the user isn't part of" do
+    let(:position) { create(:payroll_position, rate_cents: 2500) }
+
+    before { Flipper.enable(:payments_contractors_refresh_2026_06_26, position.event) }
+
+    it "doesn't show the position" do
+      get :show, params: { id: position.hashid }
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(response).to be_redirect
+    end
+
+    it "doesn't update the position, even when an event the user manages is passed" do
+      patch :update, params: { event_id: event.slug, id: position.hashid, contractor: { title: "New title", rate: "999.00" } }
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(position.reload.title).not_to eq("New title")
+      expect(position.rate_cents).to eq(2500)
+    end
+
+    it "doesn't terminate the position" do
+      post :terminate, params: { id: position.hashid }
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(position.reload).not_to be_terminated
     end
   end
 end

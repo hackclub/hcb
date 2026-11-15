@@ -143,7 +143,7 @@ RSpec.describe Payroll::Position, type: :model do
       end
 
       it "does not advance a position that is still under review" do
-        under_review = create(:payroll_position)
+        under_review = create(:payroll_position, aasm_state: :under_review)
         allow(under_review).to receive(:onboarding_complete?).and_return(true)
         under_review.refresh_onboarding_state!
         expect(under_review).to be_under_review

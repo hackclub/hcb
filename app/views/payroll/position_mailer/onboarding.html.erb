@@ -6,7 +6,7 @@
   </p>
 
   <p>
-    <%= link_to "Click here", onboarding_payroll_position_url(@position) %> to review the new terms and sign your renewed contractor agreement.
+    <%= link_to "Review the new terms", onboarding_payroll_position_url(@position) %> to sign your renewed contractor agreement.
     <% if @position.renewal_of.onboarded? %>
       You can keep submitting invoices under your current contract until it ends on <%= @position.renewal_of.end_date.to_fs(:long) %>.
     <% end %>
@@ -17,7 +17,7 @@
   </p>
 
   <p>
-    <%= link_to "Click here", onboarding_payroll_position_url(@position) %> to review your position, sign your contractor agreement, and complete your onboarding.
+    <%= link_to "Review your position", onboarding_payroll_position_url(@position) %> to sign your contractor agreement and complete your onboarding.
   </p>
 <% end %>
 

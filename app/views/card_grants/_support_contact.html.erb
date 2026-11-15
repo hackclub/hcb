@@ -1,0 +1,29 @@
+<%# locals: (card_grant:, classes: "btn") %>
+
+<%# A button to the organization's own support channel (Slack, email or a link),
+    from its card grant settings. Renders nothing when the organization hasn't
+    set one up. When there's a support message it opens the modal from
+    `card_grants/support_modal`, which the page has to render once. %>
+
+<% setting = card_grant.setting %>
+<% event_name = card_grant.event.name %>
+
+<% if setting.support_message.present? %>
+  <button type="button" class="<%= classes %>" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
+    <%= inline_icon "support" %>
+    Contact <%= event_name %>
+  </button>
+<% elsif setting.support_url.present? %>
+  <%= link_to setting.support_url, target: "_blank", rel: "noopener", class: classes do %>
+    <% if setting.slack_support? %>
+      <%= inline_icon "slack" %>
+      Contact <%= event_name %> on Slack
+    <% elsif setting.email_support? %>
+      <%= inline_icon "email" %>
+      Email <%= event_name %>
+    <% else %>
+      <%= inline_icon "support" %>
+      Contact <%= event_name %>
+    <% end %>
+  <% end %>
+<% end %>

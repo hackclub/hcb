@@ -268,10 +268,6 @@ module Reimbursement
       draft?
     end
 
-    def unlockable?
-      submitted? || reimbursement_requested?
-    end
-
     def closed?
       reimbursement_approved? || reimbursed? || rejected? || reversed?
     end
@@ -290,18 +286,6 @@ module Reimbursement
 
     def fees_charged_cents
       expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
-    end
-
-    def last_reimbursement_requested_by
-      last_user_change_to(aasm_state: "reimbursement_requested")
-    end
-
-    def last_reimbursement_approved_by
-      last_user_change_to(aasm_state: "reimbursement_approved")
-    end
-
-    def last_rejected_by
-      last_user_change_to(aasm_state: "rejected")
     end
 
     def comment_recipients_for(comment)
@@ -342,7 +326,11 @@ module Reimbursement
     end
 
     def reviewer_selectable?
-      !event.reviewer_selection_disabled?
+      card_grant.blank? && !event.reviewer_selection_disabled?
+    end
+
+    def reviewer_assignable_by_creator?
+      card_grant.present? && !event.reviewer_selection_disabled?
     end
 
     def assigned_reviewer_required?
@@ -363,12 +351,22 @@ module Reimbursement
       expenses.complete.with_receipt.count != expenses.count
     end
 
+    def expenses_missing_category
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil)
+    end
+
     def missing_categories?
-      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil).exists?
+      expenses_missing_category.exists?
     end
 
     def mismatched_currency?
       payout_method.present? && currency != payout_method.currency
+    end
+
+    # An unsupported payout method (e.g. a disabled Wise currency) only blocks new
+    # submissions; reports already in flight can still be paid out.
+    def unsupported_payout_method?
+      draft? && payout_method.present? && payout_method.unsupported?
     end
 
     def convert_report_currency!(new_currency)
@@ -432,8 +430,8 @@ module Reimbursement
           payout_method.account_holder.presence
         end
 
-      ActiveRecord::Base.transaction do
-        wise_transfer = WiseTransfer.create!(
+      wise_transfer = ActiveRecord::Base.transaction do
+        transfer = WiseTransfer.create!(
           user: as,
           event:,
           amount:,
@@ -449,26 +447,32 @@ module Reimbursement
           bank_name: payout_method.bank_name,
           recipient_country: payout_method.recipient_country,
           recipient_information: payout_method.recipient_information,
+          allow_unsupported_recipient: true, # already approved, so let it through
         )
 
-        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
-        wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
-
-        expenses.each do |expense|
-          expense.receipts.each do |receipt|
-            ::ReceiptService::Create.new(
-              receiptable: wise_transfer.local_hcb_code,
-              uploader: as,
-              attachments: [receipt.file.blob],
-              upload_method: :duplicate
-            ).run!
-          end
-        end
+        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(transfer.local_hcb_code)}", user: User.system_user)
+        transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
 
         mark_rejected!(skip_mailer: true)
 
-        wise_transfer
+        transfer
       end
+
+      # The receipts belong on the transfer's ledger item, which only exists
+      # once its pending transaction commits, so copy them after the
+      # transaction above.
+      expenses.each do |expense|
+        expense.receipts.each do |receipt|
+          ::ReceiptService::Create.new(
+            receiptable: wise_transfer.reload_ledger_item, # the association was cached as nil while the transfer's pending transaction was being created
+            uploader: as,
+            attachments: [receipt.file.blob],
+            upload_method: :duplicate
+          ).run!
+        end
+      end
+
+      wise_transfer
     end
 
     private
@@ -511,7 +515,7 @@ module Reimbursement
     end
 
     def payout_method_allowed?
-      payout_method.present? && !payout_method.unsupported?
+      payout_method.present? && !unsupported_payout_method?
     end
 
     def invalidate_cached_data
