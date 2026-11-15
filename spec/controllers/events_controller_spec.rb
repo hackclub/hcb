@@ -847,6 +847,78 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:organizer) { create(:user, full_name: "Zed Organizer") }
+
+    def create_card(user, **attrs)
+      cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
+      create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: cardholder, **attrs)
+    end
+
+    def page_for(**params)
+      get(:card_overview, params: { event_id: event.slug, **params })
+      Nokogiri::HTML5(response.body)
+    end
+
+    before do
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+    end
+
+    it "treats LIKE wildcards in the search literally" do
+      create_card(organizer, name: "snake_case")
+      create_card(organizer, name: "snakeXcase")
+
+      page = page_for(q: "_")
+
+      expect(page.text).to include("snake_case")
+      expect(page.text).not_to include("snakeXcase")
+    end
+
+    it "shows no cards for an unknown cardholder instead of all of them" do
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: "not-a-real-person")
+
+      expect(page.text).not_to include("Organizer Card")
+      expect(page.text).to include("doesn’t have any")
+    end
+
+    it "still filters by a cardholder who has left the team" do
+      former_member = create(:user, full_name: "Former Member")
+      create_card(former_member, name: "Former Member Card")
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: former_member.slug)
+
+      expect(page.text).to include("Former Member Card")
+      expect(page.text).not_to include("Organizer Card")
+    end
+
+    it "groups cards by user with the viewer first and previews three per user", :aggregate_failures do
+      other = create(:user, full_name: "Aaron Aardvark")
+      create_card(other)
+      4.times { create_card(organizer) }
+
+      page = page_for
+
+      sections = page.css("section .mention")
+      expect(sections.map { |s| s.text.squish }).to eq([organizer.initial_name, other.initial_name])
+      expect(page.css(".mixed-grid").first.css(".stripe-card").count).to eq(3)
+      expect(page.text).to include("+1 more")
+    end
+
+    it "drops the page number when toggling between grid and list" do
+      toggle = page_for(page: 2, status: "active").at_css("a.pop[href*='view=list']")
+
+      expect(toggle["href"]).to include("status=active")
+      expect(toggle["href"]).not_to include("page=")
+    end
+  end
+
   describe "#sub_organizations" do
     render_views
 
@@ -1534,6 +1606,71 @@ RSpec.describe EventsController do
 
         expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
         expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
+      end
+    end
+  end
+
+  describe "account numbers" do
+    render_views
+
+    let(:event) { create(:event) }
+
+    before do
+      allow(ColumnService).to receive(:post).and_return(
+        "id"             => "acno_test",
+        "account_number" => "987654321012",
+        "routing_number" => "121145349",
+        "bic"            => "CLNOUS66"
+      )
+      event.create_column_account_number!
+    end
+
+    describe "#account_number" do
+      it "leaves the account number out of the page until someone clicks Show", :aggregate_failures do
+        sign_in_organizer_of(event)
+
+        get(:account_number, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+
+        page = Nokogiri::HTML5(response.body)
+        expect(page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :n)}']")).to be_present
+        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :s)}']")).to be_present
+      end
+    end
+
+    describe "#reveal_account_number" do
+      it "renders the account number into the frame that asked for it", :aggregate_failures do
+        sign_in_organizer_of(event)
+        request.headers["Turbo-Frame"] = "account_number_modal_reveal"
+
+        get(:reveal_account_number, params: { id: event.slug, tooltip_direction: "s" })
+
+        expect(response).to have_http_status(:ok)
+        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_modal_reveal")
+        copy = frame.at_css("[data-controller='clipboard']")
+        expect(copy["data-clipboard-text-value"]).to eq("987654321012")
+        expect(copy["class"]).to include("tooltipped--s")
+        expect(frame.text).to include("987654321012")
+      end
+
+      it "sends a request from outside a turbo frame back to the account number page" do
+        sign_in_organizer_of(event)
+
+        get(:reveal_account_number, params: { id: event.slug })
+
+        expect(response).to redirect_to(account_number_event_path(event))
+      end
+
+      it "doesn't reveal the account number to someone outside the organization", :aggregate_failures do
+        create_session(create(:user), verified: true)
+        request.headers["Turbo-Frame"] = "account_number_reveal"
+
+        get(:reveal_account_number, params: { id: event.slug })
+
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        expect(response.body).not_to include("987654321012")
       end
     end
   end
