@@ -309,7 +309,8 @@
   filter: drop-shadow(1em 0 0px #000);
 }
 
-.stripe-card--skeleton {
+// Doubled class beats `.stripe-card.virtual`'s gradient
+.stripe-card.stripe-card--skeleton {
   background: $smoke;
   box-shadow: none;
   pointer-events: none;

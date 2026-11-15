@@ -66,7 +66,7 @@
         <% elsif @skeleton_group_counts %>
           <% @skeleton_group_counts.each do |count| %>
             <section class="mt-3" aria-hidden="true">
-              <div class="flex items-center gap-2 motion-safe:animate-pulse">
+              <div class="flex items-center gap-2">
                 <span class="block size-6 rounded-full bg-smoke dark:bg-darkless"></span>
                 <span class="block h-4 w-32 rounded-full bg-smoke dark:bg-darkless"></span>
                 <%= badge_for count, class: "bg-muted flex-shrink-0 mx-0" %>
@@ -74,7 +74,7 @@
               </div>
               <%= render "stripe_cards/skeleton", count: [count, 3].min %>
               <% if count > 3 %>
-                <div class="flex mt-3 motion-safe:animate-pulse">
+                <div class="flex mt-3">
                   <span class="block h-9 w-24 ml-auto rounded bg-smoke dark:bg-darkless"></span>
                 </div>
               <% end %>
