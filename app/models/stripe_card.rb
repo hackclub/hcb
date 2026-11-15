@@ -402,10 +402,6 @@ class StripeCard < ApplicationRecord
     @canonical_transaction_hcb_codes ||= canonical_transactions.pluck(:hcb_code)
   end
 
-  def issued?
-    stripe_id.present?
-  end
-
   def notify_user
     if virtual? && card_grant.nil?
       StripeCardMailer.with(card_id: self.id).virtual_card_ordered.deliver_later
