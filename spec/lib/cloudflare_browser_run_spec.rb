@@ -9,7 +9,7 @@ RSpec.describe CloudflareBrowserRun do
 
   it "posts the HTML and returns the PDF bytes" do
     stub = stub_request(:post, "https://api.cloudflare.com/client/v4/accounts/acct/browser-rendering/pdf")
-           .with(headers: { "Authorization" => "Bearer tok" }, body: hash_including("html" => "<p>hi</p>"))
+           .with(headers: { "Authorization" => "Bearer tok" }, body: hash_including("html" => "<p>hi</p>", "setJavaScriptEnabled" => false))
            .to_return(status: 200, body: "%PDF-1.4", headers: { "Content-Type" => "application/pdf" })
 
     expect(described_class.pdf("<p>hi</p>")).to eq("%PDF-1.4")

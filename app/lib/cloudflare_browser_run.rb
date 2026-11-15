@@ -6,7 +6,9 @@ module CloudflareBrowserRun
   def self.pdf(html)
     connection.post("/client/v4/accounts/#{Credentials.fetch(:CLOUDFLARE, :ACCOUNT_ID)}/browser-rendering/pdf", {
                       html:,
-                      # networkidle0 lets the twemoji <script> in some templates finish before printing
+                      # emailed receipts are untrusted HTML, and none of our templates need scripts
+                      setJavaScriptEnabled: false,
+                      # networkidle0 lets remote images finish loading before printing
                       gotoOptions: { waitUntil: "networkidle0" },
                       # matches the old wkhtmltopdf defaults: US letter, 10mm margins, backgrounds on
                       pdfOptions: { format: "letter", printBackground: true, margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" } },
