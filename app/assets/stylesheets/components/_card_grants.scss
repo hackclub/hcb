@@ -30,16 +30,24 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 .grant-hero {
   padding: 1.75rem;
 
-  // The shared wash only fades to near-white at the very bottom, but the
-  // grant's numbers sit higher up, so wash the whole hero evenly instead.
+  // The event's image shows as a band behind the status row only, fading into
+  // the plain card surface before the numbers start. A fixed length rather
+  // than a percentage, so the band doesn't creep under the amount on phones,
+  // where the hero is much taller.
   &.card.card--background-image {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.96)),
+      linear-gradient(
+        rgba(255, 255, 255, 0.75)
+      ),
       var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
-        linear-gradient(rgba(37, 36, 41, 0.85), rgba(37, 36, 41, 0.94)),
+        linear-gradient(
+          rgba(37, 36, 41, 0.6) 0,
+          rgba(37, 36, 41, 0.9) 3.5rem,
+          rgb(37, 36, 41) 6rem
+        ),
         var(--bg-image) !important;
     }
   }
@@ -59,9 +67,9 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   margin-bottom: 1.25rem;
 }
 
-// Secondary text over the background image: `.muted` is too faint to read there.
+// Secondary text in the hero: `.muted` is too faint, especially over the image.
 .grant-hero__soft {
-  color: mix($slate, $muted, 60%);
+  color: $slate;
 
   html[data-dark='true'] & {
     color: $smoke-dark;
@@ -161,6 +169,11 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   min-width: 0;
   text-align: right;
   overflow-wrap: anywhere;
+
+  // Links and mentions default to a faint grey; values should read as values.
+  &:is(a, .mention) {
+    color: inherit;
+  }
 
   // `.mention` carries a trailing margin meant for inline prose; drop it so
   // avatars line up flush with the values above and below.
