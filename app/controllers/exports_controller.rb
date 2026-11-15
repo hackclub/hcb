@@ -104,7 +104,7 @@ class ExportsController < ApplicationController
           end
         end
 
-        render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
+        render_pdf "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement"
       end
     end
   end

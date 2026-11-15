@@ -183,6 +183,10 @@ module Reimbursement
 
     delegate :currency, to: :report
 
+    def missing_category?
+      !is_fee? && category.nil?
+    end
+
     def card_label
       return memo + " (#{render_money(amount_cents)})" if memo && !is_standard?
 
