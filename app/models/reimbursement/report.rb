@@ -98,11 +98,11 @@ module Reimbursement
     # compared directly, so USD reports come first, then each other currency
     # grouped together, sorted by amount within each currency.
     scope :order_by_amount, ->(direction) do
-      direction = direction.to_s.casecmp?("asc") ? "ASC" : "DESC"
+      amount = Arel.sql(amount_cents_sql)
       order(
         Arel.sql("CASE WHEN reimbursement_reports.currency = 'USD' THEN 0 ELSE 1 END"),
         :currency,
-        Arel.sql("(#{amount_cents_sql}) #{direction}")
+        direction.to_s.casecmp?("asc") ? amount.asc : amount.desc
       )
     end
     # Sorts by workflow order (draft → submitted → … → reversed) rather than alphabetically.
