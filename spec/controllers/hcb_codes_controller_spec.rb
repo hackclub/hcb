@@ -175,7 +175,7 @@ RSpec.describe HcbCodesController, type: :controller do
       end
 
       it "is hidden once the expense has been repaid" do
-        RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+        RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashids: [expense.ledger_item.reload.hashid], created_by: user).run
         create(:canonical_transaction, event:, amount_cents: 100_00)
 
         get :show, params: { id: expense.local_hcb_code.hashid }
