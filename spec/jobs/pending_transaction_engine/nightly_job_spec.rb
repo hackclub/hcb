@@ -26,4 +26,37 @@ RSpec.describe PendingTransactionEngine::NightlyJob, type: :job do
 
     expect(Rails.error).not_to have_received(:report)
   end
+
+  describe "cron check-in" do
+    let(:events) { [] }
+
+    before do
+      # Mirrors Appsignal::CheckIn.cron: the finish event is only sent if the block returns.
+      allow(Appsignal::CheckIn).to receive(:cron) do |identifier, &block|
+        events << [:start, identifier]
+        block.call
+        events << [:finish, identifier]
+      end
+    end
+
+    it "runs the engine inside the check-in" do
+      allow(nightly).to receive(:run) { events << :run }
+
+      described_class.perform_now
+
+      expect(events).to eq([
+                             [:start, "pending_transaction_engine_nightly_job"],
+                             :run,
+                             [:finish, "pending_transaction_engine_nightly_job"]
+                           ])
+    end
+
+    it "doesn't finish the check-in when the run fails" do
+      allow(nightly).to receive(:run).and_raise(StandardError)
+
+      described_class.perform_now
+
+      expect(events).to eq([[:start, "pending_transaction_engine_nightly_job"]])
+    end
+  end
 end

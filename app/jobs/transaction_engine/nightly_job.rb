@@ -6,8 +6,10 @@ module TransactionEngine
     include ::TransactionEngine::Shared
 
     def perform
-      ::TransactionEngine::Nightly.new.run
-      ::EventMappingEngine::Nightly.new.run
+      Appsignal::CheckIn.cron("transaction_engine_nightly_job") do
+        ::TransactionEngine::Nightly.new.run
+        ::EventMappingEngine::Nightly.new.run
+      end
     end
 
   end
