@@ -31,7 +31,20 @@ module Reimbursement
       user.present? && record&.report&.user == user
     end
 
-    alias receiptable_upload? user_made_expense?
+    # Who may attach receipts to this expense, through ReceiptablePolicy: the
+    # report's submitter, who may not be in the organization, or its members.
+    def receiptable_upload?
+      admin? || user_made_expense? || OrganizerPosition.role_at_least?(user, record.event, :member)
+    end
+
+    # Who may delete a receipt attached to this expense, through ReceiptPolicy:
+    # the report's submitter, who may not be in the organization, or a manager.
+    # Mileage and fee expenses have only ever let any member delete instead.
+    def receipt_destroy?
+      return OrganizerPosition.role_at_least?(user, record.event, :member) unless record.instance_of?(Reimbursement::Expense)
+
+      user_made_expense? || manager?
+    end
 
     private
 

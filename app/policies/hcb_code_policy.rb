@@ -36,7 +36,14 @@ class HcbCodePolicy < ApplicationPolicy
     user.present? && record.stripe_card? && record.stripe_cardholder&.user == user
   end
 
-  alias receiptable_upload? user_made_purchase?
+  # Who may attach receipts to this code, through ReceiptablePolicy: members of
+  # any event the code is on, plus the cardholder, who need not be a member.
+  alias receiptable_upload? attach_receipt?
+
+  # Who may delete a receipt attached to this code, through ReceiptPolicy.
+  def receipt_destroy?
+    OrganizerPosition.role_at_least?(user, record.event, :member)
+  end
 
   private
 
