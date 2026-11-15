@@ -204,6 +204,84 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include("I have multiple grants")
     end
 
+    it "puts the eye toggle on the card number and CVC for the grantee" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      toggles = response.parsed_body.css(".grant-row a.grant-row__reveal")
+      expect(toggles.size).to eq(2)
+      expect(toggles.map { |toggle| toggle["aria-label"] }.uniq).to eq(["Reveal card details"])
+      expect(toggles.first["href"]).to include("show_details=true")
+
+      allow_any_instance_of(StripeCard).to receive(:full_card_number).and_return("4242424242424242")
+      allow_any_instance_of(StripeCard).to receive(:cvc).and_return("123")
+
+      get(:show, params: { id: card_grant.hashid, show_details: "true" })
+
+      expect(response.body).to include("4242 4242 4242 4242")
+      toggles = response.parsed_body.css(".grant-row a.grant-row__reveal")
+      expect(toggles.map { |toggle| toggle["aria-label"] }.uniq).to eq(["Hide card details"])
+      expect(toggles.first["href"]).to include("show_details=false")
+    end
+
+    it "surfaces the organization's support channel to the grantee" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.setting.update!(support_url: "https://hackclub.slack.com/archives/C123")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      # Beside the spending limits, and again leading the help card.
+      note_link = response.parsed_body.at_css(".grant-limits__note a.btn")
+      expect(note_link["href"]).to eq("https://hackclub.slack.com/archives/C123")
+      expect(note_link.text).to include("Contact #{event.name} on Slack")
+      help = response.parsed_body.at_css(".grant-help")
+      expect(help.element_children.first["href"]).to eq("https://hackclub.slack.com/archives/C123")
+      expect(help.text).to include("Questions about this grant?")
+    end
+
+    it "opens the organization's support message from every contact button" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.setting.update!(support_message: "Find us in #grants-help", support_url: "mailto:help@example.com")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      modal_id = "support_card_grant_#{card_grant.id}"
+      expect(response.parsed_body.css("##{modal_id}").size).to eq(1)
+      expect(response.parsed_body.at_css("##{modal_id}").text).to include("Find us in #grants-help")
+      expect(response.parsed_body.css("[data-modal='#{modal_id}']").size).to eq(2)
+    end
+
+    it "omits the support buttons when the organization hasn't set up support" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.parsed_body.at_css(".grant-limits__note .btn")).to be_nil
+      expect(response.body).not_to include("Questions about this grant?")
+      expect(response.body).to include("Common questions")
+    end
+
+    it "lets the grantee contact the organization about a canceled grant" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id, status: :canceled)
+      card_grant.stripe_card.update_columns(stripe_status: "canceled")
+      card_grant.setting.update!(support_url: "mailto:help@example.com")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.parsed_body.at_css("a[href='mailto:help@example.com']").text).to include("Email #{event.name}")
+    end
+
     it "keeps the grantee help articles off the organizer's view" do
       organizer = create(:user)
       card_grant = create(:card_grant, event:)

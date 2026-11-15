@@ -33,6 +33,7 @@
       Your card grant was flagged because it doesn't meet the given requirements.
       Please reach out to <%= @card_grant.event.name %> for support.
     </p>
+    <%= render "card_grants/support_contact", card_grant: @card_grant, classes: "btn mt-3" %>
   <% end %>
 <% end %>
 
@@ -110,3 +111,5 @@
     <input type="submit" class="btn bg-warning" value="Submitted" form="pre_authorization_form" disabled>
   <% end %>
 </div>
+
+<%= render "card_grants/support_modal", card_grant: @card_grant %>

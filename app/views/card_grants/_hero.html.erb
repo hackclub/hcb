@@ -9,10 +9,9 @@
 <% state = card_grant.state %>
 <% spendable = state == "success" %>
 <% ended = card_grant.canceled? || card_grant.expired? %>
-<% if ended %>
-  <% ended_at = card_grant.last_time_change_to(status: card_grant.status.to_sym) || card_grant.expiration_at %>
-<% end %>
-<% days_left = ((ended ? ended_at.to_date : card_grant.expiration_at.to_date) - Date.current).to_i %>
+<%# When the grant ended if it has, otherwise when it will. %>
+<% deadline = (card_grant.last_time_change_to(status: card_grant.status.to_sym) if ended) || card_grant.expiration_at %>
+<% days_left = (deadline.to_date - Date.current).to_i %>
 
 <section class="card card--background-image grant-hero mt-4"
          style="<%= card_grant.event.background_image.attached? ? "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" : "--bg-image: #{GeoPattern.generate(card_grant.stripe_card&.public_id || card_grant.public_id).to_data_uri}" %>">
@@ -55,7 +54,7 @@
         <% end %>
       </p>
       <div class="flex items-baseline flex-wrap gap-x-2">
-        <p class="grant-hero__date"><%= format_date(ended ? ended_at : card_grant.expiration_at) %></p>
+        <p class="grant-hero__date"><%= format_date(deadline) %></p>
         <span class="grant-hero__soft">
           <% if days_left.positive? %>
             <%= pluralize days_left, "day" %> left

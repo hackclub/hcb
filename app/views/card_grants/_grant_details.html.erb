@@ -45,13 +45,16 @@
 
   <% if own %>
     <div class="grant-limits__note">
-      <p class="my-0">
-        <strong><%= card_grant.event.name %> sets these limits, not HCB.</strong>
-      </p>
-      <p class="text-sm my-0 opacity-60">
-        To change these restrictions, message the <%= card_grant.event.name %> team.
-        <strong>HCB cannot change your grant limits.</strong>
-      </p>
+      <div>
+        <p class="my-0">
+          <strong><%= card_grant.event.name %> sets these limits, not HCB.</strong>
+        </p>
+        <p class="text-sm my-0 opacity-60">
+          To change these restrictions, message the <%= card_grant.event.name %> team.
+          <strong>HCB cannot change your grant limits.</strong>
+        </p>
+      </div>
+      <%= render "card_grants/support_contact", card_grant:, classes: "btn btn-small" %>
     </div>
   <% end %>
 </div>

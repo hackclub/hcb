@@ -5,14 +5,23 @@
     <% cardholder = stripe_card.cardholder %>
     <% owner = stripe_card.user == current_user && stripe_card.virtual? %>
     <% revealed = owner && @show_card_details %>
+    <%# Reloads the page with the number and CVC filled in; the anchor keeps the card in view. %>
+    <% reveal_path = card_grant_path(card_grant, show_details: (!revealed).to_s, anchor: "grant-card") %>
+    <% reveal_toggle = capture do %>
+      <% if owner %>
+        <%= link_to reveal_path, class: "grant-row__reveal tooltipped tooltipped--w", "aria-label": revealed ? "Hide card details" : "Reveal card details", data: { turbo: true } do %>
+          <%= inline_icon revealed ? "view-fill" : "view", size: 24 %>
+        <% end %>
+      <% end %>
+    <% end %>
 
-    <div class="card grant-panel">
+    <div class="card grant-panel" id="grant-card">
       <div class="grant-panel__art">
         <div class="<%= "scale-[0.98] transition-transform hover:scale-1" if card_grant.canceled? %>">
           <%= render "stripe_cards/stripe_card", stripe_card:, headless: true %>
         </div>
         <% if owner %>
-          <%= link_to card_grant_path(card_grant, show_details: (!@show_card_details).to_s),
+          <%= link_to reveal_path,
                       class: "btn w-full mt-4",
                       data: { turbo: true } do %>
             <%= inline_icon revealed ? "view-fill" : "view" %>
@@ -39,12 +48,13 @@
 
           <div class="grant-row fs-mask">
             <span class="grant-row__label">Card number</span>
-            <span class="grant-row__value font-mono">
+            <span class="grant-row__value font-mono flex items-center gap-2 justify-end">
               <% if revealed %>
                 <%= copy_to_clipboard(stripe_card.full_card_number, tooltip_direction: "w") { stripe_card.formatted_card_number } %>
               <% else %>
                 <%= stripe_card.hidden_card_number_with_last_four %>
               <% end %>
+              <%= reveal_toggle %>
             </span>
           </div>
 
@@ -62,12 +72,13 @@
 
           <div class="grant-row fs-mask">
             <span class="grant-row__label">CVC</span>
-            <span class="grant-row__value font-mono">
+            <span class="grant-row__value font-mono flex items-center gap-2 justify-end">
               <% if revealed %>
                 <%= copy_to_clipboard(stripe_card.cvc, tooltip_direction: "w") { stripe_card.cvc } %>
               <% else %>
                 <%= stripe_card.hidden_cvc %>
               <% end %>
+              <%= reveal_toggle %>
             </span>
           </div>
 

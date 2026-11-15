@@ -7,7 +7,7 @@
   <%# Rendered up front since several hide themselves, and an empty card shouldn't show. %>
   <% controls = [] %>
   <% if organizer_signed_in?(as: :member) || own %>
-    <% controls << render("stripe_cards/actions/freeze", stripe_card:, variant: "control", label: "Pause spending instantly", subtitle: "You can unfreeze it yourself at any time") if stripe_card.present? %>
+    <% controls << render("stripe_cards/actions/freeze", stripe_card:, variant: "control", label: "Pause spending", subtitle: "You can unfreeze it yourself at any time") if stripe_card.present? %>
     <% controls << render("card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: own ? "I paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement") %>
     <% if own %>
       <% controls << render("card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}") %>
@@ -16,8 +16,9 @@
     <% end %>
   <% end %>
   <% controls.reject!(&:blank?) %>
-  <% support = render("card_grants/actions/support", card_grant:, title: own ? "Still stuck?" : "Need help?") if organizer_signed_in?(as: :member) || own %>
-  <% answers = render("card_grants/quick_answers") if own %>
+  <% can_get_support = organizer_signed_in?(as: :member) || own %>
+  <% support = can_get_support ? render("card_grants/actions/support", card_grant:, title: own ? "Questions about this grant?" : "Need help?") : nil %>
+  <% answers = own ? render("card_grants/quick_answers") : nil %>
 
   <% if controls.any? %>
     <div class="card grant-controls">
@@ -28,11 +29,13 @@
     </div>
   <% end %>
 
-  <%# Help gets its own card so it doesn't read as one more control. %>
+  <%# Help gets its own card so it doesn't read as one more control. The
+      organization's own support comes first: it's who can actually change a
+      grant, so it shouldn't sit below the general help articles. %>
   <% if answers.present? || support.present? %>
-    <div class="card grant-help">
-      <%= answers %>
+    <div class="card grant-help <%= "grant-help--articles" if answers.present? && support.present? %>">
       <%= support %>
+      <%= answers %>
     </div>
   <% end %>
 <% end %>

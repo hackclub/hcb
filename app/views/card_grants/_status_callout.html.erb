@@ -8,6 +8,8 @@
 <% own = card_grant.user == current_user %>
 <% stripe_card = card_grant.stripe_card %>
 <% event_name = card_grant.event.name %>
+<%# The support modal is only on the page for these viewers. %>
+<% contactable = own || organizer_signed_in?(as: :member) %>
 
 <% canceled_by = card_grant.last_user_change_to(status: :canceled) if card_grant.canceled? %>
 <% canceled_at = card_grant.last_time_change_to(status: :canceled) if card_grant.canceled? %>
@@ -37,6 +39,8 @@
         <% if own %>Any purchases you already made still need receipts, which you can upload below.<% end %>
       <% end %>
     </p>
+    <%# The organization ended the grant, so it's who to ask about it. %>
+    <%= render "card_grants/support_contact", card_grant:, classes: "btn mt-3" if own %>
   <% end %>
 
 <% elsif card_grant.expired? %>
@@ -49,6 +53,8 @@
         <% if own %>Any purchases you already made still need receipts, which you can upload below.<% end %>
       <% end %>
     </p>
+    <%# The organization ended the grant, so it's who to ask about it. %>
+    <%= render "card_grants/support_contact", card_grant:, classes: "btn mt-3" if own %>
   <% end %>
 
 <% elsif card_grant.pending_invite? && !own %>
@@ -76,26 +82,9 @@
         To use it again, ask a manager of <%= event_name %> to defrost it.
       <% end %>
     </p>
-    <%# Grantees can't defrost a card someone else froze, so point them straight at whoever can.
-        The support modal lives in the controls, which only render for these viewers. %>
-    <% if (own || organizer_signed_in?(as: :member)) && !policy(stripe_card).defrost? && !card_grant.event.financially_frozen? && !card_grant.user.locked? %>
-      <% if card_grant.setting.support_message.present? %>
-        <button type="button" class="btn mt-3" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
-          <%= inline_icon "support" %>
-          Contact <%= event_name %>
-        </button>
-      <% elsif card_grant.setting.support_url.present? %>
-        <%= link_to card_grant.setting.support_url, target: "_blank", rel: "noopener", class: "btn mt-3" do %>
-          <%= inline_icon card_grant.setting.slack_support? ? "slack" : (card_grant.setting.email_support? ? "email" : "support") %>
-          <% if card_grant.setting.slack_support? %>
-            Contact <%= event_name %> on Slack
-          <% elsif card_grant.setting.email_support? %>
-            Email <%= event_name %>
-          <% else %>
-            Contact <%= event_name %>
-          <% end %>
-        <% end %>
-      <% end %>
+    <%# Grantees can't defrost a card someone else froze, so point them straight at whoever can. %>
+    <% if contactable && !policy(stripe_card).defrost? && !card_grant.event.financially_frozen? && !card_grant.user.locked? %>
+      <%= render "card_grants/support_contact", card_grant:, classes: "btn mt-3" %>
     <% end %>
   <% end %>
 

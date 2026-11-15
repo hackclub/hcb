@@ -55,6 +55,8 @@
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
+<%= render "card_grants/support_modal", card_grant: @card_grant if own || organizer_signed_in?(as: :member) %>
+
 <% if policy(@card_grant.comments.build).create? %>
   <% comments = policy_scope(@card_grant.comments) %>
   <div class="mt-10 mb-10 block menu__divider"></div>

@@ -234,6 +234,8 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 }
 
 .grant-panel {
+  // Revealing the card details reloads the page and lands back here.
+  scroll-margin-top: 1rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   margin: 0;
@@ -304,6 +306,18 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   color: map-get($palette, muted);
 }
 
+// The eye beside the card number and CVC that reveals (or hides) them.
+.grant-row__reveal {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: map-get($palette, muted);
+
+  &:hover,
+  &:focus-visible {
+    color: map-get($palette, info);
+  }
+}
+
 // On a narrow screen a long value drops below its label but stays right-aligned.
 .grant-row__value {
   margin-left: auto;
@@ -351,8 +365,8 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   }
 }
 
-// Help card: the help center articles as tiles, then the org's own support
-// as a slim tinted strip along the bottom.
+// Help card: the org's own support as a slim tinted strip along the top, then
+// the help center articles as tiles.
 .grant-help {
   display: grid;
   margin: 0;
@@ -364,11 +378,11 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
     border-radius: 0;
   }
 
-  // Under the tiles it's a footer: tinted, and "Still stuck?" runs into its
+  // Above the tiles it's a header: tinted, and its title runs into its
   // description on one line instead of stacking.
-  > .grant-answers + .grant-action {
+  &.grant-help--articles > .grant-action {
     background: rgba(140, 150, 165, 0.08);
-    @include grant-hairline(top);
+    @include grant-hairline(bottom);
 
     &:hover:not(:disabled),
     &:focus-visible {
@@ -642,12 +656,28 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   }
 }
 
+// The explanation, with the organization's contact button beside it.
 .grant-limits__note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   margin: 1rem -1rem -1rem;
   padding: 0.5rem 1rem;
   border-radius: 0 0 0.5rem 0.5rem;
   background: rgba(140, 150, 165, 0.1);
   @include grant-hairline(top);
+
+  // The copy takes the room and wraps; the button keeps its size beside it.
+  > div {
+    flex: 1 1 18rem;
+  }
+
+  > .btn {
+    flex: 0 0 auto;
+    margin: 0;
+  }
 }
 
 // Pre-authorization: the cart-screenshot dropzone and its uploads share one
