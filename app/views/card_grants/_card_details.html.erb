@@ -5,8 +5,8 @@
     <% cardholder = stripe_card.cardholder %>
     <% owner = stripe_card.user == current_user && stripe_card.virtual? %>
     <% revealed = owner && @show_card_details %>
-    <%# Reloads the page with the number and CVC filled in; the anchor keeps the card in view. %>
-    <% reveal_path = card_grant_path(card_grant, show_details: (!revealed).to_s, anchor: "grant-card") %>
+    <%# Swaps just the card panel (via the turbo frame below) with the number and CVC filled in, so the page doesn't scroll. %>
+    <% reveal_path = card_grant_path(card_grant, show_details: (!revealed).to_s) %>
     <% reveal_toggle = capture do %>
       <% if owner %>
         <%= link_to reveal_path, class: "grant-row__reveal tooltipped tooltipped--w", "aria-label": revealed ? "Hide card details" : "Reveal card details", data: { turbo: true } do %>
@@ -15,7 +15,8 @@
       <% end %>
     <% end %>
 
-    <div class="card grant-panel" id="grant-card">
+    <%= turbo_frame_tag "grant_card" do %>
+    <div class="card grant-panel">
       <div class="grant-panel__art">
         <div class="<%= "scale-[0.98] transition-transform hover:scale-1" if card_grant.canceled? %>">
           <%= render "stripe_cards/stripe_card", stripe_card:, headless: true %>
@@ -144,6 +145,7 @@
         <% end %>
       </div>
     </div>
+    <% end %>
   <% end %>
 
   <%= render partial: "card_grants/actions", locals: { card_grant: } %>
