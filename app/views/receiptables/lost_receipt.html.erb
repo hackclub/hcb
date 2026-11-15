@@ -4,7 +4,7 @@
 
 <%= render "receiptables/lost_receipt_steps", form: true %>
 
-<%= form_with model: @statement, scope: :lost_receipt_statement, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update" } do |form| %>
+<%= form_with model: @statement, scope: :lost_receipt_statement, url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", lost_receipt_charged_value: charged, action: "input->lost-receipt#update" } do |form| %>
   <%= form_errors @statement, "statement" %>
   <%= hidden_field_tag :s, params[:s], id: nil %>
   <%= hidden_field_tag :return_to, @return_to, id: nil %>
@@ -51,7 +51,7 @@
     Add item
   </button>
 
-  <div class="statset mt-4 mb-4">
+  <div class="statset mt-4">
     <div class="stat shrink-0">
       <span class="stat__label">Statement total</span>
       <span class="stat__value"><output data-lost-receipt-target="total" aria-live="polite">0.00</output></span>
@@ -68,10 +68,11 @@
     </div>
   </div>
 
+  <div class="card -mt-2 rounded-t-none text-center" role="status" data-lost-receipt-target="mismatch" hidden></div>
   </div>
 
   <div data-scroll-seek-target="section">
-  <h3 class="mb-2">Confirmation</h3>
+  <h3 class="mt-4 mb-2">Confirmation</h3>
   <div class="card mb-4 flex flex-col gap-3">
     <div class="field field--checkbox !items-start mb-0">
       <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
@@ -93,7 +94,7 @@
 
   </div>
 
-  <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } do %>
+  <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting...", lost_receipt_target: "submit" } do %>
     Submit statement
     <%= inline_icon "send" %>
   <% end %>

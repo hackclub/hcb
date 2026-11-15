@@ -19,6 +19,7 @@ module LostReceipt
     validates :items, length: { minimum: 1, maximum: 50 }
     validate :date_is_not_in_the_future
     validate :items_are_valid
+    validate :total_matches_transaction
     validate :acknowledgement_matches
 
     def items_attributes=(attributes)
@@ -94,6 +95,13 @@ module LostReceipt
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current
+    end
+
+    def total_matches_transaction
+      charged = receiptable.try(:amount_cents)&.abs
+      return if charged.nil? || items.empty? || items.any?(&:invalid?) || total_amount_cents == charged
+
+      errors.add(:base, "The items add up to #{Money.new(total_amount_cents, "USD").format}, but the transaction was #{Money.new(charged, "USD").format}")
     end
 
     def items_are_valid

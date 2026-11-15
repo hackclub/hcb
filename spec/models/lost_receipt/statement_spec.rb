@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe LostReceipt::Statement do
-  let(:hcb_code) { create(:canonical_pending_transaction).local_hcb_code }
+  let(:hcb_code) { create(:canonical_pending_transaction, amount_cents: -879).local_hcb_code }
   let(:details) do
     { date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example", confirmed: true,
       items_attributes: [{ description: "Notebooks", quantity: 3, unit_amount_cents: 127 },
@@ -48,7 +48,7 @@ RSpec.describe LostReceipt::Statement do
     let(:event) { create(:event) }
     let(:cardholder) { create(:user) }
     let(:hcb_code) do
-      transaction = create(:canonical_pending_transaction, amount_cents: -100)
+      transaction = create(:canonical_pending_transaction, amount_cents: -879)
       create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event:)
       transaction.local_hcb_code
     end
@@ -71,7 +71,7 @@ RSpec.describe LostReceipt::Statement do
 
     it "counts card charges against the cardholder, who is the only one asked to own them" do
       allow(hcb_code).to receive(:stripe_cardholder).and_return(double(user: cardholder))
-      earlier = create(:canonical_pending_transaction).local_hcb_code
+      earlier = create(:canonical_pending_transaction, amount_cents: -879).local_hcb_code
       allow(earlier).to receive(:stripe_cardholder).and_return(double(user: cardholder))
       expect(described_class.new(details).submit(receiptable: earlier)).to eq(true)
 
@@ -86,6 +86,14 @@ RSpec.describe LostReceipt::Statement do
       expect(statement.submit).to eq(true)
       expect(cardholder.lost_receipt_filings.count).to eq(2)
     end
+  end
+
+  it "requires the items to add up to the transaction" do
+    statement = described_class.new(details.merge(items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 878 }]))
+
+    expect(statement.submit(receiptable: hcb_code)).to eq(false)
+    expect(statement.errors[:base]).to include("The items add up to $8.78, but the transaction was $8.79")
+    expect(hcb_code.receipts).to be_empty
   end
 
   it "does not resolve the missing receipt if PDF generation fails" do
