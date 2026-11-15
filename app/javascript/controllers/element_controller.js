@@ -13,10 +13,6 @@ export default class extends Controller {
     this.subject.remove()
   }
 
-  stop(event) {
-    event.stopPropagation()
-  }
-
   get subject() {
     return this.hasSubjectTarget ? this.subjectTarget : this.element
   }
