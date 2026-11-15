@@ -302,6 +302,39 @@ RSpec.describe Tax1099ImportService do
     end
   end
 
+  describe "a W-9's state" do
+    it "is stored and sent as its 2-letter code when given as a full name" do
+      result = run(data: person_data.merge(state: "  massachusetts "))
+
+      expect(result.form.address_state).to eq("MA")
+      expect(TaxbanditsService).to have_received(:create_from_data)
+        .with(hash_including("FormW9" => hash_including("Address" => hash_including("State" => "MA"))))
+    end
+
+    it "is upcased when given as a lowercase code" do
+      expect(run(data: person_data.merge(state: "vt")).form.address_state).to eq("VT")
+    end
+
+    it "takes DC and the territories, by any of their names" do
+      expect(described_class.us_state_code("Puerto Rico")).to eq("PR")
+      expect(described_class.us_state_code("District of Columbia")).to eq("DC")
+      expect(described_class.us_state_code("Washington DC")).to eq("DC")
+      expect(described_class.us_state_code("U.S. Virgin Islands")).to eq("VI")
+    end
+
+    it "refuses anything that isn't a US state, before contacting TaxBandits" do
+      ["Mass.", "XX", "Ontario"].each do |state|
+        expect { run(data: person_data.merge(state:)) }
+          .to raise_error(described_class::ValidationError, /2-letter code/)
+      end
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
+    end
+
+    it "is left as given on a W-8, where it's a province or region anywhere" do
+      expect(run(data: w8ben_data).form.address_state).to eq("Uttar Pradesh")
+    end
+  end
+
   describe "archived legal entities" do
     let(:user) { create(:user, email: "ada@example.com") }
 

@@ -77,6 +77,15 @@ class Tax1099ImportService
 
   TIN_TYPES = %w[SSN EIN FTIN].freeze
 
+  # Two-letter code => the names it goes by, for every US state, DC, and
+  # territory: what a W-9's state is validated against, and what the page uses
+  # to turn the full names some Tax1099 rows have ("Massachusetts") into codes.
+  # Several names because the countries gem's differ for a few (DC is both
+  # "District of Columbia" and "Washington DC").
+  US_STATES = ISO3166::Country.new("US").subdivisions.to_h { |code, subdivision|
+    [code, ([subdivision.name, subdivision.translations["en"]] + Array(subdivision.unofficial_names)).compact.uniq.freeze]
+  }.freeze
+
   # A W-9 is only ever filed with a US TIN, and these W-8s are imported with the
   # payee's foreign TIN.
   TIN_TYPES_BY_FORM_TYPE = {
@@ -310,6 +319,16 @@ class Tax1099ImportService
     normalized.match?(/\A\d{9}\z/) ? normalized[0, 5] : normalized
   end
 
+  # The 2-letter code for a US state given as its code or any of its names, in
+  # any case; nil for anything else. Mirrors usStateCode() in
+  # tax1099_import_controller.js.
+  def self.us_state_code(value)
+    value = value.to_s.strip
+    return value.upcase if value.length == 2 && US_STATES.key?(value.upcase)
+
+    US_STATES.find { |_code, names| names.any? { _1.casecmp?(value) } }&.first
+  end
+
   def self.entity_type_for(form_type:, tin_type:, federal_tax_classification:)
     if form_type == W8BEN
       :person
@@ -343,6 +362,10 @@ class Tax1099ImportService
 
     if form_type == W9 && !FEDERAL_TAX_CLASSIFICATIONS.include?(@data[:federal_tax_classification])
       raise ValidationError, "federal tax classification must be one of: #{FEDERAL_TAX_CLASSIFICATIONS.join(", ")}"
+    end
+
+    if form_type == W9 && us_state.nil?
+      raise ValidationError, "state must be a US state, as its 2-letter code (e.g. MA) or its full name"
     end
 
     if form_type == W8BENE && !CH3_STATUSES.include?(@data[:ch3_status])
@@ -390,6 +413,17 @@ class Tax1099ImportService
 
   def ftin_not_legally_required?
     ActiveModel::Type::Boolean.new.cast(@data[:ftin_not_legally_required]) || false
+  end
+
+  # The W-9's state as its 2-letter code (see #validate!).
+  def us_state
+    self.class.us_state_code(@data[:state])
+  end
+
+  # What's stored and sent as the state: a W-9's as its code, a W-8's (a
+  # province or region anywhere) as given.
+  def state
+    form_type == W9 ? us_state : @data[:state].presence
   end
 
   def foreign_tin?
@@ -553,7 +587,7 @@ class Tax1099ImportService
         tin_hash:,
         address_line1: @data[:address1],
         address_city: @data[:city],
-        address_state: @data[:state].presence,
+        address_state: state,
         address_postal_code: @data[:zip_code].presence,
         address_country: country,
         aasm_state: "sent",
@@ -625,7 +659,7 @@ class Tax1099ImportService
       "Address"                  => {
         "Address1" => @data[:address1],
         "City"     => @data[:city],
-        "State"    => @data[:state],
+        "State"    => state,
         "ZipCd"    => @data[:zip_code]
       },
       "FederalTaxClassification" => @data[:federal_tax_classification]
@@ -679,8 +713,8 @@ class Tax1099ImportService
     {
       "Address1"          => @data[:address1],
       "City"              => @data[:city],
-      "State"             => @data[:state].presence,
-      "ProvinceOrStateNm" => @data[:state].presence,
+      "State"             => state,
+      "ProvinceOrStateNm" => state,
       "Country"           => country,
       "PostalCd"          => @data[:zip_code].presence
     }

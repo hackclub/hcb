@@ -18,6 +18,7 @@ module Admin
       @tin_types = Tax1099ImportService::TIN_TYPES
       @form_types = Tax1099ImportService::FORM_TYPES
       @ch3_statuses = Tax1099ImportService::CH3_STATUSES
+      @us_states = Tax1099ImportService::US_STATES
       @fields = Tax1099ImportService::FIELDS
       @imported_row_keys = Tax1099ImportService.imported_row_keys
     end

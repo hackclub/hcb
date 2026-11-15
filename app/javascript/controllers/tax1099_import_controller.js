@@ -56,6 +56,21 @@ function w8FormType(value) {
   return ''
 }
 
+// Mirrors Tax1099ImportService.us_state_code: the 2-letter code for a US state
+// given as its code or full name, in any case, or '' when it's neither.
+// usStates maps each code to the names it goes by.
+function usStateCode(usStates, value) {
+  const trimmed = value.trim()
+  if (trimmed.length === 2 && usStates[trimmed.toUpperCase()]) {
+    return trimmed.toUpperCase()
+  }
+
+  const match = Object.entries(usStates).find(([, names]) =>
+    names.some(name => name.toLowerCase() === trimmed.toLowerCase())
+  )
+  return match ? match[0] : ''
+}
+
 // Mirrors Tax1099ImportService.normalize_postal_code.
 function normalizePostalCode(value) {
   const normalized = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase()
@@ -180,6 +195,7 @@ export default class extends Controller {
     legalEntitiesUrl: String,
     fields: Array,
     importedRowKeys: Array,
+    usStates: Object,
   }
 
   async loadCsv(event) {
@@ -485,7 +501,13 @@ export default class extends Controller {
           : '',
       address1: cell('address'),
       city: cell('city'),
-      state: cell('state'),
+      // Some Tax1099 rows spell a W-9's state out ("Massachusetts"); it's sent
+      // as its code. One that isn't a recognisable US state is left as it is
+      // for the admin to fix, which the server insists on.
+      state:
+        formType === 'W9'
+          ? usStateCode(this.usStatesValue, cell('state')) || cell('state')
+          : cell('state'),
       zip_code: cell('zipCode'),
       country: cell('country').toUpperCase(),
       email: cell('email'),
