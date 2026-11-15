@@ -18,7 +18,7 @@ RSpec.describe "Wise payout method in an unsupported currency", type: :system do
   it "flags the method as unavailable and explains why when editing it" do
     visit settings_payouts_path
 
-    row = find("[data-payout-methods-row]")
+    row = find(".payout-methods__row")
     expect(row).to have_css(".badge[aria-label='#{reason}']", text: "Unavailable")
 
     row.click_on "Edit"
