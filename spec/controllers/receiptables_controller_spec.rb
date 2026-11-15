@@ -118,7 +118,7 @@ RSpec.describe ReceiptablesController do
     end
 
     it "records the submitter and restores the missing receipt when the statement is deleted" do
-      user = create(:user)
+      user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
       hcb_code.no_or_lost_receipt!
@@ -143,7 +143,7 @@ RSpec.describe ReceiptablesController do
     end
 
     it "returns to the page the form was opened from" do
-      user = create(:user)
+      user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 
@@ -157,7 +157,7 @@ RSpec.describe ReceiptablesController do
     end
 
     it "preserves the originating popover through the statement form" do
-      user = create(:user)
+      user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 
@@ -173,8 +173,21 @@ RSpec.describe ReceiptablesController do
       expect(response).to redirect_to(page_with_popover)
     end
 
+    it "rejects a signature that isn't the signed-in user's name" do
+      user = create(:user, full_name: "Jordan Rivera")
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details))
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(hcb_code.receipts).to be_empty
+
+      post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details.merge(signer_name: " jordan  rivera ")))
+      expect(hcb_code.receipts.sole).to be_lost_receipt_statement
+    end
+
     it "ignores an external return_to" do
-      user = create(:user)
+      user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 
@@ -184,7 +197,7 @@ RSpec.describe ReceiptablesController do
     end
 
     it "refuses a signed in user who isn't on the organization" do
-      create_session(create(:user), verified: true)
+      create_session(create(:user, full_name: "Alex Example"), verified: true)
       post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details))
 
       expect(hcb_code.receipts).to be_empty
@@ -192,7 +205,7 @@ RSpec.describe ReceiptablesController do
     end
 
     it "attaches ledger statements to the underlying transaction" do
-      user = create(:user)
+      user = create(:user, full_name: "Alex Example")
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 
