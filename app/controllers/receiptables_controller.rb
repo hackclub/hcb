@@ -12,7 +12,6 @@ class ReceiptablesController < ApplicationController
       receiptable: statement_receiptable,
       date: @receiptable.try(:date) || @receiptable.try(:datetime)&.to_date,
       merchant: @receiptable.try(:memo),
-      signer_name: current_user&.full_name,
       submitter: current_user
     )
     @statement.items << LostReceipt::Item.new(quantity: 1)

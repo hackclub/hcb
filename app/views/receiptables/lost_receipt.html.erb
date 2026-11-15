@@ -71,10 +71,6 @@
     </div>
 
     <div class="card mb-4 flex flex-col gap-3">
-      <div>
-        <%= form.label :signer_name, "Your full name", class: "bold" %>
-        <%= form.text_field :signer_name, required: true, autocomplete: "name", class: "!max-w-full" %>
-      </div>
       <div class="field field--checkbox !items-start mb-0">
         <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
         <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
@@ -86,6 +82,11 @@
           <%= form.text_area :acknowledgement, required: true, rows: 3, autocomplete: "off", spellcheck: false, class: "!max-w-full", data: { lost_receipt_target: "acknowledgement", sentence: } %>
         </div>
       <% end %>
+      <div>
+        <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
+        <%# Not prefilled or autofilled: typing the name is the signature. %>
+        <%= form.text_field :signer_name, required: true, autocomplete: "off", class: "!max-w-full" %>
+      </div>
     </div>
 
     <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", data: { disable_with: "Submitting..." } do %>
