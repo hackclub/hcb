@@ -220,6 +220,17 @@ class User < ApplicationRecord
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
+  validate :must_be_13_or_older, if: :will_save_change_to_birthday?
+
+  def must_be_13_or_older
+    return if birthday.blank?
+
+    calculated_age = age_on(Date.current)
+    if calculated_age && calculated_age < 13
+      errors.add(:birthday, "You must be at least 13 years old")
+    end
+  end
+
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
     message: "must contain your first and last name, and only contain characters in the latin alphabet.", allow_blank: true,
@@ -428,6 +439,13 @@ class User < ApplicationRecord
 
   def seasonal_themes_disabled?
     !seasonal_themes_enabled?
+  end
+
+  # Memoized since the settings dropdown renders on many pages.
+  def show_tax_settings?
+    return @show_tax_settings if defined?(@show_tax_settings)
+
+    @show_tax_settings = legal_entities.any? { |le| le.tax_form_required? || le.completed_tax_form? }
   end
 
   # Whether this user is allowed to issue stripe cards and activate card grants.

@@ -58,7 +58,7 @@ class ReceiptablesController < ApplicationController
 
   # Signed link visitors can't view the transaction itself.
   def fallback_location
-    from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+    from_signed_link? ? attach_receipt_hcb_code_path(hcb_code, s: params[:s]) : @receiptable
   end
 
   def statement_params
@@ -90,14 +90,20 @@ class ReceiptablesController < ApplicationController
     @receiptable = @klass.find(params[:receiptable_id])
   end
 
+  # The transaction's HCB code, whether the receiptable is the code itself or
+  # its ledger item. Nil for every other receiptable.
+  def hcb_code
+    @hcb_code ||= @receiptable.try(:receipt_hcb_code)
+  end
+
   # True when the request came from the signed link in a receipt request email,
   # which grants access without signing in (same secret the upload form uses).
   # The link doesn't prove who typed the name, so the PDF says when it was used.
   def from_signed_link?
     return @from_signed_link if defined?(@from_signed_link)
 
-    @from_signed_link = @receiptable.is_a?(HcbCode) && params[:s].present? &&
-                        HcbCode.find_signed(params[:s], purpose: :receipt_upload) == @receiptable
+    @from_signed_link = hcb_code.present? && params[:s].present? &&
+                        HcbCode.find_signed(params[:s], purpose: :receipt_upload) == hcb_code
   end
 
 end

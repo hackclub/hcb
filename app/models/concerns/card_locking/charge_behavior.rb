@@ -41,8 +41,7 @@ module CardLocking
       scope :card_locking_candidates, -> {
         card_locking_relevant
           .joins(STRIPE_CARDHOLDER_JOIN)
-          .left_outer_joins(:receipts)
-          .where(receipts: { id: nil })
+          .without_receipt
           .where(marked_no_or_lost_receipt_at: nil)
           .where("canonical_transactions.created_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
@@ -70,8 +69,8 @@ module CardLocking
     end
 
     def card_locking_resolved_at
-      receipt_at = if association(:receipts).loaded?
-                     receipts.map(&:created_at).compact.min
+      receipt_at = if (preloaded = preloaded_receipts)
+                     preloaded.map(&:created_at).compact.min
                    else
                      receipts.minimum(:created_at)
                    end

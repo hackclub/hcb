@@ -58,15 +58,20 @@ module Reimbursement
       authorize @report, :create?
 
       if @report.save
-        @expense = @report.expenses.create!(amount_cents: 0)
-        receipt = ::ReceiptService::Create.new(
-          receiptable: @expense,
-          uploader: current_user,
-          attachments: params[:reimbursement_report][:file],
-          upload_method: :quick_expense
-        ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt&.first&.suggested_memo
-        redirect_to reimbursement_report_path(@report, edit: @expense.id)
+        files = Array(params[:reimbursement_report][:file]).compact_blank
+
+        # One expense per uploaded file, or a single blank expense when there are none.
+        expenses = Array.new([files.size, 1].max) { @report.expenses.create!(amount_cents: 0) }
+        expenses.zip(files).each do |expense, file|
+          expense.attach_quick_expense_receipt!(file, uploader: current_user) if file
+        end
+
+        # Open a lone expense for editing; with several, land on the report to review them.
+        if expenses.one?
+          redirect_to reimbursement_report_path(@report, edit: expenses.first.id)
+        else
+          redirect_to reimbursement_report_path(@report)
+        end
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
@@ -353,6 +358,7 @@ module Reimbursement
           wise_recipient_id: params[:wise_recipient_id],
           sent_at: Time.now,
           recipient_phone_number: @report.user.phone_number,
+          allow_unsupported_recipient: true, # already approved and sent, so let it through
         )
         wise_transfer.mark_approved!
         wise_transfer.mark_sent!

@@ -2,12 +2,14 @@
 
 module UsersHelper
   def users_nav(selected: nil)
+    has_events = current_user&.events&.exists?
+
     items = [
       {
         name: "Home",
         path: root_path,
         icon: "home",
-        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
+        tooltip: has_events ? "See all your organizations" : "See your dashboard",
         selected: selected == :home
       }
     ]
@@ -41,7 +43,7 @@ module UsersHelper
     }
 
 
-    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
+    if has_events || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
       items << {
         name: "Receipts",
         path: my_inbox_path,

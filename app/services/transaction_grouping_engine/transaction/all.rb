@@ -161,10 +161,7 @@ module TransactionGroupingEngine
         end
 
         if @missing_receipts
-          joins << <<~SQL
-            left join receipts on receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'
-          SQL
-          conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
+          conditions << "NOT #{HcbCode.receipts_exist_sql} AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
         end
 
         conditions << "q1.amount_cents < 0" if @expenses

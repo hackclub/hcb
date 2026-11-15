@@ -73,4 +73,49 @@ RSpec.describe TransactionGroupingEngine::Transaction::All do
       end
     end
   end
+
+  describe "#run with missing_receipts" do
+    let(:event) { create(:event) }
+
+    def settled_expense
+      ct = create(:canonical_transaction, amount_cents: -1000)
+      create(:canonical_event_mapping, event:, canonical_transaction: ct)
+      ct
+    end
+
+    def attach_receipt_to(receiptable)
+      receipt = Receipt.new(receiptable:, upload_method: :api)
+      receipt.file.attach(
+        io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
+        filename: "receipt.png", content_type: "image/png"
+      )
+      receipt.save!
+    end
+
+    def missing_receipt_codes
+      described_class.new(event_id: event.id, missing_receipts: true).run.map(&:hcb_code)
+    end
+
+    it "includes an expense with no receipt" do
+      ct = settled_expense
+
+      expect(missing_receipt_codes).to include(ct.hcb_code)
+    end
+
+    it "excludes an expense whose receipt is on its HCB code" do
+      ct = settled_expense
+      attach_receipt_to(ct.local_hcb_code)
+
+      expect(missing_receipt_codes).not_to include(ct.hcb_code)
+    end
+
+    # Receipts are moving onto ledger items (#14106); the filter has to see them
+    # on either side.
+    it "excludes an expense whose receipt is on its ledger item" do
+      ct = settled_expense
+      attach_receipt_to(ct.local_hcb_code.reload.ledger_item)
+
+      expect(missing_receipt_codes).not_to include(ct.hcb_code)
+    end
+  end
 end
