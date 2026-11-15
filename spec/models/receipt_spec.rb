@@ -67,7 +67,9 @@ RSpec.describe Receipt, type: :model do
     statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
                                            signer_name: "Alex Example", confirmed: true,
                                            items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
-    expect(statement.submit(receiptable: charge)).to eq(true)
+    statement.receiptable = charge
+    statement.acknowledgement = statement.required_acknowledgement
+    expect(statement.submit).to eq(true)
 
     statement.receipt.destroy!
 
