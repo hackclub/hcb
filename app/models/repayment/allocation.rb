@@ -82,27 +82,44 @@ class Repayment
 
     # Remembers each transaction's category (and whether it was set by hand)
     # so undoing the repayment can put it back.
-    def apply_categories!
-      transactions = categorized_transactions
-      update!(previous_categories: transactions.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
-      transactions.each do |t|
-        TransactionCategoryService.new(model: t).set!(slug: Repayment::CATEGORY_SLUG, assignment_strategy: "manual")
+    #
+    # With recategorize_sender, the sending side of a transfer marked as the
+    # repayment takes on the expense's category, as it would have had it been
+    # sent as a repayment transfer.
+    def apply_categories!(recategorize_sender: false)
+      slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
+      expense_slug = repaid_category&.slug
+      sender = recategorize_sender && expense_slug ? repayment.sender_transactions : []
+      sender.each { |t| slugs[t] = expense_slug }
+
+      update!(previous_categories: slugs.to_h { |t, slug|
+        snapshot = category_snapshot(t)
+        # The sender's side isn't in the repayment category, so remember what it was set to.
+        snapshot = (snapshot || {}).merge("set_to" => slug) if sender.include?(t)
+        [snapshot_key(t), snapshot]
+      })
+      slugs.each do |t, slug|
+        TransactionCategoryService.new(model: t).set!(slug:, assignment_strategy: "manual")
       end
     end
 
     # Puts each transaction back to the category it had before, unless
     # someone has recategorized it since.
     def revert_categories!
-      categorized_transactions.each do |t|
-        mapping = t.category_mapping
-        next unless mapping&.category&.slug == Repayment::CATEGORY_SLUG
-
+      own = categorized_transactions
+      (own + repayment.sender_transactions).each do |t|
         # A transaction that settled after the repayment has no snapshot of its
         # own; it inherited the category from its pending transaction.
         key = snapshot_key(t)
         key = snapshot_key(t.canonical_pending_transaction) if !previous_categories.key?(key) && t.try(:canonical_pending_transaction)
         previous = previous_categories[key]
-        if previous.nil?
+
+        # The sender's side is only touched if it was recategorized.
+        set_to = previous&.dig("set_to") || (Repayment::CATEGORY_SLUG if own.include?(t))
+        mapping = t.category_mapping
+        next unless set_to && mapping&.category&.slug == set_to
+
+        if previous&.dig("slug").nil?
           mapping.destroy!
         else
           mapping.update!(

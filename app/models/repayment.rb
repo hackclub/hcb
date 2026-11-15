@@ -36,8 +36,8 @@ class Repayment < ApplicationRecord
   # the incoming repayment as revenue.
   CATEGORY_SLUG = "repayment"
 
-  # Transfers between organizations go through a repayment transfer instead,
-  # and donations and invoices are revenue, not money paid back.
+  # Donations and invoices are revenue, not money paid back. Incoming
+  # transfers are only allowed by repaying_ledger_items.
   NON_REPAYING_LINKED_OBJECT_TYPES = ["Disbursement::Outgoing", "Disbursement::Incoming", "Donation", "Invoice"].freeze
 
   has_paper_trail
@@ -69,10 +69,19 @@ class Repayment < ApplicationRecord
   # Settled money in on the organization's ledger that could have paid an
   # expense back. Pending money in can still change amount or never arrive.
   def self.repaying_ledger_items(event)
+    # A plain transfer from another organization that should have been sent
+    # as a repayment can be marked as one once it has settled. Repayment
+    # transfers already have their own repayment.
+    markable_transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil)
+                                     .where.not(source_event_id: event.id)
+
     event.ledger.items
          .where(status: :settled)
          .where("ledger_items.amount_cents > 0")
-         .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", NON_REPAYING_LINKED_OBJECT_TYPES)
+         .where(
+           "ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
+           NON_REPAYING_LINKED_OBJECT_TYPES, markable_transfers.select(:id)
+         )
          .not_likely_account_verification_related
   end
 
@@ -105,20 +114,31 @@ class Repayment < ApplicationRecord
 
   # A transfer's incoming side is categorized when it's created, so only a
   # repaying ledger item has transactions to categorize here.
-  def repaying_transactions
-    return [] if repaying_ledger_item.nil?
+  def repaying_transactions = transactions_of(repaying_ledger_item)
 
-    [
-      *repaying_ledger_item.canonical_transactions.includes(category_mapping: :category),
-      *repaying_ledger_item.canonical_pending_transactions.includes(category_mapping: :category)
-    ]
+  # The transfer whose incoming side was marked as the repayment, if any.
+  def repaying_transfer
+    repaying_ledger_item.linked_object.disbursement if repaying_ledger_item&.linked_object_type == "Disbursement::Incoming"
   end
+
+  # The sending organization's side of that transfer. Only recategorized when
+  # whoever marked the repayment also manages the sender (see Allocation).
+  def sender_transactions = transactions_of(repaying_transfer&.outgoing_disbursement&.ledger_item)
 
   def revert_categories!
     allocations.each(&:revert_categories!)
   end
 
   private
+
+  def transactions_of(ledger_item)
+    return [] if ledger_item.nil?
+
+    [
+      *ledger_item.canonical_transactions.includes(category_mapping: :category),
+      *ledger_item.canonical_pending_transactions.includes(category_mapping: :category)
+    ]
+  end
 
   def funded_by_a_disbursement_or_a_ledger_item
     errors.add(:base, "must be funded by either a transfer or a transaction") unless disbursement.present? ^ repaying_ledger_item.present?
