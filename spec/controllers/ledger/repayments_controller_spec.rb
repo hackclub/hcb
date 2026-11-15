@@ -101,7 +101,7 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
     end
 
     it "can't unmark one" do
-      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: create(:user)).run
+      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: create(:organizer_position, event:, role: :member).user).run
 
       delete :destroy, params: { item_id: income.ledger_item.hashid }
 

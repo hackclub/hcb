@@ -68,27 +68,41 @@ class Repayment < ApplicationRecord
 
   # Settled money in on the organization's ledger that could have paid an
   # expense back. Pending money in can still change amount or never arrive.
+  #
+  # Given a user, only what they may link is returned:
+  # - Money in that isn't a transfer, for members of the organization.
+  # - A plain transfer from another organization that should have been sent
+  #   as a repayment, for managers of the sender who can browse this ledger,
+  #   which is what sending it as a repayment would have taken. Linking it
+  #   moves the expense onto the sender's books, so nobody else can: the
+  #   income would leave revenue here without the sender taking the expense.
+  # Without a user, transfers are left out.
   def self.repaying_ledger_items(event, user = nil)
-    # A plain transfer from another organization that should have been sent
-    # as a repayment can be marked as one once it has settled. Repayment
-    # transfers already have their own repayment.
-    #
-    # Marking one also moves the expense onto the sender's books, so only
-    # someone who manages the sender can do it. Otherwise the income would
-    # leave the recipient's revenue without the sender taking on the expense.
-    markable_transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil)
-                                     .where.not(source_event_id: event.id)
-    markable_transfers = markable_transfers.none if user.nil?
-    markable_transfers = markable_transfers.where(source_event_id: user.manageable_events.select(:id)) unless user.nil? || user.admin?
+    transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil)
+                            .where.not(source_event_id: event.id)
+    if user.nil? || !DisbursementPolicy.new(user, Disbursement.new(destination_event: event)).repay?
+      transfers = transfers.none
+    elsif !user.admin?
+      transfers = transfers.where(source_event_id: user.manageable_events.select(:id))
+    end
+    member = user.nil? || OrganizerPosition.role_at_least?(user, event, :member)
 
     event.ledger.items
          .where(status: :settled)
          .where("ledger_items.amount_cents > 0")
          .where(
-           "ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
-           NON_REPAYING_LINKED_OBJECT_TYPES, markable_transfers.select(:id)
+           "(? AND (ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?))) OR (ledger_items.linked_object_type = 'Disbursement::Incoming' AND ledger_items.linked_object_id IN (?))",
+           member, NON_REPAYING_LINKED_OBJECT_TYPES, transfers.select(:id)
          )
          .not_likely_account_verification_related
+  end
+
+  # An outgoing transfer is linked through its incoming side, the money in on
+  # the recipient's ledger. Nil until the transfer has been sent.
+  def self.markable_item(ledger_item)
+    return ledger_item unless ledger_item.linked_object_type == "Disbursement::Outgoing"
+
+    ledger_item.linked_object.disbursement.incoming_disbursement.ledger_item
   end
 
   # Money in that hasn't already been marked as repaying something.
@@ -98,8 +112,7 @@ class Repayment < ApplicationRecord
 
   # What a ledger item could be marked as a repayment with: for an unrepaid
   # expense, unused money in of the same amount; for unused money in,
-  # unrepaid expenses of the same amount. Transfers are only offered to a
-  # user who manages their sender.
+  # unrepaid expenses of the same amount, limited to what the user may link.
   def self.match_candidates(ledger_item, user = nil)
     event = ledger_item.primary_ledger&.event
     return Ledger::Item.none if event.nil?

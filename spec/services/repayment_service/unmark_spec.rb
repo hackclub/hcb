@@ -6,9 +6,10 @@ RSpec.describe RepaymentService::Unmark do
   let(:event) { create(:event) }
   let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, category_slug: "food-fun") }
   let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00) }
+  let(:user) { create(:organizer_position, event:, role: :member).user }
 
   it "removes the repayment and restores both categories" do
-    repayment = RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: create(:user)).run
+    repayment = RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
 
     described_class.new(repayment:).run
 
@@ -18,7 +19,6 @@ RSpec.describe RepaymentService::Unmark do
   end
 
   it "does nothing when the repayment was already unmarked" do
-    user = create(:user)
     repayment = RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
     described_class.new(repayment:).run
 

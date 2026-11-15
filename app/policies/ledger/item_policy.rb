@@ -29,12 +29,17 @@ class Ledger
       admin_or_member?
     end
 
+    # Members link money in on their own ledger. A manager of another
+    # organization can link a transfer it sent, from here or from their own
+    # side. Repayment.match_candidates decides which transactions each sees.
     def mark_repayment?
-      admin_or_member?
+      admin_or_member? || (user.present? && user.manageable_events.exists? && DisbursementPolicy.new(user, Disbursement.new(destination_event: record.primary_ledger&.event)).repay?)
     end
 
+    # Whoever could have linked it: for a transfer, a manager of its sender.
     def unmark_repayment?
-      admin_or_member?
+      sender = record.marked_repayment&.repaying_transfer&.source_event
+      sender ? user&.admin? || OrganizerPosition.role_at_least?(user, sender, :manager) : admin_or_member?
     end
 
     def toggle_tag?(tag = nil)

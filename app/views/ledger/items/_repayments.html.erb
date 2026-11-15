@@ -8,8 +8,8 @@
 <% repaying_item = disbursement ? disbursement.incoming_disbursement.ledger_item : ledger_item %>
 <% repays = Array(disbursement&.repaid_ledger_items) + Array(repaying_item&.repaying_repayment&.repaid_ledger_items) %>
 <%# Repayments marked between two transactions on this ledger can be undone; transfers are undone by rejecting them. %>
-<% marked = ledger_item.marked_repayment %>
-<% unmarkable = marked.present? && policy(ledger_item).unmark_repayment? %>
+<% marked_item = ledger_item.marked_repayment ? ledger_item : repaying_item %>
+<% unmarkable = marked_item&.marked_repayment.present? && policy(marked_item).unmark_repayment? %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
@@ -26,7 +26,7 @@
           }, ", ") %>
       <% if unmarkable %>
         <%= button_to "Unmark",
-                      ledger_item_repayment_path(ledger_item),
+                      ledger_item_repayment_path(marked_item),
                       method: :delete,
                       class: "p0 bg-transparent border-none cursor-pointer link-reset muted underline",
                       form_class: "inline",
