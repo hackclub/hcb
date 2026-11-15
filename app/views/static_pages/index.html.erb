@@ -49,30 +49,24 @@
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
-      <% expiry_color = if grant.expiration_at.past?
-                          "bg-error"
-                        elsif grant.expiration_at <= 30.days.from_now.to_date
-                          "bg-warning"
-                        else
-                          "bg-muted"
-                        end %>
-      <% time_left = ((grant.expiration_at - Date.current) / [grant.expiration_at - grant.created_at.to_date, 1].max * 100).clamp(0, 100).to_f %>
-      <div class="card relative overflow-hidden mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
+      <% time_left = grant.percent_time_remaining %>
+      <li class="list-none card relative overflow-hidden mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
         <div class="flex-1">
           <p class="my-0 text-sm muted">From <%= grant.event.name %></p>
-          <p class="my-0 text-md">
+          <p class="my-0 text-md flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <span class="text-2xl font-[700]"><%= render_money grant.amount %></span>
-            <span class="badge m-0 mt-2 <%= expiry_color %>">
-              <%= inline_icon expiry_color == "bg-warning" ? "warning" : "clock", size: 14 %>
-              <%= grant.expiration_at.past? ? "Expired" : "#{distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day)} left to activate" %>
+            <span class="badge m-0 <%= grant.expiration_badge_color %>">
+              <%= inline_icon grant.expiring_soon? ? "warning" : "clock", size: 14 %>
+              <%= grant.expiration_passed? ? "Expired" : "#{distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day)} left to activate" %>
             </span>
           </p>
-
-          <% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %>
+          <% if grant.purpose.present? %>
+            <p class="my-0 text-sm">For <strong><%= grant.purpose %></strong></p>
+          <% end %>
         </div>
         <%= link_to "Activate my grant", grant, class: "btn" %>
-        <div class="absolute bottom-0 left-0 h-1 <%= expiry_color == "bg-warning" ? "bg-orange" : "bg-primary" %>" style="width: <%= time_left %>%;" role="progressbar" aria-label="Time left to spend this grant" aria-valuenow="<%= time_left.round %>" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
+        <div class="absolute bottom-0 left-0 h-1 <%= grant.expiring_soon? ? "bg-orange" : "bg-primary" %>" style="width: <%= time_left %>%;" role="progressbar" aria-label="Time left to activate this grant" aria-valuenow="<%= time_left %>" aria-valuemin="0" aria-valuemax="100"></div>
+      </li>
     <% end %>
   </ul>
 <% end %>
