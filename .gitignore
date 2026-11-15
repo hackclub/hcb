@@ -60,4 +60,4 @@ yarn-debug.log*
 # AI
 .claude/*
 !.claude/settings.json
-!.claude/hooks/
+!.claude/hooks/block-manual-migrations.sh
