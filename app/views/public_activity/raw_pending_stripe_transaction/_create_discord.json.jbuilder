@@ -2,19 +2,21 @@
 
 # locals: (activity:, p:)
 
-hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code
+ledger_item = activity.trackable&.canonical_pending_transaction&.ledger_item
+card_charge = ledger_item&.linked_object
+event = ledger_item&.primary_ledger&.event || ledger_item&.primary_ledger&.card_grant&.event
 user = activity.user&.name
 
 json.embed do
-  if hcb_code.present?
-    if hcb_code.stripe_refund?
-      json.description "#{user} was refunded #{render_money(hcb_code.amount_cents.abs)} from #{hcb_code.memo} for #{Discord.link_to(hcb_code.event&.name, event_url(hcb_code.event))}"
-    elsif hcb_code.pt&.declined?
-      json.description "#{possessive(user)} #{Discord.link_to(hcb_code.event&.name, event_url(hcb_code.event))} card was declined for #{render_money(activity.trackable.amount_cents.abs)} at #{hcb_code.memo}"
-    elsif hcb_code.stripe_cash_withdrawal?
-      json.description "#{user} withdrew #{render_money(hcb_code.stripe_atm_fee ? hcb_code.amount_cents.abs - hcb_code.stripe_atm_fee : hcb_code.amount_cents.abs)} from #{humanized_merchant_name(hcb_code.stripe_merchant)} for #{Discord.link_to(hcb_code.event&.name, event_url(hcb_code.event))}"
+  if ledger_item.present?
+    if card_charge&.stripe_refund?
+      json.description "#{user} was refunded #{render_money(ledger_item.amount_cents.abs)} from #{ledger_item.memo} for #{Discord.link_to(event&.name, event_url(event))}"
+    elsif ledger_item.declined?
+      json.description "#{possessive(user)} #{Discord.link_to(event&.name, event_url(event))} card was declined for #{render_money(activity.trackable.amount_cents.abs)} at #{ledger_item.memo}"
+    elsif card_charge&.stripe_cash_withdrawal?
+      json.description "#{user} withdrew #{render_money(card_charge.stripe_atm_fee ? ledger_item.amount_cents.abs - card_charge.stripe_atm_fee : ledger_item.amount_cents.abs)} from #{humanized_merchant_name(card_charge.stripe_merchant_data)} for #{Discord.link_to(event&.name, event_url(event))}"
     else
-      json.description "#{user} spent #{render_money(hcb_code.amount_cents.abs)} on #{Discord.link_to(hcb_code.memo, hcb_code_url(hcb_code))} for #{Discord.link_to(hcb_code.event&.name, event_url(hcb_code.event))}"
+      json.description "#{user} spent #{render_money(ledger_item.amount_cents.abs)} on #{Discord.link_to(ledger_item.memo, ledger_item_url(ledger_item))} for #{Discord.link_to(event&.name, event_url(event))}"
     end
   else
     json.description "#{user} spent #{render_money(activity.trackable.amount_cents.abs)} on #{activity.trackable.memo}"
@@ -22,7 +24,7 @@ json.embed do
 
 end
 
-json.components [
-  Discord.button_to("View transaction", hcb_code_url("#{TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE}-#{TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-#{activity.trackable.stripe_transaction_id}")),
-  Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))
-]
+components = []
+components << Discord.button_to("View transaction", ledger_item_url(ledger_item)) if ledger_item.present?
+components << Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))
+json.components components
