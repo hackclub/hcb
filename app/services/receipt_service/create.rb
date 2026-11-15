@@ -11,7 +11,9 @@ module ReceiptService
 
     def run!
       if @receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
-        @receiptable&.update(marked_no_or_lost_receipt_at: nil)
+        @receiptable.update(marked_no_or_lost_receipt_at: nil)
+        # An HCB code and its ledger item each keep a copy of the mark; clear both.
+        @receiptable.try(:sync_no_or_lost_receipt!)
       end
 
       @attachments&.map do |attachment|

@@ -225,7 +225,7 @@ class DisbursementsController < ApplicationController
         uploader: current_user,
         attachments: disbursement_params[:file],
         upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code
+        receiptable: disbursement.outgoing_disbursement.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
       ).run!
     end
 

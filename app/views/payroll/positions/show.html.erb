@@ -186,7 +186,17 @@
                 <% end %>
               </td>
               <td class="text-right">
-                <%= render_money invoice.amount_cents %>
+                <% if (ledger_item = invoice.payment&.current_attempt&.payout&.ledger_item).present? %>
+                  <%= render_money ledger_item.amount_cents.abs %>
+                <% else %>
+                  <%= render_money invoice.amount_cents %>
+
+                  <% if (fee_details = invoice.estimated_fee_details).present? %>
+                    <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details[:reason] %>">
+                      + <%= render_money fee_details[:amount_cents] %> fee
+                    </span>
+                  <% end %>
+                <% end %>
                 <%= link_to "", "#", class: "stretched-link", aria: { label: "View invoice" }, data: { behavior: "modal_trigger", modal: dom_id(preview_receipt || invoice, :preview) } %>
                 <% unless preview_receipt %>
                   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">
