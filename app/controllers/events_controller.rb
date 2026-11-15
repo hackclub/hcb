@@ -467,6 +467,8 @@ class EventsController < ApplicationController
   end
 
   def card_overview
+    authorize @event
+
     @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
     @q = params[:q].presence
@@ -479,22 +481,25 @@ class EventsController < ApplicationController
                                   .order("stripe_status asc, created_at desc")
 
     # Derived from cards rather than @event.users so removed members' cards stay filterable
-    cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id")).order(:full_name)
+    cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
     @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
-      { key: "user", label: "Cardholder", type: "select", options: cardholders.map { |u| [u.full_name, u.slug] } },
+      { key: "user", label: "Cardholder", type: "select", options: cardholders.sort_by(&:name).map { |u| [u.name, u.slug] } },
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
+
+    return unless turbo_frame_request?
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user&.id }) if params[:user]
 
     if @q
-      all_stripe_cards = all_stripe_cards.where(
-        "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q",
-        q: "%#{StripeCard.sanitize_sql_like(@q)}%"
-      )
+      # Last four digits are hidden from non-organizers, so they must not be searchable either
+      searchable = organizer_signed_in? ? "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q" : "stripe_cards.name ILIKE :q"
+      all_stripe_cards = all_stripe_cards.where(searchable, q: "%#{StripeCard.sanitize_sql_like(@q)}%")
     end
 
     all_stripe_cards = case @status
@@ -527,10 +532,6 @@ class EventsController < ApplicationController
       @user_stripe_cards = StripeCard.none
     end
 
-    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
-
-    authorize @event
-
     page = (params[:page] || 1).to_i
     per_page = safe_per(18)
 
@@ -547,7 +548,7 @@ class EventsController < ApplicationController
       user_groups = display_cards
                     .group_by(&:user)
                     .reject { |user, _| user.nil? }
-                    .sort_by { |user, _| [user == current_user ? 0 : 1, user.full_name.to_s] }
+                    .sort_by { |user, _| [user == current_user ? 0 : 1, user.name.to_s] }
 
       @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
       @cards_by_user = @paginated_user_groups.to_h

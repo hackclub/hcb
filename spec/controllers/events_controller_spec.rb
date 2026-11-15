@@ -779,6 +779,7 @@ RSpec.describe EventsController do
     end
 
     def page_for(**params)
+      request.headers["Turbo-Frame"] = "stripe_cards"
       get(:card_overview, params: { event_id: event.slug, **params })
       Nokogiri::HTML5(response.body)
     end
@@ -786,6 +787,23 @@ RSpec.describe EventsController do
     before do
       create(:organizer_position, user: organizer, event:)
       create_session(organizer, verified: true)
+    end
+
+    it "lets organizers search by the last four digits" do
+      create_card(organizer, name: "Organizer Card")
+
+      expect(page_for(q: "9876").text).to include("Organizer Card")
+    end
+
+    it "defers loading cards to a frame that keeps the current filters", :aggregate_failures do
+      create_card(organizer, name: "Organizer Card")
+
+      get(:card_overview, params: { event_id: event.slug, status: "active" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.at_css("turbo-frame#stripe_cards")["src"]).to include("status=active")
+      expect(page.css(".stripe-card--skeleton")).to be_present
+      expect(page.text).not_to include("Organizer Card")
     end
 
     it "treats LIKE wildcards in the search literally" do
@@ -836,6 +854,64 @@ RSpec.describe EventsController do
 
       expect(toggle["href"]).to include("status=active")
       expect(toggle["href"]).not_to include("page=")
+    end
+  end
+
+  describe "#card_overview for viewers without access to cards" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+    let(:cardholder) { create(:user, full_name: "Legal Name", preferred_name: "Chosen Name") }
+    let!(:stripe_card) do
+      create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder), name: "Snacks")
+    end
+
+    def page_for(**params)
+      request.headers["Turbo-Frame"] = "stripe_cards"
+      get(:card_overview, params: { event_id: event.slug, **params })
+      Nokogiri::HTML5(response.body)
+    end
+
+    it "doesn't let the public find cards by their hidden last four digits" do
+      expect(page_for(q: stripe_card.last4).text).not_to include("Snacks")
+    end
+
+    it "doesn't reveal a cardholder's legal name" do
+      page_for
+
+      expect(response.body).not_to include("Legal Name")
+    end
+
+    context "when signed in without a role on the organization" do
+      before { create_session(create(:user), verified: true) }
+
+      it "doesn't wrap cards in a link", :aggregate_failures do
+        cards = page_for.css(".stripe-card")
+
+        expect(cards).to be_present
+        expect(cards.flat_map { |card| card.ancestors("a").to_a }).to be_empty
+      end
+
+      it "doesn't make list rows clickable", :aggregate_failures do
+        page = page_for(view: "list")
+
+        expect(page.text).to include("Chosen Name")
+        expect(page.css("tr.clickable, a[href='#{stripe_card_path(stripe_card)}']")).to be_empty
+      end
+
+    end
+
+    context "on a private organization" do
+      let(:event) { create(:event, is_public: false) }
+
+      before { create_session(create(:user), verified: true) }
+
+      it "turns outsiders away before touching their view preference", :aggregate_failures do
+        page_for(view: "list", q: stripe_card.last4)
+
+        expect(response).to redirect_to(root_path)
+        expect(response.cookies).not_to have_key("card_overview_view")
+      end
     end
   end
 

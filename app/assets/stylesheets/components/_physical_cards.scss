@@ -308,3 +308,13 @@
   left: -1em;
   filter: drop-shadow(1em 0 0px #000);
 }
+
+.stripe-card--skeleton {
+  background: $smoke;
+  box-shadow: none;
+  pointer-events: none;
+
+  html[data-dark='true'] & {
+    background: $darkless;
+  }
+}
