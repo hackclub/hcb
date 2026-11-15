@@ -31,32 +31,23 @@ RSpec.describe PendingTransactionEngine::NightlyJob, type: :job do
     let(:events) { [] }
 
     before do
-      # Mirrors Appsignal::CheckIn.cron: the finish event is only sent if the block returns.
-      allow(Appsignal::CheckIn).to receive(:cron) do |identifier, &block|
-        events << [:start, identifier]
-        block.call
-        events << [:finish, identifier]
-      end
+      allow(Appsignal::CheckIn).to receive(:cron) { |identifier| events << [:check_in, identifier] }
     end
 
-    it "runs the engine inside the check-in" do
+    it "checks in once the run finishes" do
       allow(nightly).to receive(:run) { events << :run }
 
       described_class.perform_now
 
-      expect(events).to eq([
-                             [:start, "pending_transaction_engine_nightly_job"],
-                             :run,
-                             [:finish, "pending_transaction_engine_nightly_job"]
-                           ])
+      expect(events).to eq([:run, [:check_in, "pending_transaction_engine_nightly_job"]])
     end
 
-    it "doesn't finish the check-in when the run fails" do
+    it "doesn't check in when the run fails" do
       allow(nightly).to receive(:run).and_raise(StandardError)
 
       described_class.perform_now
 
-      expect(events).to eq([[:start, "pending_transaction_engine_nightly_job"]])
+      expect(events).to be_empty
     end
   end
 end
