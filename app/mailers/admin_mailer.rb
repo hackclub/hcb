@@ -26,7 +26,7 @@ class AdminMailer < ApplicationMailer
 
     AchTransfer.pending.find_each do |ach|
       if ach.created_at < 24.hours.ago
-        next if ach.comments.by_admin.exists? || ach.local_hcb_code.comments.by_admin.exists?
+        next if ach.comments.by_admin.exists? || ach.local_hcb_code.all_comments.by_admin.exists?
 
         @tasks << {
           url: ach_start_approval_admin_url(ach),
@@ -37,7 +37,7 @@ class AdminMailer < ApplicationMailer
 
     IncreaseCheck.pending.find_each do |check|
       if check.created_at < 24.hours.ago
-        next if check.local_hcb_code.comments.by_admin.exists?
+        next if check.local_hcb_code.all_comments.by_admin.exists?
 
         @tasks << {
           url: increase_check_process_admin_url(check),
@@ -59,7 +59,7 @@ class AdminMailer < ApplicationMailer
 
     Disbursement.reviewing.find_each do |disbursement|
       if disbursement.created_at < 24.hours.ago
-        next if disbursement.local_hcb_code.comments.by_admin.exists?
+        next if disbursement.local_hcb_code.all_comments.by_admin.exists?
 
         @tasks << {
           url: disbursement_process_admin_url(disbursement),

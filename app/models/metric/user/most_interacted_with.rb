@@ -31,7 +31,7 @@ class Metric
       def calculate
         query = <<~SQL
           SELECT CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) as user_1, comments.user_id as user_2, COUNT(*) FROM "comments"
-          JOIN "hcb_codes" on commentable_type = 'HcbCode' and hcb_codes.id = commentable_id
+          JOIN "hcb_codes" on (commentable_type = 'HcbCode' and hcb_codes.id = commentable_id) or (commentable_type = 'Ledger::Item' and hcb_codes.ledger_item_id = commentable_id)
           LEFT JOIN "ach_transfers" on hcb_codes.hcb_code = CONCAT('HCB-300-', ach_transfers.id)
           LEFT JOIN "checks" on hcb_codes.hcb_code = CONCAT('HCB-400-', checks.id)
           LEFT JOIN "increase_checks" on hcb_codes.hcb_code = CONCAT('HCB-401-', increase_checks.id)

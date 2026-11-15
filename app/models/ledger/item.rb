@@ -216,9 +216,8 @@ class Ledger
       # Counter caches
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      shown_comments = hcb_code&.all_comments || Comment.none
-      self.comment_count = shown_comments.size
-      self.not_admin_only_comment_count = shown_comments.not_admin_only.size
+      self.comment_count = all_comments.size
+      self.not_admin_only_comment_count = all_comments.not_admin_only.size
       self.receipt_count = calculate_receipt_count
 
       # Timestamps
@@ -391,11 +390,15 @@ class Ledger
       linked_object.disbursement if shared_commentable?
     end
 
+    def comment_counterpart
+      hcb_code
+    end
+
     def comment_recipients_for(comment)
       event = primary_ledger&.event || primary_ledger&.card_grant&.event
 
-      users = comments.map(&:user)
-      users += comments.flat_map(&:mentioned_users)
+      users = unshared_comments.map(&:user)
+      users += unshared_comments.flat_map(&:mentioned_users)
       users += event.users.reject(&:my_threads?) if event
       users << author if author
 
@@ -414,8 +417,8 @@ class Ledger
     def comment_mentionable(current_user: nil)
       event = primary_ledger&.event || primary_ledger&.card_grant&.event
 
-      users = comments.includes(:user).map(&:user)
-      users += comments.flat_map(&:mentioned_users)
+      users = unshared_comments.includes(:user).map(&:user)
+      users += unshared_comments.flat_map(&:mentioned_users)
       if event
         users += event.users if !current_user || Pundit.policy(current_user, event).team?
         users << event.point_of_contact

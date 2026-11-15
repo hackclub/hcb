@@ -40,7 +40,7 @@ module PendingTransactionEngine
 
         @canonical_pending_transactions ||=
           begin
-            included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
+            included_local_hcb_code_associations = [:receipts, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
             included_local_hcb_code_associations << { ledger_item: [:tags, { primary_ledger: [:event, { card_grant: :event }] }] }
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,

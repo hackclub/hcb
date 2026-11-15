@@ -697,10 +697,14 @@ class HcbCode < ApplicationRecord
     self.short_code = ::HcbCodeService::Generate::ShortCode.new.run
   end
 
+  def comment_counterpart
+    ledger_item
+  end
+
   def comment_recipients_for(comment)
     users = []
-    users += self.comments.map(&:user)
-    users += self.comments.flat_map(&:mentioned_users)
+    users += unshared_comments.map(&:user)
+    users += unshared_comments.flat_map(&:mentioned_users)
     users += self.events.flat_map(&:users).reject(&:my_threads?)
     users += [author] if author
 
@@ -718,15 +722,23 @@ class HcbCode < ApplicationRecord
 
   def comment_mentionable(current_user: nil)
     users = []
-    users += self.comments.includes(:user).map(&:user)
-    users += self.comments.flat_map(&:mentioned_users)
+    users += unshared_comments.includes(:user).map(&:user)
+    users += unshared_comments.flat_map(&:mentioned_users)
     users += self.events.includes(:users).select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
     users += self.events.includes(:point_of_contact).map(&:point_of_contact)
 
     users.compact.uniq
   end
 
+  # The ledger item caches counts of all_comments (see Ledger::Item#refresh!);
+  # codes without one count their own.
+  def comments_count
+    ledger_item&.comment_count || comments.size
+  end
+
   def not_admin_only_comments_count
+    return ledger_item.not_admin_only_comment_count if ledger_item
+
     # `not_admin_only.count` always issues a new query to the DB because a scope is being applied.
     # However, if comments have been preloaded, it's more likely to be faster to count
     # the non admin comments in memory. The vast majority of HcbCodes have fewer than 4 comments

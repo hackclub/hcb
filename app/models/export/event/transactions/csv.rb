@@ -55,7 +55,7 @@ class Export
         private
 
         def transactions
-          tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments])
+          tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :ledger_item])
           tx = tx.where("date >= ?", start_date) if start_date
           tx = tx.where("date <= ?", end_date) if end_date
           tx.order("date desc")
@@ -79,7 +79,7 @@ class Export
               amount_cents,
               format("%.2f", amount_cents / 100.0),
               (ct.local_hcb_code.ledger_item&.tags || []).filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
-              public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n"),
+              public_only ? "" : ct.local_hcb_code.all_comments.not_admin_only.pluck(:content).join("\n\n"),
               ct.local_hcb_code.author&.public_id || "",
               ct.local_hcb_code.author&.name || "",
               ct.category&.slug,

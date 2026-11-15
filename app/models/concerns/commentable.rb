@@ -27,11 +27,22 @@ module Commentable
     shared_commentable.present?
   end
 
+  # The record this one shares a transaction with in the other transaction
+  # engine (an HcbCode's Ledger::Item and vice versa). While comments move from
+  # HCB codes to ledger items (#14105) they can be on either, so both sides
+  # read the union. Nil once a record has no counterpart.
+  def comment_counterpart
+    nil
+  end
+
+  # Comments on this record and its counterpart, but not those shared with the
+  # other side of a transfer: the set that decides who a comment notifies.
+  def unshared_comments
+    Comment.where(commentable: [self, comment_counterpart].compact).order(:created_at)
+  end
+
+  # Everything shown on this record's page
   def all_comments
-    if shared_commentable
-      Comment.where(commentable: self).or(Comment.where(commentable: shared_commentable)).order(:created_at)
-    else
-      comments
-    end
+    Comment.where(commentable: [self, comment_counterpart, shared_commentable].compact).order(:created_at)
   end
 end

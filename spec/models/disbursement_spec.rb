@@ -455,15 +455,17 @@ RSpec.describe Disbursement, type: :model do
     describe "#all_comments" do
       let(:user) { create(:user) }
 
-      it "includes comments from the disbursement and both sides" do
+      it "includes comments from the disbursement and both sides, on their HCB codes or ledger items" do
         outgoing_hcb_code = disbursement.outgoing_disbursement.local_hcb_code
         incoming_hcb_code = disbursement.incoming_disbursement.local_hcb_code
+        outgoing_hcb_code.update!(ledger_item: create(:ledger_item))
 
         disbursement_comment = create(:comment, commentable: disbursement, user:)
         outgoing_comment = create(:comment, commentable: outgoing_hcb_code, user:)
+        outgoing_item_comment = create(:comment, commentable: outgoing_hcb_code.ledger_item, user:)
         incoming_comment = create(:comment, commentable: incoming_hcb_code, user:)
 
-        expect(disbursement.all_comments).to contain_exactly(disbursement_comment, outgoing_comment, incoming_comment)
+        expect(disbursement.all_comments).to contain_exactly(disbursement_comment, outgoing_comment, outgoing_item_comment, incoming_comment)
       end
     end
 

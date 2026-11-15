@@ -125,7 +125,7 @@
 
 <h4 class="mb2">Comments</h4>
 
-<% @hcb_code.comments.each do | comment | %>
+<% @hcb_code.all_comments.each do | comment | %>
   <p class="mb1">
     <b>
       <%= comment.user.name %> <%= comment.action_text %> <%= time_ago_in_words comment.created_at %> ago
