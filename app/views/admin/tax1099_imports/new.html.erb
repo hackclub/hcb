@@ -95,6 +95,8 @@
                     <option value="<%= status %>"><%= status.humanize %></option>
                   <% end %>
                 </select>
+              <% when :tin_verified %>
+                <input type="checkbox" data-field="tin_verified" value="1">
               <% when :ftin_not_legally_required %>
                 <input type="checkbox" data-field="ftin_not_legally_required" value="1">
               <% when :country %>

@@ -626,6 +626,7 @@ RSpec.describe Tax1099ImportService do
 
       expect(result.form.taxbandits_tin_matching_status).to be_nil
       expect(result.form).to be_tin_verified
+      expect(result.form.taxbandits_tin_matching_status).to be_nil
       expect(result.legal_entity.reload.pending_payable_requirements).not_to include(:form_verified)
     end
 
@@ -637,6 +638,25 @@ RSpec.describe Tax1099ImportService do
       result.form.sync_with_taxbandits
 
       expect(result.legal_entity.reload.pending_payable_requirements).not_to include(:form_verified)
+    end
+
+    it "isn't counted when the admin unchecks it" do
+      result = run(data: person_data.merge(tin_verified: ""))
+
+      expect(result.form).not_to be_tin_verified
+      expect(result.legal_entity.reload.pending_payable_requirements).to include(:form_verified)
+    end
+
+    it "is counted when checked" do
+      expect(run(data: person_data.merge(tin_verified: "1")).form).to be_tin_verified
+    end
+
+    it "is always counted on a W-8, which never needs verifying" do
+      expect(run(data: w8ben_data.merge(tin_verified: "")).form).to be_tin_verified
+    end
+
+    it "sends none of the TIN-match emails" do
+      expect { run }.not_to have_enqueued_mail(Tax::FormMailer, :verified)
     end
 
     it "still needs a TIN match for a form collected through TaxBandits" do

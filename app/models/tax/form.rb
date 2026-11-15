@@ -25,6 +25,7 @@
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
 #  tin_type                       :string
+#  tin_verified                   :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
@@ -92,6 +93,15 @@ module Tax
       mark_completed! if may_mark_completed?
     end
 
+    # tin_verified is what payability reads (LegalEntity#pending_payable_requirements).
+    # For a form collected through TaxBandits it follows TaxBandits' TIN match.
+    # Tax1099 imports are never TIN-matched, so their status never changes:
+    # Tax1099ImportService sets tin_verified from the admin's answer when it
+    # creates them, without going through the match-status emails below.
+    before_save if: :will_save_change_to_taxbandits_tin_matching_status? do
+      self.tin_verified = taxbandits_tin_match_success?
+    end
+
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
       Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
 
@@ -149,16 +159,6 @@ module Tax
       end
 
       mark_sent!
-    end
-
-    # Whether the TIN on this form counts as verified for payability. Forms
-    # imported from Tax1099 are taken as verified: they were collected and
-    # checked there, and they're submitted to TaxBandits without TIN matching,
-    # so a match result will never arrive. Decided here rather than by writing
-    # a match status, which a later TaxBandits sync would overwrite (and whose
-    # change sends the payee a "verified" email).
-    def tin_verified?
-      tax1099? || taxbandits_tin_match_success?
     end
 
     # Gives the legal entity this form's TIN identity, if it has none yet. Runs

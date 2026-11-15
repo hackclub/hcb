@@ -141,6 +141,11 @@ class Tax1099ImportService
     # not legally required"; see #validate_w8_tin!.
     { key: :tin, label: "TIN (EIN/SSN/FTIN)", required: [W9] },
     { key: :tin_type, label: "TIN Type", required: [W9] },
+    {
+      key: :tin_verified, label: "TIN verified", required: false, only_for: [W9],
+      hint: "Leave checked if the TIN was verified in Tax1099. Unchecked, a payee whose payments need a verified " \
+            "TIN can't be paid on this form; they'd need to file a new one through HCB."
+    },
     { key: :ftin_not_legally_required, label: "FTIN not legally required (box ticked on the form)", required: false, only_for: W8_FORM_TYPES },
     { key: :federal_tax_classification, label: "Federal Tax Classification", required: [W9], only_for: [W9] },
     {
@@ -460,6 +465,15 @@ class Tax1099ImportService
     form_type == W9 ? us_state : @data[:state].presence
   end
 
+  # Checked by default on the page; a row with no answer at all (an older page)
+  # counts as checked. Only a W-9's can be unchecked: nothing requires a W-8's
+  # TIN to be verified.
+  def tin_verified?
+    return true unless form_type == W9 && @data.key?(:tin_verified)
+
+    ActiveModel::Type::Boolean.new.cast(@data[:tin_verified]) || false
+  end
+
   def foreign_tin?
     tin? && @data[:tin_type] == "FTIN"
   end
@@ -626,6 +640,10 @@ class Tax1099ImportService
         address_country: country,
         aasm_state: "sent",
         sent_at: Time.current,
+        # From the admin's checkbox, not a TIN-match status: TaxBandits never
+        # TIN-matches these (IsTinMatching is false), and setting it this way
+        # sends none of the match emails.
+        tin_verified: tin_verified?,
         # When the payee completed the paper form, which stays true whether or
         # not TaxBandits has accepted it yet.
         completed_at: completed_on.in_time_zone

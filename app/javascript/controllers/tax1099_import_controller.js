@@ -515,6 +515,8 @@ export default class extends Controller {
           : '',
       // Not in either export; always picked from the signed W-8BEN-E.
       ch3_status: '',
+      // Imports are taken as verified unless the admin unchecks it.
+      tin_verified: '1',
       // Never assumed from a blank TIN; ticked by the admin from the signed W-8.
       ftin_not_legally_required: '',
       // An individual usually signs their own W-8BEN; a W-8BEN-E's signer isn't

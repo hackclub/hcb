@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2737,6 +2737,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_120000) do
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
     t.string "tin_type"
+    t.boolean "tin_verified", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
     t.index ["tin_hash"], name: "index_tax_forms_on_tin_hash"
