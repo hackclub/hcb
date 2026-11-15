@@ -336,7 +336,7 @@ RSpec.describe Tax1099ImportService do
   end
 
   describe "a W-8's country" do
-    it "is stored, sent, and used for the TIN's namespace as its 2-letter code when given as a name" do
+    it "is stored, sent, and used for the TIN's namespace as its code when given as a name" do
       result = run(data: w8ben_data.merge(country: "INDIA"))
 
       expect(result.form.address_country).to eq("IN")
@@ -345,6 +345,41 @@ RSpec.describe Tax1099ImportService do
       )
       expect(TaxbanditsService).to have_received(:create_from_data)
         .with(hash_including("FormW8Ben" => hash_including("CitizenOfCountry" => "IN")))
+    end
+
+    # TaxBandits takes and returns IRS (GEC) codes, and many ISO codes are a
+    # different country's IRS code: GB is Gabon, AU Austria, CH China.
+    it "is stored, sent, and used for the TIN's namespace as its IRS code where that differs from its ISO code" do
+      { "UNITED KINGDOM" => "UK", "GB" => "UK", "Australia" => "AS", "CH" => "SZ", "Germany" => "GM", "JP" => "JA" }.each do |given, irs_code|
+        result = run(data: w8ben_data.merge(country: given, email: "payee-#{given.parameterize}@example.com", tin: "TIN-#{given}"))
+
+        expect(result.form.address_country).to eq(irs_code), "#{given.inspect} should be #{irs_code}"
+        expect(result.form.tin_hash).to eq(
+          Tax::IdentificationNumber::Hasher.hash_tin("TIN-#{given}", tin_type: :foreign, country: irs_code)
+        )
+        expect(TaxbanditsService).to have_received(:create_from_data).with(
+          hash_including("FormW8Ben" => hash_including(
+            "ForeignTIN" => "TIN-#{given}", "CitizenOfCountry" => irs_code,
+            "PermanentAddress" => hash_including("Country" => irs_code)
+          ))
+        )
+      end
+    end
+
+    it "is sent to TaxBandits as its IRS code as a W-8BEN-E's country of organization" do
+      run(data: w8bene_data.merge(country: "GB"))
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including("FormW8BENE" => hash_including(
+          "Part1" => hash_including("CountryOfOrganization" => "UK", "MailAdd" => hash_including("Country" => "UK"))
+        ))
+      )
+    end
+
+    it "refuses a country with no IRS code, before contacting TaxBandits" do
+      expect { run(data: w8ben_data.merge(country: "AX")) }
+        .to raise_error(described_class::ValidationError, /no IRS country code/)
+      expect(TaxbanditsService).not_to have_received(:create_from_data)
     end
 
     it "matches the all-caps and alternate names Tax1099 exports use" do

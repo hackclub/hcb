@@ -410,8 +410,10 @@ class Tax1099ImportService
       raise ValidationError, "chapter 3 status must be one of: #{CH3_STATUSES.join(", ")}"
     end
 
-    if W8_FORM_TYPES.include?(form_type) && country.nil?
-      raise ValidationError, "country must be a country, as its 2-letter code (e.g. IN) or its name"
+    if W8_FORM_TYPES.include?(form_type)
+      iso_code = self.class.country_code(@data[:country])
+      raise ValidationError, "country must be a country, as its 2-letter code (e.g. IN) or its name" if iso_code.nil?
+      raise ValidationError, "country #{iso_code} has no IRS country code, so TaxBandits can't take it" if country.nil?
     end
 
     raise ValidationError, "a signed form PDF is required" if @pdf.blank?
@@ -430,9 +432,17 @@ class Tax1099ImportService
 
   # A W-9 payee is always in the US. For a W-8 it's the country of residence
   # (or organization), which is also the country that issued its foreign TIN.
-  # As its 2-letter code; nil for a W-8 country that isn't one (see #validate!).
+  #
+  # As its IRS (GEC) country code, not its ISO code: that's what TaxBandits
+  # takes, returns, and so what Tax::Form#identify_tin namespaces a foreign TIN
+  # by. The two differ for many countries, often with an ISO code that is a
+  # different country's IRS code (GB is Gabon, AU Austria, CH China). nil for a
+  # W-8 country that isn't one, or has no IRS code (see #validate!).
   def country
-    form_type == W9 ? "US" : self.class.country_code(@data[:country])
+    return "US" if form_type == W9
+
+    iso_code = self.class.country_code(@data[:country])
+    ISO3166::Country[iso_code]&.gec if iso_code
   end
 
   # A W-8 either gives a foreign TIN or says, with the box on the form, that the
