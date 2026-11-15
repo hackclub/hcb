@@ -368,7 +368,11 @@ module Reimbursement
     end
 
     def reviewer_selectable?
-      !event.reviewer_selection_disabled?
+      card_grant.blank? && !event.reviewer_selection_disabled?
+    end
+
+    def reviewer_assignable_by_creator?
+      card_grant.present? && !event.reviewer_selection_disabled?
     end
 
     def assigned_reviewer_required?
@@ -389,8 +393,12 @@ module Reimbursement
       expenses.complete.with_receipt.count != expenses.count
     end
 
+    def expenses_missing_category
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil)
+    end
+
     def missing_categories?
-      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil).exists?
+      expenses_missing_category.exists?
     end
 
     def mismatched_currency?

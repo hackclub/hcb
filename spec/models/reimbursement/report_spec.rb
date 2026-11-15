@@ -213,4 +213,24 @@ RSpec.describe Reimbursement::Report, type: :model do
       }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
     end
   end
+
+  describe "#expenses_missing_category" do
+    it "returns non-fee expenses without a category" do
+      report = create(:reimbursement_report)
+      uncategorized = create(:reimbursement_expense, report:, category: nil)
+      create(:reimbursement_expense, report:, category: "Software")
+
+      expect(report.expenses_missing_category).to contain_exactly(uncategorized)
+      expect(report.missing_categories?).to be(true)
+      expect(uncategorized.missing_category?).to be(true)
+    end
+
+    it "is empty when every expense has a category" do
+      report = create(:reimbursement_report)
+      create(:reimbursement_expense, report:, category: "Travel")
+
+      expect(report.expenses_missing_category).to be_empty
+      expect(report.missing_categories?).to be(false)
+    end
+  end
 end

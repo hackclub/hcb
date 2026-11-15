@@ -105,6 +105,12 @@ class CommentsController < ApplicationController
 
     klass = COMMENTABLE_TYPE_MAP[resource.singularize.classify]
     @commentable = klass.find(id)
+
+    # On a transfer between two organizations, the form can share the comment
+    # with the other side, which puts it on the transfer itself.
+    if params.dig(:comment, :comment_target) == "shared" && @commentable.shared_commentable?
+      @commentable = @commentable.shared_commentable
+    end
   end
 
   def set_comment
