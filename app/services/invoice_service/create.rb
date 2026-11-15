@@ -105,7 +105,7 @@ module InvoiceService
         item_description: @item_description,
         item_amount: clean_item_amount,
         sponsor:,
-        statement_descriptor: StripeService::StatementDescriptor.format(event.short_name, as: :full),
+        statement_descriptor: event.statement_descriptor,
         creator: @current_user
       }
     end
