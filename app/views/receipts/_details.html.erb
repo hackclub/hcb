@@ -19,6 +19,19 @@
     <strong style="font-weight: 600;">Size</strong>
     <%= number_to_human_size receipt.file.blob.byte_size %>
   </div>
+
+  <% if receipt.auto_rotated? %>
+    <div style="grid-template-columns: 7rem auto;">
+      <strong style="font-weight: 600;">Rotated</strong>
+      <span>
+        Automatically.
+        <%= link_to "View original", rails_blob_path(receipt.original_file, only_path: true, disposition: "inline"), target: "_blank" %>
+        <% if policy(receipt).restore_original? %>
+          <%= button_to "Undo rotation", restore_original_receipt_path(receipt), class: "p0 bg-transparent border-none cursor-pointer primary underline", form_class: "inline" %>
+        <% end %>
+      </span>
+    </div>
+  <% end %>
 </section>
 
 <% if receipt.textual_content.present? %>

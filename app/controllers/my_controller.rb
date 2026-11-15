@@ -156,7 +156,7 @@ class MyController < ApplicationController
     end
 
     @mailbox_address = current_user.active_mailbox_address
-    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
+    @receipts = Receipt.in_receipt_bin.with_attached_file.with_attached_original_file.where(user: current_user)
     @pairings = current_user.receipt_bin.suggested_receipt_pairings
 
     if flash[:popover]

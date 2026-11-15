@@ -5,6 +5,37 @@ require "rails_helper"
 RSpec.describe ReceiptsController do
   include SessionSupport
 
+  describe "#restore_original" do
+    render_views
+
+    let(:user) { create(:user) }
+    let(:receipt) do
+      turned = ImageProcessing::MiniMagick.source(file_fixture("rotation_receipt.png").to_s).rotate(90).call
+      Receipt.create!(user:, upload_method: :api, file: { io: turned, filename: "receipt.png", content_type: "image/png" })
+    end
+
+    it "shows that a receipt was rotated, and puts the upload back when asked" do
+      create_session(user, verified: true)
+      details = -> { controller.render_to_string(partial: "receipts/details", locals: { receipt: receipt.reload }) }
+      get(:link_modal) # gives the controller a request to render the partial in
+      expect(details.call).to include("Undo rotation", "View original")
+
+      post(:restore_original, params: { id: receipt.id })
+
+      expect(receipt.reload.file.blob).to eq(receipt.original_file.blob)
+      expect(details.call).not_to include("Undo rotation")
+    end
+
+    it "doesn't let someone else undo it" do
+      create_session(create(:user), verified: true)
+      rotated = receipt.file.blob
+
+      post(:restore_original, params: { id: receipt.id })
+
+      expect(receipt.reload.file.blob).to eq(rotated)
+    end
+  end
+
   describe "#create" do
     render_views
 

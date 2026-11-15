@@ -274,6 +274,10 @@ class Receipt < ApplicationRecord
     false
   end
 
+  def auto_rotated?
+    original_file.attached? && original_file.blob_id != file.blob_id # equal again after an undo
+  end
+
   # Undoes auto_rotate!. original_file stays attached so we don't rotate it again.
   def restore_original_file!
     update!(file: original_file.blob) if original_file.attached?
