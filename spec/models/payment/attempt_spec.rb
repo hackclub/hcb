@@ -123,6 +123,8 @@ RSpec.describe Payment::Attempt, type: :model do
       end
 
       context "when a Wise transfer cost more than the payment amount" do
+        subject(:attempt) { build(:payment_attempt, :wise) }
+
         let(:payout) { WiseTransfer.new }
         let(:ledger_amount_cents) { -(attempt.payment.amount_cents + 5_00) }
 
