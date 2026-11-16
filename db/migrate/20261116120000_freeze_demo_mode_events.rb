@@ -14,8 +14,7 @@ class FreezeDemoModeEvents < ActiveRecord::Migration[8.1]
   end
 
   def down
-    # Previously frozen organizations cannot be distinguished safely.
-    raise ActiveRecord::IrreversibleMigration
+    # Previously frozen organizations cannot be distinguished, so nothing is safe to undo.
   end
 
 end
