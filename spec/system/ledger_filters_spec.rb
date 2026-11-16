@@ -19,8 +19,8 @@ RSpec.describe "Ledger filters", type: :system do
     item.update_columns(ct_count: 1, **columns)
   end
 
-  def open_filter(tab)
-    find("button[aria-label='Add filter']").click
+  def open_filter(tab, ledger = page)
+    ledger.find("button[aria-label='Add filter']").click
     click_on tab
   end
 
@@ -55,6 +55,39 @@ RSpec.describe "Ledger filters", type: :system do
     expect(page).to have_text("More than $19.99")
     expect(page).to have_text("Exactly the minimum")
     expect(page).to have_no_text("A cent under")
+  end
+
+  context "on the card grants page" do
+    let(:event) { create(:event, plan_type: Event::Plan::HackClubAffiliate) }
+
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      create(:card_grant, event:, purpose: "Travel")
+      Flipper.enable_actor(:new_ledger_everywhere_2026_07_13, user)
+    end
+
+    # Each step waits for the frame to update before checking the page never left.
+    it "filters the card grant ledger without leaving the page" do
+      overview = event_card_grant_overview_path(event)
+      visit overview
+      ledger = find("turbo-frame#card_grant_transaction_overview")
+
+      open_filter "Receipts", ledger
+      click_on "Missing receipts"
+      expect(ledger).to have_css(".filter-menu__chips", text: "Missing receipts")
+      expect(page).to have_current_path(overview)
+
+      open_filter "Amount", ledger
+      find("[data-ledger-query-target='minimum']").set("5")
+      click_on "Filter transactions"
+      expect(ledger).to have_css(".filter-menu__chips", text: "More than $5.00")
+      expect(ledger).to have_css(".filter-menu__chips", text: "Missing receipts")
+      expect(page).to have_current_path(overview)
+
+      ledger.find("a[aria-label='Clear filters']").click
+      expect(ledger).to have_no_css(".filter-menu__chips")
+      expect(page).to have_current_path(overview)
+    end
   end
 
   it "drops a range whose fields are cleared, leaving the other filters alone" do

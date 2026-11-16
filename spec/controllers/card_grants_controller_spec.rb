@@ -422,6 +422,23 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:bad_request)
       expect(response.body).to start_with("Invalid query")
     end
+
+    # It renders as a frame on the card grants page, so linking to the
+    # organization's ledger would swap the organization's items into it.
+    it "keeps every filter link on the card grant ledger" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+      Flipper.enable_actor(:new_ledger_everywhere_2026_07_13, user)
+
+      get(:transaction_index, params: { event_id: event.friendly_id, query: { amount_cents: { "$lt" => 0 } }.to_json })
+
+      page = response.parsed_body
+      paths = page.css(".filter-menu a[href]").map { |link| URI(link["href"]).path }.uniq
+      expect(paths).to eq([event_card_grant_transaction_overview_path(event)])
+      expect(page.at_css("[aria-label='Add filter']").parent["data-menu-append-to-value"]).to eq("turbo-frame#card_grant_transaction_overview")
+    end
   end
 
   describe "#new" do

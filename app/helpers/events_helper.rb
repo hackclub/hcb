@@ -462,8 +462,9 @@ module EventsHelper
     end
   end
 
-  def ledger_filter_path(event, filters)
-    event_ledger_path(event, upsert_query_params(query: filters.presence&.to_json, page: 1))
+  # The ledger page being viewed, narrowed to `filters`.
+  def ledger_filter_path(filters)
+    url_for(upsert_query_params(query: filters.presence&.to_json, page: 1))
   end
 
   private

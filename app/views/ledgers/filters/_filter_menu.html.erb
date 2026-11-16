@@ -1,9 +1,10 @@
 <%# locals: () %>
 
-<% ledger_turbo_frame_id = "#{dom_id(@event)}_ledger" %>
+<%# The card grant ledger is a frame on the card grants page; the menu lives inside it so its links navigate that frame. %>
+<% menu_frame = "turbo-frame#card_grant_transaction_overview" if @use_card_grant_ledgers %>
 <% tags = @event.tags.order(label: :asc) %>
 
-<div data-controller="menu" data-menu-append-to-value="turbo-frame#<%= ledger_turbo_frame_id %>" data-menu-placement-value="bottom-start" class="-mb-1">
+<div data-controller="menu" data-menu-append-to-value="<%= menu_frame %>" data-menu-placement-value="bottom-start" class="-mb-1">
   <button
     type="button"
     aria-label="Add filter"
@@ -33,7 +34,7 @@
           <div data-tabs-target="tab" id="tags">
             <% tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
-                <%= link_to(ledger_filter_path(@event, @ledger_filters.merge("tag" => tag.id)), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(ledger_filter_path(@ledger_filters.merge("tag" => tag.id)), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
                   <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                   <%= tag.label %>
                 <% end %>
@@ -44,7 +45,7 @@
         <div data-tabs-target="tab" id="user">
           <% @users.each do |user| %>
             <div class="flex items-center">
-              <%= link_to(ledger_filter_path(@event, @ledger_filters.merge("author" => user.slug)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user == user}", data: { turbo_prefetch: "false" }) do %>
+              <%= link_to(ledger_filter_path(@ledger_filters.merge("author" => user.slug)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user == user}", data: { turbo_prefetch: "false" }) do %>
                 <div class="avatar-grow line-height-0 mr1">
                   <%= avatar_for user, size: 18 %>
                 </div>
@@ -57,7 +58,7 @@
           <div data-tabs-target="tab" id="type">
             <% SetLedgerFilters::TYPE_PREDICATES.sort.each do |type, predicate| %>
               <div class="flex items-center">
-                <%= link_to(ledger_filter_path(@event, @ledger_filters.merge("linked_object_type" => predicate)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(ledger_filter_path(@ledger_filters.merge("linked_object_type" => predicate)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
                   <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
                 <% end %>
               </div>
@@ -113,13 +114,13 @@
               </div>
               <% SetLedgerFilters::DIRECTION_PREDICATES.each do |direction, predicate| %>
                 <div class="flex items-center">
-                  <%= link_to(ledger_filter_path(@event, @ledger_filters.merge("amount_cents" => predicate)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                  <%= link_to(ledger_filter_path(@ledger_filters.merge("amount_cents" => predicate)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
                     <%= direction.humanize %>
                   <% end %>
                 </div>
               <% end %>
               <div class="flex items-center">
-                <%= link_to(ledger_filter_path(@event, @ledger_filters.except("amount_cents")), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(ledger_filter_path(@ledger_filters.except("amount_cents")), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
                 Both
                 <% end %>
               </div>
@@ -129,7 +130,7 @@
         <div data-tabs-target="tab" id="category">
           <% TransactionCategory.order(slug: :asc).each do |category| %>
             <div class="flex items-center">
-              <%= link_to(category.definition.label, ledger_filter_path(@event, @ledger_filters.merge("category" => category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
+              <%= link_to(category.definition.label, ledger_filter_path(@ledger_filters.merge("category" => category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
             </div>
           <% end %>
         </div>
@@ -138,10 +139,10 @@
         </div>
         <div data-tabs-target="tab" id="receipts">
           <div class="flex items-center">
-            <%= link_to("Missing receipts", ledger_filter_path(@event, @ledger_filters.merge(SetLedgerFilters::MISSING_RECEIPTS)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("Missing receipts", ledger_filter_path(@ledger_filters.merge(SetLedgerFilters::MISSING_RECEIPTS)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
           <div>
-            <%= link_to("All transactions", ledger_filter_path(@event, @ledger_filters.except(*SetLedgerFilters::MISSING_RECEIPTS.keys)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("All transactions", ledger_filter_path(@ledger_filters.except(*SetLedgerFilters::MISSING_RECEIPTS.keys)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
         </div>
       </div>
