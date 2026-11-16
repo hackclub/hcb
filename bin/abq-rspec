@@ -7,8 +7,8 @@ export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
 export REDIS_URL=redis://localhost:6379/$n
 export TEST_ENV_NUMBER=${RETRY:+retry}$n
 
-if docker exec postgres createdb -U postgres "bank_test$n" 2> /dev/null; then
-  docker exec -i postgres psql -U postgres -d "bank_test$n" -v ON_ERROR_STOP=1 -q < tmp/schema.sql > /dev/null
+if ! docker exec postgres psql -U postgres -Atc "select 1 from pg_database where datname = 'bank_test$n'" | grep -q 1; then
+  docker exec postgres createdb -U postgres -T bank_test "bank_test$n"
 fi
 
 exec bundle exec rspec --tag '~skip' "$@"

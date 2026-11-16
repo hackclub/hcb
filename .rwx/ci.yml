@@ -51,17 +51,13 @@ aliases:
     - Gemfile.lock
     - .ruby-version
 
-  restore-schema: &restore-schema |
-    docker exec postgres createdb -U postgres bank_test
-    docker exec -i postgres psql -U postgres -d bank_test -v ON_ERROR_STOP=1 -q < tmp/schema.sql > /dev/null
-
   postgres: &postgres
     key: postgres
     terminate-grace-period-seconds: 0
     run: |
       exec docker run --rm --name postgres --network host \
         -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
-        --tmpfs /var/lib/postgresql/data \
+        -v pgdata:/var/lib/postgresql/data \
         postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
     ready-check: docker exec postgres pg_isready -h localhost -U postgres
 
@@ -220,21 +216,24 @@ tasks:
 
   - key: db-schema
     use: [setup.bundle-install, setup.docker-images]
-    docker: true
+    docker: preserve-data
     runner:
       tmpfs: true
     filter: *rails-app
-    background-processes:
-      - *postgres
     run: |
+      docker volume create pgdata
+      docker run --detach --name postgres --network host \
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+        -v pgdata:/var/lib/postgresql/data \
+        postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+      until docker exec postgres pg_isready -h localhost -U postgres; do sleep 0.5; done
       bundle exec rails db:create db:schema:load
-      mkdir -p tmp
-      docker exec postgres pg_dump -U postgres --no-owner --no-privileges --no-comments bank_test > tmp/schema.sql
+      docker rm --force postgres
     env: *rails-test-env
     outputs:
       filesystem:
         filter:
-          workspace: [tmp/schema.sql]
+          workspace: []
           system: []
 
   - key: annotate
@@ -245,12 +244,9 @@ tasks:
     filter:
       - *rails-app
       - .annotaterb.yml
-      - tmp/schema.sql
     background-processes:
       - *postgres
-    run:
-      - *restore-schema
-      - bundle exec annotaterb models --frozen
+    run: bundle exec annotaterb models --frozen
     env: *rails-test-env
     outputs:
       filesystem: false
@@ -268,7 +264,6 @@ tasks:
       - storage
       - .rspec
       - .simplecov
-      - tmp/schema.sql
     background-processes:
       - *postgres
       - *redis
@@ -309,26 +304,23 @@ tasks:
       tmpfs: true
     filter:
       - *rails-app
-      - tmp/schema.sql
     if: ${{ init.pull-request && tasks.new-migrations.values.versions != 'none' }}
     background-processes:
       - *postgres
-    run:
-      - *restore-schema
-      - |
-        echo "Applying all migrations to get to latest state..."
-        bundle exec rails db:migrate
+    run: |
+      echo "Applying all migrations to get to latest state..."
+      bundle exec rails db:migrate
 
-        OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
-        ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
-        ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
+      OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+      ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+      ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
 
-        echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
-        bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
+      echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
+      bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
 
-        echo "Re-applying all migrations..."
-        bundle exec rails db:migrate
-        echo "All migrations are reversible!"
+      echo "Re-applying all migrations..."
+      bundle exec rails db:migrate
+      echo "All migrations are reversible!"
     env:
       <<: *rails-test-env
       VERSIONS: ${{ tasks.new-migrations.values.versions }}
