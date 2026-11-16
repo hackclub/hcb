@@ -1,8 +1,13 @@
+<%# The new ledger's menu wraps this frame in a form that adds the chosen merchant to its filters. %>
 <%= turbo_frame_tag :merchants_filter do %>
   <% @merchants.each do |merchant| %>
-    <% merchant_path = params[:ledger] ? event_ledger_path(@event, query: { merchant: merchant[:id] }.to_json) : event_transactions_list_path(@event, request.query_parameters.merge("merchant" => merchant[:id])) %>
+    <% classes = "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id]}" %>
     <div class="flex items-center">
-      <%= link_to(merchant[:name], merchant_path, class: "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id]}", data: { turbo_prefetch: "false" }) %>
+      <% if params[:ledger] %>
+        <%= button_tag merchant[:name], name: nil, value: merchant[:id], class: classes %>
+      <% else %>
+        <%= link_to(merchant[:name], event_transactions_list_path(@event, request.query_parameters.merge("merchant" => merchant[:id])), class: classes, data: { turbo_prefetch: "false" }) %>
+      <% end %>
     </div>
   <% end %>
 <% end %>

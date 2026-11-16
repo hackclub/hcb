@@ -452,6 +452,34 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#merchants_filter" do
+    render_views
+
+    let(:event) { create(:event) }
+
+    before do
+      create_session(create(:user, :make_admin), verified: true)
+      allow_any_instance_of(Event).to receive(:merchants).and_return([{ id: "1234", name: "Corner Store" }])
+    end
+
+    # The new ledger's filter menu wraps these in a form that folds the value into its query.
+    it "offers the new ledger a merchant as a nameless button, so it never submits as a param of its own" do
+      get(:merchants_filter, params: { event_id: event.slug, ledger: true, merchant: "1234" })
+
+      button = response.parsed_body.at_css("turbo-frame#merchants_filter button")
+      expect(button.text).to eq("Corner Store")
+      expect(button["value"]).to eq("1234")
+      expect(button["name"]).to be_nil
+      expect(button["class"]).to include("menu__action--active")
+    end
+
+    it "still links the classic transactions page to its merchant param" do
+      get(:merchants_filter, params: { event_id: event.slug, merchant: "1234" })
+
+      expect(response.parsed_body.at_css("turbo-frame#merchants_filter a")["href"]).to eq(event_transactions_list_path(event, merchant: "1234"))
+    end
+  end
+
   describe "#ledger as an anonymous reader of a transparent organization" do
     let!(:event) { create(:event, is_public: true) }
 

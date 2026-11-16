@@ -57,6 +57,20 @@ RSpec.describe "Ledger filters", type: :system do
     expect(page).to have_no_text("A cent under")
   end
 
+  it "keeps the filters and search already applied when picking a merchant" do
+    allow_any_instance_of(Event).to receive(:merchants).and_return([{ id: "1234", name: "Corner Store" }])
+    visit event_ledger_path(event, query: { amount_cents: { "$lt" => 0 } }.to_json, q: "coffee")
+
+    open_filter "Merchant"
+    click_on "Corner Store"
+
+    within(".filter-menu__chips") do
+      expect(page).to have_text("Corner Store")
+      expect(page).to have_text("Expenses")
+    end
+    expect(page).to have_field(with: "coffee")
+  end
+
   context "on the card grants page" do
     let(:event) { create(:event, plan_type: Event::Plan::HackClubAffiliate) }
 

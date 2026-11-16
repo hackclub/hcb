@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Folds a ledger filter form's fields into the ledger's JSON query on submit,
-// so the ledger receives one `query` param rather than a param per field.
+// Folds a ledger filter form into the ledger's JSON query on submit, so the
+// ledger receives one `query` param rather than a param per field.
 export default class extends Controller {
   static targets = ['query', 'start', 'end', 'minimum', 'maximum']
   static values = { filters: Object }
@@ -21,6 +21,10 @@ export default class extends Controller {
     })
   }
 
+  merchant({ submitter }) {
+    this.#write({ ...this.filtersValue, merchant: submitter.value })
+  }
+
   #apply(field, bounds) {
     const filters = { ...this.filtersValue }
     const range = Object.fromEntries(
@@ -30,6 +34,10 @@ export default class extends Controller {
     if (Object.keys(range).length) filters[field] = range
     else delete filters[field]
 
+    this.#write(filters)
+  }
+
+  #write(filters) {
     this.queryTarget.value = JSON.stringify(filters)
     this.queryTarget.disabled = !Object.keys(filters).length
   }
