@@ -35,7 +35,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: check.local_hcb_code
+              receiptable: check.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
             ).run!
 
             check.send_check! if payment.previously_paid?
@@ -44,7 +44,7 @@ module PayrollService
           safely do
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,
-              payment_for: "Payment for \"#{payment.title}\".",
+              payment_for: AchTransfer.truncate_payment_for("Payment for \"#{payment.title}\"."),
               recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
@@ -64,7 +64,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: ach_transfer.local_hcb_code
+              receiptable: ach_transfer.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
             ).run!
 
             if payment.previously_paid?

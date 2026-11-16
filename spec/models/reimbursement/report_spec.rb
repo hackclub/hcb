@@ -179,6 +179,29 @@ RSpec.describe Reimbursement::Report, type: :model do
       expect(report.may_mark_submitted?).to be(true)
     end
 
+    context "when the payout method is a Wise transfer in an unsupported currency" do
+      let(:report) do
+        details = create(:wise_transfer_payout_method_details, currency: "CNY", account_type: "alipay", allow_unsupported_recipient: true)
+        user.personal_legal_entity.payout_methods.create!(default: true, details:)
+        create(:reimbursement_report, user:, currency: "CNY")
+      end
+
+      it "can't be submitted as a new report" do
+        add_expense(category: "Project Supplies")
+
+        expect(report.unsupported_payout_method?).to be(true)
+        expect(report.may_mark_submitted?).to be(false)
+      end
+
+      it "doesn't block a report that was already submitted" do
+        add_expense(category: "Project Supplies")
+        report.update_columns(aasm_state: "reimbursement_requested")
+
+        expect(report.unsupported_payout_method?).to be(false)
+        expect(report.may_mark_submitted?).to be(true)
+      end
+    end
+
     it "does not require a category on fees" do
       add_expense(category: "Project Supplies")
       report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)
@@ -231,6 +254,43 @@ RSpec.describe Reimbursement::Report, type: :model do
 
       expect(report.expenses_missing_category).to be_empty
       expect(report.missing_categories?).to be(false)
+    end
+  end
+  describe "#convert_to_wise_transfer!" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:report) do
+      user.personal_legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      create(:reimbursement_report, user:, event:, currency: "GBP", aasm_state: :reimbursement_requested)
+    end
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow(WiseTransfer).to receive(:generate_quote) { |money| Money.from_amount(money.amount * 2, "USD") }
+    end
+
+    it "copies the expenses' receipts onto the Wise transfer's ledger item" do
+      expense = report.expenses.create!(value: 12.34, memo: "Stickers", aasm_state: :approved)
+      ReceiptService::Create.new(
+        receiptable: expense,
+        uploader: user,
+        attachments: [file_fixture("receipt.png")],
+        upload_method: :receipts_page
+      ).run!
+
+      wise_transfer = report.convert_to_wise_transfer!(as: user)
+
+      expect(report.reload).to be_rejected
+      hcb_code = wise_transfer.local_hcb_code.reload
+      expect(hcb_code.ledger_item).to be_present
+      expect(hcb_code.ledger_item.receipts.count).to eq(1)
+      expect(Receipt.where(receiptable: hcb_code)).to be_empty
     end
   end
 end
