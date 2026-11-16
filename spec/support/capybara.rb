@@ -11,7 +11,14 @@ Capybara.server = :puma, { Silent: true, config_files: ["-"] }
 LOCAL_URL = /\Ahttp:\/\/127\.0\.0\.1:\d+\//
 # <emoji-picker> downloads its emoji list from jsdelivr; ASCII since Ferrum sends character count as content-length
 EMOJI_DATA = [{ annotation: "smile", emoji: ":)", group: 0, order: 1, version: 1 }].to_json
-CDN_STUBS = { /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/emoji-picker-element-data@/ => EMOJI_DATA }.freeze
+# The login code pages read device details for the session through these two (see fingerprint.js)
+UA_PARSER_JS = "window.UAParser = function () { return { getResult: () => ({ browser: { name: 'Chrome', version: '1' }, os: { name: 'Linux', version: '' } }) } }"
+FINGERPRINTJS_JS = "export const load = async () => ({ get: async () => ({ visitorId: 'test', components: { timezone: { value: 'UTC' } } }) })"
+CDN_STUBS = {
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/emoji-picker-element-data@/     => [EMOJI_DATA, "application/json"],
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/ua-parser-js\//                 => [UA_PARSER_JS, "text/javascript"],
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/@fingerprintjs\/fingerprintjs@/ => [FINGERPRINTJS_JS, "text/javascript"],
+}.freeze
 
 RSpec.configure do |config|
   # Match production so pages render the CSRF meta tags that fetch() calls read
@@ -33,12 +40,12 @@ RSpec.configure do |config|
     browser = page.driver.browser
     browser.network.intercept
     browser.on(:request) do |request|
-      stub = CDN_STUBS.find { |pattern, _| request.match?(pattern) }&.last
+      body, content_type = CDN_STUBS.find { |pattern, _| request.match?(pattern) }&.last
 
       if request.match?(LOCAL_URL)
         request.continue
-      elsif stub
-        request.respond(body: stub, responseHeaders: { "Content-Type" => "application/json" })
+      elsif body
+        request.respond(body:, responseHeaders: { "Content-Type" => content_type, "Access-Control-Allow-Origin" => "*" })
       else
         request.abort
       end

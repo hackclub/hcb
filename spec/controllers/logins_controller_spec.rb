@@ -112,34 +112,47 @@ RSpec.describe LoginsController do
   end
 
   describe "#login_code" do
-    it "sends a code to the user's email and renders the form" do
+    it "sends a code to the user's email and redirects to the page for entering it" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      # A redirect (rather than rendering the form from the POST) gives the
+      # form its own URL, so a reload lands back on it instead of the email
+      # form at /users/auth.
+      expect(response).to redirect_to(email_login_path(login))
+      expect(response).to have_http_status(:see_other)
+    end
+
+    it "renders the form for entering the email code without sending another" do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:)
 
       expect {
         get(:email, params: { id: login.hashid })
-      }.to send_email(to: user.email)
+      }.not_to send_email
 
-      expect(response).to have_http_status(:unprocessable_content)
+      expect(response).to have_http_status(:ok)
       expect(response.body).to include("Email code")
       expect(response.body).to include("We just sent a login code")
+      expect(response.body).to include("Resend code")
+      expect(response.body).to include(email_login_path(login))
     end
 
     it "resends the login code when the user requests it" do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:)
 
-      expect {
-        post(:email, params: { id: login.hashid })
-      }.to send_email(to: user.email)
+      2.times do
+        expect {
+          post(:email, params: { id: login.hashid })
+        }.to send_email(to: user.email)
 
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("Resend code")
-      expect(response.body).to include(email_login_path(login))
-
-      expect {
-        post(:email, params: { id: login.hashid })
-      }.to send_email(to: user.email)
+        expect(response).to redirect_to(email_login_path(login))
+      end
     end
 
     it "sends an SMS code if the user has opted-in and verified their phone number" do
@@ -154,11 +167,25 @@ RSpec.describe LoginsController do
       expect(verification_service).to receive(:send_verification_request).with(user.phone_number)
       expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
 
+      post(:sms, params: { id: login.hashid })
+
+      expect(response).to redirect_to(sms_login_path(login))
+      expect(response).to have_http_status(:see_other)
+    end
+
+    it "renders the form for entering the SMS code without sending another" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
       get(:sms, params: { id: login.hashid })
 
-      expect(response).to have_http_status(:unprocessable_content)
+      expect(response).to have_http_status(:ok)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+      expect(response.body).to include("Resend code")
     end
 
     it "resends the SMS code when the user requests it" do
@@ -171,12 +198,10 @@ RSpec.describe LoginsController do
       expect(TwilioVerificationService).to receive(:new).twice.and_return(verification_service)
 
       post(:sms, params: { id: login.hashid })
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("Resend code")
+      expect(response).to redirect_to(sms_login_path(login))
 
       post(:sms, params: { id: login.hashid })
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("Resend code")
+      expect(response).to redirect_to(sms_login_path(login))
     end
 
     # The UI never offers SMS for an unverified number, so this request only
@@ -188,7 +213,7 @@ RSpec.describe LoginsController do
 
       expect(TwilioVerificationService).not_to receive(:new)
 
-      get(:sms, params: { id: login.hashid })
+      post(:sms, params: { id: login.hashid })
 
       expect(flash[:error]).to eq("SMS login isn't available for this account.")
       expect(response).to redirect_to(auth_users_path)
