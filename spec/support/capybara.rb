@@ -14,8 +14,9 @@ EMOJI_DATA = [{ annotation: "smile", emoji: ":)", group: 0, order: 1, version: 1
 # The login code pages read device details for the session through these two (see fingerprint.js)
 UA_PARSER_JS = "window.UAParser = function () { return { getResult: () => ({ browser: { name: 'Chrome', version: '1' }, os: { name: 'Linux', version: '' } }) } }"
 FINGERPRINTJS_JS = "export const load = async () => ({ get: async () => ({ visitorId: 'test', components: { timezone: { value: 'UTC' } } }) })"
-CDN_STUBS = {
+EXTERNAL_STUBS = {
   /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/emoji-picker-element-data@/     => [EMOJI_DATA, "application/json"],
+  /\Ahttps:\/\/blog\.hcb\.hackclub\.com\/api\/unreads/                  => [{ count: 0 }.to_json, "application/json"], # sidebar changelog badge
   /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/ua-parser-js\//                 => [UA_PARSER_JS, "text/javascript"],
   /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/@fingerprintjs\/fingerprintjs@/ => [FINGERPRINTJS_JS, "text/javascript"],
 }.freeze
@@ -36,21 +37,32 @@ RSpec.configure do |config|
       js_errors: true, # fail the spec on any uncaught JS exception
     }
 
-    # Block third-party requests (Stripe, CDNs, etc.), answering the CDN assets pages need with stand-ins
+    # Block third-party requests (Stripe, CDNs, etc.), answering the ones pages need with stand-ins
     browser = page.driver.browser
+    cors_headers = { "Access-Control-Allow-Origin" => page.server.base_url, "Access-Control-Allow-Credentials" => "true" }
     browser.network.intercept
     browser.on(:request) do |request|
-      body, content_type = CDN_STUBS.find { |pattern, _| request.match?(pattern) }&.last
+      body, content_type = EXTERNAL_STUBS.find { |pattern, _| request.match?(pattern) }&.last
 
       if request.match?(LOCAL_URL)
         request.continue
       elsif body
-        request.respond(body:, responseHeaders: { "Content-Type" => content_type, "Access-Control-Allow-Origin" => "*" })
+        request.respond(body:, responseHeaders: { "Content-Type" => content_type, **cors_headers })
       else
         request.abort
       end
     end
+
+    # Stimulus catches errors thrown by controllers and only logs them, so js_errors misses them
+    @console_errors = []
+    browser.on("Runtime.consoleAPICalled") do |params|
+      @console_errors << params["args"].map { |arg| arg["value"] || arg["description"] }.join(" ") if params["type"] == "error"
+    end
   rescue Ferrum::ProcessTimeoutError => e # show Chrome's own output when it fails to launch
     raise e, "#{e.message}\nChrome output:\n#{e.output}"
+  end
+
+  config.after(:each, type: :system) do
+    expect(@console_errors).to be_empty, "Browser console errors:\n#{@console_errors.join("\n")}"
   end
 end
