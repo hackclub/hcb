@@ -85,7 +85,7 @@ class LoginsController < ApplicationController
   # changed the tracked assets) showed the email form again, with no way to
   # enter the code that had just been sent.
   def email
-    return if request.get?
+    return unless request.post?
 
     resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
@@ -109,7 +109,7 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    return if request.get?
+    return unless request.post?
 
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 

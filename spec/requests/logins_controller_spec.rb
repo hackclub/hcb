@@ -57,5 +57,18 @@ RSpec.describe "LoginsController", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Enter your login code")
     end
+
+    # HEAD is routed like GET, so it must render, never send a code (only POSTs
+    # count towards the rack-attack throttle on sending codes)
+    it "sends no code for a HEAD request to the code form" do
+      user = create(:user)
+      post "/logins", params: { email: user.email, login: { return_to: "/" } }
+      login = Login.last
+
+      expect {
+        head email_login_path(login)
+      }.not_to send_email
+      expect(response).to have_http_status(:ok)
+    end
   end
 end
