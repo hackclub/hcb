@@ -2,9 +2,9 @@
 
 require "rails_helper"
 
-# Receipts are moving from HCB codes onto their ledger items
-# (https://github.com/hackclub/hcb/issues/14106). Until the backfill has run a
-# transaction's receipts can sit on either record, so both sides read both.
+# A transaction's receipts live on its ledger item
+# (https://github.com/hackclub/hcb/issues/14106); the HCB code reads them
+# through the item.
 RSpec.describe Receiptable do
   def attach_receipt_to(receiptable, **attributes)
     receipt = Receipt.new(receiptable:, upload_method: :api, **attributes)
@@ -14,6 +14,14 @@ RSpec.describe Receiptable do
     )
     receipt.save!
     receipt
+  end
+
+  # A receipt row still pointing at the HCB code, the way the ones the backfill
+  # skips (codes with no ledger item) do.
+  def leave_receipt_on(hcb_code)
+    attach_receipt_to(hcb_code.ledger_item).tap do |receipt|
+      receipt.update_columns(receiptable_type: "HcbCode", receiptable_id: hcb_code.id)
+    end
   end
 
   def count_queries
@@ -32,24 +40,11 @@ RSpec.describe Receiptable do
   let(:ledger_item) { hcb_code.ledger_item }
 
   describe "#receipts" do
-    it "reads a receipt attached to the ledger item from the HCB code" do
+    it "reads the ledger item's receipts from the HCB code" do
       receipt = attach_receipt_to(ledger_item)
 
-      expect(hcb_code.receipts).to contain_exactly(receipt)
-    end
-
-    it "reads a receipt attached to the HCB code from the ledger item" do
-      receipt = attach_receipt_to(hcb_code)
-
       expect(ledger_item.receipts).to contain_exactly(receipt)
-    end
-
-    it "reads receipts split across the two sides from both" do
-      on_code = attach_receipt_to(hcb_code)
-      on_item = attach_receipt_to(ledger_item)
-
-      expect(hcb_code.receipts).to contain_exactly(on_code, on_item)
-      expect(ledger_item.receipts).to contain_exactly(on_code, on_item)
+      expect(hcb_code.receipts).to contain_exactly(receipt)
     end
 
     it "is chainable like the association it replaces" do
@@ -59,11 +54,40 @@ RSpec.describe Receiptable do
       expect(hcb_code.receipts.where(data_extracted: true)).to be_empty
     end
 
-    it "reads only the HCB code's own receipts when it has no ledger item yet" do
-      code_without_item = create(:hcb_code)
-      receipt = attach_receipt_to(code_without_item)
+    it "answers from the preloaded association without querying" do
+      attach_receipt_to(ledger_item)
 
-      expect(code_without_item.receipts).to contain_exactly(receipt)
+      loaded = HcbCode.includes(:receipts).find(hcb_code.id)
+
+      queries = count_queries do
+        expect(loaded.receipts.size).to eq(1)
+        expect(loaded).not_to be_without_receipt
+      end
+      expect(queries).to eq(0)
+    end
+
+    it "is read-only on the HCB code; receipts are attached to the ledger item" do
+      receipt = Receipt.new(upload_method: :api, user: create(:user))
+      receipt.file.attach(
+        io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
+        filename: "receipt.png", content_type: "image/png"
+      )
+
+      expect { hcb_code.receipts << receipt }.to raise_error(ActiveRecord::HasManyThroughCantAssociateThroughHasOneOrManyReflection)
+    end
+
+    it "reads nothing from an HCB code with no ledger item" do
+      code_without_item = create(:hcb_code)
+
+      expect(code_without_item.ledger_item).to be_nil
+      expect(code_without_item.receipts).to be_empty
+    end
+
+    it "no longer surfaces a receipt row left on the HCB code itself" do
+      leave_receipt_on(hcb_code)
+
+      expect(hcb_code.receipts).to be_empty
+      expect(ledger_item.receipts).to be_empty
     end
 
     it "leaves every other receiptable on its own association" do
@@ -76,53 +100,21 @@ RSpec.describe Receiptable do
   end
 
   describe "#without_receipt?" do
-    it "is false when the only receipt is on the other side" do
+    it "is false on both sides once the ledger item has a receipt" do
       attach_receipt_to(ledger_item)
 
       expect(hcb_code).not_to be_without_receipt
       expect(ledger_item.reload).not_to be_without_receipt
     end
 
-    it "is true when neither side has a receipt" do
+    it "is true on both sides when the ledger item has none" do
       expect(hcb_code).to be_without_receipt
       expect(ledger_item).to be_without_receipt
     end
   end
 
-  describe "#preloaded_receipts and #receipts_count" do
-    it "answer from the preloaded associations without querying" do
-      on_code = attach_receipt_to(hcb_code)
-      on_item = attach_receipt_to(ledger_item)
-
-      loaded = HcbCode.includes(:receipts, ledger_item: :receipts).find(hcb_code.id)
-
-      queries = count_queries do
-        expect(loaded.preloaded_receipts).to contain_exactly(on_code, on_item)
-        expect(loaded.receipts_count).to eq(2)
-        expect(loaded).not_to be_without_receipt
-      end
-      expect(queries).to eq(0)
-    end
-
-    it "fall back to a query when only one side was preloaded" do
-      attach_receipt_to(ledger_item)
-
-      loaded = HcbCode.includes(:receipts).find(hcb_code.id)
-
-      expect(loaded.preloaded_receipts).to be_nil
-      expect(loaded.receipts_count).to eq(1)
-    end
-
-    it "fall back to a query when nothing was preloaded" do
-      attach_receipt_to(hcb_code)
-
-      expect(hcb_code.preloaded_receipts).to be_nil
-      expect(hcb_code.receipts_count).to eq(1)
-    end
-  end
-
   describe "receipt scopes" do
-    it "treat a receipt on the ledger item as the HCB code's" do
+    it "treat the ledger item's receipt as the HCB code's" do
       attach_receipt_to(ledger_item)
 
       expect(HcbCode.with_receipt).to include(hcb_code)
@@ -131,20 +123,20 @@ RSpec.describe Receiptable do
       expect(HcbCode.missing_receipt).not_to include(hcb_code)
     end
 
-    it "treat a receipt on the HCB code as before" do
-      attach_receipt_to(hcb_code)
-
-      expect(HcbCode.with_receipt).to include(hcb_code)
-      expect(HcbCode.missing_receipt).not_to include(hcb_code)
-    end
-
-    it "report an HCB code with no receipt on either side as missing one" do
+    it "report an HCB code whose ledger item has no receipt as missing one" do
       expect(HcbCode.without_receipt).to include(hcb_code)
       expect(HcbCode.missing_receipt).to include(hcb_code)
       expect(HcbCode.with_receipt).not_to include(hcb_code)
     end
 
-    it "keep working for receiptables that only hold their own receipts" do
+    it "ignore a receipt row left on the HCB code itself" do
+      leave_receipt_on(hcb_code)
+
+      expect(HcbCode.with_receipt).not_to include(hcb_code)
+      expect(HcbCode.without_receipt).to include(hcb_code)
+    end
+
+    it "keep working for receiptables that hold their own receipts" do
       with_receipt = create(:reimbursement_expense)
       attach_receipt_to(with_receipt)
       without_receipt = create(:reimbursement_expense)
@@ -156,19 +148,13 @@ RSpec.describe Receiptable do
   end
 
   describe "Ledger::Item#receipt_count" do
-    it "counts a receipt attached to the item itself" do
+    it "counts a receipt attached to the item" do
       attach_receipt_to(ledger_item)
 
       expect(ledger_item.reload.receipt_count).to eq(1)
     end
 
-    it "counts a receipt attached to the HCB code" do
-      attach_receipt_to(hcb_code)
-
-      expect(ledger_item.reload.receipt_count).to eq(1)
-    end
-
-    it "drops back when a receipt attached to the item is destroyed" do
+    it "drops back when the receipt is destroyed" do
       receipt = attach_receipt_to(ledger_item)
       expect(ledger_item.reload.receipt_count).to eq(1)
 
@@ -182,13 +168,6 @@ RSpec.describe Receiptable do
     before do
       hcb_code.update!(marked_no_or_lost_receipt_at: 1.day.ago)
       ledger_item.update!(marked_no_or_lost_receipt_at: 1.day.ago)
-    end
-
-    it "is cleared on both sides by a receipt attached to the HCB code" do
-      attach_receipt_to(hcb_code)
-
-      expect(hcb_code.reload.marked_no_or_lost_receipt_at).to be_nil
-      expect(ledger_item.reload.marked_no_or_lost_receipt_at).to be_nil
     end
 
     it "is cleared on both sides by a receipt attached to the ledger item" do
@@ -212,12 +191,14 @@ RSpec.describe Receiptable do
   end
 
   describe "Receipt#hcb_code" do
-    it "is the receiptable itself for an HCB code" do
-      expect(attach_receipt_to(hcb_code).hcb_code).to eq(hcb_code)
-    end
-
     it "is the item's HCB code for a ledger item" do
       expect(attach_receipt_to(ledger_item).hcb_code).to eq(hcb_code)
+    end
+
+    it "is the receiptable itself for a receipt still on an HCB code" do
+      code_without_item = create(:hcb_code)
+
+      expect(attach_receipt_to(code_without_item).hcb_code).to eq(code_without_item)
     end
 
     it "is nil for other receiptables and in the receipt bin" do
@@ -253,17 +234,19 @@ RSpec.describe Receiptable do
       expect(HcbCode.card_locking_candidates).not_to include(charge)
     end
 
-    it "resolves the same way from the preloaded associations" do
+    it "resolves the same way from the preloaded association, without querying" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
       travel_to(2.days.ago) { attach_receipt_to(charge.ledger_item, user:) }
 
-      loaded = HcbCode.includes(:receipts, ledger_item: :receipts).find(charge.id)
+      loaded = HcbCode.includes(:receipts).find(charge.id)
 
-      expect(loaded.preloaded_receipts).to be_present
-      expect(loaded.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
+      queries = count_queries do
+        expect(loaded.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
+      end
+      expect(queries).to eq(0)
     end
 
-    it "still lists a charge with no receipt on either side as a candidate" do
+    it "still lists a charge whose ledger item has no receipt as a candidate" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
 
       expect(HcbCode.card_locking_candidates).to include(charge)
