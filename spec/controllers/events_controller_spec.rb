@@ -634,6 +634,30 @@ RSpec.describe EventsController do
         expect(report_names(response.body)).to eq(%w[Draft Submitted Rejected])
       end
 
+      it "sorts USD reports ahead of other currencies regardless of direction" do
+        # Rejected so the page's pending total doesn't request a Wise quote.
+        create_report(name: "Euro", cents: [100_000], currency: "EUR", aasm_state: "rejected")
+        create_report(name: "Small USD", cents: [100])
+        create_report(name: "Large USD", cents: [5_000])
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "amount", direction: "desc" })
+        expect(report_names(response.body)).to eq(["Large USD", "Small USD", "Euro"])
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "amount", direction: "asc" })
+        expect(report_names(response.body)).to eq(["Small USD", "Large USD", "Euro"])
+      end
+
+      it "toggles the active column's direction and resets pagination in header links" do
+        create_report(name: "A")
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "name", direction: "desc", page: 1 })
+
+        links = Nokogiri::HTML5(response.body).css("thead a.sort-button").to_h { |a| [a.text.strip, Rack::Utils.parse_query(URI(a["href"]).query)] }
+        expect(links["Report"]).to include("sort" => "name", "direction" => "asc")
+        expect(links["Created"]).to include("sort" => "created_at", "direction" => "desc")
+        expect(links.values).to all(satisfy { |query| !query.key?("page") })
+      end
+
       it "falls back to newest first for unknown sort params" do
         create_report(name: "Older", created_at: 2.days.ago)
         create_report(name: "Newer", created_at: 1.day.ago)
