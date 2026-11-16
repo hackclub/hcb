@@ -272,23 +272,19 @@ class InvoicesController < ApplicationController
     by_sponsor = params[:report] == "sponsor_totals"
     name = by_sponsor ? "invoices_sponsors" : "invoices"
 
-    headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv"
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run
+    stream_file(
+      ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run,
+      filename: "#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv",
+      type: "text/csv"
+    )
   end
 
   def stream_invoices_json(invoices)
-    headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json"
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = ::InvoiceService::Export::Json.new(invoices:).run
+    stream_file(
+      ::InvoiceService::Export::Json.new(invoices:).run,
+      filename: "#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json",
+      type: "application/json"
+    )
   end
 
   def filter_options
