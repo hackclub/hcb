@@ -11,16 +11,13 @@
 #  ignored_at     :datetime
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  hcb_code_id    :bigint
 #  ledger_item_id :bigint           not null
 #  receipt_id     :bigint           not null
 #
 # Indexes
 #
-#  index_suggested_pairings_on_hcb_code_id                    (hcb_code_id)
 #  index_suggested_pairings_on_ledger_item_id                 (ledger_item_id)
 #  index_suggested_pairings_on_receipt_id                     (receipt_id)
-#  index_suggested_pairings_on_receipt_id_and_hcb_code_id     (receipt_id,hcb_code_id) UNIQUE
 #  index_suggested_pairings_on_receipt_id_and_ledger_item_id  (receipt_id,ledger_item_id) UNIQUE
 #
 # Foreign Keys
@@ -30,11 +27,6 @@
 class SuggestedPairing < ApplicationRecord
   belongs_to :receipt
   belongs_to :ledger_item, class_name: "Ledger::Item"
-
-  # Pairings used to point at the transaction's HCB code
-  # (https://github.com/hackclub/hcb/issues/15698). Nothing writes the column
-  # any more; it's dropped once no running code expects it.
-  self.ignored_columns += ["hcb_code_id"]
 
   include AASM
 
