@@ -22,7 +22,7 @@ module ReceiptService
           {
             receipt_id: @receipt.id,
             hcb_code_id: pairing[:hcb_code].id,
-            ledger_item_id: pairing[:hcb_code].ledger_item_id,
+            ledger_item_id: pairing[:ledger_item].id,
             distance: pairing[:distance],
             aasm_state: "unreviewed"
           }
@@ -39,7 +39,7 @@ module ReceiptService
                                                            .where("distance <= ?", 20)
                                                            .order(:receipt_id, distance: :asc)
                                                            .select("DISTINCT ON (receipt_id) suggested_pairings.*")
-                                                           .select { |pairing| pairing.hcb_code.missing_receipt? }
+                                                           .select { |pairing| pairing.ledger_item.missing_receipt? }
                                                            .first
             pair.mark_accepted!
 
@@ -51,24 +51,32 @@ module ReceiptService
       end
     end
 
-    def distance(hcb_code)
+    # How far the receipt is from a card charge, from 0 (every feature the
+    # extractor read off the receipt matches) to 100. The charge's amount, date,
+    # card and merchant come from its Stripe authorization where there is one,
+    # since that's what the cardholder saw at the time, and from the ledger item
+    # otherwise.
+    def distance(ledger_item)
       return if @extracted.nil?
 
-      merchant_amount = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("merchant_amount")
+      card_charge = ledger_item.linked_object if ledger_item.linked_object_type == "CardCharge"
+      authorization = card_charge&.raw_pending_stripe_transaction&.stripe_transaction
+      merchant_amount = authorization&.[]("merchant_amount")
+      stripe_merchant = card_charge&.stripe_merchant_data || {}
 
       distances = {
         amount_cents: {
-          value: @extracted.extracted_total_amount_cents && ((merchant_amount || hcb_code.amount_cents).abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
+          value: @extracted.extracted_total_amount_cents && ((merchant_amount || ledger_item.amount_cents).abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
           weight: 200,
         },
         card_last_four: {
-          value: @extracted.extracted_card_last4 == hcb_code.card&.last4 ? 0 : 1,
+          value: @extracted.extracted_card_last4 == card_charge&.stripe_card&.last4 ? 0 : 1,
           weight: 200,
         },
         date: {
           value: begin
             if @extracted.extracted_date.present?
-              distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
+              distance = ((card_charge&.raw_pending_stripe_transaction&.created_at || ledger_item.datetime).to_date - @extracted.extracted_date.to_date).abs
 
               if distance <= 1
                 0
@@ -85,7 +93,7 @@ module ReceiptService
         },
         merchant_zip_code: {
           value: begin
-            stripe_zip = hcb_code.stripe_merchant["postal_code"]
+            stripe_zip = stripe_merchant["postal_code"]
             if stripe_zip == "00000"
               nil
               # https://mapofzipcodes.com/blog/00000-zip-code
@@ -107,7 +115,7 @@ module ReceiptService
           weight: 50,
         },
         merchant_name: {
-          value: @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_merchant["name"]&.downcase) ? 0 : 1,
+          value: @extracted.extracted_merchant_name&.downcase&.in?(stripe_merchant["name"]&.downcase) ? 0 : 1,
           weight: 50,
         }
       }
@@ -122,11 +130,19 @@ module ReceiptService
 
     private
 
+    # The candidates are the user's card charges missing a receipt, which still
+    # come as HCB codes; each is scored against its ledger item. A code without
+    # one (none in practice: card charges always have a pending transaction, so
+    # always a ledger item) can't be paired.
     def transaction_distances(include_details: false)
-      potential_hcb_codes.map do |hcb_code|
+      potential_hcb_codes.includes(:ledger_item).filter_map do |hcb_code|
+        ledger_item = hcb_code.ledger_item
+        next if ledger_item.nil?
+
         {
           hcb_code:,
-          distance: distance(hcb_code)
+          ledger_item:,
+          distance: distance(ledger_item)
         }
       end
     end

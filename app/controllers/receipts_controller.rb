@@ -80,9 +80,10 @@ class ReceiptsController < ApplicationController
       @popover = params[:popover]
     end
 
-    if @hcb_code
+    # Receipts the suggester already matched with this transaction come first.
+    if @receiptable.is_a?(Ledger::Item)
       pairings_sql = <<~SQL
-        LEFT JOIN (#{@hcb_code.suggested_pairings.to_sql}) sp
+        LEFT JOIN (#{@receiptable.suggested_pairings.to_sql}) sp
         ON sp.receipt_id = receipts.id
       SQL
       @receipts = @receipts.joins(pairings_sql).reorder("sp.distance ASC, receipts.created_at DESC")

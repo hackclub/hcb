@@ -14,11 +14,13 @@ class User
       SuggestedPairing
         .unreviewed
         .where(receipt_id: @receipts.ids - ineligible_receipt_ids)
+        .where.not(ledger_item_id: nil)
         .where("distance <= ?", 50) # With at least a certain confidence level
         # Only get the closest pairing for each receipt
         .order(:receipt_id, distance: :asc)
         .select("DISTINCT ON (receipt_id) suggested_pairings.*")
-        .select { |pairing| pairing.hcb_code.missing_receipt? }
+        .preload(:ledger_item)
+        .select { |pairing| pairing.ledger_item.missing_receipt? }
     end
 
   end
