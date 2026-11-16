@@ -612,6 +612,18 @@ RSpec.describe EventsController do
         expect(report_names(response.body)).to eq(["Amy's report", "Zed's report"])
       end
 
+      it "keeps reporters without a name last in both directions" do
+        create_report(name: "Unnamed's report", user: create(:user, full_name: nil), inviter: create(:user))
+        create_report(name: "Zed's report", user: create(:user, full_name: "Zed Zed"))
+        create_report(name: "Amy's report", user: create(:user, full_name: "Amy Amy"))
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "user_name", direction: "asc" })
+        expect(report_names(response.body)).to eq(["Amy's report", "Zed's report", "Unnamed's report"])
+
+        get(:reimbursements, params: { event_id: event.slug, sort: "user_name", direction: "desc" })
+        expect(report_names(response.body)).to eq(["Zed's report", "Amy's report", "Unnamed's report"])
+      end
+
       it "sorts by amount, treating reports with no expenses as zero" do
         create_report(name: "Empty")
         create_report(name: "Small", cents: [500])

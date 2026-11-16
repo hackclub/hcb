@@ -1435,7 +1435,9 @@ class EventsController < ApplicationController
   REIMBURSEMENT_COLUMNS = [
     { key: "aasm_state", display: "Status", order: ->(relation, direction) { relation.order_by_status(direction) } },
     { key: "name", display: "Report" },
-    { key: "user_name", display: "From", column: "users.full_name", join: :user },
+    # Invited users who haven't set a name yet have a NULL full_name; keep them
+    # at the bottom in both directions instead of Postgres' default of NULLS FIRST on DESC.
+    { key: "user_name", display: "From", join: :user, order: ->(relation, direction) { relation.order(User.arel_table[:full_name].public_send(direction).nulls_last) } },
     { key: "amount", display: "Amount", right: true, order: ->(relation, direction) { relation.order_by_amount(direction) } },
     { key: "created_at", default: true, display: "Created", right: true },
   ].freeze
