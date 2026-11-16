@@ -484,6 +484,17 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    it "does not let an admin switch an organization into demo mode" do
+      admin = create(:user, :make_admin)
+      event = create(:event, name: "Existing organization")
+      create_session(admin, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { demo_mode: true, short_name: "Updated" } })
+
+      expect(response).to redirect_to(edit_event_path(event))
+      expect(event.reload).to have_attributes(demo_mode: false, short_name: "Updated")
+    end
+
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
