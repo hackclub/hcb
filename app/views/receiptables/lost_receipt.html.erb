@@ -105,9 +105,18 @@
   <div class="transition-opacity" data-scroll-seek-target="section" data-lost-receipt-target="confirmation">
   <h3 class="mt-4 mb-2">Confirmation</h3>
   <div class="card mb-4 flex flex-col gap-3">
-    <div class="field field--checkbox !items-start mb-0">
-      <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
-      <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
+    <div class="flex flex-col sm:flex-row gap-4">
+      <div class="field field--checkbox !items-start mb-0 flex-1">
+        <%= form.check_box :confirmed, required: true, class: "mt-1 shrink-0" %>
+        <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
+      </div>
+      <div class="sm:w-[250px] shrink-0">
+        <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
+        <%# Not prefilled or autofilled: typing the name is the signature. %>
+        <%# Only a signed-in user's own name is put in the page; the emailed link is checked on the server. %>
+        <%= form.text_field :signer_name, required: true, autocomplete: "off", placeholder: current_user&.full_name, class: "!max-w-full", aria: { describedby: "signature-error" }, data: { lost_receipt_target: "signature", name: current_user&.full_name } %>
+        <p id="signature-error" class="primary text-sm mt-1 mb-0" role="alert" data-lost-receipt-target="signatureError" hidden>This doesn't match the name on your HCB account.</p>
+      </div>
     </div>
     <% if (sentence = @statement.required_acknowledgement) %>
       <div>
@@ -116,12 +125,6 @@
         <%= form.text_area :acknowledgement, required: true, rows: 3, autocomplete: "off", spellcheck: false, class: "!max-w-full", data: { lost_receipt_target: "acknowledgement", sentence: } %>
       </div>
     <% end %>
-    <div class="sm:flex items-center justify-between gap-3">
-      <%= form.label :signer_name, "Type your full name to sign", class: "bold" %>
-      <%# Not prefilled or autofilled: typing the name is the signature. %>
-      <%# Only a signed-in user's own name is put in the page; the emailed link is checked on the server. %>
-      <%= form.text_field :signer_name, required: true, autocomplete: "off", placeholder: current_user&.full_name, class: "!max-w-full sm:!max-w-[250px]", data: { lost_receipt_target: "signature", name: current_user&.full_name } %>
-    </div>
   </div>
 
   </div>

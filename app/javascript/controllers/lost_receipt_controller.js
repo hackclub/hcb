@@ -17,6 +17,7 @@ export default class extends Controller {
     'receiptDate',
     'receiptItems',
     'receiptTotal',
+    'signatureError',
     'confirmation',
   ]
   static values = { charged: Number }
@@ -97,12 +98,15 @@ export default class extends Controller {
     this.confirmationTarget.style.opacity = off === 0 ? '' : 0.4
     const signature = this.signatureTarget
     const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase()
+    const typed = normalize(signature.value)
+    const name = normalize(signature.dataset.name || '')
     signature.setCustomValidity(
-      !signature.dataset.name ||
-        normalize(signature.value) === normalize(signature.dataset.name)
+      !name || typed === name
         ? ''
         : 'Type your name as it appears on your HCB account.'
     )
+    // Stay quiet while they're still partway through typing it.
+    this.signatureErrorTarget.hidden = !name || name.startsWith(typed)
     this.addButtonTarget.disabled = this.itemTargets.length >= 50
     if (this.hasAcknowledgementTarget) {
       // Same comparison as the server: case, spacing, and punctuation don't matter.
