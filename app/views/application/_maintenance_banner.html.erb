@@ -1,8 +1,7 @@
 <%# locals: (datetime:, duration:, learn_more_url: nil, notice_duration: 1.day) %>
 <% datetime = datetime.to_datetime %>
-<% not_demo_mode = !@event&.demo_mode? %>
 
-<% if signed_in? && not_demo_mode %>
+<% if signed_in? %>
   <% if Time.now.between?(datetime - notice_duration, datetime + duration) %><%# if it hasn't already passed %>
 
     <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">

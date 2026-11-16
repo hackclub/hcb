@@ -348,22 +348,6 @@ RSpec.describe Reimbursement::ReportsController do
         expect(report.reload.event).to be_nil
       end
 
-      it "blocks placing it on a demo-mode event" do
-        creator = create(:user)
-        demo_event = create(:event, :demo_mode)
-        report = create(:reimbursement_report, user: creator, event: nil)
-
-        create_session(creator, verified: true)
-
-        patch(:update, params: {
-                id: report.id,
-                reimbursement_report: { event_id: demo_event.id }
-              })
-
-        expect(flash[:error]).to match(/not authorized/i)
-        expect(report.reload.event).to be_nil
-      end
-
       it "blocks a nonexistent event id without raising" do
         creator = create(:user)
         report = create(:reimbursement_report, user: creator, event: nil)

@@ -2,11 +2,11 @@
 
 class AnnouncementPolicy < ApplicationPolicy
   def new?
-    admin_or_manager? && !record.event.demo_mode?
+    admin_or_manager?
   end
 
   def create?
-    admin_or_manager? && !record.event.demo_mode?
+    admin_or_manager?
   end
 
   def show?
