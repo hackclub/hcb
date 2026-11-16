@@ -4,17 +4,22 @@
 #
 # Table name: tags
 #
-#  id         :bigint           not null, primary key
-#  color      :text
-#  emoji      :string           not null
-#  label      :text
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  event_id   :bigint           not null
+#  id          :bigint           not null, primary key
+#  color       :text
+#  emoji       :string           not null
+#  label       :text
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  tag_list_id :bigint           not null
 #
 # Indexes
 #
-#  index_tags_on_event_id  (event_id)
+#  index_tags_on_event_id     (event_id)
+#  index_tags_on_tag_list_id  (tag_list_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (tag_list_id => tag_lists.id)
 #
 class Tag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
@@ -25,7 +30,14 @@ class Tag < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :tag
 
-  belongs_to :event
+  # Tags belonged to an event until they moved onto tag lists
+  # (https://github.com/hackclub/hcb/issues/15708). The column is dropped in a
+  # follow-up once the migration has shipped.
+  self.ignored_columns += ["event_id"]
+
+  belongs_to :tag_list
+  # The event whose ledger owns the list; see TagList#event.
+  has_one :event, through: :tag_list
   # Legacy rows; tags now live on ledger items (see ledger_item_tags).
   # hcb_codes_tags has no foreign key, so without this a deleted tag orphans
   # them. delete_all, not destroy: HcbCodeTag's broadcast callbacks render
@@ -38,7 +50,7 @@ class Tag < ApplicationRecord
   has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", dependent: :destroy
   has_many :ledger_items, through: :ledger_item_tags, class_name: "Ledger::Item"
 
-  validates :label, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
+  validates :label, presence: true, uniqueness: { scope: :tag_list_id, case_sensitive: false }
   validate :only_one_valid_emoji
 
   COLORS = %w[muted red orange yellow green cyan blue purple].freeze

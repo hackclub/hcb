@@ -5,7 +5,7 @@
     (no ledger item, or no permission) aren't selectable at all. %>
 <% can_tag = ledger_item.present? && (local_assigns[:selectable] || local_assigns[:show_tags]) && policy(ledger_item).toggle_tag? %>
 <% selectable = local_assigns[:selectable] && can_tag %>
-<% tagged_with = (ledger_item&.tags || []).filter { |tag| !@event || tag.event == @event } %>
+<% tagged_with = (ledger_item&.tags || []).filter { |tag| !@event || tag.tag_list_id == @event.ledger.tag_list_id } %>
 <% type = Rails.cache.fetch("#{pt.hcb_code}/cached_type", expires_in: 12.hours) { pt.local_hcb_code.type } %>
 
 <tr

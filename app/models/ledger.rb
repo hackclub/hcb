@@ -10,12 +10,14 @@
 #  updated_at    :datetime         not null
 #  card_grant_id :bigint
 #  event_id      :bigint
+#  tag_list_id   :bigint
 #
 # Indexes
 #
 #  index_ledgers_on_card_grant_id   (card_grant_id)
 #  index_ledgers_on_event_id        (event_id)
 #  index_ledgers_on_id_and_primary  (id,primary) UNIQUE
+#  index_ledgers_on_tag_list_id     (tag_list_id)
 #  index_ledgers_unique_card_grant  (card_grant_id) UNIQUE WHERE (card_grant_id IS NOT NULL)
 #  index_ledgers_unique_event       (event_id) UNIQUE WHERE (event_id IS NOT NULL)
 #
@@ -23,6 +25,7 @@
 #
 #  fk_rails_...  (card_grant_id => card_grants.id)
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (tag_list_id => tag_lists.id)
 #
 # Check Constraints
 #
@@ -39,6 +42,13 @@ class Ledger < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :card_grant, optional: true
   validate :validate_owner_based_on_primary
+
+  # The tags this ledger's items can carry. Every primary ledger has a list;
+  # see assign_tag_list for which one.
+  belongs_to :tag_list, optional: true
+  has_many :tags, through: :tag_list
+  validates :tag_list, presence: true, if: :primary?
+  before_validation :assign_tag_list, on: :create
 
   has_many :mappings, class_name: "Ledger::Mapping"
   has_many :pinned_mappings, -> { pinned }, class_name: "Ledger::Mapping", inverse_of: :ledger
@@ -130,6 +140,15 @@ class Ledger < ApplicationRecord
   end
 
   private
+
+  # An event's ledger gets a list of its own. A card grant's ledger shares the
+  # list of the grant's event, so the grant's charges are tagged with the
+  # event's tags, as they were when tags belonged to the event.
+  def assign_tag_list
+    return unless primary? && tag_list.nil?
+
+    self.tag_list = card_grant ? card_grant.event&.ledger&.tag_list : TagList.new
+  end
 
   # Every total goes through Ledger::Query so they all count the same set of
   # items as the balance does.

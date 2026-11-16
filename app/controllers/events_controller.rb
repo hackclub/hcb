@@ -1662,7 +1662,7 @@ class EventsController < ApplicationController
     return if performed?
 
     if params[:tag]
-      @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
+      @tag = @event.tags.find_by(label: params[:tag])
     end
 
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]

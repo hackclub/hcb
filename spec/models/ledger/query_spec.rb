@@ -575,7 +575,7 @@ RSpec.describe Ledger::Query, type: :model do
     end
 
     context "tag" do
-      let(:tag) { Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red") }
+      let(:tag) { Tag.create!(tag_list: test_event.tag_list, label: "Travel", emoji: "✈️", color: "red") }
 
       before do
         Ledger::Item::Tag.create!(ledger_item: item_b, tag:)
@@ -586,7 +586,7 @@ RSpec.describe Ledger::Query, type: :model do
       end
 
       it "matches nothing for a tag no item carries" do
-        other_tag = Tag.create!(event: test_event, label: "Food", emoji: "🍕", color: "red")
+        other_tag = Tag.create!(tag_list: test_event.tag_list, label: "Food", emoji: "🍕", color: "red")
 
         expect(execute_query({ tag: { "$eq" => other_tag.id } })).to be_empty
       end
@@ -638,7 +638,7 @@ RSpec.describe Ledger::Query, type: :model do
     end
 
     it "narrows, rather than replaces, the rest of the query" do
-      tag = Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red")
+      tag = Tag.create!(tag_list: test_event.tag_list, label: "Travel", emoji: "✈️", color: "red")
       { item_b => Date.new(2024, 1, 2), item_g => Date.new(2024, 3, 15) }.each do |item, datetime|
         Ledger::Item::Tag.create!(ledger_item: item, tag:)
         repin(item, datetime:)

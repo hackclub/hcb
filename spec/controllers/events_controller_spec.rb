@@ -389,7 +389,7 @@ RSpec.describe EventsController do
       member = create(:user)
       event = create(:event)
       create(:organizer_position, user: member, event:, role: :member)
-      event.tags.create!(label: "Snacks", color: "muted", emoji: "🍕")
+      event.tag_list.tags.create!(label: "Snacks", color: "muted", emoji: "🍕")
       create_session(member, verified: true)
 
       get(:edit, params: { id: event.slug, tab: "tags" })

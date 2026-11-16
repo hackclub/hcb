@@ -333,8 +333,8 @@ RSpec.describe Ledger::Mapping, type: :model do
       other_event = create(:event)
       Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
 
-      stale = original_event.tags.create!(label: "Stale", emoji: "🍕", color: "red")
-      valid = other_event.tags.create!(label: "Valid", emoji: "🎉", color: "green")
+      stale = original_event.tag_list.tags.create!(label: "Stale", emoji: "🍕", color: "red")
+      valid = other_event.tag_list.tags.create!(label: "Valid", emoji: "🎉", color: "green")
       Ledger::Item::Tag.create!(ledger_item:, tag: stale)
       Ledger::Item::Tag.create!(ledger_item:, tag: valid)
 
@@ -345,7 +345,7 @@ RSpec.describe Ledger::Mapping, type: :model do
 
     it "keeps tags when re-mapped to the same ledger" do
       Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
-      tag = primary_ledger.event.tags.create!(label: "Keep", emoji: "🍕", color: "blue")
+      tag = primary_ledger.event.tag_list.tags.create!(label: "Keep", emoji: "🍕", color: "blue")
       Ledger::Item::Tag.create!(ledger_item:, tag:)
 
       Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)

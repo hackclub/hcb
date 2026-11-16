@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Ledger::ItemPolicy, type: :policy do
   let(:event) { create(:event) }
   let(:item) { create(:ledger_item) }
-  let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+  let(:tag) { event.tag_list.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
 
   describe "#show?" do
     # Stub transfer_money to avoid disbursement side effects (see ledger_spec.rb)
@@ -75,7 +75,7 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
       end
 
       it "refuses a tag from an unrelated event" do
-        other_tag = create(:event).tags.create!(label: "Other", emoji: "🎉", color: "red")
+        other_tag = create(:event).tag_list.tags.create!(label: "Other", emoji: "🎉", color: "red")
 
         expect(described_class.new(user, item).toggle_tag?(other_tag)).to be(false)
       end

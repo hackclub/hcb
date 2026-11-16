@@ -35,7 +35,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
     end
 
     describe "POST #toggle_tag" do
-      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+      let(:tag) { event.tag_list.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
 
       it "adds the tag and then removes it on a second toggle" do
         post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
@@ -48,7 +48,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       it "refuses a tag from another organization" do
         other_event = create(:event)
         create(:organizer_position, user: member_user, event: other_event, role: :member)
-        other_tag = other_event.tags.create!(label: "Other", emoji: "🎉", color: "red")
+        other_tag = other_event.tag_list.tags.create!(label: "Other", emoji: "🎉", color: "red")
 
         post :toggle_tag, params: { item_id: item.hashid, tag_id: other_tag.id }
 

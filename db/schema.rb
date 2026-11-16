@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1459,8 +1459,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.text "hcb_code", null: false
     t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
-    t.datetime "receipt_due_at"
-    t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
@@ -1691,12 +1689,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.boolean "primary", null: false
+    t.bigint "tag_list_id"
     t.datetime "updated_at", null: false
     t.index ["card_grant_id"], name: "index_ledgers_on_card_grant_id"
     t.index ["card_grant_id"], name: "index_ledgers_unique_card_grant", unique: true, where: "(card_grant_id IS NOT NULL)"
     t.index ["event_id"], name: "index_ledgers_on_event_id"
     t.index ["event_id"], name: "index_ledgers_unique_event", unique: true, where: "(event_id IS NOT NULL)"
     t.index ["id", "primary"], name: "index_ledgers_on_id_and_primary", unique: true
+    t.index ["tag_list_id"], name: "index_ledgers_on_tag_list_id"
     t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
   end
 
@@ -2702,14 +2702,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.index ["receipt_id"], name: "index_suggested_pairings_on_receipt_id"
   end
 
+  create_table "tag_lists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "tags", force: :cascade do |t|
     t.text "color"
     t.datetime "created_at", null: false
     t.string "emoji", null: false
-    t.bigint "event_id", null: false
+    t.bigint "event_id"
     t.text "label"
+    t.bigint "tag_list_id", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_tags_on_event_id"
+    t.index ["tag_list_id"], name: "index_tags_on_tag_list_id"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -3261,6 +3268,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"
+  add_foreign_key "ledgers", "tag_lists"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
@@ -3331,6 +3339,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "tags", "tag_lists"
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
