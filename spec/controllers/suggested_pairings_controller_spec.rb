@@ -13,7 +13,7 @@ RSpec.describe SuggestedPairingsController do
     receipt.file.attach(io: File.open(file_fixture("receipt.png")), filename: "receipt.png", content_type: "image/png")
     receipt.save!
     hcb_code = create(:canonical_pending_transaction, amount_cents: -10_00).local_hcb_code
-    SuggestedPairing.create!(receipt:, hcb_code:, ledger_item: hcb_code.ledger_item, distance: 1)
+    SuggestedPairing.create!(receipt:, ledger_item: hcb_code.ledger_item, distance: 1)
   end
 
   describe "#accept" do

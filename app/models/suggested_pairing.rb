@@ -11,8 +11,8 @@
 #  ignored_at     :datetime
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  hcb_code_id    :bigint           not null
-#  ledger_item_id :bigint
+#  hcb_code_id    :bigint
+#  ledger_item_id :bigint           not null
 #  receipt_id     :bigint           not null
 #
 # Indexes
@@ -29,12 +29,12 @@
 #
 class SuggestedPairing < ApplicationRecord
   belongs_to :receipt
-  # The HCB code is on its way out (https://github.com/hackclub/hcb/issues/15698):
-  # the pairing is read and accepted through its ledger item. Rows written
-  # before the ledger item was backfilled for a code without one have no
-  # ledger item, and are never suggested.
-  belongs_to :hcb_code
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item"
+
+  # Pairings used to point at the transaction's HCB code
+  # (https://github.com/hackclub/hcb/issues/15698). Nothing writes the column
+  # any more; it's dropped once no running code expects it.
+  self.ignored_columns += ["hcb_code_id"]
 
   include AASM
 

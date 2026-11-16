@@ -21,14 +21,13 @@ module ReceiptService
         pairs = pairings.map do |pairing|
           {
             receipt_id: @receipt.id,
-            hcb_code_id: pairing[:hcb_code].id,
             ledger_item_id: pairing[:ledger_item].id,
             distance: pairing[:distance],
             aasm_state: "unreviewed"
           }
         end
 
-        pairings = SuggestedPairing.upsert_all(pairs, unique_by: [:receipt_id, :hcb_code_id]) if pairs.any?
+        pairings = SuggestedPairing.upsert_all(pairs, unique_by: [:receipt_id, :ledger_item_id]) if pairs.any?
 
         if @receipt.receiptable.nil?
           content = turbo_stream_action_tag(:refresh_suggested_pairings)
@@ -130,17 +129,9 @@ module ReceiptService
 
     private
 
-    # The candidates are the user's card charges missing a receipt, which still
-    # come as HCB codes; each is scored against its ledger item. A code without
-    # one (none in practice: card charges always have a pending transaction, so
-    # always a ledger item) can't be paired.
     def transaction_distances(include_details: false)
-      potential_hcb_codes.includes(:ledger_item).filter_map do |hcb_code|
-        ledger_item = hcb_code.ledger_item
-        next if ledger_item.nil?
-
+      potential_ledger_items.map do |ledger_item|
         {
-          hcb_code:,
           ledger_item:,
           distance: distance(ledger_item)
         }
@@ -151,8 +142,12 @@ module ReceiptService
       @receipt.user
     end
 
-    def potential_hcb_codes
-      user.transactions_missing_receipt
+    # The user's card charges missing a receipt. They still come as HCB codes
+    # (see User#transactions_missing_receipt); a code without a ledger item
+    # (none in practice: card charges always have a pending transaction, so
+    # always a ledger item) can't be paired.
+    def potential_ledger_items
+      user.transactions_missing_receipt.includes(:ledger_item).filter_map(&:ledger_item)
     end
 
   end
