@@ -22,15 +22,12 @@ tasks:
   - key: sandbox
     use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome]
     docker: true
-    runner:
-      tmpfs: true
     background-processes:
       - key: postgres
         terminate-grace-period-seconds: 0
         run: |
           exec docker run --rm --name postgres --network host \
             -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
-            --tmpfs /var/lib/postgresql/data \
             postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
         ready-check: docker exec postgres pg_isready -h localhost -U postgres
       - key: redis
