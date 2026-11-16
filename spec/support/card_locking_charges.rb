@@ -11,10 +11,11 @@ RSpec.shared_context "card locking charges" do
   before { Flipper.enable(:card_locking_enabled_on_07_17_2026, user) }
 
   # Attach at the correct time so the resolution callback (added later) freezes
-  # against the right timestamp. Do NOT attach-then-backdate.
+  # against the right timestamp. Do NOT attach-then-backdate. Receipts hang off
+  # the charge's ledger item; its HCB code reads them through it.
   def attach_receipt(hcb_code, uploaded_by:, at: nil)
     build_and_save = lambda do
-      receipt = Receipt.new(receiptable: hcb_code, user: uploaded_by, upload_method: :api)
+      receipt = Receipt.new(receiptable: hcb_code.ledger_item, user: uploaded_by, upload_method: :api)
       receipt.file.attach(
         io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
         filename: "receipt.png", content_type: "image/png"
