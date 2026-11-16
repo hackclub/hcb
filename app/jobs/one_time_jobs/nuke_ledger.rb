@@ -58,10 +58,10 @@ module OneTimeJobs
     end
 
     def delete_subscriptions
-      count = Subscription.count
-      puts "Deleting #{count} Subscription records"
-      Subscription.delete_all
-      puts "Deleted all Subscription records"
+      count = Ledger::Subscription.count
+      puts "Deleting #{count} Ledger::Subscription records"
+      Ledger::Subscription.delete_all
+      puts "Deleted all Ledger::Subscription records"
     end
 
     def delete_ledgers
@@ -72,9 +72,9 @@ module OneTimeJobs
     end
 
     def clear_papertrail_versions
-      ledger_versions = PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping", "Subscription"]).count
+      ledger_versions = PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping", "Ledger::Subscription"]).count
       puts "Deleting #{ledger_versions} PaperTrail versions for Ledger models"
-      PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping", "Subscription"]).delete_all
+      PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping", "Ledger::Subscription"]).delete_all
 
       hcb_code_versions = PaperTrail::Version.where(item_type: "HcbCode")
                                              .where("object_changes::text LIKE ?", "%ledger_item_id%")

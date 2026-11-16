@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Subscription::Detect do
+RSpec.describe Ledger::Subscription::Detect do
   include_context "card locking charges"
 
   before { travel_to(Time.zone.local(2026, 11, 1, 12)) }
@@ -15,7 +15,7 @@ RSpec.describe Subscription::Detect do
   # the job does. Returns the charge's subscription, if any.
   def charge(day, amount_cents: -20_00, network_id: "vercel-1", card: stripe_card, merchant_category: "bakeries", authorization_method: nil)
     ledger_item = settle(day, amount_cents:, network_id:, card:, merchant_category:)
-    authorize(ledger_item, authorization_method) if authorization_method
+    attach_authorization(ledger_item, authorization_method:) if authorization_method
     described_class.new(ledger_item.reload).run
     ledger_item.reload.subscription
   end
@@ -24,11 +24,34 @@ RSpec.describe Subscription::Detect do
     create_settled_card_charge(user:, stripe_card: card, settled_at: start + day.days, amount_cents:, merchant_network_id: network_id, merchant_category:).ledger_item
   end
 
-  # Attaches the authorization the charge settled from.
-  def authorize(ledger_item, authorization_method)
-    raw_stripe_transaction = ledger_item.linked_object.raw_stripe_transactions.sole
-    raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id, stripe_card: ledger_item.linked_object.stripe_card)
-    raw_pending_stripe_transaction.update!(stripe_transaction: raw_pending_stripe_transaction.stripe_transaction.merge("authorization_method" => authorization_method))
+  # A separate Postgres session, the way another process would connect. Not
+  # one from the pool, which the test transaction pins to the same session.
+  def with_other_session
+    current = ActiveRecord::Base.connection.raw_connection
+    other = PG.connect(host: current.host, port: current.port, dbname: current.db, user: current.user, password: current.pass)
+    yield other
+  ensure
+    other&.close
+  end
+
+  def other_session_can_lock?(ledger, merchant_key)
+    with_other_session do |other|
+      other.exec(described_class.advisory_lock_sql("pg_try_advisory_lock", ledger, merchant_key)).getvalue(0, 0) == "t"
+    end
+  end
+
+  # Holds the lock detection takes for a ledger and merchant on another
+  # session, the way a rebuild in another process would.
+  def while_rebuilding(ledger, merchant_key)
+    with_other_session do |other|
+      locked = other.exec(described_class.advisory_lock_sql("pg_try_advisory_lock", ledger, merchant_key)).getvalue(0, 0) == "t"
+      # This session holds it until the example ends if anything was detected
+      # for the same ledger and merchant earlier in the example, since the
+      # whole example runs in one transaction.
+      raise "the lock is already held: use a merchant nothing was detected for yet" unless locked
+
+      yield
+    end
   end
 
   def days_after_start(time)
@@ -45,7 +68,7 @@ RSpec.describe Subscription::Detect do
       last_charged_at: be_within(1.second).of(start + 61.days),
       next_expected_at: be_within(1.second).of(start + 91.days)
     )
-    expect(Subscription.sole.ledger_items.count).to eq(3)
+    expect(Ledger::Subscription.sole.ledger_items.count).to eq(3)
   end
 
   it "detects other cadences, with a skipped cycle" do
@@ -75,6 +98,13 @@ RSpec.describe Subscription::Detect do
     expect(first.ledger_items.count).to eq(3)
     expect(second.ledger_items.count).to eq(3)
     expect(second).not_to eq(first)
+  end
+
+  it "gives a charge that fits two subscriptions to the one due closest to it" do
+    [0, 30, 60].each { |day| charge(day) }
+    second = [12, 42, 72].map { |day| charge(day) }.last
+
+    expect(charge(100)).to eq(second)
   end
 
   it "does not read two alternating prices as one usage-based subscription" do
@@ -112,7 +142,7 @@ RSpec.describe Subscription::Detect do
   it "ignores a cycle that isn't a known cadence" do
     [0, 43, 86, 129].each { |day| charge(day) }
 
-    expect(Subscription.count).to eq(0)
+    expect(Ledger::Subscription.count).to eq(0)
   end
 
   it "detects a yearly subscription from two charges" do
@@ -133,7 +163,7 @@ RSpec.describe Subscription::Detect do
     charge(30, amount_cents: -18_05)
 
     expect(charge(61, amount_cents: -52_90)).to have_attributes(cadence_days: 30, variable_amount: true, amount_cents: 52_90)
-    expect(charge(91, amount_cents: -7_00)).to eq(Subscription.sole)
+    expect(charge(91, amount_cents: -7_00)).to eq(Ledger::Subscription.sole)
   end
 
   it "detects usage-based billing once a repeated amount is at most a third of its charges" do
@@ -148,7 +178,7 @@ RSpec.describe Subscription::Detect do
     flat = [0, 30, 60, 90, 120, 150].map { |day| charge(day) }.last
     varying = [0, 27, 62].map { |day| charge(day, amount_cents: -(10_00 + (day * 100)), network_id: "parts-1") }.last
 
-    expect(flat.confidence).to eq(100 - Subscription::WEIGHTS[:category])
+    expect(flat.confidence).to eq(100 - Ledger::Subscription::WEIGHTS[:category])
     expect(varying.signals).to include(charges: 0.4, amount: be_within(0.01).of(0.33), card: 1.0, no_skips: 1.0)
     expect(varying.confidence).to be < 50
   end
@@ -163,14 +193,14 @@ RSpec.describe Subscription::Detect do
     subscription = [0, 27, 62].map { |day| charge(day, amount_cents: -(10_00 + (day * 100))) }.last
 
     expect(subscription.confidence).to eq(subscription.points.values.sum)
-    expect(subscription.points.keys).to eq(Subscription::WEIGHTS.keys)
+    expect(subscription.points.keys).to eq(Ledger::Subscription::WEIGHTS.keys)
   end
 
   it "ignores purchases that aren't on a cadence" do
     [0, 3, 6, 40, 47].each { |day| charge(day, amount_cents: -(5_00 + day)) }
     [0, 3, 6].each { |day| charge(day, network_id: "coffee-1") }
 
-    expect(Subscription.count).to eq(0)
+    expect(Ledger::Subscription.count).to eq(0)
   end
 
   %w[chip swipe contactless].each do |authorization_method|
@@ -195,6 +225,50 @@ RSpec.describe Subscription::Detect do
 
     expect(charge(60)).to be_nil
     expect(charge(90).ledger_items.count).to eq(3)
+  end
+
+  it "is busy while the same ledger and merchant are being rebuilt" do
+    ledger_item = settle(90, network_id: "figma-1")
+
+    while_rebuilding(event.ledger, "figma-1") do
+      expect { described_class.new(ledger_item).run }.to raise_error(described_class::Busy)
+    end
+    expect(ledger_item.reload.subscription).to be_nil
+  end
+
+  it "keeps the ledger and merchant locked while it rebuilds them" do
+    settle(0, network_id: "figma-1")
+    locked_during_rebuild = nil
+    allow_any_instance_of(described_class).to receive(:run) { locked_during_rebuild = !other_session_can_lock?(event.ledger, "figma-1") }
+
+    described_class.rebuild(ledger: event.ledger, merchant_key: "figma-1")
+
+    expect(locked_during_rebuild).to be(true)
+    expect(other_session_can_lock?(event.ledger, "figma-1")).to be(true)
+  end
+
+  it "won't rebuild inside a transaction, where it couldn't release its lock if the transaction failed" do
+    ActiveRecord::Base.transaction do
+      expect { described_class.rebuild(ledger: event.ledger, merchant_key: "figma-1") }.to raise_error(ArgumentError)
+    end
+  end
+
+  it "tries a busy recompute again later" do
+    subscription = Ledger::Subscription.create!(ledger: event.ledger, merchant_key: "figma-1", name: "Figma", payment_rail: stripe_card, amount_cents: 20_00,
+                                                cadence_days: 30, last_charged_at: start, next_expected_at: start + 30.days)
+
+    while_rebuilding(event.ledger, "figma-1") do
+      expect { Ledger::Subscription::RecomputeJob.perform_now(subscription.id) }.to have_enqueued_job(Ledger::Subscription::RecomputeJob).with(subscription.id)
+    end
+    expect(subscription.reload).to be_persisted
+  end
+
+  it "tries a busy detection again later" do
+    ledger_item = settle(90, network_id: "figma-1")
+
+    while_rebuilding(event.ledger, "figma-1") do
+      expect { Ledger::Subscription::DetectJob.perform_now(ledger_item) }.to have_enqueued_job(Ledger::Subscription::DetectJob).with(ledger_item)
+    end
   end
 
   context "with a monthly subscription due on day 90" do
@@ -226,7 +300,7 @@ RSpec.describe Subscription::Detect do
     it "keeps one subscription when the billing day moves" do
       [80, 110, 140, 170, 200].each { |day| charge(day) }
 
-      expect(Subscription.sole).to eq(subscription)
+      expect(Ledger::Subscription.sole).to eq(subscription)
       expect(subscription.ledger_items.count).to eq(7)
       expect(days_after_start(subscription.reload.next_expected_at)).to eq(230)
     end
@@ -244,6 +318,13 @@ RSpec.describe Subscription::Detect do
     it "follows a price change" do
       expect(charge(90, amount_cents: -22_00)).to eq(subscription)
       expect(subscription.reload.amount_cents).to eq(22_00)
+    end
+
+    it "keeps a version when it moves to another card, not for every charge", versioning: true do
+      expect { charge(90) }.not_to(change { subscription.versions.count })
+
+      replacement = create(:stripe_card, :with_stripe_id, stripe_cardholder: stripe_card.stripe_cardholder, event:)
+      expect { charge(120, card: replacement) }.to change { subscription.versions.count }.by(1)
     end
 
     it "follows the subscription to another card" do
@@ -286,7 +367,7 @@ RSpec.describe Subscription::Detect do
         end
 
         expect(subscription.reload.ledger_items.count).to eq(7)
-        expect(Subscription.where.not(id: subscription.id).sole).to have_attributes(payment_rail: someone_elses)
+        expect(Ledger::Subscription.where.not(id: subscription.id).sole).to have_attributes(payment_rail: someone_elses)
       end
 
       it "prefers a subscription of the charge's own cardholder" do
@@ -301,7 +382,7 @@ RSpec.describe Subscription::Detect do
         described_class.new(moved).run
 
         Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: moved.reload, mapped_by: create(:user))
-        perform_enqueued_jobs(only: Subscription::RecomputeJob)
+        perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
 
         expect(subscription.reload.payment_rail).to eq(stripe_card)
       end
@@ -329,8 +410,8 @@ RSpec.describe Subscription::Detect do
 
       expect {
         Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: moved, mapped_by: create(:user))
-      }.to have_enqueued_job(Subscription::DetectJob).with(moved)
-      perform_enqueued_jobs(only: Subscription::RecomputeJob)
+      }.to have_enqueued_job(Ledger::Subscription::DetectJob).with(moved)
+      perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
 
       expect(moved.reload.subscription).to be_nil
       expect(subscription.reload).to have_attributes(
@@ -346,19 +427,104 @@ RSpec.describe Subscription::Detect do
       ActiveRecord::Base.transaction do
         Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: moved, mapped_by: create(:user))
 
-        expect(Subscription::RecomputeJob).not_to have_been_enqueued
+        expect(Ledger::Subscription::RecomputeJob).not_to have_been_enqueued
       end
 
-      expect(Subscription::RecomputeJob).to have_been_enqueued.with(subscription.id)
+      expect(Ledger::Subscription::RecomputeJob).to have_been_enqueued.with(subscription.id)
+    end
+
+    it "lets a charge go when it is refunded" do
+      refunded = subscription.ledger_items.order(:datetime).last
+
+      expect { refunded.update!(status: "reversed") }.to have_enqueued_job(Ledger::Subscription::RecomputeJob).with(subscription.id)
+      perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
+
+      expect(refunded.reload.subscription).to be_nil
+      expect(subscription.reload).to have_attributes(last_charged_at: be_within(1.second).of(start + 30.days))
+    end
+
+    it "links from the subscription as it is stored, not as it was loaded" do
+      loaded = Ledger::Subscription.find(subscription.id)
+      # A recompute after the day-60 charge left, between loading and linking.
+      subscription.update_columns(next_expected_at: start + 60.days, last_charged_at: start + 30.days)
+
+      loaded.link!(settle(85), payment_rail: stripe_card)
+
+      expect(days_after_start(loaded.next_expected_at)).to eq(90)
+    end
+
+    it "lets a charge go when a refund is larger than it" do
+      refunded = subscription.ledger_items.order(:datetime).last
+
+      expect { refunded.update!(amount_cents: 5_00) }.to have_enqueued_job(Ledger::Subscription::RecomputeJob).with(subscription.id)
+      expect(refunded.reload.subscription).to be_nil
+    end
+
+    it "keeps expecting the full price after a charge is partly refunded" do
+      expect {
+        subscription.ledger_items.order(:datetime).last.update!(amount_cents: -15_00)
+      }.not_to have_enqueued_job(Ledger::Subscription::RecomputeJob)
+
+      expect(charge(90)).to eq(subscription)
+    end
+
+    it "recomputes from what each charge was for, before partial refunds" do
+      last, middle = subscription.ledger_items.order(datetime: :desc).first(2)
+      last.update_columns(amount_cents: -15_00)
+
+      Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: middle, mapped_by: create(:user))
+      perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
+
+      expect(subscription.reload.amount_cents).to eq(20_00)
+    end
+
+    it "does not link a charge whose authorization, arriving during detection, says it was paid in person" do
+      ledger_item = settle(90)
+      detection = described_class.new(ledger_item)
+      ledger_item.linked_object
+      attach_authorization(Ledger::Item.find(ledger_item.id), authorization_method: "chip")
+
+      detection.run
+
+      expect(ledger_item.reload.subscription).to be_nil
+    end
+
+    it "lets a refunded charge go though it was linked after the refund loaded it" do
+      ledger_item = settle(90)
+      loaded = Ledger::Item.find(ledger_item.id)
+      described_class.new(ledger_item).run
+
+      loaded.update!(status: "reversed")
+
+      expect(ledger_item.reload.subscription).to be_nil
+    end
+
+    it "does not link a charge that was refunded after detection loaded it" do
+      ledger_item = settle(90)
+      detection = described_class.new(ledger_item)
+      Ledger::Item.find(ledger_item.id).update!(status: "reversed")
+
+      detection.run
+
+      expect(ledger_item.reload.subscription).to be_nil
+    end
+
+    it "lets a charge go when its late authorization says it was paid in person" do
+      ledger_item = settle(90)
+      described_class.new(ledger_item).run
+
+      attach_authorization(ledger_item, authorization_method: "chip")
+
+      expect(ledger_item.reload.subscription).to be_nil
     end
 
     it "deletes the subscription once every charge has left its ledger" do
       subscription.ledger_items.each do |ledger_item|
         Ledger::Mapping.map_primary!(ledger: nil, ledger_item:, mapped_by: create(:user))
       end
-      perform_enqueued_jobs(only: Subscription::RecomputeJob)
+      perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
 
-      expect(Subscription.count).to eq(0)
+      expect(Ledger::Subscription.count).to eq(0)
     end
 
     it "recomputes from the charges that still spend money" do
@@ -366,7 +532,7 @@ RSpec.describe Subscription::Detect do
       last.update_columns(amount_cents: 0)
 
       Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: middle, mapped_by: create(:user))
-      perform_enqueued_jobs(only: Subscription::RecomputeJob)
+      perform_enqueued_jobs(only: Ledger::Subscription::RecomputeJob)
 
       expect(subscription.reload).to have_attributes(amount_cents: 20_00, last_charged_at: be_within(1.second).of(start))
     end
@@ -385,7 +551,7 @@ RSpec.describe Subscription::Detect do
 
   describe "enqueueing" do
     it "is enqueued when a card charge settles" do
-      expect { create_settled_card_charge(user:, stripe_card:, settled_at: start) }.to have_enqueued_job(Subscription::DetectJob).at_least(:once)
+      expect { create_settled_card_charge(user:, stripe_card:, settled_at: start) }.to have_enqueued_job(Ledger::Subscription::DetectJob).at_least(:once)
     end
 
     it "is enqueued once when an authorized charge settles" do
@@ -398,7 +564,7 @@ RSpec.describe Subscription::Detect do
       expect {
         create(:canonical_event_mapping, canonical_transaction:, event:)
         CanonicalPendingTransactionService::Settle.new(canonical_transaction:, canonical_pending_transaction:).run!
-      }.to have_enqueued_job(Subscription::DetectJob).exactly(:once)
+      }.to have_enqueued_job(Ledger::Subscription::DetectJob).exactly(:once)
       expect(canonical_pending_transaction.reload.ledger_item).to be_settled
     end
 
@@ -407,13 +573,13 @@ RSpec.describe Subscription::Detect do
 
       expect {
         Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item:, mapped_by: create(:user))
-      }.to have_enqueued_job(Subscription::DetectJob).with(ledger_item)
+      }.to have_enqueued_job(Ledger::Subscription::DetectJob).with(ledger_item)
     end
 
     it "is not enqueued again when a settled charge is touched" do
       ledger_item = settle(0)
 
-      expect { ledger_item.touch }.not_to have_enqueued_job(Subscription::DetectJob)
+      expect { ledger_item.touch }.not_to have_enqueued_job(Ledger::Subscription::DetectJob)
     end
   end
 end

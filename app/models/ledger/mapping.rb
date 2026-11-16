@@ -59,9 +59,9 @@ class Ledger
     # Plain after_commit (create/update/destroy), matching this file's other hooks.
     after_commit { CardLocking::Settlement.on_ledger_item(ledger_item, on_primary: on_primary_ledger) }
     # Only when the item lands on a ledger: every touch of the item re-saves its
-    # mapping unchanged.
+    # mapping unchanged. After commit, so the refresh above has settled the item.
     after_save_commit if: -> { on_primary_ledger && (previously_new_record? || saved_change_to_ledger_id?) && ledger_item.subscription_candidate? } do
-      Subscription::DetectJob.perform_later(ledger_item)
+      Ledger::Subscription::DetectJob.perform_later(ledger_item)
     end
 
     def self.map_primary!(ledger:, ledger_item:, mapped_by:)
@@ -70,9 +70,10 @@ class Ledger
       raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
 
       mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
-      if mapped_by.present? && ledger.nil?
-        Subscription.unlink(ledger_item)
-        Ledger::Mapping.find_by(ledger_item:, on_primary_ledger: true)&.destroy! and return
+      if mapped_by.present? && ledger.nil? && (mapping = Ledger::Mapping.find_by(ledger_item:, on_primary_ledger: true))
+        mapping.destroy!
+        Ledger::Subscription.unlink(ledger_item)
+        return
       end
 
       Ledger::Mapping.find_or_initialize_by(ledger_item:, on_primary_ledger: true).tap do |mapping|
@@ -85,7 +86,7 @@ class Ledger
         mapping.save!
 
         ledger_item.prune_tags_outside_event! if remapped
-        Subscription.unlink(ledger_item) if remapped
+        Ledger::Subscription.unlink(ledger_item) if remapped
       end
     end
 

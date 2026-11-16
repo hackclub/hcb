@@ -1,0 +1,15 @@
+<%# locals: (ledger_item:, current_ledger_item:) %>
+
+<% text = capture do %>
+  <%= format_date ledger_item.datetime %> &middot; <%= render_money ledger_item.amount_cents.abs %>
+<% end %>
+<li>
+  <% if ledger_item == current_ledger_item %>
+    <strong><%= text %> (this charge)</strong>
+  <% elsif ledger_item.hcb_code %>
+    <%= link_to text, hcb_code_path(ledger_item.hcb_code), data: { turbo_frame: "_top" } %>
+  <% else %>
+    <%= text %>
+  <% end %>
+  &middot; <%= ledger_item.linked_object.stripe_card.user.name %>
+</li>

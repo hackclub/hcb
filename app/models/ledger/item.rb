@@ -44,7 +44,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (author_id => users.id)
-#  fk_rails_...  (subscription_id => subscriptions.id) ON DELETE => nullify
+#  fk_rails_...  (subscription_id => ledger_subscriptions.id) ON DELETE => nullify
 #
 class Ledger
   class Item < ApplicationRecord
@@ -67,7 +67,7 @@ class Ledger
     has_many :admin_ledger_audit_tasks, class_name: "Admin::LedgerAudit::Task", foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
-    belongs_to :subscription, optional: true, inverse_of: :ledger_items
+    belongs_to :subscription, class_name: "Ledger::Subscription", optional: true, inverse_of: :ledger_items
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
@@ -119,9 +119,21 @@ class Ledger
     end
 
     # A card charge settles either onto an item that is already mapped (here),
-    # or before its item is mapped (Ledger::Mapping).
-    after_update_commit if: -> { saved_change_to_status? && subscription_candidate? } do
-      Subscription::DetectJob.perform_later(self)
+    # or before its item is mapped (Ledger::Mapping). A refund that reverses a
+    # charge, or is larger than it, takes it out of its subscription. A partial
+    # refund leaves it in: the subscription goes by what each charge was for.
+    #
+    # Plain after_update, not after_update_commit: when a row is saved from two
+    # in-memory copies in one transaction, Rails runs commit callbacks on only
+    # one of them, which may not be the copy that saw the change. The jobs are
+    # queued once the transaction commits.
+    after_update if: -> { linked_object_type == CardCharge.name && (saved_change_to_status? || saved_change_to_amount_cents?) } do
+      if subscription_candidate?
+        Ledger::Subscription::DetectJob.perform_later(self)
+      elsif !subscription_eligible? && status_before_last_save == "settled" && amount_cents_before_last_save.negative?
+        # Reads the row, so a link made after this copy was loaded goes too.
+        Ledger::Subscription.unlink(self)
+      end
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
@@ -129,9 +141,14 @@ class Ledger
     scope :subscription_eligible, -> { settled.where(linked_object_type: CardCharge.name, amount_cents: ...0) }
     scope :with_primary_ledger, ->(ledger_id) { where(id: Ledger::Mapping.where(ledger_id:, on_primary_ledger: true).select(:ledger_item_id)) }
 
+    # Matches subscription_eligible.
+    def subscription_eligible?
+      settled? && linked_object_type == CardCharge.name && amount_cents.negative?
+    end
+
     # Subscription eligible, and not part of a subscription yet.
     def subscription_candidate?
-      settled? && linked_object_type == CardCharge.name && amount_cents.negative? && subscription_id.nil?
+      subscription_eligible? && subscription_id.nil?
     end
 
     def status_text

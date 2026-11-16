@@ -1,0 +1,35 @@
+<%# locals: (subscription:, current_ledger_item:) %>
+
+<% admin_tool("mt2 p-3") do %>
+  <h3 class="mt0 mb1">Detected as a subscription (experimental)</h3>
+  <p class="mt0 mb2">
+    <%= subscription.name %>
+    <%= subscription.lapsed? ? "charged" : "charges" %>
+    <%= subscription.variable_amount? ? "a varying amount" : render_money(subscription.amount_cents) %>
+    <%= subscription.cadence_label %>.
+    <% if subscription.lapsed? %>
+      Lapsed: no charge since <%= format_date subscription.last_charged_at %>.
+    <% elsif subscription.overdue? %>
+      Overdue: expected around <%= format_date subscription.next_expected_at %>.
+    <% else %>
+      Next charge expected around <%= format_date subscription.next_expected_at %>.
+    <% end %>
+  </p>
+  <p class="mt0 mb2 muted">
+    Confidence <%= subscription.confidence %> out of 100:
+    <%= subscription.points.map { |signal, earned| "#{signal.to_s.humanize(capitalize: false)} #{earned}/#{Ledger::Subscription::WEIGHTS.fetch(signal)}" }.to_sentence %>.
+  </p>
+  <% charges = subscription.ledger_items.includes(:hcb_code, linked_object: { stripe_card: :user }).order(datetime: :desc).to_a %>
+  <% recent, earlier = charges.first(12), charges.drop(12) %>
+  <ul class="list-reset m0">
+    <%= render partial: "ledger/subscriptions/charge", collection: recent, as: :ledger_item, locals: { current_ledger_item: } %>
+  </ul>
+  <% if earlier.any? %>
+    <%= tag.details class: "mt1", open: earlier.include?(current_ledger_item) do %>
+      <summary><%= pluralize(earlier.size, "earlier charge") %></summary>
+      <ul class="list-reset m0">
+        <%= render partial: "ledger/subscriptions/charge", collection: earlier, as: :ledger_item, locals: { current_ledger_item: } %>
+      </ul>
+    <% end %>
+  <% end %>
+<% end %>

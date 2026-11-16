@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-class CreateSubscriptions < ActiveRecord::Migration[8.1]
+class CreateLedgerSubscriptions < ActiveRecord::Migration[8.1]
   def change
-    create_table :subscriptions do |t|
+    create_table :ledger_subscriptions do |t|
       t.references :ledger, null: false, foreign_key: true, index: false
       t.references :payment_rail, polymorphic: true, null: false
       t.string :merchant_key, null: false
@@ -17,7 +17,7 @@ class CreateSubscriptions < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :subscriptions, [:ledger_id, :merchant_key]
+    add_index :ledger_subscriptions, [:ledger_id, :merchant_key]
   end
 
 end

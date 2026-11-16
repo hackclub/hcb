@@ -25,14 +25,15 @@ RSpec.shared_context "card locking charges" do
     at ? travel_to(at) { build_and_save.call } : build_and_save.call
   end
 
-  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil, merchant_network_id: nil, merchant_category: "bakeries")
+  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil, merchant_network_id: nil, merchant_category: "bakeries", merchant_category_code: nil)
     charge_event ||= event
     stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
     stripe_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder:, event: charge_event)
     raw_stripe_transaction = create(
-      :raw_stripe_transaction, stripe_card:, stripe_authorization_id: SecureRandom.hex(8),
+      :raw_stripe_transaction, stripe_card:, stripe_authorization_id: SecureRandom.hex(8), amount_cents: amount_cents.abs,
       created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date,
-      stripe_merchant_network_id: merchant_network_id, stripe_merchant_category: merchant_category, stripe_created: settled_at.to_i
+      stripe_merchant_network_id: merchant_network_id, stripe_merchant_category: merchant_category,
+      stripe_merchant_category_code: merchant_category_code, stripe_created: settled_at.to_i
     )
     canonical_transaction = create(
       :canonical_transaction, amount_cents:, memo: "Test Merchant", date: settled_at.to_date,
@@ -43,5 +44,23 @@ RSpec.shared_context "card locking charges" do
     hcb_code = canonical_transaction.local_hcb_code.reload
     attach_receipt(hcb_code, uploaded_by: user, at: uploaded_at) if uploaded_at.present?
     hcb_code.reload
+  end
+
+  # Attaches the authorization a settled card charge came from. With
+  # pending_transaction, also its canonical pending transaction, settled onto
+  # the charge's transaction, which pages that show the charge read.
+  def attach_authorization(ledger_item, authorization_method: "online", pending_transaction: false)
+    card_charge = ledger_item.linked_object
+    raw_stripe_transaction = card_charge.raw_stripe_transactions.sole
+    raw_pending_stripe_transaction = create(
+      :raw_pending_stripe_transaction, amount_cents: ledger_item.amount_cents, stripe_card: card_charge.stripe_card, authorization_method:,
+                                       stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id,
+                                       stripe_merchant_category_code: raw_stripe_transaction.stripe_transaction.dig("merchant_data", "category_code")
+    )
+    if pending_transaction
+      canonical_pending_transaction = create(:canonical_pending_transaction, amount_cents: ledger_item.amount_cents, raw_pending_stripe_transaction:)
+      CanonicalPendingSettledMapping.create!(canonical_pending_transaction:, canonical_transaction: ledger_item.canonical_transactions.sole)
+    end
+    raw_pending_stripe_transaction
   end
 end

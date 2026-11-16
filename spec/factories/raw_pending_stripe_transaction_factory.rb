@@ -16,6 +16,7 @@ FactoryBot.define do
       stripe_card { nil }
       stripe_merchant_category { "bakeries" }
       stripe_merchant_category_code { nil }
+      authorization_method { "online" }
     end
 
     stripe_transaction {
@@ -25,7 +26,7 @@ FactoryBot.define do
           "id": stripe_card&.stripe_id || generate(:stripe_card_id)
         },
         "cardholder": stripe_card&.stripe_cardholder&.stripe_id,
-        "authorization_method": "online",
+        "authorization_method": authorization_method,
         "merchant_currency": "usd",
         "verification_data": {
           "address_line1_check": "not_provided",

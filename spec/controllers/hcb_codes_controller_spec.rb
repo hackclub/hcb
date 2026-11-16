@@ -49,6 +49,24 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).to include("Address check")
     end
 
+    context "when the charge is part of a subscription" do
+      include_context "card locking charges"
+
+      it "shows the subscription to an auditor" do
+        stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:)
+        ledger_items = [70, 40, 10].map do |days_ago|
+          create_settled_card_charge(user:, stripe_card:, settled_at: days_ago.days.ago, amount_cents: -20_00, merchant_network_id: "vercel-1", merchant_category_code: "5734").ledger_item
+        end
+        attach_authorization(ledger_items.last, pending_transaction: true)
+        ledger_items.each { |ledger_item| Ledger::Subscription::Detect.new(ledger_item.reload).run }
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: ledger_items.last.hcb_code.hashid }
+
+        expect(response.body).to include("Detected as a subscription").and include("(this charge)")
+      end
+    end
+
     it "links each CPT to its own page" do
       cpt = hcb_code.canonical_pending_transactions.sole
 

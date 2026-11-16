@@ -10,6 +10,7 @@ FactoryBot.define do
       stripe_merchant_category { "bakeries" }
       stripe_transaction_type { "capture" }
       stripe_merchant_network_id { nil }
+      stripe_merchant_category_code { nil }
       stripe_created { nil }
     end
 
@@ -27,9 +28,10 @@ FactoryBot.define do
         "cardholder"    => stripe_card.stripe_cardholder.id,
         "created"       => stripe_created,
         "merchant_data" => {
-          "name"       => Faker::Company.name,
-          "category"   => stripe_merchant_category,
-          "network_id" => stripe_merchant_network_id,
+          "name"          => Faker::Company.name,
+          "category"      => stripe_merchant_category,
+          "network_id"    => stripe_merchant_network_id,
+          "category_code" => stripe_merchant_category_code,
         }.compact,
       }.compact
     end

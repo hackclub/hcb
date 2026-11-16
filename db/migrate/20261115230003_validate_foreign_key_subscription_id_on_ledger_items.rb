@@ -2,7 +2,7 @@
 
 class ValidateForeignKeySubscriptionIdOnLedgerItems < ActiveRecord::Migration[8.1]
   def change
-    validate_foreign_key :ledger_items, :subscriptions
+    validate_foreign_key :ledger_items, :ledger_subscriptions
   end
 
 end
