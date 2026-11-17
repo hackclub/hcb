@@ -7,27 +7,35 @@
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This document was archived by <%= user_mention @document.archived_by %> on <%= format_date @document.archived_at %>.</span>
     <span class="block">It will display under the Archived section<span class="xs-hide"> on the Documents page</span>.</span>
-    <span>You can <%= link_to "unarchive it", document_toggle_path(@document), data: { turbo_method: :post } %>.</span>
+    <% if policy(@document).toggle_archive? %>
+      <span>You can <%= link_to "unarchive it", document_toggle_path(@document), data: { turbo_method: :post } %>.</span>
+    <% end %>
   </div>
 <% end %>
 
 <h1 class="heading pb2">
   <%= @document.name %>
-  <% if (@document.user == current_user) || auditor_signed_in? %>
-    <div class="flex items-center mt2" style="gap: 6px">
+  <div class="flex items-center mt2" style="gap: 6px">
+    <% if policy(@document).download? %>
       <%= link_to document_download_path(@document), target: :_blank, class: "btn" do %>
         <%= inline_icon "download" %>
         Download
       <% end %>
+    <% end %>
+    <% if policy(@document).edit? %>
       <%= link_to "Edit", edit_document_path(@document), class: "btn bg-info" %>
+    <% end %>
+    <% if policy(@document).toggle_archive? %>
       <% if @document.archived? %>
         <%= link_to "Unarchive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will unarchive the document. Are you sure?" }, class: "btn bg-muted" %>
       <% else %>
         <%= link_to "Archive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will archive the document. Are you sure?", turbo_confirm_danger: true }, class: "btn bg-muted" %>
       <% end %>
+    <% end %>
+    <% if policy(@document).destroy? %>
       <%= link_to "Destroy", @document, data: { turbo_method: :delete, turbo_confirm: "Are you sure?", turbo_confirm_danger: true }, class: "btn btn--destroy" %>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </h1>
 
 <div class="card flex items-center justify-center mb2 mt2" style="width: fit-content">
