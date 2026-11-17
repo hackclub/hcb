@@ -133,6 +133,27 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_admin running balance control" do
+    render_views
+
+    def running_balance_control(target)
+      create_session(create(:user, :make_admin), verified: true)
+
+      get(:edit_admin, params: { id: target.id })
+
+      expect(response).to have_http_status(:ok)
+      response.parsed_body.at_css("input[type=checkbox][name='user[running_balance_enabled]']")
+    end
+
+    it "is shown for auditors" do
+      expect(running_balance_control(create(:user, :make_auditor))).to be_present
+    end
+
+    it "is not shown for users it doesn't apply to" do
+      expect(running_balance_control(create(:user))).to be_nil
+    end
+  end
+
   describe "#edit_admin transfer limit history" do
     render_views
 

@@ -96,7 +96,7 @@
 
       <div class="field">
         <%= form.label :point_of_contact_id, capture { %>
-          Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(event), data: { turbo_method: :post } %>
+          Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(event), data: { turbo_method: :post } if policy(event).claim_point_of_contact? %>
         <% } %>
         <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: event.point_of_contact_id)).order(:email), :id, :email, {}, { disabled: } %>
         <% if event.point_of_contact_history.any? %>

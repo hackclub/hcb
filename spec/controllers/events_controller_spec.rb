@@ -472,6 +472,29 @@ RSpec.describe EventsController do
       expect(page.css("#donations_settings strong").map(&:text)).to include("HCB* Assemble")
     end
 
+    describe "claiming point of contact" do
+      let(:event) { create(:event) }
+
+      before { allow_any_instance_of(Event).to receive(:airtable_record).and_return(nil) }
+
+      def claim_link?
+        get(:edit, params: { id: event.slug, tab: "admin" })
+        Nokogiri::HTML5(response.body).css("a[href='#{event_claim_point_of_contact_path(event)}']").any?
+      end
+
+      it "is offered to admins" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        expect(claim_link?).to eq(true)
+      end
+
+      it "is not offered to auditors" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        expect(claim_link?).to eq(false)
+      end
+    end
+
     describe "donation goal reset" do
       let(:event) { create(:event) }
 
