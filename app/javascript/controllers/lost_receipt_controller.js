@@ -67,7 +67,6 @@ export default class extends Controller {
       off > 0
         ? `Add ${money} more to match the transaction.`
         : `Remove ${money} to match the transaction.`
-    this.submitTarget.disabled = off !== 0
     // Nothing to confirm until the items add up.
     this.confirmationTarget.inert = off !== 0
     this.confirmationTarget.style.opacity = off === 0 ? '' : 0.4
@@ -86,5 +85,7 @@ export default class extends Controller {
     this.removeButtonTargets.forEach(button => {
       button.disabled = this.itemTargets.length <= 1
     })
+    // Last, after every check above. Off until the whole form is filled in and valid.
+    this.submitTarget.disabled = off !== 0 || !this.element.checkValidity()
   }
 }
