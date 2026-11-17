@@ -472,6 +472,29 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  describe "#transfer_confirmation_letter" do
+    let(:disbursement) { create(:disbursement, :deposited) }
+
+    it "lets a manager of the sending organization through" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event: disbursement.source_event, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:transfer_confirmation_letter, params: { disbursement_id: disbursement.id })
+
+      expect(response).to redirect_to(disbursement_path(disbursement))
+      expect(flash[:error]).to be_nil
+    end
+
+    it "refuses a user with no position in either organization" do
+      create_session(create(:user), verified: true)
+
+      get(:transfer_confirmation_letter, params: { disbursement_id: disbursement.id })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
+
   describe "repayments" do
     let(:sender) { create(:user) }
     let(:source_event) { create(:event, :with_positive_balance) }
