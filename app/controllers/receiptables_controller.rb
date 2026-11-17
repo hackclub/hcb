@@ -28,7 +28,7 @@ class ReceiptablesController < ApplicationController
     @statement.submitter = current_user
 
     if @statement.submit
-      flash[:success] = "Lost receipt statement added."
+      flash[:success] = "Lost receipt statement submitted. The PDF will appear here in a moment."
       redirect_to safe_url(params[:return_to]) || fallback_location
     else
       render_page :lost_receipt, status: :unprocessable_entity

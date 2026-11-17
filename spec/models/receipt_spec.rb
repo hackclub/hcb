@@ -44,6 +44,7 @@ RSpec.describe Receipt, type: :model do
     statement.receiptable = charge
     statement.acknowledgement = statement.required_acknowledgement
     expect(statement.submit).to eq(true)
+    statement.attach_pdf!
     receipt = build_receipt(receiptable: charge.ledger_item, user: create(:user))
     receipt.save!
     expect(charge.reload).to be_no_or_lost_receipt
@@ -71,6 +72,7 @@ RSpec.describe Receipt, type: :model do
     statement.receiptable = charge
     statement.acknowledgement = statement.required_acknowledgement
     expect(statement.submit).to eq(true)
+    statement.attach_pdf!
     expect(charge.ledger_item.reload.receipt_count).to eq(1)
 
     statement.receipt.update!(receiptable: nil)
@@ -90,6 +92,7 @@ RSpec.describe Receipt, type: :model do
     statement.receiptable = charge
     statement.acknowledgement = statement.required_acknowledgement
     expect(statement.submit).to eq(true)
+    statement.attach_pdf!
 
     statement.receipt.destroy!
 

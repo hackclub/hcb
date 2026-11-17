@@ -20,6 +20,8 @@ RSpec.describe ReceiptablesController do
 
   before { create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:) }
   before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+  # The PDF is attached by a job; run it inline so these see the finished receipt.
+  around { |example| perform_enqueued_jobs(only: LostReceipt::Statement::AttachPdfJob) { example.run } }
 
   describe "#mark_no_or_lost" do
     it "generates a statement using the receipt request link without claiming an authenticated signer" do
@@ -31,7 +33,7 @@ RSpec.describe ReceiptablesController do
       expect(CloudflareBrowserRun).to have_received(:pdf).with(a_string_including("Alex Example", "Receipt request link (not signed in)"))
       expect(receipt.user).to be_nil
       expect(hcb_code.reload).to be_no_or_lost_receipt
-      expect(flash[:success]).to eq("Lost receipt statement added.")
+      expect(flash[:success]).to eq("Lost receipt statement submitted. The PDF will appear here in a moment.")
       expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
     end
 
