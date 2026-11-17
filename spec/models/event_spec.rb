@@ -28,6 +28,25 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#total_raised and #total_spent_cents" do
+    def add_item(amount_cents, category_slug: nil)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.current, memo: "Transaction of #{amount_cents}", category_slug:)
+      create(:canonical_event_mapping, canonical_transaction: ct, event:)
+      item = create(:ledger_item, amount_cents:, datetime: Time.current, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    end
+
+    it "takes repayments off both totals instead of counting them as revenue" do
+      add_item(2500)
+      add_item(-500, category_slug: Repayment::CATEGORY_SLUG) # the expense that was repaid
+      add_item(-300)
+      add_item(500, category_slug: Repayment::CATEGORY_SLUG) # the money paying it back
+
+      expect(event.total_raised).to eq(2500)
+      expect(event.total_spent_cents).to eq(300)
+    end
+  end
+
   describe "private" do
     before do
       create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
@@ -450,6 +469,32 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:description]).to be_present
     end
   end
+  describe "#statement_descriptor" do
+    it "uses the name when it's short enough" do
+      event = build(:event, name: "Hack Club")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club")
+    end
+
+    it "uses the nickname for a long name" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+
+      expect(event.statement_descriptor).to eq("HCB* Assemble")
+    end
+
+    it "truncates a long name without a nickname" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club Assemb")
+    end
+
+    it "drops characters Stripe doesn't allow" do
+      event = build(:event, name: "Café's Club!")
+
+      expect(event.statement_descriptor).to eq("HCB* Cafes Club")
+    end
+  end
+
   describe "#wire_fee_waived?" do
     let(:plan_type) { Event::Plan::Standard }
     let(:event) { create(:event, plan_type:) }

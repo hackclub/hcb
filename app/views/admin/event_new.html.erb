@@ -1,3 +1,5 @@
+<%# herb:slots client %>
+<%# herb:state (selected_signee: "true") %>
 <% title "Create an organization" %>
 
 <% content_for(:admin_actions) do %>
@@ -43,7 +45,7 @@
     </div>
   </section>
 
-  <section class="card flex flex-col gap-3.5 overflow-visible" data-controller="form-hide-field" data-form-hide-field-condition-value="false">
+  <section class="card flex flex-col gap-3.5 overflow-visible">
     <h3 class="eyebrow m-0">Organizer</h3>
 
     <div class="field">
@@ -58,10 +60,10 @@
         <%= form.select :is_signee,
               [["📃 Will sign the contract", "true"], ["❌ Won't sign the contract", "false"]],
               { selected: "true" },
-              { required: true, data: { form_hide_field_target: "select", action: "form-hide-field#toggle" } } %>
+              { required: true, data: { herb_set: "selected_signee=$value" } } %>
       </div>
 
-      <div class="field" data-form-hide-field-target="field">
+      <div class="field" hidden="<%= selected_signee != "true" %>">
         <%= form.label :cosigner_email, "Cosigner email" %>
         <%= form.email_field :cosigner_email, placeholder: "Required if the organizer is under 18" %>
       </div>

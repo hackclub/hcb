@@ -3,8 +3,6 @@
 schedule_file = "config/schedule.yml"
 
 Sidekiq.configure_server do |config|
-  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
-
   # Metrics (HCB Wrapped) is given its own capsule since these jobs can be
   # long-running. Long running jobs can cause Sidekiq's usual queue-based
   # priority system to be ineffective.
@@ -24,8 +22,14 @@ Sidekiq.configure_server do |config|
   end
 end
 
-Sidekiq.configure_client do |config|
-  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+# sidekiq-cron silently skips a scheduled run if it first checks the schedule
+# more than `reschedule_grace_period` seconds after the run was due, and never
+# catches it up. Its default of 60 seconds can be shorter than a Sidekiq
+# restart, so a run that comes due while Sidekiq is restarting could be
+# dropped. Only the most recent missed run is enqueued, so a longer outage
+# doesn't cause a burst of catch-up jobs.
+Sidekiq::Cron.configure do |config|
+  config.reschedule_grace_period = 5.minutes.to_i
 end
 
 if File.exist?(schedule_file) && Sidekiq.server?

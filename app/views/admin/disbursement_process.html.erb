@@ -32,7 +32,11 @@
           <%= render "admin/review_fact", label: "To", value: to %>
 
           <%= render "admin/review_fact", label: "Memo", value: disbursement.name %>
-          <%= render "admin/review_fact", label: "Requested by", value: user_mention(disbursement.requested_by) %>
+          <% requester = user_mention(disbursement.requested_by) %>
+          <% if disbursement.requested_by && !OrganizerPosition.role_at_least?(disbursement.requested_by, disbursement.destination_event, :reader) %>
+            <% requester = safe_join([requester, tag.span(" ⚠️ not a member of #{disbursement.destination_event.name}", class: "warning bold")]) %>
+          <% end %>
+          <%= render "admin/review_fact", label: "Requested by", value: requester %>
 
           <% fulfiller = disbursement.fulfilled_by ? user_mention(disbursement.fulfilled_by) : tag.span("Nobody yet — this could be you! ✨", class: "muted") %>
           <%= render "admin/review_fact", label: (disbursement.rejected? ? "Rejected by" : "Fulfilled by"), value: fulfiller %>

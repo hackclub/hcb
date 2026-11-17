@@ -77,6 +77,22 @@
   }
 }
 
+// Flattens the payee picker's own cards when it's nested inside another card,
+// leaving other cards (e.g. callouts) alone. Transparent so the parent's inset
+// border isn't covered.
+.card--nested-flush {
+  :is(turbo-frame, [data-payee-panel]) > .card {
+    box-shadow: none;
+    border-radius: 0;
+    margin-top: 0;
+    background-color: transparent;
+  }
+
+  turbo-frame > .card {
+    padding-top: 0;
+  }
+}
+
 .podium-block {
   width: 100%;
   display: flex;
@@ -279,17 +295,28 @@ a.card {
 }
 
 // A flash that floats over the page instead of sitting in the flow. Slides up
-// on arrival and back down when the flash controller dismisses it.
+// on arrival, then back down on its own after 5 seconds or when closed.
 .flash--toast {
   --flash-offset: 1rem;
-  animation: flash-slide-in 0.5s;
+  animation:
+    flash-slide-in 0.5s,
+    flash-slide-out 0.5s 5s forwards;
 
-  &.flash--dismissed {
+  // Dismissed with the close button.
+  &[hidden] {
     translate: 0 calc(100% + var(--flash-offset));
     display: none;
     transition-property: translate, display;
     transition-duration: 0.5s;
     transition-behavior: allow-discrete;
+  }
+}
+
+@keyframes flash-slide-out {
+  to {
+    translate: 0 calc(100% + var(--flash-offset, 0));
+    visibility: hidden;
+    display: none;
   }
 }
 
@@ -310,7 +337,7 @@ a.card {
 }
 
 .card--sunset {
-  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
+  background-image: url('https://cdn.hackclub.com/019c2570-fc3b-7b34-835b-918b11af02ef/image.png');
 }
 
 #card-pin {

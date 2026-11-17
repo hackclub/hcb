@@ -57,7 +57,7 @@ class Ledger
     # another organization's items.
     def execute(ledgers: [], all_ledgers: false)
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
-      results = results.where.not(ct_count: 0, cpt_count: 0)
+      results = results.strict_loading.where.not(ct_count: 0, cpt_count: 0)
 
       # Strict boolean: only a literal true opts out of scoping, so a caller that
       # accidentally passes a truthy value (e.g. the string "false") fails closed.
@@ -80,15 +80,14 @@ class Ledger
       # top; callers that only aggregate pay nothing, since preloads don't fire
       # until records are materialized.
       #
-      # hcb_code: :event is here for one line of ledger/items/_tags, which gates
-      # on `hcb_code.event&.demo_mode?` even where the page already holds @event
-      # — the next line down uses @event, and _tag_menu prefers it. Reaching
-      # through the HCB code for an event the page already has costs a query a
-      # row without this preload, and one with it. #15023 moves tags onto
-      # Ledger::Item and takes that partial's other use of the HCB code with it,
-      # leaving the guard as the last one; it can go the same way.
+      # hcb_code is for ledger/_item's receipt affordances (receiptable id,
+      # upload policy). Its event is no longer needed: the tag partials and
+      # Ledger::ItemPolicy#toggle_tag? now resolve the owning event through the
+      # primary ledger (or its card grant) instead of the HCB code.
       #
-      # The preload outlives that, though: the admin cardholder page runs
+      # primary_ledger: [:event, { card_grant: :event }] feeds both
+      # Ledger::ItemPolicy#toggle_tag? (checked per row by _tag_menu) and the
+      # tag partials' demo_mode guard. The admin cardholder page runs
       # all_ledgers with no @event, over items spanning every org the cardholder
       # holds a card for, so there the event really is per item.
       #
@@ -97,7 +96,7 @@ class Ledger
       # (EagerLoadPolymorphicError). It also costs one query per distinct
       # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:author, :linked_object, :tags, hcb_code: :event)
+             .preload(:author, :linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
     end
 
     def self.sanitize_query(query_hash)
@@ -310,8 +309,7 @@ class Ledger
 
       case key.to_s
       when "tag"
-        # Tags hang off the HCB code, which points back at the ledger item.
-        relation.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: operand).select(:hcb_code_id)).select(:ledger_item_id))
+        relation.where(id: Ledger::Item::Tag.where(tag_id: operand).select(:ledger_item_id))
       when "category"
         # Categories are assigned to the underlying canonical transactions, and
         # an item matches if either kind carries the category. Resolving the slug

@@ -45,6 +45,9 @@
           <%= render "admin/review_fact", label: "Payee", value: wire.recipient_name, copy: wire.recipient_name %>
           <%= render "admin/review_fact", label: "Email", value: wire.recipient_email, copy: wire.recipient_email %>
           <%= render "admin/review_fact", label: "Payment for", value: wire.payment_for %>
+          <% if wire.payment.present? %>
+            <%= render "admin/review_fact", label: "Payment", value: render(partial: "admin/payment_link", locals: { payout: wire }) %>
+          <% end %>
           <%= render "admin/review_fact", label: "Memo", value: wire.memo %>
           <%= render "admin/review_fact", label: "Requested", value: format_datetime(wire.created_at) %>
         </div>
@@ -95,7 +98,7 @@
             <label class="checkbox-card">
               <%= form.check_box :charge_fee %>
               <span>
-                <strong>Charge a $25 transfer fee</strong>
+                <strong>Charge a <%= render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS %> transfer fee</strong>
                 <span class="block text-[0.8125rem] leading-snug opacity-60">Billed to <%= wire.event.name %>.</span>
               </span>
             </label>
@@ -116,6 +119,7 @@
         <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             This wire <%= wire.failed? ? "" : "is " %><strong><%= wire.aasm.current_state.to_s.humanize(capitalize: false) %></strong><% if wire.failed? %><%= wire.return_reason.presence ? ": #{wire.return_reason}" : " for an unknown reason" %><% end %>.
+            Processed by <%= @approver.present? ? user_mention(@approver) : "an unknown user" %>.
           </p>
 
           <% unless wire.failed? %>

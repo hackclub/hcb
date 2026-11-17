@@ -6,6 +6,8 @@
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>
   <body class="bg-snow overflow-x-hidden min-h-screen max-w-[100vw]">
+    <%# ui.js renders every .tooltipped element's tooltip into this. %>
+    <div id="tooltip-container"></div>
     <a class="skip-to-main" href="#main">Skip to main content</a>
     <% title = content_for?(:title) ? yield(:title) : nil %>
     <% nav = Admin::Nav.new(page_title: title) %>

@@ -11,7 +11,7 @@
   <% if @card.subledger.present? || @card.active_spending_control %>
     The balance available on this card is <%= render_money @card.balance_available %>.
     <% if @card.active_spending_control %>
-      If you need additional funds, please contact a manager. They can create an allowance <%= link_to "here", event_organizer_position_spending_controls_url(@card.event, @card.active_spending_control.organizer_position) %>.
+      If you need additional funds, please contact a manager. They can <%= link_to "create an allowance", event_organizer_position_spending_controls_url(@card.event, @card.active_spending_control.organizer_position) %> for you.
     <% end %>
   <% else %>
     The account balance for <%= @event.name %> is <%= render_money @card.balance_available %>.
@@ -19,7 +19,7 @@
 <% end %>
 
 <p>
-  <%= link_to "Click here to view the declined transaction.", @cpt.local_hcb_code %>
+  <%= link_to "View the declined transaction", @cpt.local_hcb_code %> on HCB.
 </p>
 
 <% if Rails.env.development? %>

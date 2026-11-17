@@ -129,7 +129,7 @@
         <td>
           <%= link_to "Edit", edit_event_path(event, tab: "admin") unless event.pending? || event.unapproved? %>
           <%= render("admin/event_process_link", event:) %>
-          <%= render(partial: "event_groups_link", locals: { event: }) %>
+          <%= render(partial: "admin/event_groups_link", locals: { event: }) %>
         </td>
       </tr>
     <% end %>

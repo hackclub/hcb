@@ -3,6 +3,12 @@
 require "rails_helper"
 
 RSpec.describe Contract, type: :model do
+  describe "#standard_fiscal_sponsorship?" do
+    it "is false unless a subclass says otherwise" do
+      expect(Contract::PayrollPosition.new.standard_fiscal_sponsorship?).to be false
+    end
+  end
+
   describe "#mark_voided! archival behavior" do
     let(:payee) { create(:payee) }
     let(:position) { create(:payroll_position, payee:) }

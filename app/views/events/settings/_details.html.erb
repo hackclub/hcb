@@ -1,4 +1,6 @@
-<%# locals: (event:) %>
+<%# locals: (event:, transparent_initially: event.is_public?) %>
+<%# herb:slots client %>
+<%# herb:state (transparency_enabled: transparent_initially) %>
 
 <% disabled = !policy(event).update? %>
 
@@ -8,7 +10,7 @@
   <div class="card flex flex-col items-start gap-2 p0 pb2 mb3">
     <div class="event_settings__banner">
       <% if event.background_image.persisted? %>
-        <%= image_tag event.background_image, height: 200, class: "banner__image" %>
+        <%= image_tag polymorphic_url(event.background_image), height: 200, class: "banner__image" %>
       <% end %>
 
       <% if policy(event).update? %>
@@ -25,7 +27,7 @@
 
           <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
             <div data-controller="file-upload" class="justify-center">
-              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input" }, oninput: "document.getElementById('event_background_image').files = this.files" %>
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input", controller: "mirror-files", action: "input->mirror-files#mirror", mirror_files_to_value: "event_background_image" } %>
               <button data-file-upload-target="preview" type="button"></button>
               <div data-file-upload-target="clear"></div>
             </div>
@@ -39,7 +41,7 @@
 
       <div class="event_settings__banner--logo">
         <% if event.logo.persisted? %>
-          <%= image_tag event.logo || "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
+          <%= image_tag polymorphic_url(event.logo), height: 100, class: "event_settings__banner--logo-image" %>
         <% else %>
           <%= image_tag "missing_logo.png", height: 100, class: "event_settings__banner--logo-image" %>
         <% end %>
@@ -57,7 +59,7 @@
             </button>
             <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
               <div data-controller="file-upload" class="justify-center">
-                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input" }, oninput: "document.getElementById('event_logo').files = this.files" %>
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input", controller: "mirror-files", action: "input->mirror-files#mirror", mirror_files_to_value: "event_logo" } %>
                 <button data-file-upload-target="preview" type="button"></button>
                 <div data-file-upload-target="clear"></div>
               </div>
@@ -78,6 +80,7 @@
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+              Donations and invoice payments currently show up on bank statements as <strong><%= event.statement_descriptor %></strong>.
             </p>
             <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
           </div>
@@ -112,12 +115,12 @@
 
   <h3 class="mb1" id="transparency_mode_heading">Transparency Mode</h3>
 
-  <div class="card mb3" data-controller="accordion">
+  <div class="card mb3">
     <div class="field field--checkbox">
       <span style="font-weight: 700">Make <%= possessive(event.name) %> finances transparent</span>
       <div class="field--checkbox--switch ml-auto">
         <%= form.label :is_public do %>
-          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled:, switch: true %>
+          <%= form.check_box :is_public, data: { herb_set: "change->transparency_enabled=$value" }, disabled:, switch: true %>
           <span class="slider"></span>
         <% end %>
       </div>
@@ -139,7 +142,7 @@
       </li>
       <li>With transparency mode off, your announcements page will only be visible once you have published your first announcement. It will always be visible with transparency mode on.</li>
     </ul>
-    <div data-accordion-target="content">
+    <div hidden="<%= !transparency_enabled %>">
       <div class="menu__divider" style="margin:0px"></div>
       <div class="field mt-2">
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
@@ -169,7 +172,7 @@
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
       <% if event.stripe_card_logo.persisted? %>
-        <%= image_tag event.stripe_card_logo, width: 48 %>
+        <%= image_tag polymorphic_url(event.stripe_card_logo), width: 48 %>
       <% end %>
       <div data-controller="file-upload">
         <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
@@ -242,13 +245,14 @@
       </li>
     </ul>
     <%= form.label :slug, "Organization URL" %>
-    <div class="input flex mt1" onclick="this.querySelector('input').focus()" tabindex="0" style="gap: 0.15rem">
+    <%# A label, so clicking anywhere in the box (the prefix too) focuses the field. %>
+    <label class="input flex mt1 font-normal" style="gap: 0.15rem">
       <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
       <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
-    </div>
+    </label>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
       <%= form.submit "Update", disabled: %>

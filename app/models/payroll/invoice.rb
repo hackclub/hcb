@@ -34,6 +34,7 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
     include Receiptable
+    include Hashid::Rails
 
     has_paper_trail
 
@@ -71,6 +72,14 @@ module Payroll
       end
     end
 
+    def state_color
+      case aasm_state.to_sym
+      when :approved then "success"
+      when :rejected then "error"
+      else "warning"
+      end
+    end
+
     # Returns false if the invoice was already reviewed or the event can't cover it.
     def approve(reviewed_by:)
       with_lock do
@@ -98,17 +107,27 @@ module Payroll
       nil
     end
 
+    def estimated_fee_details
+      payout_method = payroll_position.legal_entity&.default_payout_method
+      return nil if payout_method.nil?
+
+      fee_cents = Payment.estimated_fee_cents(amount, payroll_position.event, payout_method)
+      return nil if fee_cents.zero?
+
+      { amount_cents: fee_cents, reason: payout_method.fee_reason }
+    end
+
     private
 
     # The document the contractor uploaded is the receipt for the payment their
     # invoice triggers, so hand it over on approval. Payment::Attempt makes the
     # same hand-off from payment to transfer, but only at the moment it creates
     # the transfer — when the payee was ready to be paid straight away that
-    # already happened, so catch the transfer's HCB code up here too.
+    # already happened, so catch the transfer's ledger item up here too.
     def copy_receipts_to_payment!
       return if payment.nil?
 
-      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
+      [payment, payment.latest_payout&.ledger_item].compact.each do |receiptable|
         Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
       end
     end

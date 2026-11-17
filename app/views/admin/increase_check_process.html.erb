@@ -39,6 +39,9 @@
           <%= render "admin/review_fact", label: "Payee", value: check.recipient_name, copy: check.recipient_name %>
           <%= render "admin/review_fact", label: "Address", value: check.address, copy: check.address %>
           <%= render "admin/review_fact", label: "Payment for", value: check.payment_for %>
+          <% if check.payment.present? %>
+            <%= render "admin/review_fact", label: "Payment", value: render(partial: "admin/payment_link", locals: { payout: check }) %>
+          <% end %>
           <%= render "admin/review_fact", label: "Memo", value: check.memo %>
           <%= render "admin/review_fact", label: "Requested", value: format_datetime(check.created_at) %>
 
@@ -78,7 +81,7 @@
       <% else %>
         <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
-            This check has been <strong><%= check.aasm.current_state.to_s.humanize(capitalize: false) %></strong> — there's nothing to process.
+            This check has been <strong><%= check.aasm.current_state.to_s.humanize(capitalize: false) %></strong> by <%= @approver.present? ? user_mention(@approver) : "an unknown user" %> — there's nothing to process.
           </p>
         </section>
       <% end %>

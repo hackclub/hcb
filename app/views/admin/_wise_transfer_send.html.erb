@@ -1,0 +1,52 @@
+<%# The "Send" card on the admin Wise transfer page. Lives in its own partial
+    because herb's client slots can't wrap the page's turbo_frame_tag. %>
+<%# locals: (transfer:) %>
+<%# herb:slots client %>
+<%# herb:state (balance_limit: "") %>
+<%# The balance covers any amount up to what's available plus what this transfer already holds. %>
+<section
+  class="card flex flex-col gap-3.5 overflow-visible"
+  data-controller="amount-limit"
+  data-amount-limit-max-value="<%= transfer.event.balance_available_v2_cents + transfer.quoted_usd_amount_cents.to_i %>"
+  data-amount-limit-state-value="balance_limit">
+  <h3 class="eyebrow m-0">Send</h3>
+
+  <%= form_with(model: transfer, local: true, url: wise_transfer_path(transfer), method: :patch, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+    <div class="field">
+      <%= form.label :usd_amount, "Amount (USD)" %>
+      <div class="input input-group">
+        <span class="shrink-0 pl-1 font-bold opacity-50 select-none">$</span>
+        <%= form.number_field :usd_amount, placeholder: "500.00", step: 0.01, required: true, class: "bg-transparent",
+              data: {
+                controller: "truncate-decimal",
+                action: "truncate-decimal#truncate blur->truncate-decimal#pad change->amount-limit#update keyup->amount-limit#update",
+                amount_limit_target: "input"
+              } %>
+      </div>
+    </div>
+
+    <p class="m0 bold flex items-center gap-2" hidden="<%= balance_limit != "within" %>">
+      <%= inline_icon "checkmark", class: "text-green" %>
+      Sufficient funds available
+    </p>
+    <p class="m0 bold flex items-center gap-2" hidden="<%= balance_limit != "over" %>">
+      <%= inline_icon "important", class: "text-red" %>
+      Insufficient funds, please reject this transfer
+    </p>
+
+    <div>
+      <%= button_tag "🏦 Update amount", name: nil, class: "btn btn-default" %>
+      <span class="block text-[0.8125rem] leading-snug opacity-60">Updates the pending amount.</span>
+    </div>
+  <% end %>
+
+  <%= form_with(model: transfer, local: true, url: mark_sent_wise_transfer_path(transfer), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+    <div class="field">
+      <%= form.label :wise_id, "Wise ID / URL" %>
+      <%= form.text_field :wise_id, placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: transfer.usd_amount_cents.nil?,
+            data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
+    </div>
+
+    <div><%= button_tag "💸 Mark as sent", name: nil, disabled: transfer.usd_amount_cents.nil?, class: "btn bg-success" %></div>
+  <% end %>
+</section>

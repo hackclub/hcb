@@ -52,6 +52,10 @@
 
           <%= render "admin/review_fact", label: "Payment for", value: transfer.payment_for %>
 
+          <% if transfer.payment.present? %>
+            <%= render "admin/review_fact", label: "Payment", value: render(partial: "admin/payment_link", locals: { payout: transfer }) %>
+          <% end %>
+
           <% if transfer.invoiced_at.present? %>
             <%= render "admin/review_fact", label: "Invoice date", value: transfer.invoiced_at.strftime("%B %-d, %Y") %>
           <% end %>

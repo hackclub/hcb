@@ -1,19 +1,14 @@
-<%# locals: (form:, field_name:, label:, disabled:, sending: false, source_event: nil) %>
+<%# locals: (form:, field_name:, label:, disabled:, sending: false) %>
 
-<% search_path = if sending
-                   event_search_disbursements_path(sending: true)
-                 elsif source_event
-                   event_search_disbursements_path(source_event_id: source_event.public_id)
-                 else
-                   event_search_disbursements_path
-                 end %>
+<% search_path = event_search_disbursements_path(sending:) %>
 
 <% association_name = field_name.to_s.sub(/_id$/, "") %>
 <% selected_event = form.object.try(association_name) %>
 <%# Keyed on `public_id` rather than `id`, to match what `event_search` returns. %>
 <% selected = selected_event && {
      value: selected_event.public_id,
-     label: combobox_display(selected_event)
+     label: combobox_display(selected_event),
+     badge: combobox_badge(selected_event)
    } %>
 
 <div class="field flex-1">
