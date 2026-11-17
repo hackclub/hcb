@@ -5,6 +5,10 @@ class IncreaseCheckPolicy < ApplicationPolicy
     auditor_or_user?
   end
 
+  def show?
+    auditor_or_user?
+  end
+
   def create?
     user_who_can_transfer?
   end
