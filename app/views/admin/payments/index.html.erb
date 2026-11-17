@@ -1,22 +1,14 @@
 <% title "Payments" %>
 
-<%= form_with local: true, class: "card", url: admin_payments_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: admin_payments_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :state, Payment.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
-  </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @payments, entry_name: "payments" %>
-  </div>
-  <%= paginate @payments %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -31,7 +23,7 @@
   </thead>
   <tbody>
     <% @payments.each do |payment| %>
-      <tr class="<%= "admin-bg-pending" if payment.under_review? %>">
+      <tr class="<%= "shade-yellow" if payment.under_review? %>">
         <td><%= payment.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to payment.event.name, payment.event %></td>
         <td>
@@ -41,10 +33,16 @@
         <td><%= payment.purpose %></td>
         <td><%= payment.amount.format %></td>
         <td><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
-        <td><%= link_to "View", payment_path(payment) %></td>
+        <td><%= link_to "View", payment_path(payment), data: admin_popover_data_for(payment) %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @payments %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "payments" %>
+  </div>
+  <%= paginate @payments %>
+</div>
+</div>
