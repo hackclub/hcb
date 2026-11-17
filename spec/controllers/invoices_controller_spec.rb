@@ -28,6 +28,44 @@ describe InvoicesController do
     end
   end
 
+  describe "send controls" do
+    let(:parent) { create(:event) }
+    let(:event) { create(:event, parent:) }
+    let(:viewer) { create(:user) }
+
+    def send_invoice_trigger?
+      get :index, params: { event_id: event.friendly_id }
+      Nokogiri::HTML5(response.body).css("a[data-modal='new_invoice']").any?
+    end
+
+    def send_now_disabled?
+      get :new, params: { event_id: event.friendly_id }
+      Nokogiri::HTML5(response.body).at_css("input[type=submit][value='Send invoice now']").has_attribute?("disabled")
+    end
+
+    it "lets members of the organization send an invoice" do
+      create(:organizer_position, user: viewer, event:, role: :member)
+      create_session(viewer, verified: true)
+
+      expect(send_invoice_trigger?).to eq(true)
+      expect(send_now_disabled?).to eq(false)
+    end
+
+    it "does not offer to send an invoice to members of the parent organization" do
+      create(:organizer_position, user: viewer, event: parent, role: :member)
+      create_session(viewer, verified: true)
+
+      expect(send_invoice_trigger?).to eq(false)
+    end
+
+    it "disables sending for readers" do
+      create(:organizer_position, user: viewer, event:, role: :reader)
+      create_session(viewer, verified: true)
+
+      expect(send_now_disabled?).to eq(true)
+    end
+  end
+
   describe "create" do
     let(:user) { create(:user) }
     let(:event) { create(:event, organizers: [user]) }

@@ -130,7 +130,7 @@
     <% content_for :caption do %>
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
     <% end %>
-    <% if organizer_signed_in?(as: :member) %>
+    <% if InvoicePolicy.new(current_user, @event).create? %>
       <%= link_to new_event_invoice_path(event_id: @event.slug),
           class: "btn btn--icon bg-success",
           data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
