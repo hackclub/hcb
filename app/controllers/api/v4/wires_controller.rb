@@ -13,7 +13,7 @@ module Api
       end
 
       def show
-        @wire = authorize Wire.find_by_public_id!(params[:id])
+        @wire = authorize Wire.find_by_public_id!(params[:id]), :show_in_v4?
 
         render :show, status: :ok
       end
