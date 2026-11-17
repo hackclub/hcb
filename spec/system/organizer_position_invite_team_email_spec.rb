@@ -8,7 +8,7 @@ RSpec.describe "Team email warning on the invite form", type: :system do
   let(:warning) { "we discourage shared emails on HCB" }
 
   before do
-    create(:organizer_position, user:, event:, role: :manager)
+    create(:organizer_position, user:, event:, role: :manager, first_time: false)
 
     session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
     allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
