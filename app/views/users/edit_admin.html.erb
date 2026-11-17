@@ -129,7 +129,7 @@
         <% end %>
       <% end %>
     </section>
-    <% if @limit %>
+    <% if @limit && policy(@limit).history? %>
       <%= turbo_frame_tag "transfer_limit_history",
             src: admin_transfer_limit_history_user_path(@user),
             loading: :lazy do %>

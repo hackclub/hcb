@@ -133,6 +133,29 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_admin transfer limit history" do
+    render_views
+
+    def history_frame(viewer)
+      user = create(:user, :make_admin)
+      create(:governance_admin_transfer_limit, user:)
+      create_session(viewer, verified: true)
+
+      get(:edit_admin, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      response.parsed_body.at_css("turbo-frame#transfer_limit_history")
+    end
+
+    it "loads the history for admins" do
+      expect(history_frame(create(:user, :make_admin))).to be_present
+    end
+
+    it "does not load the admin-only history for auditors" do
+      expect(history_frame(create(:user, :make_auditor))).to be_nil
+    end
+  end
+
   describe "#admin_details_emails" do
     render_views
 
