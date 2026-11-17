@@ -158,6 +158,63 @@ RSpec.describe HcbCodesController, type: :controller do
       end
     end
 
+    context "for a viewer outside the organization" do
+      let(:event) { create(:event, is_public: true) }
+      let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+      let(:hcb_code) { expense.local_hcb_code }
+
+      before { cookies.delete(:session_token) }
+
+      context "when the organization is transparent" do
+        it "sends a signed out visitor to the transaction on the organization's ledger" do
+          get :show, params: { id: hcb_code.hashid }
+
+          expect(response).to redirect_to(event_path(event, page: 1, anchor: hcb_code.hashid))
+        end
+
+        it "sends a signed in non-member to the transaction on the organization's ledger" do
+          create_session(create(:user), verified: true)
+
+          get :show, params: { id: hcb_code.hashid }
+
+          expect(response).to redirect_to(event_path(event, page: 1, anchor: hcb_code.hashid))
+        end
+
+        it "links a pending transaction to the organization's ledger without a page" do
+          pending = create(:canonical_pending_transaction, event:, amount_cents: -50_00)
+
+          get :show, params: { id: pending.local_hcb_code.hashid }
+
+          expect(response).to redirect_to(event_path(event, anchor: pending.local_hcb_code.hashid))
+        end
+
+        it "asks a signed out visitor to sign in when they request it" do
+          get :show, params: { id: hcb_code.hashid, redirect_to_sign_in: true }
+
+          expect(response).to redirect_to(auth_users_path(return_to: request.url, require_reload: true))
+        end
+      end
+
+      context "when the organization is not transparent" do
+        let(:event) { create(:event, is_public: false) }
+
+        it "asks a signed out visitor to sign in" do
+          get :show, params: { id: hcb_code.hashid }
+
+          expect(response).to redirect_to(auth_users_path(return_to: request.url, require_reload: true))
+        end
+
+        it "turns away a signed in non-member" do
+          create_session(create(:user), verified: true)
+
+          get :show, params: { id: hcb_code.hashid }
+
+          expect(response).to redirect_to(root_path)
+          expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        end
+      end
+    end
+
     context "marking a repayment" do
       render_views
 

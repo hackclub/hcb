@@ -9,28 +9,7 @@ class HcbCodesController < ApplicationController
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
     authorize @hcb_code
-    @event =
-      begin
-        # Attempt to retrieve the event using the context of the
-        # previous page. Has a high chance of erroring, but we'll give it
-        # a shot.
-        route = Rails.application.routes.recognize_path(request.referrer)
-        model = route[:controller].classify.constantize
-        object = model.find(route[:id])
-        event = model == Event ? object : object.event
-        raise StandardError unless @hcb_code.events.include?(event) && current_user.events.include?(event)
-
-        event
-      rescue
-        @hcb_code.events.min_by do |e|
-          e.users.include?(current_user) ? 0 : 1
-        end
-      rescue
-        @hcb_code.event
-      end
-
-    hcb = @hcb_code.hcb_code
-    hcb_id = @hcb_code.hashid
+    @event = show_event
 
     return not_found if @hcb_code.unused?
 
@@ -63,16 +42,17 @@ class HcbCodesController < ApplicationController
         raise
       end
     else
-      raise unless @event.is_public? && !params[:redirect_to_sign_in]
+      @event ||= show_event
+      raise unless @event&.is_public? && !params[:redirect_to_sign_in]
 
       if @hcb_code.canonical_transactions.any?
         txs = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-        pos = txs.index { |tx| tx.hcb_code == hcb } + 1
+        pos = txs.index { |tx| tx.hcb_code == @hcb_code.hcb_code } + 1
         page = (pos.to_f / EventsController::TRANSACTIONS_PER_PAGE).ceil
 
-        redirect_to event_path(@event, page:, anchor: hcb_id)
+        redirect_to event_path(@event, page:, anchor: @hcb_code.hashid)
       else
-        redirect_to event_path(@event, anchor: hcb_id)
+        redirect_to event_path(@event, anchor: @hcb_code.hashid)
       end
     end
   end
@@ -169,6 +149,27 @@ class HcbCodesController < ApplicationController
     file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
 
     send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
+  end
+
+  private
+
+  def show_event
+    # Attempt to retrieve the event using the context of the
+    # previous page. Has a high chance of erroring, but we'll give it
+    # a shot.
+    route = Rails.application.routes.recognize_path(request.referrer)
+    model = route[:controller].classify.constantize
+    object = model.find(route[:id])
+    event = model == Event ? object : object.event
+    raise StandardError unless @hcb_code.events.include?(event) && current_user.events.include?(event)
+
+    event
+  rescue
+    @hcb_code.events.min_by do |e|
+      e.users.include?(current_user) ? 0 : 1
+    end
+  rescue
+    @hcb_code.event
   end
 
 end
