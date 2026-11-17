@@ -35,11 +35,11 @@ class ReceiptablePolicy < ApplicationPolicy
     return false if authorizable.nil?
 
     # Ledger::Item deliberately has no generic `event`/`events` method (it can be
-    # mapped onto more than one ledger), so look up its event the same way
-    # Ledger::ItemPolicy#rename? does instead of assuming a single association.
+    # mapped onto more than one ledger), so resolve its event the same way
+    # Ledger::ItemPolicy does instead of assuming a single association.
     events =
       if authorizable.is_a?(::Ledger::Item)
-        [authorizable.primary_ledger&.event]
+        [authorizable.primary_ledger&.event || authorizable.primary_ledger&.card_grant&.event]
       else
         authorizable.try(:events) || [authorizable.event]
       end

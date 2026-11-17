@@ -13,12 +13,14 @@ class Ledger
 
     alias_method :hcb?, :show?
 
+    # Pins order an organization's transaction list; a card grant's ledger has
+    # none to pin to.
     def pin?
-      admin_or_member?
+      record.primary_ledger&.event.present? && admin_or_member?
     end
 
     def unpin?
-      admin_or_member?
+      pin?
     end
 
     def rename?
@@ -60,7 +62,7 @@ class Ledger
     end
 
     def admin_or_member?
-      user&.admin? || OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+      user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
     end
 
   end

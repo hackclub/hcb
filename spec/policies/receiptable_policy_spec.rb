@@ -26,6 +26,39 @@ RSpec.describe ReceiptablePolicy, type: :policy do
       end
     end
 
+    context "when the record is a Ledger::Item on a card grant's ledger" do
+      # Stub transfer_money to avoid disbursement side effects (see ledger_spec.rb)
+      before { allow_any_instance_of(CardGrant).to receive(:transfer_money) }
+
+      let(:parent_event) { create(:event) }
+      let(:event) { create(:event, parent: parent_event) }
+      let(:ledger_item) do
+        create(:ledger_item).tap do |item|
+          Ledger::Mapping.map_primary!(ledger: create(:card_grant, event:).ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
+        end
+      end
+
+      def user_with_role(role, on:)
+        create(:user).tap { |user| create(:organizer_position, user:, event: on, role:) }
+      end
+
+      it "authorizes a member of the grant's organization" do
+        expect(described_class.new(user_with_role(:member, on: event), ledger_item).upload?).to be(true)
+      end
+
+      it "authorizes a manager of a parent organization" do
+        expect(described_class.new(user_with_role(:manager, on: parent_event), ledger_item).upload?).to be(true)
+      end
+
+      it "does not authorize a reader of the grant's organization" do
+        expect(described_class.new(user_with_role(:reader, on: event), ledger_item).upload?).to be_falsey
+      end
+
+      it "does not authorize a member of a parent organization" do
+        expect(described_class.new(user_with_role(:member, on: parent_event), ledger_item).upload?).to be_falsey
+      end
+    end
+
     # A transaction's receipts are attached to its ledger item (#14106), so the
     # item has to grant exactly what its HCB code grants.
     context "when the record is a Ledger::Item with an HCB code" do
