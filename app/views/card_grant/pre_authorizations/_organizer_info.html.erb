@@ -1,7 +1,7 @@
 <%# locals: { pre_authorization:, link_to_pre_authorization: false } %>
 
-<% reader = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :reader) %>
-<% manager = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :manager) %>
+<% reader = auditor_signed_in? || OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :reader) %>
+<% manager = policy(pre_authorization).organizer_approve? %>
 
 <% if reader %>
     <% no_data = capture do %>

@@ -95,6 +95,16 @@ RSpec.describe StripeCardsController do
       )
     end
 
+    it "shows auditors the last four digits on the card face" do
+      setup_context => { card: }
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:show, params: { id: card.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.css(".stripe-card__number").map { |el| el.text.squish }).to all(eq(card.hidden_card_number_with_last_four))
+    end
+
     context "when a physical card is still shipping" do
       def setup_shipping_context
         setup_context => { user:, event: }

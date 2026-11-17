@@ -23,5 +23,30 @@ RSpec.describe CardGrant::PreAuthorizationsController do
       expect(response.body).to include("javascript:alert(1)//http://example.com")
       expect(response.body).not_to include('href="javascript:')
     end
+
+    it "shows auditors the fraud prevention information" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      card_grant = create(:card_grant, event:)
+      CardGrant::PreAuthorization.create!(card_grant:).update_columns(aasm_state: "submitted")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:show, params: { card_grant_id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Fraud prevention information")
+    end
+
+    it "keeps the fraud prevention information away from the grant recipient" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      CardGrant::PreAuthorization.create!(card_grant:).update_columns(aasm_state: "submitted")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { card_grant_id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Fraud prevention information")
+    end
   end
 end
