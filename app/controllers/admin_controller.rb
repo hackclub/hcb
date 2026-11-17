@@ -299,6 +299,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = safe_per(100)
     @unique_bank_identifier = params[:unique_bank_identifier].presence
+    @bank_identifiers = known_bank_identifiers
 
     relation = RawCsvTransaction
     relation = relation.where(unique_bank_identifier: @unique_bank_identifier) if @unique_bank_identifier
@@ -309,6 +310,7 @@ class AdminController < Admin::BaseController
   end
 
   def raw_transaction_new
+    @bank_identifiers = known_bank_identifiers
   end
 
   def raw_transaction_create
@@ -1939,6 +1941,16 @@ class AdminController < Admin::BaseController
     pending_task :organizer_position_deletion_requests
 
     @pending_tasks
+  end
+
+  # Bank identifiers we've actually seen transactions for, for the raw
+  # transaction filter and manual-entry form.
+  def known_bank_identifiers
+    HashedTransaction
+      .where.not(unique_bank_identifier: nil)
+      .distinct
+      .order(unique_bank_identifier: :asc)
+      .pluck(:unique_bank_identifier)
   end
 
 end
