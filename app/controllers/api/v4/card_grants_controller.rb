@@ -11,7 +11,7 @@ module Api
       def index
         if params[:event_id].present?
           set_api_event
-          authorize @event, :transfers_in_v4?
+          authorize @event, :card_grant_overview_in_v4?
           @card_grants = @event.card_grants.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
