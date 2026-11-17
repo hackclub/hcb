@@ -75,6 +75,12 @@
           <span class="grant-hero__soft grant-meta__label">Granted to</span>
           <%= user_mention card_grant.user, class: "grant-meta__value" %>
         </div>
+        <% if organizer_signed_in? %>
+          <div>
+            <span class="grant-hero__soft grant-meta__label">Email</span>
+            <%= copy_to_clipboard card_grant.email, class: "grant-meta__value", tooltip_direction: "w" %>
+          </div>
+        <% end %>
         <div>
           <span class="grant-hero__soft grant-meta__label">Sent</span>
           <span class="grant-meta__value tooltipped tooltipped--w" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
