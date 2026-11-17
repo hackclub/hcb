@@ -907,6 +907,51 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "sub-organization actions for parent organization members" do
+    render_views
+
+    let(:parent) { create(:event) }
+    let(:event) { create(:event, parent:) }
+    let(:viewer) { create(:user) }
+
+    def modal_triggers(action, params)
+      get(action, params:)
+      Nokogiri::HTML5(response.body).css("a[data-behavior='modal_trigger']").map { |link| link["data-modal"] }
+    end
+
+    context "as a member of the parent organization" do
+      before do
+        create(:organizer_position, user: viewer, event: parent, role: :member)
+        create_session(viewer, verified: true)
+      end
+
+      it "does not offer to order a card" do
+        expect(modal_triggers(:card_overview, { event_id: event.slug })).not_to include("order_card")
+      end
+
+      it "does not offer to get reimbursed" do
+        expect(modal_triggers(:show, { id: event.slug })).not_to include("create_reimbursement")
+        expect(modal_triggers(:reimbursements, { event_id: event.slug })).not_to include("create_reimbursement_report")
+      end
+    end
+
+    context "as a member of the sub-organization" do
+      before do
+        create(:organizer_position, user: viewer, event:, role: :member)
+        create_session(viewer, verified: true)
+      end
+
+      it "offers to order a card" do
+        expect(modal_triggers(:card_overview, { event_id: event.slug })).to include("order_card")
+      end
+
+      it "offers to get reimbursed" do
+        expect(modal_triggers(:show, { id: event.slug })).to include("create_reimbursement")
+        expect(modal_triggers(:reimbursements, { event_id: event.slug })).to include("create_reimbursement_report")
+      end
+    end
+  end
+
   describe "#card_overview for auditors" do
     render_views
 
