@@ -166,6 +166,85 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#edit organization and delete controls" do
+    render_views
+
+    def event_options
+      Nokogiri::HTML5(response.body).css("select[name='reimbursement_report[event_id]'] option").map(&:text).reject(&:blank?)
+    end
+
+    def delete_button?
+      Nokogiri::HTML5(response.body).css("button, input[type=submit]").any? { |button| (button.text.presence || button["value"]).to_s.include?("Delete report") }
+    end
+
+    it "only lists organizations the manager could move the report to" do
+      manager = create(:user)
+      event = create(:event, name: "Current Org")
+      managed = create(:event, name: "Managed Org")
+      member_only = create(:event, name: "Member Org")
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: manager, event: managed, role: :manager)
+      create(:organizer_position, user: manager, event: member_only, role: :member)
+      report = create(:reimbursement_report, user: create(:user), event:)
+      create_session(manager, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(event_options).to contain_exactly("Current Org", "Managed Org")
+    end
+
+    it "offers the creator Delete report on a draft" do
+      member = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(delete_button?).to eq(true)
+    end
+
+    it "does not offer a manager Delete report once the report is submitted" do
+      manager = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      report = create(:reimbursement_report, user: create(:user), event:)
+      report.update_columns(aasm_state: "submitted")
+      create_session(manager, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(delete_button?).to eq(false)
+    end
+  end
+
+  describe "#show expense move form" do
+    render_views
+
+    it "only offers new reports on organizations the viewer can create them for" do
+      manager = create(:user)
+      event = create(:event, name: "Current Org")
+      managed = create(:event, name: "Managed Org")
+      member_only = create(:event, name: "Member Org")
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: manager, event: managed, role: :manager)
+      create(:organizer_position, user: manager, event: member_only, role: :member)
+      report = create(:reimbursement_report, user: manager, event:)
+      expense = create(:reimbursement_expense, report:)
+      create_session(manager, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      options = Nokogiri::HTML5(response.body).css("#move_#{expense.id} select[name='reimbursement_expense[event_id]'] option").map(&:text).reject(&:blank?)
+      expect(options).to include("Current Org", "Managed Org")
+      expect(options).not_to include("Member Org")
+    end
+  end
+
   describe "#update" do
     context "when event_id is changed to an event the user does not belong to" do
       it "blocks the event change and leaves the report on its original event" do

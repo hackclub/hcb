@@ -15,12 +15,23 @@
     </div>
   <% end %>
   <% if @report.submitted? || @report.draft? %>
+    <% unless admin_signed_in? %>
+      <% movable_events = @report.event ? [@report.event] : [] %>
+      <% if policy(@report).change_event? %>
+        <%# Checks a saved copy moved to each organization, the way #update authorizes the move. %>
+        <% moved_report = Reimbursement::Report.find(@report.id) %>
+        <% movable_events += current_user.events.not_hidden.filter_demo_mode(false).select do |event|
+             moved_report.event = event
+             Reimbursement::ReportPolicy.new(current_user, moved_report).change_event?
+           end %>
+      <% end %>
+    <% end %>
     <div class="field event-select-target">
       <%= form.label :event_id, "Organization", class: "mt2" %>
       <%= form.select(:event_id,
           admin_signed_in? ?
             Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
-            ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
+            movable_events.uniq.map { |event| [event.name, event.id] },
           { prompt: "Select an event…", required: true },
           { disabled: !policy(@report).change_event? }) %>
       <% if @report.card_grant.present? %>
@@ -44,12 +55,14 @@
   <div class="flex items-center w-full justify-between">
     <%= form.submit "Update report", class: "left mt2" %>
 
-    <% if current_user.admin? && !@report.draft? %>
-      <% admin_tool("right mt2") do %>
-        <%= button_to "Delete report", reimbursement_report_path(@report), class: "bg-error btn", method: :delete, type: "button" %>
+    <% if policy(@report).destroy? %>
+      <% if @report.draft? %>
+        <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
+      <% else %>
+        <% admin_tool("right mt2") do %>
+          <%= button_to "Delete report", reimbursement_report_path(@report), class: "bg-error btn", method: :delete, type: "button" %>
+        <% end %>
       <% end %>
-    <% else %>
-      <%= button_to "Delete report", reimbursement_report_path(@report), class: "right mt2 bg-error btn", method: :delete, type: "button" %>
     <% end %>
   </div>
 <% end %>
