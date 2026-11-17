@@ -75,7 +75,7 @@
           <span class="grant-hero__soft grant-meta__label">Granted to</span>
           <%= user_mention card_grant.user, class: "grant-meta__value" %>
         </div>
-        <% if organizer_signed_in? %>
+        <% if policy(card_grant).view_email? %>
           <div>
             <span class="grant-hero__soft grant-meta__label">Email</span>
             <%= copy_to_clipboard card_grant.email, class: "grant-meta__value", tooltip_direction: "w" %>
