@@ -318,6 +318,34 @@ RSpec.describe CardGrantsController do
       expect(flash[:error]).to match(/not authorized/i)
       expect(card_grant.reload.purpose).to eq(original_purpose)
     end
+
+    it "allows auditors to view, but not edit, grant settings" do
+      member = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("View grant settings")
+      expect(response.body).not_to include("Manage grant")
+    end
+
+    it "keeps grant settings away from readers" do
+      reader = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      card_grant = create(:card_grant, event:)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("View grant settings")
+      expect(response.body).not_to include("Manage grant")
+    end
   end
 
   describe "#card_index" do

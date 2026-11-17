@@ -23,7 +23,7 @@
         <span class="grant-hero__soft">&nbsp;&nbsp;• <%= card_grant.purpose %></span>
       <% end %>
     </p>
-    <% if show_actions && organizer_signed_in?(as: :member) %>
+    <% if show_actions && policy(card_grant).edit_purpose? %>
       <div class="flex items-center flex-wrap gap-2">
         <%= render "card_grants/actions/edit", card_grant: %>
       </div>
