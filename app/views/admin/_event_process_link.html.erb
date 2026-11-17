@@ -1,0 +1,23 @@
+<%# locals: (event:) %>
+<% modal_id = dom_id(event, :event_process_modal) %>
+<% needs_review = event.pending? || event.unapproved? %>
+
+<% if needs_review %>
+  <%= link_to "Process", "##{modal_id}", rel: "modal:open", class: "btn" %>
+<% else %>
+  <%= link_to "Review", "##{modal_id}", rel: "modal:open" %>
+<% end %>
+
+<section
+  id="<%= modal_id %>"
+  class="modal modal--scroll"
+  data-behavior="modal"
+  role="dialog"
+  data-controller="turbo-frame-modal"
+  data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+  <%# Lazy: the frame is only fetched when the modal is opened, so a page of 100
+      organizations doesn't fire 100 requests. %>
+  <%= turbo_frame_tag(dom_id(event, :event_process_frame), src: event_process_admin_path(event, return_to: request.fullpath), loading: :lazy) do %>
+    Loading...
+  <% end %>
+</section>

@@ -110,6 +110,8 @@ class AdminController < Admin::BaseController
 
   def event_process
     @event = Event.friendly.find(params[:id])
+
+    render(layout: !turbo_frame_request?)
   end
 
   def event_new
@@ -200,9 +202,9 @@ class AdminController < Admin::BaseController
 
     state = ::EventService::ToggleApproved.new(@event).run
 
-    redirect_to event_process_admin_path(@event), flash: { success: "Successfully marked as #{state}" }
+    redirect_to event_process_return_path, flash: { success: "Successfully marked as #{state}" }
   rescue => e
-    redirect_to event_process_admin_path(@event), flash: { error: e.message }
+    redirect_to event_process_return_path, flash: { error: e.message }
   end
 
   def event_reject
@@ -210,9 +212,9 @@ class AdminController < Admin::BaseController
 
     state = ::EventService::Reject.new(@event).run
 
-    redirect_to event_process_admin_path(@event), flash: { success: "Event has been #{state}" }
+    redirect_to event_process_return_path, flash: { success: "Event has been #{state}" }
   rescue => e
-    redirect_to event_process_admin_path(@event), flash: { error: e.message }
+    redirect_to event_process_return_path, flash: { error: e.message }
   end
 
   def bank_fees
@@ -1715,6 +1717,27 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  # Where to send an admin after approving/rejecting an organization. The review
+  # modal is opened from the organizations table and passes the table's URL so
+  # the admin lands back on the same page of results, filters intact.
+  # The event process page is rendered inside a popover on the admin index
+  # pages, so we send the admin back where they came from. Only same-host paths
+  # are honoured; anything else falls back to the process page itself.
+  def event_process_return_path
+    fallback = event_process_admin_path(@event)
+    return_to = params[:return_to].presence
+    return fallback unless return_to&.start_with?("/")
+    return fallback if return_to.start_with?("//", "/\\")
+
+    absolute = begin
+      URI.join(request.base_url, return_to).to_s
+    rescue URI::Error
+      nil
+    end
+
+    (absolute && url_from(absolute)) || fallback
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])
