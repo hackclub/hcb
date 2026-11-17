@@ -22,7 +22,7 @@
     </p>
     <%= pop_icon_to "edit",
       edit_transaction_path(@transaction),
-      disabled: !organizer_signed_in?,
+      disabled: !policy(@transaction).edit?,
       class: "right tooltipped tooltipped--w", 'aria-label': "Rename transaction" %>
   </div>
 

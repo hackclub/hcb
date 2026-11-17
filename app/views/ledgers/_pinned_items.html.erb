@@ -22,7 +22,7 @@
             <%= render "ledger/items/icon", ledger_item: %>
           </footer>
         <% end %>
-        <% if organizer_signed_in? %>
+        <% if policy(ledger_item).unpin? %>
           <%= button_to ledger_item_unpin_path(ledger_item),
                 method: :post,
                 class: "pinned__transaction__pin pointer pop tooltipped tooltipped--w",

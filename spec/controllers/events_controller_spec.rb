@@ -384,6 +384,37 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#ledger pinned transactions" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:viewer) { create(:user) }
+
+    def unpin_buttons
+      item = create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza").ledger_item
+      item.primary_mapping.update_columns(pinned_at: Time.current)
+      Flipper.enable_actor(:new_ledger_2026_07_17, viewer)
+      create_session(viewer, verified: true)
+
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      Nokogiri::HTML5(response.body).css("form[action='#{ledger_item_unpin_path(item)}']")
+    end
+
+    it "offers members Unpin" do
+      create(:organizer_position, user: viewer, event:, role: :member)
+
+      expect(unpin_buttons).to be_present
+    end
+
+    it "does not offer readers Unpin" do
+      create(:organizer_position, user: viewer, event:, role: :reader)
+
+      expect(unpin_buttons).to be_empty
+    end
+  end
+
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
