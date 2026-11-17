@@ -95,6 +95,11 @@
             <button type="button" class="!shadow-none btn w-full text-sm mt-1" hidden="<%= selected_mode != "manual" %>" data-herb-set="selected_mode=contractor">
               I'll have the recipient fill this out instead
             </button>
+          <% else %>
+            <%# Without the flag the manual path is disabled; the button stays visible to signal it's on the way. %>
+            <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" disabled>
+              Submitting tax and payout information on behalf of the recipient — coming soon
+            </button>
           <% end %>
         </div>
       </div>
