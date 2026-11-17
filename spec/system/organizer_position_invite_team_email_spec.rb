@@ -18,7 +18,7 @@ RSpec.describe "Team email warning on the invite form", type: :system do
     visit new_event_organizer_position_invite_path(event)
     expect(page).to have_no_text(warning)
 
-    email = find_field("organizer_position_invite[email]")
+    email = find_field("Email address")
 
     email.fill_in(with: "hell")
     expect(page).to have_no_text(warning)
