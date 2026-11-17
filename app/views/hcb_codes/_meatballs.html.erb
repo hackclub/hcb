@@ -1,8 +1,8 @@
 <% is_pinned = hcb_code.ledger_item&.pinned? %>
-<% pinnable = hcb_code.ledger_item&.pinnable? %>
-<% flaggable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && hcb_code.ledger_item.present? && !hcb_code.ledger_item.personal_transaction.present? %>
-<% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
-<% disputable = can_dispute?(hcb_code:) %>
+<% pinnable = hcb_code.ledger_item&.pinnable? && policy(hcb_code.ledger_item).pin? %>
+<% flaggable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && hcb_code.ledger_item.present? && !hcb_code.ledger_item.personal_transaction.present? && policy(hcb_code.ledger_item).invoice_as_personal_transaction? %>
+<% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? && policy(hcb_code.invoice).manually_mark_as_paid? %>
+<% disputable = policy(hcb_code).dispute? && can_dispute?(hcb_code:) %>
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? && hcb_code.ledger_item&.repaying_repayment.nil? %>
 <% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
 <%# Only offered when there's something of the same amount to match it with. A transfer's sender links it through the incoming side. %>
@@ -14,9 +14,10 @@
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 
 <%# A transfer's sender can link it as a repayment without being a member here; everything else is for members. %>
-<% disputable = flaggable = pinnable = open_invoice = reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(as: :member) %>
+<% reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(as: :member) %>
+<% editable_donor = hcb_code.donation? && hcb_code.donation.present? && policy(hcb_code.donation).update? %>
 
-<% if disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || markable_repayment || allowable_on_card || allowable_on_event %>
+<% if disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || markable_repayment || allowable_on_card || allowable_on_event || editable_donor %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -64,7 +65,7 @@
           Manually mark as paid
         <% end %>
       <% end %>
-      <% if hcb_code.donation? && organizer_signed_in?(as: :member) %>
+      <% if editable_donor %>
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
           <%= inline_icon "person", size: 24 %>
           Edit donor

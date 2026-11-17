@@ -3,6 +3,7 @@
 require "rails_helper"
 
 RSpec.describe HcbCodesController, type: :controller do
+  include DonationSupport
   include SessionSupport
   render_views
 
@@ -203,6 +204,92 @@ RSpec.describe HcbCodesController, type: :controller do
         get :show, params: { id: expense.local_hcb_code.hashid }
 
         expect(response.body).not_to include("Mark as repaid")
+      end
+    end
+
+    describe "transaction actions" do
+      let(:parent) { create(:event) }
+      let(:event) { create(:event, parent:) }
+      let(:viewer) { create(:user) }
+      let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+      let(:tag) { event.tags.create!(label: "Food", color: "muted", emoji: "🍕") }
+
+      before { expense.ledger_item.tags << tag }
+
+      def actions
+        get :show, params: { id: expense.local_hcb_code.hashid }
+        expect(response).to be_successful
+        page = Nokogiri::HTML5(response.body)
+        {
+          rename: page.css("a[aria-label='Rename']").any?,
+          pin: page.css("a[href='#{ledger_item_pin_path(expense.ledger_item)}']").any?,
+          remove_tag: page.css(".tx-tag form[action='#{ledger_item_toggle_tag_path(expense.ledger_item)}']").any?
+        }
+      end
+
+      it "are offered to members of the organization" do
+        create(:organizer_position, user: viewer, event:, role: :member)
+        create_session(viewer, verified: true)
+
+        expect(actions).to eq(rename: true, pin: true, remove_tag: true)
+      end
+
+      it "are not offered to members of the parent organization" do
+        create(:organizer_position, user: viewer, event: parent, role: :member)
+        create_session(viewer, verified: true)
+
+        expect(actions).to eq(rename: false, pin: false, remove_tag: false)
+      end
+    end
+
+    describe "donation actions" do
+      let(:event) { create(:event) }
+      let(:viewer) { create(:user) }
+      let(:donation) { create(:donation, event:) }
+
+      before do
+        stub_donation_payment_intent_creation
+        allow_any_instance_of(Donation).to receive(:stripe_obj).and_return({})
+      end
+
+      def page
+        get :show, params: { id: HcbCode.find_or_create_by!(hcb_code: donation.hcb_code).hashid }
+        expect(response).to be_successful
+        Nokogiri::HTML5(response.body)
+      end
+
+      def edit_donor_offered?
+        page.css("a[data-modal='update']").any?
+      end
+
+      def refund_offered?
+        page.css("button[data-modal='refund']").any?
+      end
+
+      it "offers managers Edit donor" do
+        create(:organizer_position, user: viewer, event:, role: :manager)
+        create_session(viewer, verified: true)
+
+        expect(edit_donor_offered?).to eq(true)
+      end
+
+      it "does not offer members Edit donor" do
+        create(:organizer_position, user: viewer, event:, role: :member)
+        create_session(viewer, verified: true)
+
+        expect(edit_donor_offered?).to eq(false)
+      end
+
+      it "offers admins Issue refund" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        expect(refund_offered?).to eq(true)
+      end
+
+      it "does not offer auditors Issue refund" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        expect(refund_offered?).to eq(false)
       end
     end
   end
