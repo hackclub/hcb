@@ -28,7 +28,7 @@
           <% elsif defined?(receiptable) && receiptable.no_or_lost_receipt? %>
             <p class="card__banner bg-muted white bold flex items-center mt0 mb2">
               <%= inline_icon "view-close", size: 24, class: "mr2" %>
-              Marked no/lost receipt
+              <%= no_or_lost_receipt_label(receiptable) %>
             </p>
           <% end %>
         <% end %>

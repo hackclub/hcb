@@ -50,4 +50,15 @@ module ReceiptsHelper
     end
   end
 
+
+  # Banner text for a transaction marked no/lost. While its lost receipt
+  # statement's PDF is still being generated, says so and checks back for it.
+  def no_or_lost_receipt_label(receiptable)
+    statement = LostReceipt::Statement.find_by(receiptable: receiptable.try(:receipt_hcb_code) || receiptable, receipt_id: nil)
+    return "Marked no/lost receipt" unless statement
+
+    # Stop reloading after a couple of minutes: by then the job has failed and is retrying slowly.
+    tag.span("Generating lost receipt statement...", data: ({ controller: "reload" } if statement.created_at > 2.minutes.ago))
+  end
+
 end
