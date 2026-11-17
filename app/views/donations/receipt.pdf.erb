@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Donation receipt</title>
+    <style>
+      .container {
+        font-size: 12pt;
+        line-height: 1.15;
+        position: relative;
+        padding-left: 40pt;
+        padding-right: 40pt;
+        display: block;
+      }
+
+      .centerImage {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      body {
+        margin: 8px;
+        font-family: Arial, sans-serif;
+      }
+
+      h1 { font-size: 12.5pt; }
+
+      table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        font-size: 9pt;
+      }
+
+      table, th, td { border: 1px solid gray; }
+      th, td { padding: 4pt; text-align: left; overflow-wrap: break-word; }
+      th { width: 30%; }
+    </style>
+  </head>
+  <body>
+    <br>
+    <div class="container">
+      <br>
+      <div style="height: 80px;">
+        <p style="margin: 0; float: right; font-size: 11pt; line-height: 1.5;">
+          <strong>Hack Club</strong><br>
+          <span style="white-space: nowrap;">8605 Santa Monica Boulevard #86294</span><br>
+          West Hollywood, CA 90069<br>
+          hcb@hackclub.com
+        </p>
+        <%= image_tag(wicked_pdf_asset_base64("hack_club_logo.png"), width: 156.6, height: 26.88, class: "centerImage", alt: "Hack Club") %>
+      </div>
+      <br>
+      <br>
+      <p style="margin-top: 2rem; margin-bottom: 0.5rem;"><%= @donation.donated_at.strftime("%B %-d, %Y") %></p>
+      <h1><%= @donation.tax_deductible? ? "Donation" : "Payment" %> receipt</h1>
+      <br>
+      <div style="line-height: 1.25;">
+        <p>Thank you for your <%= @donation.tax_deductible? ? "donation" : "payment" %> to <strong><%= @donation.event.name %></strong>.</p>
+        <table>
+          <tbody>
+            <tr>
+              <th scope="row">Donor</th>
+              <td><%= @donation.name(show_anonymous: true) %></td>
+            </tr>
+            <% if @donation.email.present? %>
+              <tr>
+                <th scope="row">Email</th>
+                <td><%= @donation.email %></td>
+              </tr>
+            <% end %>
+            <tr>
+              <th scope="row">Amount</th>
+              <td><%= render_money @donation.amount %> USD</td>
+            </tr>
+            <tr>
+              <th scope="row">Receipt ID</th>
+              <td><%= @donation.public_id %></td>
+            </tr>
+          </tbody>
+        </table>
+        <p><%= @donation.event.name %> is fiscally sponsored by Hack Club, a 501(c)(3) nonprofit. <span style="white-space: nowrap;">Our EIN is 81-2908499.</span></p>
+        <% if @donation.tax_deductible? %>
+          <p>No goods or services were provided in return for this gift.</p>
+        <% end %>
+        <p>Questions? Contact <%= @donation.event.donation_reply_to_email.presence || "hcb@hackclub.com" %>.</p>
+      </div>
+    </div>
+  </body>
+</html>
