@@ -86,6 +86,24 @@ RSpec.describe Ledger::ItemsController, type: :controller do
   end
 
   describe "GET #show" do
+    context "when the charge is part of a subscription" do
+      include_context "card locking charges"
+
+      it "shows the subscription to an auditor" do
+        stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:)
+        ledger_items = [70, 40, 10].map do |days_ago|
+          create_settled_card_charge(user:, stripe_card:, settled_at: days_ago.days.ago, amount_cents: -20_00, merchant_network_id: "vercel-1", merchant_category_code: "5734").ledger_item
+        end
+        attach_authorization(ledger_items.last, pending_transaction: true)
+        ledger_items.each { |ledger_item| Ledger::Subscription::Detect.new(ledger_item.reload).run }
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: ledger_items.last.hashid }
+
+        expect(response.body).to include("Detected as a subscription").and include("(this charge)")
+      end
+    end
+
     context "when the item has no HCB code" do
       it "renders for an auditor" do
         create_session(create(:user, :make_auditor), verified: true)

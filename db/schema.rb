@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_230004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -463,6 +463,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   end
 
   create_table "card_charges", force: :cascade do |t|
+    t.string "authorization_method"
     t.datetime "created_at", null: false
     t.string "merchant_category"
     t.string "merchant_network_id"
@@ -1651,6 +1652,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.text "short_code"
     t.string "special_appearance"
     t.string "status", default: "pending", null: false
+    t.bigint "subscription_id"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -1660,6 +1662,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
+    t.index ["subscription_id"], name: "index_ledger_items_on_subscription_id"
   end
 
   create_table "ledger_items_tags", primary_key: ["ledger_item_id", "tag_id"], force: :cascade do |t|
@@ -1684,6 +1687,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
     t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
     t.index ["mapped_by_id"], name: "index_ledger_mappings_on_mapped_by_id"
+  end
+
+  create_table "ledger_subscriptions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.integer "cadence_days", null: false
+    t.integer "confidence", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_charged_at", null: false
+    t.bigint "ledger_id", null: false
+    t.string "merchant_key", null: false
+    t.string "name", null: false
+    t.datetime "next_expected_at", null: false
+    t.bigint "payment_rail_id", null: false
+    t.string "payment_rail_type", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "variable_amount", default: false, null: false
+    t.index ["ledger_id", "merchant_key"], name: "index_ledger_subscriptions_on_ledger_id_and_merchant_key"
+    t.index ["payment_rail_type", "payment_rail_id"], name: "index_ledger_subscriptions_on_payment_rail"
   end
 
   create_table "ledgers", force: :cascade do |t|
@@ -3252,6 +3273,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_items", "ledger_subscriptions", column: "subscription_id", on_delete: :nullify
   add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_items_tags", "ledger_items"
   add_foreign_key "ledger_items_tags", "tags"
@@ -3259,6 +3281,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
   add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
+  add_foreign_key "ledger_subscriptions", "ledgers"
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"

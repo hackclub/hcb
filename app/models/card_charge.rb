@@ -5,6 +5,7 @@
 # Table name: card_charges
 #
 #  id                                :bigint           not null, primary key
+#  authorization_method              :string
 #  merchant_category                 :string
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
@@ -42,6 +43,13 @@ class CardCharge < ApplicationRecord
 
   before_create :set_merchant_data
   before_create :set_stripe_card
+  # On every save, not only on create, since the authorization can arrive
+  # after the charge settles.
+  before_save :set_authorization_method
+  # An authorization that arrives late can say the charge was paid in person.
+  after_update if: -> { saved_change_to_authorization_method? && card_present? && ledger_item.present? } do
+    Ledger::Subscription.unlink(ledger_item)
+  end
 
   def stripe_cardholder
     stripe_card&.stripe_cardholder
@@ -49,6 +57,17 @@ class CardCharge < ApplicationRecord
 
   def merchant_data
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_data")
+  end
+
+  IN_PERSON_AUTHORIZATION_METHODS = %w[chip swipe contactless].freeze
+
+  # Not paid in person, going by the authorization. A charge without one (a
+  # force capture) counts as not in person.
+  scope :card_not_present, -> { where(authorization_method: nil).or(where.not(authorization_method: IN_PERSON_AUTHORIZATION_METHODS)) }
+
+  # Paid in person (chip, swipe or tap), going by the authorization.
+  def card_present?
+    authorization_method.in?(IN_PERSON_AUTHORIZATION_METHODS)
   end
 
   def merchant_currency
@@ -177,6 +196,10 @@ class CardCharge < ApplicationRecord
   def set_merchant_data
     self.merchant_network_id ||= merchant_data&.[]("network_id")
     self.merchant_category ||= merchant_data&.[]("category")
+  end
+
+  def set_authorization_method
+    self.authorization_method ||= raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method")
   end
 
   def set_stripe_card

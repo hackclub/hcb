@@ -128,4 +128,32 @@ RSpec.describe CardCharge, type: :model do
       expect(charge.stripe_card).to eq(rst.stripe_card)
     end
   end
+
+  def authorization(stripe_transaction_id: nil, authorization_method: "online")
+    create(:raw_pending_stripe_transaction, authorization_method:, **{ stripe_transaction_id: }.compact)
+  end
+
+  describe "#authorization_method" do
+    it "is taken from the authorization" do
+      expect(authorization(authorization_method: "chip").card_charge.authorization_method).to eq("chip")
+    end
+
+    it "is taken from an authorization that arrives after the settled transaction" do
+      rst = create(:raw_stripe_transaction, stripe_authorization_id: "iauth_late")
+      authorization(stripe_transaction_id: "iauth_late", authorization_method: "contactless")
+
+      expect(rst.card_charge.reload.authorization_method).to eq("contactless")
+    end
+  end
+
+  describe ".card_not_present" do
+    it "leaves out charges paid in person, and keeps ones without an authorization" do
+      online = authorization.card_charge
+      chip = authorization(authorization_method: "chip").card_charge
+      force_capture = create(:raw_stripe_transaction, stripe_authorization_id: nil).card_charge
+
+      expect(described_class.card_not_present).to include(online, force_capture)
+      expect(described_class.card_not_present).not_to include(chip)
+    end
+  end
 end

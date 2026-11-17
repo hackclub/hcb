@@ -46,6 +46,11 @@
     <% end %>
   <% end %>
 
+  <% if current_user&.auditor? && (subscription = @hcb_code.ledger_item&.subscription) %>
+    <%= render "ledger/subscriptions/subscription", subscription:, current_ledger_item: @hcb_code.ledger_item %>
+    <%= render partial: "application/admin_viewer", locals: { record: subscription } %>
+  <% end %>
+
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
   <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>

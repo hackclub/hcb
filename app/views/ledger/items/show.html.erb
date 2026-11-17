@@ -84,6 +84,11 @@
 
   <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item } %>
 
+  <% if @item.subscription.present? %>
+    <%= render "ledger/subscriptions/subscription", subscription: @item.subscription, current_ledger_item: @item %>
+    <%= render partial: "application/admin_viewer", locals: { record: @item.subscription } %>
+  <% end %>
+
   <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
   </div>
