@@ -19,7 +19,12 @@ RSpec.describe LostReceipt::Statement do
                                                     "2" => { description: "Pens", quantity: "2", unit_amount: "2.49" }
                                                   }))
 
-    expect(statement.submit(receiptable: hcb_code)).to eq(true)
+    expect { expect(statement.submit(receiptable: hcb_code)).to eq(true) }
+      .to have_enqueued_job(described_class::AttachPdfJob).with(statement)
+    # Marked right away; the PDF follows in the background.
+    expect(hcb_code.reload).to be_no_or_lost_receipt
+    expect(statement.receipt).to be_nil
+    statement.attach_pdf!
     expect(statement.total_amount_cents).to eq(879)
     expect(statement.items.map(&:total_amount_cents)).to eq([381, 498])
     expect(statement.receipt.file.download).to start_with("%PDF")
@@ -62,16 +67,27 @@ RSpec.describe LostReceipt::Statement do
     expect(hcb_code.receipts).to be_empty
   end
 
-  it "does not resolve the missing receipt if PDF generation fails" do
-    allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
-
+  it "leaves the statement without a receipt if PDF generation fails, so the job can retry" do
     statement = described_class.new(details)
-    expect(statement.submit(receiptable: hcb_code)).to eq(false)
-    expect(statement.errors[:base]).to include("The PDF couldn't be generated. Please try again.")
+    expect(statement.submit(receiptable: hcb_code)).to eq(true)
+
+    allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
+    expect { statement.attach_pdf! }.to raise_error(Faraday::TimeoutError)
+    expect(statement.reload.receipt).to be_nil
     expect(hcb_code.receipts).to be_empty
+
+    allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4")
+    statement.attach_pdf!
+    expect(hcb_code.reload.receipts.count).to eq(1)
+    # Running the job twice doesn't attach a second copy.
+    statement.attach_pdf!
+    expect(hcb_code.reload.receipts.count).to eq(1)
   end
 
-  it "does not resolve the missing receipt if storing the PDF fails" do
+  it "does not keep a half-stored PDF if storing it fails" do
+    statement = described_class.new(details)
+    expect(statement.submit(receiptable: hcb_code)).to eq(true)
+
     service = ActiveStorage::Blob.service
     key = nil
     allow(service).to receive(:upload).and_wrap_original do |upload, *args, **options|
@@ -80,9 +96,8 @@ RSpec.describe LostReceipt::Statement do
       raise ActiveStorage::IntegrityError
     end
 
-    statement = described_class.new(details)
     expect {
-      expect(statement.submit(receiptable: hcb_code)).to eq(false)
+      expect { statement.attach_pdf! }.to raise_error(ActiveStorage::IntegrityError)
     }.not_to change(ActiveStorage::Blob, :count)
     expect(service.exist?(key)).to eq(false)
     expect(hcb_code.receipts).to be_empty

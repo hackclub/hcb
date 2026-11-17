@@ -15,13 +15,16 @@
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  event_id           :bigint
-#  receipt_id         :bigint           not null
+#  receipt_id         :bigint
+#  receiptable_id     :bigint           not null
+#  receiptable_type   :string           not null
 #  submitter_id       :bigint
 #
 # Indexes
 #
 #  index_lost_receipt_statements_on_event_id      (event_id)
 #  index_lost_receipt_statements_on_receipt_id    (receipt_id) UNIQUE
+#  index_lost_receipt_statements_on_receiptable   (receiptable_type,receiptable_id)
 #  index_lost_receipt_statements_on_submitter_id  (submitter_id)
 #
 # Foreign Keys
@@ -35,12 +38,12 @@ module LostReceipt
   class Statement < ApplicationRecord
     CONFIRMATION = "I confirm these details are accurate and that I have made every effort possible to get the receipt."
 
-    belongs_to :receipt, inverse_of: :lost_receipt_statement
+    # Nil until the PDF has been generated and attached, which happens in the background.
+    belongs_to :receipt, optional: true, inverse_of: :lost_receipt_statement
+    # The transaction being described.
+    belongs_to :receiptable, polymorphic: true
     belongs_to :event, optional: true
     belongs_to :submitter, class_name: "User", optional: true
-
-    # The transaction being described. Not stored: the receipt records where it's attached.
-    attr_accessor :receiptable
 
     attribute :confirmed, :boolean
 
@@ -49,7 +52,8 @@ module LostReceipt
 
     validates :date, :merchant, :purpose, :signer_name, presence: true
     validates :merchant, :signer_name, length: { maximum: 255 }
-    validates :confirmed, acceptance: { accept: true, allow_nil: false }
+    # Not stored, so only checkable when the form is submitted.
+    validates :confirmed, acceptance: { accept: true, allow_nil: false }, on: :create
     validates :items, length: { minimum: 1, maximum: 50 }
     validate :date_is_not_in_the_future
     validate :items_are_valid
@@ -74,31 +78,35 @@ module LostReceipt
       self[:items] = items.map { |item| { description: item.description, quantity: Integer(item.quantity, exception: false) || item.quantity, unit_amount_cents: item.unit_amount_cents } }
     end
 
-    # The receipt is only saved once the PDF is stored, so a failed render or
-    # upload leaves the transaction missing its receipt.
+    # Saves the statement and marks the transaction no/lost right away. The PDF
+    # takes a few seconds to render, so it's attached as the receipt by a job.
     def submit(receiptable: self.receiptable)
       self.receiptable = receiptable
       self.event = receiptable.try(:event)
       self.confirmed_at = Time.current
-      # A transaction's receipts live on its ledger item (#14106). Saving the receipt saves this statement.
-      self.receipt = Receipt.new(receiptable: receiptable.try(:ledger_item) || receiptable, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       return false unless valid?
+
+      transaction do
+        save!
+        receipt_target.no_or_lost_receipt!
+      end
+      AttachPdfJob.perform_later(self)
+      true
+    end
+
+    # Renders the PDF and attaches it to the transaction as its receipt.
+    def attach_pdf!
+      return if receipt.present?
 
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
       # Created before uploading so a partial upload can still be purged.
       blob = ActiveStorage::Blob.create_after_unfurling!(io:, filename: "lost-receipt-statement.pdf", content_type: "application/pdf")
       blob.upload(io)
+      receipt = Receipt.new(receiptable: receipt_target, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       receipt.file.attach(blob)
+      # Saving the receipt points this statement at it.
       receipt.save!
-      true
-    rescue ActiveRecord::RecordInvalid => error
-      errors.add(:base, error.record.errors.full_messages.to_sentence)
-      false
-    rescue Faraday::Error, ActiveStorage::Error => error
-      Rails.error.report(error)
-      errors.add(:base, "The PDF couldn't be generated. Please try again.")
-      false
     ensure
       blob&.purge if blob && !receipt&.persisted?
     end
@@ -114,6 +122,11 @@ module LostReceipt
     end
 
     private
+
+    # A transaction's receipts live on its ledger item (#14106).
+    def receipt_target
+      receiptable.try(:ledger_item) || receiptable
+    end
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current

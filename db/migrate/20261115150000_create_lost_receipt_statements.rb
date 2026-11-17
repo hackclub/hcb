@@ -3,7 +3,9 @@
 class CreateLostReceiptStatements < ActiveRecord::Migration[8.1]
   def change
     create_table :lost_receipt_statements do |t|
-      t.references :receipt, null: false, foreign_key: true, index: { unique: true }
+      # Null until the PDF has been generated and attached.
+      t.references :receipt, foreign_key: true, index: { unique: true }
+      t.references :receiptable, polymorphic: true, null: false
       t.references :event, foreign_key: true
       # Null when the statement came through the emailed receipt link.
       t.references :submitter, foreign_key: { to_table: :users }

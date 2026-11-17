@@ -1803,13 +1803,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_150000) do
     t.jsonb "items", default: [], null: false
     t.string "merchant", null: false
     t.text "purpose", null: false
-    t.bigint "receipt_id", null: false
+    t.bigint "receipt_id"
+    t.bigint "receiptable_id", null: false
+    t.string "receiptable_type", null: false
     t.string "signer_name", null: false
     t.bigint "submitter_id"
     t.integer "total_amount_cents", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_lost_receipt_statements_on_event_id"
     t.index ["receipt_id"], name: "index_lost_receipt_statements_on_receipt_id", unique: true
+    t.index ["receiptable_type", "receiptable_id"], name: "index_lost_receipt_statements_on_receiptable"
     t.index ["submitter_id"], name: "index_lost_receipt_statements_on_submitter_id"
   end
 
