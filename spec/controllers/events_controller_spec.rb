@@ -352,6 +352,38 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#ledger tag removal" do
+    render_views
+
+    let(:parent) { create(:event) }
+    let(:event) { create(:event, parent:) }
+    let(:viewer) { create(:user) }
+
+    def remove_tag_buttons
+      item = create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza").ledger_item
+      item.tags << event.tags.create!(label: "Food", color: "muted", emoji: "🍕")
+      Flipper.enable_actor(:new_ledger_2026_07_17, viewer)
+      create_session(viewer, verified: true)
+
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      Nokogiri::HTML5(response.body).css(".tx-tag form[action='#{ledger_item_toggle_tag_path(item)}']")
+    end
+
+    it "is offered to members of the organization" do
+      create(:organizer_position, user: viewer, event:, role: :member)
+
+      expect(remove_tag_buttons).to be_present
+    end
+
+    it "is not offered to members of the parent organization" do
+      create(:organizer_position, user: viewer, event: parent, role: :member)
+
+      expect(remove_tag_buttons).to be_empty
+    end
+  end
+
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }

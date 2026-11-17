@@ -40,9 +40,9 @@ class Ledger
       # A ledger item belongs to a single primary ledger (owned by an event or a
       # card grant), so a tag can only be applied within that one event.
       return false if event.nil?
-      return false unless user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
+      return false unless can_tag_event?
 
-      tag.nil? || event == tag.event
+      tag.nil? || event.id == tag.event_id
     end
 
     private
@@ -61,6 +61,13 @@ class Ledger
 
     def admin_or_member?
       user&.admin? || OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+    end
+
+    # Memoized because views check this once per tag on the item.
+    def can_tag_event?
+      return @can_tag_event if defined?(@can_tag_event)
+
+      @can_tag_event = user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
     end
 
   end

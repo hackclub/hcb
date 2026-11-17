@@ -2,7 +2,7 @@
 
 <div class="badge tx-tag m0 shrink-none flex items-center tag-<%= tag.color || "muted" %>" id="<%= tag_dom_id(item, tag) %>" data-tag="<%= tag.id %>">
   <span><%= tag.emoji %> <%= tag.label %></span>
-  <% if streamed || organizer_signed_in?(as: :member) %>
+  <% if streamed || policy(item).toggle_tag?(tag) %>
     <%= button_to ledger_item_toggle_tag_path(item), params: { tag_id: tag.id }, class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
       <%= inline_icon "view-close", size: 16 %>
     <% end %>
