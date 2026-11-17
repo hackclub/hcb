@@ -54,7 +54,7 @@
     </div>
   </h1>
 
-  <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
+  <% if @monthly_announcement.present? && policy(@monthly_announcement).edit? %>
     <% scheduled_for = Date.today.next_month.beginning_of_month %>
     <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
 
