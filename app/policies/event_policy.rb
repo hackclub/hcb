@@ -265,11 +265,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def toggle_event_tag?
-    user.admin?
+    user&.admin?
   end
 
   def audit_log?
-    user.auditor?
+    user&.auditor?
   end
 
   def termination?

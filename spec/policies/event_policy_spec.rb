@@ -210,4 +210,54 @@ RSpec.describe EventPolicy, type: :policy do
       it { is_expected.to eq(false) }
     end
   end
+
+  describe "#audit_log?" do
+    let(:event) { create(:event) }
+
+    subject { described_class.new(user, event).audit_log? }
+
+    context "as an auditor" do
+      let(:user) { create(:user, :make_auditor) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "as a manager" do
+      let(:user) { create(:user) }
+
+      before { create(:organizer_position, user:, event:, role: :manager) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "when signed out" do
+      let(:user) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+  end
+
+  describe "#toggle_event_tag?" do
+    let(:event) { create(:event) }
+
+    subject { described_class.new(user, event).toggle_event_tag? }
+
+    context "as an admin" do
+      let(:user) { create(:user, :make_admin) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "as an auditor" do
+      let(:user) { create(:user, :make_auditor) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "when signed out" do
+      let(:user) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+  end
 end

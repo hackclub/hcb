@@ -2,7 +2,7 @@
 
 class SponsorPolicy < ApplicationPolicy
   def index?
-    auditor_or_reader?
+    user&.auditor?
   end
 
   # sponsors can never be seen in transparency mode

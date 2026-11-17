@@ -1782,4 +1782,27 @@ RSpec.describe EventsController do
       expect(response.body).not_to include("Reset password")
     end
   end
+
+  describe "#audit_log" do
+    let(:event) { create(:event) }
+
+    it "asks a signed out visitor to sign in" do
+      get(:audit_log, params: { id: event.slug })
+
+      expect(response).to redirect_to(auth_users_path(return_to: request.url, require_reload: true))
+    end
+  end
+
+  describe "#toggle_event_tag" do
+    let(:event) { create(:event) }
+    let(:event_tag) { EventTag.create!(name: "Hackathon") }
+
+    it "turns away a signed out visitor without tagging the organization" do
+      post(:toggle_event_tag, params: { id: event.slug, event_tag_id: event_tag.id })
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(event.reload.event_tags).to be_empty
+    end
+  end
 end
