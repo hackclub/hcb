@@ -409,6 +409,42 @@ RSpec.describe EventsController do
       expect(page.css("#donations_settings strong").map(&:text)).to include("HCB* Assemble")
     end
 
+    describe "donation goal reset" do
+      let(:event) { create(:event) }
+
+      before { event.create_donation_goal!(amount_cents: 100_00) }
+
+      def reset_control?
+        get(:edit, params: { id: event.slug, tab: "donations" })
+        page = Nokogiri::HTML5(response.body)
+        # Reactive views ship every branch in <template>s for the browser; only check what was rendered.
+        page.css("template").each(&:remove)
+        page.at_css("input[name='reset_donation_goal']").present?
+      end
+
+      it "is offered to admins without an organizer position" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        expect(reset_control?).to eq(true)
+      end
+
+      it "is offered to managers" do
+        manager = create(:user)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        create_session(manager, verified: true)
+
+        expect(reset_control?).to eq(true)
+      end
+
+      it "is not offered to members" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+
+        expect(reset_control?).to eq(false)
+      end
+    end
+
     it "lists managers as reimbursement reviewers, letting parent organization managers be opted in" do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")

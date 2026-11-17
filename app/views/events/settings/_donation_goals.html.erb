@@ -37,7 +37,7 @@
                 <strong id="time">
                   <%= local_time event.donation_goal.tracking_since %>.
                 </strong>
-                <% if organizer_signed_in?(as: :manager) %>
+                <% if policy(event).update? %>
                   <label class="inline underline color-inherit cursor-pointer"
                     data-controller="confirm"
                     data-action="click->confirm#request"
