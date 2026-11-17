@@ -8,7 +8,8 @@ module Api
       before_action :set_api_event, only: [:index, :create]
 
       def index
-        @invoices = authorize(@event.invoices.order(created_at: :desc))
+        authorize @event, :invoices?
+        @invoices = @event.invoices.order(created_at: :desc)
       end
 
       def show
