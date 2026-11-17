@@ -79,4 +79,28 @@ RSpec.describe PaymentsController do
       expect(legal_entity.reload.default_payout_method).to be_nil
     end
   end
+
+  describe "GET #show" do
+    let(:parent_event) { create(:event) }
+    let(:event) { create(:event, parent: parent_event) }
+    let(:payment) { create(:payment, payee: create(:payee, event:)) }
+
+    it "renders a sub-organization's payment for a manager of the parent organization" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event: parent_event, role: :manager)
+      create_session(manager, verified: true)
+
+      get :show, params: { id: payment.id }
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "refuses a user with no position in the payment's organization" do
+      create_session(create(:user), verified: true)
+
+      get :show, params: { id: payment.id }
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
 end
