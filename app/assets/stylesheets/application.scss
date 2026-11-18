@@ -373,6 +373,8 @@ summary {
 @import 'components/sweetalert';
 @import 'components/dual_range_slider';
 @import 'components/integrations';
+@import 'components/combobox';
+@import 'components/wire_tracking';
 
 .turbo-progress-bar {
   height: 0.25rem;
@@ -581,7 +583,9 @@ summary {
 
 @layer base {
   pre,
-  code {
+  code,
+  kbd,
+  samp {
     @apply font-mono;
   }
 }

@@ -1,23 +1,15 @@
 <% title "Emails" %>
 
-<%= form_with local: true, class: "card", url: emails_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: emails_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.text_field :to, value: params[:to], placeholder: "Email address (to)" %>
     <%= form.text_field :user_id, value: params[:user_id], placeholder: "User ID" %>
-  </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @messages, entry_name: "email".pluralize(@count) %>
-  </div>
-  <%= paginate @messages %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -52,6 +44,15 @@
   </tbody>
 </table>
 
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @messages, entry_name: "email".pluralize(@count) %>
+  </div>
+  <%= paginate @messages %>
+</div>
+
+</div>
+
 <% @messages.each do |msg| %>
   <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
     <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
@@ -60,5 +61,3 @@
     <% end %>
   </section>
 <% end %>
-
-<%= paginate @messages %>
