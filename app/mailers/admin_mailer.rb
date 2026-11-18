@@ -103,7 +103,7 @@ class AdminMailer < ApplicationMailer
     @starting_at = params.fetch(:starting_at)
     @ending_at = params.fetch(:ending_at)
 
-    hq_events = Event.not_demo_mode.joins(:plan).where(event_plans: { type: Event::Plan::HackClubHQ.sti_name })
+    hq_events = EventMappingEngine::EventIds::HACK_CLUB_HQ
 
     @ledger_items = Ledger::Query.new({
                                         "$and": [
