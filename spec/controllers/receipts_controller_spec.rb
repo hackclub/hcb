@@ -59,6 +59,126 @@ RSpec.describe ReceiptsController do
     end
   end
 
+  describe "#create when the upload fails" do
+    render_views
+
+    let(:ledger_item) { create(:canonical_pending_transaction).local_hcb_code.ledger_item }
+    let(:file) { [fixture_file_upload("receipt.png", "image/png")] }
+    let(:fragment) { Nokogiri::HTML5.fragment(response.body) }
+
+    before do
+      receipt = Receipt.new
+      receipt.errors.add(:file, "is not a supported type")
+      allow_any_instance_of(ReceiptService::Create).to receive(:run!).and_raise(ActiveRecord::RecordInvalid.new(receipt))
+    end
+
+    it "shows the error on the transaction's own upload form" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "transaction_page",
+             file:
+           }, format: :turbo_stream)
+
+      stream = fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form']")
+      expect(stream["action"]).to eq("replace")
+      form = Nokogiri::HTML5.fragment(stream.at_css("template").inner_html)
+      expect(form.at_css("#upload-receipt-button").text).to include("File is not a supported type")
+      expect(form.at_css("#upload-receipt-button")["disabled"]).to be_nil
+      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("Ledger::Item")
+      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(ledger_item.id.to_s)
+      expect(form.at_css("input[name='upload_method']")["value"]).to eq("transaction_page")
+      expect(fragment.at_css("turbo-stream[target='receipt_upload_form']")).to be_nil
+    end
+
+    it "keeps a popover's upload form posting as a popover" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = ledger_item.hcb_code
+      request.headers["Referer"] = hcb_code_url(hcb_code)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "transaction_popover_drag_and_drop",
+             file:
+           }, format: :turbo_stream)
+
+      form = Nokogiri::HTML5.fragment(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form'] template").inner_html)
+      expect(form.at_css("input[name='popover']")["value"]).to eq("HcbCode:#{hcb_code.hashid}")
+      expect(form.at_css("input[name='show_link']")["value"]).to eq("true")
+      expect(form.at_css("input[name='upload_method']")["value"]).to eq("transaction_popover")
+    end
+
+    it "shows the error on the Receipt Bin form when there's no receiptable" do
+      create_session(create(:user), verified: true)
+
+      post(:create, params: { upload_method: "receipt_center", file: }, format: :turbo_stream)
+
+      stream = fragment.at_css("turbo-stream[target='receipt_upload_form']")
+      expect(stream["action"]).to eq("replace")
+      expect(stream.inner_html).to include("File is not a supported type")
+    end
+
+    it "doesn't render the transaction's upload form for a user who can't upload to it" do
+      create_session(create(:user), verified: true)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "transaction_page",
+             file:
+           }, format: :turbo_stream)
+
+      expect(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form']")).to be_nil
+      expect(response.body).not_to include("receiptable_id")
+    end
+
+    it "flashes the error for an upload from a ledger row, which has no upload form" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "receipts_page",
+             file:
+           }, format: :turbo_stream)
+
+      expect(fragment.at_css("turbo-stream[target='flash-container']").inner_html).to include("There was an error uploading your receipt")
+      expect(fragment.css("turbo-stream").map { |stream| stream["target"] }).to eq(["flash-container"])
+    end
+
+    it "flashes the error and resets the upload button for a reimbursement expense" do
+      create_session(create(:user, :make_admin), verified: true)
+      expense = create(:reimbursement_expense)
+
+      post(:create, params: {
+             receiptable_type: "Reimbursement::Expense",
+             receiptable_id: expense.id,
+             upload_method: "expense_report",
+             file:
+           }, format: :turbo_stream)
+
+      expect(fragment.css("turbo-stream").map { |stream| stream["target"] }).to eq(["flash-container", "receipts_for_#{expense.id}"])
+    end
+
+    it "doesn't show the message of an unexpected error" do
+      create_session(create(:user, :make_admin), verified: true)
+      allow_any_instance_of(ReceiptService::Create).to receive(:run!).and_raise(StandardError, "internal detail")
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "transaction_page",
+             file:
+           }, format: :turbo_stream)
+
+      expect(response.body).to include("Upload failed")
+      expect(response.body).not_to include("internal detail")
+    end
+  end
+
   # Receipts are moving onto ledger items (#14106); the controller has to drive
   # the same HCB code specific streams and redirects from either receiptable.
   describe "with a Ledger::Item receiptable" do

@@ -108,9 +108,15 @@ class ReceiptsController < ApplicationController
       raise unless @hcb_code && HcbCode.find_signed(params[:s], purpose: :receipt_upload) == @hcb_code
     end
 
+    authorized = true
+
     return unless params[file_param].present?
 
     streams = []
+
+    if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
+      @frame = true
+    end
 
     params[file_param].map do |file|
       (receipt, ) = ::ReceiptService::Create.new(
@@ -128,35 +134,15 @@ class ReceiptsController < ApplicationController
                      ))
     end
 
-    if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
-      @frame = true
-    end
-
     streams += generate_streams
 
-    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
-      receipt_upload_form_config = {
-        upload_method: params[:upload_method].sub("_drag_and_drop", ""),
-        restricted_dropzone: params[:upload_method] != :transaction_page,
-        include_spacing: params[:upload_method] != :receipt_center,
-        success: "#{"Receipt".pluralize(params[file_param].length)} added!",
-        global_paste: !@receiptable,
-        turbo: true
-      }
-      if @receiptable
-        receipt_upload_form_config[:enable_linking] = true
-        receipt_upload_form_config[:receiptable] = @receiptable
-      end
-      if @hcb_code && @frame && on_hcb_code_page?
-        receipt_upload_form_config[:restricted_dropzone] = true
-        receipt_upload_form_config[:inline_linking] = true
-        receipt_upload_form_config[:upload_method] = "transaction_popover"
-        receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}"
-        receipt_upload_form_config[:show_receipt_button] = @show_receipt_button
-        receipt_upload_form_config[:show_author_img] = @show_author_img
-      end
+    if (form_locals = receipt_upload_form_locals)
       streams.append(
-        turbo_stream.replace(@receiptable ? "#{@receiptable.id}_receipt_upload_form" : :receipt_upload_form, partial: "receipts/form_v3", locals: receipt_upload_form_config)
+        turbo_stream.replace(
+          @receiptable ? "#{@receiptable.id}_receipt_upload_form" : :receipt_upload_form,
+          partial: "receipts/form_v3",
+          locals: form_locals.merge(success: "#{"Receipt".pluralize(params[file_param].length)} added!")
+        )
       )
     end
 
@@ -173,16 +159,40 @@ class ReceiptsController < ApplicationController
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
 
-    streams.append(
-      turbo_stream.replace(
-        :receipt_upload_form,
-        partial: "receipts/form_v3", locals: {
-          upload_method: "receipt_center",
-          restricted_dropzone: true,
-          error: e.message
-        }
+    error = e.is_a?(ActiveRecord::RecordInvalid) ? e.record.errors.full_messages.to_sentence : "Upload failed"
+
+    # The receiptable's form shows the transaction's receipt state, so it's only
+    # rendered once the upload has been authorized.
+    if authorized && @receiptable && request.format.turbo_stream?
+      # These uploads come from a button with no `receipts/form_v3` around it.
+      formless = params[:upload_method].start_with?("receipts_page") || @receiptable.is_a?(Reimbursement::Expense)
+
+      if !formless && (form_locals = receipt_upload_form_locals)
+        streams.append(
+          turbo_stream.replace("#{@receiptable.id}_receipt_upload_form", partial: "receipts/form_v3", locals: form_locals.merge(error:))
+        )
+      else
+        flash.now[:error] = flash_message
+        streams.append(turbo_stream.replace("flash-container", partial: "application/flash"))
+      end
+
+      if @receiptable.is_a?(Reimbursement::Expense)
+        streams.append(
+          turbo_stream.replace("receipts_for_#{@receiptable.id}", partial: "reimbursement/expenses/receipts", locals: { expense: @receiptable })
+        )
+      end
+    else
+      streams.append(
+        turbo_stream.replace(
+          :receipt_upload_form,
+          partial: "receipts/form_v3", locals: {
+            upload_method: "receipt_center",
+            restricted_dropzone: true,
+            error:
+          }
+        )
       )
-    )
+    end
   ensure
     respond_to do |format|
       format.turbo_stream { render turbo_stream: streams }
@@ -256,6 +266,33 @@ class ReceiptsController < ApplicationController
     # The transaction's HCB code, whether the receipt is being attached to the
     # code itself or to its ledger item. Nil for every other receiptable.
     @hcb_code = @receiptable.try(:receipt_hcb_code)
+  end
+
+  # Locals for re-rendering the `receipts/form_v3` an upload was made from, or
+  # nil when the upload leaves that form alone.
+  def receipt_upload_form_locals
+    return if @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
+
+    locals = {
+      upload_method: params[:upload_method].sub("_drag_and_drop", ""),
+      restricted_dropzone: params[:upload_method] != :transaction_page,
+      include_spacing: params[:upload_method] != :receipt_center,
+      global_paste: !@receiptable,
+      turbo: true
+    }
+    if @receiptable
+      locals[:enable_linking] = true
+      locals[:receiptable] = @receiptable
+    end
+    if @hcb_code && @frame && on_hcb_code_page?
+      locals[:restricted_dropzone] = true
+      locals[:inline_linking] = true
+      locals[:upload_method] = "transaction_popover"
+      locals[:popover] = "HcbCode:#{@hcb_code.hashid}"
+      locals[:show_receipt_button] = @show_receipt_button
+      locals[:show_author_img] = @show_author_img
+    end
+    locals
   end
 
   def generate_streams
