@@ -7,7 +7,7 @@ class ReceiptsController < ApplicationController
   before_action :find_receiptable, only: [:create, :link, :link_modal]
   before_action :set_event, only: [:create, :link]
   before_action :set_transaction_display_data
-  before_action :set_receipt, only: [:destroy, :reverse]
+  before_action :set_receipt, only: [:destroy, :reverse, :restore_original]
 
   def destroy
     @receiptable = @receipt.receiptable
@@ -71,7 +71,7 @@ class ReceiptsController < ApplicationController
   def link_modal
     authorize @receiptable, policy_class: ReceiptablePolicy
 
-    @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user).order(created_at: :desc)
+    @receipts = Receipt.in_receipt_bin.with_attached_file.with_attached_original_file.where(user: current_user).order(created_at: :desc)
     @show_link = params[:show_link]
     @streams = defined?(params[:streams]) ? params[:streams] : true
     @suggested_receipt_ids = []
@@ -242,6 +242,15 @@ class ReceiptsController < ApplicationController
         end
       }
     end
+  end
+
+  def restore_original
+    authorize @receipt
+
+    @receipt.restore_original_file!
+
+    flash[:success] = "Put the receipt back the way it was uploaded"
+    redirect_back fallback_location: @receipt.receiptable || my_inbox_path
   end
 
   private

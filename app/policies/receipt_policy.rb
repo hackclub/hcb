@@ -24,6 +24,11 @@ class ReceiptPolicy < ApplicationPolicy
     return false
   end
 
+  # undoing an automatic rotation
+  def restore_original?
+    destroy?
+  end
+
   def link?
     record.receiptable.nil? && record.user == user
   end

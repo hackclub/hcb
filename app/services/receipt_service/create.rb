@@ -29,12 +29,20 @@ module ReceiptService
     private
 
     def attrs(attachment)
+      # A receipt being copied: bring its kept original along, so the copy can
+      # still show and undo an automatic rotation.
+      if attachment.is_a?(Receipt)
+        original_file = attachment.original_file.blob
+        attachment = attachment.file.blob
+      end
+
       {
         file: attachment,
+        original_file:,
         user: @uploader,
         upload_method: @upload_method,
         receiptable: @receiptable # Receiptable may be nil
-      }
+      }.compact
     end
 
   end

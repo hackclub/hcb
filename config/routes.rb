@@ -64,6 +64,7 @@ Rails.application.routes.draw do
 
     member do
       post "reverse"
+      post "restore_original"
     end
   end
 

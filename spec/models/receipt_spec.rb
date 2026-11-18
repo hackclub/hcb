@@ -13,6 +13,140 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
+  # Real Tesseract and ImageMagick, no mocks.
+  describe "auto rotation on upload" do
+    let(:upright) { Rails.root.join("spec/fixtures/files/rotation_receipt.png").to_s }
+
+    # quick_expense rotates as the receipt is created; most others do it in SuggestPairingsJob
+    def new_receipt(io:, content_type: "image/png", filename: "receipt.png", **attributes)
+      described_class.new(receiptable: create(:hcb_code), user: create(:user), upload_method: :quick_expense, **attributes).tap do |receipt|
+        receipt.file.attach(io:, filename:, content_type:)
+      end
+    end
+
+    def receipt_turned(degrees, **attributes)
+      new_receipt(io: ImageProcessing::MiniMagick.source(upright).rotate(degrees).call, **attributes).tap(&:save!)
+    end
+
+    def rotation_needed(receipt)
+      receipt.file.blob.open { |file| ReceiptService::DetectRotation.new(path: file.path).run }
+    end
+
+    [90, 180, 270].each do |degrees|
+      it "turns a receipt uploaded #{degrees} degrees clockwise upright and keeps the upload" do
+        receipt = perform_enqueued_jobs(only: ActiveStorage::PurgeJob) { receipt_turned(degrees) }
+
+        # the same instance the uploader's request holds already sees the upright file
+        expect(rotation_needed(receipt)).to be_nil
+        expect(MiniMagick::Image.read(receipt.file.download).dimensions).to eq([542, 735])
+        expect(receipt.file.filename.to_s).to eq("receipt.png")
+        expect(receipt.file.content_type).to eq("image/png")
+        # the purge job for the replaced attachment has run by now
+        expect(receipt.original_file.blob).not_to eq(receipt.file.blob)
+        expect(rotation_needed(described_class.new(file: receipt.original_file.blob))).to eq(360 - degrees)
+      end
+    end
+
+    it "rotates before pairing suggestions run or are queued" do
+      seen = []
+      allow(ReceiptService::Suggest).to receive(:new) do |receipt:|
+        seen << receipt.original_file.attached?
+        instance_double(ReceiptService::Suggest, run!: nil)
+      end
+
+      ReceiptService::Create.new(
+        attachments: [{ io: ImageProcessing::MiniMagick.source(upright).rotate(90).call, filename: "receipt.png", content_type: "image/png" }],
+        uploader: create(:user), upload_method: :quick_expense, receiptable: create(:hcb_code)
+      ).run!
+      expect(seen).to eq([true])
+
+      # other uploads rotate in the job, so the upload request doesn't wait
+      receipt = nil
+      expect { receipt = receipt_turned(90, upload_method: :api) }.to have_enqueued_job(Receipt::SuggestPairingsJob)
+      expect(receipt.original_file).not_to be_attached
+      perform_enqueued_jobs(only: Receipt::SuggestPairingsJob)
+      expect(seen).to eq([true, true])
+    end
+
+    it "can be undone, and doesn't rotate again afterwards" do
+      receipt = receipt_turned(90)
+      upload = receipt.original_file.blob
+
+      receipt.restore_original_file!
+      expect(receipt.reload.file.blob).to eq(upload)
+
+      expect(receipt.auto_rotate!).to be(false)
+      expect(receipt.reload.file.blob).to eq(upload)
+    end
+
+    it "leaves an upright receipt alone" do
+      receipt = receipt_turned(0)
+
+      expect(receipt.original_file).not_to be_attached
+      expect(MiniMagick::Image.read(receipt.file.download).dimensions).to eq([542, 735])
+    end
+
+    it "changes nothing when the rotated copy can't be saved" do
+      receipt = receipt_turned(0)
+      upload = receipt.file.blob
+      allow(ReceiptService::DetectRotation).to receive(:new).and_return(instance_double(ReceiptService::DetectRotation, run: 90))
+      allow_any_instance_of(described_class).to receive(:save!).and_raise(ActiveRecord::RecordInvalid)
+
+      expect(receipt.auto_rotate).to be(false)
+
+      receipt.reload
+      expect(receipt.file.blob).to eq(upload)
+      expect(receipt.original_file).not_to be_attached
+    end
+
+    it "keeps a PNG a PNG when the upload has no file extension" do
+      # SMS receipts are named like this
+      receipt = new_receipt(io: ImageProcessing::MiniMagick.source(upright).rotate(90).call, filename: "SMS_2026-11-14").tap(&:save!)
+
+      expect(receipt.original_file).to be_attached
+      expect(MiniMagick::Image.read(receipt.file.download).type).to eq("PNG")
+    end
+
+    it "doesn't check copies of receipts again" do
+      expect(ReceiptService::DetectRotation).not_to receive(:new)
+
+      expect(receipt_turned(90, upload_method: :duplicate).auto_rotate).to be(false)
+    end
+
+    it "keeps the original, and the undo, on a copy of a rotated receipt" do
+      receipt = receipt_turned(90)
+      copy_to = create(:hcb_code)
+
+      described_class.reupload(old_receiptable: receipt.receiptable, new_receiptable: copy_to)
+      copy = described_class.where(receiptable: copy_to).sole
+
+      expect(copy.file.blob).to eq(receipt.file.blob)
+      expect(copy).to be_auto_rotated
+      copy.restore_original_file!
+      expect(copy.reload.file.blob).to eq(receipt.original_file.blob)
+      expect(receipt.reload).to be_auto_rotated # undoing the copy leaves the first receipt alone
+    end
+
+    it "still saves a receipt whose image can't be read" do
+      allow(Rails.error).to receive(:report)
+      receipt = new_receipt(io: StringIO.new("not really a png"))
+
+      expect { receipt.save! }.not_to raise_error
+      expect(receipt.original_file).not_to be_attached
+      expect(Rails.error).not_to have_received(:report)
+    end
+
+    it "does nothing if the receipt was deleted meanwhile" do
+      receipt = receipt_turned(0)
+      stale = described_class.find(receipt.id)
+      allow(ReceiptService::DetectRotation).to receive(:new).and_return(instance_double(ReceiptService::DetectRotation, run: 90))
+      allow(Rails.error).to receive(:report)
+      receipt.destroy!
+
+      expect { stale.auto_rotate }.not_to change(ActiveStorage::Attachment, :count)
+    end
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 

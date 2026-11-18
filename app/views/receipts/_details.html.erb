@@ -19,6 +19,20 @@
     <strong style="font-weight: 600;">Size</strong>
     <%= number_to_human_size receipt.file.blob.byte_size %>
   </div>
+
+  <% if receipt.auto_rotated? %>
+    <div style="grid-template-columns: 7rem auto;">
+      <strong style="font-weight: 600;">Rotated</strong>
+      <span>
+        Automatically.
+        <%= link_to "View original", rails_blob_path(receipt.original_file, only_path: true, disposition: "inline"), target: "_blank" %>
+        <% if policy(receipt).restore_original? %>
+          <%# a link, not button_to: this renders inside other forms, and forms can't nest %>
+          <%= link_to "Undo rotation", restore_original_receipt_path(receipt), data: { turbo_method: :post, behavior: "modal_ignore" } %>
+        <% end %>
+      </span>
+    </div>
+  <% end %>
 </section>
 
 <% if receipt.textual_content.present? %>

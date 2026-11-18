@@ -466,7 +466,7 @@ module Reimbursement
           ::ReceiptService::Create.new(
             receiptable: wise_transfer.reload_ledger_item, # the association was cached as nil while the transfer's pending transaction was being created
             uploader: as,
-            attachments: [receipt.file.blob],
+            attachments: [receipt],
             upload_method: :duplicate
           ).run!
         end
