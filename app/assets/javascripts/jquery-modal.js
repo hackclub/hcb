@@ -16,16 +16,8 @@
       return modals.length ? modals[modals.length - 1] : null
     },
     selectCurrent = function () {
-      var i,
-        selected = false
-      for (i = modals.length - 1; i >= 0; i--) {
-        if (modals[i].$blocker) {
-          modals[i].$blocker
-            .toggleClass('current', !selected)
-            .toggleClass('behind', selected)
-          selected = true
-        }
-      }
+      // Every modal shares one blocker, so it's never behind another modal's
+      getCurrent()?.$blocker?.addClass('current')
     }
 
   $.modal = function (el, options) {
@@ -101,9 +93,10 @@
           var current = getCurrent()
           if (event.which === 27 && current.options.escapeClose) current.close()
         })
-      if (this.options.clickClose)
-        this.$blocker.click(function (e) {
-          if (e.target === this) $.modal.close()
+      this.$blocker
+        .off('click.modal')
+        .on('click.modal', function (e) {
+          if (e.target === this && getCurrent()?.options.clickClose) $.modal.close()
         })
     },
 
@@ -139,6 +132,7 @@
     },
 
     unblock: function (now) {
+      if ($.modal.isActive()) return // Modals share one blocker, so keep it for the ones still open
       if (!now && this.options.doFade)
         this.$blocker.fadeOut(
           this.options.fadeDuration,

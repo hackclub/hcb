@@ -151,7 +151,8 @@ const loadModals = element => {
       e.stopPropagation()
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
-    if ($(this).data('modal') === 'shared_popover') {
+    const isPopover = $(this).data('modal') === 'shared_popover'
+    if (isPopover) {
       populateSharedPopover(this)
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
@@ -160,6 +161,8 @@ const loadModals = element => {
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
+      // Stack modals opened from a popover so closing them returns to it
+      closeExisting: isPopover || !$(this).closest('#shared_popover').length,
     })
     BK.s('modal', '#' + $(this).data('modal'))
       .find('iframe[data-src]')

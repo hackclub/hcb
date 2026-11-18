@@ -324,16 +324,6 @@
         </p>
       </article>
     </section>
-
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
-      <%= modal_header "Transaction declined" %>
-
-      <%= render partial: "ledger/items/decline_reason", locals: {
-            ledger_item: ledger_item,
-            include_troubleshooting: true,
-            include_external: true
-          } %>
-    </section>
   <% end %>
 
   <% if organizer_signed_in? && ledger_item.cpt_count > 0 %>
@@ -390,4 +380,16 @@
       <% end %>
     </section>
   <% end %>
+<% end %>
+
+<% if ledger_item.declined? && (ledger_item.author == current_user || organizer_signed_in?) %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
+    <%= modal_header "Transaction declined" %>
+
+    <%= render partial: "ledger/items/decline_reason", locals: {
+          ledger_item: ledger_item,
+          include_troubleshooting: true,
+          include_external: true
+        } %>
+  </section>
 <% end %>
