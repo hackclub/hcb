@@ -603,6 +603,17 @@ RSpec.describe Ledger::Query, type: :model do
         expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_c))
       end
 
+      it "matches items with a split in the category, settled or pending" do
+        ct = create(:canonical_transaction, ledger_item: item_a, amount_cents: -100)
+        cpt = create(:canonical_pending_transaction, ledger_item: item_b, amount_cents: -100)
+        ct.splits.create!(amount_cents: -40, category:)
+        cpt.splits.create!(amount_cents: -40, category:)
+        repin(item_a)
+        repin(item_b)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_a, item_b))
+      end
+
       it "matches items whose pending transaction carries the category" do
         cpt = create(:canonical_pending_transaction, ledger_item: item_d)
         TransactionCategoryMapping.create!(category:, categorizable: cpt)

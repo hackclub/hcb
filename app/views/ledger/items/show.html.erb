@@ -84,6 +84,8 @@
 
   <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item } %>
 
+  <%= render "hcb_codes/splits", hcb_code: @item.hcb_code if @item.hcb_code.present? %>
+
   <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
   </div>

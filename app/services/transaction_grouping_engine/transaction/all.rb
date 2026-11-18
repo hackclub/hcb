@@ -110,10 +110,13 @@ module TransactionGroupingEngine
         ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
       end
 
-      def category_modifier
+      # Matches a transaction in the category, or with a split in it.
+      def category_modifier_for(type)
         return "" unless @category.present?
 
-        ActiveRecord::Base.sanitize_sql_array(["and transaction_category_mappings.transaction_category_id = ?", @category.id])
+        splittable = type == :ct ? "CanonicalTransaction" : "CanonicalPendingTransaction"
+
+        ActiveRecord::Base.sanitize_sql_array(["and (transaction_category_mappings.transaction_category_id = :id or exists (select 1 from transaction_splits where splittable_type = '#{splittable}' and splittable_id = #{type}.id and transaction_category_id = :id))", { id: @category.id }])
       end
 
       def merchant_modifier
@@ -263,7 +266,7 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :pt}
             #{user_modifier}
-            #{category_modifier}
+            #{category_modifier_for :pt}
             #{merchant_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
@@ -294,7 +297,7 @@ module TransactionGroupingEngine
             )
             #{search_modifier_for :ct}
             #{user_modifier}
-            #{category_modifier}
+            #{category_modifier_for :ct}
             #{merchant_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null

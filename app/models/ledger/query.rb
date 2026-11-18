@@ -312,7 +312,8 @@ class Ledger
         relation.where(id: Ledger::Item::Tag.where(tag_id: operand).select(:ledger_item_id))
       when "category"
         # Categories are assigned to the underlying canonical transactions, and
-        # an item matches if either kind carries the category. Resolving the slug
+        # an item matches if either kind carries the category, or has a split
+        # that does (see TransactionSplit). Resolving the slug
         # inside the subquery (rather than looking the category up first) means an
         # unknown slug simply matches nothing.
         #
@@ -326,10 +327,14 @@ class Ledger
         settled = CanonicalTransaction.where(id: mappings.where(categorizable_type: "CanonicalTransaction").select(:categorizable_id)).select(:ledger_item_id)
         pending = CanonicalPendingTransaction.where(id: mappings.where(categorizable_type: "CanonicalPendingTransaction").select(:categorizable_id)).select(:ledger_item_id)
 
+        splits = TransactionSplit.where(transaction_category_id: TransactionCategory.where(slug: operand).select(:id))
+        split_settled = CanonicalTransaction.where(id: splits.where(splittable_type: "CanonicalTransaction").select(:splittable_id)).select(:ledger_item_id)
+        split_pending = CanonicalPendingTransaction.where(id: splits.where(splittable_type: "CanonicalPendingTransaction").select(:splittable_id)).select(:ledger_item_id)
+
         # UNION ALL, not UNION: an item carrying the category on both a settled
         # and a pending transaction appears twice in the inner set, and IN
         # doesn't care — deduplicating it would only cost a sort.
-        relation.where(Ledger::Item.arel_table[:id].in(Arel::Nodes::UnionAll.new(settled.arel, pending.arel)))
+        relation.where(Ledger::Item.arel_table[:id].in([settled, pending, split_settled, split_pending].map(&:arel).reduce { |union, arm| Arel::Nodes::UnionAll.new(union, arm) }))
       when "merchant"
         relation.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: operand).select(:id))
       else

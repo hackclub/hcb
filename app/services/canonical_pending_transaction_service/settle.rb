@@ -20,6 +20,7 @@ module CanonicalPendingTransactionService
         end
 
         sync_transaction_category!
+        copy_splits!
       end
 
       if @canonical_transaction.amount_cents < 0 && @canonical_pending_transaction.raw_pending_stripe_transaction && (@canonical_pending_transaction.amount_cents != @canonical_transaction.amount_cents)
@@ -47,6 +48,25 @@ module CanonicalPendingTransactionService
         category: mapping.category,
         assignment_strategy: mapping.assignment_strategy,
       )
+    end
+
+    # Splits keep their amounts when the settled amount is larger (a tip), so
+    # what's left of the transaction absorbs the increase. When it's smaller,
+    # they're cut down to fit, since a transaction can't be split past its
+    # amount.
+    def copy_splits!
+      return if @canonical_transaction.splits.exists?
+      # A second capture of the same pending transaction would double them up
+      return if @canonical_pending_transaction.canonical_transactions.where.not(id: @canonical_transaction.id).exists?
+
+      left = @canonical_transaction.amount_cents
+      @canonical_pending_transaction.splits.each do |split|
+        amount_cents = split.amount_cents.clamp(*[0, left].sort)
+        next if amount_cents.zero?
+
+        @canonical_transaction.splits.create!(amount_cents:, memo: split[:memo], category: split.category)
+        left -= amount_cents
+      end
     end
 
   end

@@ -114,6 +114,17 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
     end
 
+    it "shows the transaction's splits as a bar" do
+      transaction = create(:canonical_transaction, event:, amount_cents: -100_00)
+      transaction.splits.create!(amount_cents: -60_00, memo: "Repaid by the PTA")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: transaction.ledger_item.hashid }
+
+      splits = Nokogiri::HTML(response.body).at_css("#splits")
+      expect(splits.text).to include("Repaid by the PTA", "$60.00", "Rest of the transaction", "$40.00")
+    end
+
     it "links each CPT to its own page for an auditor" do
       cpt = create(:canonical_pending_transaction)
       cpt_item = cpt.reload.ledger_item
