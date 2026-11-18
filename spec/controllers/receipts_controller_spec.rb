@@ -57,6 +57,24 @@ RSpec.describe ReceiptsController do
       expect(stream["action"]).to eq("replace")
       expect(stream.inner_html).to include('aria-label="1 receipt"')
     end
+
+    it "says why an unsupported file type was rejected" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      params = {
+        receiptable_type: "HcbCode",
+        receiptable_id: hcb_code.id,
+        upload_method: "transaction_page",
+        file: [fixture_file_upload("attachment1.txt", "text/plain")]
+      }
+
+      post(:create, params:)
+      expect(flash[:error]).to eq("That file type isn't supported. Upload an image or PDF.")
+
+      post(:create, params:, format: :turbo_stream)
+      expect(response.body).to include("That file type isn&#39;t supported. Upload an image or PDF.")
+      expect(response.body).not_to include("Validation failed")
+    end
   end
 
   # Receipts are moving onto ledger items (#14106); the controller has to drive

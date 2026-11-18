@@ -171,7 +171,7 @@ class ReceiptsController < ApplicationController
     Rails.error.report(e) unless e.is_a?(ActiveRecord::RecordInvalid)
 
     flash_type = :error
-    flash_message = "There was an error uploading your receipt. Please try again."
+    flash_message = Receipt.upload_error_message(e)
 
     streams.append(
       turbo_stream.replace(
@@ -179,7 +179,7 @@ class ReceiptsController < ApplicationController
         partial: "receipts/form_v3", locals: {
           upload_method: "receipt_center",
           restricted_dropzone: true,
-          error: e.message
+          error: flash_message
         }
       )
     )

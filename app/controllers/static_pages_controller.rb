@@ -212,7 +212,7 @@ class StaticPagesController < ApplicationController
   rescue => e
     Rails.error.report(e)
 
-    flash[:error] = e.message
+    flash[:error] = Receipt.upload_error_message(e)
     return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back

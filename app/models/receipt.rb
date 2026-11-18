@@ -82,6 +82,22 @@ class Receipt < ApplicationRecord
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
+  GENERIC_UPLOAD_ERROR = "There was an error uploading your receipt. Please try again."
+
+  # Turns a failed upload into a message the uploader can act on.
+  def self.upload_error_message(error)
+    errors = error.try(:record).try(:errors)
+    return GENERIC_UPLOAD_ERROR unless errors
+
+    if errors.of_kind?(:file, :content_type_invalid) || errors.of_kind?(:file, :content_type_spoofed)
+      "That file type isn't supported. Upload an image or PDF."
+    elsif errors.of_kind?(:file, :file_size_not_less_than_or_equal_to)
+      "That file is over 50 MB. Upload a smaller file."
+    else
+      GENERIC_UPLOAD_ERROR
+    end
+  end
+
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable.update(marked_no_or_lost_receipt_at: nil)
