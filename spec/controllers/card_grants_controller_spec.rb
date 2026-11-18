@@ -141,7 +141,8 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("This grant expired on")
+      expect(response.body).to include("This grant expired on <time")
+      expect(response.body).not_to include("&lt;time")
       expect(response.body).to include("Expired on")
       expect(response.body).to include("Spending controls")
       expect(response.body).to include("status bg-muted")
