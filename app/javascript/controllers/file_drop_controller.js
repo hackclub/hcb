@@ -110,17 +110,28 @@ export default class extends Controller {
       this.uploadMethodTarget.value += '_drag_and_drop'
     }
 
-    if (this.hasFormTarget) {
-      this.formTarget.requestSubmit()
-    } else {
-      this.element.requestSubmit()
-    }
+    const form = this.hasFormTarget ? this.formTarget : this.element
+    form.requestSubmit()
 
     this.submitting = true
 
     if (e.clipboardData && this.dropzoneTarget.contains(e.target))
       e.stopImmediatePropagation()
 
+    // With direct uploads, the real submit only happens once the files are up,
+    // so keep the `_drag_and_drop` suffix until then.
+    if (form.hasAttribute('data-direct-uploads-processing')) {
+      form.addEventListener(
+        'direct-uploads:end',
+        () => this.resetUploadMethod(),
+        { once: true }
+      )
+    } else {
+      this.resetUploadMethod()
+    }
+  }
+
+  resetUploadMethod() {
     if (
       this.hasUploadMethodTarget &&
       this.uploadMethodTarget.value.endsWith('_drag_and_drop')
