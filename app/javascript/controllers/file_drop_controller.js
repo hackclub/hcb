@@ -40,13 +40,20 @@ function extractId(dataTransfer) {
 }
 
 export default class extends Controller {
-  static targets = ['fileInput', 'dropzone', 'form', 'uploadMethod']
+  static targets = [
+    'fileInput',
+    'dropzone',
+    'form',
+    'uploadMethod',
+    'sizeError',
+  ]
   static values = {
     title: { type: String, default: 'Drop to add a receipt' },
     linking: { type: Boolean, default: false },
     globalPaste: { type: Boolean, default: false },
     receiptable: String,
     modal: String,
+    maxSize: Number,
   }
 
   initialize() {
@@ -132,6 +139,21 @@ export default class extends Controller {
     }
 
     this.submitting = false
+  }
+
+  // Runs before form#submit so an oversized file is never direct-uploaded.
+  checkSize(e) {
+    if (!this.hasSizeErrorTarget) return
+    const tooBig = [...this.fileInputTarget.files].find(
+      file => file.size > this.maxSizeValue
+    )
+    this.sizeErrorTarget.hidden = !tooBig
+    if (!tooBig) return
+
+    const limit = `${Math.round(this.maxSizeValue / 1024 / 1024)} MB`
+    this.sizeErrorTarget.textContent = `${tooBig.name} is larger than the ${limit} limit. Please choose a smaller file.`
+    this.fileInputTarget.value = ''
+    e.stopImmediatePropagation()
   }
 
   dragenter() {
