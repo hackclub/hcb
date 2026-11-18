@@ -20,18 +20,19 @@ ReactRailsUJS.handleEvent('turbo:before-render', ReactRailsUJS.handleUnmount)
 ReactRailsUJS.handleEvent('turbo:frame-load', ReactRailsUJS.handleMount)
 ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 
-// Remove modals triggered by <turbo-frames> when the frame is unloaded.
+// Remove modals triggered by <turbo-frames> once their frame renders a fresh copy.
 // Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
-// Modals containing the rendered frame (e.g. a lazy-loaded form) are kept.
+// Other modals are kept, since their triggers still need them.
 document.addEventListener('turbo:frame-render', ({ target }) => {
   // prettier-ignore
-  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').not($(target).parents()).remove()
+  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)')
+    .filter((_, modal) => target.querySelector(`#${CSS.escape(modal.id)}`))
+    .remove()
 })
 
 document.addEventListener('turbo:before-cache', () => {
-  const currentModal = $.modal.getCurrent()
-
-  if (currentModal) {
+  while ($.modal.isActive()) {
+    const currentModal = $.modal.getCurrent()
     currentModal.options.doFade = false
     currentModal.close()
   }
