@@ -81,4 +81,20 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
       expect(mail.to).to include("manager@example.invalid", "other-manager@example.invalid")
     end
   end
+
+  describe "#ended" do
+    let(:event) { create(:event) }
+    let(:payee) { create(:payee, event:) }
+
+    it "tells the contractor about the final invoice grace period" do
+      position = create(:payroll_position, payee:)
+      position.update_columns(start_date: 60.days.ago.to_date, end_date: 1.day.ago.to_date)
+
+      mail = described_class.with(position:).ended
+
+      expect(mail.to).to include(payee.email)
+      expect(mail.subject).to include(event.name)
+      expect(mail.body.encoded).to include("submit a final invoice", position.final_invoice_deadline.to_date.to_fs(:long))
+    end
+  end
 end

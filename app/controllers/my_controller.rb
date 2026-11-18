@@ -202,7 +202,7 @@ class MyController < ApplicationController
     @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
                                              .where(legal_entity_users: { user_id: current_user.id })
                                              .where(payees: { legal_entity_id: @legal_entity.id })
-                                             .includes(payee: :event)
+                                             .includes(:invoices, payee: :event)
                                              .order(created_at: :desc)
                                              .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?

@@ -6,9 +6,9 @@
 </p>
 
 <p>
-  After that date, <%= @position.payee.display_name %> will no longer be able to submit
-  invoices for this position. If you'd like to continue working with them, please create a
-  new contractor position before then.
+  After that date, <%= @position.payee.display_name %> will be able to submit one final invoice
+  for this position until <%= @position.final_invoice_deadline.to_date.to_fs(:long) %>.
+  If you'd like to continue working with them, please create a new contractor position before then.
 </p>
 
 <p>

@@ -48,6 +48,7 @@ module Payroll
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
+    validate :position_accepting_invoices, on: :create
 
     after_create_commit :notify_manager
 
@@ -137,6 +138,14 @@ module Payroll
       return if approved?
 
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
+    end
+
+    # Backstops Payroll::InvoicePolicy so a position's single post-expiry
+    # final invoice can't be exceeded (e.g. by a double submit).
+    def position_accepting_invoices
+      return if payroll_position.accepting_invoices?
+
+      errors.add(:base, "This position is no longer accepting invoices")
     end
 
     def currency_matches_position

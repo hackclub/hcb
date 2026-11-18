@@ -39,6 +39,16 @@ module Payroll
            subject: "#{@position.payee.display_name}'s contract for #{@event.name} expires on #{@position.end_date.to_fs(:long)}"
     end
 
+    def ended
+      @position = params[:position]
+      @payee = @position.payee
+      @event = @position.event
+
+      mail to: recipients,
+           subject: "Your contracting position for #{@event.name} has ended",
+           reply_to: reply_to_addresses
+    end
+
     def terminated
       @position = params[:position]
       @payee = @position.payee

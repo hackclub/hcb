@@ -170,6 +170,7 @@ RSpec.describe Payroll::InvoicesController do
       end
 
       it "still can't once the position is no longer active" do
+        invoice # submitted while the position was active
         position.update_column(:aasm_state, "terminated")
 
         expect { approve! }.not_to change(Payment, :count)

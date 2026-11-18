@@ -258,4 +258,103 @@ RSpec.describe Payroll::Position, type: :model do
       expect(hcb_party.reload).to be_signed
     end
   end
+
+  describe "final invoice grace period" do
+    let(:position) { create(:payroll_position, aasm_state: :onboarded) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      position.update_columns(start_date: 60.days.ago.to_date, end_date: 10.days.ago.to_date)
+    end
+
+    def sql_queries_during(&block)
+      queries = []
+      callback = ->(*, payload) { queries << payload[:sql] unless payload[:name] == "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
+      queries
+    end
+
+    def submit_invoice(**attrs)
+      position.invoices.create!(name: "Final hours", amount_cents: 1_000, currency: position.currency, **attrs)
+    end
+
+    it "accepts invoices while active" do
+      expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "accepts one invoice after expiring, until 30 days past the expiration" do
+      freeze_time do
+        position.mark_expired!
+
+        expect(position.expired_at).to eq(Time.current)
+        expect(position.final_invoice_deadline).to eq(Time.current + 30.days)
+      end
+      expect(position.accepting_invoices?).to eq(true)
+
+      submit_invoice
+      expect(position.accepting_invoices?).to eq(false)
+      expect { submit_invoice }.to raise_error(ActiveRecord::RecordInvalid, /no longer accepting invoices/)
+    end
+
+    it "doesn't count invoices submitted before the position ended" do
+      submit_invoice.update_column(:created_at, 15.days.ago)
+      position.mark_expired!
+
+      expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "allows resubmitting after the final invoice is rejected" do
+      position.mark_expired!
+      submit_invoice.update_column(:aasm_state, "rejected")
+
+      expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "uses preloaded invoices without querying" do
+      position.mark_expired!
+      submit_invoice.update_column(:created_at, 15.days.ago)
+      submit_invoice(name: "Rejected final").update_column(:aasm_state, "rejected")
+
+      open_position = Payroll::Position.includes(:invoices).find(position.id)
+      expect(sql_queries_during { expect(open_position.accepting_invoices?).to eq(true) }).to be_empty
+
+      submit_invoice(name: "Final hours")
+      used_position = Payroll::Position.includes(:invoices).find(position.id)
+      expect(sql_queries_during { expect(used_position.accepting_invoices?).to eq(false) }).to be_empty
+    end
+
+    it "measures the grace period from when the position actually expired, not its end date" do
+      position.update_columns(start_date: 90.days.ago.to_date, end_date: 31.days.ago.to_date)
+      position.mark_expired!
+
+      expect(position.accepting_invoices?).to eq(true)
+    end
+
+    it "closes once the grace period is over" do
+      position.mark_expired!
+      position.update_column(:expired_at, 31.days.ago)
+
+      expect(position.accepting_invoices?).to eq(false)
+    end
+
+    it "falls back to the end date for positions expired without an expired_at" do
+      position.update_columns(aasm_state: "expired", expired_at: nil)
+      expect(position.final_invoice_deadline).to eq(position.end_date.end_of_day + 30.days)
+      expect(position.accepting_invoices?).to eq(true)
+
+      position.update_columns(start_date: 90.days.ago.to_date, end_date: 31.days.ago.to_date)
+      expect(position.accepting_invoices?).to eq(false)
+    end
+
+    it "doesn't apply to terminated positions" do
+      position.update_column(:aasm_state, "terminated")
+
+      expect(position.accepting_invoices?).to eq(false)
+    end
+
+    it "emails the contractor when the position expires" do
+      expect { position.mark_expired! }
+        .to have_enqueued_mail(Payroll::PositionMailer, :ended)
+    end
+  end
 end
