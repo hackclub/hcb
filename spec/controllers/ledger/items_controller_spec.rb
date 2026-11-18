@@ -34,6 +34,28 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "POST #toggle_tag" do
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+
+      it "adds the tag and then removes it on a second toggle" do
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).to include(tag)
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).not_to include(tag)
+      end
+
+      it "refuses a tag from another organization" do
+        other_event = create(:event)
+        create(:organizer_position, user: member_user, event: other_event, role: :member)
+        other_tag = other_event.tags.create!(label: "Other", emoji: "🎉", color: "red")
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: other_tag.id }
+
+        expect(item.reload.tags).to be_empty
+      end
+    end
+
     describe "POST #invoice_as_personal_transaction" do
       before { create(:hcb_code, ledger_item: item) }
 
@@ -81,6 +103,34 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    context "when asked to reverse a receipt pairing" do
+      let(:receipt) do
+        Receipt.create!(receiptable: item, user: create(:user), upload_method: :email_receipt_bin,
+                        file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      end
+
+      before { create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE, ledger_item: item) }
+
+      it "carries the receipt through the redirect to the HCB code page for a non-auditor" do
+        create(:organizer_position, event:, user: (user = create(:user)))
+        create_session(user, verified: true)
+
+        get :show, params: { id: item.hashid, reverse: receipt.id }
+
+        expect(response).to redirect_to(hcb_code_path(item.hcb_code, reverse: receipt.id))
+      end
+
+      it "asks an auditor to confirm the reversal" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: item.hashid, reverse: receipt.id }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Reverse receipt pairing")
+        expect(response.body).to include(reverse_receipt_path(receipt.id, format: :html))
+      end
+    end
+
     it "updates the counts on the item's ledger row when shown in a popover" do
       create_session(create(:user, :make_auditor), verified: true)
       target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
@@ -116,7 +166,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         destination_event_id: event.id,
         scheduled_on: Date.tomorrow,
         transfer_type: "repayment",
-        repaid_ledger_item_id: expense.ledger_item.id
+        repaid_ledger_item_ids: [expense.ledger_item.id]
       ).run
       # Scheduled transfers only reach the recipient once they're sent.
       expect(disbursement.incoming_disbursement.ledger_item).to be_nil

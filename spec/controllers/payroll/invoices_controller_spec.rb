@@ -18,7 +18,7 @@ RSpec.describe Payroll::InvoicesController do
 
   def invoice_params(**overrides)
     {
-      payroll_position_id: position.id,
+      payroll_position_id: position.hashid,
       payroll_invoice: {
         name: "Engineering hours",
         amount: "50.00",
@@ -131,11 +131,15 @@ RSpec.describe Payroll::InvoicesController do
     let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency) }
 
     def approve!
-      post :approve, params: { event_id: event.slug, id: invoice.id }
+      post :approve, params: { id: invoice.hashid }
     end
 
     context "as an organizer" do
       before { create_session(organizer, verified: true) }
+
+      it "doesn't look invoices up by numeric id" do
+        expect { post :approve, params: { id: invoice.id } }.to raise_error(ActiveRecord::RecordNotFound)
+      end
 
       it "pays an invoice only once when approved twice" do
         stub_balance(100_00)
@@ -172,6 +176,26 @@ RSpec.describe Payroll::InvoicesController do
         expect(invoice.reload).to be_submitted
       end
     end
+
+    context "as an organizer of a different organization" do
+      let(:other_organizer) { create(:user) }
+      let!(:other_event) { create(:event, organizers: [other_organizer]) }
+
+      before { create_session(other_organizer, verified: true) }
+
+      it "can't approve the invoice, even when their own event is passed" do
+        stub_balance(100_00)
+
+        expect { post :approve, params: { event_id: other_event.slug, id: invoice.hashid } }.not_to change(Payment, :count)
+        expect(invoice.reload).to be_submitted
+      end
+
+      it "can't reject the invoice" do
+        post :reject, params: { id: invoice.hashid }
+
+        expect(invoice.reload).to be_submitted
+      end
+    end
   end
 
   describe "POST #reject" do
@@ -182,7 +206,7 @@ RSpec.describe Payroll::InvoicesController do
       invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
       invoice.update_column(:amount_cents, 0)
 
-      post :reject, params: { event_id: event.slug, id: invoice.id }
+      post :reject, params: { id: invoice.hashid }
 
       expect(invoice.reload).to be_rejected
       expect(invoice.reviewed_by).to eq(organizer)

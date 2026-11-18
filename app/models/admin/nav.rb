@@ -260,6 +260,10 @@ module Admin
           make_item(
             name: "Tax Forms",
             path: admin_tax_forms_path
+          ),
+          make_item(
+            name: "Tax1099 Import",
+            path: new_admin_tax1099_import_path
           )
         ]
       )

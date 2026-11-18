@@ -148,6 +148,44 @@ RSpec.describe Api::Models::LedgerTransaction do
     end
   end
 
+  describe "#receipts" do
+    def attach_receipt_to(receiptable, user: create(:user), upload_method: :api)
+      receipt = Receipt.new(receiptable:, user:, upload_method:)
+      receipt.file.attach(
+        io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
+        filename: "receipt.png", content_type: "image/png"
+      )
+      receipt.save!
+      receipt
+    end
+
+    # Loads the item the way the v3 ledger query does (see Api::V3).
+    def v3_transaction_for(ledger_item)
+      described_class.new(Ledger::Item.preload(:receipts).find(ledger_item.id))
+    end
+
+    it "reads the ledger item's receipts" do
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code.reload
+      receipt = attach_receipt_to(hcb_code.ledger_item)
+
+      expect(v3_transaction_for(hcb_code.ledger_item).receipts).to contain_exactly(receipt)
+    end
+
+    # A payout's receipts live on the expense it pays out, as HcbCode#receipts
+    # returns for the payout's HCB code.
+    it "reads a reimbursement payout's receipts from its expense" do
+      report = create(:reimbursement_report, event:)
+      expense = create(:reimbursement_expense, report:, memo: "Snacks")
+      receipt = attach_receipt_to(expense, user: report.user, upload_method: :expense_report)
+
+      expense.update_column(:aasm_state, "approved")
+      report.update_column(:aasm_state, "reimbursement_approved")
+      payout = Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event:, expense:)
+
+      expect(v3_transaction_for(payout.reload.ledger_item).receipts).to contain_exactly(receipt)
+    end
+  end
+
   describe "identity and attributes" do
     it "keeps the HcbCode's public id and exposes the ledger item separately" do
       hcb_code = create(:hcb_code, ledger_item: item)

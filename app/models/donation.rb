@@ -192,10 +192,6 @@ class Donation < ApplicationRecord
     return "checkmark" if deposited? || in_transit?
   end
 
-  def unpaid?
-    pending?
-  end
-
   def includes_message?
     self.message.present?
   end
