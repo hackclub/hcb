@@ -376,6 +376,11 @@ module Reimbursement
         update!(currency: new_currency)
 
         expenses.each do |expense|
+          if expense.is_a?(Reimbursement::Expense::Mileage)
+            expense.value_will_change! # value is miles, not money; this requotes the amount in the new currency
+            next expense.save!
+          end
+
           fractional = Money.from_amount(expense.value, old_currency).cents
           full = Money.from_cents(fractional, new_currency).amount
 

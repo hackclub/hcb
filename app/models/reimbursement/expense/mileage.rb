@@ -38,7 +38,19 @@ module Reimbursement
       end
 
       def value_label
-        "Miles (#{rate}¢/mile)"
+        "Miles (#{rate}¢#{" USD" unless currency == "USD"}/mile)"
+      end
+
+      # The mileage rate is in USD, so it's converted into the report's currency.
+      def set_amount_cents
+        usd_cents = (rate * value).round
+        return self.amount_cents = usd_cents if currency == "USD" || usd_cents.zero?
+        # Only requote when the miles change, so exchange rate drift doesn't alter (and un-approve) a saved expense.
+        return unless new_record? || value_changed? || reimbursement_report_id_changed?
+
+        self.amount_cents = MoneyService.convert_from_usd_wise(usd_cents, currency)
+      rescue Faraday::Error
+        errors.add(:base, "We couldn't fetch the #{currency} exchange rate for this mileage expense. Please try again.")
       end
 
     end
