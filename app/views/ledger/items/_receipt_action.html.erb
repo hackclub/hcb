@@ -46,7 +46,7 @@
 
     <% unless disabled %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= link_modal_id %>">
-        <%= modal_header "Select receipt" %>
+        <%= modal_header "Select receipts" %>
         <%# Lazy, so the receipt bin only loads when the modal is opened, not once per row %>
         <%= turbo_frame_tag dom_id(item, :link_modal), src: link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: item.id), loading: :lazy, target: "_top" do %>
           <strong>Loading...</strong>

@@ -9,9 +9,10 @@
       <div class="receipt__search mb3 m0 p0">
         <input data-receipt-select-target="search" data-action="keyup->receipt-select#search" placeholder="Search" style="max-width: none;" type="text" id="q">
       </div>
-      <span data-receipt-select-target="select" style="display: none;">
-        <%= form.select :receipt_id, @receipts.map { |receipt| [receipt.id, receipt.id] }, include_blank: true %>
-      </span>
+      <%# Enabled by the receipt-select controller as each receipt is selected %>
+      <% @receipts.each do |receipt| %>
+        <%= hidden_field_tag "receipt_ids[]", receipt.id, id: nil, disabled: true, data: { "receipt-select-target": "receiptId", "receipt-id": receipt.id } %>
+      <% end %>
 
       <%= form.hidden_field :receiptable_id, value: @receiptable.id %>
       <%= form.hidden_field :receiptable_type, value: @receiptable.class %>

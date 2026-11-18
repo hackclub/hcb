@@ -35,24 +35,27 @@ class ReceiptsController < ApplicationController
   end
 
   def link
-    params.require(:receipt_id)
+    params.require(:receipt_ids)
     params.require(:receiptable_type)
     params.require(:receiptable_id)
 
-    @receipt = Receipt.find(params[:receipt_id])
+    @receipts = Receipt.find(params[:receipt_ids])
 
-    authorize @receipt
+    @receipts.each { |receipt| authorize receipt }
     authorize @receiptable, policy_class: ReceiptablePolicy
 
-    @receipt.update!(receiptable: @receiptable)
+    Receipt.transaction do
+      @receipts.each { |receipt| receipt.update!(receiptable: @receiptable) }
+    end
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
+        noun = "Receipt".pluralize(@receipts.size)
         if params[:show_link]
-          flash[:success] = { text: "Receipt linked!", link: (hcb_code_path(@hcb_code) if @hcb_code), link_text: "View" }
+          flash[:success] = { text: "#{noun} linked!", link: (hcb_code_path(@hcb_code) if @hcb_code), link_text: "View" }
         else
-          flash[:success] = "Receipt added!"
+          flash[:success] = "#{noun} added!"
         end
 
         if params[:popover]&.starts_with?("HcbCode:")
@@ -380,21 +383,23 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item }))
     end
 
-    if @receipt && on_page_of_receipt_hcb_code?
-      streams.append(turbo_stream.append(
-                       :receipts_list,
-                       partial: "receipts/receipt",
-                       locals: { receipt: @receipt, show_delete_button: true, show_receipt_bin_button: true, link_to_file: true }
-                     ))
-    elsif @receipt
-      streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))
-    end
-
-    if @receipt
-      if @frame
-        streams.append(turbo_stream.remove("modal_receipt_#{@receipt.id}"))
+    # `link` attaches several receipts from the bin at once; `destroy` and
+    # `reverse` act on one.
+    (@receipts || [@receipt].compact).each do |receipt|
+      if on_page_of_receipt_hcb_code?
+        streams.append(turbo_stream.append(
+                         :receipts_list,
+                         partial: "receipts/receipt",
+                         locals: { receipt:, show_delete_button: true, show_receipt_bin_button: true, link_to_file: true }
+                       ))
       else
-        streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))
+        streams.append(turbo_stream.remove("receipt_#{receipt.id}"))
+      end
+
+      if @frame
+        streams.append(turbo_stream.remove("modal_receipt_#{receipt.id}"))
+      else
+        streams.append(turbo_stream.remove("receipt_#{receipt.id}"))
       end
     end
 

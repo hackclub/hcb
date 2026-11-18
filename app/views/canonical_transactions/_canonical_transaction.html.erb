@@ -216,7 +216,7 @@
 
     <% if !local_assigns[:receipt_upload_button_disabled] && ledger_item.present? %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-        <%= modal_header "Select receipt" %>
+        <%= modal_header "Select receipts" %>
         <%= turbo_frame_tag dom_id(ledger_item, :link_modal), src: link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: ledger_item.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), loading: :lazy, turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
