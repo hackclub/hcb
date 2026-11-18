@@ -31,7 +31,15 @@ export default class extends Controller {
   }
 
   // For forms that stay on the page when an upload fails, so it can be retried
-  reset() {
+  async reset(e) {
+    // A successful upload replaces the form. Wait for Turbo to render that, so
+    // the button doesn't flash back to its idle state first.
+    if (e?.type == 'turbo:submit-end') {
+      await e.detail.fetchResponse?.responseHTML
+      await new Promise(requestAnimationFrame)
+      await new Promise(requestAnimationFrame)
+      if (!this.element.isConnected) return
+    }
     if (!this.labels) return
 
     this.labels.forEach(([el, text]) => (el.textContent = text))
@@ -39,10 +47,14 @@ export default class extends Controller {
     this.element
       .querySelector(`#${this.buttonValue}`)
       ?.removeAttribute('disabled')
-    // ActiveStorage leaves the input disabled once the files are up
     this.element.querySelectorAll('input[type=file]').forEach(input => {
+      // ActiveStorage leaves the input disabled once the files are up, and
+      // leaves their signed ids in hidden inputs that a retry would resend
       input.disabled = false
       input.value = ''
+      this.element
+        .querySelectorAll(`input[type=hidden][name="${input.name}"]`)
+        .forEach(hidden => hidden.remove())
     })
   }
 }
