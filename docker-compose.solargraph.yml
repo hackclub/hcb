@@ -1,7 +1,9 @@
 services:
   solargraph:
     build: .
-    command: bundle exec solargraph socket --host=0.0.0.0 --port=7658
+    # Solargraph isn't in the Gemfile (it needs Prism 1.x, the app needs Prism 2
+    # for Herb), so install it alongside the bundle and run it outside Bundler.
+    command: sh -c "gem install --no-document --conservative solargraph solargraph-rails && solargraph socket --host=0.0.0.0 --port=7658"
     volumes:
       - ./:/usr/src/app:cached
       - gems:/usr/local/bundle

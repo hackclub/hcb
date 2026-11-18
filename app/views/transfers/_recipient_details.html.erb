@@ -1,4 +1,6 @@
-<%# locals: (form:, disabled:, required: true, show_us: false) %>
+<%# locals: (form:, disabled:, required: true, show_us: false, initial_country: form.object.recipient_country.to_s) %>
+<%# herb:slots client %>
+<%# herb:state (selected_recipient_country: initial_country) %>
 
 <%= form.label :address_line1, "Street address" %>
 <div class="grid grid--split gap-2">
@@ -27,6 +29,6 @@
 
   <div class="field flex-auto">
     <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, show_us ? Event.countries_for_select : Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { style: "min-height:37px", "@change": "country = $event.target.value", required:, disabled: } %>
+    <%= form.collection_select :recipient_country, show_us ? Event.countries_for_select : Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { style: "min-height:37px", required:, disabled:, data: { herb_set: "selected_recipient_country=$value" } } %>
   </div>
 </div>

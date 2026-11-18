@@ -137,6 +137,19 @@ RSpec.describe StripeCardsController do
         expect(response.body).not_to include("15 Falls Rd")
       end
 
+      it "doesn't link a shipping card to a private organization the cardholder has since left", :aggregate_failures do
+        setup_shipping_context => { user:, event: }
+        event.update_column(:is_public, false)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).and_return(Stripe::Issuing::Card.construct_from({ shipping: { status: "pending", eta: 3.days.from_now.to_i, tracking_number: nil } }))
+        OrganizerPosition.find_by!(user:, event:).destroy!
+        create_session(user, verified: true)
+
+        get(:shipping)
+
+        expect(response.body).to include("is on the way!", event.name)
+        expect(Nokogiri::HTML5(response.body).css("a[href='#{event_path(event)}']")).to be_empty
+      end
+
       it "shows the shipping address to the cardholder and auditors" do
         setup_shipping_context => { card:, user: }
 

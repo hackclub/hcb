@@ -110,7 +110,6 @@ class User < ApplicationRecord
   has_many :mailbox_addresses
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
-  has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
   has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
@@ -148,7 +147,6 @@ class User < ApplicationRecord
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
-  has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
 
   has_many :jobs, as: :entity, class_name: "Employee"
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
@@ -181,7 +179,7 @@ class User < ApplicationRecord
   has_many :legal_entity_users
   has_many :legal_entities, through: :legal_entity_users
   # has_one :through needs a singular intermediate, so hop through a person-scoped join row.
-  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
+  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.not_archived.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
 
@@ -221,6 +219,17 @@ class User < ApplicationRecord
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
+
+  validate :must_be_13_or_older, if: :will_save_change_to_birthday?
+
+  def must_be_13_or_older
+    return if birthday.blank?
+
+    calculated_age = age_on(Date.current)
+    if calculated_age && calculated_age < 13
+      errors.add(:birthday, "You must be at least 13 years old")
+    end
+  end
 
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
@@ -292,7 +301,10 @@ class User < ApplicationRecord
     end
   end
 
-  scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
+  scope :last_seen_within, ->(ago) {
+    where(id: User::Session.not_impersonated.where(last_seen_at: ago..).select(:user_id))
+      .or(where(id: ApiToken.from_trusted_application.where(last_used_at: ago..).select(:user_id)))
+  }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
@@ -331,10 +343,6 @@ class User < ApplicationRecord
 
   def make_admin!
     admin!
-  end
-
-  def remove_admin!
-    user!
   end
 
   def first_name(legal: false)
@@ -431,6 +439,13 @@ class User < ApplicationRecord
 
   def seasonal_themes_disabled?
     !seasonal_themes_enabled?
+  end
+
+  # Memoized since the settings dropdown renders on many pages.
+  def show_tax_settings?
+    return @show_tax_settings if defined?(@show_tax_settings)
+
+    @show_tax_settings = legal_entities.any? { |le| le.tax_form_required? || le.completed_tax_form? }
   end
 
   # Whether this user is allowed to issue stripe cards and activate card grants.
@@ -573,7 +588,10 @@ class User < ApplicationRecord
   end
 
   def last_seen_at
-    user_sessions.not_impersonated.maximum(:last_seen_at)
+    [
+      user_sessions.not_impersonated.maximum(:last_seen_at),
+      api_tokens.from_trusted_application.maximum(:last_used_at)
+    ].compact.max
   end
 
   def last_login_at
@@ -735,7 +753,7 @@ class User < ApplicationRecord
   end
 
   def unassociated_payments_received
-    Payment.pending_legal_entity.joins(payee: [:legal_entity]).where(
+    Payment.pending_legal_entity.left_joins(payee: :legal_entity).where(
       "(payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email",
       email:
     ).distinct

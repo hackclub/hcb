@@ -185,6 +185,33 @@ RSpec.describe Tax::Form, type: :model do
     end
   end
 
+  describe "#pdf_content" do
+    let(:form) { create(:tax_form, :completed, legal_entity:) }
+
+    def stub_pdf(pdf, submission: w9_submission)
+      submission[submission["FormType"]]["PdfUrl"] = "https://bucket.s3.amazonaws.com/forms/form.pdf"
+      allow(TaxbanditsService).to receive(:get_submission).and_return(submission)
+
+      allow(Credentials).to receive(:fetch).and_call_original
+      allow(Credentials).to receive(:fetch).with(:TAXBANDITS, :PDF_KEY).and_return(Base64.strict_encode64("k" * 32))
+
+      object = double(get: double(body: StringIO.new(pdf)))
+      allow(described_class).to receive(:taxbandits_s3_bucket).and_return(double(object:))
+    end
+
+    it "serves the PDF from TaxBandits' bucket" do
+      stub_pdf("%PDF-1.4 a form")
+
+      expect(form.pdf_content).to eq("%PDF-1.4 a form")
+    end
+
+    it "is nil until TaxBandits has a PDF" do
+      allow(TaxbanditsService).to receive(:get_submission).and_return(w9_submission)
+
+      expect(form.pdf_content).to be_nil
+    end
+  end
+
   describe "TIN immutability" do
     it "refuses to change a fingerprint once it is set" do
       form = create(:tax_form, :completed, legal_entity:, tin_hash: "abc")
@@ -193,6 +220,33 @@ RSpec.describe Tax::Form, type: :model do
 
       expect(form).not_to be_valid
       expect(form.errors[:tin_hash]).to include("cannot change once set")
+    end
+  end
+  describe "tin_verified" do
+    let(:form) { create(:tax_form, :sent) }
+
+    it "follows a successful TaxBandits TIN match" do
+      form.update!(taxbandits_tin_matching_status: :success)
+
+      expect(form).to be_tin_verified
+    end
+
+    it "is cleared by a failed TIN match" do
+      form.update!(taxbandits_tin_matching_status: :success)
+      form.update!(taxbandits_tin_matching_status: :failed)
+
+      expect(form).not_to be_tin_verified
+    end
+
+    it "is left alone when the TIN-match status doesn't change" do
+      form.update!(tin_verified: true)
+      form.update!(taxbandits_status: :opened)
+
+      expect(form).to be_tin_verified
+    end
+
+    it "starts out unverified for a form collected through TaxBandits" do
+      expect(create(:tax_form)).not_to be_tin_verified
     end
   end
 end
