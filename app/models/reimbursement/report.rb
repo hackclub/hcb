@@ -377,6 +377,8 @@ module Reimbursement
 
         expenses.each do |expense|
           if expense.is_a?(Reimbursement::Expense::Mileage)
+            next if closed? # already paid out; a requote would change the amount and un-approve the expense
+
             expense.value_will_change! # value is miles, not money; this requotes the amount in the new currency
             next expense.save!
           end

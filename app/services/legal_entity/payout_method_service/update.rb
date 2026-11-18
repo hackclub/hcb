@@ -90,7 +90,8 @@ class LegalEntity
         # payout-method change or the other repoints.
         (failed + draft).each do |report|
           safely do
-            ActiveRecord::Base.transaction do
+            # requires_new so a failed repoint also rolls back inside a caller's transaction
+            ActiveRecord::Base.transaction(requires_new: true) do
               report.update!(legal_entity_payout_method: @payout_method)
               report.convert_report_currency!(@payout_method.currency) if report.mismatched_currency?
               report.payout_holding.mark_settled! if report.payout_holding&.failed?

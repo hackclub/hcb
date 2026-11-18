@@ -189,6 +189,24 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(report.reload.legal_entity_payout_method).to eq(new_pm)
     end
 
+    it "leaves a draft report untouched when its mileage can't be requoted" do
+      allow(Safely).to receive(:env).and_return("production") # safely re-raises in test
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+      old_pm = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      Reimbursement::Expense::Mileage.create!(report:, value: 33)
+
+      service = described_class.new(
+        legal_entity: user.personal_legal_entity,
+        details_type: "LegalEntity::PayoutMethod::WiseTransfer",
+        details_attrs: valid_wise_attrs
+      )
+
+      # UsersController#update runs the service inside its own transaction
+      expect(ActiveRecord::Base.transaction { service.run }).to be(true)
+      expect(report.reload).to have_attributes(currency: "USD", legal_entity_payout_method: old_pm)
+    end
+
     it "re-points draft reports to the corrected method" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)

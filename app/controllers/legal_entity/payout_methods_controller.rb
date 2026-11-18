@@ -65,17 +65,22 @@ class LegalEntity
 
       draft_report = @payout_method.reimbursement_reports.where(aasm_state: :draft)
 
-      @payout_method.archive!
+      ActiveRecord::Base.transaction do
+        @payout_method.archive!
 
-      default = legal_entity.default_payout_method
-      if draft_report.any?
-        draft_report.find_each do |report|
-          report.update!(legal_entity_payout_method: default)
-          report.convert_report_currency!(default.currency) if default && report.mismatched_currency?
+        default = legal_entity.default_payout_method
+        if draft_report.any?
+          draft_report.find_each do |report|
+            report.update!(legal_entity_payout_method: default)
+            report.convert_report_currency!(default.currency) if default && report.mismatched_currency?
+          end
         end
       end
 
       flash[:success] = "Payout method removed."
+      redirect_back_or_to settings_payouts_path
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.message
       redirect_back_or_to settings_payouts_path
     end
 
