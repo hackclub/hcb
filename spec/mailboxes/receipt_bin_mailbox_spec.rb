@@ -11,12 +11,12 @@ RSpec.describe ReceiptBinMailbox do
   # See https://github.com/rspec/rspec-rails/issues/2545
   attr_reader(:tagged_logger)
 
-  def receive_email(to:, from:, cc: nil)
+  def receive_email(to:, from:, cc: nil, subject: "Receipt")
     receive_inbound_email_from_mail(
       to:,
       from:,
       cc:,
-      subject: "Receipt",
+      subject:,
       body: <<~BODY,
         Receipt attached
       BODY
@@ -41,6 +41,7 @@ RSpec.describe ReceiptBinMailbox do
       end
 
       expect(user.receipts.count).to eq(1)
+      expect(ReceiptService::Extract).to have_received(:new)
 
       confirmation_email = sent_emails.sole
       expect(confirmation_email.to).to contain_exactly(user.email)
@@ -74,6 +75,18 @@ RSpec.describe ReceiptBinMailbox do
       expect(bounce.to).to contain_exactly("unknown@example.com")
       expect(bounce.text_part.body.to_s).to include("We couldn't find an HCB account for unknown@example.com")
       expect(bounce.text_part.body.to_s).not_to include("This isn't a valid Receipt Bin inbox")
+      expect(Receipt.count).to eq(0)
+    end
+
+    it "bounces unknown senders to receipts@hcb.gg with a link to the Receipts page" do
+      sent_emails = capture_emails do
+        receive_email(to: "receipts@hcb.gg", from: "unknown@example.com", subject: nil)
+      end
+
+      bounce = sent_emails.sole
+      expect(bounce.to).to contain_exactly("unknown@example.com")
+      expect(bounce.subject).to eq("Email address not linked to HCB")
+      expect(bounce.html_part.body.to_s).to include("/my/inbox")
       expect(Receipt.count).to eq(0)
     end
   end
@@ -125,6 +138,19 @@ RSpec.describe ReceiptBinMailbox do
       bounce = sent_emails.sole
       expect(bounce.text_part.body.to_s).to include("This isn't a valid Receipt Bin inbox")
       expect(bounce.text_part.body.to_s).not_to include("not-user@example.com")
+    end
+
+    it "bounces as an invalid inbox when the address doesn't exist" do
+      sent_emails = capture_emails do
+        receive_email(to: MailboxAddress.generate_address, from: "not-user@example.com", subject: nil)
+      end
+
+      bounce = sent_emails.sole
+      expect(bounce.subject).to eq("Unknown Receipt Bin inbox")
+      expect(bounce.text_part.body.to_s).to include("This isn't a valid Receipt Bin inbox")
+      expect(bounce.text_part.body.to_s).not_to include("not-user@example.com")
+      expect(bounce.html_part.body.to_s).to include("/my/inbox")
+      expect(Receipt.count).to eq(0)
     end
   end
 end

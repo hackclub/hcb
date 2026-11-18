@@ -12,8 +12,11 @@ class ReceiptBinMailer < ApplicationMailer
           references: -> { [@inbound_mail&.mail&.header&.[]("References")&.value, @inbound_mail&.message_id].compact.join(" ") }
 
   def bounce_missing_user
-    @unknown_sender = params[:unknown_sender]
-    mail subject: @inbound_mail&.mail&.subject || (@unknown_sender ? "Email address not linked to HCB" : "Unknown Receipt Bin inbox")
+    mail subject: @inbound_mail&.mail&.subject || "Unknown Receipt Bin inbox"
+  end
+
+  def bounce_unknown_sender
+    mail subject: @inbound_mail&.mail&.subject || "Email address not linked to HCB"
   end
 
   def bounce_missing_attachment

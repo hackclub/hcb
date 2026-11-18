@@ -1,16 +1,6 @@
-<% if @unknown_sender %>
-  <p>
-    We couldn't find an HCB account for <%= @to %>. Try sending your receipt again from the email address you use to log in to HCB.
-  </p>
-
-  <p>
-    Or, send it to your personal Receipt Bin address, which accepts receipts from any email address. You can find it on your <%= link_to "Receipts page", my_inbox_url %>.
-  </p>
-<% else %>
-  <p>
-    This isn't a valid Receipt Bin inbox. You can find yours on your <%= link_to "Receipts page", my_inbox_url %>.
-  </p>
-<% end %>
+<p>
+  This isn't a valid Receipt Bin inbox. You can find yours on your <%= link_to "Receipts page", my_inbox_url %>.
+</p>
 
 <p>
   From,<br>
