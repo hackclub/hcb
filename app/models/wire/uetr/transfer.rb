@@ -36,7 +36,6 @@ class Wire
       def beneficiary_name = @payload["beneficiary_name"].presence
       def fx_rate = @payload["fx_rate"].presence
       def return_reason = @payload["return_reason"].presence
-      def incoming? = @payload["is_incoming"].present?
 
       def presentation = STATUSES.fetch(status, { label: status.to_s.humanize.presence || "Unknown", style: "muted" })
       def label = presentation[:label]

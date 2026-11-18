@@ -170,10 +170,6 @@ class Transaction < ApplicationRecord
     is_event_related && fee_relationship_id
   end
 
-  def uncategorized?
-    is_event_related && fee_relationship_id.nil?
-  end
-
   def filter_data
     {
       exists: true,
