@@ -23,7 +23,9 @@ RSpec.describe StaticPagesController do
       expect(response).to redirect_to("/my/inbox")
     end
 
-    it "says an unsupported file type was rejected" do
+    it "says an unsupported file type was rejected, without reporting it" do
+      expect(Rails.error).not_to receive(:report)
+
       upload(fixture_file_upload("attachment1.txt", "text/plain"))
 
       expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")

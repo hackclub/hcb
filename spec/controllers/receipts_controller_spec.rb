@@ -60,10 +60,10 @@ RSpec.describe ReceiptsController do
 
     it "says why an unsupported file type was rejected" do
       create_session(create(:user, :make_admin), verified: true)
-      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      ledger_item = create(:canonical_pending_transaction).local_hcb_code.ledger_item
       params = {
-        receiptable_type: "HcbCode",
-        receiptable_id: hcb_code.id,
+        receiptable_type: "Ledger::Item",
+        receiptable_id: ledger_item.id,
         upload_method: "transaction_page",
         file: [fixture_file_upload("attachment1.txt", "text/plain")]
       }
@@ -72,8 +72,12 @@ RSpec.describe ReceiptsController do
       expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
 
       post(:create, params:, format: :turbo_stream)
-      expect(response.body).to include("File type isn&#39;t supported. Upload an image, PDF, or CSV.")
+      fragment = Nokogiri::HTML5.fragment(response.body)
+      form = Nokogiri::HTML5.fragment(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form'] template").inner_html)
+      expect(form.at_css("#upload-receipt-button").text.strip).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
+      expect(fragment.at_css("turbo-stream[target='receipt_upload_form']")).to be_nil
       expect(response.body).not_to include("Validation failed")
+      expect(Receipt.count).to eq(0)
     end
 
     context "when an upload is rejected" do
@@ -106,6 +110,16 @@ RSpec.describe ReceiptsController do
         post(:create, params:, format: :turbo_stream)
         expect(response.body).to include("File is over 50 MB. Upload a smaller file.")
         expect(response.body).not_to include("Validation failed")
+        expect(Receipt.count).to eq(0)
+      end
+
+      it "takes the limit in the message from the validator" do
+        validator = Receipt.validators_on(:file).find { |v| v.options.key?(:less_than_or_equal_to) }
+        allow(validator).to receive(:options).and_return(validator.options.merge(less_than_or_equal_to: 1.kilobyte))
+
+        post(:create, params: { upload_method: "receipt_center", file: [fixture_file_upload("receipt.png", "image/png")] })
+
+        expect(flash[:error]).to eq("File is over 1 KB. Upload a smaller file.")
         expect(Receipt.count).to eq(0)
       end
 
@@ -198,7 +212,17 @@ RSpec.describe ReceiptsController do
       expect(stream.inner_html).to include("File is not a supported type")
     end
 
-    it "doesn't render the transaction's upload form for a user who can't upload to it" do
+    # A failure before the upload is authorized: the page gets the generic error
+    # in its flash and nothing about the receiptable.
+    def expect_only_a_generic_flash
+      streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream")
+      expect(streams.map { |stream| [stream["action"], stream["targets"] || stream["target"]] }).to eq([["replace", "#flash-container"]])
+      expect(streams.first.inner_html).to include("There was an error uploading your receipt. Please try again.")
+      expect(response.body).not_to include("receiptable_id")
+      expect(response.body).not_to include("receipts_for_")
+    end
+
+    it "flashes the generic error, without the transaction's upload form, for a user who can't upload to it" do
       create_session(create(:user), verified: true)
 
       post(:create, params: {
@@ -208,8 +232,21 @@ RSpec.describe ReceiptsController do
              file:
            }, format: :turbo_stream)
 
-      expect(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form']")).to be_nil
-      expect(response.body).not_to include("receiptable_id")
+      expect_only_a_generic_flash
+    end
+
+    it "flashes the generic error, without the expense's receipts, for a user who can't upload to it" do
+      create_session(create(:user), verified: true)
+      expense = create(:reimbursement_expense)
+
+      post(:create, params: {
+             receiptable_type: "Reimbursement::Expense",
+             receiptable_id: expense.id,
+             upload_method: "expense_report",
+             file:
+           }, format: :turbo_stream)
+
+      expect_only_a_generic_flash
     end
 
     it "flashes the error for an upload from a ledger row, which has no upload form" do
@@ -347,7 +384,7 @@ RSpec.describe ReceiptsController do
       expect(form.at_css("form")["class"]).to include("my-inbox-dropzone")
     end
 
-    it "doesn't render the transaction's upload form for a signed-out user" do
+    it "flashes the generic error, without the transaction's upload form, for a signed-out user" do
       post(:create, params: {
              receiptable_type: "Ledger::Item",
              receiptable_id: ledger_item.id,
@@ -355,11 +392,10 @@ RSpec.describe ReceiptsController do
              file:
            }, format: :turbo_stream)
 
-      expect(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form']")).to be_nil
-      expect(response.body).not_to include("receiptable_id")
+      expect_only_a_generic_flash
     end
 
-    it "doesn't render the transaction's upload form when the signed secret is wrong" do
+    it "flashes the generic error, without the transaction's upload form, when the signed secret is wrong" do
       create_session(create(:user), verified: true)
       other_hcb_code = create(:canonical_pending_transaction).local_hcb_code
 
@@ -372,12 +408,12 @@ RSpec.describe ReceiptsController do
                file:
              }, format: :turbo_stream)
 
-        expect(response.body).not_to include("receiptable_id")
+        expect_only_a_generic_flash
         expect(response.body).not_to include("#{ledger_item.id}_receipt_upload_form")
       end
     end
 
-    it "doesn't render the transaction's upload form when the file is missing" do
+    it "flashes the generic error, without the transaction's upload form, when the file is missing" do
       create_session(create(:user, :make_admin), verified: true)
 
       post(:create, params: {
@@ -386,9 +422,7 @@ RSpec.describe ReceiptsController do
              upload_method: "transaction_page"
            }, format: :turbo_stream)
 
-      expect(fragment.css("turbo-stream").map { |stream| stream["target"] }).to eq(["receipt_upload_form"])
-      expect(response.body).to include("There was an error uploading your receipt. Please try again.")
-      expect(response.body).not_to include("receiptable_id")
+      expect_only_a_generic_flash
     end
 
     it "flashes the error for a file dropped on a ledger row" do

@@ -159,11 +159,11 @@ class ReceiptsController < ApplicationController
     flash_type = :error
     flash_message = (e.record&.errors&.full_messages_for(:file)&.first if e.is_a?(ActiveRecord::RecordInvalid)) || "There was an error uploading your receipt. Please try again."
 
-    # The receiptable's form shows the transaction's receipt state, so it's only
-    # rendered once the upload has been authorized.
-    if authorized && @receiptable && request.format.turbo_stream?
-      # These uploads come from a button with no `receipts/form_v3` around it.
-      if params[:upload_method].to_s.start_with?("receipts_page") || @receiptable.is_a?(Reimbursement::Expense)
+    if @receiptable && request.format.turbo_stream?
+      # The receiptable's form shows the transaction's receipt state, so it's only
+      # rendered once the upload has been authorized. Until then, and for uploads
+      # from a button with no `receipts/form_v3` around it, the error is flashed.
+      if !authorized || params[:upload_method].to_s.start_with?("receipts_page") || @receiptable.is_a?(Reimbursement::Expense)
         flash.now[:error] = flash_message
         # The layout renders the flash twice, once for each of desktop and mobile.
         streams.append(turbo_stream.replace_all("#flash-container", partial: "application/flash"))
@@ -173,7 +173,7 @@ class ReceiptsController < ApplicationController
         )
       end
 
-      if @receiptable.is_a?(Reimbursement::Expense)
+      if authorized && @receiptable.is_a?(Reimbursement::Expense)
         streams.append(
           turbo_stream.replace("receipts_for_#{@receiptable.id}", partial: "reimbursement/expenses/receipts", locals: { expense: @receiptable })
         )
