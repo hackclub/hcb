@@ -90,16 +90,26 @@ module Twilio
     def find_hcb_code
       return nil if reimbursement?
 
-      # Measured from when we texted, so a re-sent SMS for an older charge still gets the full window
-      last_sent_message.hcb_code if last_sent_message && last_sent_message.created_at > OutgoingTwilioMessage::RECEIPT_REPLY_WINDOW.ago
+      # The window is measured from when we texted, so a re-sent SMS for an older charge still gets all of it.
+      # Decline texts carry an hcb code too but never ask for a receipt, hence `receipt_required?`.
+      charges = sent_messages.where(created_at: OutgoingTwilioMessage::RECEIPT_REPLY_WINDOW.ago..)
+                             .includes(:hcb_code).map(&:hcb_code).uniq.select(&:receipt_required?)
+
+      # With several charges in the window, the photo is for the one still missing a receipt.
+      # If that doesn't settle it, the photo goes to the Receipt Bin rather than the wrong charge.
+      charges = charges.select(&:missing_receipt?) if charges.many?
+      charges.first if charges.one?
+    end
+
+    def sent_messages
+      OutgoingTwilioMessage
+        .joins(:twilio_message)
+        .where("twilio_messages.to" => @params["From"])
+        .where.not(hcb_code: nil)
     end
 
     def last_sent_message
-      @last_sent_message ||= OutgoingTwilioMessage
-                             .joins(:twilio_message)
-                             .where("twilio_messages.to" => @params["From"])
-                             .where.not(hcb_code: nil)
-                             .last
+      @last_sent_message ||= sent_messages.last
     end
 
     def find_reimbursement_report
