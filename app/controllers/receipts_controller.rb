@@ -85,7 +85,7 @@ class ReceiptsController < ApplicationController
         ON sp.receipt_id = receipts.id
       SQL
       @receipts = @receipts.joins(pairings_sql).reorder("sp.distance ASC, receipts.created_at DESC")
-      @suggested_receipt_ids = @receipts.limit(3).where("sp.distance <= ?", 1000).pluck(:id)
+      @suggested_receipt_ids = @receipts.limit(3).where("sp.distance <= ?", ReceiptService::Suggest::SHOWN_DISTANCE).pluck(:id)
     end
 
     render :link_modal, layout: false

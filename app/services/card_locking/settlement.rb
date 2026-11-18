@@ -17,6 +17,9 @@ module CardLocking
 
       hcb_code = ct.local_hcb_code
       MaterializeChargeJob.perform_later(hcb_code_id: hcb_code.id) if hcb_code
+      # Only hooked on the old engine: both engines fire for every settlement, and once is enough
+      cardholder = ct.stripe_card.user
+      User::RescoreReceiptPairingsJob.perform_later(user_id: cardholder.id) if cardholder
     end
 
     # New engine: a ledger item was mapped. Fires on create/update/destroy (the

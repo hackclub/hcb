@@ -288,11 +288,11 @@ class HcbCode < ApplicationRecord
   end
 
   def stripe_merchant
-    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transaction.stripe_transaction["merchant_data"]
+    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
   end
 
   def stripe_merchant_currency
-    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
+    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction&.stripe_transaction&.dig("merchant_currency")
   end
 
   # What the merchant charged, in their own currency. Prefers the settled
