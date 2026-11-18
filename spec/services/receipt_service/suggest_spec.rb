@@ -68,7 +68,7 @@ RSpec.describe ReceiptService::Suggest do
   describe "#run!" do
     def run(receipt)
       described_class.new(receipt:).run!
-      receipt.reload.receiptable
+      receipt.reload.hcb_code
     end
 
     it "auto-attaches when exactly one charge fits" do

@@ -6,11 +6,10 @@
   Dropping a file onto the row uploads it as a receipt, and dropping a receipt
   dragged out of the receipt bin links it, like the canonical transaction row.
   With `receipt_upload_button`, the row also ends in upload and select buttons
-  (see ledger/items/_receipt_action). Receipts still live on the HCB code, so
-  that's the receiptable, and the gate for both is the same check
+  (see ledger/items/_receipt_action). The gate for both is the same check
   ReceiptsController#create authorizes the upload with.
 %>
-<% can_upload_receipt = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item.hcb_code).upload? %>
+<% can_upload_receipt = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item).upload? %>
 
 <tr
   class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>"
@@ -19,7 +18,7 @@
     data-file-drop-target="dropzone"
     data-file-drop-linking-value="true"
     data-file-drop-modal-value="<%= link_receipts_path %>"
-    data-file-drop-receiptable-value="HcbCode:<%= item.hcb_code.id %>"
+    data-file-drop-receiptable-value="Ledger::Item:<%= item.id %>"
     data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave"
   <% end %>>
   <td class="transaction__icon">
@@ -29,9 +28,10 @@
   </td>
   <td class="hidden sm:table-cell"><%= date %></td>
   <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
-    <div>
-      <div class="flex-auto min-w-0">
-        <div class="flex items-center gap-[1ch] min-w-0">
+    <%# On mobile the row wraps so the badges sit on the subtitle line instead of taking their own column %>
+    <div class="flex-wrap sm:flex-nowrap">
+      <div class="contents sm:block flex-auto min-w-0">
+        <div class="flex items-center gap-[1ch] w-full min-w-0">
           <%= render "ledger/items/status", ledger_item: item, class_name: "hidden sm:inline-flex" %>
           <div class="min-w-0 overflow-hidden text-ellipsis">
             <%= render "ledger/items/memo/memo", item: %>
@@ -53,8 +53,8 @@
     <% if can_upload_receipt %>
       <%= form_with url: receipts_path, html: { hidden: true }, data: { "file-drop-target" => "form", turbo: true } do |form| %>
         <%= form.file_field :file, id: nil, multiple: true, include_hidden: false, data: { "file-drop-target" => "fileInput" } %>
-        <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
-        <%= form.hidden_field :receiptable_id, id: nil, value: item.hcb_code.id %>
+        <%= form.hidden_field :receiptable_type, id: nil, value: "Ledger::Item" %>
+        <%= form.hidden_field :receiptable_id, id: nil, value: item.id %>
         <%= form.hidden_field :upload_method, id: nil, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
       <% end %>
     <% end %>

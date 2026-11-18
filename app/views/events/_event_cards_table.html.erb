@@ -2,7 +2,7 @@
   <%= blankslate "You don't have any #{status} cards yet." %>
 <% else %>
   <article class="table-container">
-    <table>
+    <table class="stripe-cards-table">
       <thead>
       <tr>
         <th>Cardholder</th>
@@ -13,8 +13,9 @@
       </tr>
       </thead>
       <tbody>
+      <% linkable = organizer_signed_in? && !@event.demo_mode %>
       <% stripe_cards.each do |c| %>
-        <tr class="clickable">
+        <tr class="<%= "clickable" if linkable %>">
           <%# Cardholder %>
           <td>
             <%= c.user.name || c.stripe_name || c.user.full_name %>
@@ -39,7 +40,7 @@
           <%# Date issued %>
           <td>
             <%= format_date c.created_at %>
-          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !@event.demo_mode %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: stripe_card_popover_data(c) if linkable %>
           </td>
         </tr>
 

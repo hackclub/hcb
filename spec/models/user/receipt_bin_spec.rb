@@ -15,7 +15,7 @@ RSpec.describe User::ReceiptBin do
     receipt = create_receipt
     pair(receipt, best, 5)
     pair(receipt, next_best, 10)
-    create_receipt(receiptable: best)
+    create_receipt(receiptable: best.ledger_item)
 
     expect(user.receipt_bin.suggested_receipt_pairings.map(&:hcb_code)).to eq([next_best])
   end

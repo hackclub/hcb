@@ -14,7 +14,7 @@ RSpec.describe User::RescoreReceiptPairingsJob do
     hcb_code = create_charge
     described_class.perform_now(user_id: user.id)
 
-    expect(receipt.reload.receiptable).to eq(hcb_code)
+    expect(receipt.reload.hcb_code).to eq(hcb_code)
   end
 
   it "leaves receipts that are not in the receipt bin alone" do

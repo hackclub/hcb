@@ -152,6 +152,21 @@ RSpec.describe ReceiptService::Extract do
     expect(receipt.reload.data_extracted).to be(false)
   end
 
+  # Broadcasting through the HcbCode model made Turbo add an `hcb_code` local,
+  # which the ledger item partial's strict `(item:)` locals rejected, so the
+  # broadcast job raised ActionView::Template::Error.
+  it "broadcasts the AI memo suggestion to a linked ledger item without error" do
+    ledger_item = create(:ledger_item)
+    hcb_code = create(:hcb_code, ledger_item:)
+    receipt = build_receipt(receiptable: hcb_code)
+
+    expect {
+      perform_enqueued_jobs(only: Turbo::Streams::ActionBroadcastJob) do
+        described_class.new(receipt:).run!
+      end
+    }.not_to raise_error
+  end
+
   # The OpenAI request above is slow enough that a user can delete the
   # receipt (or its file) from under the job while it's in flight. Before the
   # fix, the final `@receipt.update!` would re-validate `attached: true`

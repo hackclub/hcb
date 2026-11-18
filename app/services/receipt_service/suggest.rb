@@ -97,7 +97,7 @@ module ReceiptService
       # Don't auto-attach again after the user undid one for this receipt
       return if @receipt.suggested_pairings.reversed.exists?
       # The candidate list is memoized on the user, so another receipt may have just claimed this charge
-      return if Receipt.exists?(receiptable: best[:hcb_code])
+      return if best[:hcb_code].receipts.exists?
 
       @receipt.suggested_pairings.unreviewed.find_by(hcb_code: best[:hcb_code])&.mark_accepted!
     end

@@ -17,8 +17,7 @@ class User
         .where.not(receipt_id: ineligible_receipt_ids)
         .where("distance <= ?", ReceiptService::Suggest::SHOWN_DISTANCE) # With at least a certain confidence level
         # Drop transactions that got a receipt elsewhere before picking each receipt's closest pairing
-        .where("NOT EXISTS (SELECT 1 FROM receipts r WHERE r.receiptable_type = 'HcbCode' AND r.receiptable_id = suggested_pairings.hcb_code_id)")
-        .where(hcb_code_id: HcbCode.where(marked_no_or_lost_receipt_at: nil).select(:id))
+        .where(hcb_code_id: HcbCode.missing_receipt.select(:id))
         .order(:receipt_id, distance: :asc)
         .select("DISTINCT ON (receipt_id) suggested_pairings.*")
         .select { |pairing| pairing.hcb_code.missing_receipt? }

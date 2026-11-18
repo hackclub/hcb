@@ -38,7 +38,6 @@ module StripeAuthorizationService
             CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
 
-          SuggestTagsJob.perform_later(event_id: cpt.event.id, hcb_code_id: cpt.local_hcb_code.id)
           User::RescoreReceiptPairingsJob.perform_later(user_id: user.id) if user
 
           if cpt.local_hcb_code&.stripe_cash_withdrawal?
