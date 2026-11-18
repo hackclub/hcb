@@ -232,7 +232,7 @@ GEM
     comma (4.8.0)
       activesupport (>= 4.2.0)
     concurrent-ruby (1.3.8)
-    connection_pool (2.5.5)
+    connection_pool (3.0.2)
     console1984 (0.2.2)
       irb (~> 1.13)
       parser
@@ -580,8 +580,8 @@ GEM
     namae (1.2.0)
       racc (~> 1.7)
     native-package-installer (1.1.9)
-    net-http-persistent (4.0.2)
-      connection_pool (~> 2.2)
+    net-http-persistent (4.0.8)
+      connection_pool (>= 2.2.4, < 4)
     net-imap (0.6.4.1)
       date
       net-protocol
@@ -730,7 +730,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    react-rails (3.2.1)
+    react-rails (3.3.1)
       babel-transpiler (>= 0.7.0)
       connection_pool
       execjs
@@ -829,12 +829,12 @@ GEM
     secure_headers (7.3.0)
       cgi (>= 0.1)
     securerandom (0.4.1)
-    sidekiq (7.3.8)
-      base64
-      connection_pool (>= 2.3.0)
-      logger
-      rack (>= 2.2.4)
-      redis-client (>= 0.22.2)
+    sidekiq (8.1.7)
+      connection_pool (>= 3.0.0)
+      json (>= 2.16.0)
+      logger (>= 1.7.0)
+      rack (>= 3.2.0)
+      redis-client (>= 0.29.0)
     sidekiq-cron (2.4.0)
       cronex (>= 0.13.0)
       fugit (~> 1.8, >= 1.11.1)
@@ -1066,7 +1066,7 @@ DEPENDENCIES
   rubyzip (>= 2.3.0, < 3.0)
   safely_block
   secure_headers
-  sidekiq (~> 7.3.8)
+  sidekiq (~> 8.1.7)
   sidekiq-cron (~> 2.4)
   simplecov
   sprockets-rails (~> 3.5)
