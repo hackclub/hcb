@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "active_job/continuation/test_helper"
 
 RSpec.describe User::UpdateCardLocking::RecurringJob, type: :job do
+  include ActiveJob::Continuation::TestHelper
+
   let!(:first_user) { create(:user) }
   let!(:second_user) { create(:user) }
 
@@ -64,5 +67,32 @@ RSpec.describe User::UpdateCardLocking::RecurringJob, type: :job do
     allow(Rails.error).to receive(:report)
 
     expect { described_class.perform_now }.to raise_error(/Card locking failed for/)
+  end
+
+  context "when interrupted mid-sweep" do
+    it "resumes after the last finished user instead of starting over" do
+      stub_update_card_locking
+      described_class.perform_later
+
+      interrupt_job_during_step(described_class, :sweep, cursor: [first_user.id + 1, 1, 0]) { perform_enqueued_jobs }
+
+      expect(notified_users.map(&:id)).to eq([first_user.id])
+
+      perform_enqueued_jobs
+
+      expect(notified_users.map(&:id)).to eq([first_user.id, second_user.id])
+    end
+
+    it "counts failures from before the interruption toward the tolerance" do
+      users = create_list(:user, described_class::FAILURE_TOLERANCE + 1)
+      allow(User).to receive(:card_locking_candidates).and_return(User.where(id: users.map(&:id)))
+      allow(UserService::UpdateCardLocking).to receive(:new).and_raise("Twilio is down")
+      allow(Rails.error).to receive(:report)
+      described_class.perform_later
+
+      interrupt_job_during_step(described_class, :sweep, cursor: [users[5].id + 1, 6, 6]) { perform_enqueued_jobs }
+
+      expect { perform_enqueued_jobs }.to raise_error(/Card locking failed for 11 of 11 users/)
+    end
   end
 end
