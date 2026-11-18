@@ -7,6 +7,13 @@ class ReceiptBinMailerPreview < ActionMailer::Preview
     ).bounce_missing_user
   end
 
+  def bounce_missing_user_unknown_sender
+    ReceiptBinMailer.with(
+      to: "test@example.com",
+      unknown_sender: true
+    ).bounce_missing_user
+  end
+
   def bounce_missing_attachment
     ReceiptBinMailer.with(
       to: "test@example.com"
