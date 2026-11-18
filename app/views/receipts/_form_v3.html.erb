@@ -1,6 +1,6 @@
 <% instance = local_assigns.__id__ %>
 <%# Page-wide paste is pointless (and only produces an error) for someone who can't upload here %>
-<% page_paste = local_assigns[:global_paste] && (!defined?(receiptable) || !current_user || ReceiptablePolicy.new(current_user, receiptable).upload?) %>
+<% page_paste = local_assigns[:global_paste] && (!defined?(receiptable) || !current_user || local_assigns[:secret].present? || ReceiptablePolicy.new(current_user, receiptable).upload?) %>
 <div id="<%= defined?(receiptable) ? "#{receiptable.id}_" : "" %>receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;" data-controller="panel-swap">
     <%= form_with model: false, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {

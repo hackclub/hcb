@@ -51,4 +51,25 @@ RSpec.describe "Receipt form page-wide paste", type: :request do
 
     expect(global_paste_values).to eq(["false"])
   end
+
+  # An auditor can view a transaction but not upload to it, so a page-wide
+  # paste would only ever produce an authorization error.
+  it "is off, and the hint doesn't offer pasting, for a viewer who can't upload" do
+    auditor = create(:user, :make_auditor)
+    session = create(:user_session, user: auditor, verified: true, expiration_at: 1.hour.from_now)
+    allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+    expect(ReceiptablePolicy.new(auditor, hcb_code.ledger_item).upload?).to be_falsey
+
+    get hcb_code_path(hcb_code)
+
+    expect(response).to be_successful
+    expect(global_paste_values).to eq(["false"])
+    expect(response.body).not_to include("or paste,")
+  end
+
+  it "offers pasting in the hint when page-wide paste is on" do
+    get hcb_code_path(hcb_code)
+
+    expect(response.parsed_body.text).to include("Or drag & drop, or paste, your receipt here")
+  end
 end
