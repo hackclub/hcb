@@ -124,7 +124,7 @@ module Reimbursement
     # its hashid, its public ID (rmr_…), or its numeric ID.
     def find_report_by_reference(reference)
       reference = reference.to_s.strip
-      reference = reference[%r{/reimbursement/reports/([^/?#]+)}, 1] || reference
+      reference = reference[/\/reimbursement\/reports\/([^\/?#]+)/, 1] || reference
 
       if reference.match?(/\A\d+\z/)
         Reimbursement::Report.find_by(id: reference)

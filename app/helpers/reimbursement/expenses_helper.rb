@@ -4,6 +4,7 @@ module Reimbursement
   module ExpensesHelper
     # Every expense on a report renders its own "Move expense" form, so these
     # options are memoized to query once per request rather than once per expense.
+    # rubocop:disable Rails/HelperInstanceVariable
     def move_expense_report_options(report)
       @move_expense_report_options ||= {}
       @move_expense_report_options[report.id] ||= begin
@@ -17,6 +18,7 @@ module Reimbursement
     def move_expense_event_options
       @move_expense_event_options ||= current_user.events.not_hidden.filter_demo_mode(false).pluck(:name, :id)
     end
+    # rubocop:enable Rails/HelperInstanceVariable
 
   end
 end
