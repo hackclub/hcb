@@ -119,12 +119,11 @@
 
     <% if @application.may_mark_rejected? %>
       <% admin_tool do %>
-        <button type="button" class="btn bg-primary tooltipped tooltipped--w" data-behavior="modal_trigger" data-modal="reject_application" aria-label="Reject this application and send a rejection email">
+        <button type="button" class="btn bg-primary tooltipped tooltipped--w" data-modal="reject_application" aria-label="Reject this application and send a rejection email">
           Reject
         </button>
 
-        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reject_application">
-          <%= modal_header "Reject application" %>
+        <%= modal "Reject application", id: "reject_application" do %>
           <h3 class="text-lg">Choose a template</h3>
           <div class="flex flex-col gap-3">
             <% @application.rejection_messages.each do |key, value| %>
@@ -154,7 +153,7 @@
 
             <% end %>
           </div>
-        </section>
+        <% end %>
       <% end %>
     <% end %>
   </div>

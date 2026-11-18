@@ -33,7 +33,7 @@
       <% if locked %>
         <button type="button" class="btn btn-small tooltipped tooltipped--n flex items-center justify-center"
                 aria-label="Can't be edited while <%= pluralize(locking_reports.size, "reimbursement") %> using it <%= locking_reports.one? ? "is" : "are" %> being processed. Click to view."
-                data-behavior="modal_trigger" data-modal="<%= locked_modal_id %>">
+                data-modal="<%= locked_modal_id %>">
           <%= inline_icon "private", size: 18, class: "!m-0" %>
         </button>
       <% else %>
@@ -74,8 +74,7 @@
   </div>
 
   <% if locked %>
-    <section data-behavior="modal" role="dialog" id="<%= locked_modal_id %>" class="modal modal--scroll bg-snow">
-      <%= modal_header "Reimbursements in progress" %>
+    <%= modal "Reimbursements in progress", id: locked_modal_id do %>
       <p class="muted mt0 mb3">
         This payout method can't be edited or removed while
         <%= pluralize(locking_reports.size, "reimbursement") %> using it
@@ -90,7 +89,7 @@
           <span class="badge bg-<%= report.status_color %> flex-shrink-0 tooltipped tooltipped--w" aria-label="<%= report.status_description %>"><%= report.status_text %></span>
         <% end %>
       <% end %>
-    </section>
+    <% end %>
   <% else %>
     <div style="padding: 0 20px 20px;" hidden="<%= selected_row != row_id %>">
       <%= render "users/payout_form/form", user:, editing: payout_method, form_id: %>

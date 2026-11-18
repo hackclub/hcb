@@ -42,7 +42,7 @@
       <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
       <%= render "events/followers_modal", event_follows: @event.event_follows if show_followers_modal %>
       <% if show_followers_modal %>
-        <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
+        <%= link_to "#", class: "list-badge quick-action ml-4", data: { modal: "edit_followers" } do %>
           <%= inline_icon "person", size: 20 %>
           <%= pluralize(@event.followers.count, "follower") %>
         <% end %>

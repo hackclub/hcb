@@ -1,7 +1,7 @@
 <%# locals: (type:, block: nil, header: "") %>
 
-<section class="<%= "modal modal--scroll bg-snow min-w-[50%]" if block.nil? %>" data-behavior="modal" role="dialog" id="insert_<%= type.underscore %>_modal" data-controller="announcement-modal" data-announcement-modal-tiptap-outlet="#announcement-form" <% if block.present? %> data-announcement-modal-block-id-value="<%= block.id %>"<% end %>>
-  <%= modal_header header %>
+<%= modal header, id: block ? dom_id(block, :edit) : "insert_#{type.underscore}_modal", class: "min-w-[50%]", open: block.present?,
+                  data: { controller: "announcement-modal", announcement_modal_tiptap_outlet: "#announcement-form", announcement_modal_block_id_value: block&.id } do %>
   <div class="flex flex-col gap-4">
     <div class="error-card mb-0 hidden">
       <p data-announcement-modal-target="errors"></p>
@@ -11,4 +11,4 @@
 
     <button type="button" class="btn w-fit" data-action="announcement-modal#<%= type %>"><%= block.present? ? "Edit" : "Add" %></button>
   </div>
-</section>
+<% end %>

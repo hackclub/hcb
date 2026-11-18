@@ -45,7 +45,7 @@
             <% else %>
               <p>
                 To send login codes to your phone or enable two factor authentication, first
-                <action data-behavior="modal_trigger" data-modal="verify_phone">
+                <action data-modal="verify_phone">
                   <a class="underline">
                     verify your phone number.
                   </a>
@@ -100,7 +100,7 @@
         <span class="h2 bold">Security keys</span>
         <%= badge_for @user.webauthn_credentials.count, class: "bg-muted" %>
       </legend>
-      <button class="btn px2 h4 <%= "disabled" if disabled %>" data-behavior="modal_trigger" data-modal="webauthn_register">
+      <button class="btn px2 h4 <%= "disabled" if disabled %>" data-modal="webauthn_register">
         <%= inline_icon "plus", size: home_action_size %>
         Set up
       </button>
@@ -206,12 +206,11 @@
   </fieldset>
 
   <% if @user.phone_number.present? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
-      <%= modal_header "Verify phone number" %>
+    <%= modal "Verify phone number", id: "verify_phone" do %>
       <%= react_component "settings/SmsVerification",
               phone_number: @user.phone_number,
               enroll_sms_auth: true,
               turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
-    </section>
+    <% end %>
   <% end %>
 </turbo-frame>

@@ -7,7 +7,7 @@
           <%= time_ago_in_words comment.created_at %> ago<%= inline_icon "link", size: 24, class: "align-middle" %><% end %>
         <% if comment.edited? %>
         <span class="mx1">|</span>
-        <action data-behavior="modal_trigger" data-turbolinks="false" data-modal="comment-modal-<%= comment.hashid %>" tabindex="0">
+        <action data-turbolinks="false" data-modal="comment-modal-<%= comment.hashid %>" tabindex="0">
           <%= link_to "edited", "#comment-history-#{comment.hashid}",
             class: "muted tooltipped tooltipped--s",
             'aria-label': "See all edit history" %>
@@ -50,7 +50,7 @@
         </div>
       <% end %>
         <%# if comment.edited? %>
-          <!--action data-behavior="modal_trigger" data-turbolinks="false" data-modal="comment-modal-<%= comment.hashid %>" tabindex="0">
+          <!--action data-turbolinks="false" data-modal="comment-modal-<%= comment.hashid %>" tabindex="0">
             <a href="#">History</a>
           </action-->
         <%# end %>
@@ -59,8 +59,7 @@
 <% end %>
 
 <% if comment.edited? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="comment-modal-<%= comment.hashid %>">
-    <%= modal_header "Edit History" %>
+  <%= modal "Edit History", id: "comment-modal-#{comment.hashid}" do %>
     <ul class="list-reset">
       <% comment.versions.where(event: "update").reverse.each do |version| %>
         <% if version&.changeset&.[]("content_ciphertext")&.compact_blank&.any? %>
@@ -88,5 +87,5 @@
         <%= time_ago_in_words comment.created_at %> ago
       </li>
     </ul>
-  </section>
+  <% end %>
 <% end %>

@@ -9,11 +9,11 @@
                     <%= image_tag screenshot,
                                   alt: screenshot.filename.to_s,
                                   title: "Click to enlarge",
-                                  data: { behavior: "modal_trigger", modal: modal_id } %>
+                                  data: { modal: modal_id } %>
                 </div>
 
-                <section class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="overflow: initial; z-index: 300;">
-                    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
+                <%= modal id: modal_id, size: :huge, class: "p0", style: "overflow: initial;" do %>
+                    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" data-modal-close style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
                         <%= inline_icon "view-close", size: 28, class: "pop modal__close muted m0" %>
                     </a>
                     <div class="bg-smoke dark:bg-darkless flex items-center justify-center" style="border-radius: 0.75rem; padding: 1.5rem; max-height: 85vh;">
@@ -22,7 +22,7 @@
                                       alt: screenshot.filename.to_s,
                                       style: "object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: calc(85vh - 3rem); min-width: 0px;" %>
                     </div>
-                </section>
+                <% end %>
             <% else %>
                 <%= link_to rails_blob_path(screenshot, only_path: true, disposition: "inline"),
                             target: "_blank",

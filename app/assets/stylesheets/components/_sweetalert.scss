@@ -60,3 +60,15 @@
 .swal-overlay--show-modal .swal-modal {
   animation: none;
 }
+
+// The dialog SweetAlert shows in while a modal is open (common/swal.js)
+.swal-layer {
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+
+  &::backdrop {
+    background: none;
+  }
+}

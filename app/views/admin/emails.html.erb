@@ -34,7 +34,7 @@
         <td><%= msg.sent_at.strftime("%Y-%m-%d") %></td>
         <td>
           <%= link_to "#",
-            data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
+            data: { modal: "message_#{msg.id}" } do %>
             <%= msg.subject %>
           <% end %>
         </td>
@@ -53,12 +53,11 @@
 </table>
 
 <% @messages.each do |msg| %>
-  <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
-    <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
+  <%= modal "Email to #{msg.user&.name || "unknown user"}", id: "message_#{msg.id}", style: "height: 60vh;" do %>
     <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
       Loading...
     <% end %>
-  </section>
+  <% end %>
 <% end %>
 
 <%= paginate @messages %>

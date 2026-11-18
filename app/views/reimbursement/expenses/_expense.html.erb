@@ -82,7 +82,7 @@
             Mileage expense
           <% end %>
         <% end %>
-        <%= link_to "#", data: { behavior: "modal_trigger", modal: "move_#{expense.id}", "expense-form-target": "move", "action": "menu#close" } do %>
+        <%= link_to "#", data: { modal: "move_#{expense.id}", "expense-form-target": "move", "action": "menu#close" } do %>
           <%= inline_icon "inserter", size: 24 %>
           Move this expense
         <% end %>
@@ -101,8 +101,7 @@
 </article>
 <div class="lightbox" data-expense-form-target="lightbox"></div>
 </div>
-<section data-behavior="modal" role="dialog" id="move_<%= expense.id %>" class="modal modal--scroll bg-snow">
-  <%= modal_header "Move expense" %>
+<%= modal "Move expense", id: "move_#{expense.id}" do %>
   <%= render "reimbursement/expenses/move_form", expense: %>
-</section>
+<% end %>
 <% end %>

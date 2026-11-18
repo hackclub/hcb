@@ -9,10 +9,6 @@ module TurboStreamActionsHelper
     turbo_stream_action_tag :refresh_suggested_pairings
   end
 
-  def close_modal
-    turbo_stream_action_tag :close_modal
-  end
-
   def open_modal(target)
     turbo_stream_action_tag :open_modal, target: target
   end

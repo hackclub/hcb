@@ -6,7 +6,7 @@
   <h1 class="heading flex <%= "border-none" if @frame %>">
     <span class="flex-grow <%= "hidden" if @frame %>"><%= @employee.user.name %>'s payroll</span>
     <% if @employee.onboarded? %>
-      <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_employee_payment" } do %>
+      <%= link_to "#", class: "btn bg-success", data: { modal: "create_employee_payment" } do %>
         <%= inline_icon "plus" %>
         Submit invoice
       <% end %>

@@ -1,10 +1,9 @@
-/* global $ */
 import { Controller } from '@hotwired/stimulus'
 
 // The modal on the transfer form listing the recipient's transactions that can
 // be repaid. The selection is announced as `repayment-picker:select`, which the
-// transfer-type controller listens for on the document: opening the modal moves
-// it out of the form.
+// transfer-type controller listens for on the document: the modal is rendered
+// outside the form, since it has a form of its own.
 export default class extends Controller {
   static targets = ['form', 'destination', 'frame']
 
@@ -29,6 +28,6 @@ export default class extends Controller {
   }
 
   done() {
-    $.modal.close()
+    this.element.close()
   }
 }

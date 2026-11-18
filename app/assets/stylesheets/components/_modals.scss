@@ -1,54 +1,63 @@
-/* adapted from https://github.com/kylefox/jquery-modal/blob/master/jquery.modal.css */
-.blocker {
-  opacity: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 12;
-  background-color: rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-}
-.blocker.behind {
-  background-color: transparent;
-}
-
+// Native <dialog>s (ModalHelper#modal), animated in and out of the top layer
 .modal {
+  border: 0;
+  color: inherit;
   background-color: $white;
   box-shadow: var(--shadow-modal);
   padding: 2rem 1rem;
   border-radius: var(--radius-2xl);
   overflow: hidden;
-  display: none;
   margin: auto;
+  max-width: 100vw;
   max-height: 92vh;
-  vertical-align: middle;
-  position: relative;
-  z-index: 2;
   text-align: left;
-  transform: scale(0.9);
-  transition: transform 0.2s ease-in-out;
+  opacity: 0;
+  scale: 0.9;
+  transition:
+    opacity 0.2s,
+    scale 0.2s ease-in-out,
+    translate 0.2s,
+    overlay 0.2s allow-discrete,
+    display 0.2s allow-discrete;
 
-  .jquery-modal:not(:not([style*='opacity: 1'])) & {
-    transform: scale(1);
+  &::backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition:
+      opacity 0.2s,
+      overlay 0.2s allow-discrete,
+      display 0.2s allow-discrete;
+  }
+
+  // `none`, not 1: a transformed modal would anchor fixed menus inside it
+  &[open] {
+    opacity: 1;
+    scale: none;
+
+    &::backdrop {
+      opacity: 1;
+    }
+  }
+
+  @starting-style {
+    &[open] {
+      opacity: 0;
+      scale: 0.9;
+
+      &::backdrop {
+        opacity: 0;
+      }
+    }
   }
 
   &.modal--popover {
-    position: absolute;
-    right: 0px;
-    transform: translateX(100%) scale(0.9);
-    bottom: 0px;
+    inset: auto 0 0 auto;
+    margin: 0;
     max-width: 800px;
     max-height: 100dvh;
     border-radius: 0rem;
     width: 66vw;
-    transition: transform 0.2s;
-
-    .jquery-modal:not(:not([style*='opacity: 1'])) & {
-      transform: translateX(0%);
-    }
+    scale: none;
 
     &.modal--popover--sm {
       max-width: 500px;
@@ -58,12 +67,22 @@
       height: calc(100dvh - 24px);
       border-radius: var(--radius-xl);
       margin: 12px;
+      translate: 100%;
+
+      &[open] {
+        translate: none;
+      }
+
+      @starting-style {
+        &[open] {
+          translate: 100%;
+        }
+      }
     }
 
     @media (max-width: 48em) {
       width: 100vw;
       max-width: 100vw;
-      transform: translateX(0%);
       height: 80vh;
     }
   }
@@ -104,14 +123,9 @@
   @media screen and (max-width: 32em) {
     padding: 2rem 1rem 3rem;
     border-radius: 1rem 1rem 0 0;
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: auto 0 0;
     margin: 0;
-    border: 0;
-    z-index: 999;
+    width: auto;
     max-width: 100vw;
 
     @supports (padding: calc(env(safe-area-inset-bottom))) {
@@ -224,14 +238,6 @@
   }
 }
 
-// NOTE: text for screenreader users to close modal. hidden onscreen
-.close-modal {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
+html:has(.modal:modal) {
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

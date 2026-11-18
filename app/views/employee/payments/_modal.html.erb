@@ -75,8 +75,8 @@
   <% end %>
 <% end %>
 
-<section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "employee_payment_#{payment.id}" %>" style="z-index: 300;">
-  <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%);">
+<%= modal id: "employee_payment_#{payment.id}", size: :huge, class: "p0 h-100", style: "overflow: initial;" do %>
+  <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" data-modal-close style="top: 0px; right: -24px; transform: translateY(50%);">
     <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
   </a>
 
@@ -104,7 +104,7 @@
         <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Actions</a>
       </li>
       <div class="flex-grow">
-        <a href="#close_modal" tabindex="0" class="pop modal__close muted" rel="modal:close" style="background: #11111199; margin: 0px; margin-right: 6px;">
+        <a href="#close_modal" tabindex="0" class="pop modal__close muted" data-modal-close style="background: #11111199; margin: 0px; margin-right: 6px;">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
         </a>
       </div>
@@ -123,4 +123,4 @@
       <%= actions %>
     </div>
   </div>
-</section>
+<% end %>

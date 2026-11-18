@@ -194,7 +194,7 @@
               <%= ct.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
-            <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+            <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { modal: "link_receipt_#{instance}" } do %>
               <%= inline_icon "payment-docs" %>
               <span>Select</span>
             <% end %>
@@ -215,12 +215,11 @@
     </td>
 
     <% if !local_assigns[:receipt_upload_button_disabled] && ledger_item.present? %>
-      <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-        <%= modal_header "Select receipt" %>
+      <%= modal "Select receipt", id: "link_receipt_#{instance}", size: :huge do %>
         <%= turbo_frame_tag dom_id(ledger_item, :link_modal), src: link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: ledger_item.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), loading: :lazy, turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
-      </section>
+      <% end %>
     <% end %>
   <% end %>
 </tr>

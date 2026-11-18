@@ -1,0 +1,38 @@
+# frozen_string_literal: true
+
+module ModalHelper
+  # A native <dialog>, opened by any element with `data-modal="<id>"`. See dev-docs/guides/modals.md.
+  def modal(title = nil, id:, size: nil, external_link: nil, open: false, **attributes, &)
+    attributes[:class] = token_list("modal modal--scroll bg-snow", { "modal--#{size}" => size }, attributes[:class])
+    attributes[:aria] = { labelledby: "#{id}_title", **attributes[:aria].to_h } if title
+    attributes[:data] = { **attributes[:data].to_h, controller: token_list(attributes.dig(:data, :controller), "open-modal": open).presence }
+
+    tag.dialog(id:, **attributes) do
+      safe_join [(modal_header(title, id: "#{id}_title", external_link:) if title), capture(&)]
+    end
+  end
+
+  def modal_header(text, id: nil, external_link: nil)
+    tag.header class: "pb2 rounded-t-lg" do
+      modal_close +
+        (external_link ? modal_external_link(external_link) : "") +
+        tag.h2(modal_title(text), id:, class: "h1 mt0 mb0 pb0 border-none")
+    end
+  end
+
+  # The same for every modal, so it's built once for pages with hundreds of them
+  def modal_close
+    @modal_close ||= tag.button inline_icon("view-close", size: 28), type: "button", class: "pop modal__close muted", aria: { label: "Close" }, data: { modal_close: true }
+  end
+
+  def modal_external_link(external_link)
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
+  end
+
+  private
+
+  # Titles repeat down a page (a "Select receipt" per transaction), so each is sanitized once
+  def modal_title(text)
+    (@modal_titles ||= {})[text] ||= sanitize(text)
+  end
+end

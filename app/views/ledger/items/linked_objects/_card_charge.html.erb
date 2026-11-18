@@ -79,7 +79,7 @@
     <% if ledger_item.declined? && card_charge.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
       <p>
         <strong>Declined</strong>
-        <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
+        <action data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
 
           <%= render partial: "ledger/items/decline_reason", locals: {
                 ledger_item: ledger_item,
@@ -165,7 +165,7 @@
             </p>
           </details>
         <% else %>
-          <action data-behavior="modal_trigger" data-modal="merchant_details_<%= instance %>" class="pointer" tabindex="0">
+          <action data-modal="merchant_details_<%= instance %>" class="pointer" tabindex="0">
             <span class="inline-flex">
               <%= country_to_emoji(card_charge.stripe_merchant_data["country"]) if card_charge.stripe_merchant_data["country"] %>
               <%= humanized_merchant_name card_charge.stripe_merchant_data %>
@@ -224,7 +224,7 @@
               <% end %>
             </details>
           <% else %>
-            <action data-behavior="modal_trigger" data-modal="verification_details_<%= instance %>" class="pointer" tabindex="0">
+            <action data-modal="verification_details_<%= instance %>" class="pointer" tabindex="0">
               <span>
               <%= card_charge.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
               <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
@@ -263,8 +263,7 @@
 
 <% unless defined?(@frame) && @frame %>
   <% if ledger_item.author == current_user || organizer_signed_in? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
-      <%= modal_header "Merchant details" %>
+    <%= modal "Merchant details", id: "merchant_details_#{instance}" do %>
 
       <div class="details mb2">
         <p>
@@ -323,22 +322,20 @@
           Details are provided by the merchant and not guaranteed to be correct.
         </p>
       </article>
-    </section>
+    <% end %>
 
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
-      <%= modal_header "Transaction declined" %>
+    <%= modal "Transaction declined", id: "declined_information_#{instance}" do %>
 
       <%= render partial: "ledger/items/decline_reason", locals: {
             ledger_item: ledger_item,
             include_troubleshooting: true,
             include_external: true
           } %>
-    </section>
+    <% end %>
   <% end %>
 
   <% if organizer_signed_in? && ledger_item.cpt_count > 0 %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verification_details_<%= instance %>">
-      <%= modal_header "Charge details" %>
+    <%= modal "Charge details", id: "verification_details_#{instance}" do %>
       <% verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
 
       <article class="details-horiz">
@@ -388,6 +385,6 @@
           </p>
         </article>
       <% end %>
-    </section>
+    <% end %>
   <% end %>
 <% end %>

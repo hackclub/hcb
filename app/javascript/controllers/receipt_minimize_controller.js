@@ -1,9 +1,13 @@
 import { Controller } from '@hotwired/stimulus'
 
-// `unexpandReceipt` lives in the Sprockets bundle (app/assets/javascripts/ui.js),
-// which jquery-modal also calls into, so it stays a global rather than moving.
+// Undoes `expand_receipt` (app/assets/javascripts/ui.js)
 export default class extends Controller {
   minimize() {
-    window.unexpandReceipt()
+    const receipt = this.element.closest('.receipt--expanded')
+    receipt?.style.setProperty('--receipt-size', '256px')
+    receipt?.classList.remove('receipt--expanded')
+    this.element
+      .closest('.modal--popover')
+      ?.classList.remove('modal--popover--receipt-expanded')
   }
 }

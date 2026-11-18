@@ -1,13 +1,19 @@
 <%# locals: () %>
 
-<section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="shared_popover">
+<%= modal id: "shared_popover", class: "modal--popover", aria: { labelledby: "shared_popover_title" },
+          data: { controller: "popover", action: "modal:open->popover#populate close->popover#closed popstate@window->popover#popstate turbo:frame-load@document->popover#openFromUrl turbo:before-visit@document->popover#beforeVisit" } do %>
   <header class="pb2 rounded-t-lg">
-    <%= pop_icon_to "view-close", "#close_modal", class: "modal__close muted", rel: "modal:close", tabindex: 0 %>
-    <a href="#" target="_blank" rel="noopener noreferrer" class="pop modal__external muted" id="shared_popover_external_link" style="display:none">
+    <%= modal_close %>
+    <a href="#" target="_blank" rel="noopener noreferrer" class="pop modal__external muted" style="display: none;" data-popover-target="externalLink">
       <%= inline_icon "external", size: 28 %>
     </a>
-    <h2 class="h1 mt0 mb0 pb0 border-none" id="shared_popover_title"></h2>
-    <div id="shared_popover_flash" class="mt2 empty:hidden"></div>
+    <h2 class="h1 mt0 mb0 pb0 border-none" id="shared_popover_title" data-popover-target="title"></h2>
+    <div id="shared_popover_flash" class="mt2 empty:hidden" data-popover-target="flash"></div>
   </header>
-  <div id="shared_popover_body"></div>
-</section>
+  <div data-popover-target="body"></div>
+  <template data-popover-target="loading">
+    <div class="flex items-center justify-center" style="height: calc(100vh - 150px);">
+      <img src="/icons/loading.svg" alt="Loading" class="dark:invert">
+    </div>
+  </template>
+<% end %>
