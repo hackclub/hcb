@@ -64,7 +64,8 @@ module Reimbursement
         redirect_to @expense.report, flash: { error: @expense.errors.full_messages.to_sentence }
       end
     rescue ActiveRecord::RecordInvalid => e
-      redirect_to @expense.reload.report, flash: { error: e.record.errors.full_messages.to_sentence }
+      # Look up through the base class: the rolled-back row may not be the type this instance became.
+      redirect_to Reimbursement::Expense.find(@expense.id).report, flash: { error: e.record.errors.full_messages.to_sentence }
     end
 
     def approve
