@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Maintenance::BackfillLedgerItemTagsTask do
   let(:event) { create(:event) }
-  let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+  let(:tag) { event.tag_list.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
 
   def hcb_code_with_ledger_item
     create(:canonical_transaction).local_hcb_code.tap(&:reload)

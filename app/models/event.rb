@@ -486,7 +486,6 @@ class Event < ApplicationRecord
   has_many :fees
   has_many :bank_fees
 
-  has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
   has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
@@ -496,6 +495,11 @@ class Event < ApplicationRecord
 
   has_one :ledger, -> { where(primary: true) }, inverse_of: :event
   after_create :create_ledger
+  # Tags live on the ledger's tag list; this reads through to them. Declared
+  # after `has_one :ledger` since a `through:` needs its association defined
+  # first. Nested through, so read-only — write via `tag_list.tags`.
+  has_one :tag_list, through: :ledger
+  has_many :tags, -> { includes(:hcb_codes) }, through: :tag_list
   has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
   has_many :pinned_ledger_items, through: :ledger, source: :pinned_items, class_name: "Ledger::Item"

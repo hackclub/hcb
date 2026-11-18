@@ -38,11 +38,11 @@ class Ledger
 
     def toggle_tag?(tag = nil)
       # A ledger item belongs to a single primary ledger (owned by an event or a
-      # card grant), so a tag can only be applied within that one event.
+      # card grant), so only a tag from that ledger's list can be applied.
       return false if event.nil?
       return false unless user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
 
-      tag.nil? || event == tag.event
+      tag.nil? || record.primary_ledger.tag_list_id == tag.tag_list_id
     end
 
     private

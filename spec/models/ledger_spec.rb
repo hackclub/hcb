@@ -74,6 +74,44 @@ RSpec.describe Ledger, type: :model do
     end
   end
 
+  describe "tag list" do
+    it "gives an event's ledger a list of its own" do
+      event = create(:event)
+
+      expect(event.ledger.tag_list).to be_present
+      expect(event.tag_list).to eq(event.ledger.tag_list)
+      expect(event.ledger.tag_list.event).to eq(event)
+    end
+
+    it "shares the event's list with a card grant's ledger" do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      card_grant = create(:card_grant)
+
+      expect(card_grant.ledger.tag_list).to eq(card_grant.event.ledger.tag_list)
+      expect(card_grant.ledger.tag_list.event).to eq(card_grant.event)
+    end
+
+    it "leaves a non-primary ledger without one" do
+      expect(create(:ledger).tag_list).to be_nil
+    end
+
+    it "keeps a list given explicitly" do
+      tag_list = TagList.create!
+      ledger = Ledger.new(primary: true, event: create(:event), tag_list:)
+
+      expect(ledger).to be_valid
+      expect(ledger.tag_list).to eq(tag_list)
+    end
+
+    it "requires a list on a primary ledger" do
+      ledger = Ledger.new(primary: true, event: create(:event))
+      allow(ledger).to receive(:assign_tag_list)
+
+      expect(ledger).not_to be_valid
+      expect(ledger.errors[:tag_list]).to include("can't be blank")
+    end
+  end
+
   describe "owner validation" do
     context "when primary is true" do
       context "with an event owner" do

@@ -60,7 +60,7 @@ module SetLedgerFilters
       return if performed?
 
       if params[:tag]
-        @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
+        @tag = @event.tags.find_by(label: params[:tag])
       end
 
       @type = params[:type].presence

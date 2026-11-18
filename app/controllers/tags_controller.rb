@@ -9,14 +9,14 @@ class TagsController < ApplicationController
     authorize @event, policy_class: TagPolicy
 
     label = params[:label].strip
-    tag = Tag.where(label: label, event: @event).first_or_initialize(color: params[:color], emoji: params[:emoji])
+    tag = @event.tag_list.tags.where(label:).first_or_initialize(color: params[:color], emoji: params[:emoji])
     tag.save unless tag.persisted?
 
     if !tag.persisted? && tag.errors.of_kind?(:label, :taken)
       # Another request created this same tag concurrently (e.g. a double
       # submit) between our lookup above and our attempted create. Use the
       # tag it created instead of carrying forward an invalid record.
-      tag = Tag.find_by(label: label, event: @event) || tag
+      tag = @event.tag_list.tags.find_by(label:) || tag
     end
 
     if params[:ledger_item_id].present?

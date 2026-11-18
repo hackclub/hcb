@@ -53,7 +53,7 @@ RSpec.describe TagsController do
 
         if !handled && tag.new_record? && tag.label == "Snacks"
           handled = true
-          concurrent_tag = Tag.create!(label: "Snacks", event:, color: "blue", emoji: "🎉")
+          concurrent_tag = Tag.create!(label: "Snacks", tag_list: event.tag_list, color: "blue", emoji: "🎉")
           tag.errors.add(:label, :taken)
           false
         else

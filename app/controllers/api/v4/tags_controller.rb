@@ -22,7 +22,7 @@ module Api
       require_oauth2_scope("tags:read", :show)
 
       def create
-        @tag = @event.tags.build(params.permit(:label, :color, :emoji))
+        @tag = @event.tag_list.tags.build(params.permit(:label, :color, :emoji))
         authorize @event, policy_class: TagPolicy
         @tag.save!
         render :show, status: :created

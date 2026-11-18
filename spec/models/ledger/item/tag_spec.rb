@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Ledger::Item::Tag, type: :model do
   let(:event) { create(:event) }
   let(:ledger_item) { create(:ledger_item) }
-  let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+  let(:tag) { event.tag_list.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
 
   it "associates a ledger item with a top-level Tag" do
     join = described_class.create!(ledger_item:, tag:)

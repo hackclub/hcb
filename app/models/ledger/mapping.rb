@@ -78,7 +78,7 @@ class Ledger
         mapping.mapped_by = mapped_by
         mapping.save!
 
-        ledger_item.prune_tags_outside_event! if remapped
+        ledger_item.prune_tags_outside_tag_list! if remapped
       end
     end
 
