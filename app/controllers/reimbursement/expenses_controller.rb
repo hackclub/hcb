@@ -40,6 +40,8 @@ module Reimbursement
         @expense.assign_attributes(expense_number: nil, aasm_state: :pending, approved_by_id: nil)
       end
       @expense.assign_attributes(expense_params.except(:event_id))
+      # A changed type must be saved as its new class, which is what computes the amount.
+      @expense = @expense.becomes(EXPENSE_TYPE_MAP[@expense.type] || Reimbursement::Expense)
 
       authorize @expense # we authorize twice in case the reimbursement_report_id changes
 
@@ -61,6 +63,8 @@ module Reimbursement
       else
         redirect_to @expense.report, flash: { error: @expense.errors.full_messages.to_sentence }
       end
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to @expense.reload.report, flash: { error: e.record.errors.full_messages.to_sentence }
     end
 
     def approve

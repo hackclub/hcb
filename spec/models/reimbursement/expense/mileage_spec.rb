@@ -158,7 +158,7 @@ RSpec.describe Reimbursement::Expense::Mileage, type: :model do
       stub_rate(4.5)
       expense.update!(memo: "Drive")
 
-      expect(expense.value_label).to eq("Miles (#{expense.rate}¢ USD/mile)")
+      expect(expense.value_label).to eq("Miles (#{expense.rate}¢ USD/mile, converted to RON)")
       expect(expense.card_label).to eq("Drive (#{Money.from_cents(10395, "RON").format})")
     end
 
@@ -170,6 +170,62 @@ RSpec.describe Reimbursement::Expense::Mileage, type: :model do
       report.convert_report_currency!("PLN")
 
       expect(standard.reload).to have_attributes(value: 10, amount_cents: 1000)
+    end
+  end
+
+  it "converts into zero-decimal and three-decimal currencies" do
+    stub_rate(150)
+    yen = described_class.create!(report: create(:reimbursement_report, currency: "JPY"), value: 33)
+    stub_rate(0.3)
+    dinar = described_class.create!(report: create(:reimbursement_report, currency: "KWD"), value: 33)
+
+    expect(yen.amount_cents).to eq(3465) # $23.10 at 150 is 3,465 yen
+    expect(dinar.amount_cents).to eq(6930) # $23.10 at 0.3 is 6.930 dinar
+  end
+
+  it "is invalid when Wise answers without a usable rate" do
+    stub_request(:post, "https://api.wise.com/v3/quotes")
+      .to_return(status: 200, body: {}.to_json, headers: { "Content-Type" => "application/json" })
+
+    expect(described_class.new(report: create(:reimbursement_report, currency: "RON"), value: 33)).not_to be_valid
+  end
+
+  it "fetches one exchange rate for all of a report's mileage expenses" do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    report = create(:reimbursement_report)
+    expenses = Array.new(3) { described_class.create!(report:, value: 33) }
+    stub_rate(4.5)
+
+    report.convert_report_currency!("RON")
+
+    expect(expenses.map { |expense| expense.reload.amount_cents }).to all(eq((33 * 70 * 4.5).round))
+    expect(a_request(:post, "https://api.wise.com/v3/quotes")).to have_been_made.once
+  end
+
+  context "when the report moves to an organization with another mileage rate" do
+    let(:report) { create(:reimbursement_report, currency: "RON") }
+    let(:affiliate) { create(:event, plan_type: Event::Plan::HackClubAffiliate) }
+
+    it "requotes at the new organization's rate" do
+      stub_rate(4.5)
+      expense = described_class.create!(report:, value: 33)
+      stub_rate(4)
+
+      report.update!(event: affiliate)
+
+      expect(expense.reload.rate).to eq(35)
+      expect(expense.amount_cents).to eq(33 * 35 * 4)
+    end
+
+    it "doesn't move the report when the exchange rate can't be fetched" do
+      stub_rate(4.5)
+      expense = described_class.create!(report:, value: 33)
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+
+      expect(report.update(event: affiliate)).to be(false)
+      expect(report.errors.full_messages.to_sentence).to match(/exchange rate/i)
+      expect(report.reload.event).not_to eq(affiliate)
+      expect(expense.reload.amount_cents).to eq((33 * 70 * 4.5).round)
     end
   end
 

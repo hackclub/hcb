@@ -58,6 +58,32 @@ RSpec.describe Reimbursement::ExpensesController do
         expect(expense.reload).to have_attributes(value: 33, amount_cents: (33 * 70 * 4.5).round)
       end
 
+      it "converts the miles when a standard expense is switched to mileage" do
+        standard = create(:reimbursement_expense, report:, value: 1000)
+
+        patch(:update, params: { id: standard.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage" } })
+
+        expect(standard.reload).to have_attributes(type: "Reimbursement::Expense::Mileage", amount_cents: 1000 * 70 * 4.5)
+      end
+
+      it "uses the entered amount when a mileage expense is switched to standard" do
+        patch(:update, params: { id: expense.id, reimbursement_expense: { type: "Reimbursement::Expense", value: "500" } })
+
+        expect(Reimbursement::Expense.find(expense.id)).to have_attributes(type: "Reimbursement::Expense", amount_cents: 500_00)
+      end
+
+      it "shows an error instead of crashing when a move to another organization can't be saved" do
+        create(:organizer_position, user:, event:)
+        destination_event = create(:event)
+        create(:organizer_position, user:, event: destination_event)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { type: "Bogus", event_id: destination_event.id } })
+
+        expect(response).to redirect_to(report)
+        expect(flash[:error]).to match(/valid expense type/i)
+        expect(expense.reload).to have_attributes(report:, type: "Reimbursement::Expense::Mileage")
+      end
+
       it "keeps the expense on its report when the move can't be requoted" do
         destination = create(:reimbursement_report, user:, event:, currency: "PLN")
         stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
