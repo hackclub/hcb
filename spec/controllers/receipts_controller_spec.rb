@@ -86,6 +86,26 @@ RSpec.describe ReceiptsController do
       expect(stream.inner_html).to include("Uploaded!")
     end
 
+    it "#create attaches a direct-uploaded blob from a row form, keeping the drag-and-drop method" do
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: File.open(Rails.root.join("spec/fixtures/files/receipt.png")),
+        filename: "receipt.png", content_type: "image/png"
+      )
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "receipts_page_drag_and_drop",
+             file: [blob.signed_id]
+           }, format: :turbo_stream)
+
+      receipt = Receipt.last
+      expect(receipt.receiptable).to eq(ledger_item)
+      expect(receipt.file.blob).to eq(blob)
+      expect(receipt.upload_method).to eq("receipts_page_drag_and_drop")
+      expect(hcb_code.receipts).to contain_exactly(receipt)
+    end
+
     it "#create links the flash to the HCB code page" do
       post(:create, params: {
              receiptable_type: "Ledger::Item",
