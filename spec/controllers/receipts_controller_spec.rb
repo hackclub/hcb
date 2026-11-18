@@ -59,6 +59,60 @@ RSpec.describe ReceiptsController do
     end
   end
 
+  describe "#create re-rendering the upload form" do
+    render_views
+
+    let(:ledger_item) { create(:canonical_pending_transaction).local_hcb_code.reload.ledger_item }
+
+    before { create_session(create(:user, :make_admin), verified: true) }
+
+    def upload(upload_method, receiptable: ledger_item)
+      params = { upload_method:, file: [fixture_file_upload("receipt.png", "image/png")] }
+      params.merge!(receiptable_type: "Ledger::Item", receiptable_id: receiptable.id) if receiptable
+      post(:create, params:, format: :turbo_stream)
+
+      Nokogiri::HTML5.fragment(response.body)
+    end
+
+    def form_stream(fragment, receiptable: ledger_item)
+      fragment.at_css("turbo-stream[target='#{"#{receiptable.id}_" if receiptable}receipt_upload_form']")
+    end
+
+    %w[transaction_page transaction_page_drag_and_drop].each do |upload_method|
+      it "keeps taking drops anywhere in the window after a #{upload_method} upload" do
+        fragment = upload(upload_method)
+
+        html = form_stream(fragment).inner_html
+        expect(html).to include("drop@window")
+        expect(html).to include("Drop to instantly add a receipt.")
+        expect(html[/<input[^>]*name="upload_method"[^>]*>/]).to include('value="transaction_page"')
+        expect(fragment.at_css("turbo-stream[action='refresh_link_modals']")).to be_nil
+      end
+    end
+
+    it "keeps a popover's form to its own dropzone" do
+      html = form_stream(upload("transaction_popover")).inner_html
+
+      expect(html).not_to include("@window")
+    end
+
+    it "keeps the receipt bin's form to its own dropzone, without the spacing other pages use" do
+      fragment = upload("receipt_center", receiptable: nil)
+
+      html = form_stream(fragment, receiptable: nil).inner_html
+      expect(html).to include("my-inbox-dropzone")
+      expect(html).not_to include("@window")
+      expect(html).not_to include('class="mb3"')
+      expect(fragment.at_css("turbo-stream[action='refresh_link_modals']")).to be_present
+    end
+
+    %w[receipts_page receipts_page_drag_and_drop].each do |upload_method|
+      it "doesn't re-render a form for a #{upload_method} upload to a transaction's row" do
+        expect(form_stream(upload(upload_method))).to be_nil
+      end
+    end
+  end
+
   # Receipts are moving onto ledger items (#14106); the controller has to drive
   # the same HCB code specific streams and redirects from either receiptable.
   describe "with a Ledger::Item receiptable" do

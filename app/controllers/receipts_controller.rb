@@ -134,15 +134,20 @@ class ReceiptsController < ApplicationController
 
     streams += generate_streams
 
-    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
+    upload_method = params[:upload_method].delete_suffix("_drag_and_drop")
+
+    unless @receiptable && upload_method == "receipts_page"
       receipt_upload_form_config = {
-        upload_method: params[:upload_method].sub("_drag_and_drop", ""),
-        restricted_dropzone: params[:upload_method] != :transaction_page,
-        include_spacing: params[:upload_method] != :receipt_center,
+        upload_method:,
         success: "#{"Receipt".pluralize(params[file_param].length)} added!",
         global_paste: !@receiptable,
         turbo: true
       }
+      # The form checks these two with `defined?`, so a false one has to be left
+      # out. Keep them as the page first rendered the form: only a transaction's
+      # (or payment's) own page takes drops anywhere in the window.
+      receipt_upload_form_config[:restricted_dropzone] = true unless upload_method.in?(WINDOW_DROPZONE_UPLOAD_METHODS)
+      receipt_upload_form_config[:include_spacing] = true unless upload_method == "receipt_center"
       if @receiptable
         receipt_upload_form_config[:enable_linking] = true
         receipt_upload_form_config[:receiptable] = @receiptable
@@ -238,6 +243,8 @@ class ReceiptsController < ApplicationController
   end
 
   private
+
+  WINDOW_DROPZONE_UPLOAD_METHODS = %w[transaction_page payment_page attach_receipt_page].freeze
 
   # A transaction's receipts are attached to its ledger item, never its HCB code
   # (https://github.com/hackclub/hcb/issues/14106).
@@ -391,7 +398,7 @@ class ReceiptsController < ApplicationController
       end
     end
 
-    unless params[:upload_method] == :transaction_page
+    unless params[:upload_method].to_s.delete_suffix("_drag_and_drop") == "transaction_page"
       streams.append(turbo_stream.refresh_link_modals)
     end
 
