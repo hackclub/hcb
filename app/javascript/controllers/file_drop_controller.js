@@ -93,6 +93,10 @@ export default class extends Controller {
     this.counter = 0
     this.hideDropzone()
 
+    // Another zone's drop (a transaction's row on a page that takes drops
+    // anywhere in the window) is that zone's to handle.
+    if (!e.clipboardData && this.inAnotherZone(e)) return
+
     if (this.linkingValue) {
       const receiptId = extractId(e.dataTransfer)
 
@@ -112,6 +116,9 @@ export default class extends Controller {
         })
       }
     }
+
+    // A row that already has its receipt has no upload form left
+    if (!this.hasFileInputTarget) return
 
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
@@ -154,8 +161,11 @@ export default class extends Controller {
     this.submitting = false
   }
 
-  dragenter() {
-    if (this.counter == 0) {
+  dragenter(e) {
+    // Leave the highlight to the zone the file is over
+    if (this.inAnotherZone(e)) {
+      this.hideDropzone()
+    } else {
       this.showDropzone()
     }
     this.counter++
@@ -169,6 +179,11 @@ export default class extends Controller {
   }
 
   /* Utilities */
+
+  inAnotherZone(e) {
+    const zone = e.target.closest?.('[data-controller~="file-drop"]')
+    return Boolean(zone) && zone !== this.element
+  }
 
   showDropzone() {
     if (this.hasDropzoneTarget) {

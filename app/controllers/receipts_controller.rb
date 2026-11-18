@@ -119,7 +119,7 @@ class ReceiptsController < ApplicationController
         attachments: [file],
         upload_method: params[:upload_method]
       ).run!
-      next if @receiptable && !on_hcb_code_page? && !on_ledger_item_page?
+      next if @receiptable && !on_page_of_receipt_hcb_code? && !on_ledger_item_page?
 
       streams.append(turbo_stream.prepend(
                        @ledger_instance.present? ? "#{@ledger_instance}_receipts_list" : "receipts_list",
@@ -173,6 +173,13 @@ class ReceiptsController < ApplicationController
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
+
+    # The form replaced below is the receipts page's. A transaction's own form
+    # or row has no such element, so show the error in the page's flash instead.
+    if @receiptable
+      flash.now[:error] = flash_message
+      streams.append(turbo_stream.replace("flash-container", partial: "application/flash"))
+    end
 
     streams.append(
       turbo_stream.replace(
@@ -320,8 +327,8 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @hcb_code && (on_hcb_code_page? || on_ledger_item_page?) && !@hcb_code.stripe_refund?
-      if on_hcb_code_page?
+    if @hcb_code && (on_page_of_receipt_hcb_code? || on_ledger_item_page?) && !@hcb_code.stripe_refund?
+      if on_page_of_receipt_hcb_code?
         # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
         # the ledger item show page has replaced the HCB code transaction page.
         # The ledger equivalent is streamed below.
@@ -374,7 +381,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item }))
     end
 
-    if @receipt && on_hcb_code_page?
+    if @receipt && on_page_of_receipt_hcb_code?
       streams.append(turbo_stream.append(
                        :receipts_list,
                        partial: "receipts/receipt",
@@ -413,6 +420,22 @@ class ReceiptsController < ApplicationController
   def on_hcb_code_page?
     route = Rails.application.routes.recognize_path(request.referrer)
     return route[:controller].classify == "HcbCode"
+  end
+
+  # On the HCB code page of the transaction the receipt is for, rather than one
+  # that lists it among a subscription's other charges. Only the former shows
+  # this transaction's receipt list, so only it gets the streams updating it.
+  #
+  # TODO: `on_ledger_item_page?` needs the same check once the ledger item page
+  # lists a subscription's transactions.
+  def on_page_of_receipt_hcb_code?
+    return false unless on_hcb_code_page?
+    # A popover is always about its own transaction, whatever page it's open on.
+    # Receiptables with no HCB code behave as they did before this check.
+    return true if @frame || @hcb_code.nil?
+
+    route = Rails.application.routes.recognize_path(request.referrer)
+    route[:id].in?([@hcb_code.hashid, @hcb_code.hcb_code])
   end
 
   def on_ledger_item_page?
