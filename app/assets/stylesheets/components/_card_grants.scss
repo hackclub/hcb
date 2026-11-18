@@ -17,11 +17,11 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 
   &.card.card--background-image {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.92)), var(--bg-image) !important;
+      linear-gradient(rgba(255, 255, 255, 0.85)), var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
-        linear-gradient(rgba(37, 36, 41, 0.92)), var(--bg-image) !important;
+        linear-gradient(rgba(37, 36, 41, 0.85)), var(--bg-image) !important;
     }
   }
 
