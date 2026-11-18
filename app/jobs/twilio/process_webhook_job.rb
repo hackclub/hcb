@@ -67,7 +67,7 @@ module Twilio
       potential_users = User.where(phone_number: @params["From"], phone_number_verified: true)
       return potential_users.first if potential_users.count == 1
 
-      user_id = last_sent_message_hcb_code&.canonical_pending_transactions&.last&.stripe_card&.user&.id
+      user_id = last_sent_message&.hcb_code&.canonical_pending_transactions&.last&.stripe_card&.user&.id
       potential_users.find_by(id: user_id)
     end
 
@@ -90,17 +90,16 @@ module Twilio
     def find_hcb_code
       return nil if reimbursement?
 
-      if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
-        last_sent_message_hcb_code
-      end
+      # Measured from when we texted, so a re-sent SMS for an older charge still gets the full window
+      last_sent_message.hcb_code if last_sent_message && last_sent_message.created_at > OutgoingTwilioMessage::RECEIPT_REPLY_WINDOW.ago
     end
 
-    def last_sent_message_hcb_code
-      @last_sent_message_hcb_code ||= OutgoingTwilioMessage
-                                      .joins(:twilio_message)
-                                      .where("twilio_messages.to" => @params["From"])
-                                      .where.not(hcb_code: nil)
-                                      .last&.hcb_code
+    def last_sent_message
+      @last_sent_message ||= OutgoingTwilioMessage
+                             .joins(:twilio_message)
+                             .where("twilio_messages.to" => @params["From"])
+                             .where.not(hcb_code: nil)
+                             .last
     end
 
     def find_reimbursement_report

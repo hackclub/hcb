@@ -16,6 +16,9 @@
 #  index_outgoing_twilio_messages_on_twilio_message_id  (twilio_message_id)
 #
 class OutgoingTwilioMessage < ApplicationRecord
+  # How long after we text about a charge a photo texted back is attached to that charge
+  RECEIPT_REPLY_WINDOW = 1.hour
+
   belongs_to :twilio_message
   belongs_to :hcb_code, optional: true
 
