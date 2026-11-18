@@ -41,7 +41,7 @@ RSpec.describe "Card locking, end to end", type: :model do
       perform_enqueued_jobs(only: User::UpdateCardLockingJob) do
         attach_receipt(charge, uploaded_by: user)
       end
-      expect(charge.reload.receipt_resolved_at).to be_present # frozen on upload
+      expect(charge.reload.card_locking_resolved?).to be(true)
       expect(user.reload.cards_locked?).to be(false)          # card came back
     end
   end

@@ -23,7 +23,7 @@ module Maintenance
   class GrantCardLockingRolloutGraceTask < MaintenanceTasks::Task
     # Leaves a full WARNING_LEAD_TIME (48h) of warning before the lock lands, so
     # every affected cardholder gets an email and SMS roughly 24h out.
-    GRACE = CardLocking::DEADLINE_SHORTENING_FLOOR
+    GRACE = CardLocking::FIRST_DEADLINE_FLOOR
 
     def collection
       Ledger::Item.card_locking_candidates
@@ -33,9 +33,9 @@ module Maintenance
     end
 
     def process(ledger_item)
-      # The sweep will not claw this back: Deadline#compute's shortening branch
-      # clamps to min(max(target, now + 72h), current_due_at), which holds at the
-      # granted value rather than dropping to the original settled_at + 7 days.
+      # The sweep will not claw this back: Deadline#compute never moves a future
+      # deadline earlier, so it holds at the granted value rather than dropping to
+      # the original settled_at + 7 days.
       ledger_item.update_columns(receipt_due_at: GRACE.from_now)
     end
 

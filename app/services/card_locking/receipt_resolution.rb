@@ -16,16 +16,17 @@ module CardLocking
       enqueue_unlock(charge&.card_locking_cardholder, notify_progress: true)
     end
 
-    # A receipt was destroyed.
+    # A receipt was destroyed. Only deleting the charge's last receipt matters:
+    # it leaves the charge outstanding again, so its 7-day countdown restarts
+    # from now rather than the charge counting as overdue the moment the receipt
+    # is gone. Deleting one of several receipts, or a receipt on a charge that is
+    # also marked no/lost, leaves the charge resolved and its deadline untouched.
+    # Reloaded so the check reads the receipts left in the database, not an
+    # association loaded before the destroy.
     def on_receipt_destroy(receipt)
       charge = charge_for(receipt.receiptable)
-      # receipt_resolved_at is only ever cleared here, never revised. Once a charge
-      # is resolved the timestamp is frozen, so destroying an earlier receipt while
-      # a later one remains (card_locking_resolved? still true) leaves the original
-      # resolution timestamp in place. It resets to nil only when the charge becomes
-      # genuinely unresolved again (no receipts, not marked no/lost).
-      if charge&.card_locking_chargeable? && !charge.card_locking_resolved?
-        charge.update_columns(receipt_resolved_at: nil)
+      if charge&.card_locking_chargeable? && !charge.reload.card_locking_resolved?
+        charge.restart_card_locking_countdown!
       end
       enqueue_unlock(charge&.card_locking_cardholder)
     end

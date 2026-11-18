@@ -24,9 +24,16 @@ RSpec.describe Ledger::Item do
       expect(Ledger::Item.receipt_overdue(now)).not_to include(charge)
     end
 
-    it "excludes a resolved charge even if its receipt_due_at has passed" do
+    it "excludes a charge with a receipt even if its receipt_due_at has passed" do
+      charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
+
+      expect(Ledger::Item.receipt_overdue(now)).not_to include(charge)
+    end
+
+    it "excludes a charge marked no/lost even if its receipt_due_at has passed" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      charge.update!(receipt_due_at: 1.day.ago, receipt_resolved_at: 1.day.ago)
+      charge.update!(receipt_due_at: 1.day.ago, marked_no_or_lost_receipt_at: 1.day.ago)
 
       expect(Ledger::Item.receipt_overdue(now)).not_to include(charge)
     end

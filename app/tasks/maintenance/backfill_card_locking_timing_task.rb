@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Maintenance
-  # Populates persisted card-locking timing (receipt_due_at / receipt_resolved_at)
-  # for every existing relevant charge, via the idempotent materializer.
-  # receipt_due_at is set only for charges settled on or after the enforcement
-  # start date; older charges get resolved timing (so they still count toward
-  # trust) but no due date, so they are never overdue.
+  # Populates the persisted card-locking deadline (receipt_due_at) for every
+  # existing relevant charge, via the idempotent materializer. receipt_due_at is
+  # set only for charges settled on or after the enforcement start date; older
+  # charges get no due date, so they are never overdue (receipt_trusted? still
+  # counts their receipts against a synthesized settled_at + 7 days).
   class BackfillCardLockingTimingTask < MaintenanceTasks::Task
     def collection
       Ledger::Item.where(id: Ledger::Item.card_locking_relevant.select(:id))

@@ -32,15 +32,17 @@ module CardLocking
 
     # Trusted iff on-time rate >= 80% over the last 6 months AND the most recent
     # determined charge was on time. Determined = resolved, or overdue-and-unresolved.
-    # Not-yet-due unresolved charges are excluded. Constant query count regardless
-    # of history size (one pluck of scalars).
+    # Not-yet-due unresolved charges are excluded. Resolution is read live
+    # (RESOLVED_AT_SQL), so a charge whose receipts were all deleted is unresolved
+    # again and is judged against its restarted deadline. Constant query count
+    # regardless of history size (one pluck of scalars).
     def receipt_trusted?(now: Time.current)
       return false unless stripe_cardholder
 
       rows = Ledger::Item.card_locking_relevant_for_cardholder(id)
                          .where("ledger_items.settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
                          .distinct
-                         .pluck(:id, :settled_at, :receipt_due_at, :receipt_resolved_at)
+                         .pluck(:id, :settled_at, :receipt_due_at, Arel.sql(CardLocking::ChargeBehavior::RESOLVED_AT_SQL))
 
       considered = rows.filter_map do |id, settled, due, resolved|
         next if settled.nil?
@@ -82,13 +84,13 @@ module CardLocking
 
     # Overdue charges: past deadline and still unresolved.
     #
-    # The persisted receipt_due_at / receipt_resolved_at columns are the primary
-    # signal (partial-index-friendly). card_locking_candidates adds the live "still
-    # missing a receipt" check (no attached receipts row, marked_no_or_lost_receipt_at
-    # NULL) as a self-healing safety net: a charge whose receipt was attached via a
-    # path that bypassed the materializer (bulk insert, raw import, rolled-back
-    # callback) can't stay wrongly overdue forever. The extra check does not stop the
-    # partial index on receipt_due_at from being used for the persisted predicate.
+    # receipt_overdue (receipt_due_at plus the cached receipt_count and
+    # marked_no_or_lost_receipt_at) is the primary signal (partial-index-friendly).
+    # card_locking_candidates adds the live "still missing a receipt" check (no
+    # attached receipts row) as a self-healing safety net: a charge whose receipt
+    # was attached via a path that left receipt_count stale (bulk insert, raw
+    # import) can't stay wrongly overdue forever. The extra check does not stop the
+    # partial index on receipt_due_at from being used for the indexed predicate.
     def card_locking_overdue_charges(now: Time.current)
       return Ledger::Item.none unless stripe_cardholder
 

@@ -8,9 +8,9 @@ module CardLocking
   # pattern. Bounds the sliding deadline for a continuous spender.
   RECEIPT_MAX_AGE = 14.days
 
-  # When a deadline recomputes earlier (e.g. trust was lost), it may not drop
-  # below this much time from now. Prevents a pile going overdue in one instant.
-  DEADLINE_SHORTENING_FLOOR = 72.hours
+  # A charge's first deadline may not land closer than this to now, so a charge
+  # materialized long after it settled can't lock a card with no warning.
+  FIRST_DEADLINE_FLOOR = 72.hours
 
   # A cardholder is trusted at or above this on-time rate (with the recency clause).
   TRUST_ON_TIME_RATE = 0.80

@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
-# Copies the persisted card-locking timing from each HCB code onto its ledger
-# item, which owns it from this deploy on. Run as a migration rather than a
-# maintenance task so that no deploy ever sees the ledger item columns empty:
-# until they are filled no charge is overdue, so the five-minute sweep
-# (User::UpdateCardLocking::RecurringJob) would unlock every locked cardholder
-# and tell them their cards work again. Batched so no single statement holds
-# row locks for long.
+# Copies each HCB code's receipt deadline onto its ledger item, which owns it
+# from this deploy on. Every deadline is copied as it is, including ones a
+# trusted cardholder's slide or the rollout grace pushed out, and resolved
+# charges' deadlines, which receipt_trusted? reads as history. Run as a
+# migration rather than a maintenance task so that no deploy ever sees the
+# ledger item column empty: until it is filled no charge is overdue, so the
+# five-minute sweep (User::UpdateCardLocking::RecurringJob) would unlock every
+# locked cardholder and tell them their cards work again. Batched so no single
+# statement holds row locks for long.
 class CopyCardLockingReceiptTimingToLedgerItems < ActiveRecord::Migration[8.1]
   disable_ddl_transaction!
 
@@ -17,13 +19,12 @@ class CopyCardLockingReceiptTimingToLedgerItems < ActiveRecord::Migration[8.1]
 
   def up
     HcbCode.where.not(ledger_item_id: nil)
-           .where("receipt_due_at IS NOT NULL OR receipt_resolved_at IS NOT NULL")
+           .where.not(receipt_due_at: nil)
            .in_batches(of: 1_000) do |batch|
       safety_assured do
         execute(<<~SQL.squish)
           UPDATE ledger_items
-          SET receipt_due_at = hcb_codes.receipt_due_at,
-              receipt_resolved_at = hcb_codes.receipt_resolved_at
+          SET receipt_due_at = hcb_codes.receipt_due_at
           FROM hcb_codes
           WHERE hcb_codes.ledger_item_id = ledger_items.id
             AND hcb_codes.id IN (#{batch.select(:id).to_sql})
@@ -33,7 +34,7 @@ class CopyCardLockingReceiptTimingToLedgerItems < ActiveRecord::Migration[8.1]
   end
 
   def down
-    # Nothing to undo: the columns' own migration removes them.
+    # Nothing to undo: the column's own migration removes it.
   end
 
 end

@@ -21,7 +21,7 @@ RSpec.describe PersonalTransaction, type: :model do
       PersonalTransaction.create!(ledger_item: charge, reporter: user, invoice:)
 
       expect(charge.reload.marked_no_or_lost_receipt_at).to be_within(1.second).of(now)
-      expect(charge.receipt_resolved_at).to be_within(1.second).of(now)
+      expect(Ledger::Item.receipt_overdue(now)).not_to include(charge)
       expect(charge.hcb_code.reload.marked_no_or_lost_receipt_at).to be_within(1.second).of(now)
     end
   end

@@ -2,9 +2,10 @@
 
 module CardLocking
   # All card-locking behavior for a charge: a Ledger::Item linked to a
-  # CardCharge. The receipt clock runs from the item's settled_at; the persisted
-  # deadline and resolution (receipt_due_at, receipt_resolved_at) live on the
-  # item too.
+  # CardCharge. The receipt clock runs from the item's settled_at and the
+  # persisted deadline (receipt_due_at) lives on the item too. Whether the charge
+  # is resolved is never persisted: it is read live from the item's receipts (or
+  # its cached receipt_count) and marked_no_or_lost_receipt_at.
   module ChargeBehavior
     extend ActiveSupport::Concern
 
@@ -19,6 +20,16 @@ module CardLocking
       LEFT JOIN card_grants ON card_grants.id = ledgers.card_grant_id
     SQL
     ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = COALESCE(ledgers.event_id, card_grants.event_id) AND event_plans.aasm_state = 'active'"
+    # When a charge was resolved: its earliest receipt or its no/lost mark,
+    # whichever came first (LEAST skips NULLs), or NULL while it is outstanding.
+    # The SQL twin of #card_locking_resolved_at, for plucking it across a pile.
+    RESOLVED_AT_SQL = <<~SQL.squish
+      LEAST(
+        (SELECT MIN(receipts.created_at) FROM receipts
+          WHERE receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = ledger_items.id),
+        ledger_items.marked_no_or_lost_receipt_at
+      )
+    SQL
 
     included do
       # Every settled Stripe card charge a cardholder has ever made. Unbounded in
@@ -40,12 +51,12 @@ module CardLocking
       # and settled once enforcement began.
       #
       # This is the live "still missing a receipt" source of truth for candidate
-      # discovery and materialization: it reads the actual receipts and
-      # marked_no_or_lost_receipt_at, not the persisted receipt_due_at /
-      # receipt_resolved_at fast-path that drives the lock decision. The two are
-      # kept deliberately distinct (the persisted columns let the lock query use
-      # the partial index and self-heal against this check); a future cleanup must
-      # not collapse them.
+      # discovery and materialization: it reads the actual receipts rows, not the
+      # cached receipt_count that receipt_overdue (and its partial index) keys on.
+      # The two are kept deliberately distinct (the cached column lets the lock
+      # query use the partial index; this check catches a receipt attached by a
+      # path that left receipt_count stale); a future cleanup must not collapse
+      # them.
       scope :card_locking_candidates, -> {
         card_locking_relevant
           .joins(STRIPE_CARDHOLDER_JOIN)
@@ -53,11 +64,11 @@ module CardLocking
           .where(marked_no_or_lost_receipt_at: nil)
           .where("ledger_items.settled_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
-      # Charges past their deadline and still unresolved. Keys off the persisted
-      # columns directly (not the receipts check) so the partial index on
-      # receipt_due_at is usable.
+      # Charges past their deadline and still unresolved. Keys off the item's own
+      # columns (not the receipts check) so the partial index on receipt_due_at
+      # (index_ledger_items_on_open_receipt_due_at) is usable.
       scope :receipt_overdue, ->(now = Time.current) {
-        where("ledger_items.receipt_due_at <= ?", now).where(receipt_resolved_at: nil)
+        where("ledger_items.receipt_due_at <= ?", now).where(receipt_count: 0, marked_no_or_lost_receipt_at: nil)
       }
     end
 
@@ -86,12 +97,10 @@ module CardLocking
       card_locking_resolved_at.present?
     end
 
-    # The single writer of receipt_resolved_at / receipt_due_at. Idempotent. Only
-    # populates them for a receipt-required settled card charge, and clears them
-    # if the charge stops being one (e.g. a refund nets it to zero).
-    # receipt_resolved_at is frozen once set (never moved here); the destroy
-    # callback resets it when a charge becomes unresolved. Callers pass the
-    # user's trust state.
+    # The writer of receipt_due_at (alongside #restart_card_locking_countdown!).
+    # Idempotent. Only populates it for a receipt-required settled card charge,
+    # and clears it if the charge stops being one (e.g. a refund nets it to zero).
+    # Callers pass the user's trust state.
     #
     # enforcement_start_date is the cardholder's staged enforcement date (nil if
     # they are not yet enrolled, so no deadline is set and the charge can't lock).
@@ -99,11 +108,10 @@ module CardLocking
     # otherwise it is resolved from this charge's own cardholder.
     def materialize_card_locking!(now: Time.current, trusted: false, last_settled_charge_at: nil, enforcement_start_date: :unset)
       unless card_locking_chargeable? && receipt_required?
-        clear_card_locking! if receipt_due_at.present? || receipt_resolved_at.present?
+        clear_card_locking! if receipt_due_at.present?
         return
       end
 
-      resolved_at = receipt_resolved_at || card_locking_resolved_at
       if enforcement_start_date == :unset
         enforcement_start_date = CardLocking.enforcement_start_date(card_locking_cardholder)
       end
@@ -112,17 +120,33 @@ module CardLocking
         if enforcement_start_date && settled_at >= enforcement_start_date.beginning_of_day
           CardLocking::Deadline.new(
             settled_at:, trusted:, last_settled_charge_at:, current_due_at: receipt_due_at, now:,
-            resolved: resolved_at.present?
+            resolved: card_locking_resolved?
           ).compute
         end
 
-      return if receipt_resolved_at == resolved_at && receipt_due_at == due_at
+      return if receipt_due_at == due_at
 
-      update_columns(receipt_resolved_at: resolved_at, receipt_due_at: due_at)
+      update_columns(receipt_due_at: due_at)
+    end
+
+    # The charge's last receipt was just deleted, so it is outstanding again.
+    # Restart its countdown: a fresh RECEIPT_DUE_WINDOW from now, so removing the
+    # receipt from a months-old charge can't make it overdue (and lock the cards)
+    # the moment it's gone. A later deadline the charge already had (a trusted
+    # slide, rollout grace) is kept. No-op when the charge gets no deadline at all
+    # (not receipt-required, cardholder not enrolled, settled before enforcement).
+    # Deadline#compute never moves a future deadline earlier, so the sweep keeps
+    # the restarted one.
+    def restart_card_locking_countdown!(now: Time.current)
+      materialize_card_locking!(now:)
+      return if receipt_due_at.nil?
+
+      restarted_due_at = [receipt_due_at, now + CardLocking::RECEIPT_DUE_WINDOW].max
+      update_columns(receipt_due_at: restarted_due_at) unless restarted_due_at == receipt_due_at
     end
 
     def clear_card_locking!
-      update_columns(receipt_due_at: nil, receipt_resolved_at: nil)
+      update_columns(receipt_due_at: nil)
     end
   end
 end

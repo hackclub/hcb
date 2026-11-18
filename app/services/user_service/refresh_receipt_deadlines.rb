@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module UserService
-  # Maintains receipt_due_at on a cardholder's outstanding charges. Idempotent; safe to run every few minutes. The shortening floor
-  # (inside CardLocking::Deadline) protects the pile when trust is lost.
+  # Maintains receipt_due_at on a cardholder's outstanding charges. Idempotent; safe to run every few minutes. A recompute only
+  # ever lengthens a future deadline (see CardLocking::Deadline), so a restarted countdown or rollout grace survives it.
   class RefreshReceiptDeadlines
     def initialize(user:, now: Time.current)
       @user = user

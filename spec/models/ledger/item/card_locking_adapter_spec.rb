@@ -47,7 +47,6 @@ RSpec.describe Ledger::Item do
       charge.materialize_card_locking!(now:, trusted: false)
 
       expect(charge.receipt_due_at).to be_within(1.second).of(1.day.ago + 7.days)
-      expect(charge.receipt_resolved_at).to be_nil
     end
 
     it "sets no deadline for a cardholder in no rollout stage" do
@@ -76,23 +75,23 @@ RSpec.describe Ledger::Item do
       expect(charge.receipt_due_at).to be_within(1.second).of((now - 1.hour) + 7.days)
     end
 
-    it "freezes receipt_resolved_at at the time it was first materialized" do
-      charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
+    it "gives a charge that already has a receipt an unfloored settled_at + 7 days deadline" do
+      charge = create_settled_card_charge(user:, settled_at: 30.days.ago, uploaded_at: 2.days.ago)
+      charge.update_columns(receipt_due_at: nil)
 
       charge.materialize_card_locking!(now:, trusted: false)
 
-      expect(charge.receipt_resolved_at).to be_within(1.second).of(2.days.ago)
+      # Not pushed out to now + 72h: receipt_trusted? reads this as the late upload's deadline.
+      expect(charge.receipt_due_at).to be_within(1.second).of(30.days.ago + 7.days)
     end
 
-    it "does not move receipt_resolved_at on repeated calls" do
-      charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
+    it "never moves a future deadline earlier" do
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      charge.update_columns(receipt_due_at: 10.days.from_now)
+
       charge.materialize_card_locking!(now:, trusted: false)
 
-      resolved_at = charge.receipt_resolved_at
-
-      charge.materialize_card_locking!(now:, trusted: true, last_settled_charge_at: now - 1.hour)
-
-      expect(charge.receipt_resolved_at).to eq(resolved_at)
+      expect(charge.receipt_due_at).to be_within(1.second).of(10.days.from_now)
     end
 
     it "does not set receipt_due_at for a charge settled before enforcement began" do
@@ -104,15 +103,51 @@ RSpec.describe Ledger::Item do
       expect(charge.receipt_due_at).to be_nil
     end
 
-    it "clears both columns when the charge stops being receipt-required" do
+    it "clears the deadline when the charge stops being receipt-required" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      charge.update!(receipt_due_at: 2.days.from_now, receipt_resolved_at: 1.day.ago)
+      charge.update!(receipt_due_at: 2.days.from_now)
       allow(charge).to receive(:receipt_required?).and_return(false)
 
       charge.materialize_card_locking!(now:, trusted: false)
 
       expect(charge.receipt_due_at).to be_nil
-      expect(charge.receipt_resolved_at).to be_nil
+    end
+  end
+
+  describe "#restart_card_locking_countdown!" do
+    it "restarts an overdue charge's countdown from now" do
+      charge = create_settled_card_charge(user:, settled_at: 20.days.ago)
+      charge.update_columns(receipt_due_at: 13.days.ago)
+
+      charge.restart_card_locking_countdown!(now:)
+
+      expect(charge.receipt_due_at).to be_within(1.second).of(now + 7.days)
+    end
+
+    it "gives a charge with no deadline yet a full 7 days rather than the first-deadline floor" do
+      charge = create_settled_card_charge(user:, settled_at: 20.days.ago)
+      charge.update_columns(receipt_due_at: nil)
+
+      charge.restart_card_locking_countdown!(now:)
+
+      expect(charge.receipt_due_at).to be_within(1.second).of(now + 7.days)
+    end
+
+    it "keeps a deadline that is already later than 7 days from now" do
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      charge.update_columns(receipt_due_at: 10.days.from_now)
+
+      charge.restart_card_locking_countdown!(now:)
+
+      expect(charge.receipt_due_at).to be_within(1.second).of(10.days.from_now)
+    end
+
+    it "sets no deadline for a charge settled before enforcement began" do
+      charge = create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-01"))
+
+      charge.restart_card_locking_countdown!(now:)
+
+      expect(charge.receipt_due_at).to be_nil
     end
   end
 end

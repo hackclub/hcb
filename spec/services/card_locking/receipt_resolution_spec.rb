@@ -18,13 +18,14 @@ RSpec.describe CardLocking::ReceiptResolution do
   before { travel_to(now) }
 
   describe "on_no_or_lost_receipt" do
-    it "freezes receipt_resolved_at when marked no/lost via the HCB code, same as via the ledger item" do
+    it "resolves the charge when marked no/lost via the HCB code, same as via the ledger item" do
       charge = create_settled_card_charge(user:, settled_at: 12.days.ago)
       charge.update!(receipt_due_at: 12.days.ago + 7.days)
 
       charge.hcb_code.no_or_lost_receipt!
 
-      expect(charge.reload.receipt_resolved_at).to be_within(1.second).of(now)
+      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(now)
+      expect(Ledger::Item.receipt_overdue(now)).not_to include(charge)
     end
 
     it "unlocks the cardholder when marked no/lost via the HCB code, same as via the ledger item" do

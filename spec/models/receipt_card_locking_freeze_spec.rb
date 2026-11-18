@@ -10,34 +10,89 @@ RSpec.describe Receipt, type: :model do
 
   before { travel_to(now) }
 
-  describe "freezing receipt_resolved_at" do
-    it "freezes receipt_resolved_at when a receipt is attached to a chargeable, due charge" do
-      hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_due_at: 5.days.ago + 7.days)
+  describe "resolving a charge" do
+    it "takes a due charge out of the overdue pile when a receipt is attached" do
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
-      attach_receipt(hc, uploaded_by: user)
+      attach_receipt(charge, uploaded_by: user)
 
-      expect(hc.reload.receipt_resolved_at).to be_within(1.second).of(now)
+      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(now)
+      expect(user.card_locking_overdue_charges(now:)).not_to include(charge)
     end
 
-    it "freezes receipt_resolved_at at the mark time when marked no/lost after the deadline" do
-      hc = create_settled_card_charge(user:, settled_at: 12.days.ago)
-      hc.update!(receipt_due_at: 12.days.ago + 7.days)
+    it "takes a due charge out of the overdue pile when it is marked no/lost" do
+      charge = create_settled_card_charge(user:, settled_at: 12.days.ago)
+      charge.update!(receipt_due_at: 12.days.ago + 7.days)
 
-      hc.no_or_lost_receipt!
+      charge.no_or_lost_receipt!
 
-      expect(hc.reload.receipt_resolved_at).to be_within(1.second).of(now)
+      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(now)
+      expect(user.card_locking_overdue_charges(now:)).not_to include(charge)
     end
+  end
 
-    it "resets receipt_resolved_at to nil when the last receipt is destroyed" do
-      hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_due_at: 5.days.ago + 7.days)
-      receipt = attach_receipt(hc, uploaded_by: user)
-      expect(hc.reload.receipt_resolved_at).to be_present
+  describe "deleting a receipt" do
+    it "restarts the 7-day countdown from the deletion when the last receipt is deleted" do
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      charge.update!(receipt_due_at: 53.days.ago)
+      receipt = charge.receipts.sole
 
       receipt.destroy!
 
-      expect(hc.reload.receipt_resolved_at).to be_nil
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(now + 7.days)
+      expect(user.card_locking_overdue_charges(now:)).to be_empty
+      expect(user.card_locking_overdue_charges(now: now + 7.days + 1.minute)).to include(charge)
+    end
+
+    it "keeps the restarted countdown through the sweep" do
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      charge.update!(receipt_due_at: 53.days.ago)
+      charge.receipts.sole.destroy!
+
+      UserService::RefreshReceiptDeadlines.new(user:, now: now + 1.hour).run
+
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(now + 7.days)
+    end
+
+    it "keeps a later deadline the charge already had" do
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      receipt = attach_receipt(charge, uploaded_by: user)
+      charge.update!(receipt_due_at: 10.days.from_now)
+
+      receipt.destroy!
+
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(10.days.from_now)
+    end
+
+    it "leaves the deadline alone when another receipt remains" do
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      attach_receipt(charge, uploaded_by: user, at: 58.days.ago)
+      charge.update!(receipt_due_at: 53.days.ago)
+
+      charge.receipts.order(:created_at).first.destroy!
+
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(53.days.ago)
+      expect(charge.card_locking_resolved_at).to be_within(1.second).of(58.days.ago)
+    end
+
+    it "leaves the deadline alone when the charge is also marked no/lost" do
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      charge.no_or_lost_receipt!
+      charge.update!(receipt_due_at: 53.days.ago)
+
+      charge.receipts.sole.destroy!
+
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(53.days.ago)
+    end
+
+    it "sets no deadline for a cardholder in no rollout stage" do
+      Flipper.disable(:card_locking_enabled_on_07_17_2026, user)
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+
+      charge.receipts.sole.destroy!
+
+      expect(charge.reload.receipt_due_at).to be_nil
     end
   end
 
@@ -69,18 +124,17 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
-  describe "immutability of a resolved receipt_resolved_at" do
-    it "leaves receipt_resolved_at unchanged across re-materialization and the sweep" do
-      hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_due_at: 5.days.ago + 7.days)
-      attach_receipt(hc, uploaded_by: user)
-      resolved_at = hc.reload.receipt_resolved_at
-      expect(resolved_at).to be_present
+  describe "a resolved charge's deadline" do
+    it "stays unchanged across re-materialization and the sweep" do
+      charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
+      charge.update!(receipt_due_at: 5.days.ago + 7.days)
+      attach_receipt(charge, uploaded_by: user)
+      due_at = charge.reload.receipt_due_at
 
-      hc.materialize_card_locking!(now: now + 1.hour)
+      charge.materialize_card_locking!(now: now + 1.hour)
       UserService::RefreshReceiptDeadlines.new(user:, now: now + 1.hour).run
 
-      expect(hc.reload.receipt_resolved_at).to eq(resolved_at)
+      expect(charge.reload.receipt_due_at).to eq(due_at)
     end
   end
 end
