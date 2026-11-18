@@ -11,8 +11,17 @@
   display: flex;
   flex-direction: column;
 }
-.blocker.behind {
-  background-color: transparent;
+
+// Modals stacked on another one (e.g. on a popover) share its blocker, so a
+// scrim covers the modals underneath, above even mobile's fixed sheets
+.blocker__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+.modal.modal--stacked {
+  z-index: 1001;
 }
 
 .modal {

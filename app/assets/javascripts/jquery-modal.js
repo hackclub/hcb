@@ -16,16 +16,18 @@
       return modals.length ? modals[modals.length - 1] : null
     },
     selectCurrent = function () {
-      var i,
-        selected = false
-      for (i = modals.length - 1; i >= 0; i--) {
-        if (modals[i].$blocker) {
-          modals[i].$blocker
-            .toggleClass('current', !selected)
-            .toggleClass('behind', selected)
-          selected = true
-        }
-      }
+      // Every modal shares one blocker, so stacked modals get a scrim between
+      // them and the ones underneath, which are made inert so they can't be used
+      var current = getCurrent()
+      if (!current?.$blocker) return
+      current.$blocker.addClass('current')
+      modals.forEach(function (m) {
+        if (m.$elm) m.$elm[0].inert = m !== current
+      })
+      $('.blocker__scrim').remove()
+      if (modals.length > 1)
+        current.$blocker.append('<div class="blocker__scrim"></div>')
+      current.$elm?.toggleClass('modal--stacked', modals.length > 1)
     }
 
   $.modal = function (el, options) {
@@ -101,14 +103,20 @@
           var current = getCurrent()
           if (event.which === 27 && current.options.escapeClose) current.close()
         })
-      if (this.options.clickClose)
-        this.$blocker.click(function (e) {
-          if (e.target === this) $.modal.close()
+      this.$blocker
+        .off('click.modal')
+        .on('click.modal', function (e) {
+          var onBackdrop = e.target === this || $(e.target).is('.blocker__scrim')
+          if (onBackdrop && getCurrent()?.options.clickClose) $.modal.close()
         })
     },
 
     close: function (now) {
       modals.pop()
+      this.$elm.removeClass('modal--stacked')
+      this.$elm[0].inert = false
+      $('.blocker__scrim').remove()
+      selectCurrent()
       this.unblock(now)
       this.hide(now)
       unexpandReceipt()
@@ -127,18 +135,22 @@
       } else {
         this.$blocker = $($('.' + this.options.blockerClass)[0])
       }
+      // Finish a fade-out from a modal that just closed so it can't hide the blocker
+      this.$blocker.stop(true, true).addClass('blocker current').css('display', '')
       selectCurrent()
-      if (this.options.doFade) {
+      // Only fade in for the first modal; resetting the opacity under an open one makes it flicker
+      if (this.options.doFade && modals.length === 1) {
         this.$blocker
-          .addClass('blocker current')
-          .css('display', '')
           .css('opacity', 0)
           .animate({ opacity: 1 }, this.options.fadeDuration)
+      } else {
+        this.$blocker.css('opacity', 1)
       }
       this.$elm.trigger($.modal.BLOCK, [this._ctx()])
     },
 
     unblock: function (now) {
+      if ($.modal.isActive()) return // Modals share one blocker, so keep it for the ones still open
       if (!now && this.options.doFade)
         this.$blocker.fadeOut(
           this.options.fadeDuration,

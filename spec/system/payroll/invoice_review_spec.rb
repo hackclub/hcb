@@ -179,6 +179,30 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(page).to have_invoice_status("Approved")
       expect(invoice.reload).to be_approved
     end
+
+    it "blocks the popover and page under an invoice opened on the contractor popover" do
+      first_invoice = create_invoice("Week 1 hours")
+      second_invoice = create_invoice("Week 2 hours")
+      visit_without_animations event_contractors_path(event_id: event.slug)
+
+      open_row("Fiona Hackworth")
+      open_invoice(first_invoice)
+      within_invoice_modal(first_invoice) { expect(page).to have_button("Approve") }
+
+      # Everything outside the invoice, including the other invoice's row and the sidebar, is under the scrim
+      second_row = evaluate_script(<<~JS)
+        [...document.querySelectorAll('#shared_popover tr.clickable')].find(r => r.textContent.includes('#{second_invoice.name}')).getBoundingClientRect().toJSON()
+      JS
+      covering = ->(x, y) { evaluate_script("document.elementFromPoint(#{x}, #{y}).className") }
+      expect(covering.call(second_row["right"] - 5, second_row["top"] + 5)).to eq("blocker__scrim")
+      expect(covering.call(5, 300)).to eq("blocker__scrim")
+
+      page.driver.browser.mouse.click(x: 5, y: 300)
+
+      expect(page).to have_no_css("##{dom_id(first_invoice.receipts.first, :preview)}")
+      expect(page).to have_css("#shared_popover", text: second_invoice.name)
+      expect(page).to have_no_css(".blocker__scrim")
+    end
   end
 
   context "as a reader" do

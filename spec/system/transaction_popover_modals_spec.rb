@@ -22,6 +22,12 @@ RSpec.describe "Modals in transaction popovers", type: :system do
   def press_escape = page.driver.browser.keyboard.type(:escape)
   def click_backdrop = page.driver.browser.mouse.click(x: 5, y: 5)
 
+  # Clicks the popover's right edge, which is clear of any modal centered on top of it
+  def click_over_popover
+    rect = evaluate_script("document.querySelector('#{popover}').getBoundingClientRect().toJSON()")
+    page.driver.browser.mouse.click(x: rect["right"] - 10, y: rect["top"] + (rect["height"] / 2))
+  end
+
   def open_popover
     find("[data-popover-state-url='#{popover_url}']", match: :first).click
     expect(page).to have_css("#{popover} turbo-frame[complete]", text: "Card not activated")
@@ -32,6 +38,11 @@ RSpec.describe "Modals in transaction popovers", type: :system do
   def open_decline_details
     within(popover) { find("[data-modal]", text: "Card not activated").click }
     expect(page).to have_css(decline_modal, text: "Activate your new card")
+    # The popover under it is covered by a scrim and can't be used, and the backdrop never fades out and back in
+    expect(page).to have_css(".blocker__scrim")
+    expect(evaluate_script("document.querySelector('#{popover}').inert")).to be(true)
+    expect(evaluate_script("document.elementFromPoint(innerWidth - 10, innerHeight / 2).className")).to eq("blocker__scrim")
+    expect(page).to have_css(".blocker", style: { opacity: "1" })
   end
 
   before do
@@ -52,6 +63,8 @@ RSpec.describe "Modals in transaction popovers", type: :system do
 
     expect(page).to have_no_css(decline_modal)
     expect(page).to have_css(popover, text: "Card not activated")
+    expect(page).to have_no_css(".blocker__scrim")
+    expect(evaluate_script("document.querySelector('#{popover}').inert")).to be(false)
     expect(page).to have_current_path(stripe_card_path(card, popover: popover_url))
     # The backdrop still dims the page behind the popover
     expect(page).to have_css(".blocker", style: { "background-color": "rgba(0, 0, 0, 0.3)" })
@@ -67,6 +80,13 @@ RSpec.describe "Modals in transaction popovers", type: :system do
 
     open_decline_details
     click_backdrop
+
+    expect(page).to have_no_css(decline_modal)
+    expect(page).to have_css(popover)
+    expect(page).to have_current_path(stripe_card_path(card, popover: popover_url))
+
+    open_decline_details
+    click_over_popover
 
     expect(page).to have_no_css(decline_modal)
     expect(page).to have_css(popover)
