@@ -118,6 +118,7 @@
       <%= render partial: "receipts/form_v3", locals: {
             receiptable: @hcb_code.ledger_item,
             upload_method: "attach_receipt_page",
+            global_paste: true,
             turbo: false,
             redirect_url: ledger_admin_index_path
           } %>

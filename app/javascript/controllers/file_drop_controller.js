@@ -54,17 +54,33 @@ export default class extends Controller {
     this.counter = 0
 
     this.submitting = false
+  }
 
-    const element = this.globalPasteValue
+  connect() {
+    this.pasteElement = this.globalPasteValue
       ? document.body
       : this.hasFormTarget
         ? this.formTarget
         : this.element
 
-    element.addEventListener('paste', e => {
+    this.paste = e => {
+      // A page-wide listener must leave pastes into text fields (comments, memo) alone
+      if (
+        this.globalPasteValue &&
+        e.target.closest?.('input, textarea, [contenteditable]')
+      )
+        return
+
       e.dataTransfer = e.clipboardData
       this.drop(e)
-    })
+    }
+
+    this.pasteElement.addEventListener('paste', this.paste)
+  }
+
+  // The body outlives this form when a Turbo stream replaces it
+  disconnect() {
+    this.pasteElement.removeEventListener('paste', this.paste)
   }
 
   dragover(e) {
@@ -125,7 +141,11 @@ export default class extends Controller {
 
     this.submitting = true
 
-    if (e.clipboardData && this.dropzoneTarget.contains(e.target))
+    if (
+      e.clipboardData &&
+      this.hasDropzoneTarget &&
+      this.dropzoneTarget.contains(e.target)
+    )
       e.stopImmediatePropagation()
 
     if (
