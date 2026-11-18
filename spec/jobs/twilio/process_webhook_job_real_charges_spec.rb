@@ -40,8 +40,8 @@ RSpec.describe Twilio::ProcessWebhookJob do
     CanonicalPendingDeclinedMapping.create!(canonical_pending_transaction: decline.pt)
     expect([charge.receipt_required?, decline.reload.receipt_required?]).to eq([true, false])
 
-    text_about(charge, at: 20.minutes.ago)
-    text_about(decline, at: 5.minutes.ago)
+    text_about(charge, at: 8.minutes.ago)
+    text_about(decline, at: 3.minutes.ago)
 
     expect(ReceiptService::Create).to receive(:new).with(hash_including(receiptable: charge.ledger_item)).and_return(receipt_service)
     described_class.perform_now(webhook_params:)
@@ -50,9 +50,9 @@ RSpec.describe Twilio::ProcessWebhookJob do
   it "attaches the photo to the one of two texted charges that has no receipt yet" do
     first = card_charge
     second = card_charge
-    text_about(first, at: 20.minutes.ago)
+    text_about(first, at: 8.minutes.ago)
     ReceiptService::Create.new(receiptable: first.ledger_item, uploader: user, attachments: [file_fixture("receipt.png")], upload_method: "sms").run!
-    text_about(second, at: 5.minutes.ago)
+    text_about(second, at: 3.minutes.ago)
     expect([first.reload.missing_receipt?, second.missing_receipt?]).to eq([false, true])
 
     expect(ReceiptService::Create).to receive(:new).with(hash_including(receiptable: second.ledger_item)).and_return(receipt_service)

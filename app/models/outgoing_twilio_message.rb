@@ -17,8 +17,8 @@
 #
 class OutgoingTwilioMessage < ApplicationRecord
   # How long after we text about a charge a photo texted back is attached to that charge
-  # (the receipt SMS in CanonicalPendingTransaction::SendTwilioReceiptMessageJob says "within an hour")
-  RECEIPT_REPLY_WINDOW = 1.hour
+  # (the receipt SMS in CanonicalPendingTransaction::SendTwilioReceiptMessageJob says "within ten minutes")
+  RECEIPT_REPLY_WINDOW = 10.minutes
 
   belongs_to :twilio_message
   belongs_to :hcb_code, optional: true

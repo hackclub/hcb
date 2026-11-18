@@ -33,7 +33,7 @@ RSpec.describe Twilio::ProcessWebhookJob do
   end
 
   context "when the photo arrives within the reply window of the SMS" do
-    let(:sent_at) { 50.minutes.ago }
+    let(:sent_at) { 8.minutes.ago }
 
     it "attaches the receipt to the charge" do
       expect(ReceiptService::Create).to receive(:new).with(hash_including(receiptable: hcb_code.ledger_item, upload_method: "sms")).and_return(receipt_service)
@@ -53,7 +53,7 @@ RSpec.describe Twilio::ProcessWebhookJob do
   end
 
   context "when the photo arrives after the reply window" do
-    let(:sent_at) { 61.minutes.ago }
+    let(:sent_at) { 11.minutes.ago }
 
     it "adds the receipt to the Receipt Bin" do
       expect(ReceiptService::Create).to receive(:new).with(hash_including(receiptable: nil, upload_method: "sms")).and_return(receipt_service)
@@ -64,7 +64,7 @@ RSpec.describe Twilio::ProcessWebhookJob do
 
   context "when the SMS was re-sent recently for an older charge" do
     let(:hcb_code) { create(:canonical_pending_transaction, created_at: 3.days.ago).local_hcb_code }
-    let(:sent_at) { 10.minutes.ago }
+    let(:sent_at) { 5.minutes.ago }
 
     it "measures the window from the SMS, attaching the receipt to the charge" do
       expect(ReceiptService::Create).to receive(:new).with(hash_including(receiptable: hcb_code.ledger_item)).and_return(receipt_service)
@@ -96,12 +96,12 @@ RSpec.describe Twilio::ProcessWebhookJob do
   end
 
   context "when two charges were texted within the reply window" do
-    let(:sent_at) { 30.minutes.ago }
+    let(:sent_at) { 8.minutes.ago }
     let(:newer_hcb_code) { create(:canonical_pending_transaction).local_hcb_code }
 
     before do
       sent = TwilioMessage.create!(to: phone_number, from: "+15555550100", body: "Your card was charged", twilio_sid: "SM2", twilio_account_sid: "AC1")
-      OutgoingTwilioMessage.create!(twilio_message: sent, hcb_code: newer_hcb_code, created_at: 10.minutes.ago)
+      OutgoingTwilioMessage.create!(twilio_message: sent, hcb_code: newer_hcb_code, created_at: 3.minutes.ago)
     end
 
     it "attaches the receipt to the only one still missing a receipt" do
