@@ -233,18 +233,12 @@ class Receipt < ApplicationRecord
   end
 
   def duplicated?
-    if receiptable
-      return Receipt.where.not(receiptable_type:, receiptable_id:)
-                    .where.not(receiptable_id: nil)
-                    .where.not(textual_content: nil)
-                    .where(textual_content:).any?
-    end
-
-    false
+    duplicates.any?
   end
 
   def duplicates
-    if receiptable
+    # failed extractions store "", which would make every such receipt a duplicate of the others
+    if receiptable && textual_content.present?
       return Receipt.where.not(receiptable_type:, receiptable_id:)
                     .where.not(receiptable_id: nil)
                     .where.not(textual_content: nil)

@@ -15,6 +15,11 @@ RSpec.describe "card-locking settle hooks" do
       .to have_enqueued_job(CardLocking::MaterializeChargeJob).at_least(:once)
   end
 
+  it "enqueues a receipt pairing re-score for the cardholder when a card charge settles" do
+    expect { create_settled_card_charge(user:, settled_at: 1.day.ago) }
+      .to have_enqueued_job(User::RescoreReceiptPairingsJob).with(user_id: user.id)
+  end
+
   it "enqueues the materialize job when a new-engine primary mapping settles a card charge" do
     stripe_cardholder = create(:stripe_cardholder, user:)
     stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, event:)

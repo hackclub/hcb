@@ -38,6 +38,8 @@ module StripeAuthorizationService
             CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
           end
 
+          User::RescoreReceiptPairingsJob.perform_later(user_id: user.id) if user
+
           if cpt.local_hcb_code&.stripe_cash_withdrawal?
             AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
           end
