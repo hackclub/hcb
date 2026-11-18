@@ -89,6 +89,32 @@ RSpec.describe MyController do
         expect(ivar(:cards_by_event).keys).to eq([zebra, aardvark])
       end
 
+      context "in the list view" do
+        def list_page
+          get :cards, params: { view: "list" }
+          response.parsed_body
+        end
+
+        it "only links cards in organizations the user can still open", :aggregate_failures do
+          create(:organizer_position, user:, event: aardvark)
+          kept = create_card(event: aardvark)
+          left_behind = create_card
+
+          page = list_page
+
+          expect(page.css("a[href='#{stripe_card_path(kept)}']")).to be_present
+          expect(page.css("a[href='#{stripe_card_path(left_behind)}'], [data-popover-src*='#{left_behind.hashid}']")).to be_empty
+          expect(page.css("tr.clickable").count).to eq(1)
+        end
+
+        it "shows a placeholder for cards without a name, including blank ones" do
+          create_card(name: nil)
+          create_card(name: "")
+
+          expect(list_page.css("tbody tr td:first-child").map { |td| td.text.strip }).to eq(%w[— —])
+        end
+      end
+
       it "applies the search and filters" do
         laptop = create_card(name: "Laptop fund", stripe_status: "canceled", card_type: "virtual")
         create_card(name: "Snacks", stripe_status: "canceled", card_type: "virtual")

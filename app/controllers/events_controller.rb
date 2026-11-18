@@ -120,7 +120,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).preloaded_for_feed.first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -330,7 +330,7 @@ class EventsController < ApplicationController
     @settings_tab = params[:tab]
     @frame = params[:frame]
     @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
@@ -482,11 +482,12 @@ class EventsController < ApplicationController
     # Derived from cards rather than @event.users so removed members' cards stay filterable
     cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
     sorted_cardholders = cardholders.sort_by(&:name)
-    @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
+    # Public ids, since slugs are built from the name a user signed up with
+    @user = cardholders.find_by_public_id(params[:user]) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
-      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.slug] } },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.public_id] } },
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
 

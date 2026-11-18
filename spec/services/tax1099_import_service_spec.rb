@@ -1008,9 +1008,60 @@ RSpec.describe Tax1099ImportService do
         .to raise_error(described_class::ValidationError, /country must be a country/)
     end
 
-    it "only takes a foreign TIN" do
-      expect { run(data: w8ben_data.merge(tin_type: "SSN")) }
-        .to raise_error(described_class::ValidationError, /FTIN/)
+    it "doesn't take an EIN" do
+      expect { run(data: w8ben_data.merge(tin: "12-3456789", tin_type: "EIN")) }
+        .to raise_error(described_class::ValidationError, /FTIN, SSN/)
+    end
+
+    describe "with an SSN" do
+      let(:ssn_data) { w8ben_data.merge(tin: "123-45-6789", tin_type: "SSN") }
+
+      it "sends it as the US TIN, not a foreign one" do
+        run(data: ssn_data)
+
+        expect(TaxbanditsService).to have_received(:create_from_data).with(
+          hash_including(
+            "FormW8Ben" => hash_including(
+              "USTINType" => "SSN", "USTIN" => "123-45-6789", "ForeignTIN" => nil, "IsFTINNotLegallyRequired" => false
+            )
+          )
+        )
+      end
+
+      it "fingerprints it as a US individual's TIN, the same as a W-9 with that SSN" do
+        result = run(data: ssn_data)
+
+        expect(result.form).to have_attributes(form_type: "W8BEN", tin_type: "individual", aasm_state: "completed")
+        expect(result.form.tin_hash).to eq(
+          Tax::IdentificationNumber::Hasher.hash_tin("123-45-6789", tin_type: :individual, country: "US")
+        )
+      end
+
+      it "is a duplicate of an earlier W-9 import with the same SSN" do
+        run(data: person_data)
+
+        expect { run(data: ssn_data.merge(email: person_data[:email])) }.to raise_error(described_class::DuplicateError)
+      end
+
+      it "can also say an FTIN isn't legally required" do
+        run(data: ssn_data.merge(ftin_not_legally_required: "1"))
+
+        expect(TaxbanditsService).to have_received(:create_from_data)
+          .with(hash_including("FormW8Ben" => hash_including("USTIN" => "123-45-6789", "IsFTINNotLegallyRequired" => true)))
+      end
+
+      it "isn't taken on a W-8BEN-E" do
+        expect { run(data: w8bene_data.merge(tin: "123-45-6789", tin_type: "SSN")) }
+          .to raise_error(described_class::ValidationError, /must be one of: FTIN/)
+      end
+    end
+
+    it "sends no US TIN with a foreign TIN" do
+      run(data: w8ben_data)
+
+      expect(TaxbanditsService).to have_received(:create_from_data).with(
+        hash_including("FormW8Ben" => hash_including("USTINType" => nil, "USTIN" => nil, "ForeignTIN" => "ABCDE1234F"))
+      )
     end
 
     it "is a duplicate of an earlier import of the same foreign TIN from the same country" do

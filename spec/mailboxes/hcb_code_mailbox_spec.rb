@@ -32,6 +32,18 @@ RSpec.describe HcbCodeMailbox, type: :mailbox do
     expect(mail_processed).to have_been_delivered
   end
 
+  it "attaches the receipt to the transaction's ledger item" do
+    mail = Mail.new do |m|
+      m.from user.email
+      m.to "receipts+hcb-#{hcb.hashid}@example.com"
+      m.add_file Rails.root.join(receipt_filepath).to_s
+    end
+
+    create_inbound_email_from_source(mail.to_s, status: :processing).tap(&:route)
+
+    expect(Receipt.sole).to have_attributes(user:, receiptable: hcb.reload.ledger_item, upload_method: "email_hcb_code")
+  end
+
   it "marks email as bounced if sent by non-user" do
     mail = Mail.new do |m|
       m.from "non-user@example.com"
