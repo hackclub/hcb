@@ -19,7 +19,6 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_due_at               :datetime
 #  receipt_required             :boolean
-#  receipt_resolved_at          :datetime
 #  settled_at                   :datetime
 #  short_code                   :text
 #  special_appearance           :string
@@ -33,14 +32,14 @@
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents            (amount_cents)
-#  index_ledger_items_on_author_id               (author_id)
-#  index_ledger_items_on_datetime                (datetime)
-#  index_ledger_items_on_linked_object           (linked_object_type,linked_object_id)
-#  index_ledger_items_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
-#  index_ledger_items_on_receipt_missing         (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
-#  index_ledger_items_on_short_code              (short_code) UNIQUE
-#  index_ledger_items_on_status                  (status)
+#  index_ledger_items_on_amount_cents         (amount_cents)
+#  index_ledger_items_on_author_id            (author_id)
+#  index_ledger_items_on_datetime             (datetime)
+#  index_ledger_items_on_linked_object        (linked_object_type,linked_object_id)
+#  index_ledger_items_on_open_receipt_due_at  (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))
+#  index_ledger_items_on_receipt_missing      (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
+#  index_ledger_items_on_short_code           (short_code) UNIQUE
+#  index_ledger_items_on_status               (status)
 #
 # Foreign Keys
 #

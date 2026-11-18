@@ -30,6 +30,8 @@
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (user_id => users.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class EmburseCard < ApplicationRecord
