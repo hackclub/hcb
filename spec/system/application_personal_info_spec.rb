@@ -6,11 +6,8 @@ RSpec.describe "Application personal info page", type: :system do
   let(:cosigner_field) { "#event_application_cosigner_email" }
 
   def visit_personal_info_as(user)
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(create(:user_session, user:))
-
     stub_intl_tel_input
+    sign_in(user)
 
     visit personal_info_application_path(create(:event_application, user:))
   end

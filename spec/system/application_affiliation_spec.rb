@@ -25,8 +25,7 @@ RSpec.describe "Application affiliation form", type: :system do
       url_whitelist: [/\Ahttp:\/\/127\.0\.0\.1:\d+\//],
     }
 
-    session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
-    allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
+    sign_in(user)
 
     visit project_info_application_path(application)
   end

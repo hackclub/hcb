@@ -16,9 +16,7 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
   before do
     admin_session = create(:user_session, user: admin, verified: true, expiration_at: 1.hour.from_now)
 
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(admin_session)
+    sign_in_with(admin_session)
 
     allow(TaxbanditsService).to receive(:create_from_data).and_return({ "SubmissionId" => "sub-1" })
     allow(Tax::IdentificationNumber::Hasher).to receive(:kms_key_id).and_return(nil)
@@ -206,7 +204,7 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
     end
 
     it "is closed to non-admins" do
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(nil)
+      cookies.delete("session_token")
 
       post "/admin/tax1099_imports", params: row.merge(pdf:)
 
@@ -237,7 +235,7 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
     end
 
     it "is closed to non-admins" do
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(nil)
+      cookies.delete("session_token")
 
       get "/admin/tax1099_imports/legal_entities",
           params: { email: user.email, tin_type: "EIN", federal_tax_classification: "Partnership" }

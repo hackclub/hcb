@@ -7,12 +7,6 @@ RSpec.describe "POST /users/:id/update_admin_transfer_limit", type: :request do
   let(:admin) { create(:user, :make_admin) }
   let!(:limit) { create(:governance_admin_transfer_limit, user: admin, amount_cents: 1_000_00) }
 
-  def sign_in_with(session)
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(session)
-  end
-
   it "lets a superadmin update a transfer limit" do
     sign_in_with(create(:user_session, user: superadmin, expiration_at: 1.hour.from_now))
 

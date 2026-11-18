@@ -9,9 +9,7 @@ RSpec.describe "OAuth applications", type: :request do
   before do
     admin_session = create(:user_session, user: admin, verified: true, expiration_at: 1.hour.from_now)
 
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(admin_session)
+    sign_in_with(admin_session)
   end
 
   def create_application(owner_email:)

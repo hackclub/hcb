@@ -7,7 +7,7 @@ RSpec.describe "Event::ApplicationsController admin approval and activation", ty
 
   before do
     session = create(:user_session, user: admin, verified: true, expiration_at: 1.hour.from_now)
-    allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+    sign_in_with(session)
   end
 
   it "doesn't activate an application that hasn't been approved" do

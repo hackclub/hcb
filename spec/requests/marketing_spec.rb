@@ -54,7 +54,7 @@ RSpec.describe "Funders landing page", type: :request do
     it "shows a dashboard link for signed-in users instead of login" do
       user = create(:user, verified: true)
       session = create(:user_session, user:, verified: true, expiration_at: 1.hour.from_now)
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+      sign_in_with(session)
 
       get funders_path
 

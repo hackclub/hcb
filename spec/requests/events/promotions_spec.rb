@@ -6,12 +6,6 @@ RSpec.describe "Event promotions", type: :request do
   let(:event) { create(:event, country: "US") }
   let(:user) { create(:user) }
 
-  def sign_in_with(session)
-    allow_any_instance_of(SessionsHelper)
-      .to receive(:find_current_session)
-      .and_return(session)
-  end
-
   before do
     sign_in_with(create(:user_session, user:, expiration_at: 1.hour.from_now))
   end

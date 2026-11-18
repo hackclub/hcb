@@ -11,7 +11,7 @@ RSpec.describe "Doorkeeper authorizations while impersonating", type: :request d
 
   before do
     impersonation_session = create(:user_session, user:, impersonated_by: admin, expiration_at: 1.hour.from_now)
-    allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(impersonation_session)
+    sign_in_with(impersonation_session)
   end
 
   it "does not grant an authorization code" do

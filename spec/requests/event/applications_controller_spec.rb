@@ -61,7 +61,7 @@ RSpec.describe "Event::ApplicationsController", type: :request do
 
       before do
         session = create(:user_session, user:, verified: true, expiration_at: 1.hour.from_now)
-        allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(session)
+        sign_in_with(session)
       end
 
       it "saves the referral code from the query string" do

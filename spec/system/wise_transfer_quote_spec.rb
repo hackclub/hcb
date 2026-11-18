@@ -11,9 +11,7 @@ RSpec.describe "Wise transfer USD quote", type: :system do
     create(:organizer_position, user:, event:)
     # The amount field is disabled when the event has no balance.
     allow_any_instance_of(Event).to receive(:balance).and_return(1_000_00)
-
-    session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
-    allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
+    sign_in(user)
   end
 
   def quote
