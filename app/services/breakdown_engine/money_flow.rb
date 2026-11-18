@@ -2,26 +2,24 @@
 
 module BreakdownEngine
   class MoneyFlow
-    LABELS_BY_CODE = {
-      TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE                    => "Invoices",
-      TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE                   => "Donations",
-      TransactionGroupingEngine::Calculate::HcbCode::PARTNER_DONATION_CODE           => "Donations",
-      TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE               => "ACH transfers",
-      TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE                       => "Wires",
-      TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE            => "PayPal transfers",
-      TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE              => "Wise transfers",
-      TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE                      => "Checks",
-      TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE             => "Checks",
-      TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE              => "Check deposits",
-      TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE      => "Transfers out",
-      TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE      => "Transfers in",
-      TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE         => "Card fees",
-      TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE                   => "HCB fees",
-      TransactionGroupingEngine::Calculate::HcbCode::INCOMING_BANK_FEE_CODE          => "HCB fees",
-      TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE => "HCB fees",
-      TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE                => "Fee revenue",
-      TransactionGroupingEngine::Calculate::HcbCode::EXPENSE_PAYOUT_CODE             => "Reimbursements",
-      TransactionGroupingEngine::Calculate::HcbCode::PAYOUT_HOLDING_CODE             => "Reimbursements",
+    LABELS_BY_TYPE = {
+      "Invoice"                      => "Invoices",
+      "Donation"                     => "Donations",
+      "AchTransfer"                  => "ACH transfers",
+      "Wire"                         => "Wires",
+      "PaypalTransfer"               => "PayPal transfers",
+      "WiseTransfer"                 => "Wise transfers",
+      "Check"                        => "Checks",
+      "IncreaseCheck"                => "Checks",
+      "CheckDeposit"                 => "Check deposits",
+      "Disbursement::Outgoing"       => "Transfers out",
+      "Disbursement::Incoming"       => "Transfers in",
+      "StripeServiceFee"             => "Card fees",
+      "BankFee"                      => "HCB fees",
+      "FeeReimbursementGroup"        => "HCB fees",
+      "FeeRevenue"                   => "Fee revenue",
+      "Reimbursement::ExpensePayout" => "Reimbursements",
+      "Reimbursement::PayoutHolding" => "Reimbursements",
     }.freeze
 
     EXPENSE_GROUPS = {
@@ -41,8 +39,8 @@ module BreakdownEngine
 
     def run
       net_cents_by_label = Hash.new(0)
-      non_card_totals.each do |code, amount_cents|
-        net_cents_by_label[LABELS_BY_CODE.fetch(code, "Other")] += amount_cents
+      non_card_totals.each do |linked_object_type, amount_cents|
+        net_cents_by_label[LABELS_BY_TYPE.fetch(linked_object_type, "Other")] += amount_cents
       end
 
       net_cents_by_card_category = Hash.new(0)
@@ -82,31 +80,32 @@ module BreakdownEngine
 
     private
 
-    def transactions
-      scope = @event.canonical_transactions
-      scope = scope.where(date: @start_date.to_date..) if @start_date.present?
-      scope = scope.where(date: ..@end_date.to_date) if @end_date.present?
-      scope
+    def items
+      Ledger::Query.new({
+                          "$and": [
+                            ({ datetime: { "$gte": @start_date.to_date } } if @start_date.present?),
+                            ({ datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?)
+                          ].compact
+                        }).execute(ledgers: [@event.ledger]).unscope(:order)
     end
 
     def non_card_totals
-      transactions
-        .where("canonical_transactions.transaction_source_type IS DISTINCT FROM 'RawStripeTransaction'")
-        .group(Arel.sql("split_part(canonical_transactions.hcb_code, '-', 2)"))
-        .sum("canonical_transactions.amount_cents")
+      items
+        .where("ledger_items.linked_object_type IS DISTINCT FROM ?", "CardCharge")
+        .group(:linked_object_type)
+        .sum(:amount_cents)
     end
 
     def gross_totals
-      amounts = transactions.group("canonical_transactions.hcb_code").sum("canonical_transactions.amount_cents").values
-      { money_in_cents: amounts.select(&:positive?).sum, money_out_cents: -amounts.select(&:negative?).sum }
+      { money_in_cents: items.where("ledger_items.amount_cents > 0").sum(:amount_cents), money_out_cents: -items.where("ledger_items.amount_cents < 0").sum(:amount_cents) }
     end
 
     def card_totals
-      transactions
-        .where(transaction_source_type: "RawStripeTransaction")
-        .joins("INNER JOIN raw_stripe_transactions ON raw_stripe_transactions.id = canonical_transactions.transaction_source_id")
-        .group(Arel.sql("lower(trim(split_part(raw_stripe_transactions.stripe_transaction->'merchant_data'->>'category', '*', 1)))"))
-        .sum("canonical_transactions.amount_cents")
+      items
+        .where(linked_object_type: "CardCharge")
+        .joins("INNER JOIN card_charges ON card_charges.id = ledger_items.linked_object_id")
+        .group(Arel.sql("lower(trim(split_part(card_charges.merchant_category, '*', 1)))"))
+        .sum("ledger_items.amount_cents")
     end
 
     def expense_tree(spending_by_group)

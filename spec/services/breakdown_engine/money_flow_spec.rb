@@ -5,18 +5,15 @@ require "rails_helper"
 RSpec.describe BreakdownEngine::MoneyFlow do
   let(:event) { create(:event, name: "Hack Night") }
 
-  def add_transaction(code, amount_cents, date: Date.current)
-    ct = create(:canonical_transaction, amount_cents:, date:)
-    create(:canonical_event_mapping, event:, canonical_transaction: ct)
-    ct.update_column(:hcb_code, "HCB-#{code}-#{ct.id}")
-    ct
+  def add_item(linked_object_type, amount_cents, date: Date.current, linked_object_id: nil)
+    item = create(:ledger_item)
+    Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    item.update_columns(amount_cents:, datetime: date.in_time_zone, linked_object_type:, linked_object_id:, ct_count: 1)
+    item
   end
 
-  def add_card_transaction(merchant_category, amount_cents, date: Date.current)
-    raw = create(:raw_stripe_transaction, amount_cents:, stripe_merchant_category: merchant_category)
-    ct = create(:canonical_transaction, amount_cents:, date:, transaction_source: raw)
-    create(:canonical_event_mapping, event:, canonical_transaction: ct)
-    ct
+  def add_card_charge(merchant_category, amount_cents, date: Date.current)
+    add_item("CardCharge", amount_cents, date:, linked_object_id: CardCharge.create!(merchant_category:).id)
   end
 
   def run(**options)
@@ -38,8 +35,8 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "routes income through the event to expenses and the remaining balance" do
-    add_transaction("100", 1_000_00)
-    add_transaction("300", -300_00)
+    add_item("Invoice", 1_000_00)
+    add_item("AchTransfer", -300_00)
 
     result = run
 
@@ -52,8 +49,8 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "draws from the balance when spending exceeds income" do
-    add_transaction("200", 100_00)
-    add_transaction("310", -250_00)
+    add_item("Donation", 100_00)
+    add_item("Wire", -250_00)
 
     result = run
 
@@ -62,25 +59,37 @@ RSpec.describe BreakdownEngine::MoneyFlow do
     expect(link_value(result, "Hack Night", "Balance")).to be_nil
   end
 
-  it "merges codes that share a label" do
-    add_transaction("200", 100_00)
-    add_transaction("201", 50_00)
+  it "merges types that share a label" do
+    add_item("Check", 100_00)
+    add_item("IncreaseCheck", 50_00)
 
-    expect(link_value(run, "Donations", "Hack Night")).to eq(150.0)
+    expect(link_value(run, "Checks", "Hack Night")).to eq(150.0)
   end
 
   it "nets inflows and outflows under the same label" do
-    add_transaction("100", 500_00)
-    add_transaction("300", -200_00)
-    add_transaction("300", 50_00)
+    add_item("Invoice", 500_00)
+    add_item("AchTransfer", -200_00)
+    add_item("AchTransfer", 50_00)
 
     expect(link_value(run, "Hack Night", "ACH transfers")).to eq(150.0)
   end
 
+  it "totals money in and out by ledger item, like the ledger page" do
+    add_item("Invoice", 1_000_00)
+    add_item("BankFee", -70_00)
+    add_item("FeeReimbursementGroup", 20_00)
+
+    result = run
+
+    expect(result[:money_in_cents]).to eq(1_020_00)
+    expect(result[:money_out_cents]).to eq(70_00)
+    expect(link_value(result, "Hack Night", "HCB fees")).to eq(50.0)
+  end
+
   it "groups related expenses under a parent node" do
-    add_transaction("100", 1_000_00)
-    add_transaction("300", -200_00)
-    add_transaction("310", -100_00)
+    add_item("Invoice", 1_000_00)
+    add_item("AchTransfer", -200_00)
+    add_item("Wire", -100_00)
 
     result = run
 
@@ -91,8 +100,8 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "does not create a group for a single expense" do
-    add_transaction("100", 1_000_00)
-    add_transaction("700", -70_00)
+    add_item("Invoice", 1_000_00)
+    add_item("BankFee", -70_00)
 
     result = run
 
@@ -101,8 +110,8 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "folds sources under 3% of income into Other income" do
-    add_transaction("100", 1_000_00)
-    add_transaction("200", 10_00)
+    add_item("Invoice", 1_000_00)
+    add_item("Donation", 10_00)
 
     result = run
 
@@ -110,10 +119,10 @@ RSpec.describe BreakdownEngine::MoneyFlow do
     expect(link_value(result, "Other income", "Hack Night")).to eq(10.0)
   end
 
-  it "labels unknown codes as Other and sorts them last" do
-    add_transaction("100", 1_000_00)
-    add_transaction("000", -500_00)
-    add_transaction("300", -100_00)
+  it "labels items without a linked object as Other and sorts them last" do
+    add_item("Invoice", 1_000_00)
+    add_item(nil, -500_00)
+    add_item("AchTransfer", -100_00)
 
     expenses = run[:nodes].select { |node| node[:kind] == "expense" }.map { |node| node[:name] }
 
@@ -121,9 +130,9 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "categorizes card spending by merchant category" do
-    add_transaction("100", 1_000_00)
-    add_card_transaction("bakeries", -40_00)
-    add_card_transaction("airlines_air_carriers", -60_00)
+    add_item("Invoice", 1_000_00)
+    add_card_charge("bakeries", -40_00)
+    add_card_charge("airlines_air_carriers", -60_00)
 
     result = run
 
@@ -133,8 +142,8 @@ RSpec.describe BreakdownEngine::MoneyFlow do
   end
 
   it "only includes transactions within the date range" do
-    add_transaction("100", 1_000_00, date: 2.years.ago.to_date)
-    add_transaction("200", 300_00, date: 1.week.ago.to_date)
+    add_item("Invoice", 1_000_00, date: 2.years.ago.to_date)
+    add_item("Donation", 300_00, date: 1.week.ago.to_date)
 
     result = run(start_date: 1.month.ago, end_date: Time.now)
 
