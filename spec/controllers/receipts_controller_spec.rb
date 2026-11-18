@@ -57,6 +57,83 @@ RSpec.describe ReceiptsController do
       expect(stream["action"]).to eq("replace")
       expect(stream.inner_html).to include('aria-label="1 receipt"')
     end
+
+    it "says why an unsupported file type was rejected" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      params = {
+        receiptable_type: "HcbCode",
+        receiptable_id: hcb_code.id,
+        upload_method: "transaction_page",
+        file: [fixture_file_upload("attachment1.txt", "text/plain")]
+      }
+
+      post(:create, params:)
+      expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
+
+      post(:create, params:, format: :turbo_stream)
+      expect(response.body).to include("File type isn&#39;t supported. Upload an image, PDF, or CSV.")
+      expect(response.body).not_to include("Validation failed")
+    end
+
+    context "when an upload is rejected" do
+      let(:user) { create(:user) }
+
+      before { create_session(user, verified: true) }
+
+      # A blob that claims to be over the limit, so the spec never allocates 50 MB.
+      def oversized_blob
+        ActiveStorage::Blob.create_and_upload!(
+          io: Rails.root.join("spec/fixtures/files/receipt.png").open, filename: "big.png", content_type: "image/png"
+        ).tap { |blob| blob.update_column(:byte_size, 50.megabytes + 1) }
+      end
+
+      it "does not report an unsupported file type to the error tracker" do
+        expect(Rails.error).not_to receive(:report)
+
+        post(:create, params: { upload_method: "receipt_center", file: [fixture_file_upload("attachment1.txt", "text/plain")] })
+
+        expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
+        expect(Receipt.count).to eq(0)
+      end
+
+      it "says the file is over 50 MB" do
+        params = { upload_method: "receipt_center", file: [oversized_blob.signed_id] }
+
+        post(:create, params:)
+        expect(flash[:error]).to eq("File is over 50 MB. Upload a smaller file.")
+
+        post(:create, params:, format: :turbo_stream)
+        expect(response.body).to include("File is over 50 MB. Upload a smaller file.")
+        expect(response.body).not_to include("Validation failed")
+        expect(Receipt.count).to eq(0)
+      end
+
+      it "shows the generic message and reports any other error" do
+        error = StandardError.new("S3 is down")
+        allow(ReceiptService::Create).to receive(:new).and_raise(error)
+        expect(Rails.error).to receive(:report).with(error).twice
+
+        params = { upload_method: "receipt_center", file: [fixture_file_upload("receipt.png", "image/png")] }
+
+        post(:create, params:)
+        expect(flash[:error]).to eq("There was an error uploading your receipt. Please try again.")
+
+        post(:create, params:, format: :turbo_stream)
+        expect(response.body).to include("There was an error uploading your receipt. Please try again.")
+        expect(response.body).not_to include("S3 is down")
+      end
+    end
+
+    it "still says a successful upload was added" do
+      create_session(create(:user), verified: true)
+
+      post(:create, params: { upload_method: "receipt_center", file: [fixture_file_upload("receipt.png", "image/png")] })
+
+      expect(flash[:success]).to eq("Receipt added!")
+      expect(flash[:error]).to be_nil
+      expect(Receipt.last.user).to eq(User.last)
+    end
   end
 
   describe "#create when the upload fails" do
@@ -206,7 +283,7 @@ RSpec.describe ReceiptsController do
              file:
            }, format: :turbo_stream)
 
-      expect(response.body).to include("Upload failed")
+      expect(response.body).to include("There was an error uploading your receipt. Please try again.")
       expect(response.body).not_to include("internal detail")
     end
 
@@ -310,7 +387,7 @@ RSpec.describe ReceiptsController do
            }, format: :turbo_stream)
 
       expect(fragment.css("turbo-stream").map { |stream| stream["target"] }).to eq(["receipt_upload_form"])
-      expect(response.body).to include("Upload failed")
+      expect(response.body).to include("There was an error uploading your receipt. Please try again.")
       expect(response.body).not_to include("receiptable_id")
     end
 
@@ -381,7 +458,7 @@ RSpec.describe ReceiptsController do
              file:
            }, format: :html)
 
-      expect(flash[:error]).to eq("There was an error uploading your receipt. Please try again.")
+      expect(flash[:error]).to eq("File is not a supported type")
       expect(response).to redirect_to(hcb_code_url(ledger_item.hcb_code))
     end
   end
@@ -479,7 +556,7 @@ RSpec.describe ReceiptsController do
              file: [fixture_file_upload("receipt.png", "image/png")]
            }, format: :turbo_stream)
 
-      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='flash-container']")
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[targets='#flash-container']")
       expect(stream.inner_html).to include("There was an error uploading your receipt")
     end
 
