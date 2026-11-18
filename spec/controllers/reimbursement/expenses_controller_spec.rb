@@ -21,6 +21,55 @@ RSpec.describe Reimbursement::ExpensesController do
   end
 
   describe "#update" do
+    context "with a mileage expense on a non-USD report" do
+      let(:user) { create(:user) }
+      let(:event) { create(:event) }
+      let(:report) { create(:reimbursement_report, user:, event:, currency: "RON") }
+      let(:expense) { Reimbursement::Expense::Mileage.create!(report:, value: 33) }
+
+      def stub_rate(rate)
+        stub_request(:post, "https://api.wise.com/v3/quotes")
+          .to_return(status: 200, body: { rate: }.to_json, headers: { "Content-Type" => "application/json" })
+      end
+
+      before do
+        stub_rate(4.5)
+        expense
+        create_session(user, verified: true)
+      end
+
+      it "requotes in the destination report's currency when the expense is moved" do
+        destination = create(:reimbursement_report, user:, event:, currency: "PLN")
+        stub_rate(4)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { value: "33.0", reimbursement_report_id: destination.id } })
+
+        expect(flash[:error]).to be_blank
+        expect(expense.reload).to have_attributes(report: destination, value: 33, amount_cents: 33 * 70 * 4)
+      end
+
+      it "shows an error instead of saving when the exchange rate can't be fetched" do
+        stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { value: "10" } })
+
+        expect(response).to redirect_to(report)
+        expect(flash[:error]).to match(/exchange rate/i)
+        expect(expense.reload).to have_attributes(value: 33, amount_cents: (33 * 70 * 4.5).round)
+      end
+
+      it "keeps the expense on its report when the move can't be requoted" do
+        destination = create(:reimbursement_report, user:, event:, currency: "PLN")
+        stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { reimbursement_report_id: destination.id } })
+
+        expect(response).to have_http_status(:redirect)
+        expect(flash[:error]).to match(/exchange rate/i)
+        expect(expense.reload).to have_attributes(report:, amount_cents: (33 * 70 * 4.5).round)
+      end
+    end
+
     context "when event_id points to an event the user does not belong to" do
       it "blocks the event change and leaves expense state untouched" do
         attacker = create(:user)
