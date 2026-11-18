@@ -62,6 +62,13 @@ export default class extends Controller {
         : this.element
 
     element.addEventListener('paste', e => {
+      // A page-wide listener must leave pastes into text fields (comments, memo) alone
+      if (
+        this.globalPasteValue &&
+        e.target.closest?.('input, textarea, [contenteditable]')
+      )
+        return
+
       e.dataTransfer = e.clipboardData
       this.drop(e)
     })
@@ -118,7 +125,11 @@ export default class extends Controller {
 
     this.submitting = true
 
-    if (e.clipboardData && this.dropzoneTarget.contains(e.target))
+    if (
+      e.clipboardData &&
+      this.hasDropzoneTarget &&
+      this.dropzoneTarget.contains(e.target)
+    )
       e.stopImmediatePropagation()
 
     if (

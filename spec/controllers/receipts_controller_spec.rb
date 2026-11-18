@@ -41,6 +41,24 @@ RSpec.describe ReceiptsController do
       expect(response.body).not_to include("return_to")
     end
 
+    it "keeps page-wide paste on for the re-rendered form only outside popovers" do
+      create_session(create(:user, :make_admin), verified: true)
+      ledger_item = create(:canonical_pending_transaction).local_hcb_code.ledger_item
+
+      global_paste = lambda do |upload_method|
+        post(:create, params: {
+               receiptable_type: "Ledger::Item",
+               receiptable_id: ledger_item.id,
+               upload_method:,
+               file: [fixture_file_upload("receipt.png", "image/png")]
+             }, format: :turbo_stream)
+        Nokogiri::HTML5.fragment(response.body).at_css("[data-file-drop-global-paste-value]")["data-file-drop-global-paste-value"]
+      end
+
+      expect(global_paste.call("transaction_page")).to eq("true")
+      expect(global_paste.call("transaction_popover")).to eq("false")
+    end
+
     it "streams the new receipt count into the item's ledger row" do
       create_session(create(:user, :make_admin), verified: true)
       hcb_code = create(:canonical_pending_transaction).local_hcb_code
