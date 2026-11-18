@@ -28,7 +28,7 @@
           <% elsif defined?(receiptable) && receiptable.no_or_lost_receipt? %>
             <p class="card__banner bg-muted white bold flex items-center mt0 mb2">
               <%= inline_icon "view-close", size: 24, class: "mr2" %>
-              Marked no/lost receipt
+              <%= no_or_lost_receipt_label(receiptable) %>
             </p>
           <% end %>
         <% end %>
@@ -100,10 +100,11 @@
       </section>
     <% end %>
 
-    <% if defined?(receiptable) && (receiptable&.missing_receipt? || (admin_signed_in? && !receiptable&.no_or_lost_receipt?)) %>
+    <% if defined?(receiptable) && receiptable.try(:has_attribute?, :marked_no_or_lost_receipt_at) && (receiptable&.missing_receipt? || (admin_signed_in? && !receiptable&.no_or_lost_receipt?)) %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
-        <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret], return_to: (request.original_url if request.get?)), data: { turbo_method: :post, turbo_frame: turbo_frame_request_id } do %>
+        <% lost_receipt_path = receiptable_lost_receipt_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret], return_to: (request.original_url if request.get? && !turbo_frame_request?)) %>
+        <%= link_to lost_receipt_path, data: { turbo_frame: "_top" } do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>

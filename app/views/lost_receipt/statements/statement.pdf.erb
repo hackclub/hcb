@@ -1,0 +1,117 @@
+<% receiptable = @statement.receiptable %>
+<% charged = receiptable.try(:amount_cents)&.abs %>
+<% cardholder = receiptable.try(:stripe_cardholder)&.user %>
+<% money = ->(cents) { Money.new(cents, "USD").format } %>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Statement in lieu of lost receipt</title>
+    <%# Same handwriting font the check UI uses. %>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1f2d3d; margin: 0; padding: 20pt 28pt; }
+      .muted { color: #8492a6; }
+      .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14pt; border-bottom: 2pt solid #ec3750; }
+      .logo { display: flex; align-items: center; gap: 8pt; font-size: 20pt; font-weight: bold; }
+      .header p { margin: 0; font-size: 9pt; text-align: right; }
+      h1 { font-size: 20pt; margin: 22pt 0 2pt; }
+      h2 { font-size: 9pt; letter-spacing: 0.06em; text-transform: uppercase; color: #8492a6; margin: 22pt 0 6pt; }
+      .details { width: 100%; border: 1px solid #e0e6ed; border-radius: 8pt; border-spacing: 0; padding: 6pt 12pt; }
+      .details th, .details td { padding: 5pt 0; text-align: left; vertical-align: top; border-bottom: 1px solid #f0f2f5; }
+      .details tr:last-child th, .details tr:last-child td { border-bottom: 0; }
+      .details th { width: 130pt; font-weight: normal; color: #8492a6; }
+      .items { width: 100%; border-collapse: collapse; }
+      .items th { background: #f9fafc; font-size: 9pt; color: #8492a6; text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e0e6ed; }
+      .items td { padding: 7pt 8pt; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+      .items tfoot td { font-weight: bold; font-size: 12pt; border-bottom: 0; border-top: 1.5pt solid #1f2d3d; }
+      .items tr { page-break-inside: avoid; }
+      .amount { text-align: right !important; white-space: nowrap; }
+      .text { white-space: pre-wrap; overflow-wrap: break-word; }
+      <%# Inlined, not linked: the renderer waits on every network request before printing. %>
+      @font-face { font-family: Damion; src: url("data:font/woff2;base64,<%= Base64.strict_encode64(Rails.root.join("app/assets/fonts/damion.woff2").binread) %>") format("woff2"); }
+      .signature { page-break-inside: avoid; margin-top: 18pt; display: flex; gap: 24pt; }
+      .signature div { flex: 1; }
+      .signature .line { border-bottom: 1px solid #1f2d3d; min-height: 30pt; display: flex; align-items: flex-end; padding-bottom: 3pt; }
+      .signature .name { font-family: Damion, cursive; font-size: 24pt; line-height: 1; }
+      .signature small { display: block; margin-top: 3pt; font-size: 8.5pt; color: #8492a6; }
+      .footer { margin-top: 26pt; padding-top: 8pt; border-top: 1px solid #e0e6ed; font-size: 8.5pt; color: #8492a6; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo"><%= image_tag pdf_asset_base64("logo-production.png"), width: 34, height: 34 %> HCB</div>
+      <p>
+        <strong>The Hack Foundation</strong><br>
+        8605 Santa Monica Boulevard #86294<br>
+        West Hollywood, CA 90069
+      </p>
+    </div>
+
+    <h1>Statement in lieu of lost receipt</h1>
+    <span class="muted">Filed <%= @statement.confirmed_at.utc.strftime("%B %-d, %Y") %></span>
+
+    <h2>Transaction</h2>
+    <table class="details">
+      <% if receiptable.try(:event) %>
+        <tr><th>Organization</th><td><%= receiptable.event.name %></td></tr>
+      <% end %>
+      <tr>
+        <th>Charged</th>
+        <td>
+          <% if charged %><strong><%= money.(charged) %></strong><% end %>
+          <% if receiptable.is_a?(HcbCode) %>
+            <% if receiptable.memo.present? %>to <%= receiptable.memo %><% end %>
+            · <%= link_to "View transaction", hcb_code_url(receiptable) %>
+          <% else %>
+            <%= receiptable.to_global_id %>
+          <% end %>
+        </td>
+      </tr>
+      <% if cardholder %>
+        <tr><th>Cardholder</th><td><%= cardholder.full_name %></td></tr>
+      <% end %>
+      <tr><th>Merchant</th><td><%= @statement.merchant %></td></tr>
+      <tr><th>Purchase date</th><td><%= @statement.date.strftime("%B %-d, %Y") %></td></tr>
+      <tr><th>Purpose</th><td class="text"><%= @statement.purpose %></td></tr>
+    </table>
+
+    <h2>Items purchased</h2>
+    <table class="items">
+      <thead><tr><th>Description</th><th class="amount">Qty</th><th class="amount">Price each</th><th class="amount">Amount</th></tr></thead>
+      <tbody>
+        <% @statement.items.each do |item| %>
+          <tr>
+            <td class="text"><%= item.description %></td>
+            <td class="amount"><%= item.quantity %></td>
+            <td class="amount"><%= money.(item.unit_amount_cents) %></td>
+            <td class="amount"><%= money.(item.total_amount_cents) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot><tr><td colspan="3">Total (USD)</td><td class="amount"><%= money.(@statement.total_amount_cents) %></td></tr></tfoot>
+    </table>
+
+    <h2>Certification</h2>
+    <p style="margin: 0"><%= LostReceipt::Statement::CONFIRMATION %></p>
+    <% if @statement.required_acknowledgement %>
+      <p style="margin: 6pt 0 0"><%= @statement.required_acknowledgement %></p>
+    <% end %>
+    <div class="signature">
+      <div>
+        <div class="line"><span class="name"><%= @statement.signer_name %></span></div>
+        <small>Submitted by</small>
+      </div>
+      <div>
+        <div class="line"><%= @statement.confirmed_at.utc.strftime("%B %-d, %Y at %H:%M UTC") %></div>
+        <small>Date</small>
+      </div>
+    </div>
+
+    <p class="footer">
+      <% unless @statement.submitter %>
+        Submission method: Receipt request link (not signed in).
+      <% end %>
+      Generated by HCB in place of a receipt the purchaser could not obtain.
+    </p>
+  </body>
+</html>

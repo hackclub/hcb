@@ -8,6 +8,11 @@
   </span>
 </h1>
 
+<% lost_receipts = current_user.lost_receipts.count %>
+<% if lost_receipts > 0 %>
+  <p class="muted">You've lost <%= pluralize lost_receipts, "receipt" %>.</p>
+<% end %>
+
 <% if CardLocking.enabled? %>
   <% locked = current_user.cards_locked? %>
   <% due_in = CardLocking.time_remaining_in_words(@locking_next_due_at) %>

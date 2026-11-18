@@ -6,6 +6,21 @@ RSpec.describe HcbCodesController, type: :controller do
   include SessionSupport
   render_views
 
+  describe "GET #attach_receipt" do
+    it "links to the lost receipt form on the signed upload page" do
+      cpt = create(:canonical_pending_transaction, amount_cents: -1234, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event: create(:event))
+      hcb_code = cpt.local_hcb_code
+
+      secret = hcb_code.signed_id(purpose: :receipt_upload, expires_in: 1.day)
+      get :attach_receipt, params: { id: hcb_code.hashid, s: secret }
+
+      expect(response).to be_successful
+      link = Nokogiri::HTML.fragment(response.body).at_css('a[href*="lost_receipt"]')
+      expect(link["href"]).to include("s=#{secret}")
+    end
+  end
+
   describe "GET #show" do
     let(:event) {
       event = create(:event)

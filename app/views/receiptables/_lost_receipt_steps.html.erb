@@ -1,0 +1,9 @@
+<%# locals: (form: false) %>
+
+<% content_for :table_of_contents do %>
+  <%= render "events/transfers/step_item", number: 1, label: "Look for the receipt", seek: false, current: !form %>
+  <%= render "events/transfers/step_item", number: 2, label: "Purchase details", seek: form, current: form %>
+  <%= render "events/transfers/step_item", number: 3, label: "Items", seek: form, current: false %>
+  <%= render "events/transfers/step_item", number: 4, label: "Receipt", seek: form, current: false %>
+  <%= render "events/transfers/step_item", number: 5, label: "Confirmation", seek: form, current: false %>
+<% end %>

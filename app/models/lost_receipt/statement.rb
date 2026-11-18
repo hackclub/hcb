@@ -1,0 +1,197 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: lost_receipt_statements
+#
+#  id                 :bigint           not null, primary key
+#  confirmed_at       :datetime         not null
+#  date               :date             not null
+#  items              :jsonb            not null
+#  merchant           :string           not null
+#  purpose            :text             not null
+#  signer_name        :string           not null
+#  total_amount_cents :integer          not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  cardholder_id      :bigint
+#  event_id           :bigint
+#  receipt_id         :bigint
+#  receiptable_id     :bigint           not null
+#  receiptable_type   :string           not null
+#  submitter_id       :bigint
+#
+# Indexes
+#
+#  index_lost_receipt_statements_on_cardholder_id  (cardholder_id)
+#  index_lost_receipt_statements_on_event_id       (event_id)
+#  index_lost_receipt_statements_on_receipt_id     (receipt_id) UNIQUE
+#  index_lost_receipt_statements_on_receiptable    (receiptable_type,receiptable_id)
+#  index_lost_receipt_statements_on_submitter_id   (submitter_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (cardholder_id => users.id)
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (receipt_id => receipts.id)
+#  fk_rails_...  (submitter_id => users.id)
+#
+module LostReceipt
+  # What someone said they bought, saved next to the PDF generated from it.
+  class Statement < ApplicationRecord
+    CONFIRMATION = "I confirm these details are accurate and that I have made every effort possible to get the receipt."
+
+    # Nil until the PDF has been generated and attached, which happens in the background.
+    belongs_to :receipt, optional: true, inverse_of: :lost_receipt_statement
+    # The transaction being described.
+    belongs_to :receiptable, polymorphic: true
+    belongs_to :event, optional: true
+    belongs_to :submitter, class_name: "User", optional: true
+    # Who the lost receipt counts against. ACHs, checks, and the like have none, so they only count against the organization.
+    belongs_to :cardholder, class_name: "User", optional: true
+
+    attr_accessor :acknowledgement
+
+    attribute :confirmed, :boolean
+
+    # Only once the items are known to be valid numbers.
+    before_save { self[:total_amount_cents] = total_amount_cents }
+
+    validates :date, :merchant, :purpose, :signer_name, presence: true
+    validates :merchant, :signer_name, length: { maximum: 255 }
+    # Not stored, so only checkable when the form is submitted.
+    validates :confirmed, acceptance: { accept: true, allow_nil: false }, on: :create
+    validates :items, length: { minimum: 1, maximum: 50 }
+    validate :date_is_not_in_the_future
+    validate :items_are_valid
+    validate :total_matches_transaction
+    validate :signer_name_matches_account
+    validate :acknowledgement_matches, on: :create
+
+    def items_attributes=(attributes)
+      attributes = attributes.values if attributes.is_a?(Hash)
+      # Checked before building items so a huge request can't allocate them all.
+      raise ActiveRecord::NestedAttributes::TooManyRecords if attributes.size > 50
+
+      self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
+    end
+
+    # Stored as JSON, used as Items.
+    def items
+      @items ||= Array(self[:items]).map { |item| Item.new(item) }
+    end
+
+    def items=(items)
+      @items = items
+      self[:items] = items.map { |item| { description: item.description, quantity: Integer(item.quantity, exception: false) || item.quantity, unit_amount_cents: item.unit_amount_cents } }
+    end
+
+    # Saves the statement and marks the transaction no/lost right away. The PDF
+    # takes a few seconds to render, so it's attached as the receipt by a job.
+    def submit(receiptable: self.receiptable)
+      self.receiptable = receiptable
+      self.event = receiptable.try(:event)
+      self.cardholder = charged_cardholder
+      self.confirmed_at = Time.current
+      return false unless valid?
+
+      transaction do
+        save!
+        receipt_target.no_or_lost_receipt!
+      end
+      AttachPdfJob.perform_later(self)
+      true
+    end
+
+    # Renders the PDF and attaches it to the transaction as its receipt.
+    def attach_pdf!
+      return if receipt.present?
+
+      html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
+      io = StringIO.new(CloudflareBrowserRun.pdf(html))
+      # Created before uploading so a partial upload can still be purged.
+      blob = ActiveStorage::Blob.create_after_unfurling!(io:, filename: "lost-receipt-statement.pdf", content_type: "application/pdf")
+      blob.upload(io)
+      receipt = Receipt.new(receiptable: receipt_target, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
+      receipt.file.attach(blob)
+      # Saving the receipt points this statement at it.
+      receipt.save!
+    ensure
+      blob&.purge if blob && !receipt&.persisted?
+    end
+
+    def total_amount_cents
+      items.sum(&:total_amount_cents)
+    end
+
+    # The name the signature has to match. Someone signed in signs as themselves;
+    # the emailed link goes to the cardholder. Nil when we know neither.
+    def expected_signer_name
+      (submitter || charged_cardholder)&.full_name.presence
+    end
+
+    # The sentence the submitter has to type. Nil when there's no organization to count against.
+    def required_acknowledgement
+      organization = receiptable.try(:event)
+      return unless organization
+
+      # Only someone filing for their own card can say "I have lost". The emailed link goes to the cardholder.
+      own = if charged_cardholder && (submitter.nil? || submitter == charged_cardholder)
+              ", and the #{(earlier(charged_cardholder.lost_receipts).count + 1).ordinalize} receipt I have lost"
+            end
+      "I understand this is the #{(earlier(organization.lost_receipt_statements).count + 1).ordinalize} receipt my organization has lost#{own}. " \
+        "Continually losing receipts will result in termination of my organization."
+    end
+
+    private
+
+    # Statements filed before this one, so the PDF (rendered after saving) counts the same as the form did.
+    def earlier(statements)
+      persisted? ? statements.where(id: ...id) : statements
+    end
+
+    def charged_cardholder
+      receiptable.try(:stripe_cardholder)&.user
+    end
+
+    def acknowledgement_matches
+      # Case, spacing, and punctuation don't matter.
+      normalize = ->(text) { text.to_s.downcase.gsub(/[^a-z0-9]/, "") }
+      return if normalize.call(acknowledgement) == normalize.call(required_acknowledgement)
+
+      errors.add(:acknowledgement, "must match the sentence shown")
+    end
+
+    # A transaction's receipts live on its ledger item (#14106).
+    def receipt_target
+      receiptable.try(:ledger_item) || receiptable
+    end
+
+    def date_is_not_in_the_future
+      errors.add(:date, "can't be in the future") if date && date > Date.current
+    end
+
+    def signer_name_matches_account
+      return if expected_signer_name.nil? || signer_name.blank?
+      return if signer_name.squish.casecmp?(expected_signer_name.squish)
+
+      errors.add(:signer_name, "must match the name on your HCB account")
+    end
+
+    def total_matches_transaction
+      charged = receiptable.try(:amount_cents)&.abs
+      return if charged.nil? || items.empty? || items.any?(&:invalid?) || total_amount_cents == charged
+
+      errors.add(:base, "The items add up to #{Money.new(total_amount_cents, "USD").format}, but the transaction was #{Money.new(charged, "USD").format}")
+    end
+
+    def items_are_valid
+      items.each_with_index do |item, index|
+        next if item.valid?
+
+        item.errors.full_messages.each { |message| errors.add(:base, "Item #{index + 1}: #{message}") }
+      end
+    end
+
+  end
+end

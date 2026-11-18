@@ -57,6 +57,8 @@ class Receipt < ApplicationRecord
   alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
+  has_one :lost_receipt_statement, class_name: "LostReceipt::Statement", dependent: :destroy, inverse_of: :receipt
+
   # The HCB code of the transaction this receipt is attached to, whether the
   # receiptable is the HCB code itself or the transaction's ledger item. Nil in
   # the receipt bin and on every other kind of receiptable (expenses, payments,
@@ -81,12 +83,37 @@ class Receipt < ApplicationRecord
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, content_type: "application/pdf", if: :lost_receipt_statement?
+  validate do
+    if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.valid?
+      errors.add(:lost_receipt_statement, "must come from the lost receipt form")
+    end
+  end
 
+  # A real receipt clears the no/lost mark, unless a lost receipt statement is on file.
   before_create do
-    if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
+    if !lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at) && !receiptable.receipts.lost_receipt_statement.exists?
       receiptable.update(marked_no_or_lost_receipt_at: nil)
       # An HCB code and its ledger item each keep a copy of the mark; clear both.
       receiptable.try(:sync_no_or_lost_receipt!)
+    end
+  end
+
+  # A lost receipt statement is what marks the transaction no/lost.
+  before_save do
+    if lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
+      receiptable.update!(marked_no_or_lost_receipt_at: receiptable.marked_no_or_lost_receipt_at || Time.current)
+      receiptable.sync_no_or_lost_receipt!
+    end
+  end
+
+  after_destroy { clear_lost_receipt_marker_without_statement(receiptable) }
+  after_update_commit do
+    if (previous = previous_receiptable)
+      # After the commit, not inside it: saving a second copy of the old receiptable in the same
+      # transaction makes Rails skip the deferred touch that recounts the ledger item's receipts.
+      clear_lost_receipt_marker_without_statement(previous)
+      CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
     end
   end
 
@@ -134,7 +161,8 @@ class Receipt < ApplicationRecord
     discord_bot_modal: 22,
     payment_page: 23,
     contractor_invoice: 24,
-    payment_page_drag_and_drop: 25
+    payment_page_drag_and_drop: 25,
+    lost_receipt_statement: 26
   }
 
   enum :textual_content_source, {
@@ -255,6 +283,19 @@ class Receipt < ApplicationRecord
   end
 
   private
+
+  def previous_receiptable
+    return unless saved_change_to_receiptable_id? || saved_change_to_receiptable_type?
+
+    receiptable_type_before_last_save&.constantize&.find_by(id: receiptable_id_before_last_save)
+  end
+
+  def clear_lost_receipt_marker_without_statement(record)
+    return unless record&.has_attribute?(:marked_no_or_lost_receipt_at) && !record.receipts.lost_receipt_statement.exists?
+
+    record.update!(marked_no_or_lost_receipt_at: nil)
+    record.sync_no_or_lost_receipt!
+  end
 
   def pdf_text
     doc = if self.attachment_changes["file"]&.attachable
