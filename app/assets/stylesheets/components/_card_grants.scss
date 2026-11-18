@@ -15,22 +15,13 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 .grant-hero {
   padding: 1.75rem;
 
-  // The event's image shows as a band behind the status row only, fading into
-  // the plain card surface before the numbers start. A fixed length rather
-  // than a percentage, so the band doesn't creep under the amount on phones,
-  // where the hero is much taller.
   &.card.card--background-image {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.75)), var(--bg-image) !important;
+      linear-gradient(rgba(255, 255, 255, 0.92)), var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
-        linear-gradient(
-          rgba(37, 36, 41, 0.6) 0,
-          rgba(37, 36, 41, 0.9) 3.5rem,
-          rgb(37, 36, 41) 6rem
-        ),
-        var(--bg-image) !important;
+        linear-gradient(rgba(37, 36, 41, 0.92)), var(--bg-image) !important;
     }
   }
 
