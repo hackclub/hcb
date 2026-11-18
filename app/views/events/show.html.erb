@@ -34,7 +34,7 @@
 <% end %>
 <hr class="mt-0.5 mb-4 opacity-0 sm:opacity-50">
 
-<div class="flex flex-col gap-4 -mt-3" data-controller="event-home">
+<div class="flex flex-col gap-4 -mt-3">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden mt-3">
       <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
@@ -134,60 +134,7 @@
     </div>
   </div>
 
-  <div class="flex justify-between items-center mb-2 mt-10">
-    <h2 class="my-0 px-0">Insights</h2>
-    <% timeframes = BreakdownEngine.timeframes_for(@event) %>
-    <% if timeframes.size > 1 %>
-      <div data-controller="menu" data-menu-append-to-value="#tags-chart">
-        <button
-          class="whitespace-nowrap homepage-eyebrow my-0 border-0 bg-transparent flex items-center cursor-pointer"
-          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-          data-menu-target="toggle">
-          <span data-event-home-target="button">All time</span>
-          <%= inline_icon "down-caret", size: 20 %>
-        </button>
-        <div class="menu__content menu__content--2 menu__content--compact h5 -mt-2 ml-1" data-menu-target="content">
-          <% timeframes.each do |timeframe| %>
-            <a data-action="event-home#updateTimeframe click->menu#close"><%= timeframe %></a>
-          <% end %>
-        </div>
-      </div>
-    <% else %>
-      <h5 class="homepage-eyebrow mt0 mb0">All&nbsp;time</h5>
-    <% end %>
-  </div>
-
-  <%= turbo_frame_tag "money_flow", src: event_money_flow_chart_path(@event), loading: "lazy", target: "_top", class: "empty:hidden card card--breakdown w-100 mb-4", data: { "event-home-target": "moneyFlow" } do %>
-    <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-      <%= render partial: "application/loading_container" %>
-    </div>
-  <% end %>
-
-  <div class="homepage-row">
-    <%= turbo_frame_tag "merchants", src: event_merchants_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown w-100 mb-4", data: { "event-home-target": "merchants" } do %>
-      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-        <%= render partial: "application/loading_container" %>
-      </div>
-    <% end %>
-    <%= turbo_frame_tag "categories", src: event_categories_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown w-100 mb-4", data: { "event-home-target": "categories" } do %>
-      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-        <%= render partial: "application/loading_container" %>
-      </div>
-    <% end %>
-  </div>
-
-  <div class="homepage-row">
-    <%= turbo_frame_tag "tags", src: event_tags_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown w-100 mb-4", data: { "event-home-target": "tags" } do %>
-      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-        <%= render partial: "application/loading_container" %>
-      </div>
-    <% end %>
-    <%= turbo_frame_tag "users", src: event_users_chart_path(@event), loading: "lazy", class: "empty:hidden card card--breakdown w-100 mb-4", data: { "event-home-target": "users" } do %>
-      <div class="p-0 min-h-96 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
-        <%= render partial: "application/loading_container" %>
-      </div>
-    <% end %>
-  </div>
+  <%= render "events/home/insights", event: @event %>
 
   <%= turbo_frame_tag "transaction_heatmap", src: event_transaction_heatmap_path(@event), class: "homepage-row mb-4", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height:223px">

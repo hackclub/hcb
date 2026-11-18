@@ -57,7 +57,8 @@ app = Doorkeeper::Application.create(
   name: "tester",
   redirect_uri: "http://localhost:3000/",
   scopes: ["read", "write"],
-  confidential: false
+  confidential: false,
+  owner: User.find_by(email: "you@example.com") # point of contact, required
 )
 ```
 

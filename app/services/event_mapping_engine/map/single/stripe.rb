@@ -16,6 +16,13 @@ module EventMappingEngine
             event_id: @canonical_transaction.raw_stripe_transaction.likely_event_id,
             subledger_id: @canonical_transaction.stripe_card.subledger_id,
           )
+
+          # A refund settles after the charge's pending transaction has, so
+          # CanonicalPendingTransactionService::Settle never gives it a
+          # category. Take the charge's instead.
+          TransactionCategoryService
+            .new(model: @canonical_transaction)
+            .sync_from_card_charge!
         end
 
       end
