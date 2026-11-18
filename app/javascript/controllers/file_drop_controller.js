@@ -53,7 +53,7 @@ export default class extends Controller {
     globalPaste: { type: Boolean, default: false },
     receiptable: String,
     modal: String,
-    maxSize: Number,
+    maxBytes: Number,
   }
 
   initialize() {
@@ -144,14 +144,16 @@ export default class extends Controller {
   // Runs before form#submit so an oversized file is never direct-uploaded.
   checkSize(e) {
     if (!this.hasSizeErrorTarget) return
-    const tooBig = [...this.fileInputTarget.files].find(
-      file => file.size > this.maxSizeValue
-    )
-    this.sizeErrorTarget.hidden = !tooBig
-    if (!tooBig) return
+    const files = [...this.fileInputTarget.files]
+    const tooBig = files.filter(file => file.size > this.maxBytesValue)
+    this.sizeErrorTarget.hidden = !tooBig.length
+    if (!tooBig.length) return
 
-    const limit = `${Math.round(this.maxSizeValue / 1024 / 1024)} MB`
-    this.sizeErrorTarget.textContent = `${tooBig.name} is larger than the ${limit} limit. Please choose a smaller file.`
+    const names = tooBig.map(file => file.name).join(', ')
+    const limit = `${Math.round(this.maxBytesValue / 1024 / 1024)} MB`
+    // The whole selection is dropped, so say so when other files were picked too
+    const several = files.length > 1 ? ', so nothing was uploaded' : ''
+    this.sizeErrorTarget.textContent = `${names} ${tooBig.length > 1 ? 'are' : 'is'} over ${limit}${several}. Upload a smaller file.`
     this.fileInputTarget.value = ''
     e.stopImmediatePropagation()
   }
