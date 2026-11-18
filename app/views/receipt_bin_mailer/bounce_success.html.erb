@@ -10,7 +10,7 @@ You can find <%= @receipts_count == 1 ? "it" : "them" %> in your <%= link_to("Re
 
   <ul>
     <% @paired_ledger_items.each do |ledger_item| %>
-      <li><%= link_to ledger_item.memo, hcb_code_url(ledger_item.hcb_code) %> from <%= time_ago_in_words ledger_item.datetime %> ago - <%= link_to "click to reverse this pairing", hcb_code_url(ledger_item.hcb_code, reverse: ledger_item.receipts.last.id) %></li>
+      <li><%= link_to ledger_item.memo, ledger_item_url(ledger_item) %> from <%= time_ago_in_words ledger_item.datetime %> ago - <%= link_to "click to reverse this pairing", ledger_item_url(ledger_item, reverse: ledger_item.receipts.last.id) %></li>
     <% end %>
   </ul>
 <% end %>

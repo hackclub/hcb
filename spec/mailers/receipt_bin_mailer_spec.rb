@@ -16,7 +16,7 @@ RSpec.describe ReceiptBinMailer, type: :mailer do
       ledger_item
     end
 
-    it "lists the transactions each receipt was paired with and links to the HCB code" do
+    it "lists the transactions each receipt was paired with and links to the ledger item" do
       ledger_item = create_paired_ledger_item(memo: "COFFEE SHOP", settled_at: 3.days.ago)
 
       mail = described_class.with(to: user.email, receipts_count: 1, paired_ledger_items: [ledger_item]).bounce_success
@@ -25,8 +25,8 @@ RSpec.describe ReceiptBinMailer, type: :mailer do
       expect(body).to include("We also automatically matched it to the following transaction:")
       expect(body).to include("COFFEE SHOP")
       expect(body).to include("3 days ago")
-      expect(body).to include("/hcb/#{ledger_item.hcb_code.hashid}\"")
-      expect(body).to include("/hcb/#{ledger_item.hcb_code.hashid}?reverse=#{ledger_item.receipts.last.id}")
+      expect(body).to include("/transactions/#{ledger_item.hashid}\"")
+      expect(body).to include("/transactions/#{ledger_item.hashid}?reverse=#{ledger_item.receipts.last.id}")
     end
 
     it "does not mention pairing when nothing was paired" do
