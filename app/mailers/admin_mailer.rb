@@ -97,7 +97,6 @@ class AdminMailer < ApplicationMailer
     @starting_at = params.fetch(:starting_at)
     @ending_at = params.fetch(:ending_at)
 
-
     @ledger_items = Ledger::Query.new({
                                         "$and": [
                                           { amount_cents: { "$gte": INCOMING_FUNDS_THRESHOLD_CENTS } },
