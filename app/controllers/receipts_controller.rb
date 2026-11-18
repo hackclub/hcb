@@ -140,7 +140,8 @@ class ReceiptsController < ApplicationController
         restricted_dropzone: params[:upload_method] != :transaction_page,
         include_spacing: params[:upload_method] != :receipt_center,
         success: "#{"Receipt".pluralize(params[file_param].length)} added!",
-        global_paste: !@frame, # popovers can stack many forms on one page
+        # Page-wide paste only where this is the page's one form: the bin, or a transaction's own page (not a popover or a list row)
+        global_paste: !@receiptable || (!@frame && params[:upload_method].start_with?("transaction_page")),
         turbo: true
       }
       if @receiptable

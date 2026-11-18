@@ -1,4 +1,6 @@
 <% instance = local_assigns.__id__ %>
+<%# Page-wide paste is pointless (and only produces an error) for someone who can't upload here %>
+<% page_paste = local_assigns[:global_paste] && (!defined?(receiptable) || !current_user || ReceiptablePolicy.new(current_user, receiptable).upload?) %>
 <div id="<%= defined?(receiptable) ? "#{receiptable.id}_" : "" %>receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;" data-controller="panel-swap">
     <%= form_with model: false, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
@@ -14,7 +16,7 @@
           ",
           "file-drop-target" => ("dropzone" if defined?(restricted_dropzone)),
           "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt.",
-          "file-drop-global-paste-value" => defined?(global_paste) && global_paste ? "true" : "false"
+          "file-drop-global-paste-value" => page_paste ? "true" : "false"
         }.compact do |form| %>
 
       <div class="card flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form" data-panel-swap-target="form">
@@ -80,7 +82,7 @@
             <% end %>
           </span>
 
-          <p class="center muted">Or drag & drop your receipt here (find more info for receipts on <a href="https://help.hcb.hackclub.com/en/collections/19657949-receipts-compliance" class="link">our help page</a>)</p>
+          <p class="center muted">Or drag & drop<%= ", or paste," if page_paste %> your receipt here (find more info for receipts on <a href="https://help.hcb.hackclub.com/en/collections/19657949-receipts-compliance" class="link">our help page</a>)</p>
         </div>
       </div>
 

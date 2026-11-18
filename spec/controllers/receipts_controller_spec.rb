@@ -59,6 +59,37 @@ RSpec.describe ReceiptsController do
       expect(global_paste.call("transaction_popover")).to eq("false")
     end
 
+    it "keeps page-wide paste on for the receipt bin form" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      post(:create, params: {
+             upload_method: "receipt_center",
+             file: [fixture_file_upload("receipt.png", "image/png")]
+           }, format: :turbo_stream)
+
+      form = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='receipt_upload_form'] [data-file-drop-global-paste-value]")
+      expect(form["data-file-drop-global-paste-value"]).to eq("true")
+    end
+
+    # A list page has many rows (and popovers); one row's upload must not hand
+    # the page a page-wide paste listener for that row's transaction.
+    it "doesn't stream a page-wide paste form for a row upload from a list page" do
+      create_session(create(:user, :make_admin), verified: true)
+      ledger_item = create(:canonical_pending_transaction).local_hcb_code.ledger_item
+
+      %w[receipts_page receipts_page_drag_and_drop].each do |upload_method|
+        post(:create, params: {
+               receiptable_type: "Ledger::Item",
+               receiptable_id: ledger_item.id,
+               upload_method:,
+               file: [fixture_file_upload("receipt.png", "image/png")]
+             }, format: :turbo_stream)
+
+        forms = Nokogiri::HTML5.fragment(response.body).css("[data-file-drop-global-paste-value='true']")
+        expect(forms).to be_empty, "#{upload_method} streamed a page-wide paste form"
+      end
+    end
+
     it "streams the new receipt count into the item's ledger row" do
       create_session(create(:user, :make_admin), verified: true)
       hcb_code = create(:canonical_pending_transaction).local_hcb_code
