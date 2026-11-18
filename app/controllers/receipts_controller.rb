@@ -171,7 +171,7 @@ class ReceiptsController < ApplicationController
     Rails.error.report(e) unless e.is_a?(ActiveRecord::RecordInvalid)
 
     flash_type = :error
-    flash_message = (e.record.errors.full_messages_for(:file).first if e.is_a?(ActiveRecord::RecordInvalid)) || "There was an error uploading your receipt. Please try again."
+    flash_message = (e.record&.errors&.full_messages_for(:file)&.first if e.is_a?(ActiveRecord::RecordInvalid)) || "There was an error uploading your receipt. Please try again."
 
     # The form replaced below is the receipts page's. A transaction's own form
     # or row has no such element, so show the error in the page's flash instead.
