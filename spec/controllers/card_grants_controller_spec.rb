@@ -319,12 +319,25 @@ RSpec.describe CardGrantsController do
       expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
     end
 
-    it "keeps the copyable email off a member's view once the grant is canceled" do
+    it "still lets a member copy the email once the grant is canceled" do
       member = create(:user)
       card_grant = create(:card_grant, event:)
       card_grant.update_columns(status: :canceled)
       create(:organizer_position, user: member, event:, role: :member)
       create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_present
+    end
+
+    it "keeps the copyable email off a reader's view once the grant is canceled" do
+      reader = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :canceled)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
 
       get(:show, params: { id: card_grant.hashid })
 
