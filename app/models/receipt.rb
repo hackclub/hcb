@@ -79,7 +79,7 @@ class Receipt < ApplicationRecord
     end
   end
 
-  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, attached: true, content_type: { with: /(\Aimage\/.*\z|application\/pdf|text\/csv)/, message: "has an invalid content type" }
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
