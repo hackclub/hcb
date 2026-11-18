@@ -142,6 +142,20 @@ RSpec.describe ReceiptsController do
       expect(Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='receipts_list']")).to be_nil
     end
 
+    it "#create shows a failed upload in the page's flash" do
+      allow(::ReceiptService::Create).to receive(:new).and_raise(ActiveRecord::RecordInvalid)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "receipts_page_drag_and_drop",
+             file: [fixture_file_upload("receipt.png", "image/png")]
+           }, format: :turbo_stream)
+
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='flash-container']")
+      expect(stream.inner_html).to include("There was an error uploading your receipt")
+    end
+
     it "#create links the flash to the HCB code page" do
       post(:create, params: {
              receiptable_type: "Ledger::Item",

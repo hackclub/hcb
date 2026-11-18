@@ -173,6 +173,13 @@ class ReceiptsController < ApplicationController
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
 
+    # The form replaced below is the receipts page's. A transaction's own form
+    # or row has no such element, so show the error in the page's flash instead.
+    if @receiptable
+      flash.now[:error] = flash_message
+      streams.append(turbo_stream.replace("flash-container", partial: "application/flash"))
+    end
+
     streams.append(
       turbo_stream.replace(
         :receipt_upload_form,
