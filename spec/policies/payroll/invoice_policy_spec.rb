@@ -32,6 +32,18 @@ RSpec.describe Payroll::InvoicePolicy, type: :policy do
       expect(described_class.new(create(:user), invoice).on_behalf?).to eq(false)
     end
 
+    it "is denied on a signed renewal that hasn't started yet" do
+      renewal = position.build_renewal.tap(&:save!)
+      renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+      policy = described_class.new(organizer, renewal.invoices.build)
+      expect(policy.on_behalf?).to eq(false)
+
+      travel_to(renewal.start_date) do
+        expect(policy.on_behalf?).to eq(true)
+      end
+    end
+
     it "is denied before the position has finished onboarding" do
       position.update_column(:aasm_state, "onboarding")
 

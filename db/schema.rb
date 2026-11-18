@@ -2121,12 +2121,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.integer "rate_cents", default: 0, null: false
     t.string "rate_unit", default: "hour", null: false
     t.datetime "rejected_at"
+    t.bigint "renewal_of_id"
     t.date "start_date", null: false
     t.datetime "terminated_at"
     t.text "title", null: false
     t.datetime "updated_at", null: false
     t.index ["manager_id"], name: "index_payroll_positions_on_manager_id"
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
+    t.index ["renewal_of_id"], name: "index_payroll_positions_on_renewal_of_id"
   end
 
   create_table "personal_transactions", force: :cascade do |t|

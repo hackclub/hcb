@@ -669,6 +669,8 @@ Rails.application.routes.draw do
     member do
       get "contract"
       post "terminate"
+      get "renew"
+      post "renew", action: "create_renewal"
     end
   end
 

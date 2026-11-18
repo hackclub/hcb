@@ -4,7 +4,14 @@
 
 <h1 class="heading border-0 mb-0">Welcome, <%= @position.payee.display_name %>!</h1>
 <p class="muted mt-0">
-  <%= @position.event.name %> is onboarding you as a contractor through HCB.
+  <% if @position.renewal_of %>
+    <%= @position.event.name %> is renewing your contract through HCB.
+    <% if @position.renewal_of.onboarded? %>
+      Your current contract runs through <%= @position.renewal_of.end_date.to_fs(:long) %>, and you can keep submitting invoices under it until then.
+    <% end %>
+  <% else %>
+    <%= @position.event.name %> is onboarding you as a contractor through HCB.
+  <% end %>
 </p>
 
 <article class="hcb-code">
@@ -43,7 +50,11 @@
 
 <% if @position.onboarding_complete? %>
   <%= render "application/callout", type: "success", title: "You're all set!", class: "mt-4" do %>
-    Your onboarding is complete. <%= @position.event.name %> can now pay you for this position.
+    <% if @position.renewal_of %>
+      <%= @position.event.name %> has renewed your contract for <%= @position.period_label %>.
+    <% else %>
+      Your onboarding is complete. <%= @position.event.name %> can now pay you for this position.
+    <% end %>
   <% end %>
 <% end %>
 
