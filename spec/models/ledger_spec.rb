@@ -369,6 +369,18 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
     end
 
+    it "counts internal transfers as neither revenue nor an expense" do
+      add_item(2500)
+      add_item(1000, category_slug: "internal-transfer")
+      add_item(-300)
+      add_item(-700, category_slug: "internal-transfer")
+      add_item(400, category_slug: "internal-transfer", datetime: 2.days.ago)
+
+      expect(ledger.revenue_cents).to eq(2500)
+      expect(ledger.expenses_cents).to eq(300)
+      expect(ledger.revenue_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
+    end
+
     it "only takes repayments within the date range off revenue" do
       add_item(2500)
       add_item(500, category_slug: "repayment", datetime: 2.days.ago)

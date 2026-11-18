@@ -45,6 +45,16 @@ RSpec.describe Event, type: :model do
       expect(event.total_raised).to eq(2500)
       expect(event.total_spent_cents).to eq(300)
     end
+
+    it "counts internal transfers as neither revenue nor an expense" do
+      add_item(2500)
+      add_item(1000, category_slug: "internal-transfer")
+      add_item(-300)
+      add_item(-700, category_slug: "internal-transfer")
+
+      expect(event.total_raised).to eq(2500)
+      expect(event.total_spent_cents).to eq(300)
+    end
   end
 
   describe "private" do

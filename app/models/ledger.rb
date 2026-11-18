@@ -54,8 +54,19 @@ class Ledger < ApplicationRecord
 
   # Repayments pay an expense back, so they come off expenses rather than
   # counting as revenue, the same way Event::StatementOfActivity does it.
+  # Internal transfers only move money between HCB organizations, so they
+  # count as neither revenue nor an expense.
   monetize def revenue_cents(start_date: nil, end_date: nil)
-    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents) - repayments_received_cents(start_date:, end_date:)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents) - repayments_received_cents(start_date:, end_date:) - internal_transfers_received_cents(start_date:, end_date:)
+  end
+
+  monetize memo_wise def internal_transfers_received_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }, also: { category: { "$eq": Event::StatementOfActivity::INTERNAL_TRANSFER_SLUG } }).sum(:amount_cents)
+  end
+
+  # Returned as a positive amount, like expenses_cents.
+  monetize memo_wise def internal_transfers_sent_cents
+    query_items(amount: { "$lt": 0 }, also: { category: { "$eq": Event::StatementOfActivity::INTERNAL_TRANSFER_SLUG } }).sum(:amount_cents).abs
   end
 
   # Money in under the repayment category. Memoized per date range, since both
@@ -68,10 +79,12 @@ class Ledger < ApplicationRecord
   # ledger once it's charged, so the fee that's still pending is an expense
   # that hasn't happened yet — the same amount the ledger renders as a pending
   # "Fiscal sponsorship" row, and the same amount available_balance_cents holds
-  # back, which keeps revenue - expenses == available balance. A negative fee
-  # balance is a fee credit, not an expense, hence the floor at zero.
-  # Repayments received come off expenses, mirroring revenue_cents.
-  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs - repayments_received_cents + [fronted_fee_balance_cents, 0].max
+  # back, which keeps revenue - expenses == available balance for a ledger
+  # with no internal transfers. A negative fee balance is a fee credit, not an
+  # expense, hence the floor at zero.
+  # Repayments received and internal transfers sent come off expenses,
+  # mirroring revenue_cents.
+  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs - repayments_received_cents - internal_transfers_sent_cents + [fronted_fee_balance_cents, 0].max
 
   # A negative fee balance is a fee credit. Credits are not spendable, so
   # they never add to the available balance.
