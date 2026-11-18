@@ -42,7 +42,7 @@ RSpec.describe "Card locking, end to end", type: :model do
         attach_receipt(charge, uploaded_by: user)
       end
       expect(charge.reload.card_locking_resolved?).to be(true)
-      expect(user.reload.cards_locked?).to be(false)          # card came back
+      expect(user.reload.cards_locked?).to be(false) # card came back
     end
   end
 end
