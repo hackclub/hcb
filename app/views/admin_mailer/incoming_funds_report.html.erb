@@ -1,4 +1,4 @@
-Hack Club HQ received the following incoming funds of <%= render_money AdminMailer::INCOMING_FUNDS_THRESHOLD_CENTS %> or more between <%= @starting_at.strftime("%B %-d, %Y") %> and <%= @ending_at.strftime("%B %-d, %Y") %>:
+<p>Hack Club HQ received the following incoming funds of <%= render_money AdminMailer::INCOMING_FUNDS_THRESHOLD_CENTS %> or more between <%= @starting_at.strftime("%B %-d, %Y") %> and <%= @ending_at.strftime("%B %-d, %Y") %>:</p>
 
 <ul>
   <% @ledger_items.each do |item| %>
