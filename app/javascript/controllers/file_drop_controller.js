@@ -97,9 +97,11 @@ export default class extends Controller {
       }
     }
 
+    // Text pastes and file-less drops must not touch the form (empty submit pops a validation bubble)
+    if (!e.dataTransfer.files.length) return
+
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
-    if (!this.fileInputTarget.files.length) return
 
     if (
       this.hasUploadMethodTarget &&
