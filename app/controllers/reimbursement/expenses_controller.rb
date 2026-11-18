@@ -36,6 +36,7 @@ module Reimbursement
     def update
       authorize @expense
 
+      original_report = @expense.report
       attributes = expense_params
 
       if params.dig(:reimbursement_expense, :report_reference).present?
@@ -54,6 +55,12 @@ module Reimbursement
       @expense.assign_attributes(attributes.except(:event_id))
 
       authorize @expense # we authorize twice in case the reimbursement_report_id changes
+
+      # Managers can act on every report in their event, but an expense should
+      # stay with the person who incurred it. Only admins may reassign it.
+      if @expense.report.user_id != original_report.user_id && !admin_signed_in?
+        return redirect_to original_report, flash: { error: "Expenses can only be moved to another report belonging to the same person." }
+      end
 
       if attributes[:event_id].presence
         event = Event.find(attributes[:event_id])
