@@ -69,11 +69,70 @@ RSpec.describe ReceiptsController do
       }
 
       post(:create, params:)
-      expect(flash[:error]).to eq("That file type isn't supported. Upload an image or PDF.")
+      expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
 
       post(:create, params:, format: :turbo_stream)
-      expect(response.body).to include("That file type isn&#39;t supported. Upload an image or PDF.")
+      expect(response.body).to include("File type isn&#39;t supported. Upload an image, PDF, or CSV.")
       expect(response.body).not_to include("Validation failed")
+    end
+
+    context "when an upload is rejected" do
+      let(:user) { create(:user) }
+
+      before { create_session(user, verified: true) }
+
+      # A blob that claims to be over the limit, so the spec never allocates 50 MB.
+      def oversized_blob
+        ActiveStorage::Blob.create_and_upload!(
+          io: Rails.root.join("spec/fixtures/files/receipt.png").open, filename: "big.png", content_type: "image/png"
+        ).tap { |blob| blob.update_column(:byte_size, 50.megabytes + 1) }
+      end
+
+      it "does not report an unsupported file type to the error tracker" do
+        expect(Rails.error).not_to receive(:report)
+
+        post(:create, params: { upload_method: "receipt_center", file: [fixture_file_upload("attachment1.txt", "text/plain")] })
+
+        expect(flash[:error]).to eq("File type isn't supported. Upload an image, PDF, or CSV.")
+        expect(Receipt.count).to eq(0)
+      end
+
+      it "says the file is over 50 MB" do
+        params = { upload_method: "receipt_center", file: [oversized_blob.signed_id] }
+
+        post(:create, params:)
+        expect(flash[:error]).to eq("File is over 50 MB. Upload a smaller file.")
+
+        post(:create, params:, format: :turbo_stream)
+        expect(response.body).to include("File is over 50 MB. Upload a smaller file.")
+        expect(response.body).not_to include("Validation failed")
+        expect(Receipt.count).to eq(0)
+      end
+
+      it "shows the generic message and reports any other error" do
+        error = StandardError.new("S3 is down")
+        allow(ReceiptService::Create).to receive(:new).and_raise(error)
+        expect(Rails.error).to receive(:report).with(error).twice
+
+        params = { upload_method: "receipt_center", file: [fixture_file_upload("receipt.png", "image/png")] }
+
+        post(:create, params:)
+        expect(flash[:error]).to eq("There was an error uploading your receipt. Please try again.")
+
+        post(:create, params:, format: :turbo_stream)
+        expect(response.body).to include("There was an error uploading your receipt. Please try again.")
+        expect(response.body).not_to include("S3 is down")
+      end
+    end
+
+    it "still says a successful upload was added" do
+      create_session(create(:user), verified: true)
+
+      post(:create, params: { upload_method: "receipt_center", file: [fixture_file_upload("receipt.png", "image/png")] })
+
+      expect(flash[:success]).to eq("Receipt added!")
+      expect(flash[:error]).to be_nil
+      expect(Receipt.last.user).to eq(User.last)
     end
   end
 

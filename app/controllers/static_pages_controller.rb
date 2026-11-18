@@ -210,9 +210,9 @@ class StaticPagesController < ApplicationController
     redirect_back
 
   rescue => e
-    Rails.error.report(e)
+    Rails.error.report(e) unless e.is_a?(ActiveRecord::RecordInvalid)
 
-    flash[:error] = Receipt.upload_error_message(e)
+    flash[:error] = (e.record.errors.full_messages_for(:file).first if e.is_a?(ActiveRecord::RecordInvalid)) || "There was an error uploading your receipt. Please try again."
     return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
