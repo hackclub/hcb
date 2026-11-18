@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2695,10 +2695,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
     t.float "distance"
     t.bigint "hcb_code_id", null: false
     t.datetime "ignored_at"
+    t.bigint "ledger_item_id"
     t.bigint "receipt_id", null: false
     t.datetime "updated_at", null: false
     t.index ["hcb_code_id"], name: "index_suggested_pairings_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_suggested_pairings_on_ledger_item_id"
     t.index ["receipt_id", "hcb_code_id"], name: "index_suggested_pairings_on_receipt_id_and_hcb_code_id", unique: true
+    t.index ["receipt_id", "ledger_item_id"], name: "index_suggested_pairings_on_receipt_id_and_ledger_item_id", unique: true
     t.index ["receipt_id"], name: "index_suggested_pairings_on_receipt_id"
   end
 
@@ -3331,6 +3334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_130000) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "suggested_pairings", "ledger_items", on_delete: :cascade
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"
