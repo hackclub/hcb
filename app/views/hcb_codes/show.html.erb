@@ -46,7 +46,7 @@
     <% end %>
   <% end %>
 
-  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
+  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code, receipt_upload: (true unless @frame)) if @hcb_code.stripe_card? %>
 
   <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>
   <% if @hcb_code.shared_commentable? %>
