@@ -103,7 +103,6 @@ class AdminMailer < ApplicationMailer
     @starting_at = params.fetch(:starting_at)
     @ending_at = params.fetch(:ending_at)
 
-    hq_events = EventMappingEngine::EventIds::HACK_CLUB_HQ
 
     @ledger_items = Ledger::Query.new({
                                         "$and": [
@@ -113,8 +112,7 @@ class AdminMailer < ApplicationMailer
                                           { status: { "$in": %w[pending settled] } },
                                           { linked_object_type: { "$nin": INCOMING_FUNDS_EXCLUDED_TYPES } },
                                         ]
-                                      }).execute(ledgers: Ledger.where(primary: true, event: hq_events)).to_a
-
+                                      }).execute(ledgers: Ledger.where(primary: true, event: EventMappingEngine::EventIds::HACK_CLUB_HQ)).to_a
     return if @ledger_items.none?
 
     mail(
