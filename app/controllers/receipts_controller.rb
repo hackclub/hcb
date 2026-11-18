@@ -165,15 +165,14 @@ class ReceiptsController < ApplicationController
     # rendered once the upload has been authorized.
     if authorized && @receiptable && request.format.turbo_stream?
       # These uploads come from a button with no `receipts/form_v3` around it.
-      formless = params[:upload_method].start_with?("receipts_page") || @receiptable.is_a?(Reimbursement::Expense)
-
-      if !formless && (form_locals = receipt_upload_form_locals)
-        streams.append(
-          turbo_stream.replace("#{@receiptable.id}_receipt_upload_form", partial: "receipts/form_v3", locals: form_locals.merge(error:))
-        )
+      if params[:upload_method].to_s.start_with?("receipts_page") || @receiptable.is_a?(Reimbursement::Expense)
+        flash.now[:error] = e.is_a?(ActiveRecord::RecordInvalid) ? error : flash_message
+        # The layout renders the flash twice, once for each of desktop and mobile.
+        streams.append(turbo_stream.replace_all("#flash-container", partial: "application/flash"))
       else
-        flash.now[:error] = flash_message
-        streams.append(turbo_stream.replace("flash-container", partial: "application/flash"))
+        streams.append(
+          turbo_stream.replace("#{@receiptable.id}_receipt_upload_form", partial: "receipts/form_v3", locals: receipt_upload_form_locals.merge(error:))
+        )
       end
 
       if @receiptable.is_a?(Reimbursement::Expense)
@@ -274,7 +273,7 @@ class ReceiptsController < ApplicationController
     return if @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
 
     locals = {
-      upload_method: params[:upload_method].sub("_drag_and_drop", ""),
+      upload_method: params[:upload_method].to_s.sub("_drag_and_drop", ""),
       restricted_dropzone: params[:upload_method] != :transaction_page,
       include_spacing: params[:upload_method] != :receipt_center,
       global_paste: !@receiptable,
