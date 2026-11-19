@@ -34,6 +34,26 @@ RSpec.describe "Menus", type: :system do
     expect(page).to have_no_link("Sign out")
   end
 
+  it "closes again when clicked twice before it's positioned" do
+    # Both clicks land before floating-ui's position promise resolves
+    execute_script("const t = document.querySelector('.user-menu-trigger'); t.click(); t.click()")
+
+    expect(page).to have_no_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("false")
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+  end
+
+  it "hands focus back to its button when closed with Escape from inside" do
+    toggle.click
+    # Focus a link inside, as Tab would
+    execute_script("[...document.querySelectorAll('a')].find(a => a.textContent.includes('Sign out') && a.checkVisibility()).focus()")
+    expect(evaluate_script("document.activeElement.textContent")).to include("Sign out")
+    press_escape
+
+    expect(page).to have_no_link("Sign out")
+    expect(evaluate_script("document.activeElement === document.querySelector('.user-menu-trigger')")).to be(true)
+  end
+
   it "signs out through its Turbo DELETE link" do
     toggle.click
     click_on "Sign out"

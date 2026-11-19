@@ -44,7 +44,7 @@ RSpec.describe ModalHelper, type: :helper do
       dialog = render_modal(id: "bare").at_css("dialog")
 
       expect(dialog["class"]).to eq("modal modal--scroll bg-snow")
-      expect(dialog.attributes.keys).to contain_exactly("id", "class")
+      expect(dialog.attributes.keys).to contain_exactly("id", "class", "aria-modal", "closedby")
       expect(dialog.at_css("header")).to be_nil
     end
   end

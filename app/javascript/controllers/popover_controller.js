@@ -105,7 +105,7 @@ export default class extends Controller {
   beforeVisit(event) {
     const url = new URL(event.detail.url)
     if (
-      document.querySelector('dialog:modal') ||
+      document.querySelector('dialog.modal[open]') ||
       !url.searchParams.has('popover')
     )
       return

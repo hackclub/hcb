@@ -11,7 +11,7 @@ RSpec.describe "Transaction popovers", type: :system do
   def press_escape = page.driver.browser.keyboard.type(:escape)
   def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
   def transitions = evaluate_script("document.querySelector('#shared_popover').getAnimations().map(a => a.transitionProperty)")
-  def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
+  def open_modals = evaluate_script("[...document.querySelectorAll('dialog.modal[open]')].map(dialog => dialog.id)")
 
   def open_popover
     click_on "TEST DONATION"
@@ -57,6 +57,41 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(transitions).to include("translate")
     expect_closed(popover)
     expect(page).to have_no_css("#{popover} turbo-frame", visible: :all)
+  end
+
+  it "lets the transaction it showed be garbage collected once closed" do
+    execute_script(<<~JS)
+      window.loadedFrames = []
+      document.addEventListener('turbo:frame-load', ({ target }) => window.loadedFrames.push(new WeakRef(target)))
+    JS
+    open_popover
+    # Waited on in JS: a Capybara node handle would itself keep the frame alive
+    Timeout.timeout(10) { sleep 0.05 until evaluate_script("!!document.querySelector('#shared_popover turbo-frame[complete]')") }
+    press_escape
+    expect_closed(popover)
+
+    page.driver.browser.page.command("HeapProfiler.collectGarbage")
+    expect(evaluate_script("window.loadedFrames.length")).to be_positive
+    expect(evaluate_script("window.loadedFrames.filter(frame => frame.deref()).length")).to eq(0)
+  end
+
+  # Each one used to bind another set of tooltip handlers, slowing every later click and hover
+  it "adds no page-wide handlers each time a transaction loads" do
+    handlers = "(events => Object.values(events ?? {}).reduce((sum, list) => sum + list.length, 0))(jQuery._data(document, 'events'))"
+    open_popover
+    expect(page).to have_css("#{popover} turbo-frame[complete]")
+    press_escape
+    expect_closed(popover)
+    before = evaluate_script(handlers)
+
+    2.times do
+      open_popover
+      expect(page).to have_css("#{popover} turbo-frame[complete]")
+      press_escape
+      expect_closed(popover)
+    end
+
+    expect(evaluate_script(handlers)).to eq(before)
   end
 
   it "expands a receipt in place when its thumbnail is clicked, without a modal over it" do

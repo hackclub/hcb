@@ -10,7 +10,7 @@ RSpec.describe "Modals", type: :system do
   def press_escape = page.driver.browser.keyboard.type(:escape)
 
   def page_overflow = evaluate_script("getComputedStyle(document.documentElement).overflow")
-  def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
+  def open_modals = evaluate_script("[...document.querySelectorAll('dialog.modal[open]')].map(dialog => dialog.id)")
 
   # Clicks happen once the modal has finished animating in, where it'll stay
   def expect_open(selector) = expect(page).to have_css("#{selector}[open]", style: { opacity: "1" })
@@ -41,6 +41,49 @@ RSpec.describe "Modals", type: :system do
       expect(evaluate_script("document.activeElement.textContent")).to include("Start report")
     end
 
+    # Opened with show(), not showModal(), so the page behind is kept out by hand
+    it "keeps Tab inside the modal in both directions" do
+      focus_in_modal = "!!document.activeElement.closest('#{modal}')"
+      keyboard = page.driver.browser.keyboard
+
+      12.times do
+        keyboard.type(:tab)
+        expect(evaluate_script(focus_in_modal)).to be(true)
+      end
+      12.times do
+        keyboard.type([:shift, :tab])
+        expect(evaluate_script(focus_in_modal)).to be(true)
+      end
+    end
+
+    it "wraps Tab from its last control to its first, and back" do
+      first, last = evaluate_script(<<~JS)
+        (() => {
+          const all = [...document.querySelectorAll('#{modal} a[href], #{modal} button, #{modal} input, #{modal} select, #{modal} textarea')]
+            .filter(el => el.tabIndex >= 0 && !el.disabled && el.checkVisibility({ visibilityProperty: true }))
+          all.at(-1).focus()
+          return [all[0].outerHTML, all.at(-1).outerHTML]
+        })()
+      JS
+      keyboard = page.driver.browser.keyboard
+
+      keyboard.type(:tab)
+      expect(evaluate_script("document.activeElement.outerHTML")).to eq(first)
+      keyboard.type([:shift, :tab])
+      expect(evaluate_script("document.activeElement.outerHTML")).to eq(last)
+    end
+
+    it "puts focus back in the modal when something behind it takes it" do
+      execute_script("document.querySelector('a[href]:not(#{modal} a)').focus()")
+
+      expect(evaluate_script("!!document.activeElement.closest('#{modal}')")).to be(true)
+    end
+
+    it "covers the page behind, so it can't be clicked, and tells screen readers it's modal" do
+      expect(evaluate_script("document.elementFromPoint(5, 5).className")).to eq("modal-backdrop")
+      expect(find(modal)["aria-modal"]).to eq("true")
+    end
+
     it "closes on Escape" do
       press_escape
 
@@ -56,11 +99,14 @@ RSpec.describe "Modals", type: :system do
 
       click_on "Start report"
       expect(transitions(modal)).to include("scale") # in, too
+      expect(transitions(".modal-backdrop")).to include("opacity") # with its backdrop fading in
       expect_open(modal)
       press_escape
       expect(page).to have_css("#{modal}[open][data-closing]")
       expect(transitions(modal)).to include("opacity", "scale")
+      expect(transitions(".modal-backdrop")).to include("opacity")
       expect_closed(modal)
+      expect(page).to have_no_css(".modal-backdrop", visible: :all)
     end
 
     it "closes when clicking the backdrop but not when clicking inside the modal" do
@@ -272,8 +318,6 @@ RSpec.describe "Modals", type: :system do
 
       expect(page).to have_css(".swal-overlay--show-modal", text: "Again!")
       click_on "OK"
-      expect(page).to have_no_css(".swal-layer", visible: :all)
-      expect(evaluate_script("document.querySelector('.swal-overlay').parentElement === document.body")).to be(true)
       expect(open_modals).to eq(["outer"])
     end
 
@@ -284,7 +328,7 @@ RSpec.describe "Modals", type: :system do
       execute_script("swal('Saved!')")
       click_on "OK"
 
-      expect(page).to have_no_css(".swal-layer", visible: :all)
+      expect(page).to have_no_css(".swal-overlay--show-modal")
       expect(open_modals).to eq(["outer"])
     end
   end

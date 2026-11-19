@@ -1,7 +1,8 @@
 // Styled, spaced and animated like a modal (components/_modals.scss)
 .swal-overlay {
   background-color: $backdrop;
-  transition: opacity 0.2s;
+  // Leaving; showing takes 0.2s, like a modal
+  transition: opacity 0.15s;
 
   [data-dark='true'] & {
     background-color: $backdrop-dark;
@@ -13,8 +14,8 @@
     padding: 2rem 1rem;
     scale: 0.9;
     transition:
-      opacity 0.2s,
-      scale 0.2s;
+      opacity 0.15s,
+      scale 0.15s;
 
     @media (min-width: 32em) {
       padding: 2rem;
@@ -91,24 +92,17 @@
   }
 }
 
+.swal-overlay--show-modal {
+  transition-duration: 0.2s;
+}
+
 .swal-overlay--show-modal .swal-modal {
   animation: none;
   scale: none;
+  transition-duration: 0.2s;
 
   @starting-style {
     opacity: 0;
     scale: 0.9;
-  }
-}
-
-// The dialog SweetAlert shows in while a modal is open (common/swal.js)
-.swal-layer {
-  padding: 0;
-  border: 0;
-  background: none;
-  overflow: visible;
-
-  &::backdrop {
-    background: none;
   }
 }

@@ -4,14 +4,16 @@ module ModalHelper
   # A native <dialog>, opened by any element with `data-modal="<id>"`. See dev-docs/guides/modals.md.
   def modal(title = nil, id:, size: nil, external_link: nil, open: false, **attributes, &)
     attributes[:class] = token_list("modal modal--scroll bg-snow", { "modal--#{size}" => size }, attributes[:class])
-    attributes[:aria] = { labelledby: "#{id}_title", **attributes[:aria].to_h } if title
+    # It's opened non-modally (app/javascript/modal.js), so this is what tells screen readers the page behind is out of reach
+    attributes[:aria] = { modal: true, **({ labelledby: "#{id}_title" } if title).to_h, **attributes[:aria].to_h }
     attributes[:data] = {
       **attributes[:data].to_h,
       controller: token_list(attributes.dig(:data, :controller), "open-modal": open).presence,
       turbo_temporary: (true if open) # a one-off, so the page Back restores leaves it out
     }
 
-    tag.dialog(id:, **attributes) do
+    # Opened with `show()` (app/javascript/modal.js), which would otherwise ignore close requests like Android's back gesture
+    tag.dialog(id:, closedby: "closerequest", **attributes) do
       safe_join [(modal_header(title, id: "#{id}_title", external_link:) if title), capture(&)]
     end
   end

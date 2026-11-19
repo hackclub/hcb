@@ -6,7 +6,6 @@ import {
   offset,
   size,
 } from '@floating-ui/dom'
-import $ from 'jquery'
 import gsap from 'gsap'
 import { addLayer, removeLayer } from '../layers'
 
@@ -45,6 +44,10 @@ export default class extends Controller {
   open() {
     if (this.isOpen) return
     if (!this.hasContentTarget) return
+    // Open from here on, not once it's positioned, so a quick second click or
+    // Escape before then closes this menu rather than opening another
+    this.isOpen = true
+    this.toggleTarget.setAttribute('aria-expanded', true)
 
     // The content can be a <template> wrapping the menu, which keeps its links
     // and forms out of the page until it opens (a menu inside a link can't
@@ -56,7 +59,7 @@ export default class extends Controller {
     this.content = source.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
-    // Outside the modal it opens from, a menu would be inert; fixed, the modal can't clip it
+    // Outside the modal it opens from, a menu would be under it; fixed, the modal can't clip it
     const modal = this.toggleTarget.closest('dialog')
     const container = this.appendToValue
       ? document.querySelector(this.appendToValue)
@@ -93,24 +96,28 @@ export default class extends Controller {
   close(e) {
     if (e && e.currentTarget == document) {
       // Is the clicked element part of the toggle?
-      if (
-        e.type == 'click' &&
-        (e.target == this.toggleTarget ||
-          $(this.toggleTarget).find(e.target).length)
-      )
-        return
+      if (e.type == 'click' && this.toggleTarget.contains(e.target)) return
       if (
         e.target == this.content ||
-        ($(this.content).find(e.target).length &&
+        (this.content?.contains(e.target) &&
           !e.target.dataset?.action?.includes('menu#close'))
       )
         return
       if (
         e.target.tagName.toLowerCase() == 'input' &&
-        $(e.target).closest('.menu__content').length
+        e.target.closest('.menu__content')
       )
         return
     }
+
+    // Closed with Escape (or anything but a click) while focus was in it:
+    // the menu is about to go, so focus goes back to its toggle, not <body>
+    if (
+      e?.type != 'click' &&
+      this.content?.contains(document.activeElement) &&
+      this.hasToggleTarget
+    )
+      this.toggleTarget.focus({ preventScroll: true })
 
     if (this.content) {
       const content = this.content
@@ -121,6 +128,9 @@ export default class extends Controller {
       } else {
         // Out the way it came in, like a modal
         content.style.pointerEvents = 'none'
+        content.style.transition = 'opacity 0.15s ease, transform 0.15s ease'
+        content.style.opacity = '0'
+
         gsap.to(content, {
           ...this.hidden,
           duration: 0.15,
@@ -144,7 +154,10 @@ export default class extends Controller {
   }
 
   computePosition(firstTime = false) {
-    computePosition(this.toggleTarget, this.content, {
+    const content = this.content
+    if (!content) return
+
+    computePosition(this.toggleTarget, content, {
       placement: this.placementValue,
       strategy: this.strategy,
       middleware: [
@@ -161,19 +174,20 @@ export default class extends Controller {
         }),
       ],
     }).then(({ x, y, placement }) => {
-      Object.assign(this.content.style, {
+      // Closed, or closed and reopened, while this was being worked out
+      if (this.content !== content) return
+
+      Object.assign(content.style, {
         top: `${y}px`,
         left: `${x}px`,
       })
-      if (firstTime) {
-        this.hidden = { y: placement.includes('top') ? -12 : 12, opacity: 0 }
-        gsap.from(this.content, { ...this.hidden, duration: 0.15 })
-      }
+      if (!firstTime) return
 
-      this.toggleTarget.setAttribute('aria-expanded', true)
-      this.isOpen = true
-
-      this.content
+      this.hidden = { y: placement.includes('top') ? -12 : 12 }
+      gsap.from(content, { ...this.hidden, duration: 0.15 })
+      // Once, on opening: autoUpdate repositions on every scroll and resize,
+      // and would otherwise pull focus back each time
+      content
         .querySelectorAll("[data-behavior~='autofocus']")
         .forEach(input => input.focus())
     })

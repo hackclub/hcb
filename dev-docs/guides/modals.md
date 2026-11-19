@@ -10,7 +10,11 @@ A modal is a native `<dialog>`, rendered by the `modal` helper (`app/helpers/mod
 <% end %>
 ```
 
-That's the whole API. The browser draws the modal above everything else, traps focus inside it, closes the top one on Escape and hands focus back to the trigger. `app/javascript/modal.js` adds what it doesn't do: opening from triggers, closing from the backdrop, and the edge cases below. It listens once on the document, so a page can render hundreds of modals (one per transaction row, say) without any setup per modal.
+That's the whole API. `app/javascript/modal.js` opens it with `show()`, not `showModal()`, and does what `showModal()` would have done itself: a backdrop (`.modal-backdrop`, placed right before the modal) covers the page, each modal opened stacks above the last, focus stays inside the top one (Tab wraps around, and anything behind that takes focus hands it back), and `aria-modal` tells screen readers the page behind is out of reach. The browser still focuses the first control and hands focus back to the trigger on close. It also opens from triggers, closes from the backdrop, and handles the edge cases below.
+
+Why not `showModal()`: it makes the rest of the page inert, and the browser restyles the whole page to do that, once on open and again on close. On a long ledger that was most of what a click cost.
+
+It all listens once on the document, so a page can render hundreds of modals (one per transaction row, say) without any setup per modal.
 
 ## Options
 
@@ -59,7 +63,7 @@ Modals, the popover, SweetAlert and menus are styled as one family, so anything 
 - **Corners**: `--radius-2xl` for anything with a backdrop (modals, the popover, alerts), `--radius-xl` for menus. On phones, what slides up from the bottom uses `$sheet-radius`.
 - **Backdrop**: `$backdrop`, or `$backdrop-dark` in dark mode.
 - **Shadow**: `--shadow-modal` or `--shadow-menu`; `_dark.scss` swaps both for dark mode.
-- **Motion**: everything fades in with a small scale or slide (0.2s for modals and alerts, 0.15s for menus) and leaves the same way in reverse, rather than disappearing.
+- **Motion**: everything fades in with a small scale or slide (0.2s for modals and alerts, 0.15s for menus) and leaves the same way in reverse, rather than disappearing. Leaving takes 0.15s everywhere, so closing never feels slower than opening.
 
 ## Performance
 
@@ -67,16 +71,18 @@ A ledger page can hold hundreds of triggers, modals and menus, so none of them m
 
 - **Triggers and closed modals** have no listeners or controllers of their own. The listeners in `modal.js` and `layers.js` are attached once, to the document.
 - **Something that reacts to the whole page** (outside clicks, Escape, `hcb:close-menus`) listens only while it's open. Menus add their document listeners in `open()` and remove them in `close()`. A `click@document->...` action would instead run on every click, for every instance on the page.
-- **Opening a modal** makes the rest of the page inert, which costs the browser a style recalculation of the whole page (~15 ms on a 75-row ledger). That's the price of the page behind being unreachable by keyboard and screen readers.
+- **Opening a modal** touches only the modal and its backdrop. Don't make the page behind `inert` or open with `showModal()`: either restyles the whole page (~15–25 ms per open and per close on a 75-row ledger at 4× CPU).
+- **Page-wide behaviors** (tooltips, money inputs) are delegated from the document once. Don't rebind them on `turbo:frame-load` or watch the whole page with a `MutationObserver`; each popover load would stack more handlers onto every click.
 
 ## Things that render outside a modal
 
-While a modal is open, the rest of the page is inert. Two things that render to `<body>` handle this already:
+Modals sit at `z-index: 2000` and up, under the backdrop of the one above. While one is open, focus can't leave it. What renders to `<body>` handles this already:
 
 - **Menus** (`menu` controller) opened from inside a modal render inside it.
-- **SweetAlert** (`swal`, `data-turbo-confirm`) gets a top-layer dialog of its own, on top of the Escape stack. Import it from `common/swal`, not `sweetalert`.
+- **SweetAlert** (`swal`, `data-turbo-confirm`) shows above every modal and joins the top of the Escape stack. Import it from `common/swal`, not `sweetalert`.
+- **The command bar** shows above every modal and is marked `data-above-modals`, so the focus trap lets it keep focus.
 
-Anything new that portals to `<body>` needs the same treatment, and a layer if Escape should close it.
+Anything new that portals to `<body>` while a modal is open needs a `z-index` above 2000 and `data-above-modals` (if it takes focus), plus a layer if Escape should close it.
 
 ## The transaction popover
 

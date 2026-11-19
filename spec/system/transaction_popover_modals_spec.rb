@@ -22,11 +22,11 @@ RSpec.describe "Modals in transaction popovers", type: :system do
   # Sends Escape to the focused element without clicking anything first
   def press_escape = page.driver.browser.keyboard.type(:escape)
   def click_backdrop = page.driver.browser.mouse.click(x: 5, y: 5)
-  def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
+  def open_modals = evaluate_script("[...document.querySelectorAll('dialog.modal[open]')].map(dialog => dialog.id)")
   # Not just faded out, but closed
   def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
   # The modal on top at a point, whether its box or its backdrop is there
-  def covering(x, y) = evaluate_script("document.elementFromPoint(#{x}, #{y}).closest('dialog')?.id")
+  def covering(x, y) = evaluate_script("(el => (el.matches('.modal-backdrop') ? el.nextElementSibling : el.closest('dialog'))?.id)(document.elementFromPoint(#{x}, #{y}))")
 
   # Clicks the popover's right edge, which is clear of any modal centered on top of it
   def over_popover
@@ -76,7 +76,8 @@ RSpec.describe "Modals in transaction popovers", type: :system do
     expect(covering(*over_popover)).to eq("shared_popover")
     expect(page).to have_current_path(stripe_card_path(card, popover: popover_url))
     # The backdrop still dims the page behind the popover
-    expect(evaluate_script("getComputedStyle(document.querySelector('#{popover}'), '::backdrop').backgroundColor")).to eq("rgba(0, 0, 0, 0.3)")
+    dark = evaluate_script("document.documentElement.dataset.dark") == "true"
+    expect(evaluate_script("getComputedStyle(document.querySelector('#{popover}').previousElementSibling).backgroundColor")).to eq(dark ? "rgba(0, 0, 0, 0.5)" : "rgba(0, 0, 0, 0.3)")
   end
 
   it "closes only the topmost modal on Escape or a backdrop click" do

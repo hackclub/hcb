@@ -197,7 +197,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       second_row = evaluate_script(<<~JS)
         [...document.querySelectorAll('#shared_popover tr.clickable')].find(r => r.textContent.includes('#{second_invoice.name}')).getBoundingClientRect().toJSON()
       JS
-      covering = ->(x, y) { evaluate_script("document.elementFromPoint(#{x}, #{y}).closest('dialog')?.id") }
+      covering = ->(x, y) { evaluate_script("(el => (el.matches('.modal-backdrop') ? el.nextElementSibling : el.closest('dialog'))?.id)(document.elementFromPoint(#{x}, #{y}))") }
       expect(covering.call(second_row["right"] - 5, second_row["top"] + 5)).to eq(invoice_modal)
       expect(covering.call(5, 300)).to eq(invoice_modal)
 
