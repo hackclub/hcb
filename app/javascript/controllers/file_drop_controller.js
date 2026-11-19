@@ -116,6 +116,8 @@ export default class extends Controller {
 
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
+    // checkSize (#15836) clears an oversized selection; don't submit the empty input
+    if (!this.fileInputTarget.files.length) return
 
     if (
       this.hasUploadMethodTarget &&
