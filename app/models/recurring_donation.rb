@@ -40,6 +40,9 @@ class RecurringDonation < ApplicationRecord
   include Hashid::Rails
   hashid_config salt: ""
 
+  include PublicIdentifiable
+  set_public_id_prefix :rdn
+
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "subscriptions", :stripe_subscription_id
 
