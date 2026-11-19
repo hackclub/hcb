@@ -2238,15 +2238,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "raw_pending_fee_reimbursement_transactions", force: :cascade do |t|
-    t.integer "amount_cents"
-    t.datetime "created_at", null: false
-    t.date "date_posted"
-    t.bigint "fee_reimbursement_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["fee_reimbursement_id"], name: "index_rp_fee_reimbursement_txs_on_fee_reimbursement_id"
-  end
-
   create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
     t.integer "amount_cents"
     t.datetime "created_at", null: false
@@ -3292,7 +3283,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
-  add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
