@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -397,7 +397,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
     t.bigint "raw_pending_bank_fee_transaction_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "raw_pending_donation_transaction_id"
-    t.bigint "raw_pending_fee_reimbursement_transaction_id"
     t.bigint "raw_pending_fee_revenue_transaction_id"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_invoice_transaction_id"
@@ -420,7 +419,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
-    t.index ["raw_pending_fee_reimbursement_transaction_id"], name: "index_cpts_on_raw_pending_fee_reimbursement_tx_id"
     t.index ["raw_pending_fee_revenue_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
@@ -2240,15 +2238,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "raw_pending_fee_reimbursement_transactions", force: :cascade do |t|
-    t.integer "amount_cents"
-    t.datetime "created_at", null: false
-    t.date "date_posted"
-    t.bigint "fee_reimbursement_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["fee_reimbursement_id"], name: "index_rp_fee_reimbursement_txs_on_fee_reimbursement_id"
-  end
-
   create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
     t.integer "amount_cents"
     t.datetime "created_at", null: false
@@ -2789,12 +2778,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
     t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
   end
 
-  create_table "transaction_csvs", force: :cascade do |t|
-    t.string "aasm_state", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "transactions", force: :cascade do |t|
     t.bigint "ach_transfer_id"
     t.bigint "amount"
@@ -3300,7 +3283,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
   add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
-  add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"

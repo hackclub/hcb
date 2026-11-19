@@ -86,6 +86,34 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  INCOMING_FUNDS_REPORT_RECIPIENTS = [
+    "usr_MVtap3", # Lucy
+    "usr_wVtRav", # Mel
+  ].freeze
+
+  INCOMING_FUNDS_THRESHOLD_CENTS = 10_000_00
+
+  def incoming_funds_report
+    @starting_at = params.fetch(:starting_at)
+    @ending_at = params.fetch(:ending_at)
+
+    @ledger_items = Ledger::Query.new({
+                                        "$and": [
+                                          { amount_cents: { "$gte": INCOMING_FUNDS_THRESHOLD_CENTS } },
+                                          { datetime: { "$gte": @starting_at } },
+                                          { datetime: { "$lt": @ending_at } },
+                                          { status: { "$in": %w[pending settled] } },
+                                          { linked_object_type: { "$ne": "Disbursement::Incoming" } },
+                                        ]
+                                      }).execute(ledgers: Ledger.where(primary: true, event: EventMappingEngine::EventIds::HACK_CLUB_HQ)).to_a
+    return if @ledger_items.none?
+
+    mail(
+      to: INCOMING_FUNDS_REPORT_RECIPIENTS.filter_map { |id| User.find_by_public_id(id)&.email_address_with_name },
+      subject: "[HCB] #{@ledger_items.size} incoming #{"payment".pluralize(@ledger_items.size)} of #{ApplicationController.helpers.render_money_short(INCOMING_FUNDS_THRESHOLD_CENTS)}+ to HQ this week (#{ApplicationController.helpers.render_money(@ledger_items.sum(&:amount_cents))})"
+    )
+  end
+
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
