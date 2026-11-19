@@ -108,9 +108,6 @@
 
 <% unless defined?(selectable) || receipt.preview.nil? %>
   <%= modal id: modal_id, size: :huge, class: "p0 h-100", style: "overflow: initial;" do %>
-    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" data-modal-close style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
-      <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
-    </a>
 
     <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
       <% if receipt.file.blob.content_type == "application/pdf" %>
@@ -123,6 +120,7 @@
 
       <div style="border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
         <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0;">
+          <div><%= modal_close %></div>
           <%= render partial: "receipts/details", locals: { receipt: } %>
         </div>
         <%= local_assigns[:details_footer] %>
@@ -138,9 +136,7 @@
           <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Details</a>
         </li>
         <div class="flex-grow">
-          <a href="#close_modal" tabindex="0" class="pop modal__close muted" data-modal-close style="background: #11111199; margin: 0px; margin-right: 6px;">
-            <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
-          </a>
+          <%= modal_close %>
         </div>
       </ul>
 

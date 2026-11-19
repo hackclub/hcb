@@ -232,6 +232,15 @@
   }
 }
 
+// In a modal with no header or side panel, like an enlarged screenshot
+.modal__close.modal__close--corner {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  margin: 0;
+  z-index: 1;
+}
+
 .modal__external {
   float: right;
   width: 32px;

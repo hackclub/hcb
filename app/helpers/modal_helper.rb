@@ -26,9 +26,9 @@ module ModalHelper
     end
   end
 
-  # The same for every modal, so it's built once for pages with hundreds of them
-  def modal_close
-    @modal_close ||= tag.button inline_icon("view-close", size: 28), type: "button", class: "pop modal__close muted", aria: { label: "Close" }, data: { modal_close: true }
+  # The same for nearly every modal, so it's built once for pages with hundreds of them
+  def modal_close(**options)
+    options[:class] ? modal_close_button(options[:class]) : (@modal_close ||= modal_close_button)
   end
 
   def modal_external_link(external_link)
@@ -36,6 +36,10 @@ module ModalHelper
   end
 
   private
+
+  def modal_close_button(extra_class = nil)
+    tag.button inline_icon("view-close", size: 28), type: "button", class: token_list("pop modal__close muted", extra_class), aria: { label: "Close" }, data: { modal_close: true }
+  end
 
   # Titles repeat down a page (a "Select receipt" per transaction), so each is sanitized once
   def modal_title(text)
