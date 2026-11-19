@@ -111,13 +111,18 @@ $shades: (
   @extend .shade-neutral;
 }
 
+:root {
+  --muted-text: #{$muted-text};
+  --muted-text-hover: #{darken($muted-text, 10%)};
+}
+
 @each $name, $value in $palette {
   .#{'' + $name} {
-    color: $value;
+    color: if($name == muted, var(--muted-text), $value);
   }
   a.#{'' + $name}:hover,
   a.#{'' + $name}:focus {
-    color: darken($value, 10%);
+    color: if($name == muted, var(--muted-text-hover), darken($value, 10%));
   }
 
   .bg-#{'' + $name} {
