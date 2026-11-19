@@ -111,7 +111,7 @@ class ApplicationController < ActionController::Base
       raise
     else
       Rails.error.report(exception)
-      redirect_to root_url
+      redirect_to root_path
     end
   end
 

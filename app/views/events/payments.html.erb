@@ -189,7 +189,7 @@
                                     external_link: payment_path(d)
                                   ) %>
                   <% elsif (ledger_item = d.try(:ledger_item)).present? %>
-                    <%= link_to "", ledger_item_url(ledger_item), class: "stretched-link", data: ledger_item_popover_data(ledger_item, title: transfer_popover_title) %>
+                    <%= link_to "", ledger_item_path(ledger_item), class: "stretched-link", data: ledger_item_popover_data(ledger_item, title: transfer_popover_title) %>
                   <% end %>
                 <% end %>
               </td>

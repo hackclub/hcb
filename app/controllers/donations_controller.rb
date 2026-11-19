@@ -109,7 +109,7 @@ class DonationsController < ApplicationController
 
     if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
       skip_authorization
-      redirect_to root_url and return
+      redirect_to root_path and return
     end
 
     d_params[:ip_address] = request.remote_ip

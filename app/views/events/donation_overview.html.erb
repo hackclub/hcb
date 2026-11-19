@@ -155,7 +155,7 @@
             </td>
             <td style="text-align: right;">
               <%= render_money(d.amount) %>
-              <%= link_to "", ledger_item_url(d.ledger_item), class: "stretched-link", data: ledger_item_popover_data(d.ledger_item, title: "#{d.name} donated #{render_money(d.amount)}", state_title: "#{d.name} donated #{render_money(d.amount)}") if organizer_signed_in? %>
+              <%= link_to "", ledger_item_path(d.ledger_item), class: "stretched-link", data: ledger_item_popover_data(d.ledger_item, title: "#{d.name} donated #{render_money(d.amount)}", state_title: "#{d.name} donated #{render_money(d.amount)}") if organizer_signed_in? %>
             </td>
           </tr>
         <% end %>
