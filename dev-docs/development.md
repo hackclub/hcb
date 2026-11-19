@@ -172,6 +172,23 @@ bundle exec rspec
 
 External contributors should provide credentials via a [`.env.development`](/.env.development) file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces) will need to rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
 
+`bin/setup` copies `.env.development.example` to `.env.development` before preparing the database, only if the file does not already exist. Existing configuration and environment overrides are preserved.
+
+The example's `LOCKBOX` key and Active Record encryption values are public development defaults for synthetic seed data only. They do not protect real data. Never use them with production data. Keep the same encryption values while reusing a development database; changing them requires re-encrypting its data or resetting the disposable database.
+
+Docker Compose loads `.env.development` automatically. For a standalone container, mount it read-only so Rails loads it through Dotenv. Do not pass this quoted example directly to Docker's `--env-file`, which preserves the quote characters in values. Real environment files are excluded from the image, but the public example is included for `bin/setup`. For example, after building the local development image as `hcb-dev`:
+
+```bash copy Copy Container Setup
+docker run --rm --network <development-network> \
+  --mount "type=bind,source=$(pwd)/.env.development,target=/usr/src/app/.env.development,readonly" \
+  -e RAILS_ENV=development \
+  -e DATABASE_URL=postgres://postgres@<database-host>:5432/bank_development \
+  -e REDIS_URL=redis://<redis-host>:6379 \
+  hcb-dev bundle exec rails db:prepare
+```
+
+Replace the network and host placeholders with your development services. Use those same environment settings when starting the app or running seeds in another container.
+
 HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to set up Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our [`.env.development`](/.env.development) file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).

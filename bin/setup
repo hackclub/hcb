@@ -19,10 +19,11 @@ FileUtils.chdir APP_ROOT do
 
   # Install JavaScript dependencies
   system("yarn install --check-files")
-  # puts "\n== Copying sample files =="
-  # unless File.exist?("config/database.yml")
-  #   FileUtils.cp "config/database.yml.sample", "config/database.yml"
-  # end
+
+  puts "\n== Copying development configuration =="
+  unless File.exist?(".env.development")
+    FileUtils.cp ".env.development.example", ".env.development"
+  end
 
   puts "\n== Preparing database =="
   system! "bin/rails db:prepare"
