@@ -148,7 +148,7 @@ RSpec.describe WiresController do
 
       comment = disbursement.comments.sole
       expect(comment.user).to eq(admin)
-      expect(comment.content).to include(hcb_code_url(wire.local_hcb_code))
+      expect(comment.content).to include(ledger_item_url(wire.reload_ledger_item))
     end
   end
 

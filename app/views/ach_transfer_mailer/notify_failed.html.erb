@@ -1,4 +1,4 @@
-We're writing to let you know your <%= link_to "recent ACH transfer to #{@ach_transfer.recipient_name}", hcb_code_url(@ach_transfer.local_hcb_code) %> was rejected by the recipient's bank and failed to send. Here's the explanation given by the receiving bank:
+We're writing to let you know your <%= link_to "recent ACH transfer to #{@ach_transfer.recipient_name}", ledger_item_url(@ach_transfer.ledger_item) %> was rejected by the recipient's bank and failed to send. Here's the explanation given by the receiving bank:
 
 <pre><%= @reason %></pre>
 

@@ -4,7 +4,7 @@
     Back to checks
   <% end %>
 
-  <%= link_to hcb_code_path(@check.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= link_to ledger_item_path(@check.ledger_item), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@check.local_hcb_code.comments.count, "comment") %>)
   <% end %>
