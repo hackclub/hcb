@@ -45,12 +45,8 @@ class DonationsController < ApplicationController
   # GET /donations/1
   def show
     authorize @donation
-
-    if @donation.ledger_item.present?
-      redirect_to ledger_item_path(@donation.ledger_item)
-    else
-      redirect_to hcb_code_path(@donation.local_hcb_code)
-    end
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
+    redirect_to hcb_code_path(@hcb_code.hashid)
   end
 
   def start_donation
@@ -214,6 +210,7 @@ class DonationsController < ApplicationController
 
   def update
     authorize @donation
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
     permitted = [:anonymous, :name]
     permitted << :email if policy(@donation).update_email?
@@ -222,16 +219,16 @@ class DonationsController < ApplicationController
       if params[:resend_receipt] == "1" && policy(@donation).resend_receipt?
         if @donation.receipt_resendable?
           @donation.send_receipt!
-          redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "Edited the donor's details and resent their receipt to #{@donation.email}." }
+          redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details and resent their receipt to #{@donation.email}." }
         else
-          redirect_to ledger_item_path(@donation.ledger_item), flash: { error: "Edited the donor's details, but this donation's receipt can't be resent." }
+          redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "Edited the donor's details, but this donation's receipt can't be resent." }
         end
         return
       end
 
-      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "Edited the donor's details." }
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
     else
-      redirect_to ledger_item_path(@donation.ledger_item), flash: { error: @donation.errors.full_messages.to_sentence }
+      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
     end
   end
 

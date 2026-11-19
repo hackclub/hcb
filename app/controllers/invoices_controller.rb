@@ -139,7 +139,8 @@ class InvoicesController < ApplicationController
   def show
     @invoice = Invoice.friendly.find(params[:id])
     authorize @invoice
-    redirect_to ledger_item_path(@invoice.ledger_item)
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @invoice.hcb_code)
+    redirect_to hcb_code_path(@hcb_code.hashid)
   end
 
   def archive
