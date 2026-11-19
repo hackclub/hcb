@@ -66,6 +66,8 @@
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
 #
 class CanonicalPendingTransaction < ApplicationRecord
+  self.ignored_columns += ["raw_pending_fee_reimbursement_transaction_id"]
+
   has_paper_trail
 
   include Categorizable
