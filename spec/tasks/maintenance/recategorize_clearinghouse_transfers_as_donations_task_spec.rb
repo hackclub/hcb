@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Clearinghouse recategorization tasks" do
+RSpec.describe "Clearinghouse recategorization task" do
   let(:clearinghouse) { create(:event) }
   let(:organization) { create(:event) }
 
@@ -58,31 +58,6 @@ RSpec.describe "Clearinghouse recategorization tasks" do
       process(disbursement)
 
       expect(slug_of(incoming)).to eq("grants")
-    end
-  end
-
-  describe Maintenance::RecategorizeClearinghouseIncomeAsInternalTransfersTask do
-    def add_transaction(event, amount_cents, category_slug: nil)
-      ct = create(:canonical_transaction, amount_cents:, category_slug:)
-      create(:canonical_event_mapping, canonical_transaction: ct, event:)
-      ct
-    end
-
-    it "recategorizes money into the Clearinghouse as an internal transfer" do
-      uncategorized = add_transaction(clearinghouse, 1000)
-      donation = add_transaction(clearinghouse, 2000, category_slug: "donations")
-      other = add_transaction(clearinghouse, 3000, category_slug: "grants")
-      add_transaction(clearinghouse, -500)
-      add_transaction(organization, 4000)
-
-      task = described_class.new.tap { |t| t.clearinghouse_event_id = clearinghouse.id }
-      expect(task.collection).to contain_exactly(uncategorized, donation, other)
-
-      task.collection.each { |ct| task.process(ct) }
-
-      expect(slug_of(uncategorized)).to eq("internal-transfer")
-      expect(slug_of(donation)).to eq("internal-transfer")
-      expect(slug_of(other)).to eq("grants")
     end
   end
 end
