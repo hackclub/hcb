@@ -45,8 +45,12 @@ class DonationsController < ApplicationController
   # GET /donations/1
   def show
     authorize @donation
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
-    redirect_to hcb_code_path(@hcb_code.hashid)
+
+    if @donation.ledger_item.present?
+      redirect_to ledger_item_path(@donation.ledger_item)
+    else
+      redirect_to hcb_code_path(@donation.local_hcb_code)
+    end
   end
 
   def start_donation
@@ -173,16 +177,15 @@ class DonationsController < ApplicationController
 
   def refund
     @donation = Donation.find(params[:id])
-    @hcb_code = @donation.local_hcb_code
 
     authorize @donation
 
     if @donation.canonical_transactions.any?
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "The refund process has been queued for this donation." }
     else
       Donation::RefundJob.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
@@ -211,7 +214,6 @@ class DonationsController < ApplicationController
 
   def update
     authorize @donation
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
     permitted = [:anonymous, :name]
     permitted << :email if policy(@donation).update_email?
@@ -220,16 +222,16 @@ class DonationsController < ApplicationController
       if params[:resend_receipt] == "1" && policy(@donation).resend_receipt?
         if @donation.receipt_resendable?
           @donation.send_receipt!
-          redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details and resent their receipt to #{@donation.email}." }
+          redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "Edited the donor's details and resent their receipt to #{@donation.email}." }
         else
-          redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: "Edited the donor's details, but this donation's receipt can't be resent." }
+          redirect_to ledger_item_path(@donation.ledger_item), flash: { error: "Edited the donor's details, but this donation's receipt can't be resent." }
         end
         return
       end
 
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "Edited the donor's details." }
     else
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { error: @donation.errors.full_messages.to_sentence }
     end
   end
 
