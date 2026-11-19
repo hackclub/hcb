@@ -210,11 +210,20 @@ RSpec.describe EventsController do
 
     it "lists outgoing disbursements as Disbursement::Outgoing and renders the recipient org" do
       organizer = create(:user)
-      event = create(:event)
+      event = create(:event, :with_positive_balance)
       create(:organizer_position, user: organizer, event:)
 
       recipient = create(:event, name: "Receiving Organization")
-      create(:disbursement, source_event: event, event: recipient)
+      # The list links each transfer to its ledger item, which a disbursement
+      # gets from the pending transaction DisbursementService::Create imports.
+      DisbursementService::Create.new(
+        name: "Shared pizza",
+        amount: "10.00",
+        requested_by_id: organizer.id,
+        source_event_id: event.id,
+        destination_event_id: recipient.id,
+        transfer_type: "transfer"
+      ).run
 
       create_session(organizer, verified: true)
 
@@ -638,11 +647,21 @@ RSpec.describe EventsController do
       Nokogiri::HTML5(body).css("article.table-container tbody tr")
     end
 
+    # A paid donation always has a pending transaction, and so a ledger item for
+    # the overview to link to: StripeController imports one in the same webhook
+    # that moves the donation out of pending. The factory skips that, so mirror it.
+    def create_deposited_donation(**attrs)
+      donation = create(:donation, event:, aasm_state: "deposited", **attrs)
+      rpdt = create(:raw_pending_donation_transaction, donation_transaction_id: donation.id.to_s, amount_cents: donation.amount, date_posted: Date.current)
+      create(:canonical_pending_transaction, raw_pending_donation_transaction: rpdt, amount_cents: donation.amount, event:)
+      donation
+    end
+
     before { stub_donation_payment_intent_creation }
 
     let(:event) { create(:event, is_public: true) }
-    let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
-    let!(:public_donation) { create(:donation, event:, name: "Jane Jones", email: "jane.jones@example.com", anonymous: false, aasm_state: "deposited") }
+    let!(:anonymous_donation) { create_deposited_donation(name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true) }
+    let!(:public_donation) { create_deposited_donation(name: "Jane Jones", email: "jane.jones@example.com", anonymous: false) }
 
     context "as a signed out visitor" do
       it "lists anonymous donors when there is no search" do

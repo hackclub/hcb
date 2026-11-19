@@ -341,8 +341,15 @@ class User < ApplicationRecord
     ["auditor", "admin", "superadmin"].include?(self.access_level)
   end
 
+  # make_admin! and remove_admin! are used from the Rails console to grant
+  # and revoke admin access. Nothing in the codebase calls remove_admin!,
+  # so please don't remove it as dead code.
   def make_admin!
     admin!
+  end
+
+  def remove_admin!
+    user!
   end
 
   def first_name(legal: false)

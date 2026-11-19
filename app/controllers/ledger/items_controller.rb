@@ -13,8 +13,10 @@ class Ledger
         skip_authorization
         return not_found if @item.hcb_code.nil?
 
-        return redirect_to hcb_code_path(@item.hcb_code)
+        return redirect_to hcb_code_path(@item.hcb_code, reverse: params[:reverse].presence)
       end
+
+      @reverse_receipt_id = params[:reverse]
 
       if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
         # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id

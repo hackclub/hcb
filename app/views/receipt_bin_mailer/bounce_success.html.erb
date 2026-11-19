@@ -1,16 +1,16 @@
 <p>
 We got your <%= "receipt".pluralize(@receipts_count) %>, thanks!
-<% unless @receipts_count == @paired_with.size %>
+<% unless @receipts_count == @paired_ledger_items.size %>
 You can find <%= @receipts_count == 1 ? "it" : "them" %> in your <%= link_to("Receipt Bin", my_inbox_url) %>.
 <% end %>
 </p>
 
-<% if @paired_with.any? %>
-  <p>We also automatically matched <%= @receipts_count == 1 ? "it" : "#{@paired_with.size} #{"receipt".pluralize(@paired_with.size)}" %> to the following <%= "transaction".pluralize(@paired_with.size) %>:</p>
+<% if @paired_ledger_items.any? %>
+  <p>We also automatically matched <%= @receipts_count == 1 ? "it" : "#{@paired_ledger_items.size} #{"receipt".pluralize(@paired_ledger_items.size)}" %> to the following <%= "transaction".pluralize(@paired_ledger_items.size) %>:</p>
 
   <ul>
-    <% @paired_with.map do |pair| %>
-      <li><%= link_to pair.memo, hcb_code_url(pair) %> from <%= time_ago_in_words pair.pt&.raw_pending_stripe_transaction&.created_at || Time.at(pair.raw_stripe_transaction.stripe_transaction["created"]) %> ago - <%= link_to "click to reverse this pairing", hcb_code_url(pair, reverse: pair.receipts.last.id) %></li>
+    <% @paired_ledger_items.each do |ledger_item| %>
+      <li><%= link_to ledger_item.memo, ledger_item_url(ledger_item) %> from <%= time_ago_in_words ledger_item.datetime %> ago - <%= link_to "click to reverse this pairing", ledger_item_url(ledger_item, reverse: ledger_item.receipts.last.id) %></li>
     <% end %>
   </ul>
 <% end %>
