@@ -210,6 +210,56 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response.body).to include(ERB::Util.html_escape(invoice.event.name))
       expect(response.body).to include("$1.23")
     end
+
+    context "for a transfer staff process by hand" do
+      let(:event) { create(:event, :with_positive_balance) }
+
+      let(:wire) do
+        stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+          .to_return_json(status: 200, body: { country_code: "DE" })
+        create(:wire, :pending, event:)
+      end
+
+      let(:paypal_transfer) do
+        # New PayPal transfers are refused at validation, so save past it to
+        # stand in for one created before that.
+        PaypalTransfer.new(
+          event:,
+          user: create(:user),
+          amount_cents: 25_00,
+          memo: "Stickers",
+          payment_for: "Stickers",
+          recipient_name: "Orpheus",
+          recipient_email: "orpheus@example.com"
+        ).tap { |transfer| transfer.save!(validate: false) }
+      end
+
+      def ledger_item_for(transfer)
+        create(:ledger_item, linked_object: transfer).tap do |ledger_item|
+          create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item:)
+        end
+      end
+
+      [:make_auditor, :make_admin].each do |role|
+        it "shows the Process button on a wire to a user with #{role.to_s.delete_prefix("make_")} access" do
+          create_session(create(:user, role), verified: true)
+
+          get :show, params: { id: ledger_item_for(wire).hashid }
+
+          expect(response).to be_successful
+          expect(response.body).to include(%(action="#{wire_process_admin_path(wire)}"))
+        end
+
+        it "shows the Process button on a PayPal transfer to a user with #{role.to_s.delete_prefix("make_")} access" do
+          create_session(create(:user, role), verified: true)
+
+          get :show, params: { id: ledger_item_for(paypal_transfer).hashid }
+
+          expect(response).to be_successful
+          expect(response.body).to include(%(action="#{paypal_transfer_process_admin_path(paypal_transfer)}"))
+        end
+      end
+    end
   end
 
   context "as a reader (not a member)" do
