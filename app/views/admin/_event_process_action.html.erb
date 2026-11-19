@@ -1,0 +1,8 @@
+<%# locals: (url:, label:, button_class: "btn", return_to: nil, confirm: nil, danger: false) %>
+<%# `turbo_frame: "_top"` breaks out of the modal's frame so the page behind it
+    (the organizations table) reflects the new state instead of going stale. %>
+<%= form_with(model: false, local: true, url:, method: :put, class: "contents", data: { turbo_frame: "_top" }) do %>
+  <%= hidden_field_tag :return_to, return_to, id: nil if return_to.present? %>
+  <%= button_tag label, name: nil, class: button_class,
+        data: { turbo_confirm: confirm, turbo_confirm_danger: danger.presence }.compact %>
+<% end %>
