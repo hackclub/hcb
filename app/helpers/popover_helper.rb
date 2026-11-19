@@ -37,7 +37,7 @@ module PopoverHelper
     # item show page. Everyone else gets the HCB code popover instead — otherwise
     # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
     # the popover would render empty.
-    if policy(item).show? && auditor_signed_in?
+    if auditor_signed_in? && policy(item).show?
       popover_data(
         title: item.pretty_title,
         src: item.popover_path,
@@ -78,10 +78,10 @@ module PopoverHelper
   end
 
   def contractor_popover_data(contractor)
-    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    path = payroll_position_path(contractor)
     popover_data(
       title: "#{contractor.payee.display_name}'s contract",
-      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      src: payroll_position_path(contractor, frame: true),
       frame_id: "contractor_#{contractor.id}",
       state_url: path,
       external_link: path

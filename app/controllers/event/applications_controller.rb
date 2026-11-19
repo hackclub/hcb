@@ -7,7 +7,7 @@ class Event
     before_action :prevent_access_if_archived, only: [:project_info, :personal_info, :review, :videos, :agreement, :sign_agreement]
     before_action :set_steps, only: [:show, :sign_agreement]
     after_action :record_pageview
-    skip_before_action :signed_in_user, only: [:new, :apply, :create]
+    skip_before_action :signed_in_user, only: [:new, :apply, :create, :unsubscribe]
     skip_after_action :verify_authorized, only: :create
     skip_before_action :redirect_to_onboarding
 
@@ -73,7 +73,8 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
-        party.update!(user: current_user)
+        # An admin may have signed for HCB before approving; a signed party can't change hands.
+        party.update!(user: current_user) if party.pending?
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -95,6 +96,11 @@ class Event
     def admin_activate
       authorize @application
 
+      unless @application.approved?
+        flash[:error] = "Approve this application before activating it."
+        return redirect_back_or_to application_path(@application)
+      end
+
       @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
@@ -106,10 +112,11 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
+        return_to = start_applications_path(teen_led: params[:teen_led].presence, referral_code:)
+        redirect_to auth_users_path(return_to:, require_reload: true, purpose: "application") and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code:))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -202,6 +209,15 @@ class Event
       end
     end
 
+    def unsubscribe
+      skip_authorization
+
+      if request.post?
+        @application.archive! if @application.draft? && !@application.archived?
+        redirect_to unsubscribe_application_path(params[:id])
+      end
+    end
+
     def archive
       authorize @application
 
@@ -242,8 +258,20 @@ class Event
 
     private
 
+    # The `ref` from the landing page link. Only a plain string is accepted (a
+    # nested param would raise when built into a URL), capped so it can't bloat
+    # the login's return_to, and blank becomes nil.
+    def referral_code
+      code = params[:referral_code]
+      code.strip.first(100).presence if code.is_a?(String)
+    end
+
     def set_application
-      @application = Application.find(params[:id])
+      @application = if action_name == "unsubscribe"
+                       Application.find_signed(params[:id], purpose: :unsubscribe) || raise(ActiveRecord::RecordNotFound)
+                     else
+                       Application.find(params[:id])
+                     end
     end
 
     def set_steps

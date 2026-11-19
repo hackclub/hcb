@@ -115,6 +115,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+  end
+
   def safe_per(default, max: 200)
     (params[:per] || default).to_i.clamp(1, max)
   end
@@ -152,10 +157,18 @@ class ApplicationController < ActionController::Base
     not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
-  def set_streaming_headers
+  # Streams `body` (a String or an Enumerator yielding chunks) to the client as
+  # a file. Unlike `send_data`, the body is not buffered, so large exports
+  # start downloading right away.
+  def stream_file(body, filename:, type:, disposition: "attachment")
+    headers["Content-Type"] = type
+    headers["Content-Disposition"] = ActionDispatch::Http::ContentDisposition.format(disposition:, filename:)
     headers["X-Accel-Buffering"] = "no"
     headers["Cache-Control"] ||= "no-cache"
     headers.delete("Content-Length")
+
+    response.status = 200
+    self.response_body = body
   end
 
   def confetti!(emojis: nil)

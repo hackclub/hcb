@@ -24,7 +24,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this._closeMenusHandler = () => this.close()
+    this._closeMenusHandler = () => this.isOpen && this.close()
     document.addEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
@@ -52,7 +52,14 @@ export default class extends Controller {
     if (this.isOpen) return
     if (!this.hasContentTarget) return
 
-    this.content = this.contentTarget.cloneNode(true)
+    // The content can be a <template> wrapping the menu, which keeps its links
+    // and forms out of the page until it opens (a menu inside a link can't
+    // otherwise hold links of its own: HTML doesn't nest them).
+    const source =
+      this.contentTarget instanceof HTMLTemplateElement
+        ? this.contentTarget.content.firstElementChild
+        : this.contentTarget
+    this.content = source.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
     ;(
@@ -113,7 +120,8 @@ export default class extends Controller {
       }
     }
 
-    this.toggleTarget.setAttribute('aria-expanded', false)
+    if (this.hasToggleTarget)
+      this.toggleTarget.setAttribute('aria-expanded', false)
     this.cleanup && this.cleanup()
 
     this.content = undefined
