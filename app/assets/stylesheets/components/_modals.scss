@@ -16,7 +16,7 @@
   scale: 0.9;
   transition:
     opacity 0.2s,
-    scale 0.2s ease-in-out,
+    scale 0.2s,
     translate 0.2s;
 
   &::backdrop {
@@ -29,7 +29,7 @@
   &[open]:not([data-closing]) {
     opacity: 1;
     scale: none;
-    transition: translate 0.2s;
+    transition: translate 0.2s, scale 0.2s;
 
     &::backdrop {
       opacity: 1;
