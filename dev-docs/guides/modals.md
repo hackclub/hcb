@@ -37,7 +37,7 @@ It all listens once on the document, so a page can render hundreds of modals (on
 
 ## Nesting and Escape
 
-Open a modal from inside another and it stacks on top. The backdrop closes only the top one, and closing a modal also closes any opened from it (from a trigger inside it, or rendered inside it), so none is left behind blocking the page.
+Open a modal from inside another and it stacks on top. The backdrop closes only the top one, and closing a modal also closes any opened from it (from a trigger inside it, or rendered inside it), so none is left behind blocking the page. Opening a modal that's already open (the popover loading another record, say) closes the ones opened from it, so they don't cover what it shows now.
 
 Escape closes one thing at a time, newest first: with the popover, a modal over it and a menu open in that, three presses close the menu, the modal, then the popover. Modals and menus join this stack (`app/javascript/layers.js`) while they're open:
 
@@ -52,7 +52,7 @@ Something that handles Escape on its own, like a combobox closing its suggestion
 
 ## Where to render a modal
 
-Anywhere, even in a table row, a hidden menu or a lazy turbo-frame. A modal opens from the end of `<body>` and moves back when it closes, so where it's rendered never changes how it looks or behaves: it doesn't inherit styles from the row around it, and its links and forms navigate the page rather than the frame. If the frame it came from is replaced while it's open, it's dropped when it closes.
+Anywhere, even in a table row, a hidden menu or a lazy turbo-frame. A modal opens from the end of `<body>` and moves back when it closes, so where it's rendered never changes how it looks or behaves: it doesn't inherit styles from the row around it, and its links and forms navigate the page rather than the frame. If the frame it came from is replaced while it's open, it's dropped when it closes. If it's removed or replaced while open (by a Turbo Stream, say), its backdrop and the modals opened from it go with it.
 
 While it's open, it isn't inside its original ancestors, so Herb state and forms around it don't reach it. Keep a modal's reactive state in a partial rendered inside it, and don't render a modal with its own `<form>` inside another form (HTML can't nest forms, so the inner one is dropped when the page is parsed).
 

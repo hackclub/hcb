@@ -55,6 +55,10 @@ export function openModal(target, trigger = null) {
     // `pointer-events: none`, open invisible under a hidden ancestor, and only
     // navigate the turbo-frame around it, so it opens from <body> instead
     if (dialog.parentElement !== document.body) lift(dialog)
+  } else {
+    // Opened again while open, it goes back on top: the popover loads
+    // something else, which those opened from what it showed would cover
+    openedFrom(dialog).forEach(closeModal)
   }
 
   document.dispatchEvent(new CustomEvent('hcb:close-menus'))
@@ -69,11 +73,16 @@ export function openModal(target, trigger = null) {
 
 function show(dialog) {
   stack = stack.filter(other => other !== dialog && other.isConnected)
-  // Above the ones already open, wherever each is in the page
+  // Above the ones already open, wherever each is in the page. One above the
+  // top one's, not the count: closing one beneath would otherwise hand the next
+  // the same depth as the top one, and leave it under that if earlier in the page.
+  const depth = stack.length ? depthOf(stack.at(-1)) + 1 : 0
   for (const layer of [backdropFor(dialog), dialog])
-    if (stack.length) layer.style.setProperty('--modal-depth', stack.length)
+    if (depth) layer.style.setProperty('--modal-depth', depth)
     else layer.style.removeProperty('--modal-depth')
   stack.push(dialog)
+  // Open ones are always <body>'s own children (see `lift`)
+  removals.observe(document.body, { childList: true })
 
   dialog.before(backdropFor(dialog))
   // Focuses the first thing in it, and remembers what to hand focus back to
@@ -98,6 +107,9 @@ function backdropFor(dialog) {
   return backdrop
 }
 
+const depthOf = dialog =>
+  Number(dialog.style.getPropertyValue('--modal-depth')) || 0
+
 // Once it's closed
 function settle(dialog) {
   closing.delete(dialog)
@@ -106,7 +118,29 @@ function settle(dialog) {
   backdrops.get(dialog)?.remove()
   stack = stack.filter(other => other !== dialog)
   removeLayer(dialog)
-  if (!stack.length) releaseFocus()
+  if (stack.length) return
+  releaseFocus()
+  removals.disconnect()
+}
+
+// A Turbo Stream can remove or replace an open modal, which never fires
+// `close`, and would leave its backdrop over the page and focus kept from it.
+// Only watching <body>'s own children, and only while one is open.
+const removals = new MutationObserver(records => {
+  for (const { removedNodes } of records)
+    for (const node of removedNodes)
+      // Not one a morph moved elsewhere, or one closing put back
+      if (stack.includes(node) && !node.isConnected) dropped(node)
+})
+
+function dropped(dialog) {
+  settle(dialog)
+  openedFrom(dialog).forEach(closeModal)
+  origins.get(dialog)?.remove()
+  origins.delete(dialog)
+  // Focus went with it; hand it to the one beneath, if any
+  const top = topModal()
+  if (top && !top.contains(document.activeElement)) ends(top)[0]?.focus()
 }
 
 // Animates it out, then closes it. `dialog.close()` closes it at once.
