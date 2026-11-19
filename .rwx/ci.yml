@@ -73,6 +73,7 @@ tasks:
     with:
       repository: https://github.com/hackclub/hcb.git
       ref: ${{ init.commit-sha }}
+      github-token: ${{ github.token }}
 
   - key: setup
     use: code
