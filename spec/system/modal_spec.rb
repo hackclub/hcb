@@ -14,6 +14,8 @@ RSpec.describe "Modals", type: :system do
 
   # Clicks happen once the modal has finished animating in, where it'll stay
   def expect_open(selector) = expect(page).to have_css("#{selector}[open]", style: { opacity: "1" })
+  # Not just faded out, but closed
+  def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
 
   before do
     create(:event, organizers: [user])
@@ -32,7 +34,7 @@ RSpec.describe "Modals", type: :system do
 
       within(modal) { find(".modal__close").click }
 
-      expect(page).to have_no_css(modal)
+      expect_closed(modal)
       expect(page_overflow).to eq("visible")
       expect(evaluate_script("document.activeElement.textContent")).to include("Start report")
     end
@@ -40,7 +42,20 @@ RSpec.describe "Modals", type: :system do
     it "closes on Escape" do
       press_escape
 
-      expect(page).to have_no_css(modal)
+      expect_closed(modal)
+    end
+
+    # Closing a <dialog> takes it off screen at once, which Safari and Firefox can't animate
+    it "animates out while still open before closing, from the close button and Escape" do
+      within(modal) { find(".modal__close").click }
+      expect(page).to have_css("#{modal}[open][data-closing]")
+      expect_closed(modal)
+
+      click_on "Start report"
+      expect_open(modal)
+      press_escape
+      expect(page).to have_css("#{modal}[open][data-closing]")
+      expect_closed(modal)
     end
 
     it "closes when clicking the backdrop but not when clicking inside the modal" do
@@ -48,7 +63,7 @@ RSpec.describe "Modals", type: :system do
       expect(open_modals).to eq(["create_reimbursement_report"])
 
       page.driver.browser.mouse.click(x: 5, y: 5) # top-left corner of the backdrop
-      expect(page).to have_no_css(modal)
+      expect_closed(modal)
     end
 
     it "stays open when a press inside it is released over the backdrop, as when selecting text" do
@@ -65,7 +80,7 @@ RSpec.describe "Modals", type: :system do
     it "keeps form input when reopened" do
       within(modal) { fill_in "Report name", with: "Chicago Trip Expenses" }
       press_escape
-      expect(page).to have_no_css(modal)
+      expect_closed(modal)
 
       click_on "Start report"
 
@@ -102,7 +117,7 @@ RSpec.describe "Modals", type: :system do
 
       press_escape
 
-      expect(page).to have_no_css("#inner")
+      expect_closed("#inner")
       expect(open_modals).to eq(["outer"])
       click_on "Open inner" # the outer modal is interactive again
       expect_open("#inner")
@@ -116,7 +131,7 @@ RSpec.describe "Modals", type: :system do
 
       execute_script("document.getElementById('outer').close()")
 
-      expect(page).to have_no_css("#inner")
+      expect_closed("#inner")
       expect(open_modals).to be_empty
     end
 
@@ -126,7 +141,7 @@ RSpec.describe "Modals", type: :system do
       expect(page).to have_css("#hidden_modal", text: "Hidden body")
 
       press_escape
-      expect(page).to have_no_css("#hidden_modal")
+      expect_closed("#hidden_modal")
       expect(page).to have_css("#hidden_parent > #hidden_modal", visible: :hidden)
     end
 
@@ -147,7 +162,7 @@ RSpec.describe "Modals", type: :system do
 
       click_on "Done"
 
-      expect(page).to have_no_css("#styled")
+      expect_closed("#styled")
     end
 
     it "drops a lifted modal on close once the frame it came from has been replaced" do
@@ -169,6 +184,19 @@ RSpec.describe "Modals", type: :system do
       expect(page).to have_css("#auto_frame > #auto", visible: :hidden)
 
       expect(evaluate_async_script("setTimeout(() => arguments[0](document.getElementById('auto').open), 500)")).to be(false)
+    end
+
+    it "stays open when reopened while animating out" do
+      click_on "Open outer"
+      expect_open("#outer")
+
+      execute_script(<<~JS)
+        document.querySelector("#outer [data-modal-close]").click()
+        document.querySelector("[data-modal=outer]").click()
+      JS
+
+      expect(evaluate_async_script("setTimeout(() => arguments[0](document.getElementById('outer').open), 500)")).to be(true)
+      expect_open("#outer")
     end
 
     it "opens from a Turbo Stream" do

@@ -1,4 +1,5 @@
-// Native <dialog>s (ModalHelper#modal), animated in and out of the top layer
+// Native <dialog>s (ModalHelper#modal). They animate out while still open,
+// marked `data-closing` (app/javascript/modal.js), so every browser shows it.
 .modal {
   border: 0;
   color: inherit;
@@ -16,21 +17,16 @@
   transition:
     opacity 0.2s,
     scale 0.2s ease-in-out,
-    translate 0.2s,
-    overlay 0.2s allow-discrete,
-    display 0.2s allow-discrete;
+    translate 0.2s;
 
   &::backdrop {
     background-color: rgba(0, 0, 0, 0.3);
     opacity: 0;
-    transition:
-      opacity 0.2s,
-      overlay 0.2s allow-discrete,
-      display 0.2s allow-discrete;
+    transition: opacity 0.2s;
   }
 
   // `none`, not 1: a transformed modal would anchor fixed menus inside it
-  &[open] {
+  &[open]:not([data-closing]) {
     opacity: 1;
     scale: none;
 
@@ -69,7 +65,7 @@
       margin: 12px;
       translate: 100%;
 
-      &[open] {
+      &[open]:not([data-closing]) {
         translate: none;
       }
 

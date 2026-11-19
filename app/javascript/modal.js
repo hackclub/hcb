@@ -6,12 +6,16 @@ import { Turbo } from '@hotwired/turbo-rails'
 
 // Where each open modal was rendered, so closing it can put it back
 const origins = new WeakMap()
+// Modals animating out, so reopening one mid-animation keeps it open
+const closing = new WeakMap()
 
 export function openModal(target, trigger = null) {
   const dialog =
     typeof target === 'string' ? document.getElementById(target) : target
   if (!dialog) return
 
+  closing.delete(dialog)
+  delete dialog.dataset.closing
   // Where it's rendered, it would inherit styles like a table row's
   // `pointer-events: none`, open invisible under a hidden ancestor, and only
   // navigate the turbo-frame around it, so it opens from <body> instead
@@ -24,6 +28,25 @@ export function openModal(target, trigger = null) {
   // Fired when already open too, so a modal like the popover can load something else
   dialog.dispatchEvent(new CustomEvent('modal:open', { detail: { trigger } }))
   if (!dialog.open) dialog.showModal()
+}
+
+// Animates it out, then closes it. `dialog.close()` closes it at once.
+export function closeModal(target) {
+  const dialog =
+    typeof target === 'string' ? document.getElementById(target) : target
+  if (!dialog?.open || closing.has(dialog)) return
+
+  const run = {}
+  closing.set(dialog, run)
+  dialog.dataset.closing = ''
+  // Ones opened from inside it go with it
+  document.querySelectorAll('dialog[open]').forEach(other => {
+    if (other !== dialog && dialog.contains(origins.get(other) ?? other))
+      closeModal(other)
+  })
+  Promise.allSettled(
+    dialog.getAnimations().map(({ finished }) => finished)
+  ).then(() => closing.get(dialog) === run && dialog.close())
 }
 
 function lift(dialog) {
@@ -47,7 +70,7 @@ document.addEventListener('click', event => {
   const close = event.target.closest('[data-modal-close]')
   if (close) {
     event.preventDefault()
-    close.closest('dialog')?.close()
+    closeModal(close.closest('dialog'))
     return
   }
 
@@ -81,8 +104,19 @@ document.addEventListener('pointerdown', event => {
   pressedBackdrop = onBackdrop(event)
 })
 document.addEventListener('click', event => {
-  if (pressedBackdrop && onBackdrop(event)) event.target.close()
+  if (pressedBackdrop && onBackdrop(event)) closeModal(event.target)
 })
+
+// Escape animates out too. `cancel` doesn't bubble, so listen while it captures.
+document.addEventListener(
+  'cancel',
+  event => {
+    if (!event.target.matches?.('.modal')) return
+    event.preventDefault()
+    closeModal(event.target)
+  },
+  true
+)
 
 // `close` doesn't bubble, so listen while it captures
 document.addEventListener(
@@ -90,14 +124,13 @@ document.addEventListener(
   ({ target }) => {
     if (!(target instanceof HTMLDialogElement)) return
 
+    closing.delete(target)
+    delete target.dataset.closing
     // Modals opened from inside this one would otherwise stay open, invisible, blocking the page
     document.querySelectorAll('dialog[open]').forEach(dialog => {
       if (target.contains(origins.get(dialog) ?? dialog)) dialog.close()
     })
-
-    Promise.allSettled(
-      target.getAnimations().map(({ finished }) => finished)
-    ).then(() => target.open || restore(target))
+    restore(target)
   },
   true
 )

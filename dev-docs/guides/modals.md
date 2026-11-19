@@ -26,8 +26,8 @@ That's the whole API. The browser draws the modal above everything else, traps f
 ## Opening and closing
 
 - **Triggers** are any element with `data-modal="<id>"`. A link inside a trigger (a row, say) still does its own thing, and Cmd/Ctrl-clicking a trigger that's a real link opens the link.
-- **Close** with an element marked `data-modal-close`, Escape, the backdrop, or `dialog.close()` from a Stimulus controller: `this.element.closest('dialog').close()`.
-- **From JavaScript**, `import { openModal } from '../modal'` and call `openModal('rename_card')` (or pass the element).
+- **Close** with an element marked `data-modal-close`, Escape or the backdrop. Each animates the modal out first.
+- **From JavaScript**, `import { openModal, closeModal } from '../modal'` and call `openModal('rename_card')` or `closeModal(this.element.closest('dialog'))` (an id or the element). `dialog.close()` works too, but skips the animation.
 - **From the server**, `turbo_stream.open_modal("rename_card")`.
 - **To close after a successful form submission**, add `data: { controller: "turbo-frame-modal", action: "turbo:submit-end->turbo-frame-modal#submitEnd" }`.
 
