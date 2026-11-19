@@ -5,12 +5,13 @@ module PopoverHelper
   #
   # Usage in views:
   #   link_to "Label", href, data: popover_data(title: "...", src: "/path", ...)
-  def popover_data(title:, src:, frame_id:, state_url:, external_link: nil, state_title: nil, size: nil)
+  def popover_data(title:, src:, frame_id:, state_url:, external_link: nil, state_title: nil, size: nil, subtitle: nil)
     {
       turbo_frame: "_top",
       behavior: "modal_trigger",
       modal: "shared_popover",
       popover_title: title,
+      popover_subtitle: subtitle,
       popover_src: src,
       popover_frame_id: frame_id,
       popover_state_url: state_url,
