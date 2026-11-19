@@ -19,8 +19,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
 
 RUN corepack enable
 
-RUN gem install bundler -v 2.5.17
-
 ADD yarn.lock /usr/src/app/yarn.lock
 ADD package.json /usr/src/app/package.json
 ADD .ruby-version /usr/src/app/.ruby-version
