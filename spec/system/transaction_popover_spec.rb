@@ -8,11 +8,14 @@ RSpec.describe "Transaction popovers", type: :system do
   let(:hcb_code) { event.canonical_transactions.sole.local_hcb_code }
   let(:popover) { "#shared_popover" }
 
+  def press_escape = page.driver.browser.keyboard.type(:escape)
+  def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
+
   def open_popover
     click_on "TEST DONATION"
     expect(page).to have_css("#{popover} #shared_popover_title", text: "for $1,000.00")
     # Wait for the slide-in to finish so clicks land where the close button ends up
-    expect(page).to have_css(popover, style: { transform: "matrix(1, 0, 0, 1, 0, 0)" })
+    expect(page).to have_css(popover, style: { translate: "none", opacity: "1" })
   end
 
   before do
@@ -59,5 +62,51 @@ RSpec.describe "Transaction popovers", type: :system do
 
     expect(page).to have_css(popover)
     expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
+  end
+
+  context "with a tag" do
+    let!(:tag) { Tag.create!(event:, label: "Snacks", emoji: "🍕", color: "green") }
+
+    # The menu would be inert on <body>, behind the popover, and so would the confirmation
+    it "deletes it through the menu and confirmation inside the popover" do
+      open_popover
+      within(popover) { click_on "+ Add tag" }
+
+      find("button[title='Delete this tag']").click
+      click_on "Confirm"
+
+      expect(page).to have_no_css(".swal-overlay--show-modal")
+      expect { tag.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it "opens the create tag modal from its menu on top of the popover" do
+      open_popover
+      within(popover) { click_on "+ Add tag" }
+      click_on "Create tag"
+
+      expect(page).to have_css("#create_tag[open]")
+      fill_in "Tag name", with: "Travel"
+      expect(open_modals).to contain_exactly("shared_popover", "create_tag")
+
+      press_escape
+      expect(page).to have_no_css("#create_tag")
+      expect(open_modals).to eq(["shared_popover"])
+    end
+  end
+
+  it "closes cleanly when a morph refresh drops its open attribute" do
+    open_popover
+
+    execute_script("Turbo.session.refresh(location.href)")
+
+    expect(page).to have_no_css(popover)
+    expect(open_modals).to be_empty
+  end
+
+  it "ignores a ?popover= that matches no link, however it's written" do
+    visit event_transactions_path(event, popover: %q{"]) , [x='})
+
+    expect(page).to have_css("h1", text: "Transactions")
+    expect(page).to have_no_css(popover)
   end
 end

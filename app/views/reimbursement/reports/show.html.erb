@@ -58,7 +58,7 @@
     <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event? || (@report.reviewer_assignable_by_creator? && policy(@report).edit?)) %>
       <%= pop_icon_to "settings",
                       "#",
-                      data: { behavior: "modal_trigger", modal: "edit" },
+                      data: { modal: "edit" },
                       icon_size: 28,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px;",
@@ -81,13 +81,11 @@
   <% end %>
 <% end %>
 
-<section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
-  <%= modal_header "Edit report" %>
+<%= modal "Edit report", id: "edit", class: "lg:max-w-[450px]" do %>
   <%= render "reimbursement/reports/edit_form" %>
-</section>
+<% end %>
 
-<section data-behavior="modal" role="dialog" id="request_changes" class="modal modal--scroll bg-snow">
-  <%= modal_header "Return report" %>
+<%= modal "Return report", id: "request_changes" do %>
   <p>
     Returning the report to <%= @report.user.first_name %> will allow them (as well as you and other team members) to make changes
     to the report. <span class="bold">If you have specific changes you'd like to see made, list them below:</span>
@@ -103,10 +101,9 @@
 
     <%= form.submit "Return this report to #{@report.user.first_name}" %>
   <% end %>
-</section>
+<% end %>
 
-<section data-behavior="modal" role="dialog" id="submit" class="modal modal--scroll bg-snow">
-  <%= modal_header "Submit report" %>
+<%= modal "Submit report", id: "submit" do %>
   <%= form_with url: reimbursement_report_submit_path(report_id: @report.id), model: [@report, Comment.new] do |form| %>
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
@@ -124,20 +121,19 @@
     <% end %>
     <%= form.submit "Submit" %>
   <% end %>
-</section>
+<% end %>
 
 <% if @report.submitted? %>
-  <section data-behavior="modal" role="dialog" id="all_expenses_approved_modal" class="modal modal--scroll bg-snow">
-    <%= modal_header "All expenses approved" %>
+  <%= modal "All expenses approved", id: "all_expenses_approved_modal" do %>
     <p>You just approved the last expense; do you want to reimburse the entire report?</p>
     <div class="flex gap-2">
-      <%= link_to "Not now", "#", class: "btn bg-muted", rel: "modal:close" %>
+      <%= link_to "Not now", "#", class: "btn bg-muted", data: { modal_close: true } %>
       <%= link_to reimbursement_report_approve_path(@report), class: "btn bg-info", data: { turbo_method: :post } do %>
         <%= inline_icon "payment-transfer" %>
         Reimburse report
       <% end %>
     </div>
-  </section>
+  <% end %>
 <% end %>
 
 <% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
@@ -301,15 +297,13 @@
 
 <%= render partial: "reimbursement/reports/conversation" %>
 
-<section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
-  <%= modal_header "Add payout information" %>
+<%= modal "Add payout information", id: "edit_payout" do %>
   <%= render "users/payout_methods_list", user: @report.user, legal_entity: @report.user.personal_legal_entity %>
-</section>
+<% end %>
 
-<section data-behavior="modal" role="dialog" id="wire_requirements" class="modal modal--scroll bg-snow">
-  <%= modal_header "Wire transfer requirements" %>
+<%= modal "Wire transfer requirements", id: "wire_requirements" do %>
   <%= render partial: "/wires/requirements", locals: { event: @report.event, class: "mb-0" } %>
-</section>
+<% end %>
 
 <style>
   html { scroll-behavior: smooth; }

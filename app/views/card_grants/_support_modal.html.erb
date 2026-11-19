@@ -6,8 +6,7 @@
 <% setting = card_grant.setting %>
 
 <% if setting.support_message.present? %>
-  <section id="support_card_grant_<%= card_grant.id %>" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
-    <%= modal_header "Get support for your card grant" %>
+  <%= modal "Get support for your card grant", id: "support_card_grant_#{card_grant.id}" do %>
     <%= MarkdownService.instance.render(setting.support_message) %>
 
     <% if setting.support_url.present? %>
@@ -28,5 +27,5 @@
         </div>
       </footer>
     <% end %>
-  </section>
+  <% end %>
 <% end %>

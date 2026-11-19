@@ -1,12 +1,12 @@
 <%# locals: (is_blankslate: false) %>
 
-<button type="button" class="pop" data-behavior="modal_trigger" data-modal="share_donation_page"><%= inline_icon "share", size: 28 %></button>
+<button type="button" class="pop" data-modal="share_donation_page"><%= inline_icon "share", size: 28 %></button>
 <a href="<%= start_donation_donations_url(@event) %>" class="btn bg-success gap-2 <%= is_blankslate ? "w-full" : "ml-2" %>" target="_blank">
   Donation page
   <%= inline_icon "external", class: "!m-0" %>
 </a>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="share_donation_page">
+<%= modal id: "share_donation_page" do %>
   <div data-controller="tabs qr-code" data-tabs-default-tab-value="link">
     <header class="pb-8">
       <%= modal_close %>
@@ -104,4 +104,4 @@
       <pre class="bg-gray-200 dark:bg-gray-700 select-all"><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
     </div>
   </div>
-</section>
+<% end %>

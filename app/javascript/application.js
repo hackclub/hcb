@@ -20,28 +20,13 @@ ReactRailsUJS.handleEvent('turbo:before-render', ReactRailsUJS.handleUnmount)
 ReactRailsUJS.handleEvent('turbo:frame-load', ReactRailsUJS.handleMount)
 ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 
-// Remove modals triggered by <turbo-frames> once their frame renders a fresh copy.
-// Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
-// Other modals are kept, since their triggers still need them.
-document.addEventListener('turbo:frame-render', ({ target }) => {
-  // prettier-ignore
-  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)')
-    .filter((_, modal) => target.querySelector(`#${CSS.escape(modal.id)}`))
-    .remove()
-})
-
 document.addEventListener('turbo:before-cache', () => {
-  while ($.modal.isActive()) {
-    const currentModal = $.modal.getCurrent()
-    currentModal.options.doFade = false
-    currentModal.close()
-  }
-
   $('.field_with_errors').removeClass('field_with_errors')
 })
 
 import './controllers'
 import './confirm'
+import './modal'
 
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
@@ -60,5 +45,4 @@ import LocalTime from 'local-time'
 LocalTime.start()
 
 import '@github/text-expander-element'
-import '@oddbird/popover-polyfill'
 import 'emoji-picker-element'

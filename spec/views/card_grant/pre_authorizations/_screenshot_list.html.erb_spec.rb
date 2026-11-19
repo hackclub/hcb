@@ -18,11 +18,11 @@ RSpec.describe "card_grant/pre_authorizations/_screenshot_list" do
     html = Nokogiri::HTML(render_list)
     screenshot = pre_authorization.screenshots.first
 
-    thumbnail = html.at_css("img[data-behavior='modal_trigger']")
+    thumbnail = html.at_css("img[data-modal]")
     expect(thumbnail).to be_present
     expect(thumbnail["data-modal"]).to eq("preview_screenshot_#{screenshot.id}")
 
-    modal = html.at_css("##{thumbnail["data-modal"]}[data-behavior='modal']")
+    modal = html.at_css("dialog##{thumbnail["data-modal"]}")
     expect(modal).to be_present
     expect(modal.at_css("img")["src"]).to eq(thumbnail["src"])
   end
@@ -32,7 +32,7 @@ RSpec.describe "card_grant/pre_authorizations/_screenshot_list" do
 
     html = Nokogiri::HTML(render_list)
 
-    expect(html.at_css("[data-behavior='modal_trigger']")).to be_nil
+    expect(html.at_css("[data-modal]")).to be_nil
     link = html.at_css("a[target='_blank']")
     expect(link).to be_present
     expect(link["href"]).to include("cart.pdf")

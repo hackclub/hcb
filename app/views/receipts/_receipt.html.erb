@@ -51,7 +51,6 @@
       <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
         <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
               "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
             } if receipt.preview %>
       </span>
@@ -74,7 +73,7 @@
     <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
               { controller: "/receipts", action: :destroy, id: receipt.id, popover: local_assigns[:popover] },
-              data: { turbo_method: :delete, behavior: "modal_ignore" },
+              data: { turbo_method: :delete },
               size: 12,
               class: "warning bg-black-important tooltipped tooltipped--w receipt__delete-button",
               style: "position: absolute; top: 4px; right: 4px; z-index: 1;",
@@ -92,7 +91,6 @@
         <%= pop_icon_to "attachment",
             "#",
             data: {
-              "behavior": "modal_trigger",
               "modal": "create_#{receipt.id}"
             },
             size: 24,
@@ -103,7 +101,6 @@
         <%= pop_icon_to "payment-docs",
             reverse_receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
             data: {
-              behavior: "modal_ignore",
               turbo_method: :post,
             },
             size: 24,
@@ -114,7 +111,6 @@
         <%= pop_icon_to "view-close",
             receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion] || local_assigns[:popover]), show_receipt_button: local_assigns[:show_receipt_button], show_author_img: local_assigns[:show_author_img], ledger_instance: @ledger_instance }.compact),
             data: {
-              behavior: "modal_ignore",
               turbo_method: :delete,
               turbo_confirm: "Are you sure you'd like to delete this receipt?",
               turbo_confirm_danger: true,
@@ -128,13 +124,8 @@
 </div>
 
 <% unless defined?(selectable) || receipt.preview.nil? %>
-  <style>
-    .blocker {
-      z-index: 300;
-    }
-  </style>
-  <section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= modal_id %>" style="z-index: 300;">
-    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
+  <%= modal id: modal_id, size: :huge, class: "p0 h-100", style: "overflow: initial;" do %>
+    <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" data-modal-close style="top: 0px; right: -24px; transform: translateY(50%); background: #11111199;">
       <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
     </a>
 
@@ -164,7 +155,7 @@
           <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Details</a>
         </li>
         <div class="flex-grow">
-          <a href="#close_modal" tabindex="0" class="pop modal__close muted" rel="modal:close" style="background: #11111199; margin: 0px; margin-right: 6px;">
+          <a href="#close_modal" tabindex="0" class="pop modal__close muted" data-modal-close style="background: #11111199; margin: 0px; margin-right: 6px;">
             <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
           </a>
         </div>
@@ -187,7 +178,7 @@
 
     </div>
 
-  </section>
+  <% end %>
 <% end %>
 
 <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>

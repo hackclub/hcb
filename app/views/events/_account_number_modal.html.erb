@@ -1,6 +1,6 @@
 <%# locals: () %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="account_number">
+<%= modal id: "account_number" do %>
   <header>
     <%= modal_close %>
     <h2 class="heading mt0 pb0 border-none">
@@ -83,4 +83,4 @@
       <%= button_to "View account number", event_column_account_number_path(@event), method: :post, class: "btn bg-accent" %>
     </div>
   <% end %>
-</section>
+<% end %>

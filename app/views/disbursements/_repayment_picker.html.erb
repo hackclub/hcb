@@ -1,8 +1,7 @@
 <%# locals: (destination_event:, selected_transactions: []) %>
 
-<%# Rendered outside the transfer form: the modal has a form of its own, and opening it moves it to the end of the page anyway. %>
-<%= tag.section class: "modal modal--scroll modal--wide bg-snow", data: { behavior: "modal", controller: "repayment-picker transaction-selection", transaction_selection_transactions_value: selected_transactions, action: "transaction-selection:change->repayment-picker#selectionChanged repayment-picker:reset->transaction-selection#clear" }, role: "dialog", id: "repayment_picker" do %>
-  <%= modal_header "Which transactions are you repaying?" %>
+<%# Rendered outside the transfer form, since the modal has a form of its own. %>
+<%= modal "Which transactions are you repaying?", id: "repayment_picker", size: :wide, data: { controller: "repayment-picker transaction-selection", transaction_selection_transactions_value: selected_transactions, action: "transaction-selection:change->repayment-picker#selectionChanged repayment-picker:reset->transaction-selection#clear" } do %>
   <p class="muted mt-0">Pick the expenses you're paying back. Each selected expense will be repaid in full. You can only repay an expense once.</p>
 
   <%= form_with url: repayable_transactions_disbursements_path, method: :get, class: "flex flex-col gap-2 mb-4", data: { turbo_frame: "repayable_transactions", controller: "form", repayment_picker_target: "form" } do |form| %>

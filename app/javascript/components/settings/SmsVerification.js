@@ -50,9 +50,9 @@ const SmsVerification = ({
 
     let removed = false
 
-    // Render a fresh widget on every open, not just the first: jquery-modal
-    // re-appends the modal element to its blocker each time it opens, and
-    // moving an iframe in the DOM reloads it, killing an existing widget.
+    // Render a fresh widget on every open, not just the first: a modal moves
+    // to <body> each time it opens (app/javascript/modal.js), and moving an
+    // iframe in the DOM reloads it, killing an existing widget.
     const observer = new IntersectionObserver(entries => {
       if (!entries.some(entry => entry.isIntersecting)) return
 

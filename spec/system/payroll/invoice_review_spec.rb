@@ -31,7 +31,7 @@ RSpec.describe "Contractor invoice review", type: :system do
     end
   end
 
-  # Modals fade in with jQuery; a click that lands mid-fade can miss its target
+  # Menus slide open with jQuery; a click that lands mid-slide can miss its target
   def visit_without_animations(path)
     visit path
     page.execute_script("jQuery.fx.off = true")
@@ -51,8 +51,11 @@ RSpec.describe "Contractor invoice review", type: :system do
     open_row(invoice.name)
   end
 
+  # It animates in, so wait until it's where the clicks will land
   def within_invoice_modal(invoice, &)
-    within("##{dom_id(invoice.receipts.first || invoice, :preview)}", &)
+    modal = "##{dom_id(invoice.receipts.first || invoice, :preview)}"
+    expect(page).to have_css(modal, style: { opacity: "1" })
+    within(modal, &)
   end
 
   context "as a manager" do

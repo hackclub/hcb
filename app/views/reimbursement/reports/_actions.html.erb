@@ -64,7 +64,7 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <button class="btn bg-light-warning w-full sm:w-auto" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
+            <button class="btn bg-light-warning w-full sm:w-auto" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -87,7 +87,7 @@
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
         <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || report.unsupported_payout_method? || report.mismatched_currency? %>
           <% if user == current_user %>
-            <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
+            <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? || report.payout_method.present? ? "Edit" : "Add" %> payout information
               <% button_hint = capture do %>
@@ -114,7 +114,7 @@
               </div>
             </div>
           <% elsif admin_signed_in? %>
-            <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
+            <%= link_to payouts_user_path(user), class: "btn bg-warning", data: { modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s payout information
               <% button_hint = capture do %>
@@ -166,9 +166,9 @@
               <% elsif report.event&.financially_frozen? %>
                <span class="bold warning">Warning</span>: <%= report.event.name %> is currently frozen.
               <% elsif report.event.nil? %>
-               <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
+               <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { modal: "edit" } %> to request reimbursement from.
               <% elsif report.below_minimum_amount? %>
-               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>.
+               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer", data: { modal: "wire_requirements" } %>.
               <% end %>
             <% end %>
           </div>
@@ -200,7 +200,7 @@
             <% end %>
           <% end %>
           <% if report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && !report.reviewer.present? %>
-            <%= link_to "#", class: "btn bg-info whitespace-nowrap", data: { behavior: "modal_trigger", modal: "submit_report" } do %>
+            <%= link_to "#", class: "btn bg-info whitespace-nowrap", data: { modal: "submit_report" } do %>
               <%= button %>
             <% end %>
           <% else %>
@@ -208,8 +208,7 @@
               <%= button %>
             <% end %>
           <% end %>
-          <section data-behavior="modal" role="dialog" id="submit_report" class="modal modal--scroll modal--wide bg-snow">
-            <%= modal_header report.assigned_reviewer_required? ? "Select a reviewer" : "Submit report" %>
+          <%= modal report.assigned_reviewer_required? ? "Select a reviewer" : "Submit report", id: "submit_report", size: :wide do %>
 
             <% if report.assigned_reviewer_required? %>
               <p><%= report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
@@ -239,9 +238,9 @@
                 <% end %>
               <% end %>
             <% end %>
-          </section>
+          <% end %>
         <% elsif report.draft? %>
-          <button class="btn bg-info whitespace-nowrap" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
+          <button class="btn bg-info whitespace-nowrap" id="submit_button" data-modal="submit">
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -307,14 +306,13 @@
               <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. After approving this reimbursement, make sure to send a #{render_money(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS)} disbursement from #{report.event.name} to HCB Operations and leave a comment on it linking to this report.", turbo_confirm].compact.join("\n\n") %>
             <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
-              <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
+              <button class="btn bg-info whitespace-nowrap" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
               </button>
-              <section data-behavior="modal" role="dialog" id="convert_to_wise_transfer" class="modal modal--scroll modal--wide bg-snow">
-                <%= modal_header "Process Wise reimbursement" %>
+              <%= modal "Process Wise reimbursement", id: "convert_to_wise_transfer", size: :wide do %>
 
-                <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
+                <button class="btn bg-info whitespace-nowrap" data-modal="wise_approval" id="submit_button">
                   <%= inline_icon "attachment" %>
                   Preferred: Process as reimbursement report
                 </button>
@@ -334,9 +332,8 @@
                   <%= inline_icon "important" %>
                   Alternative: Convert to Wise transfer
                 <% end %>
-              </section>
-              <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll modal--wide bg-snow">
-                <%= modal_header "Approve & send Wise reimbursement" %>
+              <% end %>
+              <%= modal "Approve & send Wise reimbursement", id: "wise_approval", size: :wide do %>
 
                 This reimbursement must be sent via Wise at the same time it is approved to prevent fee fluctuations.
 
@@ -400,7 +397,7 @@
 
                   <%= form.submit "Approve report" %>
                 <% end %>
-              </section>
+              <% end %>
             <% else %>
               <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>

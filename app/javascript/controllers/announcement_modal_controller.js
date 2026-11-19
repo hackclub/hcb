@@ -1,5 +1,3 @@
-/* global $ */
-
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
@@ -72,7 +70,7 @@ export default class extends Controller {
     } else {
       this.inputTarget.value = ''
       this.errorsTarget.parentElement.classList.add('hidden')
-      $.modal.close()
+      this.element.close()
     }
   }
 
