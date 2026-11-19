@@ -1,6 +1,6 @@
 <%# locals: (start_date:, end_date:) %>
 <div data-controller="menu" class="inline-flex items-center">
-  <button type="button" class="btn text-black" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+  <button type="button" class="btn text-black" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close">
     <%= inline_icon "calendar", size: 20, class: "max-w-[unset]" %>
     <%= start_date && end_date ? "#{start_date.to_date.strftime('%b %-d, %Y')} — #{end_date.to_date.strftime('%b %-d, %Y')}" : "Date" %>
   </button>

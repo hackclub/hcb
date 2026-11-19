@@ -55,7 +55,7 @@ RSpec.describe "Modals", type: :system do
       expect_closed(modal)
 
       click_on "Start report"
-      expect(transitions(modal)).to include("opacity", "scale") # in, too
+      expect(transitions(modal)).to include("scale") # in, too
       expect_open(modal)
       press_escape
       expect(page).to have_css("#{modal}[open][data-closing]")
@@ -209,6 +209,18 @@ RSpec.describe "Modals", type: :system do
       execute_script("Turbo.renderStreamMessage(arguments[0])", stream)
 
       expect_open("#outer")
+    end
+
+    it "lets Escape dismiss a SweetAlert over a modal and leave the modal open" do
+      click_on "Open outer"
+      expect_open("#outer")
+      execute_script("swal('Saved!')")
+      expect(page).to have_css(".swal-overlay--show-modal")
+
+      press_escape
+
+      expect(page).to have_no_css(".swal-overlay--show-modal")
+      expect(evaluate_async_script("setTimeout(() => arguments[0](document.getElementById('outer').open), 500)")).to be(true)
     end
 
     it "keeps a SweetAlert opened inside a modal clickable" do

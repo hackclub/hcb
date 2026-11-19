@@ -109,6 +109,61 @@ RSpec.describe "Transaction popovers", type: :system do
     end
   end
 
+  context "with a modal over it and a menu open in that" do
+    let(:menu_item) { "Option one" }
+
+    before do
+      open_popover
+      html = ApplicationController.render(inline: <<~ERB)
+        <%= modal "Layered", id: "layered" do %>
+          <div data-controller="menu">
+            <button type="button" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close">Options</button>
+            <div data-menu-target="content" class="menu__content"><span>#{menu_item}</span></div>
+          </div>
+        <% end %>
+      ERB
+      stream = ApplicationController.render(inline: %(<%= turbo_stream.open_modal("layered") %>))
+      execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0]); Turbo.renderStreamMessage(arguments[1])", html, stream)
+      expect(page).to have_css("#layered[open]", style: { opacity: "1" })
+      click_on "Options"
+      expect(page).to have_text(menu_item)
+    end
+
+    it "closes the menu, then the modal, then the popover, one per Escape" do
+      press_escape
+      expect(page).to have_no_text(menu_item)
+      expect(open_modals).to contain_exactly("shared_popover", "layered")
+
+      press_escape
+      expect_closed("#layered")
+      expect(open_modals).to eq(["shared_popover"])
+
+      press_escape
+      expect_closed(popover)
+      expect(open_modals).to be_empty
+    end
+
+    # Each press moves on, rather than landing on a modal that's still animating out
+    it "closes all three when Escape is pressed three times quickly" do
+      3.times { press_escape }
+
+      expect(page).to have_no_text(menu_item)
+      expect_closed("#layered")
+      expect_closed(popover)
+    end
+  end
+
+  it "cancels renaming the transaction on Escape without closing the popover" do
+    open_popover
+    within(popover) { find("[aria-label='Rename']").click }
+    rename = find("#{popover} input[name='hcb_code[memo]']")
+
+    rename.send_keys(:escape)
+
+    expect(page).to have_no_css("#{popover} input[name='hcb_code[memo]']")
+    expect(open_modals).to eq(["shared_popover"])
+  end
+
   # Morphing drops `open`, which alone would leave it hidden but blocking the page
   it "reopens with fresh content after a morph refresh, as a reload would" do
     open_popover

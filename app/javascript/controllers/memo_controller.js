@@ -73,7 +73,11 @@ export default class extends Controller {
   }
 
   keydown(e) {
-    if (e.key === 'Escape') this.cancel()
+    if (e.key !== 'Escape') return
+
+    // Claimed, so it doesn't also close what's open around it (app/javascript/layers.js)
+    e.preventDefault()
+    this.cancel()
   }
 
   save() {

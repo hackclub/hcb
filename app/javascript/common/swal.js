@@ -1,4 +1,5 @@
 import sweetalert from 'sweetalert'
+import { addLayer, removeLayer } from '../layers'
 
 // An open modal <dialog> makes the rest of the page inert, SweetAlert's overlay
 // included, so the alert gets a top-layer dialog of its own while one is open.
@@ -9,12 +10,15 @@ export default function swal(...args) {
   const layer = document.createElement('dialog')
   layer.className = 'swal-layer'
   layer.append(document.querySelector('.swal-overlay'))
-  // SweetAlert handles Escape itself, resolving the alert
+  // Only answering the alert closes it, not a close request like Android's back gesture
   layer.addEventListener('cancel', event => event.preventDefault())
   document.body.append(layer)
   layer.showModal()
+  // SweetAlert answers Escape itself; as the top layer, it keeps Escape from the modal beneath
+  addLayer(layer, () => {})
 
   alert.finally(() => {
+    removeLayer(layer)
     document.body.append(layer.firstElementChild)
     layer.remove()
   })

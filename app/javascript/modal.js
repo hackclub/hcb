@@ -1,17 +1,22 @@
 import { Turbo } from '@hotwired/turbo-rails'
+import { addLayer, removeLayer } from './layers'
 
-// Modals are native <dialog>s (ModalHelper#modal), so the browser stacks them,
-// traps focus and closes the top one on Escape. Everything here is delegated
-// from the document, so a page with hundreds of modals costs nothing until one opens.
+// Modals are native <dialog>s (ModalHelper#modal), so the browser stacks them
+// and traps focus, and Escape closes the top one (app/javascript/layers.js).
+// Everything here is delegated from the document, so a page with hundreds of
+// modals costs nothing until one opens.
 
 // Where each open modal was rendered, so closing it can put it back
 const origins = new WeakMap()
 // Modals animating out, so reopening one mid-animation keeps it open
 const closing = new WeakMap()
 
+// An id or the <dialog> itself
+const find = target =>
+  typeof target === 'string' ? document.getElementById(target) : target
+
 export function openModal(target, trigger = null) {
-  const dialog =
-    typeof target === 'string' ? document.getElementById(target) : target
+  const dialog = find(target)
   if (!dialog) return
 
   closing.delete(dialog)
@@ -28,17 +33,19 @@ export function openModal(target, trigger = null) {
   // Fired when already open too, so a modal like the popover can load something else
   dialog.dispatchEvent(new CustomEvent('modal:open', { detail: { trigger } }))
   if (!dialog.open) dialog.showModal()
+  addLayer(dialog, () => closeModal(dialog))
 }
 
 // Animates it out, then closes it. `dialog.close()` closes it at once.
 export function closeModal(target) {
-  const dialog =
-    typeof target === 'string' ? document.getElementById(target) : target
+  const dialog = find(target)
   if (!dialog?.open || closing.has(dialog)) return
 
   const run = {}
   closing.set(dialog, run)
   dialog.dataset.closing = ''
+  // Already on its way out, so Escape moves on to what's beneath
+  removeLayer(dialog)
   // Ones opened from inside it go with it
   document.querySelectorAll('dialog[open]').forEach(other => {
     if (other !== dialog && dialog.contains(origins.get(other) ?? other))
@@ -107,7 +114,8 @@ document.addEventListener('click', event => {
   if (pressedBackdrop && onBackdrop(event)) closeModal(event.target)
 })
 
-// Escape animates out too. `cancel` doesn't bubble, so listen while it captures.
+// Other close requests, like Android's back gesture, animate out too. `cancel`
+// doesn't bubble, so listen while it captures.
 document.addEventListener(
   'cancel',
   event => {
@@ -126,6 +134,7 @@ document.addEventListener(
 
     closing.delete(target)
     delete target.dataset.closing
+    removeLayer(target)
     // Modals opened from inside this one would otherwise stay open, invisible, blocking the page
     document.querySelectorAll('dialog[open]').forEach(dialog => {
       if (target.contains(origins.get(dialog) ?? dialog)) dialog.close()

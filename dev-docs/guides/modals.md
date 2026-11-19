@@ -31,9 +31,20 @@ That's the whole API. The browser draws the modal above everything else, traps f
 - **From the server**, `turbo_stream.open_modal("rename_card")`.
 - **To close after a successful form submission**, add `data: { controller: "turbo-frame-modal", action: "turbo:submit-end->turbo-frame-modal#submitEnd" }`.
 
-## Nesting
+## Nesting and Escape
 
-Open a modal from inside another and it stacks on top. Escape and the backdrop close only the top one, and closing a modal closes any opened from inside it, so a hidden child can never be left blocking the page.
+Open a modal from inside another and it stacks on top. The backdrop closes only the top one, and closing a modal closes any opened from inside it, so a hidden child can never be left blocking the page.
+
+Escape closes one thing at a time, newest first: with the popover, a modal over it and a menu open in that, three presses close the menu, the modal, then the popover. Modals and menus join this stack (`app/javascript/layers.js`) while they're open:
+
+```js
+import { addLayer, removeLayer } from '../layers'
+
+addLayer(this, () => this.close()) // on open
+removeLayer(this) // on close
+```
+
+Something that handles Escape on its own, like a combobox closing its suggestions or an inline edit cancelling, calls `event.preventDefault()`, and the stack leaves that press alone.
 
 ## Where to render a modal
 
@@ -46,9 +57,9 @@ While it's open, it isn't inside its original ancestors, so Herb state and forms
 While a modal is open, the rest of the page is inert. Two things that render to `<body>` handle this already:
 
 - **Menus** (`menu` controller) opened from inside a modal render inside it.
-- **SweetAlert** (`swal`, `data-turbo-confirm`) gets a top-layer dialog of its own. Import it from `common/swal`, not `sweetalert`.
+- **SweetAlert** (`swal`, `data-turbo-confirm`) gets a top-layer dialog of its own, on top of the Escape stack. Import it from `common/swal`, not `sweetalert`.
 
-Anything new that portals to `<body>` needs the same treatment.
+Anything new that portals to `<body>` needs the same treatment, and a layer if Escape should close it.
 
 ## The transaction popover
 

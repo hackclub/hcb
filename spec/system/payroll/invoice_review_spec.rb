@@ -192,19 +192,20 @@ RSpec.describe "Contractor invoice review", type: :system do
       open_invoice(first_invoice)
       within_invoice_modal(first_invoice) { expect(page).to have_button("Approve") }
 
-      # Everything outside the invoice, including the other invoice's row and the sidebar, is under the scrim
+      # Everything outside the invoice, including the other invoice's row and the sidebar, is under its backdrop
+      invoice_modal = dom_id(first_invoice.receipts.first, :preview)
       second_row = evaluate_script(<<~JS)
         [...document.querySelectorAll('#shared_popover tr.clickable')].find(r => r.textContent.includes('#{second_invoice.name}')).getBoundingClientRect().toJSON()
       JS
-      covering = ->(x, y) { evaluate_script("document.elementFromPoint(#{x}, #{y}).className") }
-      expect(covering.call(second_row["right"] - 5, second_row["top"] + 5)).to eq("blocker__scrim")
-      expect(covering.call(5, 300)).to eq("blocker__scrim")
+      covering = ->(x, y) { evaluate_script("document.elementFromPoint(#{x}, #{y}).closest('dialog')?.id") }
+      expect(covering.call(second_row["right"] - 5, second_row["top"] + 5)).to eq(invoice_modal)
+      expect(covering.call(5, 300)).to eq(invoice_modal)
 
       page.driver.browser.mouse.click(x: 5, y: 300)
 
-      expect(page).to have_no_css("##{dom_id(first_invoice.receipts.first, :preview)}")
+      expect(page).to have_no_css("##{invoice_modal}[open]", visible: :all)
       expect(page).to have_css("#shared_popover", text: second_invoice.name)
-      expect(page).to have_no_css(".blocker__scrim")
+      expect(covering.call(second_row["right"] - 5, second_row["top"] + 5)).to eq("shared_popover")
     end
   end
 

@@ -8,6 +8,7 @@ import {
 } from '@floating-ui/dom'
 import $ from 'jquery'
 import gsap from 'gsap'
+import { addLayer, removeLayer } from '../layers'
 
 export default class extends Controller {
   static targets = ['toggle', 'content']
@@ -35,6 +36,7 @@ export default class extends Controller {
     this.content = undefined
     this.cleanup = undefined
     this.isOpen = false
+    removeLayer(this)
     document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
@@ -88,6 +90,7 @@ export default class extends Controller {
         elementResize: this.updateOnResizeValue,
       }
     )
+    addLayer(this, () => this.close())
   }
 
   /**
@@ -134,10 +137,7 @@ export default class extends Controller {
     this.cleanup = undefined
 
     this.isOpen = false
-  }
-
-  keydown(e) {
-    if (e.code == 'Escape' && this.isOpen) this.close()
+    removeLayer(this)
   }
 
   computePosition(firstTime = false) {

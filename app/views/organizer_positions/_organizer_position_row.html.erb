@@ -40,7 +40,7 @@
               <% end %>
             <% elsif organizer_position.fiscal_sponsorship_contract&.present? %>
               <div data-controller="menu" data-menu-placement-value="bottom-start">
-                <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close">
                   <%= inline_icon("clock", size: 24) %>
                 </div>
                 <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">

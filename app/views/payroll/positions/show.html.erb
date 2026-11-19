@@ -20,7 +20,7 @@
           <%= pop_icon_to "more",
               "#",
               class: "align-middle", "aria-label": "More Options",
-              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
             <% if @position.draft? %>
