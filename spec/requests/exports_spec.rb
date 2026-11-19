@@ -7,6 +7,8 @@ RSpec.describe "Transaction exports", type: :request do
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
   describe "GET /exports/:event.pdf" do
+    before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
     it "renders the statement for a valid month" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month }
 

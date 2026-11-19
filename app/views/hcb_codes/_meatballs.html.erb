@@ -6,14 +6,20 @@
 <%# Disputing a charge on a card that can be replaced first offers to replace it, since its details may be compromised %>
 <% dispute_card = hcb_code.stripe_card if disputable && hcb_code.stripe_card? %>
 <% dispute_flow = StripeCard::ReplacementFlow.new(stripe_card: dispute_card, flow: "losten", reason: "stolen", dispute: hcb_code) if dispute_card && policy(dispute_card).replace_lost_or_stolen? %>
-<% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
+<% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? && hcb_code.ledger_item&.repaying_repayment.nil? %>
 <% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
+<%# Only offered when there's something of the same amount to match it with. A transfer's sender links it through the incoming side. %>
+<% repayment_item = Repayment.markable_item(hcb_code.ledger_item) if hcb_code.ledger_item.present? %>
+<% markable_repayment = repayment_item.present? && policy(repayment_item).mark_repayment? && Repayment.match_candidates(repayment_item, current_user).exists? %>
 
 <% merchant_not_allowed = hcb_code.stripe_card? && hcb_code.pt.hcb_decline_reason == :merchant_not_allowed && hcb_code.stripe_card&.card_grant.present? %>
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 
-<% if (disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
+<%# A transfer's sender can link it as a repayment without being a member here; everything else is for members. %>
+<% disputable = flaggable = pinnable = open_invoice = reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(as: :member) %>
+
+<% if disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || markable_repayment || allowable_on_card || allowable_on_event %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -43,6 +49,12 @@
           Repay this
         <% end %>
       <% end %>
+      <% if markable_repayment %>
+        <%= link_to "#", data: { behavior: "modal_trigger", modal: "mark_repayment" }, class: "flex items-center" do %>
+          <%= inline_icon "link", size: 24 %>
+          <%= repayment_item.amount_cents.negative? ? "Mark as repaid" : "Mark as a repayment" %>
+        <% end %>
+      <% end %>
       <% if flaggable %>
         <%= link_to ledger_item_invoice_as_personal_transaction_path(hcb_code.ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
           <%= inline_icon "sad", size: 24 %>
@@ -55,7 +67,7 @@
           Manually mark as paid
         <% end %>
       <% end %>
-      <% if hcb_code.donation? %>
+      <% if hcb_code.donation? && organizer_signed_in?(as: :member) %>
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
           <%= inline_icon "person", size: 24 %>
           Edit donor
@@ -91,6 +103,10 @@
 <%# Same condition as the menu above, which holds this modal's trigger %>
 <% if dispute_flow && organizer_signed_in?(as: :member) %>
   <%= render "stripe_cards/actions/replacement_modal", flow: dispute_flow %>
+<% end %>
+
+<% if markable_repayment %>
+  <%= render "ledger/repayments/picker", ledger_item: repayment_item %>
 <% end %>
 
 <% if open_invoice %>

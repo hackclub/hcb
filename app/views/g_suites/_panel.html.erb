@@ -20,7 +20,7 @@
       <p class="mt0">It’s time to set up your servers.</p>
     </section>
   <% end %>
-  <details <%= @g_suite.verified? ? nil : "open" %> class="my-4">
+  <details <% unless @g_suite.verified? %> open<% end %> class="my-4">
     <summary>
       <h2 class="inline-block pb0 border-none mt0">Setup instructions</h2>
     </summary>
@@ -68,7 +68,7 @@
             <tbody>
             <tr class="shade-neutral <%= "muted strikethrough" if @results[:verification_key] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:verification_key] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:verification_key] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -84,7 +84,7 @@
             </tr>
             <tr class="<%= "muted strikethrough" if @results[:spf] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:spf] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:spf] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -101,7 +101,7 @@
             <% if @g_suite.dkim_key.present? %>
               <tr class="shade-neutral <%= "muted strikethrough" if @results[:dkim] %>">
                 <% if @g_suite.verification_error? %>
-                  <td><input type="checkbox" disabled <%= "checked" if @results[:dkim] %>></td>
+                  <td><input type="checkbox" disabled <% if @results[:dkim] %> checked<% end %>></td>
                 <% end %>
                 <td>google._domainkey.<%= @g_suite.domain %></td>
                 <td>3600</td>
@@ -111,7 +111,7 @@
               </tr>
               <tr class="<%= "muted strikethrough" if @results[:dmarc] %>">
                 <% if @g_suite.verification_error? %>
-                  <td><input type="checkbox" disabled <%= "checked" if @results[:dmarc] %>></td>
+                  <td><input type="checkbox" disabled <% if @results[:dmarc] %> checked<% end %>></td>
                 <% end %>
                 <td>_DMARC.<%= @g_suite.domain %></td>
                 <td>3600</td>
@@ -122,7 +122,7 @@
             <% end %>
             <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_primary] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:mx_primary] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:mx_primary] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -138,7 +138,7 @@
             </tr>
             <tr class="<%= "muted strikethrough" if @results[:mx_alt1] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt1] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:mx_alt1] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -154,7 +154,7 @@
             </tr>
             <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt2] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt2] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:mx_alt2] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -170,7 +170,7 @@
             </tr>
             <tr class="<%= "muted strikethrough" if @results[:mx_alt3] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt3] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:mx_alt3] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>
@@ -186,7 +186,7 @@
             </tr>
             <tr class="shade-neutral <%= "muted strikethrough" if @results[:mx_alt4] %>">
               <% if @g_suite.verification_error? %>
-                <td><input type="checkbox" disabled <%= "checked" if @results[:mx_alt4] %>></td>
+                <td><input type="checkbox" disabled <% if @results[:mx_alt4] %> checked<% end %>></td>
               <% end %>
               <td>
                 <% if @g_suite.subdomain %>

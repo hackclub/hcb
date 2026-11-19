@@ -41,8 +41,7 @@ module CardLocking
       scope :card_locking_candidates, -> {
         card_locking_relevant
           .joins(STRIPE_CARDHOLDER_JOIN)
-          .left_outer_joins(:receipts)
-          .where(receipts: { id: nil })
+          .without_receipt
           .where(marked_no_or_lost_receipt_at: nil)
           .where("canonical_transactions.created_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }

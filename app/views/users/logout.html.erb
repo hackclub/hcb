@@ -13,8 +13,9 @@
     <% if params[:error] == "unauthorised_card_grant" %>
       This account does not have access to this grant. Please sign in with the same email you received the invitation at.
     <% else %>
-      You’re currently signed into HCB, would you like to <%= params[:return_to].present? ? "continue" : "head to your dashboard" %>?</h3>
+      You’re currently signed into HCB, would you like to <%= params[:return_to].present? ? "continue" : "head to your dashboard" %>?
     <% end %>
+  </h3>
 
   <div class="flex justify-between items-center flex-wrap w-full">
     <%= link_to "Sign out", logout_users_path, data: { turbo_method: :delete }, class: "block mt-0 no-underline" %>

@@ -26,7 +26,7 @@ module Api
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @transactions = resolve_engines(paginate_cursor(@hcb_codes, &:public_id))
       end
 
       def create
