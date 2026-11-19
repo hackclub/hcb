@@ -287,7 +287,7 @@ RSpec.describe Payroll::Position, type: :model do
         position.mark_expired!
 
         expect(position.expired_at).to eq(Time.current)
-        expect(position.final_invoice_deadline).to eq(Time.current + 30.days)
+        expect(position.final_invoice_deadline).to eq((Time.current + 30.days).end_of_day)
       end
       expect(position.accepting_invoices?).to eq(true)
 
