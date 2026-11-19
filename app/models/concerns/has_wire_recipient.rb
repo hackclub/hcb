@@ -8,8 +8,10 @@ module HasWireRecipient
     has_country_enum(field: :recipient_country)
     validates_length_of :remittance_info, maximum: 140
 
+    normalizes :bic_code, with: ->(bic_code) { bic_code.strip.upcase }
+
     validate do
-      unless bic_code.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
+      unless valid_bic_code?
         errors.add(:bic_code, "is not a valid SWIFT / BIC code")
       end
     end
@@ -39,10 +41,10 @@ module HasWireRecipient
       error = "contains invalid characters; the SWIFT system only supports the English alphabet and numbers."
       regex = /[^A-Za-z0-9\-?:( ).,'+\/]/
 
-      errors.add(:address_line1, error) if address_line1.match(regex)
+      errors.add(:address_line1, error) if address_line1&.match(regex)
       errors.add(:address_line2, error) if address_line2.present? && address_line2.match(regex)
-      errors.add(:address_postal_code, error) if address_postal_code.match(regex)
-      errors.add(:address_state, error) if address_state.match(regex)
+      errors.add(:address_postal_code, error) if address_postal_code&.match(regex)
+      errors.add(:address_state, error) if address_state&.match(regex)
 
       Wire.recipient_information_accessors.excluding("legal_type", "email").each do |recipient_information_accessor|
         errors.add(recipient_information_accessor, error) if recipient_information[recipient_information_accessor]&.match(regex)
@@ -54,6 +56,14 @@ module HasWireRecipient
     validate do
       if recipient_information[:legal_type].present? && !LEGAL_TYPE_FIELD[:options].values.include?(recipient_information[:legal_type])
         errors.add(:legal_type, "must be #{LEGAL_TYPE_FIELD[:options].keys.map(&:downcase).to_sentence(last_word_connector: ' or ')}.")
+      end
+    end
+
+    # see https://docs.column.com/api/counterparty/create-a-counterparty/ for valid options, under "account_type"
+
+    validate on: :create do
+      if account_type.present? && !ACCOUNT_TYPE_FIELD[:options].values.include?(account_type)
+        errors.add(:account_type, "must be #{ACCOUNT_TYPE_FIELD[:options].keys.map(&:downcase).to_sentence(two_words_connector: ' or ')}.")
       end
     end
 
@@ -86,11 +96,11 @@ module HasWireRecipient
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "7-11 digits Cédulas for individuals, or 10-digit NIT for corporations/NGO/organizations" }
         fields << { type: :text_area, key: "purpose_code", label: "Payment purpose", description: "A clearly identifiable purpose of payment (e.g., goods, services, capital, etc.)", reimbursement_default: "Reimbursement" }
       when "DO"
-        fields << { type: :text_field, key: "account_type", label: "Account type" }
+        fields << ACCOUNT_TYPE_FIELD
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "11-digit Cedula or passport number for individuals, or 7+ digits tax ID or 9+ digits Registro Mercantil for corporations/NGO/organizations" }
       when "HN"
-        fields << { type: :text_field, key: "account_type", label: "Account type" }
+        fields << ACCOUNT_TYPE_FIELD
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "13-digit Tarjeta de Identidad for individuals, or 14-digit Registro Tributario Nacional for corporations/NGO/organizations" }
         fields << { type: :text_area, key: "remittance_info", label: "Remittance information", description: "For payments from corporations/organizations to individuals, include a detailed purpose of payment (especially for salaries)" }
@@ -383,9 +393,27 @@ module HasWireRecipient
     }
   }.freeze
 
+  ACCOUNT_TYPE_FIELD = {
+    type: :select,
+    key: "account_type",
+    label: "Account type",
+    options: {
+      "Checking": "checking",
+      "Savings": "savings"
+    }
+  }.freeze
+
+  BIC_CODE_FORMAT = /\A[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?\z/ # https://www.johndcook.com/blog/2024/01/29/swift/
+
+  def valid_bic_code?
+    bic_code.to_s.match?(BIC_CODE_FORMAT)
+  end
+
   def bank_country
+    return recipient_country unless valid_bic_code?
+
     ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
   end
 
-  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX"]).uniq
+  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX", "HNL"]).uniq
 end

@@ -3,20 +3,23 @@
 schedule_file = "config/schedule.yml"
 
 Sidekiq.configure_server do |config|
-  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+  # Sidekiq's default formatter colorizes every line, which only helps someone
+  # reading a terminal. Anywhere else (a log file, the journal, a log shipper)
+  # the escape codes end up in the logs.
+  config.logger.formatter = Sidekiq::Logger::Formatters::Plain.new unless $stdout.tty?
 
-  # Metrics (HCB Wrapped) is given it's own capsule since these jobs can be
+  # Metrics (HCB Wrapped) is given its own capsule since these jobs can be
   # long-running. Long running jobs can cause Sidekiq's usual queue-based
   # priority system to be ineffective.
   #
   # Imagine a scenario where you have 10 threads. You queue 15 long running jobs
   # as `low`, and then another 5 important jobs as `critical`.
   # All 10 sidekiq threads will pick up the first 10 `low` jobs first, and only
-  # once they finish can it pick up the 5 `critical` jobs. After after
+  # once they finish can it pick up the 5 `critical` jobs. After
   # finishing the `critical` jobs, it will then pick up the remaining 5 `low`
   # jobs. This means `critical` jobs can be blocked by long-running `low` jobs.
   #
-  # Giving these long-running jobs it's own capsule guarantees the other queues
+  # Giving these long-running jobs its own capsule guarantees the other queues
   # (like `critical`) are not blocked by long-running jobs.
   config.capsule("throttled") do |capsule|
     capsule.queues = %w[metrics]
@@ -24,8 +27,14 @@ Sidekiq.configure_server do |config|
   end
 end
 
-Sidekiq.configure_client do |config|
-  config.redis = { ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+# sidekiq-cron silently skips a scheduled run if it first checks the schedule
+# more than `reschedule_grace_period` seconds after the run was due, and never
+# catches it up. Its default of 60 seconds can be shorter than a Sidekiq
+# restart, so a run that comes due while Sidekiq is restarting could be
+# dropped. Only the most recent missed run is enqueued, so a longer outage
+# doesn't cause a burst of catch-up jobs.
+Sidekiq::Cron.configure do |config|
+  config.reschedule_grace_period = 5.minutes.to_i
 end
 
 if File.exist?(schedule_file) && Sidekiq.server?

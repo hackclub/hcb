@@ -13,14 +13,24 @@ class LegalEntityPolicy < ApplicationPolicy
   # owned solely by the caller, and it looks the entity up from a user-supplied id.
   # So this must be strict ownership, not replace?'s `admin? || member?`: an admin
   # who is not a member must not be able to redirect a stranger's pending payments.
+  # Managed LEs can't do this because leaving a managed LE without a payee makes it
+  # unusable.
   def switch?
-    member?
+    member? && !record.managed?
   end
 
   # Nobody but the taxpayer may see their TIN, not even the last four digits, and
   # not even an admin or an auditor.
   def show_masked_tin?
     member?
+  end
+
+  def create?
+    member?
+  end
+
+  def set_legal_entity?
+    user.admin? || member?
   end
 
   private

@@ -142,12 +142,4 @@ class EmburseTransaction < ApplicationRecord
     amount > 0 && merchant_name.nil?
   end
 
-  def self.total_emburse_card_transaction_volume
-    -self.where("amount < 0").completed.sum(:amount)
-  end
-
-  def self.total_emburse_card_transaction_count
-    self.where("amount < 0").completed.size
-  end
-
 end

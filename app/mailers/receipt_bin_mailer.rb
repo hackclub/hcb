@@ -21,12 +21,12 @@ class ReceiptBinMailer < ApplicationMailer
 
   def bounce_success
     @receipts_count = params[:receipts_count]
-    @paired_with = params[:paired_with]
+    @paired_ledger_items = params[:paired_ledger_items]
     mail subject: @inbound_mail&.mail&.subject || "Thank you for your #{"receipt".pluralize(@receipts_count)}!"
   end
 
   def bounce_error
-    mail subject: @inbound_mail&.mail&.subject || "An unknown error occured"
+    mail subject: @inbound_mail&.mail&.subject || "An unknown error occurred"
   end
 
 end

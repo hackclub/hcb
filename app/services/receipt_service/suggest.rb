@@ -22,6 +22,7 @@ module ReceiptService
           {
             receipt_id: @receipt.id,
             hcb_code_id: pairing[:hcb_code].id,
+            ledger_item_id: pairing[:hcb_code].ledger_item_id,
             distance: pairing[:distance],
             aasm_state: "unreviewed"
           }
@@ -117,14 +118,6 @@ module ReceiptService
       weight = features.map { |data| data[:weight] }.sum.to_f
 
       value / weight * 100
-    end
-
-    def sorted_transactions
-      transaction_distances.sort_by { |match| match[:distance] }
-    end
-
-    def best_match
-      sorted_transactions.first
     end
 
     private

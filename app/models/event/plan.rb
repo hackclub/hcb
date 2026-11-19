@@ -51,10 +51,6 @@ class Event
       end
     end
 
-    def standard?
-      type == Event::Plan::Standard.name
-    end
-
     def default_values
       {}
     end
@@ -75,7 +71,7 @@ class Event
 
     def self.available_features
       # this must contain every HCB feature that we want enable / disable with plans.
-      %w[cards invoices donations account_number check_deposits transfers promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
+      %w[cards invoices donations account_number check_deposits transfers contractors promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
     end
 
     self.available_features.each do |feature|

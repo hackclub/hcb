@@ -39,17 +39,6 @@ class GsuiteService
     service
   end
 
-  def get_gsuite_user(email)
-    begin
-      client.get_user(
-        email,
-        projection: "full"
-      )
-    rescue Google::Apis::ClientError
-      nil
-    end
-  end
-
   def delete_gsuite_user(email)
     begin
       client.delete_user(email)

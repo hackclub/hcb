@@ -61,7 +61,7 @@ Key consequences for a `restricted` token:
 
 Scopes are granted to a token through the standard OAuth flow (see [Authentication in standards.md](./standards.md#authentication)); they aren't attached automatically. Two things must line up:
 
-1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only `read` / `write` / `admin:read` / `admin:write`, so the granular scopes above can be registered freely even though they aren't in that list.
+1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only the `read` / `write` and admin scopes, so the granular scopes above can be registered freely even though they aren't in that list.
 2. **The token request must ask for them.** Pass the same space-separated strings in the `scope=` parameter of the `authorize` request (URL-encoded, so spaces become `%20`).
 
 To get per-action enforcement (everything in this document), the requested scopes **must include `restricted`** alongside the granular ones. A token without `restricted` ignores every `require_oauth2_scope` declaration and falls back to legacy full access.
@@ -123,10 +123,11 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 
 | Pattern | When to use | Examples |
 |---------|-------------|----------|
-| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` |
+| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` | `card_grants:read`
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |
+| `admin:<resource>:read` / `admin:<resource>:write` | The same admin level, but limited to one resource's endpoints - only comments exist for now | `admin:comments:read`, `admin:comments:write` |
 
 Guidelines:
 
@@ -148,7 +149,7 @@ To gate an action behind a new scope:
    require_oauth2_scope "ach_transfers:write", :create
    ```
 2. **Pick a name** following the [naming conventions](#scope-naming-conventions) — usually `<resource>:read` or `<resource>:write`.
-5. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
+3. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
 
 ---
 

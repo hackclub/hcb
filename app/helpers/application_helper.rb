@@ -4,12 +4,14 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include ComboboxHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper
   include GSuitesHelper
   include HcbCodeHelper
   include InvoicesHelper
+  include LegalEntitiesHelper
   include LoginsHelper
   include LogoHelper
   include OrganizerPosition::Spending::AllowancesHelper
@@ -25,6 +27,16 @@ module ApplicationHelper
   include ToursHelper
   include TurboStreamActionsHelper
   include UsersHelper
+
+  # Flash keys that aren't messages, and so are never rendered as one.
+  def renderable_flash
+    flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
+
+  # Inline image for PDF templates; the renderer can't reach our asset host from dev.
+  def pdf_asset_base64(path)
+    "data:#{Marcel::MimeType.for(name: path)};base64,#{Base64.strict_encode64(Rails.root.join("app/assets/images", path).binread)}"
+  end
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
@@ -157,7 +169,7 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)
@@ -287,13 +299,9 @@ module ApplicationHelper
     content_for(:container_class) { "container--sm" }
   end
 
-  alias_method :page_narrow, :page_sm
-
   def page_xs
     content_for(:container_class) { "container--xs" }
   end
-
-  alias_method :page_extranarrow, :page_xs
 
   def title(text)
     content_for :title, text

@@ -3,7 +3,7 @@
     <% if defined?(icon) && defined?(color) %>
       <%= inline_icon icon, width: 24, class: "bg-#{color}", style: "height: 24px; color: white; border-radius: 999px; padding: 4px;" %>
     <% else %>
-      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png") %>
+      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cdn.hackclub.com/019c256a-a425-7ddc-aa02-9fe82bd89c6b/image.png") %>
     <% end %>
     <div class="flex flex-col" style="transform: translateY(-3px); line-height: 1.6">
       <span>
@@ -27,9 +27,13 @@
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>
         <% end %>
-        <span class="align-middle timestamp" style="cursor: default" data-controller="timestamp" data-timestamp-time-value="<%= activity.created_at.to_i * 1000 %>">
-          <%= time_ago_in_words activity.created_at %> ago
-        </span>
+        <% if local_assigns[:card] && policy(card).show? %>
+          <%= link_to stripe_card_path(card), class: "flex items-center mr-1", aria: { label: "View card" }, data: { turbo_frame: "_top" } do %>
+            <%= inline_icon "card", width: 20, class: "muted", "aria-hidden": true %>
+          <% end %>
+        <% end %>
+        <%# local-time (started in application.js) keeps this relative time current in the browser. %>
+        <%= time_tag activity.created_at, "#{time_ago_in_words(activity.created_at)} ago", class: "align-middle timestamp", style: "cursor: default", data: { local: "time-ago" } %>
       </div>
     </div>
   </div>

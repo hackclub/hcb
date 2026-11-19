@@ -1,8 +1,8 @@
 # Stripe Testing
 
-A range of HCB's features are built using Stripe; including donations, invoices and issued cards. Fortunately, Stripe has amazing developer tools which allow you to use it in development very easily.
+A range of HCB's features are built using Stripe, including donations, invoices and issued cards. Fortunately, Stripe has amazing developer tools which allow you to use it in development very easily.
 
-## Getting setup
+## Getting set up
 
 We recommend creating a US Stripe account in "test mode". Read more here: [docs.stripe.com/test-mode](https://docs.stripe.com/test-mode#test-mode). Once you create a Stripe account, you'll be in the default sandbox.
 
@@ -24,7 +24,7 @@ Once you've started the transfer, it may take some time for the money to actuall
 
 ## Spending money
 
-Once you're setup, you can use most of HCB's Stripe features like normal! Read more for details on specific features.
+Once you're set up, you can use most of HCB's Stripe features like normal! Read more for details on specific features.
 
 ### Donations
 

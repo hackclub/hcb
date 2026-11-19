@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module PopoverHelper
-  def popovers_enabled?
-    current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
-  end
-
   # Builds the data attributes hash for triggering the shared popover modal.
   #
   # Usage in views:
@@ -36,21 +32,27 @@ module PopoverHelper
     )
   end
 
-  def ledger_item_popover_data(item)
+  def ledger_item_popover_data(item, title: nil, state_title: nil)
     # Only serve the ledger item popover to users who can actually view the ledger
     # item show page. Everyone else gets the HCB code popover instead — otherwise
     # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
     # the popover would render empty.
-    if policy(item).show?
+    if auditor_signed_in? && policy(item).show?
       popover_data(
-        title: item.pretty_title,
+        title: title || item.pretty_title,
         src: item.popover_path,
         frame_id: item.public_id,
         state_url: ledger_item_path(item),
-        external_link: ledger_item_path(item)
+        external_link: ledger_item_path(item),
+        state_title:
       )
     else
-      hcb_code_popover_data(item.hcb_code)
+      hcb_code = item.hcb_code
+
+      # fall back to links for items that don't have an HCB code
+      return { turbo: false } unless hcb_code
+
+      hcb_code_popover_data(hcb_code).merge({ popover_title: title, popover_state_title: state_title }.compact)
     end
   end
 
@@ -77,10 +79,10 @@ module PopoverHelper
   end
 
   def contractor_popover_data(contractor)
-    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    path = payroll_position_path(contractor)
     popover_data(
       title: "#{contractor.payee.display_name}'s contract",
-      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      src: payroll_position_path(contractor, frame: true),
       frame_id: "contractor_#{contractor.id}",
       state_url: path,
       external_link: path

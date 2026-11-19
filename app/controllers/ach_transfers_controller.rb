@@ -2,6 +2,7 @@
 
 class AchTransfersController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
 
   before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
@@ -28,7 +29,7 @@ class AchTransfersController < ApplicationController
       end
 
       format.pdf do
-        render pdf: "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})", page_height: "11in", page_width: "8.5in"
+        render_pdf "ACH Transfer ##{@ach_transfer.id} Confirmation Letter (#{@event.name} to #{@ach_transfer.recipient_name} on #{@ach_transfer.canonical_pending_transaction.date.strftime("%B #{@ach_transfer.canonical_pending_transaction.date.day.ordinalize}, %Y")})"
       end
 
       # works, but not being used at the moment
@@ -62,7 +63,7 @@ class AchTransfersController < ApplicationController
           uploader: current_user,
           attachments: ach_transfer_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @ach_transfer.local_hcb_code
+          receiptable: @ach_transfer.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
         ).run!
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
@@ -128,7 +129,7 @@ class AchTransfersController < ApplicationController
       permitted_params << :scheduled_on
     end
 
-    params.require(:ach_transfer).permit(*permitted_params)
+    @ach_transfer_params ||= scope_payment_recipient!(params.require(:ach_transfer).permit(*permitted_params))
   end
 
 end

@@ -37,7 +37,7 @@ module Reimbursement
     monetize :amount_cents, as: "amount", with_model_currency: :currency
     validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }, integer_column: true
     attribute :expense_number, :integer
-    has_one :expense_payout
+    has_one :expense_payout, foreign_key: "reimbursement_expenses_id", inverse_of: :expense
     has_one :event, through: :report
     has_one :user, through: :report
     belongs_to :approved_by, class_name: "User", optional: true
@@ -96,6 +96,14 @@ module Reimbursement
     end
 
     include TouchHistory
+
+    # A reimbursement's receipts hang off the expense, not off the HCB code its
+    # payout creates, so the payout's ledger item can only learn about them from
+    # this side. `Receipt` touches its receiptable on create, update and destroy,
+    # which is what gets us here.
+    after_touch do
+      expense_payout&.ledger_item&.refresh!
+    end
 
     broadcasts_refreshes_to ->(expense) { expense.was_touched? ? :_noop : expense.report }
 
@@ -165,6 +173,27 @@ module Reimbursement
       self.amount_cents = (rate * value).round
     end
 
+    # Attaches `file` as this expense's receipt and fills in the memo and amount
+    # extracted from it. Extraction runs synchronously for :quick_expense uploads.
+    def attach_quick_expense_receipt!(file, uploader:)
+      receipt = ::ReceiptService::Create.new(
+        receiptable: self,
+        uploader:,
+        attachments: [file],
+        upload_method: :quick_expense
+      ).run!.first&.reload # extraction persists to a separate instance, so refresh ours
+      return if receipt.nil?
+
+      suggestions = { memo: receipt.suggested_memo.presence }
+      # amount_cents is derived from value (see #set_amount_cents). A mileage
+      # expense's value is miles, so a receipt total doesn't apply to it.
+      if is_standard? && receipt.extracted_total_amount_cents
+        suggestions[:value] = receipt.extracted_total_amount_cents.to_d / rate
+      end
+
+      update(suggestions.compact)
+    end
+
     def is_standard?
       type.nil? || type == "Reimbursement::Expense"
     end
@@ -173,11 +202,11 @@ module Reimbursement
       type == "Reimbursement::Expense::Fee"
     end
 
-    def is_mileage?
-      type == "Reimbursement::Expense::Mileage"
-    end
-
     delegate :currency, to: :report
+
+    def missing_category?
+      !is_fee? && category.nil?
+    end
 
     def card_label
       return memo + " (#{render_money(amount_cents)})" if memo && !is_standard?

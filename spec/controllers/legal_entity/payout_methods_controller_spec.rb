@@ -122,14 +122,34 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       expect(LegalEntity::PayoutMethod.exists?(pm.id)).to be(true)
     end
 
-    it "does not allow removing the default method" do
+    it "does not allow removing the default method while other methods remain" do
       default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+      legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
 
       delete(:archive, params: { id: default_pm.id })
 
       expect(flash[:error]).to match(/default/i)
       expect(default_pm.reload.archived).to be(false)
       expect(default_pm).to be_default
+    end
+
+    it "removes the default method when it is the only unarchived method" do
+      default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+
+      delete(:archive, params: { id: default_pm.id })
+
+      expect(flash[:success]).to match(/removed/i)
+      expect(default_pm.reload.archived).to be(true)
+      expect(default_pm).not_to be_default
+    end
+
+    it "unpins a draft report from the sole removed method" do
+      default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft, legal_entity_payout_method: default_pm)
+
+      delete(:archive, params: { id: default_pm.id })
+
+      expect(report.reload.legal_entity_payout_method).to be_nil
     end
 
     it "archives a removed method instead of destroying it" do

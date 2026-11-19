@@ -20,7 +20,7 @@ class OrganizerPositionInvitesController < ApplicationController
   def create
     user_email = invite_params[:email]
     role = invite_params[:role]
-    is_signee = invite_params[:is_signee] || false
+    is_signee = (role == "manager" && invite_params[:is_signee]) || false
 
     enable_spending_controls = (invite_params[:enable_controls] == "true") && (role != "manager")
     initial_control_allowance_amount = invite_params[:initial_control_allowance_amount]
@@ -43,7 +43,7 @@ class OrganizerPositionInvitesController < ApplicationController
   end
 
   def show
-    # If the user's not signed in, redirect them to login page
+    # If the user's not signed in, redirect them to the login page
     unless signed_in?
       skip_authorization
       return redirect_to auth_users_path(return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }

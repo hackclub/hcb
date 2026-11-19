@@ -11,6 +11,7 @@
 #  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
+#  intended_at                  :datetime
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -64,10 +65,33 @@ class Ledger
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
+    # Every model that declares `has_one :ledger_item, as: :linked_object`.
+    # Raw bank transactions have no linked object, so nil is allowed.
+    LINKED_OBJECT_TYPES = %w[
+      AchTransfer
+      BankFee
+      CardCharge
+      Check
+      CheckDeposit
+      Disbursement::Incoming
+      Disbursement::Outgoing
+      Donation
+      FeeReimbursementGroup
+      FeeRevenue
+      IncreaseCheck
+      Invoice
+      PaypalTransfer
+      Reimbursement::ExpensePayout
+      Reimbursement::PayoutHolding
+      StripeServiceFee
+      Wire
+      WiseTransfer
+    ].freeze
+
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
-    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
-    has_many :tags, through: :hcb_code
+    has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
+    has_many :tags, through: :ledger_item_tags, source: :tag
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -76,8 +100,13 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
+    has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayments, through: :repayment_allocations
+    has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
+      intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
       pending: "pending", # any CPTs contributing to balance
       settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
       reversed: "reversed", # sum of CTs is zero
@@ -91,6 +120,7 @@ class Ledger
     attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
+    validates :linked_object_type, inclusion: { in: LINKED_OBJECT_TYPES }, allow_nil: true
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -104,6 +134,10 @@ class Ledger
     after_create :map!
     after_touch :map!
 
+    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
+      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
+    end
+
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     def status_text
@@ -113,21 +147,23 @@ class Ledger
     def status_css
       case status.to_sym
       when :pending
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "bg-transparent border border-dashed border-muted m0"
       when :settled
         nil
+      when :intended
+        "bg-transparent border border-dashed border-muted m0"
       when :reversed
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :released
-        "bg-info m0 mr1"
+        "bg-info m0"
       when :rejected
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :failed
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :canceled
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       when :declined
-        "badge m-0 pr-[6px] mr-2 bg-error"
+        "badge m-0 pr-[6px] bg-error"
       end
     end
 
@@ -135,6 +171,12 @@ class Ledger
     # account-verification micro-deposit. Most use "ACCTVERIFY"; a few companies
     # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
     ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
+
+    # SQL counterpart of #likely_account_verification_related?
+    scope :not_likely_account_verification_related, -> {
+      where.not("ABS(ledger_items.amount_cents) < 100 AND ledger_items.linked_object_type IS NULL AND ledger_items.memo ILIKE ANY (ARRAY[?])",
+                ACCOUNT_VERIFICATION_MEMO_MATCHES.map { |s| "%#{sanitize_sql_like(s)}%" })
+    }
 
     # Account-verification micro-deposit amounts prove ownership of a linked
     # external account, so they're redacted from non-organizer (transparency)
@@ -166,16 +208,41 @@ class Ledger
       linked_object_type != "Reimbursement::ExpensePayout"
     end
 
+    # A reimbursement payout's receipts are uploaded to the expense it pays out,
+    # not to the payout itself, so read them from there (as HcbCode#receipts
+    # does for the payout's HCB code). Every other item reads its own.
+    def receipts
+      expense_payout_receipts || super
+    end
+
+    # Tags are event-scoped. When this item is remapped to a different event, any
+    # tag belonging to an event it no longer touches is orphaned (hidden on the
+    # new org's event-filtered views and impossible to remove via `toggle_tag`),
+    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap,
+    # which saves the new mapping on a separate row — so reload the associations
+    # before reading the (now-current) event off the primary ledger.
+    def prune_tags_outside_event!
+      reload
+
+      event = primary_ledger&.event || primary_ledger&.card_grant&.event
+      return if event.nil?
+
+      ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
+      # Recompute from the database, not from what this copy last loaded. One
+      # map! refreshes several in-memory copies of the same item (the
+      # Ledger::Mapping commit hook refreshes its own copy before the copy map!
+      # was called on gets its turn), and a copy loaded before another copy
+      # saved would otherwise see phantom changes: the reversed/released card
+      # charge email went out once per copy. Reloading also drops association
+      # caches that `after_create :map!` memoized before any mapping existed
+      # (e.g. `primary_ledger` as nil).
+      reload
 
       # Counter caches
       self.ct_count = canonical_transactions.size
@@ -183,12 +250,13 @@ class Ledger
       shown_comments = hcb_code&.all_comments || Comment.none
       self.comment_count = shown_comments.size
       self.not_admin_only_comment_count = shown_comments.not_admin_only.size
-      self.receipt_count = receipts.size
+      self.receipt_count = calculate_receipt_count
 
       # Timestamps
+      self.intended_at = calculate_intended_at
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || created_at
+      self.datetime = settled_at || pending_at || intended_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -251,6 +319,8 @@ class Ledger
         "Fiscal sponsorship fee"
       when "FeeRevenue"
         "Fee revenue"
+      when "FeeReimbursementGroup"
+        "Stripe fee reimbursements"
       when "Reimbursement::PayoutHolding"
         "Reimbursement payout holding"
       when "Reimbursement::ExpensePayout"
@@ -263,7 +333,7 @@ class Ledger
     end
 
     def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee", "FeeReimbursementGroup"].include?(linked_object_type) ? "of" : "for"
 
       amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
 
@@ -312,6 +382,8 @@ class Ledger
         "bank-icon"
       when "FeeRevenue"
         "bank-icon"
+      when "FeeReimbursementGroup"
+        "cash"
       when "Reimbursement::PayoutHolding"
         "reimbursement"
       when "Reimbursement::ExpensePayout"
@@ -350,6 +422,17 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
+    end
+
+    # When the item became "intended" — a linked object with no transactions yet
+    # (e.g. an unpaid invoice). Unlike pending_at/settled_at there's no
+    # transaction to derive this from, so the value assigned at creation (the
+    # linked object's creation time) is preserved while the item stays intended
+    # and cleared once a transaction maps in.
+    def calculate_intended_at
+      return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
+      intended_at || created_at
     end
 
     def calculate_pending_at
@@ -398,11 +481,35 @@ class Ledger
       end
     end
 
+    # The receipts on the expense this item pays out, when it is a reimbursement
+    # payout; nil for every other item.
+    def expense_payout_receipts
+      linked_object&.expense&.receipts if linked_object_type == "Reimbursement::ExpensePayout"
+    end
+
+    def calculate_receipt_count
+      return expense_payout_receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+
+      receipts.size
+    end
+
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
     end
 
     def calculate_status
+      # An item that has a linked object but no transactions yet (e.g. an invoice
+      # that has been created but not paid). The linked object keeps it from being
+      # pruned once orphaned-item pruning exists. One that was rejected or
+      # canceled before any transaction existed (a scheduled ACH transfer that
+      # was canceled, a voided invoice) is no longer intended.
+      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+        return :rejected if linked_object.try(:rejected?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :intended
+      end
+
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
         return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
@@ -502,6 +609,8 @@ class Ledger
         end
       when "FeeRevenue"
         "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "FeeReimbursementGroup"
+        linked_object.memo
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
