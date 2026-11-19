@@ -3014,6 +3014,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   end
 
   create_table "versions", force: :cascade do |t|
+    t.bigint "api_token_id"
     t.datetime "created_at", precision: nil
     t.string "event", null: false
     t.bigint "impersonated_by_id"
@@ -3021,6 +3022,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.string "item_type", null: false
     t.jsonb "object"
     t.jsonb "object_changes"
+    t.bigint "user_session_id"
     t.string "whodunnit"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end

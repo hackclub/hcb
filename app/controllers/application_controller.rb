@@ -143,7 +143,10 @@ class ApplicationController < ActionController::Base
   end
 
   def info_for_paper_trail
-    { impersonated_by_id: current_session&.impersonated_by_id }
+    {
+      impersonated_by_id: current_session&.impersonated_by_id,
+      user_session_id: current_session&.id
+    }
   end
 
   def not_found
