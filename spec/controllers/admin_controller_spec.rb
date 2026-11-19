@@ -24,6 +24,27 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#ledger_item" do
+    it "redirects a raw database id to the ledger item's hashid page" do
+      admin = create(:user, :make_admin)
+      item = create(:ledger_item)
+
+      create_session(admin, verified: true)
+
+      get :ledger_item, params: { id: item.id }
+
+      expect(response).to redirect_to("/transactions/#{item.hashid}")
+    end
+
+    it "404s for an unknown id" do
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      expect { get :ledger_item, params: { id: 0 } }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
   describe "#fee_revenues" do
     render_views
 
