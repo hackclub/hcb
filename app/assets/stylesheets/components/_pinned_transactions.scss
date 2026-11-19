@@ -7,12 +7,19 @@
     padding-right: 1rem;
   }
 
-  .pinned__transaction {
+  .pinned__item {
     width: 100%;
     scroll-snap-align: start;
     min-width: 18rem;
     max-width: 504px; // width of 1 card at max screen
 
+    &:hover .pinned__transaction__pin,
+    .pinned__transaction__pin:focus-visible {
+      opacity: 1;
+    }
+  }
+
+  .pinned__transaction {
     &__text {
       overflow: hidden;
       display: -webkit-box;
@@ -28,12 +35,6 @@
       right: 0.75rem;
       opacity: 0;
       transition: opacity 0.125s ease;
-    }
-
-    &:hover {
-      .pinned__transaction__pin {
-        opacity: 1;
-      }
     }
 
     footer svg {

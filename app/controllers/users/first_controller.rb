@@ -13,10 +13,6 @@ module Users
 
       load_team_community
 
-      @macbook_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-macbook")
-      @printer_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer")
-      @airpods_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods")
-
       @advisor_email_body = <<~EMAIL
         At Championships this year, I met a couple of engineers from a nonprofit, Hack Club. They run a service called HCB and they pitch it as "the ultimate booster club for FRC, FTC, and FLL teams."
 
@@ -160,30 +156,6 @@ module Users
       flash.now[:error] = e.record.errors.full_messages.to_sentence
 
       render :new, status: :unprocessable_content
-    end
-
-    def macbook_qr_code
-      raffle_link = current_user(allow_unverified: true).raffles.find_by(program: "first-worlds-2026-macbook")&.referral_link
-
-      if raffle_link.nil?
-        head :not_found
-        return
-      end
-
-      qrcode = RQRCode::QRCode.new(raffle_link)
-
-      png = qrcode.as_png(
-        bit_depth: 1,
-        border_modules: 2,
-        color_mode: ChunkyPNG::COLOR_GRAYSCALE,
-        color: "black",
-        fill: "white",
-        module_px_size: 6,
-        size: 300
-      )
-
-      send_data png, filename: "MacBook Raffle Referral.png",
-        type: "image/png", disposition: "inline"
     end
 
     private

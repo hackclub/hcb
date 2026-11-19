@@ -30,9 +30,15 @@ class Subledger < ApplicationRecord
   has_many :canonical_pending_event_mappings
   has_many :canonical_pending_transactions, through: :canonical_pending_event_mappings
 
-  monetize :balance_cents
-
-  def balance_cents
+  # The old transaction engine's balance, for comparison against the ledger in
+  # Ledger::AssertCorrectLedgerBalancesJob. Use CardGrant#balance_cents instead.
+  #
+  # It drifts whenever a transaction's event mapping and its settlement land in
+  # different jobs. E.g. a grant top-up's canonical transaction is imported and
+  # mapped by TransactionEngine::NightlyJob, but its pending transaction is only
+  # settled by the next PendingEventMappingEngine::NightlyJob, so it counts twice
+  # in between.
+  def legacy_balance_cents
     canonical_transactions.sum(:amount_cents) +
       canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents) +
       canonical_pending_transactions.incoming_disbursement.unsettled.fronted.sum(:amount_cents)

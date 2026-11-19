@@ -45,7 +45,12 @@ class ExportsController < ApplicationController
                   end
 
         if @export.async?
-          @export.requested_by = User.find_or_create_by(email: params[:email]) if params[:email]
+          # A signed-in user's export is always emailed to them. Only a
+          # signed-out requester (which `authorize` above limits to public
+          # orgs) may supply an address via `params[:email]`. Honoring the
+          # param for signed-in users would let a forged cross-site GET mail a
+          # private ledger to an attacker-chosen address.
+          @export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
 
           if @export.requested_by.nil?
             redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event]) and return
@@ -55,15 +60,12 @@ class ExportsController < ApplicationController
 
           ExportJob.perform_later(export_id: @export.id)
 
-          flash[:success] = params[:email] ? "Your export will arrive in a few moments." : "This export is too big, so we'll send you an email when it's ready."
+          flash[:success] = signed_in? ? "This export is too big, so we'll send you an email when it's ready." : "Your export will arrive in a few moments."
 
           redirect_back fallback_location: @event and return
         else
           @export.save!
-          headers["Content-Type"] = @export.mime_type
-          headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-          response.status = 200
-          self.response_body = @export.content
+          stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
         end
       end
 
@@ -99,7 +101,7 @@ class ExportsController < ApplicationController
           end
         end
 
-        render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
+        render_pdf "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement"
       end
     end
   end
@@ -113,10 +115,7 @@ class ExportsController < ApplicationController
           requested_by: current_user,
           event_id: @event.id
         )
-        headers["Content-Type"] = @export.mime_type
-        headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-        response.status = 200
-        self.response_body = @export.content
+        stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
       end
     end
   end

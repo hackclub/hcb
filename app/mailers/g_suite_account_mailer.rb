@@ -1,13 +1,6 @@
 # frozen_string_literal: true
 
 class GSuiteAccountMailer < ApplicationMailer
-  def verify
-    @recipient = params[:recipient]
-
-    mail to: @recipient,
-         subject: "[Action Requested] Verify your HCB Google Workspace account"
-  end
-
   def notify_user_of_activation(params)
     @recipient = params[:recipient]
     @address = params[:address]

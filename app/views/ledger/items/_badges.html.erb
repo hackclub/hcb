@@ -1,0 +1,21 @@
+<%# locals: (item:) %>
+
+<%#
+  The row's comment and receipt counts, wrapped so a stream can swap in fresh
+  ones, even when a badge is hidden at zero. `contents` keeps the badges direct
+  flex items of the memo cell.
+
+  Replaced with `turbo_stream.replace [item, :badges]` by:
+  - ReceiptsController, when one of the item's receipts changes
+  - CommentsController#destroy, when one of the item's comments is deleted
+  - the transaction popovers, which reload after a comment is posted
+
+  The counts are cached on the item (see Ledger::Item#refresh!), and each of
+  those changes refreshes them before the stream renders. The exception is
+  comments shared with the other side of a transfer, which don't refresh the
+  item's count yet.
+%>
+<div id="<%= dom_id(item, :badges) %>" class="contents">
+  <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
+  <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+</div>

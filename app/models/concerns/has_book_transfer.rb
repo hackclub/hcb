@@ -24,10 +24,6 @@ module HasBookTransfer
     book_transfer_receiving_account == bank_account_sym
   end
 
-  def book_transfer_from?(bank_account_sym)
-    book_transfer_originating_account == bank_account_sym
-  end
-
   def book_transfer_originating_account
     book_transfer_accounts[:originator]
   end
