@@ -253,7 +253,7 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [setup.docker-images, db-schema, assets, setup.chrome, captain, abq]
+    use: [setup.docker-images, db-schema, assets, setup.chrome, setup.imagemagick, captain, abq]
     docker: true
     runner:
       cpus: 16

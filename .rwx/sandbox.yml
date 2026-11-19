@@ -21,7 +21,7 @@ tasks:
     call: ${{ run.dir }}/packages/setup.yml
 
   - key: sandbox
-    use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome]
+    use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome, setup.imagemagick]
     docker: true
     background-processes:
       - key: postgres

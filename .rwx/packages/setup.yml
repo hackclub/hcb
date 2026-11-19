@@ -9,8 +9,13 @@ tasks:
       sudo apt-get update
       sudo apt-get install -y libpoppler-glib-dev libpq-dev
       sudo apt-get clean
-      # wkhtmltopdf-binary has no Ubuntu 26.04 build. Its 22.04 build runs here.
-      echo ubuntu_22.04_amd64 > "$RWX_ENV/WKHTMLTOPDF_HOST_SUFFIX"
+
+  # Receipt previews are resized through MiniMagick, which shells out to ImageMagick.
+  - key: imagemagick
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y --no-install-recommends imagemagick
+      sudo apt-get clean
 
   - key: docker-images
     docker: preserve-data
@@ -40,9 +45,7 @@ tasks:
   - key: bundle-install
     use: ruby
     tool-cache: ci-bundle-install-v3
-    run: |
-      bundle install
-      bundle exec wkhtmltopdf --version
+    run: bundle install
     runner:
       tmpfs: true
     env:
