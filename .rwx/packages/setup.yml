@@ -1,7 +1,7 @@
 package: true
 
 tool-cache:
-  vault: dylan-test
+  vault: hcb-main
 
 tasks:
   - key: system-packages
@@ -44,7 +44,7 @@ tasks:
 
   - key: bundle-install
     use: ruby
-    tool-cache: ci-bundle-install-v3
+    tool-cache: ci-bundle-install
     run: bundle install
     runner:
       tmpfs: true
@@ -63,7 +63,7 @@ tasks:
 
   - key: yarn-install
     use: [package.use, node]
-    tool-cache: ci-yarn-install-v3
+    tool-cache: ci-yarn-install
     run: |
       corepack enable
       yarn install --frozen-lockfile

@@ -27,7 +27,7 @@ base:
   config: rwx/base 1.2.2
 
 tool-cache:
-  vault: dylan-test
+  vault: hcb-main
 
 aliases:
   rails-test-env: &rails-test-env
@@ -144,7 +144,7 @@ tasks:
       - .rubocop.yml
       - .rubocop_todo.yml
       - .ruby-version
-    tool-cache: ci-rubocop-v3
+    tool-cache: ci-rubocop
     run: bundle exec rubocop
     outputs:
       problems:
