@@ -9,6 +9,7 @@
   <li><strong>Contractor:</strong> <%= @position.payee.display_name %> (<%= @position.payee.email %>)</li>
   <li><strong>Position:</strong> <%= @position.title %></li>
   <li><strong>Description:</strong> <%= @invoice.name %></li>
+  <li><strong>Period:</strong> <%= @invoice.period_label %></li>
   <% if @invoice.description.present? %>
     <li><strong>Notes:</strong> <%= @invoice.description %></li>
   <% end %>
@@ -16,7 +17,7 @@
 </ul>
 
 <p>
-  <%= link_to "Review this invoice on HCB", event_payroll_position_url(event_id: @event.slug, id: @position) %>
+  <%= link_to "Review this invoice on HCB", payroll_position_url(@position) %>
 </p>
 
 <p>

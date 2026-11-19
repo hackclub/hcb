@@ -2,4 +2,4 @@ We're writing to let you know your payout via Wise transfer for "<%= link_to @re
 
 <pre><%= @reason %></pre><% end %>
 
-<%= @cancelled ? "We've cancelled this reimbursement report" : "This reimbursement report will be cancelled" %>, and the funds returned to <%= @report.event.name %>. If you still need to be reimbursed, please check your payout details <%= link_to "here", settings_payouts_url %> and submit a new report.
+<%= @cancelled ? "We've cancelled this reimbursement report" : "This reimbursement report will be cancelled" %>, and the funds returned to <%= @report.event.name %>. If you still need to be reimbursed, please <%= link_to "check your payout details", settings_payouts_url %> and submit a new report.

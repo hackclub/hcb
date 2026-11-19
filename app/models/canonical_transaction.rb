@@ -167,10 +167,6 @@ class CanonicalTransaction < ApplicationRecord
     friendly_memo_in_memory_backup
   end
 
-  def likely_disbursement?
-    memo.to_s.upcase.include?("HCB DISBURSE")
-  end
-
   def likely_hack_club_fee?
     hcb_code.starts_with?("HCB-700-") || memo.to_s.upcase.include?("HACK CLUB BANK FEE TO ACCOUNT")
   end
@@ -281,12 +277,6 @@ class CanonicalTransaction < ApplicationRecord
     return nil unless raw_stripe_transaction
 
     raw_stripe_transaction.stripe_transaction["authorization"]
-  end
-
-  def likely_waveable_for_fee?
-    likely_check_clearing_dda? ||
-      likely_card_transaction_refund? ||
-      likely_disbursement?
   end
 
   # DEPRECATED

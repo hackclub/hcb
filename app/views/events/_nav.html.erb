@@ -8,7 +8,7 @@
 
 <% content_for(:nav) do %>
   <% if !@event&.demo_mode? %>
-    <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
+    <%= render partial: "ledger/items/create_tag", locals: { button: false } %>
   <% end %>
 
   <nav class="dock flex mt-4 font-medium">
@@ -17,7 +17,7 @@
         <span class="mx-1 dock__section"><%= item[:section] %></span>
         <hr class="opacity-80 border-none h-[1px] bg-gray-200">
       <% elsif item[:dropdown] %>
-        <details class="dock" <%= "open" if item[:selected] %>>
+        <details class="dock" <% if item[:selected] %> open<% end %>>
           <summary class="dock__item tooltipped tooltipped--e" aria-label="<%= item[:tooltip] %>">
             <%= inline_icon item[:icon], size: 32, style: "padding: 0" %>
             <span class="flex-grow">

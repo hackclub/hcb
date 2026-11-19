@@ -18,10 +18,12 @@ RSpec.describe Payroll::InvoicesController do
 
   def invoice_params(**overrides)
     {
-      payroll_position_id: position.id,
+      payroll_position_id: position.hashid,
       payroll_invoice: {
         name: "Engineering hours",
         amount: "50.00",
+        start_date: position.start_date.iso8601,
+        end_date: (position.start_date + 6.days).iso8601,
         file: [fixture_file_upload("receipt.png", "image/png")]
       }.merge(overrides)
     }
@@ -81,6 +83,20 @@ RSpec.describe Payroll::InvoicesController do
         end
       end
 
+      it "rejects dates outside the contract period, which the date picker alone can't enforce" do
+        stub_balance(100_00)
+
+        [
+          { start_date: (position.start_date - 1.day).iso8601 },
+          { end_date: (position.end_date + 1.day).iso8601 },
+          { start_date: "not-a-date" },
+          { start_date: (position.start_date + 2.days).iso8601, end_date: (position.start_date + 1.day).iso8601 }
+        ].each do |dates|
+          expect { post :create, params: invoice_params(**dates) }.not_to change(Payroll::Invoice, :count)
+          expect(response).to have_http_status(:unprocessable_content)
+        end
+      end
+
       it "rejects an invoice with no attachment" do
         expect { post :create, params: invoice_params(file: []) }.not_to change(Payroll::Invoice, :count)
 
@@ -128,14 +144,18 @@ RSpec.describe Payroll::InvoicesController do
   end
 
   describe "POST #approve" do
-    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency) }
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency, start_date: position.start_date, end_date: position.start_date) }
 
     def approve!
-      post :approve, params: { event_id: event.slug, id: invoice.id }
+      post :approve, params: { id: invoice.hashid }
     end
 
     context "as an organizer" do
       before { create_session(organizer, verified: true) }
+
+      it "doesn't look invoices up by numeric id" do
+        expect { post :approve, params: { id: invoice.id } }.to raise_error(ActiveRecord::RecordNotFound)
+      end
 
       it "pays an invoice only once when approved twice" do
         stub_balance(100_00)
@@ -172,6 +192,26 @@ RSpec.describe Payroll::InvoicesController do
         expect(invoice.reload).to be_submitted
       end
     end
+
+    context "as an organizer of a different organization" do
+      let(:other_organizer) { create(:user) }
+      let!(:other_event) { create(:event, organizers: [other_organizer]) }
+
+      before { create_session(other_organizer, verified: true) }
+
+      it "can't approve the invoice, even when their own event is passed" do
+        stub_balance(100_00)
+
+        expect { post :approve, params: { event_id: other_event.slug, id: invoice.hashid } }.not_to change(Payment, :count)
+        expect(invoice.reload).to be_submitted
+      end
+
+      it "can't reject the invoice" do
+        post :reject, params: { id: invoice.hashid }
+
+        expect(invoice.reload).to be_submitted
+      end
+    end
   end
 
   describe "POST #reject" do
@@ -179,10 +219,10 @@ RSpec.describe Payroll::InvoicesController do
 
     # Invoices created before amounts had to be positive must still be reviewable.
     it "rejects a legacy invoice with a non-positive amount" do
-      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
+      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency, start_date: position.start_date, end_date: position.start_date)
       invoice.update_column(:amount_cents, 0)
 
-      post :reject, params: { event_id: event.slug, id: invoice.id }
+      post :reject, params: { id: invoice.hashid }
 
       expect(invoice.reload).to be_rejected
       expect(invoice.reviewed_by).to eq(organizer)

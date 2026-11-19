@@ -39,6 +39,11 @@
         Configure payouts
       <% end %>
     <% end %>
+
+    <%= link_to settings_tax_path(legal_entity_id: @legal_entity.id), class: "btn" do %>
+      <%= inline_icon "docs" %>
+      Tax information
+    <% end %>
   </div>
 </h1>
 
@@ -167,6 +172,7 @@
             <th>Date</th>
             <th>Organization</th>
             <th>Description</th>
+            <th>Period</th>
             <th class="text-right">Amount</th>
           </tr>
         </thead>
@@ -179,6 +185,7 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <td class="nowrap"><%= invoice.period_label || tag.span("—", class: "muted") %></td>
               <td class="text-right"><%= render_money invoice.amount_cents %></td>
             </tr>
           <% end %>
@@ -233,8 +240,8 @@
             <td>
               <%= render_money payment.amount_cents %>
 
-              <% if payout.present? && policy(payout.local_hcb_code).show? %>
-                <%= link_to "", hcb_code_url(payout.hcb_code), class: "stretched-link", data: hcb_code_popover_data(payout.local_hcb_code) %>
+              <% if payout.present? && policy(payout.ledger_item).show? %>
+                <%= link_to "", ledger_item_path(payout.ledger_item), class: "stretched-link", data: ledger_item_popover_data(payout.ledger_item) %>
               <% else %>
                 <%= link_to "", payment_path(payment), class: "stretched-link", data: payment_popover_data(payment) %>
               <% end %>
