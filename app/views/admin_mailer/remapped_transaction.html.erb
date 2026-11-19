@@ -1,0 +1,28 @@
+<p>
+  <%= @user.name %> remapped
+  <%= link_to "transaction ##{@canonical_transaction.id}", transaction_admin_url(@canonical_transaction) %>
+  (<%= ApplicationController.helpers.render_money @canonical_transaction.amount_cents %>, <%= @canonical_transaction.date %>)
+  from <b><%= @previous_event&.name || "no event" %></b>
+  to <b><%= @canonical_transaction.event&.name || "no event" %></b>.
+</p>
+
+<% if @first_mapped_at %>
+  <p>
+    It was first mapped in <b><%= @first_mapped_at.strftime("%B %Y") %></b>, a previous month.
+  </p>
+<% end %>
+
+<% local_hcb_code = @canonical_transaction.local_hcb_code %>
+<% if local_hcb_code&.wire? %>
+  <p>
+    ⚠️ This transaction is linked to a wire transfer to <b><%= local_hcb_code.wire.recipient_name %></b> (<%= local_hcb_code.wire.recipient_email %>).
+  </p>
+<% elsif local_hcb_code&.wise_transfer? %>
+  <p>
+    ⚠️ This transaction is linked to a Wise transfer to <b><%= local_hcb_code.wise_transfer.recipient_name %></b> (<%= local_hcb_code.wise_transfer.recipient_email %>).
+  </p>
+<% end %>
+
+<p><b>Memo:</b> <%= @canonical_transaction.memo %></p>
+
+<p>Normally I would offer a cookie, but I don't think that's going to do enough. Sorry.</p>
