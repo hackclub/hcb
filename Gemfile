@@ -192,7 +192,7 @@ end
 gem "jbuilder", "~> 2.13"
 
 gem "ledgerjournal"
-gem "doorkeeper", "~> 5.8"
+gem "doorkeeper", "~> 5.9"
 gem "doorkeeper-device_authorization_grant"
 
 gem "cssbundling-rails", "~> 1.4"
