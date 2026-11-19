@@ -4,23 +4,18 @@
     <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
       data: {
         turbo: "true",
-        controller: "file-drop form",
-        action: expense.report.locked? ? "" : "
+        controller: "file-drop form uploading",
+        "uploading-button-value" => "upload-receipt-button",
+        "uploading-icon-value" => "⌛",
+        action: "submit->uploading#start" + (expense.report.locked? ? "" : "
           dragover->file-drop#dragover
           drop->file-drop#drop
           dragenter->file-drop#dragenter
           dragleave->file-drop#dragleave
-        ",
+        "),
         "file-drop-target" => "dropzone",
         "file-drop-title-value" => "Add receipt"
-      }.compact, html: {
-        onsubmit: "
-          const button = $('#upload-receipt-button', this);
-          $('span', button).text('Uploading...');
-          $('b', button).text('⌛');
-          button.attr('disabled', 'disabled');
-        "
-      }) do |form| %>
+      }.compact) do |form| %>
       <% if expense.is_fee? %>
         <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
       <% elsif expense.receipts.any? %>
@@ -77,7 +72,7 @@
 <% end %>
 <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
   <%= modal_header "Select receipt" %>
-  <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
+  <%= turbo_frame_tag dom_id(expense, :link_modal), src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
     <strong>Loading...</strong>
   <% end %>
 </section>

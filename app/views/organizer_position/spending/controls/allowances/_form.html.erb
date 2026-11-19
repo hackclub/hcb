@@ -1,14 +1,14 @@
 <%# locals: () %>
 
-<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "allowance_form(#{{ balance_cents: @active_control.balance_cents }.to_json})" }) do |form| %>
+<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false, controller: "allowance-form", allowance_form_balance_cents_value: @active_control.balance_cents }, class: "w-full") do |form| %>
   <div class="field field--options w-full max-w-none">
-    <%= form.radio_button :operation, "add", "x-model" => "operation", required: true, checked: true %>
+    <%= form.radio_button :operation, "add", required: true, checked: true, data: { allowance_form_target: "operation", action: "change->allowance-form#update" } %>
     <%= form.label :operation, value: "add", class: "w-full inline-flex" do %>
       <%= inline_icon "plus" %>
       <strong>Increase allowance</strong>
     <% end %>
 
-    <%= form.radio_button :operation, "subtract", "x-model" => "operation", required: true %>
+    <%= form.radio_button :operation, "subtract", required: true, data: { allowance_form_target: "operation", action: "change->allowance-form#update" } %>
     <%= form.label :operation, value: "subtract", class: "w-full inline-flex" do %>
       <%= inline_icon "minus" %>
       <strong>Decrease allowance</strong>
@@ -17,7 +17,7 @@
 
   <div class="field">
     <%= form.label :amount %>
-    <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, "x-on:input": "amount = $el.value" %>
+    <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, data: { action: "allowance-form#setAmount" } %>
   </div>
 
   <div class="field">
@@ -25,7 +25,7 @@
     <%= form.text_field :memo, placeholder: "Lunch for layover at SFO", required: true %>
   </div>
 
-  <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-text="projected_balance"></span></p>
+  <p data-allowance-form-target="preview" hidden><%= @active_control.organizer_position.user.name %>'s spending balance will be <span data-allowance-form-target="projectedBalance"></span></p>
 
   <div class="actions">
     <%= form.submit "Create allowance" %>

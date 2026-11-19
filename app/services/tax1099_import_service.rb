@@ -1,0 +1,976 @@
+# frozen_string_literal: true
+
+# Imports a single W-9, W-8BEN or W-8BEN-E that was collected through Tax1099
+# into TaxBandits, from
+# data an admin has reviewed in the browser (see Admin::Tax1099ImportsController
+# and the tax1099_import Stimulus controller, which parse the Tax1099 CSV export
+# client-side so it is never uploaded anywhere).
+#
+# One row in, one Tax::Form out. TaxBandits accepts the completed form data on
+# the payee's behalf, so unlike a form HCB sends for signature there is nothing
+# to wait for: the form is marked completed here rather than by a later webhook.
+class Tax1099ImportService
+  class Error < StandardError; end
+
+  # Raised when a not-discarded tax1099 form already exists for this TIN, or,
+  # for a W-8 with no TIN, for this row; see #duplicate_tax1099_form.
+  class DuplicateError < Error
+    attr_reader :existing_form
+
+    def initialize(existing_form)
+      @existing_form = existing_form
+      super("this has already been imported as #{existing_form.public_id}")
+    end
+
+  end
+
+  class ValidationError < Error; end
+
+  # Raised when TaxBandits rejects the submission. Its message is scrubbed of the
+  # submitted TIN before it is built; see #submit!.
+  class SubmissionError < Error; end
+
+  # Raised when the form's fate at TaxBandits is unknown to HCB: the call failed
+  # in a way that doesn't say whether the submission was accepted (a timeout, a
+  # dropped connection, a 5xx), or it was accepted without a submission id, or
+  # recording the acceptance failed. The form has been kept, as sent rather than
+  # completed, so that it can't be submitted a second time; see #run.
+  class UncertainSubmissionError < Error
+    attr_reader :form
+
+    def initialize(form, submission_id: nil)
+      @form = form
+
+      super(
+        if submission_id
+          "TaxBandits accepted this form as submission #{submission_id}, but HCB couldn't record that, " \
+          "so #{form.public_id} is still saved as sent, not completed. It needs its external_id set " \
+          "to #{submission_id} and marking completed. Don't import this row again."
+        else
+          "TaxBandits didn't confirm whether it accepted this form, so it has been saved as " \
+          "#{form.public_id} (sent, not completed) to keep it from being submitted twice. " \
+          "Look up PayeeRef #{form.public_id} in TaxBandits: if the submission is there, the form " \
+          "still needs marking completed; if it isn't, discard #{form.public_id} and import this row again."
+        end
+      )
+    end
+
+  end
+
+  # Internal: signals an uncertain outcome from #submit! to #run.
+  class UncertainOutcome < StandardError; end
+  private_constant :UncertainOutcome
+
+  # Tax1099's export has no column we can trust for this, so it is never
+  # prefilled from the CSV and an admin always picks it by hand.
+  FEDERAL_TAX_CLASSIFICATIONS = [
+    "Individual", "Sole Proprietor", "Single Member LLC Not Elected", "Single Member LLC Elected",
+    "C Corporation", "S Corporation", "Partnership", "Trust or Estate", "LLC C Corporation",
+    "LLC S Corporation", "LLC Partnership", "Others"
+  ].freeze
+
+  # The suffixes TaxBandits accepts, and nothing else (not even "Jr."). See
+  # #suffix for how a row's is matched to one.
+  SUFFIXES = %w[Jr Sr I II III IV V VI VII].freeze
+
+  W9 = "W9"
+  W8BEN = "W8BEN"
+  W8BENE = "W8BENE"
+  FORM_TYPES = [W9, W8BEN, W8BENE].freeze
+  W8_FORM_TYPES = [W8BEN, W8BENE].freeze
+
+  TIN_TYPES = %w[SSN EIN FTIN].freeze
+
+  # The Hack Foundation's (Hack Club's) own EIN, digits only. Some Tax1099 rows
+  # carry it as the payee's TIN (a form filled in by or for Hack Club itself),
+  # and those are never imported: the page skips them as the CSV loads, and
+  # #validate! refuses them.
+  HACK_CLUB_EIN = "812908499"
+
+  # Whether a TIN, however it's formatted, is Hack Club's EIN. Mirrors
+  # isHackClubTin() in tax1099_import_controller.js.
+  def self.hack_club_tin?(tin)
+    tin.to_s.gsub(/\D/, "") == HACK_CLUB_EIN
+  end
+
+  # Folds a country name for matching: accents stripped, lowercased, letters and
+  # digits only, so "TURKIYE", "Türkiye" and "türkiye" agree, as do "KOREA,
+  # REPUBLIC OF" and "Korea, Republic of". Mirrors normalizeName() in
+  # tax1099_import_controller.js, character for character.
+  def self.normalize_name(name)
+    name.to_s.unicode_normalize(:nfd).gsub(/\p{Mn}/, "").downcase.gsub(/[^a-z0-9]/, "")
+  end
+
+  # Normalized name => 2-letter code, for every name the countries gem knows a
+  # country by: its ISO names, its common and English names, and its unofficial
+  # names (which cover exports' "VIET NAM", "SOUTH KOREA", "IVORY COAST"...).
+  # Built once here and shipped to the page, so the server and the page match
+  # exactly the same names.
+  COUNTRY_CODES_BY_NAME = ISO3166::Country.all.each_with_object({}) { |country, codes|
+    names = [country.iso_short_name, country.iso_long_name, country.common_name, country.translations["en"]] +
+            Array(country.unofficial_names)
+
+    names.each do |name|
+      key = normalize_name(name)
+      codes[key] ||= country.alpha2 if key.present?
+    end
+  }.freeze
+
+  # Two-letter code => the names it goes by, for every US state, DC, and
+  # territory: what a W-9's state is validated against, and what the page uses
+  # to turn the full names some Tax1099 rows have ("Massachusetts") into codes.
+  # Several names because the countries gem's differ for a few (DC is both
+  # "District of Columbia" and "Washington DC").
+  US_STATES = ISO3166::Country.new("US").subdivisions.to_h { |code, subdivision|
+    [code, ([subdivision.name, subdivision.translations["en"]] + Array(subdivision.unofficial_names)).compact.uniq.freeze]
+  }.freeze
+
+  # A W-9 is only ever filed with a US TIN. A W-8BEN is imported with the
+  # payee's foreign TIN or, when they have one, their SSN (line 5's US TIN),
+  # which is sent as the form's USTIN and fingerprinted as a US individual's, so
+  # it identifies the same taxpayer as a W-9 filed with that SSN. A W-8BEN-E is
+  # only imported with a foreign TIN.
+  TIN_TYPES_BY_FORM_TYPE = {
+    W9     => %w[SSN EIN],
+    W8BEN  => %w[FTIN SSN],
+    W8BENE => %w[FTIN],
+  }.freeze
+
+  # TaxBandits' Ch3Status values for a W-8BEN-E. Tax1099's export doesn't carry
+  # it, so an admin always picks it from the signed form.
+  CH3_STATUSES = %w[
+    CORPORATION PARTNERSHIP DISREGARDED_ENTITY SIMPLE_TRUST GRANTOR_TRUST COMPLEX_TRUST ESTATE
+    TAX_EXEMPT_ORGANIZATION PRIVATE_FOUNDATION INTERNATIONAL_ORGANIZATION CENTRAL_BANK_OF_ISSUE
+    FOREIGN_GOVERNMENT_CONTROLLED_ENTITY FOREIGN_GOVERNMENT_INTEGRAL_PART
+  ].freeze
+
+  # TaxBandits' length limits for what this sends it, checked by #validate! so a
+  # row that breaks one is caught on the page with the field to fix, instead of
+  # as a rejection. Each is [the TaxBandits field, its limit, when it applies,
+  # what it's sent from]: a FIELDS key, or a method for a value built from
+  # several.
+  #
+  # On a W-9, TaxBandits only checks (and only keeps) FirstNm, MiddleNm and
+  # LastNm for the "Individual" classification. For every other one it accepts
+  # them at any length and stores them as null, keeping just Line1Nm, which is
+  # required and checked for every W-9. Found against TaxBandits' sandbox, Nov
+  # 2026: a 41-character FirstNm on a Partnership or Sole Proprietor W-9 was
+  # accepted and discarded, a 21-character one on an Individual's was rejected.
+  LENGTH_LIMITS = [
+    ["FirstNm", 20, :individual_names?, :first_name],
+    ["MiddleNm", 20, :individual_names?, :middle_name],
+    ["LastNm", 20, :individual_names?, :last_name],
+    ["Line1Nm", 40, [W9], :full_name],
+    ["NmOfIndividual", 60, [W8BEN], :full_name],
+    ["NmOfOrganization", 40, [W8BENE], :first_name],
+    ["OtherDesc", 50, [W9], :other_description],
+  ].freeze
+
+  # Enforces at most one live tax1099 form per TIN; see the migration that adds it.
+  UNIQUE_TIN_INDEX = "index_tax_forms_unique_live_tax1099_tin_hash"
+
+  # :required is true, or the form types the field is required for. :only_for,
+  # when present, is the form types the field applies to at all; the page hides
+  # it for the rest. :hint, when present, is shown as a tooltip on the label.
+  FIELDS = [
+    { key: :form_type, label: "Form Type", required: true },
+    { key: :first_name, label: "Payee First Name (or business name)", required: true },
+    { key: :middle_name, label: "Payee Middle Name", required: false },
+    { key: :last_name, label: "Payee Last Name", required: false },
+    { key: :suffix, label: "Payee Suffix", required: false },
+    # A W-9 always has a TIN. A W-8 may not: its payee can instead tick "FTIN
+    # not legally required"; see #validate_w8_tin!.
+    { key: :tin, label: "TIN (EIN/SSN/FTIN)", required: [W9] },
+    { key: :tin_type, label: "TIN Type", required: [W9] },
+    {
+      key: :tin_verified, label: "TIN verified", required: false, only_for: [W9],
+      hint: "Leave checked if the TIN was verified in Tax1099. Unchecked, a payee whose payments need a verified " \
+            "TIN can't be paid on this form; they'd need to file a new one through HCB."
+    },
+    { key: :ftin_not_legally_required, label: "FTIN not legally required (box ticked on the form)", required: false, only_for: W8_FORM_TYPES },
+    { key: :federal_tax_classification, label: "Federal Tax Classification", required: [W9], only_for: [W9] },
+    # TaxBandits requires it with "Others" (as OtherDesc), and takes it with
+    # nothing else; see #validate!.
+    {
+      key: :other_description, label: "Other Classification Description", required: false, only_for: [W9],
+      hint: "Only for the \"Others\" classification: what the payee wrote beside \"Other\" on line 3 of the W-9."
+    },
+    {
+      key: :ch3_status, label: "Chapter 3 Status", required: [W8BENE], only_for: [W8BENE],
+      hint: "On the W-8BEN-E, copy the one box ticked in Part I, line 4 (\"Chapter 3 Status (entity type)\"). " \
+            "Ignore line 4's \"hybrid entity\" yes/no question, and don't use line 5: that's the Chapter 4 (FATCA) status."
+    },
+    { key: :address1, label: "Address", required: true },
+    { key: :city, label: "City", required: true },
+    { key: :state, label: "State / Province", required: [W9] },
+    { key: :zip_code, label: "Zip / Postal Code", required: [W9] },
+    # The country of residence (or, for a W-8BEN-E, of organization). Ignored for
+    # a W-9, which is always US.
+    { key: :country, label: "Country", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES },
+    {
+      key: :signer_name, label: "Signer Name", required: W8_FORM_TYPES, only_for: W8_FORM_TYPES,
+      hint: "The name printed in the signature section at the bottom of the form " \
+            "(\"Print name of signer\"). On a W-8BEN this is usually the payee themselves."
+    },
+    { key: :email, label: "Email Address", required: true },
+    { key: :completed_on, label: "Form Completed Date", required: true },
+  ].freeze
+
+  Result = Struct.new(:form, :legal_entity, keyword_init: true)
+
+  # data                  — the reviewed row, keyed by FIELDS' :key values.
+  # pdf                   — the uploaded signed form PDF (anything responding to #read).
+  # legal_entity          — the LegalEntity an admin picked when the payee
+  #                         already had business entities to choose from.
+  # new_legal_entity      — true when the admin chose to create a new business
+  #                         entity instead. One of the two is required whenever
+  #                         .legal_entity_candidates isn't empty.
+  # pdf_url_builder       — called with the store token, returns the URL to hand
+  #                         to TaxBandits. Injected because URL generation needs
+  #                         the request's host.
+  def initialize(data:, pdf:, pdf_url_builder:, legal_entity: nil, new_legal_entity: false)
+    @data = data.symbolize_keys
+    @pdf = pdf
+    @pdf_url_builder = pdf_url_builder
+    @legal_entity = legal_entity
+    @new_legal_entity = new_legal_entity
+  end
+
+  def run
+    validate!
+
+    if (duplicate = duplicate_tax1099_form)
+      raise DuplicateError, duplicate
+    end
+
+    # Checked up front because once TaxBandits has accepted the submission
+    # there is no taking it back, so the form must be certain to land somewhere.
+    validate_legal_entity_choice!
+
+    # Staged before anything is created so that a rejected upload (too large,
+    # not a PDF) doesn't leave an orphaned user, legal entity, or form behind.
+    pdf_token = Tax::W9PdfStore.store(@pdf)
+
+    # Past this point, every outcome is reported as one of: success, a
+    # SubmissionError or other error (nothing was accepted, and nothing is kept),
+    # or an UncertainSubmissionError (the form is kept). No other exception can
+    # escape once the form exists, which is what lets the controller tell the
+    # admin that any other error means nothing was submitted.
+    #
+    # The form is committed, as sent, before TaxBandits is contacted, and the
+    # call is made outside any transaction. Whatever TaxBandits does, HCB
+    # already has the record for it: nothing that fails after an accepted
+    # submission (recording its id, a commit) can roll the form back and leave
+    # a certificate at TaxBandits that HCB knows nothing about. It also keeps
+    # the transaction, and the locks it takes, from being held open for the
+    # length of an HTTP call.
+    #
+    # The form is created with its tin_hash already set, which is what
+    # index_tax_forms_unique_live_tax1099_tin_hash keys on, so from that commit
+    # on a second import of the same TIN fails as a duplicate before it has sent
+    # anything to TaxBandits.
+    form = begin
+      claim_form!
+    rescue => e
+      # Nothing was sent, so nothing will ever fetch this PDF.
+      Tax::W9PdfStore.discard(pdf_token)
+
+      # Lost the race to a concurrent import of the same TIN.
+      if e.is_a?(ActiveRecord::RecordNotUnique) && e.message.include?(UNIQUE_TIN_INDEX) && (duplicate = duplicate_tax1099_form)
+        raise DuplicateError, duplicate
+      end
+
+      raise
+    end
+
+    response = begin
+      submit!(form, pdf_token)
+    rescue UncertainOutcome
+      # It may have accepted it: keep the form, as sent, and the PDF for its
+      # fetch. The held tin_hash makes a retry fail as a duplicate.
+      raise UncertainSubmissionError, form
+    rescue
+      # Either TaxBandits answered and said no, or the request was never sent.
+      # Either way nothing exists there to keep a record of.
+      release!(form)
+      Tax::W9PdfStore.discard(pdf_token)
+      raise
+    end
+
+    # Anything without a submission id can't be tied back to a certificate,
+    # and webhooks find forms by that id.
+    submission_id = response["SubmissionId"].presence if response.is_a?(Hash)
+    raise UncertainSubmissionError, form if submission_id.nil?
+
+    begin
+      record_acceptance!(form, submission_id)
+    rescue => e
+      Rails.logger.error("Tax1099ImportService: TaxBandits accepted #{form.public_id} as #{submission_id}, but recording it failed (#{e.class})")
+      raise UncertainSubmissionError.new(form, submission_id:)
+    end
+
+    # The import has succeeded by now, so a failure here mustn't be reported as
+    # if it hadn't. It's reported instead: the refresh runs again the next time
+    # the payee's tax forms, payees or payout methods change, but nothing
+    # guarantees that happens soon.
+    begin
+      form.legal_entity.refresh_pending_contractors_payments!
+    rescue => e
+      Rails.error.report(e, handled: true, context: { form: form.public_id })
+    end
+
+    Result.new(form:, legal_entity: form.legal_entity)
+  end
+
+  # The legal entities an admin has to choose between before a row can be
+  # imported: the payee's entities of the form's type. Empty when the choice is
+  # unambiguous: a personal form always goes on the user's personal legal
+  # entity, and a payee with no entity of the form's type yet gets a new one.
+  # Called on its own (without a TIN or a PDF) so the page can ask the question
+  # before anything sensitive is submitted.
+  def self.legal_entity_candidates(email:, entity_type:)
+    return [] if entity_type.to_s == "person"
+
+    user = User.find_by(email:)
+    return [] if user.nil?
+
+    # Only entities of the form's own type. A form on an entity of another type
+    # (a corporation's W-9 on a business entity, say) never gives the entity its
+    # TIN and is flagged by LegalEntity#entity_type_mismatched_tax_form, which
+    # leaves the payee unpayable, after a submission that can't be taken back.
+    #
+    # And only unarchived ones: a form on an archived entity still leaves the
+    # payee unpayable (LegalEntity#pending_payable_requirements' not_archived).
+    user.legal_entities.not_archived.where(entity_type:).to_a
+  end
+
+  # The user's active personal legal entity. Not User#personal_legal_entity,
+  # which is an unordered has_one that can return an archived personal entity
+  # when the user also has an active one.
+  def self.personal_legal_entity_for(user)
+    user.legal_entities.not_archived.find_by(entity_type: :person)
+  end
+
+  # Keys for every live Tax1099 import, so the page can hide CSV rows that an
+  # earlier session already imported. Built only from what an import already
+  # stores on the form, and never from the TIN: the browser can't compute
+  # tin_hash, and an unkeyed fingerprint of a TIN could be brute-forced.
+  #
+  # This is a convenience filter, not the duplicate check. A row that slips
+  # through (say, its email was edited during review) is still rejected by
+  # tin_hash on import. Must stay in step with rowKey() in
+  # tax1099_import_controller.js.
+  def self.imported_row_keys
+    Tax::Form.tax1099.not_discarded.where.not(completed_at: nil).includes(legal_entity: :users)
+             .flat_map { row_keys_for(_1) }.uniq
+  end
+
+  # One key per user on the form's legal entity.
+  def self.row_keys_for(form)
+    return [] if form.completed_at.nil?
+
+    kind = form.entity_person? ? "person" : "business"
+
+    form.legal_entity.users.map do |user|
+      row_key(email: user.email, completed_on: form.completed_at.to_date.iso8601, kind:, zip_code: form.address_postal_code)
+    end
+  end
+
+  def self.row_key(email:, completed_on:, kind:, zip_code:)
+    [
+      email.to_s.strip.downcase,
+      completed_on,
+      kind,
+      normalize_postal_code(zip_code),
+    ].join("|")
+  end
+
+  # Mirrors Tax::Form#entity_type_from, so an imported form gets the same entity
+  # type a TaxBandits sync of the same form would give it.
+  # Letters and digits only, uppercased, so "sw1a 1aa" and "SW1A 1AA" agree. A
+  # ZIP+4 is cut to its ZIP so "11385" and "11385-1234" agree too.
+  def self.normalize_postal_code(postal_code)
+    normalized = postal_code.to_s.gsub(/[^0-9A-Za-z]/, "").upcase
+    normalized.match?(/\A\d{9}\z/) ? normalized[0, 5] : normalized
+  end
+
+  # The 2-letter code for a country given as its code or any of its names, in
+  # any case; nil for anything else. Mirrors countryCode() in
+  # tax1099_import_controller.js.
+  def self.country_code(value)
+    value = value.to_s.strip
+    return value.upcase if value.length == 2 && ISO3166::Country[value.upcase]
+
+    COUNTRY_CODES_BY_NAME[normalize_name(value)]
+  end
+
+  # The 2-letter code for a US state given as its code or any of its names, in
+  # any case; nil for anything else. Mirrors usStateCode() in
+  # tax1099_import_controller.js.
+  def self.us_state_code(value)
+    value = value.to_s.strip
+    return value.upcase if value.length == 2 && US_STATES.key?(value.upcase)
+
+    US_STATES.find { |_code, names| names.any? { _1.casecmp?(value) } }&.first
+  end
+
+  def self.entity_type_for(form_type:, tin_type:, federal_tax_classification:)
+    if form_type == W8BEN
+      :person
+    elsif form_type == W8BENE
+      :business
+    elsif tin_type == "SSN"
+      :person
+    elsif federal_tax_classification.to_s.include?("Corporation")
+      :corporation
+    else
+      :business
+    end
+  end
+
+  private
+
+  def validate!
+    unless FORM_TYPES.include?(form_type)
+      raise ValidationError, "form type must be one of: #{FORM_TYPES.join(", ")}"
+    end
+
+    missing = FIELDS.select { |field| required?(field) && @data[field[:key]].blank? }
+    raise ValidationError, "missing required field(s): #{missing.map { _1[:label] }.join(", ")}" if missing.any?
+
+    if self.class.hack_club_tin?(@data[:tin])
+      raise ValidationError, "this TIN is Hack Club's own EIN, so this form isn't imported"
+    end
+
+    validate_w8_tin! if W8_FORM_TYPES.include?(form_type)
+
+    tin_types = TIN_TYPES_BY_FORM_TYPE.fetch(form_type)
+    if tin? && !tin_types.include?(@data[:tin_type])
+      raise ValidationError, "TIN type for a #{form_type} must be one of: #{tin_types.join(", ")}"
+    end
+
+    if form_type == W9 && !FEDERAL_TAX_CLASSIFICATIONS.include?(@data[:federal_tax_classification])
+      raise ValidationError, "federal tax classification must be one of: #{FEDERAL_TAX_CLASSIFICATIONS.join(", ")}"
+    end
+
+    if form_type == W9 && @data[:federal_tax_classification] == "Others" && @data[:other_description].blank?
+      raise ValidationError, "the \"Others\" federal tax classification needs an Other Classification Description"
+    end
+
+    if form_type != W8BENE && @data[:suffix].present? && suffix.nil?
+      raise ValidationError, "suffix must be one of: #{SUFFIXES.join(", ")}"
+    end
+
+    validate_lengths!
+
+    if form_type == W9 && us_state.nil?
+      raise ValidationError, "state must be a US state, as its 2-letter code (e.g. MA) or its full name"
+    end
+
+    if form_type == W8BENE && !CH3_STATUSES.include?(@data[:ch3_status])
+      raise ValidationError, "chapter 3 status must be one of: #{CH3_STATUSES.join(", ")}"
+    end
+
+    if W8_FORM_TYPES.include?(form_type)
+      iso_code = self.class.country_code(@data[:country])
+      raise ValidationError, "country must be a country, as its 2-letter code (e.g. IN) or its name" if iso_code.nil?
+      raise ValidationError, "country #{iso_code} has no IRS country code, so TaxBandits can't take it" if country.nil?
+    end
+
+    raise ValidationError, "a signed form PDF is required" if @pdf.blank?
+
+    raise ValidationError, "form completed date must be a date (YYYY-MM-DD)" if completed_on.nil?
+    raise ValidationError, "form completed date can't be in the future" if completed_on > Time.zone.today
+  end
+
+  def required?(field)
+    field[:required] == true || (field[:required].is_a?(Array) && field[:required].include?(form_type))
+  end
+
+  def form_type
+    @data[:form_type].to_s
+  end
+
+  def validate_lengths!
+    too_long = LENGTH_LIMITS.filter_map do |taxbandits_field, limit, applies, source|
+      next unless applies.is_a?(Symbol) ? send(applies) : applies.include?(form_type)
+
+      value = FIELDS.any? { _1[:key] == source } ? @data[source].to_s : send(source)
+      next if value.length <= limit
+
+      label = FIELDS.find { _1[:key] == source }&.fetch(:label) || "The full name (first, middle, last and suffix together)"
+      "#{label} is #{value.length} characters, and TaxBandits takes at most #{limit} (#{taxbandits_field})"
+    end
+
+    raise ValidationError, too_long.to_sentence if too_long.any?
+  end
+
+  # Whether TaxBandits checks FirstNm, MiddleNm and LastNm; see LENGTH_LIMITS.
+  # The W-8BEN's limits are from its documentation, not tested.
+  def individual_names?
+    form_type == W8BEN || (form_type == W9 && @data[:federal_tax_classification] == "Individual")
+  end
+
+  # The row's suffix as TaxBandits spells it, matched case-insensitively and
+  # without a trailing period, so "Jr.", "JR" and "jr" are all "Jr". nil when
+  # there's none, or it isn't one TaxBandits takes (see #validate!).
+  def suffix
+    given = @data[:suffix].to_s.strip.delete_suffix(".")
+    SUFFIXES.find { _1.casecmp?(given) } if given.present?
+  end
+
+  # A W-9 payee is always in the US. For a W-8 it's the country of residence
+  # (or organization), which is also the country that issued its foreign TIN.
+  #
+  # As its IRS (GEC) country code, not its ISO code: that's what TaxBandits
+  # takes, returns, and so what Tax::Form#identify_tin namespaces a foreign TIN
+  # by. The two differ for many countries, often with an ISO code that is a
+  # different country's IRS code (GB is Gabon, AU Austria, CH China). nil for a
+  # W-8 country that isn't one, or has no IRS code (see #validate!).
+  def country
+    return "US" if form_type == W9
+
+    iso_code = self.class.country_code(@data[:country])
+    ISO3166::Country[iso_code]&.gec if iso_code
+  end
+
+  # A W-8 either gives a foreign TIN or says, with the box on the form, that the
+  # payee's country doesn't require one. Exactly one, so the admin is copying
+  # what the signed form says rather than HCB assuming it from a blank TIN. A
+  # W-8BEN with an SSN instead may have the box ticked or not: the box is about
+  # the foreign TIN, which the SSN doesn't stand in for on the form.
+  def validate_w8_tin!
+    if !tin? && !ftin_not_legally_required?
+      raise ValidationError, "enter the foreign TIN, or tick \"FTIN not legally required\" if the form does"
+    elsif foreign_tin? && ftin_not_legally_required?
+      raise ValidationError, "a form with a foreign TIN can't also say an FTIN isn't legally required"
+    end
+  end
+
+  def tin?
+    @data[:tin].present?
+  end
+
+  def ftin_not_legally_required?
+    ActiveModel::Type::Boolean.new.cast(@data[:ftin_not_legally_required]) || false
+  end
+
+  # The W-9's state as its 2-letter code (see #validate!).
+  def us_state
+    self.class.us_state_code(@data[:state])
+  end
+
+  # What's stored and sent as the state: a W-9's as its code, a W-8's (a
+  # province or region anywhere) as given.
+  def state
+    form_type == W9 ? us_state : @data[:state].presence
+  end
+
+  # Checked by default on the page; a row with no answer at all (an older page)
+  # counts as checked. Only a W-9's can be unchecked: nothing requires a W-8's
+  # TIN to be verified.
+  def tin_verified?
+    return true unless form_type == W9 && @data.key?(:tin_verified)
+
+    ActiveModel::Type::Boolean.new.cast(@data[:tin_verified]) || false
+  end
+
+  def foreign_tin?
+    tin? && @data[:tin_type] == "FTIN"
+  end
+
+  # A W-8BEN's SSN; see TIN_TYPES_BY_FORM_TYPE.
+  def us_tin?
+    tin? && @data[:tin_type] == "SSN"
+  end
+
+  # When the payee actually completed the form in Tax1099, not when it was
+  # imported. LegalEntity#latest_completed_tax_form and friends rank forms by
+  # completed_at, so stamping an old form with the import time would let it
+  # outrank a newer form the payee has since completed through TaxBandits.
+  def completed_on
+    return @completed_on if defined?(@completed_on)
+
+    @completed_on = begin
+      Date.iso8601(@data[:completed_on].to_s)
+    rescue Date::Error
+      nil
+    end
+  end
+
+  # A personal form always goes on the personal entity, and a payee with no
+  # business entity yet gets a new one. Anything else is ambiguous, and the
+  # admin has to settle it before the row is submitted.
+  def validate_legal_entity_choice!
+    if entity_type == :person
+      user = User.find_by(email: @data[:email])
+      return if user.nil? # gets a personal entity when it's created
+
+      personal = self.class.personal_legal_entity_for(user)
+      raise ValidationError, "#{@data[:email]} has no active personal legal entity to put this form on" if personal.nil?
+
+      validate_tin_matches!(personal)
+      return
+    end
+
+    candidates = self.class.legal_entity_candidates(email: @data[:email], entity_type:)
+
+    if @legal_entity
+      # Guard against a stale or hand-edited id pointing at somebody else's
+      # entity: the form would otherwise attach a payee's TIN to a stranger.
+      #
+      # This must come before the TIN comparison. Otherwise any entity's id
+      # could be posted with a guessed TIN, and which of the two errors came
+      # back would say whether the guess was that entity's TIN.
+      unless candidates.include?(@legal_entity)
+        raise ValidationError, "the selected legal entity is not one of #{@data[:email]}'s #{entity_type} legal entities"
+      end
+
+      validate_tin_matches!(@legal_entity)
+    elsif candidates.any? && !@new_legal_entity
+      raise ValidationError, "#{@data[:email]} already has #{entity_type} legal entities; pick one, or choose to create a new one"
+    end
+  end
+
+  # A legal entity's TIN can never change once set, so a form with a different
+  # TIN would never identify it: it would become LegalEntity#mismatched_tax_form
+  # and leave the payee unpayable, after a submission TaxBandits won't take
+  # back. Usually the row's TIN is mistyped, or it belongs on another entity.
+  # Nothing to compare when the row has no TIN or the entity has none yet.
+  def validate_tin_matches!(legal_entity)
+    return if tin_hash.nil? || legal_entity.nil? || legal_entity.tin_hash.nil?
+    return if legal_entity.tin_hash == tin_hash
+
+    if legal_entity.person?
+      raise ValidationError, "#{@data[:email]}'s personal legal entity is already identified by a different TIN. " \
+                             "Check the TIN against the signed form; if it's right, the payee's existing TIN needs sorting out before this can be imported"
+    else
+      raise ValidationError, "the selected legal entity is already identified by a different TIN; check the TIN against the signed form, " \
+                             "or pick another entity or create a new one"
+    end
+  end
+
+  def entity_type
+    @entity_type ||= self.class.entity_type_for(
+      form_type:,
+      tin_type: @data[:tin_type],
+      federal_tax_classification: @data[:federal_tax_classification]
+    )
+  end
+
+  # A foreign TIN is only unique within the country that issued it, so it's
+  # namespaced by the country of residence, the same way Tax::Form#identify_tin
+  # namespaces one from a TaxBandits sync.
+  def tin_hash
+    @tin_hash ||= Tax::IdentificationNumber::Hasher.hash_tin(
+      @data[:tin],
+      tin_type: tin_namespace,
+      country: foreign_tin? ? country : "US"
+    )
+  end
+
+  # The TIN space (individual, entity or foreign) the fingerprint and the form's
+  # tin_type use, as opposed to @data[:tin_type] (SSN, EIN or FTIN).
+  # nil without a TIN, same as a TIN-less W-8 synced from TaxBandits.
+  def tin_namespace
+    return nil unless tin?
+
+    Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: foreign_tin?)
+  end
+
+  def duplicate_tax1099_form
+    return Tax::Form.tax1099.not_discarded.find_by(tin_hash:) if tin_hash
+
+    tinless_duplicate
+  end
+
+  # A W-8 with no TIN has no fingerprint (and find_by(tin_hash: nil) would match
+  # every other TIN-less import), so it's matched the way the page matches CSV
+  # rows: by email, completed date, person or business, and postal code, and
+  # here also by form type. Only against other TIN-less forms: one with a TIN
+  # is a different filing, even from the same payee on the same day.
+  def tinless_duplicate
+    Tax::Form.tax1099.not_discarded.where(tin_hash: nil, form_type:)
+             .includes(legal_entity: :users)
+             .find { |form| self.class.row_keys_for(form).include?(row_key) }
+  end
+
+  def row_key
+    self.class.row_key(
+      email: @data[:email],
+      completed_on: completed_on.iso8601,
+      kind: entity_type == :person ? "person" : "business",
+      zip_code: @data[:zip_code]
+    )
+  end
+
+  # Creates the user, legal entity, and form, and commits them. The form is
+  # populated with what Tax::Form#import_taxbandits_data would otherwise have
+  # derived from a TaxBandits sync (the payee never visits TaxBandits, so
+  # nothing will import it afterwards), and starts out sent: it only becomes
+  # completed once TaxBandits has accepted it; see #record_acceptance!.
+  #
+  # Created with tin_hash already set, rather than updated to it, so the legal
+  # entity doesn't adopt the TIN yet: if TaxBandits rejects it (a mistyped
+  # TIN, say), the entity must not be left with an identity it can never
+  # change.
+  def claim_form!
+    ActiveRecord::Base.transaction do
+      # A TIN-less W-8 has no unique index to stop two concurrent imports of
+      # the same row, so they're serialized on the row's key instead, and the
+      # check before this one is repeated now that it can't race. The lock is
+      # held until this transaction commits, by which time the form is visible.
+      unless tin_hash
+        ActiveRecord::Base.connection.execute(
+          ActiveRecord::Base.sanitize_sql(["SELECT pg_advisory_xact_lock(?)", Zlib.crc32("tax1099_import:#{row_key}")])
+        )
+        if (duplicate = tinless_duplicate)
+          raise DuplicateError, duplicate
+        end
+      end
+
+      legal_entity = find_or_create_legal_entity!
+
+      # Checked up front too; again here against the entity actually used, in
+      # case it has been identified since.
+      validate_tin_matches!(legal_entity)
+
+      Tax::Form.create!(
+        external_service: :taxbandits,
+        source: :tax1099,
+        legal_entity:,
+        form_type:,
+        entity_type:,
+        tin_type: tin_namespace,
+        tin_hash:,
+        address_line1: @data[:address1],
+        address_city: @data[:city],
+        address_state: state,
+        address_postal_code: @data[:zip_code].presence,
+        address_country: country,
+        aasm_state: "sent",
+        sent_at: Time.current,
+        # From the admin's checkbox, not a TIN-match status: TaxBandits never
+        # TIN-matches these (IsTinMatching is false), and setting it this way
+        # sends none of the match emails.
+        tin_verified: tin_verified?,
+        # When the payee completed the paper form, which stays true whether or
+        # not TaxBandits has accepted it yet.
+        completed_at: completed_on.in_time_zone
+      )
+    end
+  end
+
+  # Written directly rather than through mark_completed!, so none of its
+  # callbacks run: no "completed" email to a payee who never visited
+  # TaxBandits, and no import of data HCB already has.
+  def record_acceptance!(form, submission_id)
+    ActiveRecord::Base.transaction do
+      form.update!(external_id: submission_id, aasm_state: "completed")
+      form.adopt_tin_hash_on_legal_entity!
+    end
+  end
+
+  # Undoes #claim_form! after a definite rejection. The form, and a business
+  # legal entity this import created, go; the user stays. HCB never deletes
+  # users, and the payee's account will be needed when the row is retried.
+  def release!(form)
+    ActiveRecord::Base.transaction do
+      legal_entity = form.legal_entity
+      form.destroy_fully!
+
+      if @created_legal_entity
+        # Through a relation, not the association: legal_entity_users has no
+        # :dependent option, so the association's delete_all would only null
+        # out the foreign key and leave the rows behind.
+        LegalEntityUser.where(legal_entity:).delete_all
+        legal_entity.destroy!
+      end
+    end
+  rescue => e
+    # The rejection is what the admin needs to hear about. A form left behind
+    # here is still sent and has no submission id; a retry reports it as a
+    # duplicate, and it can be discarded.
+    Rails.logger.error("Tax1099ImportService: couldn't release #{form.public_id} after a rejection (#{e.class})")
+  end
+
+  def build_payload(form, pdf_url)
+    {
+      "FormType"      => form_type,
+      "IsTinMatching" => false,
+      "PayeeRef"      => form.public_id,
+      "PdfUrl"        => pdf_url,
+    }.merge(
+      case form_type
+      when W9 then { "FormW9" => w9_payload }
+      when W8BEN then { "FormW8Ben" => w8ben_payload }
+      when W8BENE then { "FormW8BENE" => w8bene_payload }
+      end
+    )
+  end
+
+  def w9_payload
+    {
+      "FirstNm"                  => @data[:first_name],
+      "Line1Nm"                  => full_name,
+      "MiddleNm"                 => @data[:middle_name],
+      "LastNm"                   => @data[:last_name],
+      "Suffix"                   => suffix,
+      "TINType"                  => @data[:tin_type],
+      "TIN"                      => @data[:tin],
+      "Address"                  => {
+        "Address1" => @data[:address1],
+        "City"     => @data[:city],
+        "State"    => state,
+        "ZipCd"    => @data[:zip_code]
+      },
+      "FederalTaxClassification" => @data[:federal_tax_classification]
+    }.merge(
+      @data[:federal_tax_classification] == "Others" ? { "OtherDesc" => @data[:other_description] } : {}
+    )
+  end
+
+  # Tax1099's export has a single country, so it is used for citizenship as well
+  # as residence. TaxBandits requires the signer's name on a W-8, which an admin
+  # copies from the signed PDF.
+  def w8ben_payload
+    {
+      "NmOfIndividual"           => full_name,
+      "FirstNm"                  => @data[:first_name],
+      "MiddleNm"                 => @data[:middle_name],
+      "LastNm"                   => @data[:last_name],
+      "Suffix"                   => suffix,
+      "CitizenOfCountry"         => country,
+      "USTINType"                => us_tin? ? "SSN" : nil,
+      "USTIN"                    => us_tin? ? @data[:tin] : nil,
+      "ForeignTIN"               => foreign_tin? ? @data[:tin] : nil,
+      "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
+      "PermanentAddress"         => w8_address,
+      "MailingAddress"           => w8_address,
+      "Signature"                => { "SignerNm" => @data[:signer_name] }
+    }
+  end
+
+  def w8bene_payload
+    {
+      "Part1"  => {
+        "NmOfOrganization"         => @data[:first_name],
+        "CountryOfOrganization"    => country,
+        "Ch3Status"                => @data[:ch3_status],
+        "ForeignTIN"               => @data[:tin].presence,
+        "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
+        "PermanentAdd"             => w8_address,
+        "MailAdd"                  => w8_address
+      },
+      # The certification the signer made by signing the PDF (line 30), dated
+      # when the form was completed.
+      "Part30" => {
+        "IsCapacityToSign" => true,
+        "SignerNm"         => @data[:signer_name],
+        # The format of TaxBandits' sample request; it documents no other.
+        "SignDate"         => completed_on.strftime("%Y-%m-%dT00:00:00")
+      }
+    }
+  end
+
+  # TaxBandits' W-8BEN sample names the region ProvinceOrStateNm while its field
+  # reference (and the W-8BEN-E) call it State, so both are sent.
+  def w8_address
+    {
+      "Address1"          => @data[:address1],
+      "City"              => @data[:city],
+      "State"             => state,
+      "ProvinceOrStateNm" => state,
+      "Country"           => country,
+      "PostalCd"          => @data[:zip_code].presence
+    }
+  end
+
+  def full_name
+    [@data[:first_name], @data[:middle_name], @data[:last_name], suffix].compact_blank.join(" ")
+  end
+
+  # Finds the legal entity the form belongs on by email: a personal form goes
+  # on the user's active personal legal entity, and any other on the entity of
+  # the form's type the admin picked or, failing that, a new one. The choice was
+  # already validated by #validate_legal_entity_choice!.
+  def find_or_create_legal_entity!
+    user = User.find_or_create_by!(email: @data[:email])
+
+    if entity_type == :person
+      self.class.personal_legal_entity_for(user) ||
+        raise(ValidationError, "#{@data[:email]} has no active personal legal entity to put this form on")
+    else
+      @legal_entity || begin
+        @created_legal_entity = true
+        LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
+      end
+    end
+  end
+
+  # Only a 4xx is a definite rejection: TaxBandits answered, and said no. Any
+  # other failure (a timeout, a dropped connection, a 5xx, a response that
+  # couldn't be parsed) leaves open whether it accepted the submission.
+  #
+  # Anything that goes wrong building the payload happens before a byte is
+  # sent, so it propagates as an ordinary error.
+  def submit!(form, pdf_token)
+    payload = build_payload(form, @pdf_url_builder.call(pdf_token))
+
+    begin
+      TaxbanditsService.create_from_data(payload)
+    rescue Faraday::ClientError => e
+      raise SubmissionError, "TaxBandits rejected the submission: #{scrub(rejection_reasons(e))}", cause: nil
+    rescue => e
+      # Nothing from the exception is kept: like a rejection's, its message could
+      # carry the TIN, and here there's nothing in it the admin can act on.
+      Rails.logger.warn("Tax1099ImportService: uncertain TaxBandits outcome for #{form.public_id} (#{e.class})")
+      raise UncertainOutcome, cause: nil
+    end
+  end
+
+  # What TaxBandits said was wrong, from the Errors ([{ Id, Name, Message }]) in
+  # its response body, e.g. "FormW9.FirstNm: ...". Faraday's own message is only
+  # "the server responded with status 400", and the body is still the raw JSON
+  # string here, since raise_error runs before the json middleware. Falls back
+  # to the status when the body has no errors we can read.
+  def rejection_reasons(error)
+    body = error.response_body
+    if body.is_a?(String)
+      body = begin
+        JSON.parse(body)
+      rescue JSON::ParserError
+        nil
+      end
+    end
+
+    reasons = taxbandits_errors(body).filter_map { |e| [e["Name"], e["Message"]].compact_blank.join(": ").presence }
+    reasons.any? ? reasons.join("; ") : "HTTP #{error.response_status}"
+  end
+
+  # Every { Id, Name, Message } under an "Errors" key, wherever it's nested.
+  def taxbandits_errors(node)
+    case node
+    when Hash
+      Array(node["Errors"]).grep(Hash) + node.except("Errors").values.flat_map { taxbandits_errors(_1) }
+    when Array
+      node.flat_map { taxbandits_errors(_1) }
+    else
+      []
+    end
+  end
+
+  # A TaxBandits validation error echoes back the field it rejected — which for
+  # a W-9 can be the TIN itself. Anything that reaches Rails' logs,
+  # AppSignal, or the admin's browser from here has to have the TIN removed
+  # first, and the original exception severed (cause: nil at the raise site) so
+  # its unscrubbed message can't ride along. Same defense as
+  # Tax::Form#import_taxbandits_data.
+  def scrub(message)
+    tin = @data[:tin].to_s
+    variants = [tin, tin.delete("-")].map(&:presence).compact.uniq
+
+    variants.reduce(message.to_s.truncate(1000)) { |text, variant| text.gsub(variant, "[FILTERED]") }
+  end
+
+end

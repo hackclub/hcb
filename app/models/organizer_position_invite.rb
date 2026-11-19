@@ -76,8 +76,6 @@ class OrganizerPositionInvite < ApplicationRecord
   friendly_id :slug_candidates, use: :slugged
 
   scope :pending, -> { where(accepted_at: nil, rejected_at: nil, cancelled_at: nil) }
-  # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
-  scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
   belongs_to :event
   belongs_to :user
@@ -85,7 +83,6 @@ class OrganizerPositionInvite < ApplicationRecord
 
   has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
 
-  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true
@@ -256,7 +253,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def on_contract_signed(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      deliver if organizer_position.nil?
+      accept if organizer_position.nil?
 
       # Unfreeze the event if this is the first signed contract
       if event.contracts.signed.count == 1

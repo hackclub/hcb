@@ -43,7 +43,7 @@
       <th>Start Date</th>
       <th>End Date</th>
       <th>Amount</th>
-      <th>HCB Code</th>
+      <th>Ledger item</th>
     </tr>
   </thead>
   <tbody>
@@ -55,7 +55,7 @@
         <td><%= fee_revenue.start&.strftime("%Y-%m-%d") %></td>
         <td><%= fee_revenue.end&.strftime("%Y-%m-%d") %></td>
         <td><%= render_money_amount(fee_revenue.amount_cents) %></td>
-        <td><%= link_to fee_revenue.hcb_code, hcb_code_path(fee_revenue.hcb_code) %></td>
+        <td><%= link_to fee_revenue.ledger_item.hashid, ledger_item_path(fee_revenue.ledger_item) %></td>
       </tr>
     <% end %>
   </tbody>

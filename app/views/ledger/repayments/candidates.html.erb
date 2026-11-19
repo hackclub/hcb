@@ -1,0 +1,26 @@
+<%= turbo_frame_tag "repayment_candidates" do %>
+  <% if @candidates.any? %>
+    <p class="muted text-sm mt-0 mb-2"><%= page_entries_info @candidates, entry_name: "transaction" %></p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><span class="sr-only">Type</span></th>
+            <th>Date</th>
+            <th>Memo</th>
+            <th class="text-right">Amount</th>
+            <th><span class="sr-only">Choose</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: "ledger/repayments/candidate", collection: @candidates, locals: { ledger_item: @item } %>
+        </tbody>
+      </table>
+    </div>
+
+    <%= paginate @candidates, per_page_menu: false %>
+  <% else %>
+    <%# Rendered for any transaction the user can open the picker on, including ones they can't link, so it says nothing about @item. %>
+    <%= blankslate "No transactions left to match" %>
+  <% end %>
+<% end %>

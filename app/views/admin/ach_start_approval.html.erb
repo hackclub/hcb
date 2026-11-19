@@ -4,7 +4,7 @@
     Back to ACHs
   <% end %>
 
-  <%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= link_to ledger_item_path(@ach_transfer.ledger_item), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@ach_transfer.local_hcb_code.comments.count, "comment") %>)
   <% end %>
@@ -44,7 +44,7 @@
           <tr>
             <td style="text-align: right;">Organization</td>
             <td colspan="2" style="width: 300px">
-              <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
+              <%= link_to @ach_transfer.event.name, @ach_transfer.event, data: { turbo_frame: "_top" } %>
             </td>
           </tr>
           <tr>
