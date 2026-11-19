@@ -172,6 +172,7 @@
             <th>Date</th>
             <th>Organization</th>
             <th>Description</th>
+            <th>Period</th>
             <th class="text-right">Amount</th>
           </tr>
         </thead>
@@ -184,6 +185,7 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <td class="nowrap"><%= invoice.period_label || tag.span("—", class: "muted") %></td>
               <td class="text-right"><%= render_money invoice.amount_cents %></td>
             </tr>
           <% end %>

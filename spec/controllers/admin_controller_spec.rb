@@ -97,6 +97,48 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#wire_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      wire = create(:wire, :pending, event: create(:event, :with_positive_balance))
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :wire_process, params: { id: wire.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(wire.recipient_name)
+    end
+  end
+
+  describe "#paypal_transfer_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      # New PayPal transfers are refused at validation, so save past it to
+      # stand in for one created before that.
+      paypal_transfer = PaypalTransfer.new(
+        event: create(:event, :with_positive_balance),
+        user: create(:user),
+        amount_cents: 25_00,
+        memo: "Stickers",
+        payment_for: "Stickers",
+        recipient_name: "Orpheus",
+        recipient_email: "orpheus@example.com"
+      ).tap { |transfer| transfer.save!(validate: false) }
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :paypal_transfer_process, params: { id: paypal_transfer.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Orpheus")
+    end
+  end
+
   describe "#event_search" do
     it "returns JSON options the combobox can render" do
       admin = create(:user, :make_admin)
