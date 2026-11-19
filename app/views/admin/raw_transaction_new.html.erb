@@ -1,37 +1,48 @@
-<% title "Add a Raw Transaction" %>
+<% title "Add a raw transaction" %>
 
-<h1>Add a Raw Transaction By Hand</h1>
+<% content_for(:admin_actions) do %>
+  <%= link_to "All raw transactions", raw_transactions_admin_index_path, class: "btn" %>
+<% end %>
 
-<%= form_with(model: false, local: true, url: raw_transaction_create_admin_index_path) do |form| %>
-  <fieldset>
-    <legend>Raw Transaction</legend>
-    <p>
-      <%= form.label :unique_bank_identifier, "Bank Identifier" %>
-      <br>
-      <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { selected: "FSMAIN", include_blank: true }, {}) %>
-    </p>
+<%= form_with(model: false, local: true, url: raw_transaction_create_admin_index_path, class: "fields flex flex-col gap-4 max-w-[46rem]") do |form| %>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Transaction</h3>
+    <span class="block text-[0.8125rem] leading-snug opacity-60 -mt-2">
+      Creates a raw transaction by hand, as though it had come in on a bank statement. It still needs
+      to be hashed and mapped to an organization from the ledger.
+    </span>
 
-    <p>
-      <%= form.label :date, "Date" %>
-      <br>
-      <%= form.text_field :date, placeholder: "2021-03-01", required: true %>
-    </p>
+    <div class="field">
+      <%= form.label :unique_bank_identifier, "Bank account" %>
+      <%= form.collection_select :unique_bank_identifier, @bank_identifiers, :to_s, :to_s,
+            { include_blank: "Select a bank account", selected: params[:unique_bank_identifier] },
+            { required: true } %>
+    </div>
 
-    <p>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-4 gap-y-3.5">
+      <div class="field">
+        <%= form.label :date, "Date posted" %>
+        <%= form.date_field :date, value: params[:date], required: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :amount %>
+        <div class="input input-group">
+          <span class="shrink-0 pl-1 font-bold opacity-50 select-none">$</span>
+          <%= form.number_field :amount, placeholder: "500.00", step: 0.01, value: params[:amount], required: true, class: "bg-transparent" %>
+        </div>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">Negative for money leaving the account.</span>
+      </div>
+    </div>
+
+    <div class="field">
       <%= form.label :memo %>
-      <br>
-      <%= form.text_field :memo, placeholder: "Transaction memo", required: true %>
-    </p>
+      <%= form.text_field :memo, placeholder: "As it would appear on the statement", value: params[:memo], required: true %>
+    </div>
+  </section>
 
-    <p>
-      <%= form.label :amount, "Amount" %>
-      <br>
-      <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, placeholder: "500.00", step: 0.01, required: true %>
-    </p>
-  </fieldset>
-
-  <p>
-    <%= form.submit "Add raw transaction" %>
-  </p>
+  <div class="flex flex-wrap items-center gap-3">
+    <%= button_tag "Add raw transaction", name: nil, class: "btn bg-success" %>
+    <%= link_to "Cancel", raw_transactions_admin_index_path, class: "font-medium text-muted no-underline hover:text-blue focus:text-blue" %>
+  </div>
 <% end %>
