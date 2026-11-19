@@ -56,7 +56,7 @@
           <% end %>
 
           <% if disbursement.reviewing? %>
-            <%= link_to "Process", disbursement_process_admin_path(disbursement), class: "btn" %>
+            <%= link_to "Process", disbursement_process_admin_path(disbursement), class: "btn", data: admin_process_popover_data(disbursement) %>
           <% else %>
             <%= pop_icon_to "external", disbursement_process_admin_path(disbursement), "aria-label": "View" %>
           <% end %>

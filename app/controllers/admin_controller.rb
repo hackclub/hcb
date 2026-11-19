@@ -677,6 +677,7 @@ class AdminController < Admin::BaseController
   def ach_start_approval
     @ach_transfer = AchTransfer.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def ach_approve
@@ -724,6 +725,7 @@ class AdminController < Admin::BaseController
   def disbursement_process
     @disbursement = Disbursement.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def disbursement_approve
@@ -838,6 +840,8 @@ class AdminController < Admin::BaseController
       approval_attempt = @check.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
       @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
     end
+
+    render(layout: !turbo_frame_request?)
   end
 
   def paypal_transfers
@@ -862,6 +866,7 @@ class AdminController < Admin::BaseController
   def paypal_transfer_process
     @paypal_transfer = PaypalTransfer.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def wires
@@ -950,6 +955,8 @@ class AdminController < Admin::BaseController
       approval_attempt = @wire.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
       @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
     end
+
+    render(layout: !turbo_frame_request?)
   end
 
   def wire_lookup
@@ -977,6 +984,8 @@ class AdminController < Admin::BaseController
 
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
+
+    render(layout: !turbo_frame_request?)
   end
 
   def applications
@@ -1222,6 +1231,7 @@ class AdminController < Admin::BaseController
   def invoice_process
     @invoice = Invoice.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def invoice_mark_paid

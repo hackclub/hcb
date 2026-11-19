@@ -3,6 +3,14 @@
 module InvoicesHelper
   include PaymentMethodsHelper
 
+  # Badge colour to pair with Invoice#state_text on the admin process screen.
+  def invoice_state_badge(invoice)
+    return "bg-pending" if invoice.open?
+    return "bg-error" if invoice.void_v2? || invoice.refunded_v2?
+
+    "bg-success"
+  end
+
   def invoice_sent_at(invoice = @invoice)
     format_datetime invoice.created_at
   end
