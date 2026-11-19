@@ -18,7 +18,7 @@ class CanonicalPendingTransaction
         message += " To attach a receipt, text us an image within ten minutes, or upload one to #{attach_receipt_url hcb_code}."
       end
 
-      TwilioMessageService::Send.new(@user, message, hcb_code:).run!
+      TwilioMessageService::Send.new(@user, message, hcb_code:, ledger_item: @cpt.ledger_item).run!
     end
 
   end
