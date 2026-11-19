@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2787,12 +2787,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_140000) do
     t.datetime "updated_at", null: false
     t.index ["categorizable_type", "categorizable_id"], name: "idx_on_categorizable_type_categorizable_id_f3e1245d19", unique: true
     t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
-  end
-
-  create_table "transaction_csvs", force: :cascade do |t|
-    t.string "aasm_state", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "transactions", force: :cascade do |t|
