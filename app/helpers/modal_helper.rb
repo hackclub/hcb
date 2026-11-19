@@ -5,7 +5,11 @@ module ModalHelper
   def modal(title = nil, id:, size: nil, external_link: nil, open: false, **attributes, &)
     attributes[:class] = token_list("modal modal--scroll bg-snow", { "modal--#{size}" => size }, attributes[:class])
     attributes[:aria] = { labelledby: "#{id}_title", **attributes[:aria].to_h } if title
-    attributes[:data] = { **attributes[:data].to_h, controller: token_list(attributes.dig(:data, :controller), "open-modal": open).presence }
+    attributes[:data] = {
+      **attributes[:data].to_h,
+      controller: token_list(attributes.dig(:data, :controller), "open-modal": open).presence,
+      turbo_temporary: (true if open) # a one-off, so the page Back restores leaves it out
+    }
 
     tag.dialog(id:, **attributes) do
       safe_join [(modal_header(title, id: "#{id}_title", external_link:) if title), capture(&)]
@@ -13,7 +17,7 @@ module ModalHelper
   end
 
   def modal_header(text, id: nil, external_link: nil)
-    tag.header class: "pb2 rounded-t-lg" do
+    tag.header class: "pb2" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
         tag.h2(modal_title(text), id:, class: "h1 mt0 mb0 pb0 border-none")
@@ -26,7 +30,7 @@ module ModalHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
+    pop_icon_to "external", sanitize(external_link), target: "_blank", class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   private

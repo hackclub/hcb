@@ -36,6 +36,7 @@ RSpec.describe ModalHelper, type: :helper do
 
       expect(dialog["class"].split).to eq(%w[modal modal--scroll bg-snow modal--wide max-w-md])
       expect(dialog["data-controller"]).to eq("picker open-modal")
+      expect(dialog["data-turbo-temporary"]).to eq("true")
       expect(dialog["data-picker-value"]).to eq("1")
     end
 

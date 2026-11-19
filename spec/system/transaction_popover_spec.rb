@@ -59,6 +59,60 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(page).to have_no_css("#{popover} turbo-frame", visible: :all)
   end
 
+  it "expands a receipt in place when its thumbnail is clicked, without a modal over it" do
+    Receipt.create!(receiptable: hcb_code.ledger_item, user:, upload_method: :transaction_popover,
+                    file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+    open_popover
+
+    within(popover) { find("img.receipt--image").click }
+
+    expect(page).to have_css("#{popover} .receipt--expanded")
+    expect(open_modals).to eq(["shared_popover"])
+  end
+
+  it "opens a comment's edit history from its edited link" do
+    comment = hcb_code.comments.create!(user:, content: "Was for snacks", has_untracked_edit: true)
+    open_popover
+
+    within(popover) { click_on "edited" }
+
+    expect(page).to have_css("#comment-modal-#{comment.hashid}[open]")
+  end
+
+  it "reopens when Back returns to the ledger after leaving from inside it" do
+    open_popover
+    execute_script("Turbo.visit('/my/cards')")
+    expect(page).to have_current_path("/my/cards")
+
+    go_back
+
+    expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
+    expect(page).to have_css("h1", text: "Transactions")
+    expect(page).to have_css("#{popover}[open] turbo-frame##{hcb_code.public_id}")
+  end
+
+  # Turbo would re-render the whole ledger for it, or snapshot it and close every modal at once
+  it "animates out on Back, without Turbo touching the page" do
+    open_popover
+    execute_script("document.body.dataset.untouched = true")
+
+    go_back
+
+    expect(page).to have_css("#{popover}[open][data-closing]")
+    expect_closed(popover)
+    expect(page).to have_css("body[data-untouched]")
+  end
+
+  it "takes one Back to leave the ledger, which doesn't add a history entry when it loads" do
+    visit my_reimbursements_path
+    execute_script("Turbo.visit(arguments[0])", event_transactions_path(event))
+    expect(page).to have_css("tr", text: "TEST DONATION")
+
+    go_back
+
+    expect(page).to have_current_path(my_reimbursements_path)
+  end
+
   it "closes on browser back" do
     open_popover
 
@@ -94,6 +148,34 @@ RSpec.describe "Transaction popovers", type: :system do
       expect { tag.reload }.to raise_error(ActiveRecord::RecordNotFound)
     end
 
+    # It's rendered on the page, not in the popover, but was opened from it
+    it "closes the create tag modal along with the popover it was opened from" do
+      open_popover
+      within(popover) { click_on "+ Add tag" }
+      click_on "Create tag"
+      expect(page).to have_css("#create_tag[open]", style: { scale: "none" })
+
+      go_back
+
+      expect_closed("#create_tag")
+      expect_closed(popover)
+    end
+
+    it "keeps a modal working after a morph refresh while it's open" do
+      open_create_tag = lambda do
+        find("tr", text: "TEST DONATION").hover
+        find(".add-tag-badge").click
+        click_on "Create tag"
+        expect(page).to have_css("#create_tag[open]", style: { scale: "none" })
+      end
+      open_create_tag.call
+
+      execute_script("Turbo.session.refresh(location.href)")
+      expect(page).to have_no_css("#create_tag[open]", visible: :all, wait: 10)
+
+      open_create_tag.call
+    end
+
     it "opens the create tag modal from its menu on top of the popover" do
       open_popover
       within(popover) { click_on "+ Add tag" }
@@ -117,7 +199,7 @@ RSpec.describe "Transaction popovers", type: :system do
       html = ApplicationController.render(inline: <<~ERB)
         <%= modal "Layered", id: "layered" do %>
           <div data-controller="menu">
-            <button type="button" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close">Options</button>
+            <button type="button" data-menu-target="toggle" data-action="menu#toggle">Options</button>
             <div data-menu-target="content" class="menu__content"><span>#{menu_item}</span></div>
           </div>
         <% end %>
@@ -175,6 +257,10 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]:not([data-stale])", wait: 10)
     expect(open_modals).to eq(["shared_popover"])
     expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
+
+    # The close the morph caused lands after the reopen, and mustn't undo it
+    press_escape
+    expect_closed(popover)
   end
 
   it "ignores a ?popover= that matches no link, however it's written" do

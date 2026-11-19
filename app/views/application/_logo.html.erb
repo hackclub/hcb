@@ -9,7 +9,7 @@
     'aria-label': tooltipped_logo? ?
       (user_birthday? ? "Happy birthday! #{['🎂', '🎈', '🎉', '🥳'].sample}" : "You’re in #{Rails.env} mode. #{development_mode_flavor}") :
       "",
-    data: { "controller" => "analytics #{"ar" if current_page?(auth_users_path)}", "analytics-event-name-value" => "Icon right-clicked", "ar-usdz-href-value" => "/bank.usdz", "action" => "contextmenu->menu#toggle contextmenu->analytics#track click@document->menu#close", "menu-target" => "toggle" } do %>
+    data: { "controller" => "analytics #{"ar" if current_page?(auth_users_path)}", "analytics-event-name-value" => "Icon right-clicked", "ar-usdz-href-value" => "/bank.usdz", "action" => "contextmenu->menu#toggle contextmenu->analytics#track", "menu-target" => "toggle" } do %>
 
     <% logo_env = Rails.env.local? ? "development" : Rails.env %>
 

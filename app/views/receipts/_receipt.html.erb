@@ -62,8 +62,7 @@
             data: {
               "receipt-id" => receipt.id,
               "file_type"  => receipt.file.blob.content_type,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
+              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt"
             } if receipt.preview %>
     </span>
     <% if receipt.file.blob.content_type == "application/pdf" %>

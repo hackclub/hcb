@@ -33,7 +33,7 @@ That's the whole API. The browser draws the modal above everything else, traps f
 
 ## Nesting and Escape
 
-Open a modal from inside another and it stacks on top. The backdrop closes only the top one, and closing a modal closes any opened from inside it, so a hidden child can never be left blocking the page.
+Open a modal from inside another and it stacks on top. The backdrop closes only the top one, and closing a modal also closes any opened from it (from a trigger inside it, or rendered inside it), so none is left behind blocking the page.
 
 Escape closes one thing at a time, newest first: with the popover, a modal over it and a menu open in that, three presses close the menu, the modal, then the popover. Modals and menus join this stack (`app/javascript/layers.js`) while they're open:
 
@@ -51,6 +51,23 @@ Something that handles Escape on its own, like a combobox closing its suggestion
 Anywhere, even in a table row, a hidden menu or a lazy turbo-frame. A modal opens from the end of `<body>` and moves back when it closes, so where it's rendered never changes how it looks or behaves: it doesn't inherit styles from the row around it, and its links and forms navigate the page rather than the frame. If the frame it came from is replaced while it's open, it's dropped when it closes.
 
 While it's open, it isn't inside its original ancestors, so Herb state and forms around it don't reach it. Keep a modal's reactive state in a partial rendered inside it, and don't render a modal with its own `<form>` inside another form (HTML can't nest forms, so the inner one is dropped when the page is parsed).
+
+## Look and motion
+
+Modals, the popover, SweetAlert and menus are styled as one family, so anything new that floats over the page should reuse the same pieces:
+
+- **Corners**: `--radius-2xl` for anything with a backdrop (modals, the popover, alerts), `--radius-xl` for menus. On phones, what slides up from the bottom uses `$sheet-radius`.
+- **Backdrop**: `$backdrop`, or `$backdrop-dark` in dark mode.
+- **Shadow**: `--shadow-modal` or `--shadow-menu`; `_dark.scss` swaps both for dark mode.
+- **Motion**: everything fades in with a small scale or slide (0.2s for modals and alerts, 0.15s for menus) and leaves the same way in reverse, rather than disappearing.
+
+## Performance
+
+A ledger page can hold hundreds of triggers, modals and menus, so none of them may cost anything until one is used:
+
+- **Triggers and closed modals** have no listeners or controllers of their own. The listeners in `modal.js` and `layers.js` are attached once, to the document.
+- **Something that reacts to the whole page** (outside clicks, Escape, `hcb:close-menus`) listens only while it's open. Menus add their document listeners in `open()` and remove them in `close()`. A `click@document->...` action would instead run on every click, for every instance on the page.
+- **Opening a modal** makes the rest of the page inert, which costs the browser a style recalculation of the whole page (~15 ms on a 75-row ledger). That's the price of the page behind being unreachable by keyboard and screen readers.
 
 ## Things that render outside a modal
 

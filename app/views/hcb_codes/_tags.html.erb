@@ -11,7 +11,7 @@
 
       <div data-controller="menu">
         <% if TagPolicy.new(current_user, @event).create? %>
-          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close">+ Add tag</button>
+          <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle">+ Add tag</button>
         <% end %>
         <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
           <% @event.tags.each do |tag| %>

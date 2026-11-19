@@ -204,6 +204,34 @@ RSpec.describe "Modals", type: :system do
       expect_open("#outer")
     end
 
+    it "doesn't reopen a modal that opened itself when Back returns to its page" do
+      html = ApplicationController.render(inline: %(<%= modal "Once", id: "once", open: true do %><a href="/my/cards">Go to cards</a><% end %>))
+      execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0])", html)
+      expect_open("#once")
+      click_on "Go to cards"
+      expect(page).to have_current_path("/my/cards")
+
+      go_back
+
+      expect(page).to have_current_path(my_reimbursements_path)
+      expect(page).to have_no_css("#once", visible: :all)
+    end
+
+    # `close` fires a task later, after the reopen, and mustn't undo it
+    it "stays open and on top when reopened before its close event lands" do
+      click_on "Open outer"
+      expect_open("#outer")
+      click_on "Open inner"
+      expect_open("#inner")
+
+      execute_script("document.getElementById('inner').close(); document.querySelector('[data-modal=inner]').click()")
+
+      expect(evaluate_async_script("setTimeout(() => arguments[0](document.getElementById('inner').open), 300)")).to be(true)
+      press_escape
+      expect_closed("#inner")
+      expect(open_modals).to eq(["outer"])
+    end
+
     it "opens from a Turbo Stream" do
       stream = ApplicationController.render(inline: %(<%= turbo_stream.open_modal("outer") %>))
       execute_script("Turbo.renderStreamMessage(arguments[0])", stream)
@@ -223,6 +251,32 @@ RSpec.describe "Modals", type: :system do
       expect(evaluate_async_script("setTimeout(() => arguments[0](document.getElementById('outer').open), 500)")).to be(true)
     end
 
+    it "hands focus back to the button that asked for confirmation inside a modal" do
+      html = ApplicationController.render(inline: %(<%= modal "Confirming", id: "confirming" do %><%= button_to "Delete it", "/", data: { turbo_confirm: "Sure?" } %><% end %>))
+      stream = ApplicationController.render(inline: %(<%= turbo_stream.open_modal("confirming") %>))
+      execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0]); Turbo.renderStreamMessage(arguments[1])", html, stream)
+      expect_open("#confirming")
+
+      click_on "Delete it"
+      click_on "Cancel"
+
+      expect(page).to have_button("Delete it", focused: true)
+    end
+
+    # It fades out in the modal's layer, which mustn't take the overlay back from the new alert
+    it "shows an alert opened while the last one inside a modal is still fading out" do
+      click_on "Open outer"
+      expect_open("#outer")
+      execute_script("swal('Saved!').then(() => swal('Again!'))")
+      click_on "OK"
+
+      expect(page).to have_css(".swal-overlay--show-modal", text: "Again!")
+      click_on "OK"
+      expect(page).to have_no_css(".swal-layer", visible: :all)
+      expect(evaluate_script("document.querySelector('.swal-overlay').parentElement === document.body")).to be(true)
+      expect(open_modals).to eq(["outer"])
+    end
+
     it "keeps a SweetAlert opened inside a modal clickable" do
       click_on "Open outer"
       expect_open("#outer")
@@ -230,7 +284,7 @@ RSpec.describe "Modals", type: :system do
       execute_script("swal('Saved!')")
       click_on "OK"
 
-      expect(page).to have_no_css(".swal-overlay--show-modal")
+      expect(page).to have_no_css(".swal-layer", visible: :all)
       expect(open_modals).to eq(["outer"])
     end
   end

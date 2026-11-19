@@ -7,8 +7,12 @@ import { closeModal, openModal } from '../modal'
 // reload and closes with Back.
 export default class extends Controller {
   static targets = ['title', 'externalLink', 'flash', 'body', 'loading']
+  // Turbo's id for this page's history entries, so app/javascript/popover_history.js
+  // can tell the popover's own entries from other pages'
+  static values = { page: String }
 
   connect() {
+    this.pageValue = history.state?.turbo?.restorationIdentifier ?? ''
     this.openFromUrl()
   }
 
@@ -59,7 +63,7 @@ export default class extends Controller {
     const url = new URL(location.href)
     if (url.searchParams.get('popover') !== stateUrl) {
       url.searchParams.set('popover', stateUrl)
-      history.pushState({ popover: true }, '', url)
+      this.pushEntry(url)
     }
   }
 
@@ -71,7 +75,7 @@ export default class extends Controller {
     const url = new URL(location.href)
     if (this.stateUrl && url.searchParams.get('popover') === this.stateUrl) {
       url.searchParams.delete('popover')
-      history.pushState(null, '', url)
+      this.pushEntry(url)
     }
     if (this.pageTitle) document.title = this.pageTitle
 
@@ -84,9 +88,17 @@ export default class extends Controller {
     )
   }
 
-  popstate({ state }) {
-    if (state?.popover) this.openFromUrl()
+  popstate({ detail: { popover } }) {
+    if (popover) this.openFromUrl()
     else closeModal(this.element)
+  }
+
+  // Marks the entry being left as the popover's too, so Back to it is the popover's
+  // to handle, and keeps Turbo's state on both, so Turbo can restore the page
+  pushEntry(url) {
+    const popover = entry => new URL(entry).searchParams.has('popover')
+    history.replaceState({ ...history.state, popover: popover(location) }, '')
+    history.pushState({ ...history.state, popover: popover(url) }, '', url)
   }
 
   // Pages loaded with ?popover= echo it into links built from the query string

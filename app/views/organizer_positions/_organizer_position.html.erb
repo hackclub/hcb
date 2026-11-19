@@ -12,7 +12,7 @@
         <div class="g0 line-height-0">
           <% if policy(organizer_position).change_position_role? %>
             <div data-controller="menu" data-menu-placement-value="bottom-start">
-              <div class="flex items-center cursor-pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close">
+              <div class="flex items-center cursor-pointer" data-menu-target="toggle" data-action="click->menu#toggle">
                 <p class="h4 medium info"><%= organizer_position.role.capitalize %></p>
                 <%= inline_icon "down-caret", class: "info menu__toggle" %>
               </div>
@@ -91,7 +91,7 @@
             <% end %>
           <% elsif organizer_position.fiscal_sponsorship_contract&.present? %>
             <div data-controller="menu" data-menu-placement-value="bottom-start">
-              <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close">
+              <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle">
                 <%= inline_icon("clock", size: 24) %>
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">

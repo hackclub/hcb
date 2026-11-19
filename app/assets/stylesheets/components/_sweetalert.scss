@@ -1,7 +1,24 @@
+// Styled, spaced and animated like a modal (components/_modals.scss)
 .swal-overlay {
+  background-color: $backdrop;
+  transition: opacity 0.2s;
+
+  [data-dark='true'] & {
+    background-color: $backdrop-dark;
+  }
+
   .swal-modal {
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-modal);
+    padding: 2rem 1rem;
+    scale: 0.9;
+    transition:
+      opacity 0.2s,
+      scale 0.2s;
+
+    @media (min-width: 32em) {
+      padding: 2rem;
+    }
 
     font-family: inherit;
 
@@ -28,37 +45,60 @@
     }
   }
 
-  .swal-title {
+  .swal-modal .swal-title {
     color: inherit;
-    padding: 20px !important;
-    padding-bottom: 10px !important;
+    padding: 0;
     text-align: left;
-    margin-bottom: 0px;
-    margin: 0 !important;
+    margin: 0;
   }
 
-  .swal-text {
+  .swal-modal .swal-text {
     width: 100%;
+    max-width: none;
     color: inherit;
     opacity: 0.8;
+    padding: 0;
+    margin: 0;
   }
 
-  .swal-footer {
-    padding: 13px !important;
+  .swal-title + .swal-text {
+    margin-top: 0.5rem;
+  }
+
+  .swal-modal .swal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0;
+    margin-top: 1.5rem;
     background-color: transparent;
+  }
+
+  .swal-button-container {
+    margin: 0;
   }
 
   .swal-button {
     @extend .btn;
   }
 
-  .swal-button--confirm {
-    @extend .bg-blue;
+  .swal-button--confirm:not(.swal-button--danger) {
+    @extend .bg-info;
+  }
+
+  .swal-button--danger {
+    @extend .bg-error;
   }
 }
 
 .swal-overlay--show-modal .swal-modal {
   animation: none;
+  scale: none;
+
+  @starting-style {
+    opacity: 0;
+    scale: 0.9;
+  }
 }
 
 // The dialog SweetAlert shows in while a modal is open (common/swal.js)

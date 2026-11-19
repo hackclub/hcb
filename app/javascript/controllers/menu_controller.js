@@ -22,22 +22,14 @@ export default class extends Controller {
 
   initialize() {
     this.isOpen = false
+    // Added to the page only while open, so a page of closed menus costs nothing
+    this.closeOnOutsideClick = event => this.close(event)
+    this.closeOnRequest = () => this.close()
   }
 
-  connect() {
-    this._closeMenusHandler = () => this.isOpen && this.close()
-    document.addEventListener('hcb:close-menus', this._closeMenusHandler)
-  }
-
+  // Also removes the cloned menu, so it doesn't outlive a turbo frame update
   disconnect() {
-    this.cleanup && this.cleanup()
-    // remove cloned popup so it doesn't outlive turbo frame updates.
-    this.content && this.content.remove()
-    this.content = undefined
-    this.cleanup = undefined
-    this.isOpen = false
-    removeLayer(this)
-    document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
+    this.close()
   }
 
   toggle(e) {
@@ -91,6 +83,8 @@ export default class extends Controller {
       }
     )
     addLayer(this, () => this.close())
+    document.addEventListener('click', this.closeOnOutsideClick)
+    document.addEventListener('hcb:close-menus', this.closeOnRequest)
   }
 
   /**
@@ -120,12 +114,19 @@ export default class extends Controller {
 
     if (this.content) {
       const content = this.content
-      if (e?.type == 'click') {
+      if (e?.type == 'click' && content.contains(e.target)) {
         // let turbo resolve the target frame before removing the link
         content.style.display = 'none'
         setTimeout(() => content.remove(), 0)
       } else {
-        content.remove()
+        // Out the way it came in, like a modal
+        content.style.pointerEvents = 'none'
+        gsap.to(content, {
+          ...this.hidden,
+          duration: 0.15,
+          overwrite: true,
+          onComplete: () => content.remove(),
+        })
       }
     }
 
@@ -138,6 +139,8 @@ export default class extends Controller {
 
     this.isOpen = false
     removeLayer(this)
+    document.removeEventListener('click', this.closeOnOutsideClick)
+    document.removeEventListener('hcb:close-menus', this.closeOnRequest)
   }
 
   computePosition(firstTime = false) {
@@ -163,12 +166,8 @@ export default class extends Controller {
         left: `${x}px`,
       })
       if (firstTime) {
-        // Animate!
-        gsap.from(this.content, {
-          y: placement.includes('top') ? -12 : 12,
-          opacity: 0.75,
-          duration: 0.15,
-        })
+        this.hidden = { y: placement.includes('top') ? -12 : 12, opacity: 0 }
+        gsap.from(this.content, { ...this.hidden, duration: 0.15 })
       }
 
       this.toggleTarget.setAttribute('aria-expanded', true)

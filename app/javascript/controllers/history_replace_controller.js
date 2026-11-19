@@ -6,6 +6,9 @@ export default class extends Controller {
   static values = { url: String }
 
   connect() {
-    window.history.pushState(null, '', this.urlValue)
+    // The frame also renders on page load, where its URL is already the page's.
+    // Keeping Turbo's state lets Turbo restore the page on Back and Forward.
+    if (new URL(this.urlValue, location.href).href !== location.href)
+      history.pushState(history.state, '', this.urlValue)
   }
 }

@@ -225,7 +225,7 @@ module UsersHelper
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close"
+          action: "contextmenu->menu#toggle click->menu#toggle"
         },
       )
 

@@ -7,11 +7,10 @@
           <%= time_ago_in_words comment.created_at %> ago<%= inline_icon "link", size: 24, class: "align-middle" %><% end %>
         <% if comment.edited? %>
         <span class="mx1">|</span>
-        <action data-turbolinks="false" data-modal="comment-modal-<%= comment.hashid %>" tabindex="0">
-          <%= link_to "edited", "#comment-history-#{comment.hashid}",
-            class: "muted tooltipped tooltipped--s",
-            'aria-label': "See all edit history" %>
-        </action>
+        <%= link_to "edited", "#comment-history-#{comment.hashid}",
+          class: "muted tooltipped tooltipped--s",
+          'aria-label': "See all edit history",
+          data: { modal: "comment-modal-#{comment.hashid}" } %>
         <% end %>
         <% if policy(comment).destroy? %>
           <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?", turbo_confirm_danger: true } do %>

@@ -1,3 +1,5 @@
+// First, so its popstate listener runs before Turbo's
+import './popover_history'
 import $ from 'jquery'
 import ReactRailsUJS from 'react_ujs'
 

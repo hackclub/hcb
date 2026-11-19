@@ -3,11 +3,19 @@
 const layers = new Map()
 
 export function addLayer(owner, close) {
+  prune()
   layers.set(owner, close)
 }
 
 export function removeLayer(owner) {
   layers.delete(owner)
+}
+
+// Turbo can replace one without it closing, which would otherwise keep the old
+// page alive and leave it on top
+function prune() {
+  for (const owner of layers.keys())
+    if (owner.isConnected === false) layers.delete(owner)
 }
 
 // On window, so it runs last: anything that handles Escape itself (a combobox's
@@ -20,6 +28,9 @@ window.addEventListener('keydown', event => {
     !layers.size
   )
     return
+
+  prune()
+  if (!layers.size) return
 
   // Or the browser would close the top <dialog> too
   event.preventDefault()

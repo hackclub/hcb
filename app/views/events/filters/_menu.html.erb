@@ -12,7 +12,7 @@
     class="pop my-2 cursor-pointer tooltipped tooltipped--s relative overflow-visible"
     aria-label="<%= active_filter_count > 0 ? "#{toggle_label} (#{active_filter_count} applied)" : toggle_label %>"
     data-menu-target="toggle"
-    data-action="menu#toggle click@document->menu#close">
+    data-action="menu#toggle">
     <%= inline_icon "filter", size: 28 %>
     <% if active_filter_count > 0 %>
       <span class="filter-menu__count" aria-hidden="true"><%= active_filter_count %></span>

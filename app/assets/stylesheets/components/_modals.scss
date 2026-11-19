@@ -20,9 +20,13 @@
     translate 0.2s;
 
   &::backdrop {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: $backdrop;
     opacity: 0;
     transition: opacity 0.2s;
+
+    [data-dark='true'] & {
+      background-color: $backdrop-dark;
+    }
   }
 
   // `none`, not 1: a transformed modal would anchor fixed menus inside it
@@ -55,7 +59,6 @@
     margin: 0;
     max-width: 800px;
     max-height: 100dvh;
-    border-radius: 0rem;
     width: 66vw;
     scale: none;
 
@@ -71,7 +74,6 @@
 
     @media (min-width: 48em) {
       height: calc(100dvh - 24px);
-      border-radius: var(--radius-xl);
       margin: 12px;
       translate: 10%;
 
@@ -87,6 +89,7 @@
     }
 
     @media (max-width: 48em) {
+      border-radius: $sheet-radius;
       width: 100vw;
       max-width: 100vw;
       height: 80vh;
@@ -128,7 +131,7 @@
 
   @media screen and (max-width: 32em) {
     padding: 2rem 1rem 3rem;
-    border-radius: 1rem 1rem 0 0;
+    border-radius: $sheet-radius;
     inset: auto 0 0;
     margin: 0;
     width: auto;
