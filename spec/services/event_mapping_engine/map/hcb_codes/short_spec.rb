@@ -28,11 +28,16 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     cpt.create_canonical_pending_event_mapping!(event:, subledger:)
     hcb_code = cpt.local_hcb_code
 
-    charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
+    # Carry the short code so the charge groups onto the pending transaction's
+    # HCB code. Without it, both fall back to `HCB-000-<id>` and collide
+    # whenever their IDs happen to match.
+    charge = create(
+      :canonical_transaction,
+      amount_cents: -42_34,
+      date: 3.months.ago,
+      memo: "HCB-#{hcb_code.short_code}"
+    )
     create(:canonical_event_mapping, canonical_transaction: charge, event:, subledger:)
-    # Mapping a transaction rewrites its HCB code, so group it onto the pending
-    # transaction's code afterwards.
-    charge.update_column(:hcb_code, hcb_code.hcb_code)
 
     # A dispute reimbursement arrives months after the charge it reverses,
     # carrying the short code in its memo.
