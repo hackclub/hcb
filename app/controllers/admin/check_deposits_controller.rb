@@ -17,7 +17,7 @@ module Admin
       @check_deposit = CheckDeposit.find(params[:id])
 
       unless @check_deposit.manual_submission_required?
-        redirect_to hcb_code_url(@check_deposit.local_hcb_code)
+        redirect_to ledger_item_path(@check_deposit.ledger_item)
       end
     end
 

@@ -32,6 +32,10 @@ class CardGrantPolicy < ApplicationPolicy
   alias_method :edit_topup?, :edit_purpose?
   alias_method :edit_withdraw?, :edit_purpose?
 
+  def view_email?
+    auditor_or_member?
+  end
+
   def activate?
     (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
   end

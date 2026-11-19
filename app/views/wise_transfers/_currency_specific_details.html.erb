@@ -4,6 +4,14 @@
 
 <%# Each currency's fields, and fields only some account types ask for, are shown and enabled by the state-switch controller. %>
 <div data-controller="state-switch">
+  <% HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys.group_by { |currency| HasWiseRecipient::UNSUPPORTED_CURRENCIES[currency] }.each do |reason, currencies| %>
+    <%= tag.div class: "flex items-start gap-1 warning mb2", hidden: !initial_currency.in?(currencies),
+                data: { state_switch_target: "case", state_switch_name: "selected_currency", state_switch_when: currencies.join(" ") } do %>
+      <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
+      <span><%= reason %></span>
+    <% end %>
+  <% end %>
+
   <% WiseTransfer::AVAILABLE_CURRENCIES.each do |currency| %>
     <%= tag.fieldset class: "contents", hidden: currency != initial_currency, disabled: currency != initial_currency,
                      data: { state_switch_target: "case", state_switch_name: "selected_currency", state_switch_when: currency } do %>

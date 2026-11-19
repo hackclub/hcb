@@ -11,6 +11,9 @@ class Announcement
     end
 
     def edit?
+      # Only the announcement's author may edit its blocks. We don't keep a
+      # history of edits, so if another manager changed the content it would
+      # still appear under the original author's name and misattribute their words.
       (manager? && record.announcement.author == user) || admin?
     end
 

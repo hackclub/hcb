@@ -293,6 +293,68 @@ RSpec.describe CardGrantsController do
 
       expect(response.body).not_to include("All articles")
     end
+
+    it "lets a member copy the email the grant was sent to" do
+      member = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.user.update_columns(email: "changed@example.com")
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_present
+      expect(response.body).not_to include("changed@example.com")
+    end
+
+    it "keeps the copyable email off a reader's view" do
+      reader = create(:user)
+      card_grant = create(:card_grant, event:)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
+    end
+
+    it "still lets a member copy the email once the grant is canceled" do
+      member = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :canceled)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_present
+    end
+
+    it "keeps the copyable email off a reader's view once the grant is canceled" do
+      reader = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :canceled)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
+    end
+
+    it "keeps the copyable email off the grantee's view" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
+    end
   end
 
   describe "read-only grant settings" do
@@ -578,15 +640,19 @@ RSpec.describe CardGrantsController do
     end
   end
 
-  describe "receipt upload buttons on the new ledger" do
+  describe "rows on the new ledger" do
     let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
-    let(:card_grant) { create(:card_grant, event:) }
+    let(:grantee) { create(:user) }
+    let(:card_grant) do
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: grantee))
+      create(:card_grant, event:, user: grantee, stripe_card: card)
+    end
     let!(:item) do
       # A bare factory CPT gets an "HCB-000-<id>" code, which collides with the
       # event's positive balance CT whenever the two happen to share an id and
       # merges them into one ledger item. A Stripe transaction keys the code on
       # its iauth id instead.
-      item = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction)).local_hcb_code.ledger_item
+      item = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card)).local_hcb_code.ledger_item
       Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
       item.refresh!
       item
@@ -610,13 +676,13 @@ RSpec.describe CardGrantsController do
       expect(cell).to be_present
 
       form = cell.at_css("form[action='#{receipts_path}']")
-      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
-      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.hcb_code.id.to_s)
+      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("Ledger::Item")
+      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.id.to_s)
       expect(form.at_css("input[type='file'][name='file[]']")).to be_present
       expect(cell.text).to include("Upload receipt")
 
-      frame = cell.at_css("turbo-frame#link_modal_#{item.hcb_code.id}")
-      expect(frame["src"]).to eq(link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: item.hcb_code.id))
+      frame = cell.at_css("turbo-frame##{ActionView::RecordIdentifier.dom_id(item, :link_modal)}")
+      expect(frame["src"]).to eq(link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: item.id))
       expect(frame["loading"]).to eq("lazy")
     end
 
@@ -643,6 +709,17 @@ RSpec.describe CardGrantsController do
 
       expect(page.css("tbody tr.transaction")).to be_present
       expect(page.at_css(".transaction__receipt-action")).to be_nil
+    end
+
+    it "links each charge to its transaction page for the grantee" do
+      create_session(grantee, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      link = page.at_css("tbody tr.transaction td.transaction__memo a[href='#{ledger_item_path(item)}']")
+      expect(link).to be_present
+      expect(link["data-popover-src"]).to eq(item.hcb_code.popover_path)
+      expect(link["data-popover-frame-id"]).to eq(item.hcb_code.public_id)
     end
   end
 
