@@ -92,6 +92,19 @@ RSpec.describe CommentPolicy, type: :policy do
 
         expect(policy.send(:users)).to include(user)
       end
+
+      it "includes users of parent organizations" do
+        parent_event = create(:event)
+        parent_user = create(:user)
+        create(:organizer_position, event: parent_event, user: parent_user)
+        event = create(:event, :with_positive_balance, parent: parent_event)
+        ach_transfer = create(:ach_transfer, event:)
+
+        comment = create(:comment, commentable: ach_transfer)
+        policy = described_class.new(parent_user, comment)
+
+        expect(policy.send(:users)).to include(parent_user)
+      end
     end
 
     context "when commentable responds to :author" do
@@ -134,5 +147,62 @@ RSpec.describe CommentPolicy, type: :policy do
 
       expect(policy.create?).to eq(true)
     end
+  end
+
+  shared_examples "a thread open to the organization and its parents" do
+    let(:parent_event) { create(:event) }
+    let(:event) { create(:event, parent: parent_event) }
+
+    def member_of(event, role)
+      create(:user).tap { |user| create(:organizer_position, event:, user:, role:) }
+    end
+
+    def policy_for(user)
+      described_class.new(user, build(:comment, commentable:))
+    end
+
+    it "lets the organization's members and parent organization members see and comment" do
+      [member_of(event, :reader), member_of(parent_event, :manager), member_of(parent_event, :member), member_of(parent_event, :reader)].each do |user|
+        policy = policy_for(user)
+
+        expect(policy.new?).to eq(true)
+        expect(policy.create?).to eq(true)
+        expect(policy.show?).to eq(true)
+      end
+    end
+
+    it "lets parent organization members edit and delete their own comments" do
+      user = member_of(parent_event, :manager)
+      policy = described_class.new(user, create(:comment, commentable:, user:))
+
+      expect(policy.edit?).to eq(true)
+      expect(policy.destroy?).to eq(true)
+    end
+
+    it "does not let other users see or comment" do
+      [create(:user), member_of(create(:event), :manager)].each do |user|
+        policy = policy_for(user)
+
+        expect(policy.new?).to eq(false)
+        expect(policy.create?).to eq(false)
+        expect(policy.show?).to eq(false)
+      end
+    end
+  end
+
+  describe "comments on a payment" do
+    before { allow(PaymentMailer).to receive(:with).and_return(double.as_null_object) }
+
+    let(:commentable) { create(:payment, payee: create(:payee, event:)) }
+
+    include_examples "a thread open to the organization and its parents"
+  end
+
+  describe "comments on a card grant" do
+    before { allow_any_instance_of(CardGrant).to receive(:transfer_money) }
+
+    let(:commentable) { create(:card_grant, event:) }
+
+    include_examples "a thread open to the organization and its parents"
   end
 end

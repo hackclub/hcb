@@ -58,7 +58,7 @@ class CommentPolicy < ApplicationPolicy
     elsif record.commentable.is_a?(Event)
       user_list = []
     else
-      user_list = record.commentable.event.users
+      user_list = record.commentable.event.ancestor_users
     end
 
     if record.commentable.respond_to?(:author) && record.commentable.author.present?
