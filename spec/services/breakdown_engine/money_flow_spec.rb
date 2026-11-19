@@ -76,14 +76,47 @@ RSpec.describe BreakdownEngine::MoneyFlow do
 
   it "totals money in and out by ledger item, like the ledger page" do
     add_item("Invoice", 1_000_00)
-    add_item("BankFee", -70_00)
-    add_item("FeeReimbursementGroup", 20_00)
+    add_item("AchTransfer", -200_00)
+    add_item("AchTransfer", 50_00)
 
     result = run
 
-    expect(result[:money_in_cents]).to eq(1_020_00)
-    expect(result[:money_out_cents]).to eq(70_00)
-    expect(link_value(result, "Hack Night", "HCB fees")).to eq(50.0)
+    expect(result[:money_in_cents]).to eq(1_050_00)
+    expect(result[:money_out_cents]).to eq(200_00)
+    expect(link_value(result, "Hack Night", "ACH transfers")).to eq(150.0)
+  end
+
+  it "groups HCB and Stripe fees together, netting fee reimbursements against Stripe fees" do
+    add_item("FeeRevenue", 1_000_00)
+    add_item("BankFee", -70_00)
+    add_item("StripeServiceFee", -30_00)
+    add_item("FeeReimbursementGroup", -25_00)
+    add_item("FeeReimbursementGroup", 5_00)
+
+    result = run
+
+    expect(node_names(result, "group")).to eq(["Fees"])
+    expect(link_value(result, "Fees", "HCB fees")).to eq(70.0)
+    expect(link_value(result, "Fees", "Stripe fees")).to eq(50.0)
+  end
+
+  it "ignores intended items that haven't moved any money" do
+    add_item("Invoice", 1_000_00)
+    add_item("Invoice", 5_000_00).update_columns(ct_count: 0, cpt_count: 0)
+
+    expect(run[:money_in_cents]).to eq(1_000_00)
+  end
+
+  it "only counts items on the event's own ledger" do
+    add_item("Invoice", 1_000_00)
+    other = create(:ledger_item)
+    Ledger::Mapping.create!(ledger: create(:event).ledger, ledger_item: other, on_primary_ledger: true)
+    other.update_columns(amount_cents: 9_000_00, datetime: Time.current, linked_object_type: "Donation", ct_count: 1)
+
+    result = run
+
+    expect(result[:money_in_cents]).to eq(1_000_00)
+    expect(node_names(result, "income")).to eq(["Invoices"])
   end
 
   it "groups related expenses under a parent node" do
@@ -119,6 +152,18 @@ RSpec.describe BreakdownEngine::MoneyFlow do
     expect(link_value(result, "Other income", "Hack Night")).to eq(10.0)
   end
 
+  it "caps income at #{described_class::MAX_NODES} nodes by folding the smallest into Other income" do
+    %w[Invoice Donation AchTransfer Wire PaypalTransfer WiseTransfer Check CheckDeposit Disbursement::Incoming].each_with_index do |type, i|
+      add_item(type, (200 - i) * 100)
+    end
+
+    result = run
+
+    expect(node_names(result, "income").size).to eq(described_class::MAX_NODES)
+    expect(node_names(result, "income").last).to eq("Other income")
+    expect(link_value(result, "Other income", "Hack Night")).to eq(192.0 + 193.0)
+  end
+
   it "labels items without a linked object as Other and sorts them last" do
     add_item("Invoice", 1_000_00)
     add_item(nil, -500_00)
@@ -139,6 +184,37 @@ RSpec.describe BreakdownEngine::MoneyFlow do
     expect(link_value(result, "Hack Night", "Card spending")).to eq(100.0)
     expect(link_value(result, "Card spending", "Food")).to eq(40.0)
     expect(link_value(result, "Card spending", "Travel")).to eq(60.0)
+  end
+
+  it "nets card refunds against spending in the same category" do
+    add_item("Invoice", 1_000_00)
+    add_card_charge("bakeries", -40_00)
+    add_card_charge("bakeries", 15_00)
+    add_card_charge("airlines_air_carriers", -60_00)
+
+    expect(link_value(run, "Card spending", "Food")).to eq(25.0)
+  end
+
+  it "shows a category refunded more than was spent as card refunds, not as income from that category" do
+    add_item("Invoice", 1_000_00)
+    add_card_charge("airlines_air_carriers", 300_00)
+    add_card_charge("bakeries", -40_00)
+
+    result = run
+
+    expect(node_names(result, "income")).to eq(["Invoices", "Card refunds"])
+    expect(link_value(result, "Card refunds", "Hack Night")).to eq(300.0)
+    expect(result[:nodes].map { |node| node[:name] }).not_to include("Travel")
+  end
+
+  it "includes the whole first and last day of a calendar year and nothing outside it" do
+    start_date, end_date = BreakdownEngine.date_range("2025")
+    add_item("Invoice", 1_00, date: Time.zone.parse("2024-12-31 23:59:59"))
+    add_item("Invoice", 10_00, date: Time.zone.parse("2025-01-01 00:00:00"))
+    add_item("Invoice", 100_00, date: Time.zone.parse("2025-12-31 23:59:59"))
+    add_item("Invoice", 1_000_00, date: Time.zone.parse("2026-01-01 00:00:00"))
+
+    expect(run(start_date:, end_date:)[:money_in_cents]).to eq(110_00)
   end
 
   it "only includes transactions within the date range" do

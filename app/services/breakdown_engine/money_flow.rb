@@ -14,9 +14,9 @@ module BreakdownEngine
       "CheckDeposit"                 => "Check deposits",
       "Disbursement::Outgoing"       => "Transfers out",
       "Disbursement::Incoming"       => "Transfers in",
-      "StripeServiceFee"             => "Card fees",
+      "StripeServiceFee"             => "Stripe fees",
       "BankFee"                      => "HCB fees",
-      "FeeReimbursementGroup"        => "HCB fees",
+      "FeeReimbursementGroup"        => "Stripe fees",
       "FeeRevenue"                   => "Fee revenue",
       "Reimbursement::ExpensePayout" => "Reimbursements",
       "Reimbursement::PayoutHolding" => "Reimbursements",
@@ -24,7 +24,7 @@ module BreakdownEngine
 
     EXPENSE_GROUPS = {
       "Transfers" => ["ACH transfers", "Wires", "PayPal transfers", "Wise transfers", "Checks", "Transfers out", "Reimbursements"],
-      "Fees"      => ["HCB fees", "Card fees"],
+      "Fees"      => ["HCB fees", "Stripe fees"],
     }.freeze
     CARD_GROUP = "Card spending"
     BALANCE = "Balance"
@@ -49,10 +49,10 @@ module BreakdownEngine
         net_cents_by_card_category[label] += amount_cents
       end
 
-      income = consolidate(
-        net_cents_by_label.merge(net_cents_by_card_category) { |_, a, b| a + b }.select { |_, cents| cents.positive? },
-        other_label: "Other income"
-      )
+      income_by_label = net_cents_by_label.select { |_, cents| cents.positive? }
+      card_refund_cents = net_cents_by_card_category.values.select(&:positive?).sum
+      income_by_label["Card refunds"] = card_refund_cents if card_refund_cents.positive?
+      income = consolidate(income_by_label, other_label: "Other income")
 
       spending_by_group = Hash.new { |hash, group| hash[group] = {} }
       net_cents_by_label.each do |label, cents|
