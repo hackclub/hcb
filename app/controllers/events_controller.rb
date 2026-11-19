@@ -1375,17 +1375,19 @@ class EventsController < ApplicationController
 
     @merchant = params[:merchant]
 
-    merchants_hash = {}
+    @merchants = Rails.cache.fetch("merchants_filter_#{@event.id}", expires_in: 5.minutes) do
+      merchants_hash = {}
 
-    @event.merchants.each do |merchant|
-      if merchants_hash.key?(merchant[:id])
-        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
-      else
-        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      @event.merchants.each do |merchant|
+        if merchants_hash.key?(merchant[:id])
+          merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+        else
+          merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+        end
       end
-    end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+      merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    end
   end
 
   def request_call
