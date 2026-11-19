@@ -29,7 +29,7 @@
         <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
           <li class="card card--hover h-100">
             <div class="overflow-hidden" style="max-height: 250px;">
-              <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
+              <%= image_tag event_verification_letter_path(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
             </div>
 
             <strong class="h3 block mt1 leading-[1.125]">Verification Letter</strong>
@@ -39,7 +39,7 @@
         <%= link_to event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "pdf") do %>
             <li class="card card--hover h-100 w-fit">
               <div class="overflow-hidden" style="max-height: 250px;">
-                <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
+                <%= image_tag event_fiscal_sponsorship_letter_path(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
               </div>
               <strong class="h3 block mt1 leading-[1.125]">Fiscal Sponsorship Confirmation</strong>
               <%= user_mention @event.point_of_contact %>

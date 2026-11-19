@@ -15,7 +15,7 @@
           <td><%= render_money ach.amount %></td>
           <td><%= ach.payment_for %></td>
           <td><%= ach.scheduled_on %></td>
-          <td><%= link_to "View", hcb_code_path(ach.hcb_code), data: { turbo_frame: "_top" } %></td>
+          <td><%= link_to "View", ledger_item_path(ach.ledger_item), data: { turbo_frame: "_top" } %></td>
         </tr>
       <% end %>
     </table>

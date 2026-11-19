@@ -154,10 +154,6 @@ class CardGrantsController < ApplicationController
               disposition: "attachment"
   end
 
-  def edit_overview
-    authorize @card_grant
-  end
-
   def edit_purpose
     authorize @card_grant
   end
@@ -212,14 +208,14 @@ class CardGrantsController < ApplicationController
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
 
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def clear_purpose
     authorize @card_grant, :update?
     @card_grant.update!(purpose: nil)
     flash[:success] = "Purpose has been successfully cleared!"
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def show

@@ -49,9 +49,40 @@ class TransactionCategoryService
     model.create_category_mapping!(category:, assignment_strategy: "automatic")
   end
 
+  # A refund (or a later capture) joins a card charge after the charge's
+  # pending transaction has settled, so CanonicalPendingTransactionService::Settle
+  # never runs for it and it settles without a category. Copy the charge's
+  # category instead: the one on its earlier settled transaction, which a user
+  # may have changed since it settled, or failing that the one on its pending
+  # transaction.
+  def sync_from_card_charge!
+    return if model.category.present?
+
+    mapping = card_charge_category_mapping
+    return unless mapping
+
+    set!(slug: mapping.category.slug, assignment_strategy: mapping.assignment_strategy)
+  end
+
   private
 
   attr_reader(:model)
+
+  def card_charge_category_mapping
+    return unless model.is_a?(CanonicalTransaction)
+
+    raw_stripe_transaction = model.raw_stripe_transaction
+    card_charge = raw_stripe_transaction&.card_charge
+    return unless card_charge
+
+    settled_mapping = card_charge.raw_stripe_transactions
+                                 .where.not(id: raw_stripe_transaction.id)
+                                 .order(:id)
+                                 .filter_map { |sibling| sibling.canonical_transaction&.category_mapping }
+                                 .first
+
+    settled_mapping || card_charge.raw_pending_stripe_transaction&.canonical_pending_transaction&.category_mapping
+  end
 
   def stripe_merchant_category
     case model

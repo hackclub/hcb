@@ -36,6 +36,7 @@ module Payroll
   class Position < ApplicationRecord
     include AASM
     include Contractable
+    include HasPeriod
     include PgSearch::Model
     include Hashid::Rails
 
@@ -53,6 +54,7 @@ module Payroll
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_many :payments, through: :invoices
     has_one :event, through: :payee
+    has_one :legal_entity, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
@@ -174,22 +176,6 @@ module Payroll
       end
     end
 
-    # Renders the contract window like "Jan 1 – Jun 30, 2026", collapsing within
-    # a single month ("Apr 1–28, 2026") or spanning years
-    # ("Dec 1, 2025 – Feb 28, 2026") when needed.
-    def period_label
-      return if start_date.nil?
-      return start_date.strftime("%b %-d, %Y") if end_date.nil? || start_date == end_date
-
-      if start_date.year != end_date.year
-        "#{start_date.strftime("%b %-d, %Y")} – #{end_date.strftime("%b %-d, %Y")}"
-      elsif start_date.month != end_date.month
-        "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
-      else
-        "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
-      end
-    end
-
     # The steps a contractor must complete before payments can be sent, each as
     # { label:, complete: }. Rendered in the contractor show modal.
     def onboarding_checklist
@@ -256,14 +242,6 @@ module Payroll
       days = ONBOARDING_REMINDER_DAYS.dup
       days << days.last + ONBOARDING_REMINDER_INTERVAL_DAYS while days.last + ONBOARDING_REMINDER_INTERVAL_DAYS < days_remaining
       days.select { |day| day < days_remaining }
-    end
-
-    def tax_info_needed?
-      !payee.legal_entity&.payable?
-    end
-
-    def payout_method_needed?
-      !payee.legal_entity&.default_payout_method_ready?
     end
 
     def refresh_onboarding_state!
@@ -348,7 +326,7 @@ module Payroll
     end
 
     def contractable_link_path
-      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
+      Rails.application.routes.url_helpers.payroll_position_path(self)
     end
 
     # The contractor isn't emailed when the contract is sent; they're notified

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ReceiptableMailer < ApplicationMailer
+  helper :hcb_code # for attach_receipt_url, so recipients can upload receipts without signing in
+
   default to: -> { @user.email_address_with_name },
           subject: -> { @subject }
 

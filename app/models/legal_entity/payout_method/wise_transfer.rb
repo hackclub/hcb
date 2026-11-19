@@ -112,6 +112,10 @@ class LegalEntity
         self.class.information_required_for(currency).select { |field| field[:key].in?(keys) }
       end
 
+      def fee_reason
+        "Wise transfers incur a fee"
+      end
+
       private
 
       def required_recipient_fields_present

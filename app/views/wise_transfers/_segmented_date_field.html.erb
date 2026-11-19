@@ -1,6 +1,7 @@
 <%# locals: (form:, field:, input_options: {}) %>
 <% current_value = form.object.try(field[:key]) %>
-<% picker_id = "#{form.object_name}-#{field[:key]}".parameterize %>
+<%# Every currency renders its own copy of this field, so the picker is told apart by its input's id. %>
+<% picker_id = (input_options[:id] || "#{form.object_name}-#{field[:key]}").to_s.parameterize %>
 <div data-controller="menu" class="relative">
   <div class="input input-group cursor-text" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <div data-controller="segmented-data-input" data-segmented-data-input-initial-value="<%= current_value %>" data-segmented-data-input-picker-id-value="<%= picker_id %>" class="flex items-center flex-1">
