@@ -110,7 +110,7 @@ class AdminMailer < ApplicationMailer
 
     mail(
       to: INCOMING_FUNDS_REPORT_RECIPIENTS.filter_map { |id| User.find_by_public_id(id)&.email_address_with_name },
-      subject: "[HCB] #{@ledger_items.size} incoming #{"payment".pluralize(@ledger_items.size)} of $10k+ to HQ this week (#{ApplicationController.helpers.render_money(@ledger_items.sum(&:amount_cents))})"
+      subject: "[HCB] #{@ledger_items.size} incoming #{"payment".pluralize(@ledger_items.size)} of #{ApplicationController.helpers.render_money_short(INCOMING_FUNDS_THRESHOLD_CENTS)}+ to HQ this week (#{ApplicationController.helpers.render_money(@ledger_items.sum(&:amount_cents))})"
     )
   end
 
