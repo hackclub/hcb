@@ -6,7 +6,6 @@ module BreakdownEngine
     "Past month" => 1.month
   }.freeze
 
-
   def self.date_range(timeframe)
     if TIMEFRAMES.key?(timeframe)
       [TIMEFRAMES[timeframe].ago, Time.now]
@@ -22,14 +21,15 @@ module BreakdownEngine
     rolling = TIMEFRAMES.select { |_, duration| event.created_at < duration.ago }.keys
 
     years = Rails.cache.fetch("breakdown_timeframe_years_#{event.id}", expires_in: 1.hour) do
-      event.canonical_transactions
-           .group(Arel.sql("EXTRACT(YEAR FROM canonical_transactions.date)"))
-           .having("COUNT(*) >= ?", 10)
-           .count
-           .keys
-           .map { |year| year.to_i.to_s }
-           .sort
-           .reverse
+      Ledger::Query.new({}).execute(ledgers: [event.ledger])
+                   .unscope(:order)
+                   .group(Arel.sql("EXTRACT(YEAR FROM ledger_items.datetime)"))
+                   .having("COUNT(*) >= ?", 10)
+                   .count
+                   .keys
+                   .map { |year| year.to_i.to_s }
+                   .sort
+                   .reverse
     end
 
     ["All time", *rolling, *years]

@@ -1633,8 +1633,9 @@ RSpec.describe EventsController do
 
       it "offers calendar years with enough transactions" do
         Rails.cache.clear
-        create_list(:canonical_transaction, 10, date: Date.new(2025, 6, 1)).each do |canonical_transaction|
-          create(:canonical_event_mapping, event:, canonical_transaction:)
+        create_list(:ledger_item, 10).each do |item|
+          Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+          item.update_columns(datetime: Time.zone.local(2025, 6, 1), ct_count: 1)
         end
 
         get(:show, params: { id: event.slug, timeframe: "2025" })
@@ -1650,6 +1651,71 @@ RSpec.describe EventsController do
         expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("All time")
         expect(chart_sources).to all(satisfy { |src| !src.include?("timeframe") })
       end
+    end
+  end
+
+  describe "#money_flow_chart" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    before do
+      item = create(:ledger_item)
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+      item.update_columns(amount_cents: 1_000_00, datetime: Time.zone.local(2025, 6, 1), linked_object_type: "Invoice", ct_count: 1)
+    end
+
+    def frame
+      Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#money_flow")
+    end
+
+    it "turns outsiders of a private organization away without computing anything" do
+      private_event = create(:event, is_public: false)
+      create_session(create(:user), verified: true)
+      expect(BreakdownEngine::MoneyFlow).not_to receive(:new)
+
+      get(:money_flow_chart, params: { event_id: private_event.slug })
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "shows a transparent organization's totals to anonymous visitors without linking to the filtered ledger" do
+      get(:money_flow_chart, params: { event_id: event.slug })
+
+      expect(frame.text).to include("$1,000")
+      expect(frame.css("a")).to be_empty
+    end
+
+    it "links organizers to the transactions in the chosen year" do
+      sign_in_organizer_of(event)
+
+      get(:money_flow_chart, params: { event_id: event.slug, timeframe: "2025" })
+
+      money_in = frame.css("a").find { |link| link.text == "Money in" }
+      expect(money_in["href"]).to eq(event_transactions_path(event, direction: "revenue", start: "2025-01-01", end: "2025-12-31"))
+    end
+
+    it "hides Hack Club HQ's flow from anyone who isn't on its team" do
+      hq = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_HQ, is_public: true)
+      create_session(create(:user), verified: true)
+
+      get(:money_flow_chart, params: { event_id: hq.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(frame.element_children).to be_empty
+    end
+  end
+
+  describe "#balance_chart" do
+    render_views
+
+    it "renders the balance card" do
+      event = create(:event)
+      sign_in_organizer_of(event)
+
+      get(:balance_chart, params: { event_id: event.slug })
+
+      expect(Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#balance_chart #balance-chart")).to be_present
     end
   end
 

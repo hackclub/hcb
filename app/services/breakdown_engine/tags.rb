@@ -9,13 +9,9 @@ module BreakdownEngine
     end
 
     def run
+      dates = @start_date&.to_date..@end_date&.to_date
       tags = @event.tags.includes(hcb_codes: [:canonical_transactions, :canonical_pending_transactions]).each_with_object([]) do |tag, array|
-        transactions = tag.hcb_codes.select do |hcb_code|
-          next false unless @start_date.nil? || hcb_code.date&.after?(@start_date)
-          next false unless @end_date.nil? || hcb_code.date&.before?(@end_date)
-
-          true
-        end
+        transactions = tag.hcb_codes.select { |hcb_code| hcb_code.date && dates.cover?(hcb_code.date) }
 
         amount_cents_sum = transactions.sum(&:amount_cents).abs
         next if amount_cents_sum == 0
