@@ -1,34 +1,16 @@
 FROM mcr.microsoft.com/devcontainers/base:bookworm
 
-# Install Ruby
-ARG RUBY_VERSION="3.4.13"
-RUN su vscode -c "gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB"
-RUN su vscode -c "curl -sSL https://get.rvm.io | bash -s stable"
-RUN su vscode -c "/bin/bash -l -c \"rvm install ${RUBY_VERSION}\""
-RUN su vscode -c "/bin/bash -l -c \"rvm --default use ${RUBY_VERSION}\""
-
-# Install Rails
-RUN su vscode -c "/bin/bash -l -c \"gem install rails webdrivers\""
-RUN su vscode -c "/bin/bash -l -c \"rvm fix-permissions\""
-
-ARG NODE_VERSION="24"
-RUN su vscode -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
-RUN su vscode -c "\
-  export NVM_DIR=/home/vscode/.nvm && \
-  source \$NVM_DIR/nvm.sh && \
-  nvm install ${NODE_VERSION} && \
-  nvm alias default ${NODE_VERSION} && \
-  corepack enable \
-"
-
 # Default value to allow debug server to serve content over GitHub Codespace's port forwarding service
 # The value is a comma-separated list of allowed domains 
 ENV RAILS_DEVELOPMENT_HOSTS=".githubpreview.dev,.preview.app.github.dev,.app.github.dev"
 
-# [Optional] Uncomment this section to install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-		# These libraries are used by rails or helpful for development
+    build-essential \
+    libssl-dev \
+    libreadline-dev \
+    libyaml-dev \
+    zlib1g-dev \
     postgresql-client \
     libpq-dev \
     poppler-utils \
@@ -38,5 +20,18 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libgirepository1.0-dev \
     libpoppler-glib-dev \
     libcairo-gobject2 \
-    yarn \
     imagemagick
+
+# Use shims for non-login shells and restore them when login profiles reset PATH.
+ENV MISE_DATA_DIR=/home/vscode/.local/share/mise \
+    MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS=ruby,node \
+    PATH="/home/vscode/.local/share/mise/shims:${PATH}" \
+    BUNDLE_PATH=/usr/local/bundle
+RUN curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
+    && printf '%s\n' 'export PATH="/home/vscode/.local/share/mise/shims:$PATH"' > /etc/profile.d/mise.sh \
+    && install -d -o vscode -g vscode /usr/local/bundle
+
+USER vscode
+WORKDIR /home/vscode
+COPY --chown=vscode:vscode .ruby-version .node-version ./
+RUN mise install && corepack enable && mise reshim
