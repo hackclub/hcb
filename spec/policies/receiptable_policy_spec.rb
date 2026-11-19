@@ -18,6 +18,15 @@ RSpec.describe ReceiptablePolicy, type: :policy do
         expect(described_class.new(create(:user), ledger_item).upload?).to be_falsey
       end
 
+      it "authorizes a member of the card grant's event when the primary ledger belongs to a card grant" do
+        card_grant = create(:card_grant)
+        grant_item = create(:ledger_item)
+        Ledger::Mapping.create!(ledger: card_grant.ledger, ledger_item: grant_item, on_primary_ledger: true)
+        organizer_position = create(:organizer_position, event: card_grant.event)
+
+        expect(described_class.new(organizer_position.user, grant_item).upload?).to be(true)
+      end
+
       it "does not raise for an unmapped item with no primary ledger" do
         unmapped_item = create(:ledger_item)
 
