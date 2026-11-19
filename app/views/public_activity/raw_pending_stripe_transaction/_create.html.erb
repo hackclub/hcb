@@ -1,28 +1,30 @@
 <%# locals: (activity:, p:, current_user: nil, **) %>
 
 <% current_user ||= p[:current_user] %>
-<% hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code %>
+<% ledger_item = activity.trackable&.canonical_pending_transaction&.ledger_item %>
+<% card_charge = ledger_item&.linked_object %>
+<% event = ledger_item&.primary_ledger&.event || ledger_item&.primary_ledger&.card_grant&.event %>
 
-<% if hcb_code %>
-  <% if hcb_code.stripe_refund? %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
-      was refunded <%= render_money hcb_code.amount_cents.abs %> from <i><%= hcb_code.memo %></i> for <%= link_to hcb_code.event&.name, hcb_code.event %>
+<% if ledger_item %>
+  <% if card_charge&.stripe_refund? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
+      was refunded <%= render_money ledger_item.amount_cents.abs %> from <i><%= ledger_item.memo %></i> for <%= link_to event&.name, event %>
     <% end %>
-  <% elsif hcb_code.pt&.declined? %>
-    <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
-      <%= link_to hcb_code.event&.name, hcb_code.event %> card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= hcb_code.memo %></i>
+  <% elsif ledger_item.declined? %>
+    <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
+      <%= link_to event&.name, event %> card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= ledger_item.memo %></i>
     <% end %>
-  <% elsif hcb_code.stripe_cash_withdrawal? %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
-      withdrew <%= render_money hcb_code.stripe_atm_fee ? hcb_code.amount_cents.abs - hcb_code.stripe_atm_fee : hcb_code.amount_cents.abs %> from <i><%= humanized_merchant_name(hcb_code.stripe_merchant) %></i> for <%= link_to hcb_code.event&.name, hcb_code.event %>
+  <% elsif card_charge&.stripe_cash_withdrawal? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
+      withdrew <%= render_money card_charge.stripe_atm_fee ? ledger_item.amount_cents.abs - card_charge.stripe_atm_fee : ledger_item.amount_cents.abs %> from <i><%= humanized_merchant_name(card_charge.stripe_merchant_data) %></i> for <%= link_to event&.name, event %>
     <% end %>
-  <% elsif hcb_code.event.present? %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
-      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %> for <%= link_to hcb_code.event.name, hcb_code.event %>
+  <% elsif event.present? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
+      spent <%= render_money ledger_item.amount_cents.abs %> on <%= link_to ledger_item.memo, ledger_item_path(ledger_item) %> for <%= link_to event.name, event %>
     <% end %>
   <% else %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
-      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
+      spent <%= render_money ledger_item.amount_cents.abs %> on <%= link_to ledger_item.memo, ledger_item_path(ledger_item) %>
     <% end %>
   <% end %>
 <% else %>
