@@ -2094,11 +2094,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description"
+    t.date "end_date"
     t.text "name", null: false
     t.bigint "payment_id"
     t.bigint "payroll_position_id", null: false
     t.datetime "rejected_at"
     t.bigint "reviewed_by_id"
+    t.date "start_date"
     t.datetime "updated_at", null: false
     t.index ["payment_id"], name: "index_payroll_invoices_on_payment_id"
     t.index ["payroll_position_id"], name: "index_payroll_invoices_on_payroll_position_id"
