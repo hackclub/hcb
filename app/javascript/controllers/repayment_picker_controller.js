@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { closeModal } from '../modal'
 
 // The modal on the transfer form listing the recipient's transactions that can
 // be repaid. The selection is announced as `repayment-picker:select`, which the
@@ -28,6 +29,6 @@ export default class extends Controller {
   }
 
   done() {
-    this.element.close()
+    closeModal(this.element)
   }
 }

@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import { Turbo } from '@hotwired/turbo-rails'
-import { openModal } from '../modal'
+import { closeModal, openModal } from '../modal'
 
 // The side panel that loads whichever transaction, card or payment was clicked
 // (PopoverHelper builds the links), with its URL in ?popover= so it survives a
@@ -12,7 +12,8 @@ export default class extends Controller {
     this.openFromUrl()
   }
 
-  // Also run as frames load, since the link for ?popover= may be in a lazy one
+  // Also run as frames load, since the link for ?popover= may be in a lazy one,
+  // and after a morph refresh, which closes it like a reload would
   openFromUrl() {
     const stateUrl = new URL(location.href).searchParams.get('popover')
     if (!stateUrl || (this.element.open && stateUrl === this.stateUrl)) return
@@ -63,6 +64,9 @@ export default class extends Controller {
   }
 
   closed() {
+    // Reopened, after a morph refresh, before this ran
+    if (this.element.open) return
+
     // Closing with Back has already dropped it
     const url = new URL(location.href)
     if (this.stateUrl && url.searchParams.get('popover') === this.stateUrl) {
@@ -82,7 +86,7 @@ export default class extends Controller {
 
   popstate({ state }) {
     if (state?.popover) this.openFromUrl()
-    else this.element.close()
+    else closeModal(this.element)
   }
 
   // Pages loaded with ?popover= echo it into links built from the query string

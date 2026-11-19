@@ -1,7 +1,7 @@
 <%# locals: () %>
 
 <%= modal id: "shared_popover", class: "modal--popover", aria: { labelledby: "shared_popover_title" },
-          data: { controller: "popover", action: "modal:open->popover#populate close->popover#closed popstate@window->popover#popstate turbo:frame-load@document->popover#openFromUrl turbo:before-visit@document->popover#beforeVisit" } do %>
+          data: { controller: "popover", action: "modal:open->popover#populate close->popover#closed popstate@window->popover#popstate turbo:frame-load@document->popover#openFromUrl turbo:morph@document->popover#openFromUrl turbo:before-visit@document->popover#beforeVisit" } do %>
   <header class="pb2 rounded-t-lg">
     <%= modal_close %>
     <a href="#" target="_blank" rel="noopener noreferrer" class="pop modal__external muted" style="display: none;" data-popover-target="externalLink">

@@ -9,6 +9,7 @@ RSpec.describe "Transaction popovers", type: :system do
   let(:popover) { "#shared_popover" }
 
   def press_escape = page.driver.browser.keyboard.type(:escape)
+  def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
   def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
 
   def open_popover
@@ -39,9 +40,19 @@ RSpec.describe "Transaction popovers", type: :system do
 
     find("#{popover} .modal__close").click
 
-    expect(page).to have_no_css(popover)
+    expect_closed(popover)
     expect(page).to have_current_path(event_transactions_path(event))
     expect(page).to have_title(ledger_title)
+  end
+
+  it "keeps the transaction showing as it slides out" do
+    open_popover
+
+    find("#{popover} .modal__close").click
+
+    expect(page).to have_css("#{popover}[data-closing] turbo-frame##{hcb_code.public_id}")
+    expect_closed(popover)
+    expect(page).to have_no_css("#{popover} turbo-frame", visible: :all)
   end
 
   it "closes on browser back" do
@@ -49,14 +60,14 @@ RSpec.describe "Transaction popovers", type: :system do
 
     go_back
 
-    expect(page).to have_no_css(popover)
+    expect_closed(popover)
     expect(page).to have_current_path(event_transactions_path(event))
   end
 
   it "reopens on browser back after being closed" do
     open_popover
     find("#{popover} .modal__close").click
-    expect(page).to have_no_css(popover)
+    expect_closed(popover)
 
     go_back
 
@@ -89,24 +100,27 @@ RSpec.describe "Transaction popovers", type: :system do
       expect(open_modals).to contain_exactly("shared_popover", "create_tag")
 
       press_escape
-      expect(page).to have_no_css("#create_tag")
+      expect_closed("#create_tag")
       expect(open_modals).to eq(["shared_popover"])
     end
   end
 
-  it "closes cleanly when a morph refresh drops its open attribute" do
+  # Morphing drops `open`, which alone would leave it hidden but blocking the page
+  it "reopens with fresh content after a morph refresh, as a reload would" do
     open_popover
+    execute_script("document.querySelector('#{popover} turbo-frame').dataset.stale = true")
 
     execute_script("Turbo.session.refresh(location.href)")
 
-    expect(page).to have_no_css(popover)
-    expect(open_modals).to be_empty
+    expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]:not([data-stale])")
+    expect(open_modals).to eq(["shared_popover"])
+    expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
   end
 
   it "ignores a ?popover= that matches no link, however it's written" do
     visit event_transactions_path(event, popover: %q{"]) , [x='})
 
     expect(page).to have_css("h1", text: "Transactions")
-    expect(page).to have_no_css(popover)
+    expect_closed(popover)
   end
 end

@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { closeModal } from '../modal'
 
 export default class extends Controller {
   static values = { blockId: Number }
@@ -70,7 +71,7 @@ export default class extends Controller {
     } else {
       this.inputTarget.value = ''
       this.errorsTarget.parentElement.classList.add('hidden')
-      this.element.close()
+      closeModal(this.element)
     }
   }
 
