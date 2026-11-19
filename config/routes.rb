@@ -1012,7 +1012,6 @@ Rails.application.routes.draw do
     get :recent_activity
     get :balance_transactions
     get :balance_chart
-    get :money_movement
     get :merchants_chart
     get :categories_chart
     get :tags_chart
