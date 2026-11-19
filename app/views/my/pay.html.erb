@@ -241,7 +241,7 @@
               <%= render_money payment.amount_cents %>
 
               <% if payout.present? && policy(payout.ledger_item).show? %>
-                <%= link_to "", ledger_item_url(payout.ledger_item), class: "stretched-link", data: ledger_item_popover_data(payout.ledger_item) %>
+                <%= link_to "", ledger_item_path(payout.ledger_item), class: "stretched-link", data: ledger_item_popover_data(payout.ledger_item) %>
               <% else %>
                 <%= link_to "", payment_path(payment), class: "stretched-link", data: payment_popover_data(payment) %>
               <% end %>

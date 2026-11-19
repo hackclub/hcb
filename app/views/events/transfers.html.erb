@@ -176,7 +176,7 @@
                 <% end %>
 
                 <% if organizer_signed_in? %>
-                  <%= link_to "", ledger_item_url(d.ledger_item), class: "stretched-link", data: ledger_item_popover_data(d.ledger_item, title: transfer_popover_title) %>
+                  <%= link_to "", ledger_item_path(d.ledger_item), class: "stretched-link", data: ledger_item_popover_data(d.ledger_item, title: transfer_popover_title) %>
                 <% end %>
               </td>
             </tr>
