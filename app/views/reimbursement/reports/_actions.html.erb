@@ -85,7 +85,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || report.unsupported_payout_method? || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
@@ -95,7 +95,7 @@
                   <span class="bold warning">Warning</span>: your report is in <%= report.currency %>, but your payouts are configured for <%= report.payout_method.currency %>. Update your payout settings or switch the report currency to match.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
-                  <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                  <% if report.unsupported_payout_method? %>
                     update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
@@ -119,7 +119,7 @@
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s payout information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                <% if report.unsupported_payout_method? %>
                   update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
@@ -157,6 +157,10 @@
                 Get started by adding an expense to this report.
               <% elsif report.missing_receipts? || report.missing_categories? || report.expenses.any? { |e| e.amount.zero? } %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, amount, and category for each expense to continue.
+                <% missing_category_numbers = report.expenses_missing_category.order(:expense_number).pluck(:expense_number) %>
+                <% if missing_category_numbers.any? %>
+                  <br><span class="bold warning">Missing a category:</span> <%= missing_category_numbers.map { |number| "##{number}" }.to_sentence %>. Edit <%= missing_category_numbers.one? ? "this expense" : "these expenses" %> and select a category.
+                <% end %>
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
               <% elsif report.event&.financially_frozen? %>
@@ -297,10 +301,10 @@
               <% button_hint = capture do %>
                 <%= button_hint %>
                 <% admin_tool("p-2 mt-2") do %>
-                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to send a $25 disbursement from <%= report.event.name %> to HCB Operations and leave a comment on it linking to this report.
+                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to send a <%= render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS %> disbursement from <%= report.event.name %> to HCB Operations and leave a comment on it linking to this report.
                 <% end %>
               <% end %>
-              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. After approving this reimbursement, make sure to send a $25 disbursement from #{report.event.name} to HCB Operations and leave a comment on it linking to this report.", turbo_confirm].compact.join("\n\n") %>
+              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. After approving this reimbursement, make sure to send a #{render_money(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS)} disbursement from #{report.event.name} to HCB Operations and leave a comment on it linking to this report.", turbo_confirm].compact.join("\n\n") %>
             <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
@@ -344,8 +348,8 @@
                     </strong>
                   </div>
 
-                  <% if payout_method.wise_recipient_id.present? %>
-                    <%= link_to "https://wise.com/send#?contact=#{payout_method.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
+                  <% if payout_method.wise_recipient_url %>
+                    <%= link_to payout_method.wise_recipient_url, class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
                       <%= inline_icon "wise" %>
                       Open <%= report.user.full_name %> on Wise
                     <% end %>

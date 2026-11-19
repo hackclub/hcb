@@ -3,7 +3,6 @@
 <%#
   The "Upload receipt" and "Select" buttons at the end of a ledger row, like the
   canonical transaction row's (see canonical_transactions/_canonical_transaction).
-  Receipts still live on the HCB code, so that's the receiptable.
 
   ReceiptsController replaces this cell with `updated: true` whenever one of
   the item's receipts changes, which swaps the buttons for "Uploaded!" once the
@@ -22,8 +21,8 @@
 
     <%= form_with url: receipts_path, data: { controller: "form", turbo: true } do |form| %>
       <%= form.file_field :file, id: file_input_id, multiple: true, include_hidden: false, required: true, class: "sr-only", data: { action: "change->form#submit" } %>
-      <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
-      <%= form.hidden_field :receiptable_id, id: nil, value: item.hcb_code.id %>
+      <%= form.hidden_field :receiptable_type, id: nil, value: "Ledger::Item" %>
+      <%= form.hidden_field :receiptable_id, id: nil, value: item.id %>
       <%= form.hidden_field :upload_method, id: nil, value: "receipts_page" %>
 
       <div class="btn-group btn-group--no-wrap w-100">
@@ -49,7 +48,7 @@
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= link_modal_id %>">
         <%= modal_header "Select receipt" %>
         <%# Lazy, so the receipt bin only loads when the modal is opened, not once per row %>
-        <%= turbo_frame_tag "link_modal_#{item.hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: item.hcb_code.id), loading: :lazy, target: "_top" do %>
+        <%= turbo_frame_tag dom_id(item, :link_modal), src: link_modal_receipts_path(receiptable_type: "Ledger::Item", receiptable_id: item.id), loading: :lazy, target: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>

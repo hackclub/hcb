@@ -1,14 +1,17 @@
 <%# locals: () %>
+<%# herb:slots client %>
 
 <div id="flash-container">
   <% flash.to_h.except("imported_transactions", "file").each do |key, value| %>
+    <%# herb:key key %>
+    <%# herb:state (dismissed: false) %>
     <article
       role="alertdialog"
       class="flash flash--<%= key %>"
-      data-controller="admin-flash"
+      hidden="<%= dismissed %>"
       data-turbo-temporary>
       <div class="flash--content"><%= value %></div>
-      <button class="flash--close-button" data-action="click->admin-flash#dismiss:prevent">
+      <button class="flash--close-button" data-herb-set="dismissed=true">
         <%= inline_icon("view-close", size: 20, class: "pointer flash--close") %>
       </button>
     </article>
