@@ -173,6 +173,28 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
     end
 
+    it "keeps the method and shows an error when a draft report's mileage can't be requoted" do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+      legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      other_pm = legal_entity.payout_methods.create!(default: false, details: ach)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft, legal_entity_payout_method: other_pm)
+      Reimbursement::Expense::Mileage.create!(report:, value: 33)
+
+      delete(:archive, params: { id: other_pm.id })
+
+      expect(flash[:error]).to match(/exchange rate/i)
+      expect(other_pm.reload.archived).to be(false)
+      expect(report.reload).to have_attributes(currency: "USD", legal_entity_payout_method: other_pm)
+    end
+
     it "can't act on an already-archived method" do
       legal_entity.payout_methods.create!(default: true, details: ach)
       archived = legal_entity.payout_methods.create!(default: false, archived: true, details: ach(account: "99999999"))

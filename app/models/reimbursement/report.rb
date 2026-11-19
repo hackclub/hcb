@@ -119,6 +119,15 @@ module Reimbursement
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
 
+    # The mileage rate comes from the organization's plan.
+    after_update if: -> { saved_change_to_event_id? && !closed? } do
+      # reload: already-loaded expenses may still hold the previous organization
+      expenses.reload.each { |expense| expense.requote! if expense.is_a?(Reimbursement::Expense::Mileage) }
+    rescue ActiveRecord::RecordInvalid => e
+      errors.add(:base, e.record.errors.full_messages.to_sentence)
+      raise
+    end
+
     after_commit :invalidate_cached_data # do this after commit for expense touch-ing
 
     aasm timestamps: true do
@@ -376,6 +385,12 @@ module Reimbursement
         update!(currency: new_currency)
 
         expenses.each do |expense|
+          if expense.is_a?(Reimbursement::Expense::Mileage)
+            next if closed? # already paid out; a requote would change the amount and un-approve the expense
+
+            next expense.requote! # value is miles, not money
+          end
+
           fractional = Money.from_amount(expense.value, old_currency).cents
           full = Money.from_cents(fractional, new_currency).amount
 

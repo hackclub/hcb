@@ -189,6 +189,28 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(report.reload.legal_entity_payout_method).to eq(new_pm)
     end
 
+    it "re-points a draft report but keeps its currency when its mileage can't be requoted" do
+      allow(Safely).to receive(:env).and_return("production") # safely re-raises in test
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+      old_pm = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expense = Reimbursement::Expense::Mileage.create!(report:, value: 33)
+
+      service = described_class.new(
+        legal_entity: user.personal_legal_entity,
+        details_type: "LegalEntity::PayoutMethod::WiseTransfer",
+        details_attrs: valid_wise_attrs,
+        replacing: old_pm
+      )
+
+      # UsersController#update runs the service inside its own transaction
+      expect(ActiveRecord::Base.transaction { service.run }).to be(true)
+      # Never left on the archived method; the mismatch blocks submission until the currency is switched.
+      expect(report.reload).to have_attributes(currency: "USD", legal_entity_payout_method: service.payout_method)
+      expect(report).to be_mismatched_currency
+      expect(expense.reload.amount_cents).to eq(33 * 70)
+    end
+
     it "re-points draft reports to the corrected method" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)

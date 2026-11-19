@@ -209,7 +209,7 @@ module Reimbursement
     end
 
     def card_label
-      return memo + " (#{render_money(amount_cents)})" if memo && !is_standard?
+      return memo + " (#{amount.format})" if memo && !is_standard?
 
       memo
     end

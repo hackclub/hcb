@@ -202,7 +202,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   def self.quote_connection
-    Faraday.new url: "https://api.wise.com" do |f|
+    Faraday.new url: "https://api.wise.com", request: { open_timeout: 2, timeout: 5 } do |f|
       f.request :json
       f.response :raise_error
       f.response :json
@@ -212,13 +212,19 @@ class WiseTransfer < ApplicationRecord
   def self.convert_usd_to_local(usd_amount, target_currency)
     return Money.from_cents(usd_amount.cents, target_currency) if target_currency == "USD"
 
-    response = quote_connection.post("/v3/quotes", {
-                                       sourceCurrency: "USD",
-                                       targetCurrency: target_currency,
-                                       sourceAmount: usd_amount.amount
-                                     })
+    # Cached briefly so converting several amounts (e.g. a report's mileage expenses) is one Wise call.
+    rate = Rails.cache.fetch("wise_usd_rate/#{target_currency}", expires_in: 1.minute) do
+      rate = quote_connection.post("/v3/quotes", {
+                                     sourceCurrency: "USD",
+                                     targetCurrency: target_currency,
+                                     sourceAmount: usd_amount.amount
+                                   }).body["rate"]
+      raise Faraday::ParsingError, "Wise returned no exchange rate for #{target_currency}" unless rate.is_a?(Numeric) && rate.positive?
 
-    Money.from_amount(usd_amount.amount * response.body["rate"], target_currency)
+      rate
+    end
+
+    Money.from_amount(usd_amount.amount * rate, target_currency)
   end
 
   def self.generate_detailed_quote(initial_local_amount)

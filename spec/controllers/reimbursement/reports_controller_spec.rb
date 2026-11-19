@@ -5,6 +5,15 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  def gbp_wise
+    stub_request(:get, /api\.column\.com\/institutions/)
+      .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+    LegalEntity::PayoutMethod::WiseTransfer.new(
+      address_line1: "1 Main St", address_city: "London", address_state: "England",
+      address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+    )
+  end
+
   describe "#start" do
     render_views
 
@@ -512,6 +521,25 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#update_currency" do
+    it "keeps the report's currency and shows an error when its mileage can't be requoted" do
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+      user = create(:user)
+      user.personal_legal_entity.payout_methods.create!(default: true, details: gbp_wise)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expense = Reimbursement::Expense::Mileage.create!(report:, value: 33)
+
+      create_session(user, verified: true)
+
+      post(:update_currency, params: { report_id: report.id })
+
+      expect(response).not_to have_http_status(:server_error)
+      expect(flash[:error]).to match(/exchange rate/i)
+      expect(report.reload.currency).to eq("USD")
+      expect(expense.reload.amount_cents).to eq(33 * 70)
+    end
+  end
+
   describe "#update_payout_method" do
     def ach(account: "12345678")
       LegalEntity::PayoutMethod::AchTransfer.new(account_number: account, routing_number: "021000021")
@@ -552,6 +580,24 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(report.reload.currency).to eq("GBP")
       expect(report.legal_entity_payout_method).to eq(wise)
+    end
+
+    it "keeps the report as-is and shows an error when its mileage can't be requoted" do
+      stub_request(:post, "https://api.wise.com/v3/quotes").to_return(status: 500)
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      wise = user.personal_legal_entity.payout_methods.create!(default: false, details: gbp_wise)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expense = Reimbursement::Expense::Mileage.create!(report:, value: 33)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: wise.id })
+
+      expect(response).to redirect_to(report)
+      expect(flash[:error]).to match(/exchange rate/i)
+      expect(report.reload).to have_attributes(currency: "USD", legal_entity_payout_method: default_pm)
+      expect(expense.reload.amount_cents).to eq(33 * 70)
     end
 
     it "refuses to assign a payout method belonging to another user" do
