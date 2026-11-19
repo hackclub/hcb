@@ -29,6 +29,7 @@
   &[open]:not([data-closing]) {
     opacity: 1;
     scale: none;
+    transition: translate 0.2s;
 
     &::backdrop {
       opacity: 1;
@@ -70,7 +71,7 @@
       height: calc(100dvh - 24px);
       border-radius: var(--radius-xl);
       margin: 12px;
-      translate: 100%;
+      translate: 10%;
 
       &[open]:not([data-closing]) {
         translate: none;
@@ -78,7 +79,7 @@
 
       @starting-style {
         &[open]:not([data-closing]) {
-          translate: 100%;
+          translate: 10%;
         }
       }
     }
