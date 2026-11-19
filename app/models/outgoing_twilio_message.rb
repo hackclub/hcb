@@ -12,7 +12,6 @@
 #
 # Indexes
 #
-#  index_outgoing_twilio_messages_on_hcb_code_id        (hcb_code_id)
 #  index_outgoing_twilio_messages_on_ledger_item_id     (ledger_item_id)
 #  index_outgoing_twilio_messages_on_twilio_message_id  (twilio_message_id)
 #
@@ -29,10 +28,6 @@ class OutgoingTwilioMessage < ApplicationRecord
   # The transaction the text was about, if any, where a photo texted back is
   # attached. Nil for texts that aren't about a transaction (User::SendSmsJob).
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
-
-  # Messages used to point at the transaction's HCB code. Nothing writes the
-  # column any more; it's dropped once no running code expects it.
-  self.ignored_columns += ["hcb_code_id"]
 
   validates_presence_of :twilio_message
 
