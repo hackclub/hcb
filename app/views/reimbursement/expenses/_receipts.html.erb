@@ -71,7 +71,7 @@
   </div>
 <% end %>
 <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-  <%= modal_header "Select receipt" %>
+  <%= modal_header "Select receipts" %>
   <%= turbo_frame_tag dom_id(expense, :link_modal), src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
     <strong>Loading...</strong>
   <% end %>

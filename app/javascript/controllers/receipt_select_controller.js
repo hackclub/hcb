@@ -14,26 +14,25 @@ class Receipt {
 }
 
 export default class extends Controller {
-  static targets = ['receipt', 'select', 'confirm', 'noResults', 'search']
+  static targets = ['receipt', 'receiptId', 'confirm', 'noResults', 'search']
 
   select(e) {
-    const prevReceiptId = this.selectElement.value + ''
+    const receipt = e.currentTarget
+    const selected = receipt.classList.toggle('receipt--selected')
+    const receiptId = receipt.getAttribute('data-receipt-id')
 
-    document
-      .querySelectorAll('.receipt--selected')
-      .forEach(el => el.classList.remove('receipt--selected'))
+    // The hidden input carrying this receipt's id is submitted only while the
+    // receipt is selected.
+    this.receiptIdTargets
+      .filter(input => input.getAttribute('data-receipt-id') === receiptId)
+      .forEach(input => (input.disabled = !selected))
 
-    const receiptId = e.currentTarget.getAttribute('data-receipt-id')
-
-    if (receiptId === prevReceiptId) {
-      this.confirmTarget.disabled = true
-      this.selectElement.value = ''
-      return this.#render()
-    }
-
-    this.confirmTarget.disabled = false
-    this.selectElement.value = receiptId
-    e.currentTarget.classList.add('receipt--selected')
+    const count = this.receiptIdTargets.filter(input => !input.disabled).length
+    this.confirmTarget.disabled = count === 0
+    this.confirmTarget.value =
+      count === 0
+        ? this.confirmTarget.defaultValue
+        : `Add ${count} receipt${count === 1 ? '' : 's'} to transaction`
 
     this.#render()
   }
@@ -59,9 +58,10 @@ export default class extends Controller {
 
     const hidden = this.receiptTargets.filter(el => !shown.includes(el))
 
-    for (let i = 0; i < hidden.length; i++) {
-      const el = hidden[i]
-      if (el.classList.contains('receipt--selected')) {
+    // Selected receipts stay visible whatever the search says, so the user can
+    // see (and undo) what they're about to attach.
+    for (let i = hidden.length - 1; i >= 0; i--) {
+      if (hidden[i].classList.contains('receipt--selected')) {
         shown.push(hidden.splice(i, 1)[0])
       }
     }
@@ -91,9 +91,5 @@ export default class extends Controller {
 
   get receipts() {
     return this.receiptTargets.map(el => new Receipt(el))
-  }
-
-  get selectElement() {
-    return this.selectTarget.children[0]
   }
 }

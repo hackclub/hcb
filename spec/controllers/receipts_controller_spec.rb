@@ -133,7 +133,7 @@ RSpec.describe ReceiptsController do
       request.headers["Referer"] = hcb_code_url(create(:canonical_pending_transaction).local_hcb_code)
 
       post(:link, params: {
-             receipt_id: receipt.id,
+             receipt_ids: [receipt.id],
              receiptable_type: "Ledger::Item",
              receiptable_id: ledger_item.id
            }, format: :turbo_stream)
@@ -177,7 +177,7 @@ RSpec.describe ReceiptsController do
       ).run!.first
 
       post(:link, params: {
-             receipt_id: receipt.id,
+             receipt_ids: [receipt.id],
              receiptable_type: "Ledger::Item",
              receiptable_id: ledger_item.id,
              show_link: true
@@ -185,7 +185,69 @@ RSpec.describe ReceiptsController do
 
       expect(receipt.reload.receiptable).to eq(ledger_item)
       expect(hcb_code.receipts).to contain_exactly(receipt)
-      expect(flash[:success][:link]).to eq(hcb_code_path(hcb_code))
+      expect(flash[:success]).to include(text: "Receipt linked!", link: hcb_code_path(hcb_code))
+    end
+  end
+
+  # The "Select from Receipt Bin" modal attaches every selected receipt in one
+  # request.
+  describe "#link with several receipts" do
+    render_views
+
+    let(:user) { create(:user, :make_admin) }
+    let(:ledger_item) { create(:canonical_pending_transaction).local_hcb_code.reload.ledger_item }
+
+    def receipt_in_bin(uploader: user)
+      ::ReceiptService::Create.new(
+        receiptable: nil,
+        uploader:,
+        attachments: [fixture_file_upload("receipt.png", "image/png")],
+        upload_method: :receipts_page
+      ).run!.first
+    end
+
+    before { create_session(user, verified: true) }
+
+    it "attaches each of them and removes each from the page's receipt bin" do
+      receipts = [receipt_in_bin, receipt_in_bin]
+
+      post(:link, params: {
+             receipt_ids: receipts.map(&:id),
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id
+           }, format: :turbo_stream)
+
+      expect(receipts.map { |receipt| receipt.reload.receiptable }).to all(eq(ledger_item))
+
+      fragment = Nokogiri::HTML5.fragment(response.body)
+      receipts.each do |receipt|
+        expect(fragment.at_css("turbo-stream[action='remove'][target='receipt_#{receipt.id}']")).to be_present
+      end
+    end
+
+    it "pluralizes the flash" do
+      receipts = [receipt_in_bin, receipt_in_bin]
+
+      post(:link, params: {
+             receipt_ids: receipts.map(&:id),
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id
+           }, format: :html)
+
+      expect(flash[:success]).to eq("Receipts added!")
+    end
+
+    it "attaches none of them when one isn't the user's to link" do
+      receipts = [receipt_in_bin, receipt_in_bin(uploader: create(:user))]
+
+      post(:link, params: {
+             receipt_ids: receipts.map(&:id),
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id
+           }, format: :html)
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(receipts.map { |receipt| receipt.reload.receiptable }).to all(be_nil)
     end
   end
 
