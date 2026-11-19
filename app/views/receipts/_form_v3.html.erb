@@ -14,7 +14,8 @@
           ",
           "file-drop-target" => ("dropzone" if defined?(restricted_dropzone)),
           "file-drop-title-value" => defined?(restricted_dropzone) ? "Drop to add to Receipt Bin." : "Drop to instantly add a receipt.",
-          "file-drop-global-paste-value" => defined?(global_paste) && global_paste ? "true" : "false"
+          "file-drop-global-paste-value" => defined?(global_paste) && global_paste ? "true" : "false",
+          "file-drop-max-bytes-value" => Receipt::MAX_FILE_SIZE
         }.compact do |form| %>
 
       <div class="card flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form" data-panel-swap-target="form">
@@ -56,7 +57,7 @@
                               direct_upload: true,
                               data: {
                                 "file-drop-target" => "fileInput",
-                                "action"           => "change->form#submit"
+                                "action"           => "change->file-drop#checkSize change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap gap-2">
             <% additional_classes = [].tap do |array|
@@ -79,6 +80,8 @@
               <% end %>
             <% end %>
           </span>
+
+          <p class="center error break-words" role="alert" hidden data-file-drop-target="sizeError"></p>
 
           <p class="center muted">Or drag & drop your receipt here (find more info for receipts on <a href="https://help.hcb.hackclub.com/en/collections/19657949-receipts-compliance" class="link">our help page</a>)</p>
         </div>
