@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# Reduce slug size by deleting node_modules during assets clean
-# https://blog.saeloun.com/2020/05/04/how-to-reduce-heroku-slug-size.html
-# Adapted from https://github.com/heroku/heroku-buildpack-ruby/issues/792
+# Delete node_modules during assets:clean. It's only needed to build assets.
 
 namespace :assets do
   desc "Remove 'node_modules' folder"
