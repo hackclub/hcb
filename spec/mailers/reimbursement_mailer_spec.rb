@@ -82,7 +82,7 @@ RSpec.describe ReimbursementMailer do
   end
 
   describe "#wise_transfer_failed" do
-    it "tells the reimbursee why their Wise payout failed and where to fix their details" do
+    it "tells the reimbursee why their payout via Wise transfer failed and where to fix their details" do
       create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       user = create(:user, email: "user@example.com")
       report = create(:reimbursement_report, user:, name: "Food & drinks for event")

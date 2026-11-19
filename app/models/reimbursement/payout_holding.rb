@@ -107,6 +107,20 @@ module Reimbursement
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
 
+    def awaiting_wise_transfer?
+      wise_transfer.nil? && !failed? && !reversed?
+    end
+
+    def cancel_failed_payout
+      return false unless failed? && expense_payouts.all?(&:settled?)
+
+      reverse!
+      true
+    rescue => e
+      Rails.error.report(e, context: { reimbursement_payout_holding_id: id })
+      false
+    end
+
     def reverse!
       raise ArgumentError, "must be a reimbursed report" unless report.reimbursed?
       raise ArgumentError, "must be a failed payout holding" unless failed?
