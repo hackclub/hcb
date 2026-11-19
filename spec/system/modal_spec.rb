@@ -16,6 +16,8 @@ RSpec.describe "Modals", type: :system do
   def expect_open(selector) = expect(page).to have_css("#{selector}[open]", style: { opacity: "1" })
   # Not just faded out, but closed
   def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
+  # What it's animating right now, as CSS transitions
+  def transitions(selector) = evaluate_script("document.querySelector(arguments[0]).getAnimations().map(a => a.transitionProperty)", selector)
 
   before do
     create(:event, organizers: [user])
@@ -49,12 +51,15 @@ RSpec.describe "Modals", type: :system do
     it "animates out while still open before closing, from the close button and Escape" do
       within(modal) { find(".modal__close").click }
       expect(page).to have_css("#{modal}[open][data-closing]")
+      expect(transitions(modal)).to include("opacity", "scale")
       expect_closed(modal)
 
       click_on "Start report"
+      expect(transitions(modal)).to include("opacity", "scale") # in, too
       expect_open(modal)
       press_escape
       expect(page).to have_css("#{modal}[open][data-closing]")
+      expect(transitions(modal)).to include("opacity", "scale")
       expect_closed(modal)
     end
 
