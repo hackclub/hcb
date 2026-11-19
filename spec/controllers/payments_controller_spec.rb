@@ -48,6 +48,28 @@ RSpec.describe PaymentsController do
     end
   end
 
+  describe "GET #show" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, :with_positive_balance, organizers: [user]) }
+
+    before do
+      create_session(user, verified: true)
+    end
+
+    it "links each attempt with a payout to its ledger item" do
+      payee = create(:payee, event:)
+      payment = create(:payment, payee:)
+      ach_transfer = create(:ach_transfer, event:)
+      create(:payment_attempt, :ach, payment:, payout: ach_transfer, aasm_state: "under_review")
+
+      get :show, params: { id: payment.to_param }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(ledger_item_path(ach_transfer.reload.ledger_item))
+      expect(response.body).not_to include(hcb_code_path(ach_transfer.local_hcb_code))
+    end
+  end
+
   describe "POST #create" do
     let(:user) { create(:user) }
     let(:event) { create(:event, organizers: [user]) }
