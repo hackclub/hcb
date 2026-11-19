@@ -36,6 +36,13 @@
               <span class="text-xl font-bold">HCB Admin</span>
             </div>
 
+            <div class="dock flex mt-4">
+              <%= link_to admin_index_path, class: "dock__item", 'aria-current': current_page?(admin_index_path) ? "page" : "false" do %>
+                <%= inline_icon "home", size: 32, style: "padding: 0" %>
+                <span class="flex-grow">Home</span>
+              <% end %>
+            </div>
+
             <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100" do %>
               <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
             <% end %>
