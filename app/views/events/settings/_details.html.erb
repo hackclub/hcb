@@ -80,6 +80,7 @@
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+              Donations and invoice payments currently show up on bank statements as <strong><%= event.statement_descriptor %></strong>.
             </p>
             <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
           </div>
@@ -103,7 +104,7 @@
               target: event.donation_page_available? ? "_blank" : nil %>
             and your
             <%= link_to "public reimbursement page",
-              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(event) : { tab: "reimbursements" },
+              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_path(event) : { tab: "reimbursements" },
               target: event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
           </p>
         </div>

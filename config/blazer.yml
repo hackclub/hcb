@@ -87,6 +87,8 @@ data_sources:
       # Transactions
       hcb_code: "/hcb/{value}"
       hcb_code_id: "/hcb/{value}"
+      ledger_item_id: "/admin/ledger_items/{value}"
+      repaying_ledger_item_id: "/admin/ledger_items/{value}"
       canonical_transaction_id: "/canonical_transactions/{value}"
       canonical_pending_transaction_id: "/canonical_pending_transactions/{value}"
 
@@ -186,6 +188,8 @@ data_sources:
       voided_by_id: *user_name
 
       # Transactions
+      ledger_item_id: &ledger_item_memo "SELECT id, CONCAT(memo, ' (', TO_CHAR(amount_cents / 100.0, 'FM$999,999,990.00'), ')') FROM ledger_items WHERE id IN {value}"
+      repaying_ledger_item_id: *ledger_item_memo
       canonical_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_transactions WHERE id IN {value}"
       canonical_pending_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_pending_transactions WHERE id IN {value}"
 

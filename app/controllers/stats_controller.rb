@@ -99,13 +99,12 @@ class StatsController < ApplicationController
             INNER JOIN canonical_pending_transactions cpt ON cpt.hcb_code = hcb_codes.hcb_code
             INNER JOIN raw_pending_stripe_transactions rpst ON cpt.raw_pending_stripe_transaction_id = rpst.id
             INNER JOIN stripe_cardholders sc ON sc.stripe_id = rpst.stripe_transaction->'card'->'cardholder'->>'id'
-            LEFT JOIN receipts ON receipts.receiptable_type = 'HcbCode' AND receipts.receiptable_id = hcb_codes.id
             LEFT JOIN canonical_pending_declined_mappings cpdm ON cpdm.canonical_pending_transaction_id = cpt.id
             INNER JOIN canonical_pending_event_mappings cpem ON cpem.canonical_pending_transaction_id = cpt.id
             INNER JOIN events ON events.id = cpem.event_id
             INNER JOIN event_plans ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'
             WHERE sc.user_id = users.id
-            AND   receipts.id IS NULL AND cpdm.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at IS NULL
+            AND   NOT #{HcbCode.receipts_exist_sql} AND cpdm.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at IS NULL
             AND   event_plans.type != 'Event::Plan::SalaryAccount'
             #{"AND rpst.created_at >= ?" if since_card_locking}
         )

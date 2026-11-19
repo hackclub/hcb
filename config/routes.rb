@@ -111,7 +111,6 @@ Rails.application.routes.draw do
     post "receipt_report", to: "users#receipt_report", as: :trigger_receipt_report
 
     get "cards", to: "my#cards", as: :my_cards
-    get "cards/events/:event_id", to: "my#event_cards", as: :my_event_cards
     get "cards/shipping", to: "stripe_cards#shipping", as: :my_cards_shipping
   end
 
@@ -275,6 +274,7 @@ Rails.application.routes.draw do
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "ledger_items", to: "admin#ledger_items"
+      get "ledger_items/:id", to: "admin#ledger_item", as: :ledger_item
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
@@ -639,6 +639,9 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      resource :repayment, only: [:create] do
+        get :candidates
+      end
       post "toggle_tag", to: "items#toggle_tag"
     end
   end

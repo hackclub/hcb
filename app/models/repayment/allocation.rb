@@ -27,18 +27,17 @@
 #
 #  repayment_allocations_positive_amount  (amount_cents > 0)
 #
-# Links a repayment instance to a transaction it repays. The destination
-# organization had the expense; the source organization is paying it back.
+# Links a repayment instance to a transaction it repays: an expense of the
+# repayment's organization.
 #
 # Each allocation still covers one expense in full. Partial repayment needs
 # separate accounting and category-snapshot handling before it can be enabled.
 class Repayment
   class Allocation < ApplicationRecord
     belongs_to :repayment, inverse_of: :allocations
-    delegate :disbursement, to: :repayment, allow_nil: true
+    delegate :disbursement, :event, to: :repayment, allow_nil: true
     belongs_to :repaid_ledger_item, class_name: "Ledger::Item", foreign_key: :ledger_item_id, inverse_of: :repayment_allocations
 
-    # Rejected and errored disbursements never moved money, so they don't count.
     scope :not_failed, -> { joins(:repayment).merge(Repayment.not_failed) }
 
     # Pending and settled expenses on the organization's ledger. Transfers
@@ -60,7 +59,7 @@ class Repayment
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
     # Ledger item amounts can change later (e.g. a partial refund), so these are
     # only checked when the repayment is made.
-    validate :repaid_transaction_is_an_expense_of_the_destination, on: :create
+    validate :repaid_transaction_is_an_expense_of_the_event, on: :create
     validate :repays_in_full, on: :create
     validate :repaid_transaction_not_already_repaid, on: :create
 
@@ -75,18 +74,31 @@ class Repayment
       repaid_transactions.filter_map { |t| t.category_mapping&.category }.first
     end
 
-    # Remembers each repaid transaction's category (and whether it was set by
-    # hand) so rejecting the repayment can put it back.
+    # The repaid transactions, plus the money in that repaid them when the
+    # repayment was marked between two transactions rather than transferred.
+    def categorized_transactions
+      repaid_transactions + repayment.repaying_transactions
+    end
+
+    # Remembers each transaction's category (and whether it was set by hand).
+    #
+    # The sending side of a transfer marked as the repayment takes on the
+    # expense's category (or none, if the expense has none), as it would have
+    # had it been sent as a repayment transfer.
     def apply_categories!
-      transactions = repaid_transactions
-      update!(previous_categories: transactions.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
-      transactions.each do |t|
-        TransactionCategoryService.new(model: t).set!(slug: Repayment::CATEGORY_SLUG, assignment_strategy: "manual")
+      slugs = categorized_transactions.index_with { |t| Repayment::CATEGORY_SLUG }
+      expense_slug = repaid_category&.slug
+      repayment.sender_transactions.each { |t| slugs[t] = expense_slug }
+
+      update!(previous_categories: slugs.keys.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
+      slugs.each do |t, slug|
+        TransactionCategoryService.new(model: t).set!(slug:, assignment_strategy: "manual")
       end
     end
 
     # Puts each repaid transaction back to the category it had before, unless
-    # someone has recategorized it since.
+    # someone has recategorized it since. Only repayment transfers are undone
+    # (by rejecting them); a repayment marked between two transactions isn't.
     def revert_categories!
       repaid_transactions.each do |t|
         mapping = t.category_mapping
@@ -121,16 +133,16 @@ class Repayment
       { "slug" => mapping.category.slug, "assignment_strategy" => mapping.assignment_strategy }
     end
 
-    def repaid_transaction_is_an_expense_of_the_destination
-      return if repaid_ledger_item.nil? || disbursement.nil?
+    def repaid_transaction_is_an_expense_of_the_event
+      return if repaid_ledger_item.nil? || event.nil?
 
-      unless Repayment.repayable_ledger_items(disbursement.destination_event).exists?(repaid_ledger_item.id)
-        errors.add(:repaid_ledger_item, "must be an expense of #{disbursement.destination_event.name}")
+      unless Repayment.repayable_ledger_items(event).exists?(repaid_ledger_item.id)
+        errors.add(:repaid_ledger_item, "must be an expense of #{event.name}")
       end
     end
 
     def repays_in_full
-      return if repaid_ledger_item.nil? || disbursement.nil?
+      return if repaid_ledger_item.nil? || event.nil?
 
       unless amount_cents == -repaid_ledger_item.amount_cents
         errors.add(:amount_cents, "must match the full amount of the repaid transaction")

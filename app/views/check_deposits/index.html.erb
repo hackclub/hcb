@@ -55,7 +55,7 @@
             <td><%= format_date check_deposit.created_at %></td>
             <td>
               <%= render_money check_deposit.amount_cents %>
-              <%= link_to "", url_for(check_deposit.local_hcb_code), class: "stretched-link" %>
+              <%= link_to "", ledger_item_path(check_deposit.ledger_item), class: "stretched-link" %>
             </td>
           </tr>
         <% end %>
