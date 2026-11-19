@@ -22,6 +22,7 @@ module ReceiptService
           {
             receipt_id: @receipt.id,
             hcb_code_id: pairing[:hcb_code].id,
+            ledger_item_id: pairing[:hcb_code].ledger_item_id,
             distance: pairing[:distance],
             aasm_state: "unreviewed"
           }

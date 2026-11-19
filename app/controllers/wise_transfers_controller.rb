@@ -37,7 +37,7 @@ class WiseTransfersController < ApplicationController
           uploader: current_user,
           attachments: wise_transfer_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @wise_transfer.local_hcb_code
+          receiptable: @wise_transfer.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
         ).run!
       end
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
