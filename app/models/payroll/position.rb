@@ -53,6 +53,7 @@ module Payroll
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_many :payments, through: :invoices
     has_one :event, through: :payee
+    has_one :legal_entity, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
@@ -258,14 +259,6 @@ module Payroll
       days.select { |day| day < days_remaining }
     end
 
-    def tax_info_needed?
-      !payee.legal_entity&.payable?
-    end
-
-    def payout_method_needed?
-      payee.legal_entity&.default_payout_method.blank?
-    end
-
     def refresh_onboarding_state!
       mark_onboarded! if onboarding? && may_mark_onboarded?
     end
@@ -348,7 +341,7 @@ module Payroll
     end
 
     def contractable_link_path
-      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
+      Rails.application.routes.url_helpers.payroll_position_path(self)
     end
 
     # The contractor isn't emailed when the contract is sent; they're notified
