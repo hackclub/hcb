@@ -108,6 +108,7 @@ RSpec.describe "Api::V3 transactions", type: :request do
     def stripe_transaction(authorization:)
       raw = build(:raw_stripe_transaction)
       raw.stripe_transaction = raw.stripe_transaction.merge("authorization" => authorization).compact
+      raw.stripe_authorization_id = authorization
       raw.save!
 
       ct = create(
@@ -131,6 +132,51 @@ RSpec.describe "Api::V3 transactions", type: :request do
 
       expect(response.parsed_body.size).to eq(1)
       expect(response.headers["X-Total"].to_i).to eq(1)
+    end
+
+    it "exposes ledger status and settlement details for a charge with no authorization record" do
+      charge = Api::Models::CardCharge.first
+      raw = charge.ledger_item.linked_object.raw_stripe_transactions.first
+      raw.update!(stripe_transaction: raw.stripe_transaction.merge(
+        "authorization_method" => "contactless",
+        "merchant_data"        => { "name" => "Bakery", "category" => "bakeries", "country" => "US", "network_id" => "merchant_123" }
+      ))
+
+      get "/api/v3/organizations/#{event.slug}/card_charges", headers: ledger_header
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.sole).to include(
+        "id"                   => charge.public_id,
+        "status"               => "settled",
+        "merchant"             => raw.stripe_transaction["merchant_data"],
+        "authorization_method" => "contactless"
+      )
+      expect(response.parsed_body.sole).not_to have_key("decline_reason")
+    end
+
+    it "uses the ledger status on the detail endpoint with either API engine" do
+      charge = Api::Models::CardCharge.first
+      charge.ledger_item.update!(status: :released)
+
+      [{}, ledger_header].each do |headers|
+        get "/api/v3/card_charges/#{charge.public_id}", headers: headers
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to include("id" => charge.public_id, "status" => "released")
+        expect(response.parsed_body).not_to have_key("decline_reason")
+      end
+    end
+
+    it "includes the decline reason only for a declined ledger item" do
+      charge = Api::Models::CardCharge.first
+      raw = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_1")
+      raw.update!(stripe_transaction: raw.stripe_transaction.merge("metadata" => { "declined_reason" => "merchant_not_allowed" }))
+      charge.ledger_item.update!(status: :declined)
+
+      get "/api/v3/card_charges/#{charge.public_id}", headers: ledger_header
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include("status" => "declined", "decline_reason" => "merchant_not_allowed")
     end
 
     it "reports a force capture as its own type, not as a card charge" do
