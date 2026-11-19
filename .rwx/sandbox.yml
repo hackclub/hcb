@@ -13,7 +13,6 @@ tasks:
     with:
       repository: https://github.com/hackclub/hcb.git
       ref: ${{ init.commit-sha }}
-      github-token: ${{ github.token }}
       preserve-git-dir: true
 
   - key: setup
