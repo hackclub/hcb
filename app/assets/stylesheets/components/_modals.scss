@@ -35,8 +35,9 @@
     }
   }
 
+  // Matches the open state's selector, or it would win and nothing would animate
   @starting-style {
-    &[open] {
+    &[open]:not([data-closing]) {
       opacity: 0;
       scale: 0.9;
 
@@ -55,6 +56,12 @@
     width: 66vw;
     scale: none;
 
+    @starting-style {
+      &[open]:not([data-closing]) {
+        scale: none;
+      }
+    }
+
     &.modal--popover--sm {
       max-width: 500px;
     }
@@ -70,7 +77,7 @@
       }
 
       @starting-style {
-        &[open] {
+        &[open]:not([data-closing]) {
           translate: 100%;
         }
       }

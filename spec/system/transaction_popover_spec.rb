@@ -10,6 +10,7 @@ RSpec.describe "Transaction popovers", type: :system do
 
   def press_escape = page.driver.browser.keyboard.type(:escape)
   def expect_closed(selector) = expect(page).to have_no_css("#{selector}[open]", visible: :all)
+  def transitions = evaluate_script("document.querySelector('#shared_popover').getAnimations().map(a => a.transitionProperty)")
   def open_modals = evaluate_script("[...document.querySelectorAll('dialog:modal')].map(dialog => dialog.id)")
 
   def open_popover
@@ -45,12 +46,15 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(page).to have_title(ledger_title)
   end
 
-  it "keeps the transaction showing as it slides out" do
-    open_popover
+  it "slides in, and out with the transaction still showing" do
+    click_on "TEST DONATION"
+    expect(transitions).to include("translate")
+    expect(page).to have_css(popover, style: { translate: "none", opacity: "1" })
 
     find("#{popover} .modal__close").click
 
     expect(page).to have_css("#{popover}[data-closing] turbo-frame##{hcb_code.public_id}")
+    expect(transitions).to include("translate")
     expect_closed(popover)
     expect(page).to have_no_css("#{popover} turbo-frame", visible: :all)
   end
@@ -112,7 +116,8 @@ RSpec.describe "Transaction popovers", type: :system do
 
     execute_script("Turbo.session.refresh(location.href)")
 
-    expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]:not([data-stale])")
+    # The refresh reloads the page and its frames before the popover's own
+    expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]:not([data-stale])", wait: 10)
     expect(open_modals).to eq(["shared_popover"])
     expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
   end
