@@ -52,7 +52,7 @@ class CanonicalPendingTransaction
         message += " Upload your receipts to unlock in seconds."
       end
 
-      TwilioMessageService::Send.new(@user, message, hcb_code:).run!
+      TwilioMessageService::Send.new(@user, message, hcb_code:, ledger_item: @cpt.ledger_item).run!
     end
 
     private
