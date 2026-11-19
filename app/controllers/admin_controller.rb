@@ -427,6 +427,15 @@ class AdminController < Admin::BaseController
                             .page(@page).per(@per).order(datetime: :desc)
   end
 
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
+  end
+
   def event_search
     @q = params[:q].presence
     events = @q.present? ? Event.search_name(@q) : Event.all
