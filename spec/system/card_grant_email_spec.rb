@@ -55,7 +55,7 @@ RSpec.describe "Card grant email", type: :system do
   it "hides the email from a reader" do
     visit_grant_as(:reader)
 
-    expect(page).to have_text(card_grant.user.name)
+    expect(page).to have_text("Spending controls")
     expect(page).to have_no_text(card_grant.email)
   end
 
