@@ -82,10 +82,7 @@ export default class extends Controller {
     this.stateUrl = this.pageTitle = null
     this.bodyTarget.replaceChildren()
     this.flashTarget.replaceChildren()
-    this.element.classList.remove(
-      'modal--popover--sm',
-      'modal--popover--receipt-expanded'
-    )
+    this.element.classList.remove('modal--popover--sm')
   }
 
   popstate({ detail: { popover } }) {

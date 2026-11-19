@@ -94,15 +94,23 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(evaluate_script(handlers)).to eq(before)
   end
 
-  it "expands a receipt in place when its thumbnail is clicked, without a modal over it" do
+  it "opens a receipt in its own modal over the popover, which Escape closes first" do
     Receipt.create!(receiptable: hcb_code.ledger_item, user:, upload_method: :transaction_popover,
                     file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
     open_popover
 
     within(popover) { find("img.receipt--image").click }
 
-    expect(page).to have_css("#{popover} .receipt--expanded")
+    receipt_modal = "dialog[id^=preview_receipt_][open]"
+    expect(page).to have_css(receipt_modal, style: { scale: "none" })
+    expect(open_modals.length).to eq(2)
+    expect(open_modals.first).to eq("shared_popover")
+
+    press_escape
+    expect(page).to have_no_css(receipt_modal, visible: :all)
     expect(open_modals).to eq(["shared_popover"])
+    press_escape
+    expect_closed(popover)
   end
 
   it "opens a comment's edit history from its edited link" do

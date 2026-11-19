@@ -5,7 +5,7 @@
 
 <%# When a `style` local is given, browsers keep that first `style` attribute and drop the second. %>
 <div id="receipt_<%= receipt.id %>"
-     class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>"
+     class="receipt flex flex-col relative mb1 <%= "receipt--pairing" if defined?(pairing) && pairing %>"
      <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %>
      <% if defined?(style) %> style="<%= j style %>"<% end %>
      data-receipt-id="<%= receipt.id %>"
@@ -14,9 +14,6 @@
 
 <% unless defined?(hide_info) %>
   <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">
-    <button class="pop receipt__minimize mr1" data-controller="receipt-minimize" data-action="receipt-minimize#minimize">
-      <%= inline_icon "view-back", size: 24 %>
-    </button>
     <span>
       <strong style="overflow-wrap: anywhere;">
         <% if defined?(link_to_file) && !defined?(selectable) %>
@@ -47,27 +44,14 @@
       </span>
     </span>
   <% else %>
-    <% if receipt.preview && !local_assigns[:popover] %>
+    <%# Opens the full receipt in a modal, over the popover too %>
+    <% if receipt.preview %>
       <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
         <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : modal_id
-            } if receipt.preview %>
+              "modal"      => modal_id
+            } %>
       </span>
-    <% elsif receipt.preview && local_assigns[:popover] %>
-    <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
-      <%= image_tag receipt.preview,
-            class: "card p0 receipt--image #{receipt.file.blob.content_type == "application/pdf" ? "receipt__pdf-preview" : ""}",
-            alt: receipt.suggested_memo,
-            data: {
-              "receipt-id" => receipt.id,
-              "file_type"  => receipt.file.blob.content_type,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt"
-            } if receipt.preview %>
-    </span>
-    <% if receipt.file.blob.content_type == "application/pdf" %>
-      <iframe data-src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
-    <% end %>
     <% end %>
     <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
