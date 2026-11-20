@@ -12,7 +12,6 @@
 #
 # Indexes
 #
-#  index_outgoing_twilio_messages_on_hcb_code_id        (hcb_code_id)
 #  index_outgoing_twilio_messages_on_ledger_item_id     (ledger_item_id)
 #  index_outgoing_twilio_messages_on_twilio_message_id  (twilio_message_id)
 #
