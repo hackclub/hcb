@@ -517,9 +517,19 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
   # Transfer-type and HQ-only categories would misreport what the money was for.
   it "rejects a payment without an allowed category" do
-    [nil, "internal-transfer", "repayment", "hcb-revenue", "made-up"].each do |slug|
+    [nil, "internal-transfer", "repayment", "hcb-revenue", "fiscal-sponsorship-fees", "made-up"].each do |slug|
       expect { create_disbursement(transfer_type: "payment", payment_category_slug: slug) }.to raise_error(DisbursementService::Create::UserError, "Choose a category for this payment.")
     end
+  end
+
+  # An admin may skip the allowlist, but a payment left uncategorized would misreport both ledgers.
+  it "requires an admin to categorize a payment, by its category or both overrides" do
+    requestor.update!(access_level: :admin)
+
+    expect { create_disbursement(transfer_type: "payment", source_transaction_category_slug: "rent") }.to raise_error(DisbursementService::Create::UserError, "Choose a category for this payment.")
+
+    disbursement = create_disbursement(transfer_type: "payment", source_transaction_category_slug: "rent", destination_transaction_category_slug: "venue")
+    expect(categories(disbursement)).to eq(["rent", "venue"])
   end
 
   describe "repayments" do

@@ -26,9 +26,10 @@ class TransactionCategory
     alias_method(:hq_only?, :hq_only)
 
     # What an organizer can pick for a payment transfer, by slug. A payment
-    # is real spending or income, so the transfer-type categories don't fit.
+    # is real spending or income, so the transfer-type categories don't fit,
+    # nor ones HCB assigns itself (fees, donation and invoice imports).
     def self.payment_selectable
-      Definition::ALL.reject { |slug, definition| definition.hq_only? || slug.in?(["internal-transfer", Repayment::CATEGORY_SLUG]) }
+      Definition::ALL.reject { |slug, definition| definition.hq_only? || slug.in?(["internal-transfer", Repayment::CATEGORY_SLUG, "fiscal-sponsorship-fees", "donations"]) }
     end
   end
 
