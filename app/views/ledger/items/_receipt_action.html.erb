@@ -18,17 +18,18 @@
     <% disabled = item.receipt_optional? %>
     <% file_input_id = dom_id(item, :receipt_file) %>
     <% link_modal_id = dom_id(item, :link_receipt) %>
+    <% upload_button_id = dom_id(item, :upload_receipt_button) %>
 
-    <%= form_with url: receipts_path, data: { controller: "form", turbo: true } do |form| %>
-      <%= form.file_field :file, id: file_input_id, multiple: true, include_hidden: false, required: true, class: "sr-only", data: { action: "change->form#submit" } %>
+    <%= form_with url: receipts_path, data: { controller: "form uploading", turbo: true, "uploading-button-value" => upload_button_id, action: "submit->uploading#start direct-upload:error->uploading#reset turbo:submit-end->uploading#reset" } do |form| %>
+      <%= form.file_field :file, id: file_input_id, multiple: true, include_hidden: false, required: true, class: "sr-only", accept: "image/*,image/heic,.pdf", direct_upload: true, data: { action: "change->form#submit" } %>
       <%= form.hidden_field :receiptable_type, id: nil, value: "Ledger::Item" %>
       <%= form.hidden_field :receiptable_id, id: nil, value: item.id %>
       <%= form.hidden_field :upload_method, id: nil, value: "receipts_page" %>
 
       <div class="btn-group btn-group--no-wrap w-100">
-        <%= form.label :file, for: file_input_id, class: "btn #{"disabled" if disabled} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+        <%= form.label :file, for: file_input_id, id: upload_button_id, class: "btn #{"disabled" if disabled} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
           <%= inline_icon "cloud-upload" %>
-          <%= item.receipt_count.positive? ? "Upload another receipt" : "Upload receipt" %>
+          <span aria-live="polite"><%= item.receipt_count.positive? ? "Upload another receipt" : "Upload receipt" %></span>
         <% end %>
 
         <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if disabled} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: link_modal_id } do %>
