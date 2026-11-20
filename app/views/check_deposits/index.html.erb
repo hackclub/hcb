@@ -55,7 +55,7 @@
             <td><%= format_date check_deposit.created_at %></td>
             <td>
               <%= render_money check_deposit.amount_cents %>
-              <%= link_to "", ledger_item_path(check_deposit.ledger_item), class: "stretched-link" %>
+              <%= link_to "", ledger_item_path(check_deposit.ledger_item), class: "stretched-link", data: ledger_item_popover_data(check_deposit.ledger_item, title: "Check deposit of #{render_money(check_deposit.amount_cents)}") %>
             </td>
           </tr>
         <% end %>
