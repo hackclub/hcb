@@ -12,6 +12,15 @@
             "command": "ruby --disable-gems \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block_manual_migrations.rb"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby --disable-gems \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block_force_push.rb"
+          }
+        ]
       }
     ]
   }
