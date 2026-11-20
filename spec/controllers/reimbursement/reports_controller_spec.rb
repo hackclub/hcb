@@ -123,6 +123,47 @@ RSpec.describe Reimbursement::ReportsController do
       expect(response).to have_http_status(:ok)
       expect(header_badges(response.body)).to eq(["Review Requested"])
     end
+
+    context "when the report exceeds the organization's balance" do
+      let(:creator) { create(:user) }
+      let(:event) { create(:event, name: "DevHacks") }
+      let(:report) { create(:reimbursement_report, user: creator, event:, aasm_state: :submitted) }
+
+      before do
+        report.expenses.create!(value: 100, memo: "Stickers")
+        allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(0)
+        create_session(creator, verified: true)
+      end
+
+      def insufficient_funds_callout(body)
+        Nokogiri::HTML5(body).css(".card.b--warning").find { |card| card.text.include?("secure additional funds") }
+      end
+
+      it "tells the submitter that they are waiting on the organization" do
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(insufficient_funds_callout(response.body).text.squish).to include("Waiting on DevHacks")
+      end
+
+      it "does not disclose the organization's balance before the report is submitted" do
+        report.update!(aasm_state: :draft)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(insufficient_funds_callout(response.body)).to be_nil
+      end
+
+      it "does not show the warning once the report is closed" do
+        report.update!(aasm_state: :rejected)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(insufficient_funds_callout(response.body)).to be_nil
+      end
+    end
   end
 
   describe "#edit" do
