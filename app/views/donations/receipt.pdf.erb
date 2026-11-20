@@ -36,6 +36,14 @@
       table, th, td { border: 1px solid gray; }
       th, td { padding: 4pt; text-align: left; overflow-wrap: break-word; }
       th { width: 30%; }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        padding: 0 40pt;
+      }
+
+      footer p { margin: 0; white-space: nowrap; }
     </style>
   </head>
   <body>
@@ -49,7 +57,7 @@
           West Hollywood, CA 90069<br>
           hcb@hackclub.com
         </p>
-        <%= image_tag(wicked_pdf_asset_base64("hack_club_logo.png"), width: 156.6, height: 26.88, class: "centerImage", alt: "Hack Club") %>
+        <%= image_tag(pdf_asset_base64("hack_club_logo.png"), width: 156.6, height: 26.88, class: "centerImage", alt: "Hack Club") %>
       </div>
       <br>
       <br>
@@ -87,5 +95,9 @@
         <p>Questions? Contact <%= @donation.event.donation_reply_to_email.presence || "hcb@hackclub.com" %>.</p>
       </div>
     </div>
+    <footer>
+      <p style="font-size: 12pt; font-weight: bold; color: #434343;">By the students, for the students.</p>
+      <p style="font-size: 10pt; color: #999999;">Hack Club is a 501(c)(3) public charity. Our nonprofit EIN is 81-2908499.</p>
+    </footer>
   </body>
 </html>
