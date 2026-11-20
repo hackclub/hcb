@@ -46,7 +46,7 @@ RSpec.describe HasPaymentRecipient do
         check = IncreaseCheck.new(
           event: attacker_event,
           payment_recipient: victim_recipient,
-          amount: 100,
+          amount_cents: 100,
           memo: "test",
           payment_for: "test",
           recipient_name: "Recipient",
