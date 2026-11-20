@@ -1,0 +1,16 @@
+// Hack Club's brand typeface, self-hosted from public/fonts.
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('/fonts/PhantomSans-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('/fonts/PhantomSans-Italic-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}

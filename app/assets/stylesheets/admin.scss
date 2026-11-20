@@ -1,4 +1,5 @@
 $font-family:
+  'Phantom Sans',
   system-ui,
   -apple-system,
   BlinkMacSystemFont,
@@ -13,6 +14,7 @@ $mono:
   ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
 @import 'variables';
+@import 'fonts';
 @import 'basscss';
 @import 'space';
 @import 'utilities';
@@ -135,7 +137,7 @@ html {
 
 :root {
   --hcb-font-sans:
-    ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Phantom Sans', ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif;
   --hcb-font-mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }

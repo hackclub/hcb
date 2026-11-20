@@ -13,6 +13,7 @@ module.exports = {
   theme: {
     fontFamily: {
       sans: [
+        '"Phantom Sans"',
         'system-ui',
         '-apple-system',
         'BlinkMacSystemFont',
