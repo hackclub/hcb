@@ -4,7 +4,7 @@
     Back to wires
   <% end %>
 
-  <%= link_to hcb_code_path(@wire.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= link_to ledger_item_path(@wire.ledger_item), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@wire.local_hcb_code.comments.count, "comment") %>)
   <% end %>

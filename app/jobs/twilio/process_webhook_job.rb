@@ -67,7 +67,7 @@ module Twilio
       potential_users = User.where(phone_number: @params["From"], phone_number_verified: true)
       return potential_users.first if potential_users.count == 1
 
-      user_id = last_sent_message_hcb_code&.canonical_pending_transactions&.last&.stripe_card&.user&.id
+      user_id = last_sent_message&.hcb_code&.canonical_pending_transactions&.last&.stripe_card&.user&.id
       potential_users.find_by(id: user_id)
     end
 
@@ -90,17 +90,26 @@ module Twilio
     def find_hcb_code
       return nil if reimbursement?
 
-      if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
-        last_sent_message_hcb_code
-      end
+      # The window is measured from when we texted, so a re-sent SMS for an older charge still gets all of it.
+      # Decline texts carry an hcb code too but never ask for a receipt, hence `receipt_required?`.
+      charges = sent_messages.where(created_at: OutgoingTwilioMessage::RECEIPT_REPLY_WINDOW.ago..)
+                             .includes(:hcb_code).map(&:hcb_code).uniq.select(&:receipt_required?)
+
+      # With several charges in the window, the photo is for the one still missing a receipt.
+      # If that doesn't settle it, the photo goes to the Receipt Bin rather than the wrong charge.
+      charges = charges.select(&:missing_receipt?) if charges.many?
+      charges.first if charges.one?
     end
 
-    def last_sent_message_hcb_code
-      @last_sent_message_hcb_code ||= OutgoingTwilioMessage
-                                      .joins(:twilio_message)
-                                      .where("twilio_messages.to" => @params["From"])
-                                      .where.not(hcb_code: nil)
-                                      .last&.hcb_code
+    def sent_messages
+      OutgoingTwilioMessage
+        .joins(:twilio_message)
+        .where("twilio_messages.to" => @params["From"])
+        .where.not(hcb_code: nil)
+    end
+
+    def last_sent_message
+      @last_sent_message ||= sent_messages.last
     end
 
     def find_reimbursement_report

@@ -274,6 +274,7 @@ Rails.application.routes.draw do
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "ledger_items", to: "admin#ledger_items"
+      get "ledger_items/:id", to: "admin#ledger_item", as: :ledger_item
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"

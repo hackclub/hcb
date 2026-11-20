@@ -61,16 +61,6 @@ class Raffle < ApplicationRecord
     number
   end
 
-  def pending?
-    !confirmed?
-  end
-
-  def confirm!
-    return if confirmed?
-
-    update!(confirmed: true)
-  end
-
   def tickets
     1 + extra_tickets
   end

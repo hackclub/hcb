@@ -20,6 +20,7 @@ class TwilioMessage < ApplicationRecord
   has_one :outgoing_twilio_message, required: false
 
   has_one :hcb_code, through: :outgoing_twilio_message
+  has_one :ledger_item, through: :outgoing_twilio_message
 
   has_many_attached :files
 
