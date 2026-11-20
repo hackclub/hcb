@@ -147,6 +147,7 @@ group :test do
   gem "capybara" # Browser-driven system tests
   gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
+  gem "rspec-abq" # Distributes specs across parallel runners in CI
   gem "simplecov", require: false # Code coverage
   gem "webmock"
 end

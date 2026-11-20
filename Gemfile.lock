@@ -775,6 +775,8 @@ GEM
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
     rqrcode_core (1.2.0)
+    rspec-abq (1.2.3)
+      rspec-core (>= 3.8.0, < 3.14.0)
     rspec-core (3.13.3)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.3)
@@ -1058,6 +1060,7 @@ DEPENDENCIES
   reverse_markdown
   rotp
   rqrcode
+  rspec-abq
   rspec-rails (~> 7.1.1)
   rtesseract
   rubocop
