@@ -264,6 +264,7 @@ tasks:
       - storage
       - .rspec
       - .simplecov
+      - .claude/hooks
     background-processes:
       - *postgres
       - *redis

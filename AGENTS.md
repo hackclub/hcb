@@ -2,7 +2,7 @@
 
 ## Never force push
 
-Do not run `git push --force`, `git push --force-with-lease`, `git push -f`, or anything else that rewrites history on a remote branch, unless the user explicitly asks for that exact command in this conversation. This includes rebasing or amending commits that have already been pushed and then pushing the result.
+Do not force push. A Claude Code hook in [`.claude/settings.json`](.claude/settings.json) blocks any `git push` that carries `--force`, `--force-with-lease`, `--force-if-includes`, `-f`, `--mirror`, or a `+refspec`. That block is not something to work around with a git alias, a shell variable, or a script. Do not rebase or amend commits that have already been pushed either, since the result can only be pushed by force. If the user wants history rewritten, they run that command themselves.
 
 Force pushing is never part of the normal workflow here. HCB updates feature branches by merging `main` into them, not by rebasing, so review comments stay attached to the right commits (see [`dev-docs/pull_requests.md`](dev-docs/pull_requests.md)).
 
