@@ -166,7 +166,9 @@ module DisbursementService
       if @transfer_type == "payment"
         # Admins can pick any category, or set each side with the overrides.
         categorized = if requested_by&.admin?
-                        @payment_category_slug.present? || (@source_transaction_category_slug.present? && @destination_transaction_category_slug.present?)
+                        slugs = [@payment_category_slug, @source_transaction_category_slug, @destination_transaction_category_slug].compact_blank
+                        (@payment_category_slug.present? || (@source_transaction_category_slug.present? && @destination_transaction_category_slug.present?)) &&
+                          slugs.all? { |slug| TransactionCategory::Definition::ALL.key?(slug) }
                       else
                         TransactionCategory::Definition.payment_selectable.key?(@payment_category_slug)
                       end

@@ -527,6 +527,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     requestor.update!(access_level: :admin)
 
     expect { create_disbursement(transfer_type: "payment", source_transaction_category_slug: "rent") }.to raise_error(DisbursementService::Create::UserError, "Choose a category for this payment.")
+    expect { create_disbursement(transfer_type: "payment", payment_category_slug: "rnet") }.to raise_error(DisbursementService::Create::UserError, "Choose a category for this payment.")
 
     disbursement = create_disbursement(transfer_type: "payment", source_transaction_category_slug: "rent", destination_transaction_category_slug: "venue")
     expect(categories(disbursement)).to eq(["rent", "venue"])
