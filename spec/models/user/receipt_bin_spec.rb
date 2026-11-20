@@ -13,7 +13,7 @@ RSpec.describe User::ReceiptBin do
   end
 
   def create_pairing(receipt, hcb_code, distance: 10)
-    SuggestedPairing.create!(receipt:, hcb_code:, ledger_item: hcb_code.ledger_item, distance:)
+    SuggestedPairing.create!(receipt:, ledger_item: hcb_code.ledger_item, distance:)
   end
 
   describe "#suggested_receipt_pairings" do
@@ -28,13 +28,10 @@ RSpec.describe User::ReceiptBin do
       expect(user.receipt_bin.suggested_receipt_pairings).to eq([closest])
     end
 
-    it "leaves out pairings whose ledger item already has a receipt, and pairings without a ledger item" do
+    it "leaves out pairings whose ledger item already has a receipt" do
       receipted = create(:canonical_pending_transaction, amount_cents: -10_00).local_hcb_code
       receipted.ledger_item.update_columns(receipt_required: true, receipt_count: 1)
       create_pairing(create_receipt_in_bin, receipted)
-      orphan = create(:canonical_pending_transaction, amount_cents: -10_00).local_hcb_code
-      orphan.ledger_item.update_columns(receipt_required: true, receipt_count: 0)
-      create_pairing(create_receipt_in_bin, orphan).update_column(:ledger_item_id, nil)
 
       expect(user.receipt_bin.suggested_receipt_pairings).to be_empty
     end

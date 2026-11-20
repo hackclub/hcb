@@ -14,7 +14,6 @@ class User
       SuggestedPairing
         .unreviewed
         .where(receipt_id: @receipts.ids - ineligible_receipt_ids)
-        .where.not(ledger_item_id: nil)
         .where("distance <= ?", 50) # With at least a certain confidence level
         # Only get the closest pairing for each receipt
         .order(:receipt_id, distance: :asc)

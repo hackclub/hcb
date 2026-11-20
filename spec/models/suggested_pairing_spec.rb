@@ -9,7 +9,7 @@ RSpec.describe SuggestedPairing, type: :model do
       receipt = Receipt.new(user: create(:user), upload_method: :api)
       receipt.file.attach(io: File.open(file_fixture("receipt.png")), filename: "receipt.png", content_type: "image/png")
       receipt.save!
-      pairing = described_class.create!(receipt:, hcb_code:, ledger_item: hcb_code.ledger_item, distance: 1)
+      pairing = described_class.create!(receipt:, ledger_item: hcb_code.ledger_item, distance: 1)
 
       pairing.mark_accepted!
 
