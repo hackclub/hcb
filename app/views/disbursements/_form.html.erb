@@ -17,7 +17,8 @@
     <div class="flex flex-col gap-2 mb-4">
       <% [
            ["repayment", "payment", "Repayment", "Paying the other organization back for an expense they covered for you, like supplies bought on their card."],
-           ["transfer", "transfers-horizontal", "Internal transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
+           ["transfer", "transfers-horizontal", "Internal transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."],
+           ["payment", "bag", "Payment", "Paying the other organization for goods or services, like merch they made or a venue they booked for you."]
          ].each do |value, icon, title, description| %>
         <div>
           <%= form.radio_button :transfer_type, value,
@@ -119,6 +120,33 @@
       </div>
 
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    </fieldset>
+
+    <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="payment" hidden>
+      <div class="field">
+        <%= form.label :name, "What is the payment for?", for: "disbursement_payment_name" %>
+        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :name, id: "disbursement_payment_name", value: (disbursement.name unless disbursement.transfer_type_repayment?), placeholder: "T-shirts for our hackathon", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+      </div>
+
+      <div class="field">
+        <%= form.label :payment_category_slug, "Category" %>
+        <span class="muted block mb-1">Both organizations' transactions get this category.</span>
+        <%= form.select :payment_category_slug,
+                        options_for_select(TransactionCategory::Definition.payment_selectable.values.map { |d| [d.label, d.slug] }, params.dig(:disbursement, :payment_category_slug)),
+                        { include_blank: "Choose a category" },
+                        required: true, class: "!max-w-full", disabled: %>
+      </div>
+
+      <div class="field flex items-center justify-between">
+        <%= form.label :amount, "Amount", for: "disbursement_payment_amount", class: "m-0" %>
+        <div class="flex items-center input py-0 max-w-[150px]">
+          <span class="bold muted">$</span>
+          <%= form.number_field :amount, id: "disbursement_payment_amount", class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement.amount.to_f / 100 unless disbursement.amount.nil? || disbursement.transfer_type_repayment?), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+        </div>
+      </div>
+
+      <%= render "events/transfers/attach_receipt", form:, disabled:, input_html: { id: "disbursement_payment_file" } %>
     </fieldset>
   </div>
 
