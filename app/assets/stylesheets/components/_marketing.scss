@@ -1,36 +1,10 @@
 // Marketing landing pages (/for/*). Refined, editorial take on HCB's design system:
-// snow base, HCB red accent, system-ui type, the signature border-shadow surfaces —
+// snow base, HCB red accent, Phantom Sans type, the signature border-shadow surfaces —
 // elevated with mono eyebrows, generous space, a dark contrast band, and load reveals.
 // Shared by every marketing page; page-specific styling stays prefixed `mk-`.
 
 $mk-ink: $black; // #1f2d3d
 $mk-bg: $snow; // #f9fafc
-
-// Hack Club's brand typeface, served from the HC CDN (same source the app bundle uses).
-// Used for marketing headings; body stays on the system stack for readability.
-@font-face {
-  font-family: 'Phantom Sans';
-  src:
-    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff2')
-      format('woff2'),
-    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff')
-      format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Phantom Sans';
-  src:
-    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2')
-      format('woff2'),
-    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff')
-      format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
 
 // ---------------------------------------------------------------- base / layout
 .marketing {
@@ -50,9 +24,7 @@ $mk-bg: $snow; // #f9fafc
     margin: 0;
     border: 0;
     padding: 0;
-    font-family:
-      'Phantom Sans',
-      #{$font-family};
+    font-family: $font-family;
     font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.02em;
