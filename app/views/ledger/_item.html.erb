@@ -40,7 +40,7 @@
 
         <%# The org that owns the item's primary ledger, or whose card grant does. %>
         <% if show_event_name %>
-          <%= render "hcb_codes/event_name", event: item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
+          <%= render "ledger/items/event_name", event: item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
         <% end %>
 
         <%= render layout: "ledger/items/mobile_subtitle", locals: { datetime: item.datetime, author: (item.author if show_author) } do %>
