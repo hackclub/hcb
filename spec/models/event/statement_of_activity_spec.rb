@@ -391,19 +391,25 @@ RSpec.describe Event::StatementOfActivity do
         expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
       end
 
-      # #15894: once marked as a repayment, the sides carry the expense's and repayment categories, which stay as they are.
-      it "keeps a side that was recategorized after the payment was sent" do
+      # #15894: a payment marked as repaying an expense moves that expense onto the sender, so it must stay
+      # under the expense's category, even when that's the payment's own category.
+      it "keeps a payment that was marked as a repayment under the repaid expense's category" do
         group = create(:event_group)
         event_b = create(:event)
         group.memberships.create!(event: event_a)
         group.memberships.create!(event: event_b)
+        expense = create(:canonical_transaction, amount_cents: -10_00, category_slug: "repayment")
+        create(:canonical_event_mapping, event: event_b, canonical_transaction: expense)
         disbursement = create(:disbursement, source_event: event_a, event: event_b, transfer_type: "payment", source_transaction_category: supplies, destination_transaction_category: supplies)
-        outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00, category_slug: "food-fun")
+        # After marking: the sender's side takes the expense's category, the recipient's becomes a repayment.
+        outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00, category_slug: "project-supplies")
         incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00, category_slug: "repayment")
+        incoming.ledger_item.update_columns(linked_object_type: "Disbursement::Incoming", linked_object_id: disbursement.id)
+        Repayment.new(repaying_ledger_item: incoming.ledger_item).save!(validate: false)
 
         result = described_class.new(group, start_date_param: "1970-01-01").transactions_by_category
 
-        expect(result.values.flatten).to contain_exactly(outgoing, incoming)
+        expect(result[supplies]).to eq([outgoing])
         expect(result).not_to have_key(described_class::INTRA_ORG_TRANSFER)
       end
     end

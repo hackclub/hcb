@@ -10,7 +10,7 @@ class Event
     INTER_ORG_TRANSFER = StatementCategory.new("inter-organization-transfer", "Inter-organization transfers")
 
     INTERNAL_TRANSFER_SLUG = "internal-transfer"
-    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(500|550)-(\d+)\z/ # side (outgoing 500, incoming 550), then the disbursement id
+    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(?:500|550)-(\d+)\z/
 
     attr_reader(:event, :event_group, :include_descendants)
 
@@ -193,36 +193,40 @@ class Event
 
     def reporting_category_for(transaction)
       category = transaction.category
-      side, disbursement_id = transaction.hcb_code.to_s.match(DISBURSEMENT_HCB_CODE_REGEX)&.captures
+      disbursement_id = transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
       return category unless category && disbursement_id
 
-      disbursement = intra_organization_disbursements[disbursement_id.to_i]
+      disbursement = intra_organization_disbursements[disbursement_id]
       if category.slug == INTERNAL_TRANSFER_SLUG
         disbursement ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
       # A payment between two organizations in the statement is neither's
-      # revenue or expense. A side recategorized since (e.g. marked as a
-      # repayment) no longer has the payment's own category, so it keeps its own.
-      elsif disbursement&.transfer_type_payment? && category.id == (side == "500" ? disbursement.source_transaction_category_id : disbursement.destination_transaction_category_id)
+      # revenue or expense.
+      elsif disbursement&.transfer_type_payment?
         INTRA_ORG_TRANSFER
       else
         category
       end
     end
 
-    # Transfers in the statement with both organizations in it, by id.
+    # Transfers in the statement with both organizations in it, by id: those
+    # categorized as internal transfers, and payments. A payment marked as a
+    # repayment is left out, since its sides then report the repaid expense.
     memo_wise def intra_organization_disbursements
       event_ids = events.map(&:id)
+      disbursement_transactions = transactions.where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
+      disbursement_id_sql = Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int")
+      internal_transfer_ids = disbursement_transactions
+                              .joins(:category_mapping)
+                              .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
+                              .select(disbursement_id_sql)
+      # Marking a transfer as a repayment always links its incoming side (see Repayment.markable_item).
+      repaying_ids = Ledger::Item.where(linked_object_type: "Disbursement::Incoming", id: Repayment.select(:repaying_ledger_item_id)).select(:linked_object_id)
 
-      disbursement_ids = transactions
-                         .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
-                         .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
-                         .uniq
-
-      return {} if disbursement_ids.empty?
-
-      Disbursement.where(id: disbursement_ids, source_event_id: event_ids, event_id: event_ids)
-                  .select(:id, :transfer_type, :source_transaction_category_id, :destination_transaction_category_id)
-                  .index_by(&:id)
+      in_scope = Disbursement.where(source_event_id: event_ids, event_id: event_ids)
+      in_scope.where(id: internal_transfer_ids)
+              .or(in_scope.transfer_type_payment.where(id: disbursement_transactions.select(disbursement_id_sql)).where.not(id: repaying_ids))
+              .select(:id, :transfer_type)
+              .index_by(&:id)
     end
 
     def transactions
