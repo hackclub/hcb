@@ -1,4 +1,4 @@
-<%# locals: (animated: false) %>
+<%# locals: (revealed: false, animated: false) %>
 
 <%# The account and routing numbers at the top of the account number page. Before the account
     number is generated, the eye posts to create and this whole frame comes back with the new number. %>
@@ -18,7 +18,7 @@
       <%= render "events/account_number_generate" %>
     <% else %>
       <%# Right after the account number is generated, it's revealed straight away. %>
-      <%= render "events/account_number_reveal", frame_id: "account_number_reveal", revealed: animated, animated: %>
+      <%= render "events/account_number_reveal", frame_id: "account_number_reveal", revealed:, animated: %>
     <% end %>
   </span>
   <span class="flex flex-col">

@@ -12,13 +12,16 @@ module Column
         @animated = true
 
         # The eye on the account number page and in the account numbers modal posts
-        # here from inside a turbo frame. That frame gets the new number rendered
-        # into it, so the page it's on stays put.
-        case turbo_frame_request_id
-        when "account_number_details"
-          return render partial: "events/account_number_details", locals: { animated: true }
-        when "account_number_modal"
-          return render partial: "events/account_number_modal", locals: { animated: true }
+        # here. A turbo stream fills the new number into both places (the page
+        # shows the modal too), so the page stays put and the two agree. Only the
+        # place that was clicked plays the reveal animation: the other one may be
+        # hidden (the modal is usually closed) and would animate into nothing.
+        if request.format.turbo_stream?
+          clicked = turbo_frame_request_id
+          return render turbo_stream: [
+            turbo_stream.replace("account_number_details", partial: "events/account_number_details", locals: { revealed: true, animated: clicked == "account_number_details" }),
+            turbo_stream.replace("account_number_modal", partial: "events/account_number_modal_contents", locals: { revealed: true, animated: clicked == "account_number_modal" })
+          ]
         end
 
         if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
