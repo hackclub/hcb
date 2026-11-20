@@ -86,6 +86,76 @@ RSpec.describe ReceiptsController do
       expect(stream.inner_html).to include("Uploaded!")
     end
 
+    # A transaction's page lists the earlier charges of its subscription, and a
+    # receipt can be dropped on any of those rows.
+    describe "#create from an HCB code page" do
+      def upload
+        post(:create, params: {
+               receiptable_type: "Ledger::Item",
+               receiptable_id: ledger_item.id,
+               upload_method: "receipts_page_drag_and_drop",
+               show_receipt_button: "true",
+               file: [fixture_file_upload("receipt.png", "image/png")]
+             }, format: :turbo_stream)
+
+        Nokogiri::HTML5.fragment(response.body)
+      end
+
+      it "updates the page's receipt list when the receipt is for that page's transaction" do
+        request.headers["Referer"] = hcb_code_url(hcb_code)
+
+        fragment = upload
+
+        expect(fragment.at_css("turbo-stream[target='receipts_list']")).to be_present
+        expect(fragment.at_css("turbo-stream[target='_receipts_list']")).to be_present
+      end
+
+      it "leaves the page's receipt list alone when the receipt is for another transaction listed on it" do
+        request.headers["Referer"] = hcb_code_url(create(:canonical_pending_transaction).local_hcb_code)
+
+        fragment = upload
+
+        expect(Receipt.last.receiptable).to eq(ledger_item)
+        expect(fragment.at_css("turbo-stream[target='receipts_list']")).to be_nil
+        expect(fragment.at_css("turbo-stream[target='_receipts_list']")).to be_nil
+        expect(fragment.at_css("turbo-stream[target='_stripe_card_receipts']")).to be_nil
+        expect(fragment.at_css("turbo-stream[target='#{hcb_code.hashid}']").inner_html).to include("Uploaded!")
+      end
+    end
+
+    it "#link from another transaction's HCB code page doesn't add the receipt to that page's list" do
+      receipt = ::ReceiptService::Create.new(
+        receiptable: nil,
+        uploader: User.last,
+        attachments: [fixture_file_upload("receipt.png", "image/png")],
+        upload_method: :receipts_page
+      ).run!.first
+      request.headers["Referer"] = hcb_code_url(create(:canonical_pending_transaction).local_hcb_code)
+
+      post(:link, params: {
+             receipt_id: receipt.id,
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id
+           }, format: :turbo_stream)
+
+      expect(receipt.reload.receiptable).to eq(ledger_item)
+      expect(Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='receipts_list']")).to be_nil
+    end
+
+    it "#create shows a failed upload in the page's flash" do
+      allow(::ReceiptService::Create).to receive(:new).and_raise(ActiveRecord::RecordInvalid)
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "receipts_page_drag_and_drop",
+             file: [fixture_file_upload("receipt.png", "image/png")]
+           }, format: :turbo_stream)
+
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='flash-container']")
+      expect(stream.inner_html).to include("There was an error uploading your receipt")
+    end
+
     it "#create links the flash to the HCB code page" do
       post(:create, params: {
              receiptable_type: "Ledger::Item",

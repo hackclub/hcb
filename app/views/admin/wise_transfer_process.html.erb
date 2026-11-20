@@ -7,7 +7,7 @@
     Back to Wise transfers
   <% end %>
 
-  <%= link_to hcb_code_path(@wise_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= link_to ledger_item_path(@wise_transfer.ledger_item), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@wise_transfer.local_hcb_code.comments.count, "comment") %>)
   <% end %>
@@ -40,9 +40,9 @@
     <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
       <tbody>
         <tr>
-          <td>HCB Code</td>
+          <td>Ledger item</td>
           <td>
-            <%= link_to(@wise_transfer.hcb_code, hcb_code_path(@wise_transfer.hcb_code)) %>
+            <%= link_to(@wise_transfer.ledger_item.hashid, ledger_item_path(@wise_transfer.ledger_item)) %>
           </td>
         </tr>
         <tr>

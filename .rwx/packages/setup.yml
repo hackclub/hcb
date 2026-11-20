@@ -1,0 +1,82 @@
+package: true
+
+tool-cache:
+  vault: hcb-main
+
+tasks:
+  - key: system-packages
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y libpoppler-glib-dev libpq-dev
+      sudo apt-get clean
+
+  # Receipt previews are resized through MiniMagick, which shells out to ImageMagick.
+  - key: imagemagick
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y --no-install-recommends imagemagick
+      sudo apt-get clean
+
+  - key: docker-images
+    docker: preserve-data
+    run: |
+      docker pull postgres:15
+      docker pull redis:latest
+
+  - key: chrome
+    call: google/install-chrome 2.2.1
+    with:
+      chrome-version: stable
+
+  - key: ruby
+    use: [package.use, system-packages]
+    call: ruby/install 2.0.2
+    with:
+      ruby-version-file: .ruby-version
+    filter: [.ruby-version]
+
+  - key: node
+    use: package.use
+    call: nodejs/install 1.2.1
+    with:
+      node-version-file: .node-version
+    filter: [.node-version]
+
+  - key: bundle-install
+    use: ruby
+    tool-cache: ci-bundle-install
+    run: bundle install
+    runner:
+      tmpfs: true
+    env:
+      BUNDLE_FROZEN: true
+    filter:
+      - .ruby-version
+      - Gemfile
+      - Gemfile.lock
+    outputs:
+      filesystem:
+        filter:
+          system:
+            - "!/home/ubuntu/.rubies/*/lib/ruby/gems/*/cache/*.gem"
+            - "!/home/ubuntu/.bundle/cache"
+
+  - key: yarn-install
+    use: [package.use, node]
+    tool-cache: ci-yarn-install
+    run: |
+      corepack enable
+      yarn install --frozen-lockfile
+    runner:
+      tmpfs: true
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    filter:
+      - node_modules
+      - package.json
+      - yarn.lock
+    outputs:
+      filesystem:
+        filter:
+          system:
+            - "!/home/ubuntu/.cache/yarn"

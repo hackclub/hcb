@@ -9,8 +9,8 @@ module Twilio
       @params = webhook_params.with_indifferent_access
       @user = find_user
       @attachments = fetch_attachments
-      @hcb_code = find_hcb_code
-      @receiptable = @hcb_code&.ledger_item
+      @ledger_item = find_ledger_item
+      @receiptable = @ledger_item
       @report = find_reimbursement_report
 
       if @user.nil?
@@ -51,7 +51,7 @@ module Twilio
       elsif reimbursement?
         send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to your report named: #{@report.name}! #{reimbursement_report_url(@report)}")
       elsif @receiptable
-        send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@hcb_code.memo}! #{hcb_code_url(@hcb_code)}")
+        send_reply("Attached #{receipts.count} #{"receipt".pluralize(receipts.count)} to #{@ledger_item.memo}! #{ledger_item_url(@ledger_item)}")
       else
         send_reply("Added #{receipts.count} #{"receipt".pluralize(receipts.count)} to your Receipt Bin! https://hcb.hackclub.com/my/inbox")
       end
@@ -67,7 +67,7 @@ module Twilio
       potential_users = User.where(phone_number: @params["From"], phone_number_verified: true)
       return potential_users.first if potential_users.count == 1
 
-      user_id = last_sent_message_hcb_code&.canonical_pending_transactions&.last&.stripe_card&.user&.id
+      user_id = last_sent_message&.ledger_item&.canonical_pending_transactions&.last&.stripe_card&.user&.id
       potential_users.find_by(id: user_id)
     end
 
@@ -87,20 +87,29 @@ module Twilio
       end
     end
 
-    def find_hcb_code
+    def find_ledger_item
       return nil if reimbursement?
 
-      if last_sent_message_hcb_code && last_sent_message_hcb_code.pt.created_at > 5.minutes.ago
-        last_sent_message_hcb_code
-      end
+      # The window is measured from when we texted, so a re-sent SMS for an older charge still gets all of it.
+      # Decline texts carry a ledger item too but never ask for a receipt, hence `receipt_required?`.
+      charges = sent_messages.where(created_at: OutgoingTwilioMessage::RECEIPT_REPLY_WINDOW.ago..)
+                             .includes(:ledger_item).map(&:ledger_item).uniq.select(&:receipt_required?)
+
+      # With several charges in the window, the photo is for the one still missing a receipt.
+      # If that doesn't settle it, the photo goes to the Receipt Bin rather than the wrong charge.
+      charges = charges.select(&:missing_receipt?) if charges.many?
+      charges.first if charges.one?
     end
 
-    def last_sent_message_hcb_code
-      @last_sent_message_hcb_code ||= OutgoingTwilioMessage
-                                      .joins(:twilio_message)
-                                      .where("twilio_messages.to" => @params["From"])
-                                      .where.not(hcb_code: nil)
-                                      .last&.hcb_code
+    def sent_messages
+      OutgoingTwilioMessage
+        .joins(:twilio_message)
+        .where("twilio_messages.to" => @params["From"])
+        .where.not(ledger_item: nil)
+    end
+
+    def last_sent_message
+      @last_sent_message ||= sent_messages.last
     end
 
     def find_reimbursement_report

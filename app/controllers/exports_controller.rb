@@ -65,10 +65,7 @@ class ExportsController < ApplicationController
           redirect_back fallback_location: @event and return
         else
           @export.save!
-          headers["Content-Type"] = @export.mime_type
-          headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-          response.status = 200
-          self.response_body = @export.content
+          stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
         end
       end
 
@@ -118,10 +115,7 @@ class ExportsController < ApplicationController
           requested_by: current_user,
           event_id: @event.id
         )
-        headers["Content-Type"] = @export.mime_type
-        headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-        response.status = 200
-        self.response_body = @export.content
+        stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
       end
     end
   end

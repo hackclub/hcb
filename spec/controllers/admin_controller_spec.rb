@@ -45,6 +45,27 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#ledger_item" do
+    it "redirects a raw database id to the ledger item's hashid page" do
+      admin = create(:user, :make_admin)
+      item = create(:ledger_item)
+
+      create_session(admin, verified: true)
+
+      get :ledger_item, params: { id: item.id }
+
+      expect(response).to redirect_to("/transactions/#{item.hashid}")
+    end
+
+    it "404s for an unknown id" do
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      expect { get :ledger_item, params: { id: 0 } }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
   describe "#fee_revenues" do
     render_views
 
@@ -115,6 +136,48 @@ RSpec.describe AdminController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Money wiring mission statement")
+    end
+  end
+
+  describe "#wire_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      wire = create(:wire, :pending, event: create(:event, :with_positive_balance))
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :wire_process, params: { id: wire.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(wire.recipient_name)
+    end
+  end
+
+  describe "#paypal_transfer_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      # New PayPal transfers are refused at validation, so save past it to
+      # stand in for one created before that.
+      paypal_transfer = PaypalTransfer.new(
+        event: create(:event, :with_positive_balance),
+        user: create(:user),
+        amount_cents: 25_00,
+        memo: "Stickers",
+        payment_for: "Stickers",
+        recipient_name: "Orpheus",
+        recipient_email: "orpheus@example.com"
+      ).tap { |transfer| transfer.save!(validate: false) }
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :paypal_transfer_process, params: { id: paypal_transfer.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Orpheus")
     end
   end
 

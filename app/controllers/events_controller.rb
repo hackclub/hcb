@@ -640,7 +640,8 @@ class EventsController < ApplicationController
   end
 
   # The account number page doesn't send the account number until someone clicks
-  # "Show". That loads this action into the clicked turbo frame.
+  # the eye beside it, the same way a card's number and CVC are shown. That loads
+  # this action into the clicked turbo frame; clicking the eye again hides it.
   def reveal_account_number
     authorize @event, :account_number?
 
@@ -650,7 +651,7 @@ class EventsController < ApplicationController
 
     render partial: "events/account_number_reveal", locals: {
       frame_id: turbo_frame_request_id,
-      revealed: true,
+      revealed: params[:show_details] == "true",
       tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
     }
   end
@@ -1375,17 +1376,19 @@ class EventsController < ApplicationController
 
     @merchant = params[:merchant]
 
-    merchants_hash = {}
+    @merchants = Rails.cache.fetch("merchants_filter_#{@event.id}", expires_in: 5.minutes) do
+      merchants_hash = {}
 
-    @event.merchants.each do |merchant|
-      if merchants_hash.key?(merchant[:id])
-        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
-      else
-        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      @event.merchants.each do |merchant|
+        if merchants_hash.key?(merchant[:id])
+          merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+        else
+          merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+        end
       end
-    end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+      merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    end
   end
 
   def request_call

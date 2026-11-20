@@ -40,13 +40,20 @@ function extractId(dataTransfer) {
 }
 
 export default class extends Controller {
-  static targets = ['fileInput', 'dropzone', 'form', 'uploadMethod']
+  static targets = [
+    'fileInput',
+    'dropzone',
+    'form',
+    'uploadMethod',
+    'sizeError',
+  ]
   static values = {
     title: { type: String, default: 'Drop to add a receipt' },
     linking: { type: Boolean, default: false },
     globalPaste: { type: Boolean, default: false },
     receiptable: String,
     modal: String,
+    maxBytes: Number,
   }
 
   initialize() {
@@ -77,6 +84,10 @@ export default class extends Controller {
     this.counter = 0
     this.hideDropzone()
 
+    // Another zone's drop (a transaction's row on a page that takes drops
+    // anywhere in the window) is that zone's to handle.
+    if (!e.clipboardData && this.inAnotherZone(e)) return
+
     if (this.linkingValue) {
       const receiptId = extractId(e.dataTransfer)
 
@@ -96,6 +107,9 @@ export default class extends Controller {
         })
       }
     }
+
+    // A row that already has its receipt has no upload form left
+    if (!this.hasFileInputTarget) return
 
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
@@ -134,8 +148,28 @@ export default class extends Controller {
     this.submitting = false
   }
 
-  dragenter() {
-    if (this.counter == 0) {
+  // Runs before form#submit so an oversized file is never direct-uploaded.
+  checkSize(e) {
+    if (!this.hasSizeErrorTarget) return
+    const files = [...this.fileInputTarget.files]
+    const tooBig = files.filter(file => file.size > this.maxBytesValue)
+    this.sizeErrorTarget.hidden = !tooBig.length
+    if (!tooBig.length) return
+
+    const names = tooBig.map(file => file.name).join(', ')
+    const limit = `${Math.round(this.maxBytesValue / 1024 / 1024)} MB`
+    // The whole selection is dropped, so say so when other files were picked too
+    const several = files.length > 1 ? ', so nothing was uploaded' : ''
+    this.sizeErrorTarget.textContent = `${names} ${tooBig.length > 1 ? 'are' : 'is'} over ${limit}${several}. Upload a smaller file.`
+    this.fileInputTarget.value = ''
+    e.stopImmediatePropagation()
+  }
+
+  dragenter(e) {
+    // Leave the highlight to the zone the file is over
+    if (this.inAnotherZone(e)) {
+      this.hideDropzone()
+    } else {
       this.showDropzone()
     }
     this.counter++
@@ -149,6 +183,11 @@ export default class extends Controller {
   }
 
   /* Utilities */
+
+  inAnotherZone(e) {
+    const zone = e.target.closest?.('[data-controller~="file-drop"]')
+    return Boolean(zone) && zone !== this.element
+  }
 
   showDropzone() {
     if (this.hasDropzoneTarget) {

@@ -425,6 +425,15 @@ class AdminController < Admin::BaseController
                             .page(@page).per(@per).order(datetime: :desc)
   end
 
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
+  end
+
   def event_search
     @q = params[:q].presence
     events = @q.present? ? Event.search_name(@q) : Event.all
@@ -1502,11 +1511,11 @@ class AdminController < Admin::BaseController
           end
         end
 
-        stream_data("text/csv", "#{filename}.csv", csv)
+        stream_file(csv, filename: "#{filename}.csv", type: "text/csv")
       end
 
       format.json do
-        stream_data("application/json", "#{filename}.json", @data.to_json, false)
+        stream_file(@data.to_json, filename: "#{filename}.json", type: "application/json", disposition: "inline")
       end
 
     end
@@ -1676,16 +1685,6 @@ class AdminController < Admin::BaseController
     Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
       block.call
     end
-  end
-
-  def stream_data(content_type, filename, data, download = true)
-    headers["Content-Type"] = content_type
-    headers["Content-disposition"] = "#{download ? 'attachment; ' : ''}filename=#{filename}"
-    headers["X-Accel-Buffering"] = "no"
-    headers.delete("Content-Length")
-
-    response.status = 200
-    self.response_body = data
   end
 
   def filtered_events(events: Event.all)

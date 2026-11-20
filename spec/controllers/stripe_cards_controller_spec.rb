@@ -146,7 +146,7 @@ RSpec.describe StripeCardsController do
 
         get(:shipping)
 
-        expect(response.body).to include("is on the way!", event.name)
+        expect(response.body).to include("is on the way!", ERB::Util.html_escape(event.name))
         expect(Nokogiri::HTML5(response.body).css("a[href='#{event_path(event)}']")).to be_empty
       end
 

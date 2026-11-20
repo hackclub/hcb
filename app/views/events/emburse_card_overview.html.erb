@@ -65,9 +65,9 @@ West Hollywood, CA 90069</pre>
     </details>
   <% end %>
 <% elsif @emburse_card_requests.any? %>
-  <%= blankslate "No cards have been issued yet." %>
+  <%= blankslate "No cards have been issued yet" %>
 <% elsif @cards.blank? %>
-  <%= blankslate "You haven’t requested any cards yet." %>
+  <%= blankslate "You haven’t requested any cards yet" %>
 <% end %>
 
 <% if @emburse_card_requests.outstanding.any? %>
