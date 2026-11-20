@@ -162,8 +162,16 @@ module DisbursementService
 
       raise UserError, "Choose the transactions you're repaying." if @transfer_type == "repayment" && @repaid_ledger_items.empty?
       raise UserError, "Only repayments can repay transactions." if @transfer_type != "repayment" && @repaid_ledger_items.any?
-      # Admins can categorize a payment any way, as with other transfers.
-      raise UserError, "Choose a category for this payment." if @transfer_type == "payment" && !requested_by&.admin? && !TransactionCategory::Definition.payment_selectable.key?(@payment_category_slug)
+
+      if @transfer_type == "payment"
+        # Admins can pick any category, or set each side with the overrides.
+        categorized = if requested_by&.admin?
+                        @payment_category_slug.present? || (@source_transaction_category_slug.present? && @destination_transaction_category_slug.present?)
+                      else
+                        TransactionCategory::Definition.payment_selectable.key?(@payment_category_slug)
+                      end
+        raise UserError, "Choose a category for this payment." unless categorized
+      end
     end
 
     # An explicit slug (from admins, or HCB-created transfers like card grants)

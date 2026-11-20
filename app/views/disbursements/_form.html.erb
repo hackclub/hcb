@@ -135,7 +135,7 @@
         <%= form.select :payment_category_slug,
                         options_for_select(TransactionCategory::Definition.payment_selectable.values.map { |d| [d.label, d.slug] }, params.dig(:disbursement, :payment_category_slug)),
                         { include_blank: "Choose a category" },
-                        required: true, class: "!max-w-full", disabled: %>
+                        required: !admin_signed_in?, class: "!max-w-full", disabled: %>
       </div>
 
       <div class="field flex items-center justify-between">
