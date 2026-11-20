@@ -1726,6 +1726,85 @@ RSpec.describe EventsController do
       end
     end
 
+    describe "#account_number filters" do
+      def create_column_transaction(transaction_id, amount_cents, date_posted)
+        RawColumnTransaction.create!(
+          amount_cents:,
+          date_posted:,
+          column_transaction: { "transaction_id" => transaction_id, "account_number_id" => "acno_test", "effective_at" => "#{date_posted}T12:00:00Z" }
+        )
+      end
+
+      def page
+        Nokogiri::HTML5(response.body)
+      end
+
+      def ledger_frame
+        page.at_css("turbo-frame##{ActionView::RecordIdentifier.dom_id(event.ledger)}")
+      end
+
+      # Which of the two transactions the page shows for these filters.
+      def shown(**filters)
+        get(:account_number, params: { id: event.slug, **filters })
+        expect(response).to have_http_status(:ok)
+        rows = page.css("tbody tr").map { |row| row.text.squish }.join.downcase
+        %w[GoFundMe Shopify].select { |memo| rows.include?(memo.downcase) }
+      end
+
+      before do
+        Flipper.enable(:new_ledger_everywhere_2026_07_13)
+        allow(ColumnService).to receive(:ach_transfer).with("acht_gofundme").and_return("company_name" => "GoFundMe", "company_entry_description" => "PAYOUT")
+        allow(ColumnService).to receive(:ach_transfer).with("acht_shopify").and_return("company_name" => "Shopify", "company_entry_description" => "DEBIT")
+        create_column_transaction("acht_gofundme", 5000, Date.new(2026, 11, 1))
+        create_column_transaction("acht_shopify", -2500, Date.new(2026, 10, 1))
+        event.column_account_number.update!(deposit_only: false)
+        sign_in_organizer_of(event)
+      end
+
+      it "renders the ledger's filters inside its frame, without the user, type and merchant tabs", :aggregate_failures do
+        expect(shown).to eq(%w[GoFundMe Shopify])
+
+        frame = ledger_frame
+        expect(frame.at_css("[aria-label='Add filter']")).to be_present
+        expect(frame.css("[data-tabs-target='btn']").map(&:text)).to eq(%w[Date Amount Category Receipts])
+        expect(frame.css("[data-tabs-target='tab']").map { |tab| tab["id"] }).to eq(%w[date amount category receipts])
+        expect(frame.at_css("[data-controller='tabs']")["data-tabs-default-tab-value"]).to eq("date")
+
+        # Every filter link stays on this page rather than opening the ledger.
+        expect(frame.at_css("a[href='#{account_number_event_path(event, direction: "revenue", page: 1)}']")).to be_present
+        expect(frame.css("a[href^='#{event_ledger_path(event)}']")).to be_empty
+        expect(frame.at_css(".filter-menu__chips")).to be_nil
+      end
+
+      it "leaves direction out for a deposit-only account number" do
+        event.column_account_number.update!(deposit_only: true)
+
+        get(:account_number, params: { id: event.slug })
+
+        expect(ledger_frame.at_css("a[href='#{account_number_event_path(event, direction: "revenue", page: 1)}']")).to be_nil
+      end
+
+      it "narrows the items by search, direction, date and amount", :aggregate_failures do
+        expect(shown(q: "GoFundMe")).to eq(["GoFundMe"])
+        expect(shown(direction: "expenses")).to eq(["Shopify"])
+        expect(shown(direction: "revenue")).to eq(["GoFundMe"])
+        expect(shown(start: "2026-10-15")).to eq(["GoFundMe"])
+        expect(shown(end: "2026-10-15")).to eq(["Shopify"])
+        expect(shown(maximum_amount: "30")).to eq(["Shopify"])
+        expect(shown(minimum_amount: "30")).to eq(["GoFundMe"])
+      end
+
+      it "shows the applied filters as chips that clear back to this page", :aggregate_failures do
+        expect(shown(direction: "revenue", minimum_amount: "30")).to eq(["GoFundMe"])
+
+        frame = ledger_frame
+        chips = frame.css(".filter-menu__chips .badge")
+        expect(chips.map { |chip| chip.text.squish }).to eq(["Revenue", "More than $30.00"])
+        expect(chips.first.at_css("a")["href"]).to eq(account_number_event_path(event, minimum_amount: "30"))
+        expect(frame.at_css("[aria-label='Clear filters']")["href"]).to eq(account_number_event_path(event))
+      end
+    end
+
     describe "#reveal_account_number" do
       it "streams the account number into both the inline frame and the modal's, each with an eye to hide it again", :aggregate_failures do
         sign_in_organizer_of(event)

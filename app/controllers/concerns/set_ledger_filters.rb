@@ -99,8 +99,10 @@ module SetLedgerFilters
       end
     end
 
-    def ledger_query
-      query = []
+    # Extra predicates AND onto the page's filters, for a page that shows one
+    # slice of a ledger (e.g. the account number page's unlinked items).
+    def ledger_query(*predicates)
+      query = [*predicates]
 
       query << { memo: { "$search": params[:q] } } if params[:q].present?
 
