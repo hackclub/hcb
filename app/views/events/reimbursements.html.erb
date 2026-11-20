@@ -48,15 +48,15 @@
       <table>
         <thead>
         <tr>
-          <th>Status</th>
-          <th>Report</th>
-          <th>From</th>
-          <th class="text-right">Amount</th>
-          <th class="text-right">Created</th>
+          <% @table_columns.each do |column| %>
+            <th class="<%= "text-right" if column[:right] %>">
+              <%= render "events/sort_table_header", sort: column[:key], columns: @table_columns, display: column[:display], right: column[:right] %>
+            </th>
+          <% end %>
         </tr>
         </thead>
         <tbody>
-          <% @reports.order(created_at: :desc).each do |report| %>
+          <% @reports.each do |report| %>
             <tr class="clickable">
               <td>
                 <% if report.status_description %>
