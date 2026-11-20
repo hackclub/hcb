@@ -1,0 +1,90 @@
+<% disabled = !policy(@event).create_transfer? %>
+
+<% title "Edit a check" %>
+<% page_sm %>
+
+<% if @event.present? && !policy(@event).create_transfer? %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "edit a check" } %>
+<% end %>
+
+<h1 class="mt5">Edit check to <%= @check.recipient_name %> (#<%= @check.id %>)</h1>
+<%= form_with(model: @check, local: true) do |form| %>
+  <%= form_errors(@check, "check", "We couldn't update this") %>
+
+  <div class="field--edit">
+   <div>
+     <%= form.label :memo %>
+     <span class="muted block" data-behavior="check_characters_update">
+       <%= 40 - (@check.memo&.length || 0) %> characters left
+     </span>
+   </div>
+    <%= form.text_field :memo,
+        maxlength: 40,
+        placeholder: "Appears on the physical check",
+        required: true,
+        data: { behavior: "check_memo_field" },
+        disabled: %>
+  </div>
+
+  <hr class="my-8">
+  <h2>Recipient details</h2>
+
+  <div class="field--edit">
+    <%= form.label :recipient_name, "Legal name" %>
+    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250, disabled: %>
+  </div>
+
+  <div class="field--edit">
+    <%= form.label :recipient_email, "Email" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+  </div>
+
+  <div class="field--edit">
+    <%= form.label :address_line1, "Street address" %>
+    <div class="flex items-center gap-2">
+      <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: %>
+      <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: %>
+    </div>
+  </div>
+
+  <div class="field--edit">
+    <%= form.label :address_city, "City" %>
+    <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled: %>
+  </div>
+  <div class="field--edit">
+    <%= form.label :address_state, "State" %>
+    <%= form.select :address_state, IncreaseCheck::US_STATES, { prompt: "Select a state" }, disabled: %>
+  </div>
+
+  <div class="field--edit">
+    <%= form.label :address_zip, "ZIP" %>
+    <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled: %>
+  </div>
+
+  <hr class="my-8">
+  <h2>Payment information</h2>
+
+  <div class="field--edit">
+    <%= form.label :payment_for, "What are you paying for with this check?" %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+  </div>
+
+  <div class="field--edit">
+    <%= form.label :amount, "Amount" %>
+    <div class="input flex gap-2 items-center py-0 max-w-[150px]">
+      <span class="bold muted" style="width: 1rem;">$</span>
+      <%= form.number_field :amount,
+          placeholder: "500.00",
+          class: "!p-0 !border-none !shadow-none min-h-auto",
+          value: ("%.2f" % (@check.amount.to_f / 100)),
+          disabled: disabled,
+          step: 0.01,
+          min: 1,
+          required: true %>
+    </div>
+  </div>
+
+  <div class="actions inline-block mb-8">
+    <%= form.submit "Update check", disabled: %>
+  </div>
+<% end %>
