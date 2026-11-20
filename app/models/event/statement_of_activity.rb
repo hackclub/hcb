@@ -10,7 +10,7 @@ class Event
     INTER_ORG_TRANSFER = StatementCategory.new("inter-organization-transfer", "Inter-organization transfers")
 
     INTERNAL_TRANSFER_SLUG = "internal-transfer"
-    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(?:500|550)-(\d+)\z/
+    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(500|550)-(\d+)\z/ # side (outgoing 500, incoming 550), then the disbursement id
 
     attr_reader(:event, :event_group, :include_descendants)
 
@@ -69,17 +69,17 @@ class Event
     memo_wise def category_totals
       totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
 
-      # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers)
-      if totals.key?(INTERNAL_TRANSFER_SLUG)
-        virtual_totals = grouped_transactions
-                         .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
-                         .transform_keys(&:slug)
-                         .transform_values { |txns| txns.sum(&:amount_cents) }
+      # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers) and for payments between organizations in the statement (which move to Intra org transfers)
+      intra_payments = grouped_transactions.fetch(INTRA_ORG_TRANSFER, []).reject { |t| t.category.slug == INTERNAL_TRANSFER_SLUG }
+      return totals unless totals.key?(INTERNAL_TRANSFER_SLUG) || intra_payments.any?
 
-        totals.except(INTERNAL_TRANSFER_SLUG).merge(virtual_totals)
-      else
-        totals
-      end
+      intra_payments.each { |t| totals[t.category.slug] -= t.amount_cents }
+      virtual_totals = grouped_transactions
+                       .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
+                       .transform_keys(&:slug)
+                       .transform_values { |txns| txns.sum(&:amount_cents) }
+
+      totals.except(INTERNAL_TRANSFER_SLUG).merge(virtual_totals)
     end
 
     memo_wise def net_asset_change
@@ -193,29 +193,36 @@ class Event
 
     def reporting_category_for(transaction)
       category = transaction.category
-      return category unless category&.slug == INTERNAL_TRANSFER_SLUG
+      side, disbursement_id = transaction.hcb_code.to_s.match(DISBURSEMENT_HCB_CODE_REGEX)&.captures
+      return category unless category && disbursement_id
 
-      disbursement_id = transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
-      return category unless disbursement_id
-
-      intra_organization_disbursement_ids.include?(disbursement_id) ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
+      disbursement = intra_organization_disbursements[disbursement_id.to_i]
+      if category.slug == INTERNAL_TRANSFER_SLUG
+        disbursement ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
+      # A payment between two organizations in the statement is neither's
+      # revenue or expense. A side recategorized since (e.g. marked as a
+      # repayment) no longer has the payment's own category, so it keeps its own.
+      elsif disbursement&.transfer_type_payment? && category.id == (side == "500" ? disbursement.source_transaction_category_id : disbursement.destination_transaction_category_id)
+        INTRA_ORG_TRANSFER
+      else
+        category
+      end
     end
 
-    memo_wise def intra_organization_disbursement_ids
+    # Transfers in the statement with both organizations in it, by id.
+    memo_wise def intra_organization_disbursements
       event_ids = events.map(&:id)
 
       disbursement_ids = transactions
-                         .joins(:category_mapping)
-                         .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
                          .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
                          .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
                          .uniq
 
-      return Set.new if disbursement_ids.empty?
+      return {} if disbursement_ids.empty?
 
       Disbursement.where(id: disbursement_ids, source_event_id: event_ids, event_id: event_ids)
-                  .pluck(:id)
-                  .to_set
+                  .select(:id, :transfer_type, :source_transaction_category_id, :destination_transaction_category_id)
+                  .index_by(&:id)
     end
 
     def transactions
