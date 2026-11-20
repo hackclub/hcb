@@ -5,6 +5,27 @@ require "rails_helper"
 RSpec.describe AdminController do
   include SessionSupport
 
+  describe "#event_create" do
+    it "creates a frozen non-demo organization even when demo mode is requested" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      post :event_create, params: {
+        name: "New organization",
+        organizer_email: "",
+        point_of_contact_id: admin.id,
+        country: "US",
+        plan: Event::Plan::Standard.name,
+        tags: [""],
+        demo_mode: "1"
+      }
+
+      expect(flash[:error]).to be_nil
+      expect(response).to redirect_to(events_admin_index_path)
+      expect(Event.find_by!(name: "New organization")).to have_attributes(demo_mode: false, financially_frozen: true)
+    end
+  end
+
   describe "#disbursement_process" do
     render_views
 

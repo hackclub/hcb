@@ -1528,7 +1528,6 @@ class EventsController < ApplicationController
       :start,
       :end,
       :address,
-      :demo_mode,
       :emburse_department_id,
       :country,
       :postal_code,
