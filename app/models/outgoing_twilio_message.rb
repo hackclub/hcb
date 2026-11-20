@@ -7,7 +7,6 @@
 #  id                :bigint           not null, primary key
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
-#  hcb_code_id       :bigint
 #  ledger_item_id    :bigint
 #  twilio_message_id :bigint
 #
@@ -27,11 +26,13 @@ class OutgoingTwilioMessage < ApplicationRecord
   RECEIPT_REPLY_WINDOW = 10.minutes
 
   belongs_to :twilio_message
-  belongs_to :hcb_code, optional: true
   # The transaction the text was about, if any, where a photo texted back is
-  # attached. Nil for texts that aren't about a transaction (User::SendSmsJob)
-  # and, until the backfill has run, for texts from before this column existed.
+  # attached. Nil for texts that aren't about a transaction (User::SendSmsJob).
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+
+  # Messages used to point at the transaction's HCB code. Nothing writes the
+  # column any more; it's dropped once no running code expects it.
+  self.ignored_columns += ["hcb_code_id"]
 
   validates_presence_of :twilio_message
 

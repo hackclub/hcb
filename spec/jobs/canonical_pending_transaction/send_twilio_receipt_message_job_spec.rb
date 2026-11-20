@@ -11,25 +11,23 @@ RSpec.describe CanonicalPendingTransaction::SendTwilioReceiptMessageJob do
   before { allow(TwilioMessageService::Send).to receive(:new).and_return(sender) }
 
   it "texts about the charge and records its transaction" do
-    allow_any_instance_of(HcbCode).to receive(:receipt_required?).and_return(true)
+    cpt.ledger_item.update_columns(receipt_required: true)
 
     described_class.perform_now(cpt_id: cpt.id, user_id: user.id)
 
     expect(TwilioMessageService::Send).to have_received(:new).with(
       user,
       a_string_matching(/charged \$12\.34 at 'Bakery'.*attach a receipt/),
-      hcb_code: cpt.local_hcb_code,
       ledger_item: cpt.ledger_item
     )
-    expect(cpt.ledger_item).to be_present
   end
 
   it "doesn't ask for a receipt when none is required" do
-    allow_any_instance_of(HcbCode).to receive(:receipt_required?).and_return(false)
+    cpt.ledger_item.update_columns(receipt_required: false)
 
     described_class.perform_now(cpt_id: cpt.id, user_id: user.id)
 
-    expect(TwilioMessageService::Send).to have_received(:new).with(user, "Your card was charged $12.34 at 'Bakery'.", anything)
+    expect(TwilioMessageService::Send).to have_received(:new).with(user, "Your card was charged $12.34 at 'Bakery'.", ledger_item: cpt.ledger_item)
   end
 
   it "doesn't text an unverified number" do
