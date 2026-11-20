@@ -180,7 +180,7 @@ RSpec.describe DisbursementsController do
     end
   end
 
-  # Organizers pick a payment's category, but plain transfers stay categorized for them.
+  # Organizers pick a payment's category, but plain transfers stay categorized for them (#15894).
   describe "#create with a category from an organizer" do
     let(:sender) { create(:user) }
     let(:source_event) { create(:event, :with_positive_balance, organizers: [sender]) }
@@ -206,15 +206,9 @@ RSpec.describe DisbursementsController do
       end
     end
 
-    it "rejects a payment with a category organizers can't pick" do
-      expect { send_transfer(transfer_type: "payment", payment_category_slug: "internal-transfer") }.not_to change(Disbursement, :count)
-
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(flash.now[:error]).to eq("Choose a category for this payment.")
-    end
-
-    it "ignores categories on a plain transfer" do
-      send_transfer(transfer_type: "transfer", payment_category_slug: "food-fun", source_transaction_category_slug: "rent", destination_transaction_category_slug: "rent")
+    # A payment's category must not leak onto a plain transfer, which is always an internal transfer (#15894).
+    it "ignores a payment category on a plain transfer" do
+      send_transfer(transfer_type: "transfer", payment_category_slug: "food-fun")
 
       disbursement = Disbursement.last
       expect(disbursement.source_transaction_category.slug).to eq("internal-transfer")

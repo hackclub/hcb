@@ -398,14 +398,19 @@ RSpec.describe Event::StatementOfActivity do
         event_b = create(:event)
         group.memberships.create!(event: event_a)
         group.memberships.create!(event: event_b)
-        expense = create(:canonical_transaction, amount_cents: -10_00, category_slug: "repayment")
+        expense = create(:canonical_transaction, amount_cents: -10_00, category_slug: "project-supplies")
         create(:canonical_event_mapping, event: event_b, canonical_transaction: expense)
-        disbursement = create(:disbursement, source_event: event_a, event: event_b, transfer_type: "payment", source_transaction_category: supplies, destination_transaction_category: supplies)
-        # After marking: the sender's side takes the expense's category, the recipient's becomes a repayment.
+        disbursement = create(:disbursement, :deposited, source_event: event_a, event: event_b, amount: 10_00, transfer_type: "payment", source_transaction_category: supplies, destination_transaction_category: supplies)
         outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00, category_slug: "project-supplies")
-        incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00, category_slug: "repayment")
-        incoming.ledger_item.update_columns(linked_object_type: "Disbursement::Incoming", linked_object_id: disbursement.id)
-        Repayment.new(repaying_ledger_item: incoming.ledger_item).save!(validate: false)
+        incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00, category_slug: "project-supplies")
+        [[outgoing, disbursement.outgoing_disbursement], [incoming, disbursement.incoming_disbursement]].each do |transaction, side|
+          transaction.ledger_item.update_columns(linked_object_type: side.class.polymorphic_name, linked_object_id: side.id)
+        end
+        user = create(:user)
+        create(:organizer_position, user:, event: event_a, role: :manager)
+        create(:organizer_position, user:, event: event_b, role: :member)
+        # The sender's side takes the expense's category, the recipient's becomes a repayment.
+        RepaymentService::Mark.new(ledger_item: incoming.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
 
         result = described_class.new(group, start_date_param: "1970-01-01").transactions_by_category
 
