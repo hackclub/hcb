@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 module UserService
-  # Maintains card_charge_settled_at / receipt_due_at on a cardholder's outstanding
-  # charges. Idempotent; safe to run every few minutes. The shortening floor
-  # (inside CardLocking::Deadline) protects the pile when trust is lost.
+  # Maintains receipt_due_at on a cardholder's outstanding charges. Idempotent; safe to run every few minutes. A recompute only
+  # ever lengthens a future deadline (see CardLocking::Deadline), so a restarted countdown or rollout grace survives it.
   class RefreshReceiptDeadlines
     def initialize(user:, now: Time.current)
       @user = user
@@ -18,18 +17,17 @@ module UserService
       trusted = false
       last_settled = @user.last_settled_charge_at
       enforcement_start_date = CardLocking.enforcement_start_date(@user)
+      cards_locked = @user.cards_locked?
 
-      outstanding_charges.find_each do |hcb_code|
-        hcb_code.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:)
+      outstanding_charges.find_each do |ledger_item|
+        ledger_item.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:, cards_locked:)
       end
     end
 
     private
 
     def outstanding_charges
-      HcbCode.card_locking_candidates
-             .where(stripe_cardholders: { user_id: @user.id })
-             .includes(:canonical_transactions, :receipts)
+      Ledger::Item.card_locking_candidates.where(stripe_cardholders: { user_id: @user.id })
     end
 
   end

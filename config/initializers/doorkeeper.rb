@@ -176,6 +176,8 @@ Doorkeeper.configure do
 
   use_refresh_token
 
+  enable_application_owner confirmation: true
+
   # Provide support for an owner to be assigned to each registered application (disabled by default)
   # Optional parameter confirmation: true (default: false) if you want to enforce ownership of
   # a registered application
@@ -189,7 +191,7 @@ Doorkeeper.configure do
   # https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes
   #
   # default_scopes  :public
-  optional_scopes :read, :write, :"admin:read", :"admin:write"
+  optional_scopes :read, :write, :"admin:read", :"admin:write", :"admin:comments:read", :"admin:comments:write"
 
   # Allows to restrict only certain scopes for grant_type.
   # By default, all the scopes will be available for all the grant types.

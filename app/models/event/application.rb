@@ -175,8 +175,6 @@ class Event
       end
     end
 
-    scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
-
     DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
 
     REJECTION_AIRTABLE_STATUSES = {
@@ -305,10 +303,6 @@ class Event
       0
     end
 
-    def political?
-      political_description.present? && political_description.strip.length.positive?
-    end
-
     def contract_notify_when_sent
       false
     end
@@ -396,6 +390,8 @@ class Event
     end
 
     def activate_event!(risk_level:, tags: [], point_of_contact: nil)
+      raise "Application must be approved before activation" unless approved?
+
       contract.party(:hcb).sync_with_docuseal
       contract.reload
       raise "Contract must be signed before activation" unless contract.signed?

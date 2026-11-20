@@ -18,6 +18,9 @@
 #  index_stripe_service_fees_on_stripe_topup_id                (stripe_topup_id)
 #
 class StripeServiceFee < ApplicationRecord
+  include HasHcbCode
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
+
   belongs_to :stripe_topup, optional: true
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :raw_pending_stripe_service_fee_transaction
@@ -33,18 +36,6 @@ class StripeServiceFee < ApplicationRecord
       }
     )
     update!(stripe_topup_id: topup.id)
-  end
-
-  def hcb_code
-    [
-      ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-      ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE,
-      id
-    ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-  end
-
-  def local_hcb_code
-    HcbCode.find_or_create_by(hcb_code:)
   end
 
   def event

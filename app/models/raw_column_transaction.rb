@@ -101,8 +101,4 @@ class RawColumnTransaction < ApplicationRecord
     nil
   end
 
-  def extract_remote_object
-    update(column_transfer: remote_object)
-  end
-
 end

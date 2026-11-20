@@ -148,7 +148,42 @@ RSpec.describe WiresController do
 
       comment = disbursement.comments.sole
       expect(comment.user).to eq(admin)
-      expect(comment.content).to include(hcb_code_url(wire.local_hcb_code))
+      expect(comment.content).to include(ledger_item_url(wire.reload_ledger_item))
+    end
+  end
+
+  context "as a non-admin auditor" do
+    let(:wire) do
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      create(:wire, :pending, event: create(:event, :with_positive_balance))
+    end
+
+    before { create_session(create(:user, :make_auditor), verified: true) }
+
+    it "refuses to send a wire" do
+      expect_any_instance_of(Wire).not_to receive(:send_wire!)
+
+      post(:send_wire, params: { id: wire.id })
+
+      expect(response).to redirect_to(wire_process_admin_path(wire))
+      expect(flash[:error]).to include("send_wire?")
+      expect(wire.reload).to be_pending
+    end
+
+    it "refuses to reject a wire" do
+      post(:reject, params: { id: wire.id, comment: "Nope" })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(wire.reload).to be_pending
+      expect(wire.local_hcb_code.comments).to be_empty
+    end
+
+    it "refuses to edit a wire" do
+      patch(:update, params: { id: wire.id, wire: { recipient_name: "Someone Else" } })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(wire.reload.recipient_name).not_to eq("Someone Else")
     end
   end
 end

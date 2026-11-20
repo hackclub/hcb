@@ -1,4 +1,6 @@
-<%# locals: (event:, frame:) %>
+<%# locals: (event:, frame:, goal_initially: event.donation_goal.present?) %>
+<%# herb:slots client %>
+<%# herb:state (goal_enabled: goal_initially) %>
 
 <% disabled = !policy(event).update? %>
 
@@ -6,16 +8,16 @@
   <% if frame %>
     <div class="menu__divider m-0 my-8"></div>
   <% end %>
-  <div data-controller="accordion">
+  <div>
     <div class="field field--checkbox mb0">
       <span style="font-weight: 700">Enable donation goals</span>
       <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
         <%= form.label :donation_goal_enabled do %>
           <%= form.check_box :donation_goal_enabled,
             data: {
-              action: "change->accordion#toggle#{event.donation_goal ? " change->confirm#request" : ""}",
-              accordion_target: "checkbox",
-              **(event.donation_goal ? { controller: "confirm", confirm_message_value: "Remove donation goal?", confirm_confirm_text_value: "Remove" } : {})
+              # `confirm` re-checks the box and fires `change` again when the removal is cancelled, which keeps the state in step.
+              herb_set: "change->goal_enabled=$value",
+              **(event.donation_goal ? { controller: "confirm", action: "change->confirm#request", confirm_message_value: "Remove donation goal?", confirm_confirm_text_value: "Remove" } : {})
             },
             disabled:,
             checked: event.donation_goal.present?,
@@ -24,7 +26,7 @@
         <% end %>
       </div>
     </div>
-    <div data-accordion-target="content" class="rounded-xl">
+    <div class="rounded-xl" hidden="<%= !goal_enabled %>">
       <div class="field">
         <label for="donation_goal">Goal amount</label>
         <span class="muted mb-2 block">

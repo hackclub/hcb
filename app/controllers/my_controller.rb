@@ -9,15 +9,15 @@ class MyController < ApplicationController
   def activities
     @before = params[:before] || Time.now
     if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-      @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.all.before(@before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     else
-      @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).page(params[:page]).per(25)
+      @activities = PublicActivity::Activity.for_user(current_user).before(@before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25)
     end
   end
 
   def toggle_admin_activities
     cookies[:admin_activities] = cookies[:admin_activities] == "everyone" ? "myself" : "everyone"
-    redirect_to my_activities_url
+    redirect_to my_activities_path
   end
 
   def cards
@@ -26,39 +26,14 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
+    @stripe_cards = filtered_stripe_cards
+    cookies[:my_cards_view] = params[:view] if params[:view].in?(%w[grid list])
+    @view = cookies[:my_cards_view] || "grid"
 
-    @status = params[:status].presence_in(%w[active inactive frozen canceled])
-    @type = params[:type].presence_in(%w[virtual physical])
-    @filter_applied = @status || @type
-
-    @stripe_cards = case @status
-                    when "active"
-                      @stripe_cards.active
-                    when "inactive"
-                      @stripe_cards.inactive
-                    when "frozen"
-                      @stripe_cards.frozen
-                    when "canceled"
-                      @stripe_cards.canceled
-                    else
-                      @stripe_cards
-                    end
-
-    @stripe_cards = case @type
-                    when "virtual"
-                      @stripe_cards.virtual
-                    when "physical"
-                      @stripe_cards.physical
-                    else
-                      @stripe_cards
-                    end
-
-    @stripe_cards = @stripe_cards.order(
-      Arel.sql("stripe_status = 'active' DESC"),
-      Arel.sql("stripe_status = 'inactive' DESC")
-    )
+    cards_by_event = @stripe_cards.includes(:card_grant, event: [:plan, { logo_attachment: :blob }]).group_by(&:event)
+    # Organizations with the most active cards come first
+    @cards_by_event = cards_by_event.sort_by { |event, cards| [-cards.count(&:active?), event.name.downcase] }.to_h
   end
 
   def tasks
@@ -70,7 +45,9 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_list
-    @missing = current_user.transactions_missing_receipt
+    @missing = current_user.card_charges_missing_receipt
+                           .order(datetime: :desc)
+                           .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
 
     if @missing.any?
       render :missing_receipts_list, layout: !request.xhr?
@@ -80,7 +57,7 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_icon
-    count = current_user.transactions_missing_receipt.count
+    count = current_user.card_charges_missing_receipt.count
 
     emojis = {
       "🤡": 300,
@@ -94,25 +71,29 @@ class MyController < ApplicationController
     render :missing_receipts_icon, layout: false
   end
 
+  # Soonest deadline first, then charges still pending, then charges that never
+  # had a deadline; both undated groups newest first.
+  INBOX_DUE_DATE_ORDER = Arel.sql(<<~SQL.squish)
+    CASE WHEN ledger_items.receipt_due_at IS NOT NULL THEN 0 WHEN ledger_items.settled_at IS NULL THEN 1 ELSE 2 END,
+    ledger_items.receipt_due_at ASC,
+    ledger_items.datetime DESC
+  SQL
+
   def inbox
-    @count = current_user.transactions_missing_receipt.count
+    # The same pile card locking counts (its outstanding charges are the
+    # settled, enforcement-era part of it), so the counts and the rows agree.
+    pile = current_user.card_charges_missing_receipt
+    @count = pile.count
     if CardLocking.enabled?
       @locking_count = current_user.card_locking_overdue_charges.count
       @locking_next_due_at = current_user.card_locking_next_due_at
     end
     @now = Time.current
 
-    hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-
-    hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
-                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
-                                       .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
-
     # Deadlines only exist (and are only explained elsewhere on this page) for
     # cardholders inside the card locking rollout, so don't group by them until
     # there's at least one to group.
-    @groupable_by_due_date = CardLocking.enabled? &&
-                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    @groupable_by_due_date = CardLocking.enabled? && pile.where.not(receipt_due_at: nil).exists?
     @grouping =
       if @groupable_by_due_date
         params[:group].presence_in(["due_date", "card"]) || "due_date"
@@ -120,39 +101,27 @@ class MyController < ApplicationController
         "card"
       end
 
-    hcb_codes_missing_receipt =
-      if @grouping == "due_date"
-        # Soonest deadline first, then charges still pending, then charges that
-        # never had a deadline; both undated groups newest first.
-        hcb_codes_missing_receipt.sort_by do |hcb_code|
-          if hcb_code.receipt_due_at
-            [0, hcb_code.receipt_due_at.to_i]
-          else
-            [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
-          end
-        end
-      else
-        hcb_codes_missing_receipt.sort_by(&:created_at).reverse
-      end
-
     if @grouping == "due_date"
       # Counted over the whole pile, not the page, so a group spanning several
-      # pages still reports its real size.
-      @due_date_group_counts = hcb_codes_missing_receipt.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
-                                                        .transform_values(&:count)
+      # pages still reports its real size. Only the two columns the bucket reads.
+      @due_date_group_counts = pile.select(:id, :receipt_due_at, :settled_at)
+                                   .group_by { |item| helpers.receipt_due_group(item, now: @now) }
+                                   .transform_values(&:count)
     end
 
-    @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(safe_per(15))
+    # What the ledger row renders (see ledger/_item): the card charge for the
+    # merchant and the card, the HCB code for the upload affordances, the
+    # primary ledger's event (or its card grant's) for the org name.
+    @items = pile.order(@grouping == "due_date" ? INBOX_DUE_DATE_ORDER : { datetime: :desc })
+                 .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+                 .page(params[:page]).per(safe_per(15))
 
     if @grouping == "due_date"
-      # @hcb_codes is already in due date order, so group_by preserves it.
-      @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+      # @items is already in due date order, so group_by preserves it.
+      @due_date_groups = @items.group_by { |item| helpers.receipt_due_group(item, now: @now) }
     else
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
-      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                                # Order cards by created_at, newest first
-                                .sort_by(&:created_at).reverse!
+      @card_items = @items.group_by { |item| item.linked_object.stripe_card_id }
+      @cards = StripeCard.where(id: @card_items.keys).includes(:event).order(created_at: :desc)
     end
 
     @mailbox_address = current_user.active_mailbox_address
@@ -247,6 +216,49 @@ class MyController < ApplicationController
   end
 
   private
+
+  def filtered_stripe_cards
+    @q = params[:q].presence
+    @status = params[:status].presence_in(%w[active inactive frozen canceled])
+    @type = params[:type].presence_in(%w[virtual physical])
+    @filter_applied = @status || @type
+
+    stripe_cards = current_user.stripe_cards
+
+    stripe_cards = case @status
+                   when "active"
+                     stripe_cards.active
+                   when "inactive"
+                     stripe_cards.inactive
+                   when "frozen"
+                     stripe_cards.frozen
+                   when "canceled"
+                     stripe_cards.canceled
+                   else
+                     stripe_cards
+                   end
+
+    stripe_cards = case @type
+                   when "virtual"
+                     stripe_cards.virtual
+                   when "physical"
+                     stripe_cards.physical
+                   else
+                     stripe_cards
+                   end
+
+    if @q
+      stripe_cards = stripe_cards.left_joins(:card_grant).where(
+        "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q",
+        q: "%#{StripeCard.sanitize_sql_like(@q)}%"
+      )
+    end
+
+    stripe_cards.order(
+      Arel.sql("stripe_status = 'active' DESC"),
+      Arel.sql("stripe_status = 'inactive' DESC")
+    )
+  end
 
   def set_reimbursement_reports
     return unless signed_in?

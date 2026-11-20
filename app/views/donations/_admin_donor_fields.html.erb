@@ -1,0 +1,16 @@
+<%# locals: (form:, donation:) %>
+
+<% if policy(donation).update_email? %>
+  <% admin_tool("mb2") do %>
+    <div class="field mb2">
+      <%= form.label :email, "Donor's email" %>
+      <%= form.email_field :email, value: donation.email, placeholder: "fiona@hackclub.com", required: donation.email.present?, autocomplete: "off" %>
+    </div>
+    <% if donation.receipt_resendable? && policy(donation).resend_receipt? %>
+      <div class="field field--checkbox mb0">
+        <%= check_box_tag :resend_receipt, "1", false, style: "margin-left: 0;" %>
+        <%= label_tag :resend_receipt, "Resend the receipt to this email.", style: "display: inline; flex-grow: 1;" %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

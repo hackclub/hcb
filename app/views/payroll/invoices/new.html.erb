@@ -21,7 +21,21 @@
           <%= form.label :name, "Description" %>
           <span class="muted block">What is this invoice for?</span>
         </div>
-        <%= form.text_field :name, placeholder: "e.g. Engineering hours (Jun 1–15)", required: true %>
+        <%= form.text_field :name, placeholder: "e.g. Engineering hours", required: true %>
+      </div>
+
+      <div class="menu__divider my-0"></div>
+
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <div>
+          <%= form.label :start_date, "Period" %>
+          <span class="muted block">When was this work done?</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <%= form.date_field :start_date, min: @position.start_date, max: @position.end_date, required: true %>
+          <span class="muted">to</span>
+          <%= form.date_field :end_date, min: @position.start_date, max: @position.end_date, required: true %>
+        </div>
       </div>
 
       <div class="menu__divider my-0"></div>

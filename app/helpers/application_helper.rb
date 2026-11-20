@@ -11,12 +11,14 @@ module ApplicationHelper
   include GSuitesHelper
   include HcbCodeHelper
   include InvoicesHelper
+  include LegalEntitiesHelper
   include LoginsHelper
   include LogoHelper
   include OrganizerPosition::Spending::AllowancesHelper
   include PayeesHelper
   include PopoverHelper
   include ReceiptsHelper
+  include Reimbursement::ExpensesHelper
   include SeasonalHelper
   include SessionsHelper
   include StaticPagesHelper
@@ -30,6 +32,11 @@ module ApplicationHelper
   # Flash keys that aren't messages, and so are never rendered as one.
   def renderable_flash
     flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
+
+  # Inline image for PDF templates; the renderer can't reach our asset host from dev.
+  def pdf_asset_base64(path)
+    "data:#{Marcel::MimeType.for(name: path)};base64,#{Base64.strict_encode64(Rails.root.join("app/assets/images", path).binread)}"
   end
 
   def upsert_query_params(**new_params)
@@ -293,13 +300,9 @@ module ApplicationHelper
     content_for(:container_class) { "container--sm" }
   end
 
-  alias_method :page_narrow, :page_sm
-
   def page_xs
     content_for(:container_class) { "container--xs" }
   end
-
-  alias_method :page_extranarrow, :page_xs
 
   def title(text)
     content_for :title, text
