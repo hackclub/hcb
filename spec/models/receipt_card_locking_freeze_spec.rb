@@ -17,7 +17,7 @@ RSpec.describe Receipt, type: :model do
 
       attach_receipt(charge, uploaded_by: user)
 
-      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(now)
+      expect(charge.reload).not_to be_missing_receipt
       expect(user.card_locking_overdue_charges(now:)).not_to include(charge)
     end
 
@@ -27,7 +27,7 @@ RSpec.describe Receipt, type: :model do
 
       charge.no_or_lost_receipt!
 
-      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(now)
+      expect(charge.reload).not_to be_missing_receipt
       expect(user.card_locking_overdue_charges(now:)).not_to include(charge)
     end
   end
@@ -73,7 +73,7 @@ RSpec.describe Receipt, type: :model do
       charge.receipts.order(:created_at).first.destroy!
 
       expect(charge.reload.receipt_due_at).to be_within(1.second).of(53.days.ago)
-      expect(charge.card_locking_resolved_at).to be_within(1.second).of(58.days.ago)
+      expect(charge).not_to be_missing_receipt
     end
 
     it "leaves the deadline alone when the charge is also marked no/lost" do

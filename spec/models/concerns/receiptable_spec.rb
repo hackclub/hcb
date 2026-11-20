@@ -230,20 +230,8 @@ RSpec.describe Receiptable do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
       travel_to(2.days.ago) { attach_receipt_to(charge, user:) }
 
-      expect(charge.reload.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
+      expect(charge.reload).not_to be_missing_receipt
       expect(Ledger::Item.card_locking_candidates).not_to include(charge)
-    end
-
-    it "resolves the same way from the preloaded association, without querying" do
-      charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      travel_to(2.days.ago) { attach_receipt_to(charge, user:) }
-
-      loaded = Ledger::Item.includes(:receipts).find(charge.id)
-
-      queries = count_queries do
-        expect(loaded.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
-      end
-      expect(queries).to eq(0)
     end
 
     it "still lists a charge with no receipt as a candidate" do

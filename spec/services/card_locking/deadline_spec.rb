@@ -107,4 +107,15 @@ RSpec.describe CardLocking::Deadline do
   it "case 19: a resolved charge's first deadline is not floored" do
     expect(compute(settled_at: now - 30.days, resolved: true)).to eq(now - 30.days + 7.days)
   end
+
+  # The floor is a warning before a lock; a cardholder whose cards are already
+  # locked has had both. Flooring would clear their overdue deadlines, and the
+  # next sweep would unlock them.
+  it "case 20: a locked cardholder's first deadline is not floored" do
+    expect(compute(settled_at: now - 30.days, cards_locked: true)).to eq(now - 30.days + 7.days)
+  end
+
+  it "case 21: a locked cardholder's fresh charge still gets settled_at + 7.days" do
+    expect(compute(settled_at: now - 1.day, cards_locked: true)).to eq(now - 1.day + 7.days)
+  end
 end

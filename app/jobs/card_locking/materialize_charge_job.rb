@@ -7,10 +7,11 @@ module CardLocking
   class MaterializeChargeJob < ApplicationJob
     queue_as :low
 
-    # hcb_code_id is only passed by jobs enqueued before card locking moved onto
-    # ledger items; drop it once none are left in the queue.
-    def perform(ledger_item_id: nil, hcb_code_id: nil)
-      ledger_item_id ||= HcbCode.find_by(id: hcb_code_id)&.ledger_item_id
+    # Jobs enqueued before card locking moved onto ledger items name the charge
+    # by hcb_code_id instead. Those are dropped rather than looked up: the sweep
+    # (UserService::RefreshReceiptDeadlines) materializes every outstanding
+    # charge within minutes anyway. Remove the splat once the queue has drained.
+    def perform(ledger_item_id: nil, **)
       ledger_item = Ledger::Item.find_by(id: ledger_item_id)
       return unless ledger_item
 

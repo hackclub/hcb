@@ -17,26 +17,32 @@ RSpec.describe Ledger::Item do
     travel_back
   end
 
-  describe "#card_locking_resolved_at" do
-    it "is the first receipt's created_at when a receipt has been uploaded" do
-      charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
+  # Whether a charge still counts is the item's own missing_receipt logic.
+  describe ".card_locking_candidates" do
+    it "lists a charge still missing a receipt" do
+      charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
 
-      expect(charge.card_locking_resolved_at).to be_within(1.second).of(2.days.ago)
-      expect(charge).to be_card_locking_resolved
+      expect(Ledger::Item.card_locking_candidates).to include(charge)
     end
 
-    it "is marked_no_or_lost_receipt_at when the charge was marked without a receipt" do
+    it "drops a charge once a receipt is uploaded" do
+      charge = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
+
+      expect(Ledger::Item.card_locking_candidates).not_to include(charge)
+    end
+
+    it "drops a charge marked no/lost" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
       charge.update!(marked_no_or_lost_receipt_at: 1.day.ago)
 
-      expect(charge.card_locking_resolved_at).to be_within(1.second).of(1.day.ago)
+      expect(Ledger::Item.card_locking_candidates).not_to include(charge)
     end
 
-    it "is nil for an unresolved charge" do
+    it "drops a charge that does not require a receipt" do
       charge = create_settled_card_charge(user:, settled_at: 5.days.ago)
+      charge.update_columns(receipt_required: false)
 
-      expect(charge.card_locking_resolved_at).to be_nil
-      expect(charge).not_to be_card_locking_resolved
+      expect(Ledger::Item.card_locking_candidates).not_to include(charge)
     end
   end
 
@@ -83,6 +89,24 @@ RSpec.describe Ledger::Item do
 
       # Not pushed out to now + 72h: receipt_trusted? reads this as the late upload's deadline.
       expect(charge.receipt_due_at).to be_within(1.second).of(30.days.ago + 7.days)
+    end
+
+    it "floors an unlocked cardholder's old charge's first deadline to 72 hours out" do
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+
+      charge.materialize_card_locking!(now:, trusted: false)
+
+      expect(charge.receipt_due_at).to be_within(1.second).of(now + 72.hours)
+    end
+
+    # Resolved from the charge's own cardholder when the caller doesn't pass it.
+    it "gives a locked cardholder's old charge its real deadline rather than the floor" do
+      user.update!(cards_locked: true)
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+
+      charge.materialize_card_locking!(now:, trusted: false)
+
+      expect(charge.receipt_due_at).to be_within(1.second).of(10.days.ago + 7.days)
     end
 
     it "never moves a future deadline earlier" do

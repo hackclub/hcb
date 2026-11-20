@@ -14,6 +14,13 @@ module UserService
 
       now = Time.current
 
+      # An unlock is decided on the cardholder's persisted deadlines, so bring
+      # them up to date first: a charge that has not been materialized yet (its
+      # settlement job still queued, or every charge right after deadlines moved
+      # onto ledger items) has no deadline and so looks on time, and unlocking on
+      # that would mail "your cards work again" with receipts still overdue.
+      RefreshReceiptDeadlines.new(user: @user, now:).run if @unlock_only
+
       # The kill switch unlocks rather than freezes: as an early return it would
       # strand already-locked cardholders with no way to unlock by uploading, so
       # switching the feature off during an incident would deepen it. Folded into

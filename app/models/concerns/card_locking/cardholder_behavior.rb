@@ -82,15 +82,10 @@ module CardLocking
       card_locking_suppressed_until.present? && card_locking_suppressed_until > now
     end
 
-    # Overdue charges: past deadline and still unresolved.
-    #
-    # receipt_overdue (receipt_due_at plus the cached receipt_count and
-    # marked_no_or_lost_receipt_at) is the primary signal (partial-index-friendly).
-    # card_locking_candidates adds the live "still missing a receipt" check (no
-    # attached receipts row) as a self-healing safety net: a charge whose receipt
-    # was attached via a path that left receipt_count stale (bulk insert, raw
-    # import) can't stay wrongly overdue forever. The extra check does not stop the
-    # partial index on receipt_due_at from being used for the indexed predicate.
+    # Overdue charges: past deadline and still missing a receipt, by the item's
+    # own columns (receipt_due_at, receipt_required, receipt_count and
+    # marked_no_or_lost_receipt_at), which the partial index on receipt_due_at
+    # covers.
     def card_locking_overdue_charges(now: Time.current)
       return Ledger::Item.none unless stripe_cardholder
 
@@ -100,7 +95,7 @@ module CardLocking
                   .distinct
     end
 
-    # All outstanding (unresolved, enforcement-era) charges for this cardholder.
+    # All outstanding (missing a receipt, enforcement-era) charges for this cardholder.
     def card_locking_outstanding_charges
       return Ledger::Item.none unless stripe_cardholder
 

@@ -30,7 +30,7 @@ module CardLocking
   #
   # It is a floor across *all* stages, so it must never be advanced to a later
   # stage's date. Doing so drops every earlier-stage charge out of
-  # HcbCode.card_locking_candidates, which the lock decision, the sweep and the
+  # Ledger::Item.card_locking_candidates, which the lock decision, the sweep and the
   # outstanding pile all read through: the next sweep unlocks cardholders who are
   # already being enforced and mails them that their cards work again.
   ENFORCEMENT_START_DATE = Date.new(2026, 7, 17)

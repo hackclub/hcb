@@ -17,18 +17,17 @@ module UserService
       trusted = false
       last_settled = @user.last_settled_charge_at
       enforcement_start_date = CardLocking.enforcement_start_date(@user)
+      cards_locked = @user.cards_locked?
 
       outstanding_charges.find_each do |ledger_item|
-        ledger_item.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:)
+        ledger_item.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:, cards_locked:)
       end
     end
 
     private
 
     def outstanding_charges
-      Ledger::Item.card_locking_candidates
-                  .where(stripe_cardholders: { user_id: @user.id })
-                  .includes(:receipts)
+      Ledger::Item.card_locking_candidates.where(stripe_cardholders: { user_id: @user.id })
     end
 
   end

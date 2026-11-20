@@ -10,6 +10,10 @@ module CardLocking
     # A receipt was created or updated. Materialize synchronously so the unlock
     # job sees the resolution, then recompute the lock. notify_progress lets a
     # still-locked cardholder hear that this upload landed but more remain.
+    #
+    # Receipts attach to all sorts of records; only a Ledger::Item can be a
+    # charge. Reloaded so the resolution reads the receipt_count the Receipt's
+    # touch recounted in the database, not whatever this copy last loaded.
     def on_receipt_upsert(receipt)
       charge = charge_for(receipt.receiptable)
       charge.materialize_card_locking! if charge&.card_locking_chargeable?
@@ -17,36 +21,26 @@ module CardLocking
     end
 
     # A receipt was destroyed. Only deleting the charge's last receipt matters:
-    # it leaves the charge outstanding again, so its 7-day countdown restarts
-    # from now rather than the charge counting as overdue the moment the receipt
-    # is gone. Deleting one of several receipts, or a receipt on a charge that is
-    # also marked no/lost, leaves the charge resolved and its deadline untouched.
-    # Reloaded so the check reads the receipts left in the database, not an
-    # association loaded before the destroy.
+    # it leaves the charge missing a receipt again, so its 7-day countdown
+    # restarts from now rather than the charge counting as overdue the moment the
+    # receipt is gone. Deleting one of several receipts, or a receipt on a charge
+    # that is also marked no/lost, leaves the charge resolved and its deadline
+    # untouched.
     def on_receipt_destroy(receipt)
       charge = charge_for(receipt.receiptable)
-      if charge&.card_locking_chargeable? && !charge.reload.card_locking_resolved?
-        charge.restart_card_locking_countdown!
-      end
+      charge.restart_card_locking_countdown! if charge&.card_locking_chargeable? && charge.missing_receipt?
       enqueue_unlock(charge&.card_locking_cardholder)
     end
 
-    # A charge was marked as having no/lost receipt (also a resolution).
-    def on_no_or_lost_receipt(receiptable)
-      charge = charge_for(receiptable)
-      charge.materialize_card_locking! if charge&.card_locking_chargeable?
-      enqueue_unlock(charge&.card_locking_cardholder)
+    # A charge was marked as having no/lost receipt (also a resolution). Called
+    # from the item's own column hook (CardLocking::ChargeBehavior).
+    def on_no_or_lost_receipt(charge)
+      charge.materialize_card_locking! if charge.card_locking_chargeable?
+      enqueue_unlock(charge.card_locking_cardholder)
     end
 
-    # Card-locking state lives on Ledger::Item (CardLocking::ChargeBehavior). A
-    # no/lost mark can still arrive through the transaction's HCB code
-    # (ReceiptablesController accepts one), so a code resolves to its item. Nil
-    # for every other receiptable, so the callers above no-op for them.
     def charge_for(receiptable)
-      case receiptable
-      when ::Ledger::Item then receiptable
-      when HcbCode then receiptable.ledger_item
-      end
+      receiptable.reload if receiptable.is_a?(::Ledger::Item)
     end
 
     def enqueue_unlock(user, notify_progress: false)

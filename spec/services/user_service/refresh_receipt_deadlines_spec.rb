@@ -55,6 +55,24 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
     expect(charge.receipt_due_at).to be_within(2.seconds).of(now + 5.days)
   end
 
+  # Passed through from the cardholder, see CardLocking::Deadline.
+  it "materializes a locked cardholder's old charge at its real deadline, so it stays overdue" do
+    user.update!(cards_locked: true)
+    charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+
+    described_class.new(user:).run
+
+    expect(charge.reload.receipt_due_at).to be_within(2.seconds).of(10.days.ago + 7.days)
+  end
+
+  it "floors an unlocked cardholder's old charge to 72 hours out" do
+    charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+
+    described_class.new(user:).run
+
+    expect(charge.reload.receipt_due_at).to be_within(2.seconds).of(now + 72.hours)
+  end
+
   it "leaves an already-overdue charge frozen" do
     charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
     charge.update_columns(receipt_due_at: 2.days.ago)
