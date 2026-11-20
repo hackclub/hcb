@@ -35,7 +35,11 @@
     this.options.doFade = !isNaN(parseInt(this.options.fadeDuration, 10))
     this.options.fadeDuration = $.modal.isActive() ? 0 : this.options.fadeDuration
     this.$blocker = null
-    if (this.options.closeExisting) while ($.modal.isActive()) $.modal.close(null, true) // Close any open modals.
+    if (this.options.closeExisting) {
+      while ($.modal.isActive()) {
+        if ($.modal.close(null, true) === false) return
+      }
+    }
     modals.push(this)
     if (el.is('a')) {
       target = el.attr('href')
@@ -108,6 +112,11 @@
     },
 
     close: function (now) {
+      if (!this.$elm[0].dispatchEvent(new CustomEvent('hcb:before-discard', {
+        bubbles: true,
+        cancelable: true
+      }))) return false
+
       modals.pop()
       this.unblock(now)
       this.hide(now)
@@ -226,7 +235,7 @@
     if (!$.modal.isActive()) return
     if (event) event.preventDefault()
     var current = getCurrent()
-    current.close(now)
+    if (current.close(now) === false) return false
     return current.$elm
   }
 
