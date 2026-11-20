@@ -18,6 +18,12 @@ module Reimbursement
       unlocked? && (admin? || manager? || creator?) && !record.is_fee?
     end
 
+    # Moving an expense into any report by URL or ID, rather than one listed in
+    # the "Move expense" form.
+    def admin_move?
+      admin?
+    end
+
     def approve?
       (admin? || (manager? && !creator?)) && record.report.submitted?
     end
