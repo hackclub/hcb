@@ -24,23 +24,9 @@ FactoryBot.define do
       sent_at    { 30.minutes.ago }
     end
 
-    trait :successful do
-      aasm_state    { "successful" }
-      sent_at       { 2.hours.ago }
-      successful_at { 1.hour.ago }
-    end
-
     trait :rejected do
       aasm_state  { "rejected" }
       rejected_at { 1.hour.ago }
-    end
-
-    trait :eur do
-      currency { "EUR" }
-    end
-
-    trait :gbp do
-      currency { "GBP" }
     end
   end
 end

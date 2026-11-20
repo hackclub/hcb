@@ -8,7 +8,7 @@ describe HcbCodeService::Generate::ShortCode do
     it "creates a conforming short_code" do
       10.times do
         short_code = described_class.new.run
-        expect(short_code).to match(/[A-Z0-9]{5}/)
+        expect(short_code).to match(/\A[A-Z0-9]{5}\z/)
       end
     end
   end

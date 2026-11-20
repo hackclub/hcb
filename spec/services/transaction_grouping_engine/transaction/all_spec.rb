@@ -68,7 +68,7 @@ RSpec.describe TransactionGroupingEngine::Transaction::All do
       create(:canonical_event_mapping, event: event, canonical_transaction: transaction)
 
       [":oops ?", "%%%lol"].each do |search|
-        result = described_class.new(event_id: event.id, search: ":oops ?").all.sole
+        result = described_class.new(event_id: event.id, search:).all.sole
         expect(JSON.parse(result.raw_canonical_transaction_ids)).to contain_exactly(transaction.id)
       end
     end

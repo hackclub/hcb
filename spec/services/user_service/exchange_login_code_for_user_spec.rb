@@ -14,12 +14,6 @@ RSpec.describe UserService::ExchangeLoginCodeForUser, type: :model do
     )
   }
 
-  let(:exchange_login_code_error_resp) do
-    {
-      errors: ["error"]
-    }
-  end
-
   context "email" do
     let(:sms) { false }
 

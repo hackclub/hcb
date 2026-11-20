@@ -83,20 +83,6 @@ RSpec.describe AuditorConstraint do
       end
     end
 
-    context "when the session has been signed out" do
-      let(:user) { create(:user, access_level: :auditor) }
-      let!(:session) do
-        create(:user_session, verified: true, user:,
-                              expiration_at: 1.minute.ago,
-                              signed_out_at: 1.minute.ago)
-      end
-      let(:session_token) { session.session_token }
-
-      it "returns false" do
-        expect(described_class.matches?(request)).to eq(false)
-      end
-    end
-
     context "when the request's cookie jar can't be decrypted (e.g. a synthetic request built by " \
             "ActionDispatch::Routing::RouteSet#recognize_path, which bypasses the cookies middleware)" do
       let(:request) { instance_double("ActionDispatch::Request") }

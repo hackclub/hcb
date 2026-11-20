@@ -2,9 +2,6 @@
 
 require "rails_helper"
 
-HCBCode = TransactionGroupingEngine::Calculate::HcbCode
-
-
 describe HcbCodeService::CanDispute do
 
   context "when it's an invalid transaction" do
@@ -32,7 +29,7 @@ describe HcbCodeService::CanDispute do
 
 
   context "when stripe transaction is older than 90 days" do
-    let(:hcb_code) { build(:hcb_code, code_type: ::HCBCode::STRIPE_CARD_CODE) }
+    let(:hcb_code) { build(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE) }
     let!(:ct) { create(:canonical_transaction, date: Date.today - 91.days).update(hcb_code: hcb_code.hcb_code) }
 
     it "returns false" do
@@ -57,7 +54,7 @@ describe HcbCodeService::CanDispute do
   end
 
   context "when stripe transaction is newer than 90 days" do
-    let(:hcb_code) { build(:hcb_code, code_type: ::HCBCode::STRIPE_CARD_CODE) }
+    let(:hcb_code) { build(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE) }
     let!(:ct) { create(:canonical_transaction, date: Date.today - 90.days).update(hcb_code: hcb_code.hcb_code) }
 
     it "returns true" do
@@ -68,7 +65,7 @@ describe HcbCodeService::CanDispute do
   end
 
   context "when transaction is a donation" do
-    let(:hcb_code) { build(:hcb_code, code_type: ::HCBCode::DONATION_CODE) }
+    let(:hcb_code) { build(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE) }
     let!(:ct) { create(:canonical_transaction).update(hcb_code: hcb_code.hcb_code) }
 
 

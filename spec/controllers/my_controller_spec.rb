@@ -261,13 +261,14 @@ RSpec.describe MyController do
     render_views(false)
 
     it "sets @locking_count from card_locking_overdue_charges" do
-      user = sign_in_verified
+      sign_in_verified
       Flipper.enable(:card_locking)
+      allow_any_instance_of(User).to receive(:card_locking_overdue_charges).and_return(double(count: 2))
 
       get :inbox
 
       expect(response).to have_http_status(:ok)
-      expect(controller.instance_variable_get(:@locking_count)).to eq(user.card_locking_overdue_charges.count)
+      expect(controller.instance_variable_get(:@locking_count)).to eq(2)
     end
 
     it "sets @locking_next_due_at for the card locking callout's countdown" do

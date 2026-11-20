@@ -27,7 +27,7 @@ RSpec.describe "hcb_codes/_decline_reason" do
 
     it "renders without raising" do
       expect { render_partial(hcb_code) }.not_to raise_error
-      expect(rendered).to include("Transaction declined").or include("Troubleshooting")
+      expect(rendered).to include("Troubleshooting")
     end
   end
 

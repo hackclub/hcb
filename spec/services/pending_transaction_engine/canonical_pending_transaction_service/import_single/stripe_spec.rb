@@ -29,10 +29,14 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
       _processed_stripe_canonical_pending_transaction = create(:canonical_pending_transaction, raw_pending_stripe_transaction:)
     end
 
-    it "ignores it when processing" do
+    it "updates the existing canonical pending transaction in place" do
       expect do
         described_class.new(raw_pending_stripe_transaction:).run
-      end.to change { CanonicalPendingTransaction.count }.by(0)
+      end.not_to(change { CanonicalPendingTransaction.count })
+
+      canonical_pending_transaction = raw_pending_stripe_transaction.reload.canonical_pending_transaction
+      expect(canonical_pending_transaction.amount_cents).to eq(raw_pending_stripe_transaction.amount_cents)
+      expect(canonical_pending_transaction.memo).to eq(raw_pending_stripe_transaction.memo)
     end
   end
 

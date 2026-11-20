@@ -9,11 +9,6 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
 
   before { travel_to(now) }
 
-  def materialize_all
-    HcbCode.where(hcb_code: user.stripe_cards.flat_map { |c| c.local_hcb_codes.pluck(:hcb_code) })
-           .find_each { |hc| hc.materialize_card_locking!(now:) }
-  end
-
   it "sets settled_at and an untrusted 7-day due date on a fresh outstanding charge" do
     hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
 

@@ -31,6 +31,8 @@ RSpec.describe EventMailer, type: :mailer do
     it "links to the new sub-organization in the body" do
       expect(mailer.body.encoded).to include(subevent.name)
       expect(mailer.body.encoded).to include(creator.name)
+      expect(mailer.body.encoded).to include(event_url(subevent))
+      expect(mailer.body.encoded).to include(event_sub_organizations_url(parent_event))
     end
   end
 end

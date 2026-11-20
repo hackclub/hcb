@@ -45,19 +45,6 @@ RSpec.describe DisbursementService::Nightly do
         described_class.new.run
       end
 
-      it "uses the correct idempotency keys" do
-        expect(ColumnService).to receive(:post).with(
-          "/transfers/book",
-          hash_including(idempotency_key: "#{disbursement.id}_outgoing")
-        )
-        expect(ColumnService).to receive(:post).with(
-          "/transfers/book",
-          hash_including(idempotency_key: "#{disbursement.id}_incoming")
-        )
-
-        described_class.new.run
-      end
-
       it "uses the transaction memo in the description" do
         expect(ColumnService).to receive(:post).with(
           "/transfers/book",

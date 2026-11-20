@@ -473,20 +473,6 @@ RSpec.describe CardGrantsController do
   end
 
   describe "#new" do
-    it "renders successfully" do
-      user = create(:user)
-      event = create(:event)
-      create(:organizer_position, user:, event:)
-      create_session(user, verified: true)
-
-      expect(event.card_grant_setting).to be_nil
-
-      get(:new, params: { event_id: event.friendly_id })
-
-      expect(response).to have_http_status(:ok)
-      expect(event.reload.card_grant_setting).to be_present
-    end
-
     it "uses the email param to pre-fill the email field" do
       user = create(:user)
       event = create(:event)

@@ -17,14 +17,6 @@ RSpec.describe "Application affiliation form", type: :system do
   let(:unsaved_warning) { "You have an unsaved affiliation. Are you sure you want to continue?" }
 
   before do
-    # The apply layout loads intlTelInput from a CDN, which the url_whitelist blocks.
-    driven_by :cuprite, screen_size: [1400, 1400], options: {
-      timeout: 15,
-      process_timeout: 60,
-      js_errors: false,
-      url_whitelist: [/\Ahttp:\/\/127\.0\.0\.1:\d+\//],
-    }
-
     session = create(:user_session, user:, expiration_at: 1.day.from_now, verified: true)
     allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
 

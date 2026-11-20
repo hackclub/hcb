@@ -69,6 +69,8 @@ RSpec.describe "Stripe Webhook", type: :request do
       end
 
       it "returns 204 without syncing anything" do
+        expect_any_instance_of(StripeCard).not_to receive(:sync_from_stripe!)
+
         post "/stripe/webhook",
              params: payload,
              headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }

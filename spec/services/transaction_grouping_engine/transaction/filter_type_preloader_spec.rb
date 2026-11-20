@@ -29,10 +29,12 @@ RSpec.describe TransactionGroupingEngine::Transaction::FilterTypePreloader do
     end
 
     context "when settled_transactions is empty" do
-      it "does not raise" do
-        expect {
+      it "does not query" do
+        count = hcb_code_query_count do
           described_class.new(settled_transactions: [], type: "card_charge").run!
-        }.not_to raise_error
+        end
+
+        expect(count).to eq(0)
       end
     end
 

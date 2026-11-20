@@ -11,9 +11,5 @@ FactoryBot.define do
     trait :emburse do
       association :raw_emburse_transaction
     end
-
-    trait :stripe do
-      association :raw_stripe_transaction
-    end
   end
 end

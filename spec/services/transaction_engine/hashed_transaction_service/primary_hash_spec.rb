@@ -30,7 +30,7 @@ RSpec.describe TransactionEngine::HashedTransactionService::PrimaryHash do
   end
 
   context "when memo has extra white space inside of it" do
-    let(:memo) { "APAYMENTMEMOOF$1.01" }
+    let(:memo) { "A  PAYMENT   MEMO OF $1.01" }
 
     it "produces the same hash" do
       expect(service.run[0]).to eql(9686534373925407058)
@@ -38,8 +38,10 @@ RSpec.describe TransactionEngine::HashedTransactionService::PrimaryHash do
   end
 
   context "when date changes" do
+    let(:date) { "2020-09-16" }
+
     it "changes the hash" do
-      expect(service.run[0]).to eql(9686534373925407058)
+      expect(service.run[0]).not_to eql(9686534373925407058)
     end
   end
 
@@ -100,12 +102,10 @@ RSpec.describe TransactionEngine::HashedTransactionService::PrimaryHash do
   end
 
   context "when memo is nil" do
-    let(:memo) { " " }
+    let(:memo) { nil }
 
-    it "does not raise an error" do
-      expect do
-        service.run
-      end.not_to raise_error
+    it "hashes it as a blank memo" do
+      expect(service.run[0]).to eql(described_class.new(unique_bank_identifier:, date:, amount_cents:, memo: "").run[0])
     end
   end
 end

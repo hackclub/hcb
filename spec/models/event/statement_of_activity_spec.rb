@@ -75,7 +75,7 @@ RSpec.describe Event::StatementOfActivity do
         event = create(:event)
         instance = described_class.new(event)
 
-        expect(instance.start_date).to eq(Date.new(2025, 1, 1))
+        expect(instance.end_date).to eq(Date.new(2025, 1, 1))
       end
     end
   end

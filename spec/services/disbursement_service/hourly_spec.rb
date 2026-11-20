@@ -41,8 +41,6 @@ RSpec.describe DisbursementService::Hourly do
 
       before do
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
-        # Clear memoization on the disbursement
-        disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
 
       it "keeps the disbursement in_transit" do
@@ -58,8 +56,6 @@ RSpec.describe DisbursementService::Hourly do
       before do
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
-        # Clear memoization on the disbursement
-        disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
 
       it "marks the disbursement as deposited" do
@@ -76,8 +72,6 @@ RSpec.describe DisbursementService::Hourly do
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
         create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: 100)
-        # Clear memoization on the disbursement
-        disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
 
       it "logs an error" do

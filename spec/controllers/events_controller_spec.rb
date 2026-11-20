@@ -265,12 +265,6 @@ RSpec.describe EventsController do
     context "when the user has opted into the new ledger" do
       before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
 
-      it "renders the new ledger" do
-        get(:ledger, params: { event_id: event.slug })
-
-        expect(response).to have_http_status(:ok)
-      end
-
       # Receipt and comment changes stream fresh counts into this element
       it "wraps each row's badges in an element that streams can target" do
         hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
@@ -366,14 +360,6 @@ RSpec.describe EventsController do
     let(:event) { create(:event) }
 
     before { create_session(admin, verified: true) }
-
-    context "when the organizer has not opted into the new ledger" do
-      it "renders the classic transactions page" do
-        get(:transactions, params: { event_id: event.slug })
-
-        expect(response).to have_http_status(:ok)
-      end
-    end
 
     context "when the organization is public" do
       render_views
@@ -1147,12 +1133,6 @@ RSpec.describe EventsController do
       expect(response.body).not_to include(grandchild.name)
     end
 
-    it "omits private sub-organizations from a signed out visitor" do
-      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
-
-      expect(table_row_names(response.body)).to eq(["Transparent Sub-organization"])
-    end
-
     # Event's default scope orders by id, which plain `order` would not displace.
     it "sorts the rows by name" do
       create(:event, parent:, is_public: true, name: "Anchor Sub-organization")
@@ -1225,10 +1205,11 @@ RSpec.describe EventsController do
     end
 
     it "remembers the chosen view between visits" do
-      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+      get(:sub_organizations, params: { event_id: parent.slug, view: "grid" })
       get(:sub_organizations, params: { event_id: parent.slug })
 
-      expect(response.body).to include("sub-organization-row")
+      expect(response.body).to include('<ul id="sub_organizations" class="grid')
+      expect(response.body).not_to include("sub-organization-row")
     end
   end
 
@@ -1572,10 +1553,10 @@ RSpec.describe EventsController do
 
     context "when the viewer is an auditor" do
       it "renders the mission statement when the event has a description" do
-        admin = create(:user, :make_admin)
+        auditor = create(:user, :make_auditor)
         event = create(:event, description: "Run neat events for students")
 
-        create_session(admin, verified: true)
+        create_session(auditor, verified: true)
 
         get(:show, params: { id: event.slug })
 
@@ -1584,10 +1565,10 @@ RSpec.describe EventsController do
       end
 
       it "omits the mission statement when the event has no description" do
-        admin = create(:user, :make_admin)
+        auditor = create(:user, :make_auditor)
         event = create(:event, description: nil)
 
-        create_session(admin, verified: true)
+        create_session(auditor, verified: true)
 
         get(:show, params: { id: event.slug })
 

@@ -42,11 +42,9 @@ RSpec.describe GSuiteService::Update, type: :model do
     end
 
     it "updates g suite" do
-      original_verification_key = g_suite.verification_key
-
       g_suite_result = service.run
 
-      expect(g_suite_result.verification_key).not_to eql(original_verification_key)
+      expect(g_suite_result.verification_key).to eq("new_key")
     end
 
     it "does not send a mailer" do

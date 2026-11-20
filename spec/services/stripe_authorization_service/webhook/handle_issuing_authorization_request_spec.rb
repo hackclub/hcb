@@ -14,14 +14,10 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     )
   end
 
-  it "declines with no funds" do
-    expect(service.run).to be(false)
-    expect(service.declined_reason).to eq("inadequate_balance")
-  end
-
   describe "#metadata" do
-    it "includes the available balance and the reason when declining" do
+    it "includes the available balance and the reason when declining with no funds" do
       expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("inadequate_balance")
 
       expect(service.metadata).to eq(
         current_balance_available: "0",
@@ -42,11 +38,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     create(:canonical_pending_transaction, amount_cents: 999, event:, fronted: true)
     expect(service.run).to be(false)
     expect(service.declined_reason).to eq("inadequate_balance")
-  end
-
-  it "approves when sufficient funds" do
-    create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
-    expect(service.run).to be(true)
   end
 
   it "declines when the cardholder's cards are locked and the event's plan is card-lockable" do

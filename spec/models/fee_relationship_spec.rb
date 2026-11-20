@@ -40,7 +40,9 @@ RSpec.describe FeeRelationship, type: :model do
           end
 
           it "uses the fee_amount on the relationship rather than the transaction" do
-            expect(fee_relationship.fee_amount).to eq(200)
+            fee_relationship.save
+
+            expect(fee_relationship.reload.fee_amount).to eq(200)
           end
         end
       end

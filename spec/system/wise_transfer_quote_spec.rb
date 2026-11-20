@@ -87,8 +87,8 @@ RSpec.describe "Wise transfer USD quote", type: :system do
     release_slow_quote.set
     expect(slow_quote_returned.wait(10)).to be(true)
 
-    # Give the browser a beat to (wrongly) apply the slow response.
-    sleep 0.5
+    # Wait for the browser to receive the slow response so it has had its chance to (wrongly) apply it.
+    page.driver.wait_for_network_idle
     expect(quote).to have_text("Approximately $2.00 USD", exact: true)
   end
 end

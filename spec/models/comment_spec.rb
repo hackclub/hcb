@@ -10,11 +10,6 @@ RSpec.describe Comment, type: :model, versioning: true do
     expect(comment).to be_valid
   end
 
-  it "uses PaperTrail versioning in tests" do
-    expect(described_class.new).to be_versioned
-    expect(comment).to be_versioned
-  end
-
   it "is versioned by PaperTrail on edit" do
     expect(comment.versions.size).to eq(1)
     comment.update(content: "Edited content")

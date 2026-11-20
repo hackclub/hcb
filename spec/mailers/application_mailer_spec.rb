@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe ApplicationMailer, type: :mailer do
-  describe "#prevent_noisy_delivery" do
-    # Create a test mailer class to test the prevent_noisy_delivery callback
+  describe "#mail" do
+    # Create a test mailer class to exercise the earmuffed-recipient filtering in #mail
     let(:test_mailer_class) do
       Class.new(ApplicationMailer) do
         def test_email(recipients:)

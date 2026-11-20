@@ -600,15 +600,23 @@ RSpec.describe Reimbursement::ReportsController do
   end
 
   describe "#submit" do
-    it "lets submitters pick any manager, including ones who opted out of reviewing" do
+    # A report with everything mark_submitted! requires: a payout method and a
+    # complete, receipted expense.
+    def submittable_report(event:, member:)
+      member.personal_legal_entity.payout_methods.create!(default: true, details: build(:ach_transfer_payout_method_details))
+      report = create(:reimbursement_report, user: member, event:)
+      expense = report.expenses.create!(value: 12.34, memo: "Drinks", category: "Food & Entertainment")
+      ReceiptService::Create.new(receiptable: expense, uploader: member, attachments: [file_fixture("receipt.png")], upload_method: :receipts_page).run!
+      report
+    end
+
+    it "rejects a reviewer who isn't a manager" do
       event = create(:event, reimbursement_reviewer_selection: :required)
       member = create(:user)
       other_member = create(:user)
-      opted_out = create(:user)
       create(:organizer_position, user: member, event:, role: :member)
       create(:organizer_position, user: other_member, event:, role: :member)
-      create(:organizer_position, user: opted_out, event:, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
-      report = create(:reimbursement_report, user: member, event:)
+      report = submittable_report(event:, member:)
 
       create_session(member, verified: true)
 
@@ -616,10 +624,24 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
       expect(report.reload.reviewer).to be_nil
+      expect(report).to be_draft
+    end
+
+    it "lets submitters pick a manager who opted out of reviewing" do
+      event = create(:event, reimbursement_reviewer_selection: :required)
+      member = create(:user)
+      opted_out = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
+      report = submittable_report(event:, member:)
+
+      create_session(member, verified: true)
 
       post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
 
-      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
+      expect(flash[:error]).to be_nil
+      expect(report.reload.reviewer).to eq(opted_out)
+      expect(report).to be_submitted
     end
 
     it "lets submitters skip picking a reviewer when it's optional" do
@@ -738,11 +760,11 @@ RSpec.describe Reimbursement::ReportsController do
 
     context "when the viewer is an auditor" do
       it "renders the event's mission statement" do
-        admin = create(:user, :make_admin)
+        auditor = create(:user, :make_auditor)
         event = create(:event, description: "Audit-target mission statement")
-        report = create(:reimbursement_report, user: admin, event:)
+        report = create(:reimbursement_report, user: auditor, event:)
 
-        create_session(admin, verified: true)
+        create_session(auditor, verified: true)
 
         get(:show, params: { id: report.id })
 
@@ -751,11 +773,11 @@ RSpec.describe Reimbursement::ReportsController do
       end
 
       it "renders without error for a draft report with no event" do
-        admin = create(:user, :make_admin)
+        auditor = create(:user, :make_auditor)
         user = create(:user)
         report = create(:reimbursement_report, user:, event: nil)
 
-        create_session(admin, verified: true)
+        create_session(auditor, verified: true)
 
         get(:show, params: { id: report.id })
 

@@ -20,7 +20,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       mail = described_class.cards_locked(user:)
 
-      expect(mail.subject).to match(/locked/i)
+      expect(mail.subject).to eq("[Urgent] Your HCB cards are locked until you upload your receipts")
+      expect(html_body(mail)).to include("1 receipt is overdue")
       expect(mail.body.encoded).not_to include("72 hours")
       expect(mail.body.encoded).not_to include("violation")
       expect(mail.body.encoded).to include("recurring")
