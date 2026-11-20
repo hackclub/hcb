@@ -109,4 +109,55 @@ module PopoverHelper
       external_link: payment_path(payment)
     )
   end
+
+  def legal_entity_popover_data(legal_entity)
+    popover_data(
+      title: "Payment information for #{legal_entity.name.presence || legal_entity.display_name}",
+      src: legal_entity_path(legal_entity, frame: true),
+      frame_id: "legal_entity_#{legal_entity.hashid}",
+      state_url: legal_entity_path(legal_entity),
+      external_link: legal_entity_path(legal_entity)
+    )
+  end
+
+  # Admin pages are only reachable by admins, so popovers are always available
+  # there — no feature flag needed.
+  def admin_popovers_enabled?
+    current_user&.admin?
+  end
+
+  # Returns the popover data attributes for a record, or an empty hash when the
+  # record can't be shown in a popover. Designed to be spread into `link_to` /
+  # `pop_icon_to` calls in admin views:
+  #
+  #   link_to ct.memo, transaction_path(ct), data: admin_popover_data_for(ct)
+  def admin_popover_data_for(record)
+    return {} unless admin_popovers_enabled? && record
+
+    data =
+      case record
+      when ::StripeCard then stripe_card_popover_data(record)
+      when ::Employee then employee_popover_data(record)
+      when ::Payment then payment_popover_data(record)
+      when ::Ledger::Item then record.hcb_code.present? ? ledger_item_popover_data(record) : {}
+      when ::LegalEntity then legal_entity_popover_data(record)
+      else
+        hcb_code = record.is_a?(::HcbCode) ? record : record.try(:local_hcb_code)
+        hcb_code.present? ? hcb_code_popover_data(hcb_code) : {}
+      end
+
+    return data if data.empty?
+
+    data.merge(popover_subtitle: admin_popover_subtitle(record)).compact
+  end
+
+  # Admin tables span every organization, so name it above the popover's title.
+  # The user-facing titles leave the org out on purpose — you already know which
+  # org you're looking at — and appending it there would just wrap.
+  def admin_popover_subtitle(record)
+    event = record.try(:event)
+    return if event&.name.blank?
+
+    event.name
+  end
 end
