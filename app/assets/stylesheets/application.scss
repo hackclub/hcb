@@ -581,7 +581,9 @@ summary {
 
 @layer base {
   pre,
-  code {
+  code,
+  kbd,
+  samp {
     @apply font-mono;
   }
 }
