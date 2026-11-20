@@ -1676,6 +1676,29 @@ RSpec.describe EventsController do
     end
 
     describe "#account_number" do
+      it "shows masked numbers with an eye that generates the account number when there isn't one yet", :aggregate_failures do
+        event.column_account_number.destroy!
+        sign_in_organizer_of(event)
+
+        get(:account_number, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+
+        page = Nokogiri::HTML5(response.body)
+        details = page.at_css("turbo-frame#account_number_details")
+        expect(details.text).to include("•" * 12).and include("•" * 9).and include("deposit-only")
+        generate = details.at_css("form[action='#{event_column_account_number_path(event)}'][method='post']")
+        expect(generate.at_css("button")["aria-label"]).to eq("Show account number")
+        expect(details.at_css("a[href^='#{reveal_account_number_event_path(event)}']")).to be_nil
+
+        modal = page.at_css("turbo-frame#account_number_modal")
+        expect(modal.text).to include("Receive-only").and include("•" * 12).and include("•" * 8)
+        expect(modal.at_css("form[action='#{event_column_account_number_path(event)}'][method='post'] button")["aria-label"]).to eq("Show account number")
+        expect(modal.at_css("form[action='#{event_column_account_number_path(event)}'] input[name='_method']")).to be_nil
+        expect(page.text).to include("No transactions yet")
+      end
+
       it "leaves the account number out of the page until someone clicks the eye", :aggregate_failures do
         sign_in_organizer_of(event)
 
