@@ -1708,42 +1708,49 @@ RSpec.describe EventsController do
         expect(response.body).not_to include("987654321012")
 
         page = Nokogiri::HTML5(response.body)
-        inline_eye = page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :n)}']")
+        inline_eye = page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true")}']")
         expect(inline_eye["aria-label"]).to eq("Show account number")
-        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :s)}']")).to be_present
+        expect(inline_eye["data-turbo-stream"]).to be_present
+        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true")}']")).to be_present
       end
     end
 
     describe "#reveal_account_number" do
-      it "renders the account number into the frame that asked for it, with an eye to hide it again", :aggregate_failures do
+      it "streams the account number into both the inline frame and the modal's, each with an eye to hide it again", :aggregate_failures do
         sign_in_organizer_of(event)
-        request.headers["Turbo-Frame"] = "account_number_modal_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug, show_details: "true", tooltip_direction: "s" })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" }, format: :turbo_stream)
 
         expect(response).to have_http_status(:ok)
-        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_modal_reveal")
-        copy = frame.at_css("[data-controller='clipboard']")
-        expect(copy["data-clipboard-text-value"]).to eq("987654321012")
-        expect(copy["class"]).to include("tooltipped--s")
-        expect(frame.text).to include("987654321012")
-        hide_eye = frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false", tooltip_direction: :s)}']")
-        expect(hide_eye["aria-label"]).to eq("Hide account number")
+        expect(response.media_type).to eq(Mime[:turbo_stream])
+        streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream[action='replace']")
+        expect(streams.map { |stream| stream["target"] }).to eq(%w[account_number_reveal account_number_modal_reveal])
+
+        inline, modal = streams.map { |stream| Nokogiri::HTML5.fragment(stream.at_css("template").inner_html) }
+        expect(inline.at_css("turbo-frame#account_number_reveal [data-controller='clipboard']")["data-clipboard-text-value"]).to eq("987654321012")
+        expect(inline.at_css("[data-controller='clipboard']")["class"]).to include("tooltipped--n")
+        expect(modal.at_css("turbo-frame#account_number_modal_reveal [data-controller='clipboard']")["data-clipboard-text-value"]).to eq("987654321012")
+        expect(modal.at_css("[data-controller='clipboard']")["class"]).to include("tooltipped--s")
+        [inline, modal].each do |frame|
+          expect(frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false")}']")["aria-label"]).to eq("Hide account number")
+        end
       end
 
-      it "hides the account number again when the eye is clicked a second time", :aggregate_failures do
+      it "hides the account number in both places when the eye is clicked a second time", :aggregate_failures do
         sign_in_organizer_of(event)
-        request.headers["Turbo-Frame"] = "account_number_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug, show_details: "false" })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "false" }, format: :turbo_stream)
 
         expect(response).to have_http_status(:ok)
         expect(response.body).not_to include("987654321012")
-        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_reveal")
-        expect(frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :n)}']")).to be_present
+        streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream[action='replace']")
+        expect(streams.map { |stream| stream["target"] }).to eq(%w[account_number_reveal account_number_modal_reveal])
+        streams.each do |stream|
+          expect(stream.inner_html).to include(reveal_account_number_event_path(event, show_details: "true"))
+        end
       end
 
-      it "sends a request from outside a turbo frame back to the account number page" do
+      it "sends a plain page request back to the account number page" do
         sign_in_organizer_of(event)
 
         get(:reveal_account_number, params: { id: event.slug, show_details: "true" })
@@ -1753,9 +1760,8 @@ RSpec.describe EventsController do
 
       it "doesn't reveal the account number to someone outside the organization", :aggregate_failures do
         create_session(create(:user), verified: true)
-        request.headers["Turbo-Frame"] = "account_number_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug, show_details: "true" })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" }, format: :turbo_stream)
 
         expect(flash[:error]).to eq("You are not authorized to perform this action.")
         expect(response.body).not_to include("987654321012")

@@ -640,20 +640,22 @@ class EventsController < ApplicationController
   end
 
   # The account number page doesn't send the account number until someone clicks
-  # the eye beside it, the same way a card's number and CVC are shown. That loads
-  # this action into the clicked turbo frame; clicking the eye again hides it.
+  # the eye beside it, the same way a card's number and CVC are shown. The eye
+  # asks for a turbo stream, and the stream fills in both places the number is
+  # shown (inline on the page and in the account numbers modal), so they agree on
+  # whether it's showing. Clicking the eye again hides it the same way.
   def reveal_account_number
     authorize @event, :account_number?
 
-    unless turbo_frame_request? && @event.column_account_number.present?
+    unless request.format.turbo_stream? && @event.column_account_number.present?
       return redirect_to account_number_event_path(@event)
     end
 
-    render partial: "events/account_number_reveal", locals: {
-      frame_id: turbo_frame_request_id,
-      revealed: params[:show_details] == "true",
-      tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
-    }
+    revealed = params[:show_details] == "true"
+    render turbo_stream: [
+      turbo_stream.replace("account_number_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_reveal", revealed:, tooltip_direction: :n }),
+      turbo_stream.replace("account_number_modal_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_modal_reveal", revealed:, tooltip_direction: :s })
+    ]
   end
 
   def g_suite_overview

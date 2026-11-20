@@ -21,7 +21,8 @@
 <% if @event.demo_mode? %>
   <%= blankslate "Unavailable in Playground Mode" %>
 <% else %>
-  <%= render "events/account_number_details", animated: @animated %>
+  <%# Right after the account number is generated without JavaScript, the page shows it revealed. %>
+  <%= render "events/account_number_details", revealed: @animated, animated: @animated %>
 <% end %>
 
 <% if @event.column_account_number.present? %>
