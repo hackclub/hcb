@@ -2,6 +2,7 @@
 
 SimpleCov.start "rails" do
   enable_coverage :branch
+  command_name "RSpec #{ENV["TEST_ENV_NUMBER"]}" if ENV["TEST_ENV_NUMBER"]
 
   add_filter "/app/documentations/"
 

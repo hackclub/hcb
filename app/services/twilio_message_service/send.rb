@@ -7,10 +7,14 @@ module TwilioMessageService
   EXPECTED_TWILIO_ERRORS = %w[21408 21612 60410].freeze
 
   class Send
-    def initialize(user, body, hcb_code: nil, phone_number: nil)
+    # `ledger_item` is the transaction the text is about, so a photo texted back
+    # within the reply window can be attached to it. `hcb_code` is the same
+    # transaction's HCB code and goes away once outgoing_twilio_messages.hcb_code_id does.
+    def initialize(user, body, hcb_code: nil, ledger_item: nil, phone_number: nil)
       @user = user
       @body = body
       @hcb_code = hcb_code
+      @ledger_item = ledger_item
       @phone_number = @user&.phone_number || phone_number
     end
 
@@ -43,7 +47,8 @@ module TwilioMessageService
 
       OutgoingTwilioMessage.create!(
         twilio_message: sms_message,
-        hcb_code: @hcb_code
+        hcb_code: @hcb_code,
+        ledger_item: @ledger_item
       )
 
       sms_message
