@@ -45,7 +45,7 @@ RSpec.describe Column::AccountNumberController do
       end
 
       context "when the eye asked for it from the page or the modal" do
-        it "streams the new number into the page's frame and the whole modal", :aggregate_failures do
+        it "streams the new number into the page's frame and the whole modal, animating where it was clicked", :aggregate_failures do
           user = create(:user)
           event = create(:event)
           create(:organizer_position, user:, event:, role: :manager)
@@ -56,6 +56,8 @@ RSpec.describe Column::AccountNumberController do
             "routing_number" => "121145349",
             "bic"            => "CLNOUS66"
           )
+
+          request.headers["Turbo-Frame"] = "account_number_details"
 
           post(:create, params: { event_id: event.slug }, format: :turbo_stream)
 
@@ -70,8 +72,11 @@ RSpec.describe Column::AccountNumberController do
           expect(details.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
           expect(details.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false")}']")).to be_present
 
+          # The modal wasn't the one clicked (it's usually closed), so it gets the
+          # numbers without the animation.
           expect(modal.at_css("turbo-frame#account_number_modal")).to be_present
-          expect(modal.css("[data-controller='reveal-animation']").map(&:text)).to eq(%w[987654321012 121145349])
+          expect(modal.css("[data-controller='reveal-animation']")).to be_empty
+          expect(modal.css("[data-controller='clipboard']").map { |copy| copy["data-clipboard-text-value"] }).to include("987654321012", "121145349")
           expect(modal.text).to include("CLNOUS66").and include("Receive-only")
           expect(modal.at_css("form[action='#{event_column_account_number_path(event)}'] button[aria-label='Show account number']")).to be_nil
           expect(modal.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false")}']")).to be_present
