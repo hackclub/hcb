@@ -5,6 +5,7 @@
 # Table name: receipts
 #
 #  id                              :bigint           not null, primary key
+#  assigned_at                     :datetime
 #  data_extracted                  :boolean          default(FALSE), not null
 #  extracted_card_last4_ciphertext :text
 #  extracted_currency              :string
@@ -90,6 +91,13 @@ class Receipt < ApplicationRecord
       receiptable.update(marked_no_or_lost_receipt_at: nil)
       # An HCB code and its ledger item each keep a copy of the mark; clear both.
       receiptable.try(:sync_no_or_lost_receipt!)
+    end
+    self.assigned_at = Time.current if receiptable.present?
+  end
+
+  before_update do
+    if receiptable_id_changed? && receiptable_id_was.nil? && receiptable_id.present?
+      self.assigned_at = Time.current
     end
   end
 
