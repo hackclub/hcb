@@ -614,15 +614,23 @@ class EventsController < ApplicationController
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-        @ledger = @event.ledger
+        # Direct transactions have no author, are all one type and never carry
+        # a merchant, so those filters couldn't narrow them. Nor could a
+        # direction on a deposit-only number, which only ever receives.
+        @hidden_ledger_filters = %i[user type merchant]
+        @hidden_ledger_filters << :direction if @event.column_account_number.deposit_only?
+        set_ledger_filters
+        return if performed?
+
         # The column-transaction narrowing has no expression in Ledger::Query, so
         # it chains onto the executed relation. Everything the query does own —
-        # pending first, the rest newest first — still comes from the query, which
-        # is the whole point of going through it for the parts that do fit.
-        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
-                                     .execute(ledgers: [@ledger])
-                                     .where(id: column_transactions.select(:ledger_item_id))
-                                     .page((params[:page] || 1).to_i).per(safe_per(25))
+        # the filters, pending first, the rest newest first — still comes from
+        # the query, which is the whole point of going through it for the parts
+        # that do fit.
+        @ledger_items = ledger_query({ linked_object_type: nil })
+                        .execute(ledgers: @ledgers)
+                        .where(id: column_transactions.select(:ledger_item_id))
+                        .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
