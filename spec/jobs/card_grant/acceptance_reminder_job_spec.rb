@@ -57,7 +57,8 @@ RSpec.describe CardGrant::AcceptanceReminderJob, type: :job do
       described_class.perform_now
       case state
       when :accepted
-        grant.update!(stripe_card: create(:stripe_card, :with_stripe_id, event:, skip_notify_user: true))
+        create(:stripe_card, :with_stripe_id, event:, card_grant: grant)
+        expect(grant.reload).not_to be_pending_invite
       when :canceled
         grant.update!(status: :canceled)
       when :expired
