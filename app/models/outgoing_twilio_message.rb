@@ -7,7 +7,6 @@
 #  id                :bigint           not null, primary key
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
-#  hcb_code_id       :bigint
 #  ledger_item_id    :bigint
 #  twilio_message_id :bigint
 #
