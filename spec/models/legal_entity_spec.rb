@@ -196,6 +196,15 @@ RSpec.describe LegalEntity, type: :model do
 
       expect(entity.entity_type_mismatched_tax_form).to be_nil
     end
+
+    # An imported recipient carries no entity type, so there is nothing for a form
+    # to contradict; treating every form as a mismatch would make it unpayable.
+    it "ignores every form when the entity has no type of its own" do
+      entity = create(:legal_entity, entity_type: nil)
+      create(:tax_form, :completed, legal_entity: entity, entity_type: :business)
+
+      expect(entity.entity_type_mismatched_tax_form).to be_nil
+    end
   end
 
   describe "#completed_tax_form?" do
