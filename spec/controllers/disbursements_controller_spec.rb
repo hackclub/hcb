@@ -180,6 +180,43 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  # Organizers pick a payment's category, but plain transfers stay categorized for them.
+  describe "#create with a category from an organizer" do
+    let(:sender) { create(:user) }
+    let(:source_event) { create(:event, :with_positive_balance, organizers: [sender]) }
+    let(:destination_event) { create(:event, organizers: [sender]) }
+
+    before { create_session(sender, verified: true) }
+
+    def send_transfer(**options)
+      post(:create, params: { disbursement: { name: "Boba Drops", source_event_id: source_event.public_id, event_id: destination_event.public_id, amount: "10", **options } })
+    end
+
+    it "categorizes both sides of a payment" do
+      send_transfer(transfer_type: "payment", payment_category_slug: "food-fun")
+
+      disbursement = Disbursement.last
+      expect(disbursement).to be_transfer_type_payment
+      expect(disbursement.source_transaction_category.slug).to eq("food-fun")
+      expect(disbursement.destination_transaction_category.slug).to eq("food-fun")
+    end
+
+    it "rejects a payment with a category organizers can't pick" do
+      expect { send_transfer(transfer_type: "payment", payment_category_slug: "internal-transfer") }.not_to change(Disbursement, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(flash.now[:error]).to eq("Choose a category for this payment.")
+    end
+
+    it "ignores categories on a plain transfer" do
+      send_transfer(transfer_type: "transfer", payment_category_slug: "food-fun", source_transaction_category_slug: "rent", destination_transaction_category_slug: "rent")
+
+      disbursement = Disbursement.last
+      expect(disbursement.source_transaction_category.slug).to eq("internal-transfer")
+      expect(disbursement.destination_transaction_category.slug).to eq("internal-transfer")
+    end
+  end
+
   describe "#set_transaction_categories" do
     it "allows categories to be set by admins" do
       admin = create(:user, :make_admin)

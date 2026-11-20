@@ -507,6 +507,21 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     expect(categories(disbursement)).to eq(["internal-transfer", "internal-transfer"])
   end
 
+  # A payment is real spending for the sender and real income for the recipient.
+  it "gives both sides of a payment the category the organizer chose" do
+    disbursement = create_disbursement(transfer_type: "payment", payment_category_slug: "food-fun")
+
+    expect(disbursement).to be_transfer_type_payment
+    expect(categories(disbursement)).to eq(["food-fun", "food-fun"])
+  end
+
+  # Transfer-type and HQ-only categories would misreport what the money was for.
+  it "rejects a payment without an allowed category" do
+    [nil, "internal-transfer", "repayment", "hcb-revenue", "made-up"].each do |slug|
+      expect { create_disbursement(transfer_type: "payment", payment_category_slug: slug) }.to raise_error(DisbursementService::Create::UserError, "Choose a category for this payment.")
+    end
+  end
+
   describe "repayments" do
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
 
