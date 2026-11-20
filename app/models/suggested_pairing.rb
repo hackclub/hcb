@@ -29,11 +29,11 @@
 #
 class SuggestedPairing < ApplicationRecord
   belongs_to :receipt
+  # The HCB code is on its way out (https://github.com/hackclub/hcb/issues/15698):
+  # the pairing is read and accepted through its ledger item. Rows written
+  # before the ledger item was backfilled for a code without one have no
+  # ledger item, and are never suggested.
   belongs_to :hcb_code
-  # The transaction's ledger item, where the receipt is attached on acceptance.
-  # Pairings are written from the HCB code for now
-  # (https://github.com/hackclub/hcb/issues/15698), so this is nil for the few
-  # codes without a ledger item until the backfill has run.
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
   include AASM
@@ -50,7 +50,7 @@ class SuggestedPairing < ApplicationRecord
 
     event :mark_accepted do
       before do
-        receipt.update!(receiptable: hcb_code.ledger_item)
+        receipt.update!(receiptable: ledger_item)
       end
 
       transitions from: :unreviewed, to: :accepted
