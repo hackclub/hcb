@@ -17,7 +17,7 @@ class MyController < ApplicationController
 
   def toggle_admin_activities
     cookies[:admin_activities] = cookies[:admin_activities] == "everyone" ? "myself" : "everyone"
-    redirect_to my_activities_url
+    redirect_to my_activities_path
   end
 
   def cards

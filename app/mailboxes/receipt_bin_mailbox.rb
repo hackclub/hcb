@@ -25,13 +25,14 @@ class ReceiptBinMailbox < ApplicationMailbox
 
     return bounce_error if result.empty?
 
-    paired_with = result.map { |r| r.reload.receiptable }.select(&:present?)
+    # Suggested pairings attach a receipt to the matched transaction's ledger item.
+    paired_ledger_items = result.filter_map { |receipt| receipt.reload.receiptable }
 
     ReceiptBinMailer.with(
       mail: inbound_email,
       reply_to: mail.to.first,
       receipts_count: result.size,
-      paired_with:
+      paired_ledger_items:
     ).bounce_success.deliver_now
   end
 

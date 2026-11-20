@@ -36,6 +36,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Receipt < ApplicationRecord
+  prepend MemoWise
+
   has_encrypted :textual_content
   blind_index :textual_content
   has_encrypted :extracted_card_last4
@@ -80,7 +82,8 @@ class Receipt < ApplicationRecord
   end
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
-  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  MAX_FILE_SIZE = 50.megabytes
+  validates :file, size: { less_than_or_equal_to: MAX_FILE_SIZE }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -148,7 +151,9 @@ class Receipt < ApplicationRecord
     Rails.application.routes.url_helpers.rails_blob_url(file)
   end
 
-  def preview(resize: "1024x1024", only_path: true)
+  # Memoized because views call this several times per receipt, and each call
+  # looks up (or generates) the variant / preview record.
+  memo_wise def preview(resize: "1024x1024", only_path: true)
     if file.previewable?
       Rails.application.routes.url_helpers.rails_representation_url(file.preview(resize:).processed, only_path:)
     elsif file.variable?

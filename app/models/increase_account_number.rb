@@ -37,10 +37,4 @@ class IncreaseAccountNumber < ApplicationRecord
     end
   end
 
-  def used?
-    raw_increase_transactions.any?
-  end
-
-  private
-
 end
