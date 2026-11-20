@@ -41,7 +41,7 @@ RSpec.describe Column::AccountNumberController do
 
         frame = Nokogiri::HTML5(response.body).at_css("turbo-frame#account_number_reveal")
         expect(frame.at_css("[data-controller='reveal-animation']").text).to eq("987654321012")
-        expect(frame.at_css("a[href^='#{reveal_account_number_event_path(event)}']")).to be_nil
+        expect(frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false", tooltip_direction: :n)}']")["aria-label"]).to eq("Hide account number")
       end
     end
   end
