@@ -95,7 +95,9 @@ module CardLocking
                   .distinct
     end
 
-    # All outstanding (missing a receipt, enforcement-era) charges for this cardholder.
+    # All outstanding charges for this cardholder: the Receipt Bin's pile
+    # (User#card_charges_missing_receipt) narrowed to settled, enforcement-era
+    # charges, the ones that carry a deadline.
     def card_locking_outstanding_charges
       return Ledger::Item.none unless stripe_cardholder
 

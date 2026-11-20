@@ -34,29 +34,31 @@ module CardLocking
     SQL
 
     included do
-      # Every settled Stripe card charge a cardholder has ever made. Unbounded in
-      # time, so callers must supply their own date bound or scan the whole table.
-      scope :card_locking_relevant, -> {
+      # Every Stripe card charge, joined to its card and cardholder and to the
+      # active plan of the event that owns its primary ledger. Charges on a
+      # salary account are out: that plan never asks for receipts.
+      scope :card_charges, -> {
         joins(CARD_CHARGE_JOIN)
           .joins(STRIPE_CARD_JOIN)
+          .joins(STRIPE_CARDHOLDER_JOIN)
           .joins(PRIMARY_LEDGER_JOIN)
           .joins(ACTIVE_EVENT_PLAN_JOIN)
-          .where("ledger_items.amount_cents < 0")
-          .where.not(settled_at: nil)
           .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
       }
-      # card_locking_relevant narrowed to a single cardholder.
-      scope :card_locking_relevant_for_cardholder, ->(user_id) {
-        card_locking_relevant.joins(STRIPE_CARDHOLDER_JOIN).where(stripe_cardholders: { user_id: })
-      }
-      # Charges that can count against a cardholder: still missing a receipt
-      # (the item's own missing_receipt: receipt required, none uploaded, not
-      # written off) and settled once enforcement began.
+      scope :card_charges_for_cardholder, ->(user_id) { card_charges.where(stripe_cardholders: { user_id: }) }
+
+      # Every settled Stripe card charge a cardholder has ever made. Unbounded in
+      # time, so callers must supply their own date bound or scan the whole table.
+      scope :card_locking_relevant, -> { card_charges.where("ledger_items.amount_cents < 0").where.not(settled_at: nil) }
+      scope :card_locking_relevant_for_cardholder, ->(user_id) { card_locking_relevant.where(stripe_cardholders: { user_id: }) }
+
+      # Charges that can count against a cardholder: the Receipt Bin's pile
+      # (User#card_charges_missing_receipt, the item's own missing_receipt:
+      # receipt required, none uploaded, not written off), narrowed to charges
+      # that have settled, and settled once enforcement began. Pending charges
+      # are in the bin but have no deadline yet; their clock starts at settlement.
       scope :card_locking_candidates, -> {
-        card_locking_relevant
-          .joins(STRIPE_CARDHOLDER_JOIN)
-          .missing_receipt
-          .where("ledger_items.settled_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
+        card_charges.missing_receipt.where("ledger_items.settled_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
       # Charges past their deadline and still missing a receipt. Both halves are
       # the item's own columns, so the partial index on receipt_due_at
