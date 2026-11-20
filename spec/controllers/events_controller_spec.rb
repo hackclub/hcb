@@ -1627,7 +1627,7 @@ RSpec.describe EventsController do
       end
 
       def chart_sources
-        %w[merchants categories tags users].map { |id| insights.at_css("turbo-frame##{id}")["src"] }
+        %w[money_flow merchants categories tags users].map { |id| insights.at_css("turbo-frame##{id}")["src"] }
       end
 
       it "shows every chart for all time by default" do
@@ -1641,7 +1641,6 @@ RSpec.describe EventsController do
                               ["All time", event_path(event)],
                               ["Past year", event_path(event, timeframe: "Past year")],
                               ["Past month", event_path(event, timeframe: "Past month")],
-                              ["Past week", event_path(event, timeframe: "Past week")],
                             ])
       end
 
@@ -1654,12 +1653,25 @@ RSpec.describe EventsController do
 
       it "renders the insights frame alone when a timeframe link navigates it" do
         request.headers["Turbo-Frame"] = "insights"
-        get(:show, params: { id: event.slug, timeframe: "Past week" })
+        get(:show, params: { id: event.slug, timeframe: "Past year" })
 
         expect(response).to have_http_status(:ok)
         expect(Nokogiri::HTML5.fragment(response.body).element_children.map { |el| [el.name, el["id"]] }).to eq([["turbo-frame", "insights"]])
-        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past week")
-        expect(chart_sources).to all(end_with("?timeframe=Past+week"))
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("Past year")
+        expect(chart_sources).to all(end_with("?timeframe=Past+year"))
+      end
+
+      it "offers calendar years with enough transactions" do
+        Rails.cache.clear
+        create_list(:canonical_transaction, 10, date: Date.new(2025, 6, 1)).each do |canonical_transaction|
+          create(:canonical_event_mapping, event:, canonical_transaction:)
+        end
+
+        get(:show, params: { id: event.slug, timeframe: "2025" })
+
+        expect(insights.css("a[data-turbo-frame='insights']").map(&:text)).to include("2025")
+        expect(insights.at_css("[data-menu-target='toggle']").text.strip).to eq("2025")
+        expect(chart_sources).to all(end_with("?timeframe=2025"))
       end
 
       it "ignores a timeframe it doesn't know" do

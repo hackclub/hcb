@@ -1012,10 +1012,12 @@ Rails.application.routes.draw do
     get :team_stats
     get :recent_activity
     get :balance_transactions
+    get :balance_chart
     get :merchants_chart
     get :categories_chart
     get :tags_chart
     get :users_chart
+    get :money_flow_chart
     get :transaction_heatmap
 
     get "edit", to: redirect("/%{event_id}/settings")
