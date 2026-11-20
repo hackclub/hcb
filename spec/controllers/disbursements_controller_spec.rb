@@ -199,6 +199,11 @@ RSpec.describe DisbursementsController do
       expect(disbursement).to be_transfer_type_payment
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
       expect(disbursement.destination_transaction_category.slug).to eq("food-fun")
+
+      # Manual, so an automatic categorization can't overwrite the organizer's choice; settling copies it to the settled transactions.
+      [disbursement.raw_pending_outgoing_disbursement_transaction, disbursement.raw_pending_incoming_disbursement_transaction].each do |raw|
+        expect(raw.canonical_pending_transaction.category_mapping).to have_attributes(category: have_attributes(slug: "food-fun"), assignment_strategy: "manual")
+      end
     end
 
     it "rejects a payment with a category organizers can't pick" do
