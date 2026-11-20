@@ -2,7 +2,7 @@
   Hey there!
 </p>
 <p>
-  Download the attached file to view your <b><%= @label %></b>.
+  <%= link_to "Download your export", download_export_url(@export.signed_id(purpose: :download)) %> to view your <b><%= @export.label %></b>.
 </p>
 <p>
   Best,<br>
