@@ -1815,5 +1815,60 @@ RSpec.describe EventsController do
       expect(response.body).to include(account.address)
       expect(response.body).not_to include("Reset password")
     end
+
+    context "as an admin" do
+      before { create_session(create(:user, :make_admin), verified: true) }
+
+      it "renders the admin inspector for the active G Suite" do
+        g_suite
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Inspect \"g_suite\" record")
+      end
+
+      it "renders the setup form without an inspector when there is no G Suite" do
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("already own")
+        expect(response.body).not_to include("Inspect \"nil_class\" record")
+      end
+
+      it "ignores a deleted G Suite" do
+        g_suite.destroy!
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("already own")
+        expect(response.body).not_to include("Inspect \"")
+      end
+    end
+
+    context "without the google_workspace flag" do
+      before do
+        Flipper.disable(:google_workspace, event)
+        allow(GWaitlistTable).to receive(:all).and_return([])
+      end
+
+      it "renders the waitlist when there is no G Suite" do
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Join the waitlist")
+      end
+
+      it "renders the existing G Suite instead of the waitlist" do
+        g_suite
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(g_suite.domain)
+        expect(response.body).not_to include("Join the waitlist")
+      end
+    end
   end
 end
