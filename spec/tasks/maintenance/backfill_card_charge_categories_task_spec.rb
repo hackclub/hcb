@@ -27,7 +27,6 @@ RSpec.describe Maintenance::BackfillCardChargeCategoriesTask do
 
     expect(late_capture.ledger_item.linked_object).to be_a(CardCharge)
     expect(described_class.collection).to contain_exactly(late_capture, uncategorized_refund)
-    expect(described_class.collection).not_to include(categorized_capture, categorized_refund, not_a_card_charge)
   end
 
   it "gives a refund the category of the charge it reverses" do

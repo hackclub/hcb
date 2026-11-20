@@ -6,21 +6,6 @@ RSpec.describe Ledger::Item, type: :model do
   include DonationSupport
 
   describe "associations" do
-    it "has many ledger_mappings" do
-      item = Ledger::Item.new
-      expect(item).to respond_to(:ledger_mappings)
-    end
-
-    it "has one primary_mapping" do
-      item = Ledger::Item.new
-      expect(item).to respond_to(:primary_mapping)
-    end
-
-    it "has one primary_ledger through primary_mapping" do
-      item = Ledger::Item.new
-      expect(item).to respond_to(:primary_ledger)
-    end
-
     describe "primary_ledger association" do
       let(:primary_ledger) do
         # Event automatically creates a primary ledger
@@ -172,27 +157,6 @@ RSpec.describe Ledger::Item, type: :model do
         expect(item.primary_ledger).to be_present
       end
 
-      it "primary_ledger is accessible through mapping" do
-        primary_ledger = create(:event).ledger
-
-        item = Ledger::Item.new(
-          amount_cents: 1000,
-          memo: "Test",
-          datetime: Time.current
-        )
-        item.save(validate: false)
-
-        Ledger::Mapping.create!(
-          ledger: primary_ledger,
-          ledger_item: item,
-          on_primary_ledger: true
-        )
-
-        item.reload
-        expect(item).to be_valid
-        expect(item.primary_ledger).to eq(primary_ledger)
-      end
-
       # I can't think of a use case for this right now, but in theory there's
       # no reason why we can't support it. Potential use case might be admin
       # ledger audits that includes unmapped (to primary ledger) transactions
@@ -221,27 +185,6 @@ RSpec.describe Ledger::Item, type: :model do
     end
 
     describe "one primary mapping constraint" do
-      it "allows an item to have exactly one primary mapping" do
-        primary_ledger = create(:event).ledger
-
-        item = Ledger::Item.new(
-          amount_cents: 1000,
-          memo: "Test",
-          datetime: Time.current
-        )
-        item.save(validate: false)
-
-        mapping = Ledger::Mapping.create!(
-          ledger: primary_ledger,
-          ledger_item: item,
-          on_primary_ledger: true
-        )
-
-        item.reload
-        expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
-        expect(item.primary_mapping).to eq(mapping)
-      end
-
       it "does not allow an item to have multiple primary mappings" do
         primary_ledger1 = create(:event).ledger
         primary_ledger2 = create(:event).ledger

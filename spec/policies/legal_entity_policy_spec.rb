@@ -41,13 +41,17 @@ RSpec.describe LegalEntityPolicy, type: :policy do
     end
   end
 
-  describe "the actions the controllers authorize" do
-    # LegalEntitiesController calls `authorize` with each of these. A missing one
-    # raises NoMethodError at request time rather than denying access.
-    it "defines every policy method the controllers ask for" do
-      policy = described_class.new(owner, legal_entity)
+  describe "#replace?" do
+    it "lets the owner replace their own entity" do
+      expect(described_class.new(owner, legal_entity).replace?).to be true
+    end
 
-      expect(policy).to respond_to(:show?, :replace?, :switch?, :show_masked_tin?)
+    it "lets an admin replace someone else's entity" do
+      expect(described_class.new(admin, legal_entity).replace?).to be true
+    end
+
+    it "does not let an unrelated user replace someone else's entity" do
+      expect(described_class.new(stranger, legal_entity).replace?).to be false
     end
   end
 end

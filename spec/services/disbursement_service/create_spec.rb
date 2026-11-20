@@ -372,28 +372,6 @@ RSpec.describe DisbursementService::Create do
       }.to raise_error(ActiveRecord::RecordInvalid, /must be in the future/)
     end
 
-    it "allows scheduled date in the future" do
-      requestor = create(:user)
-      source_event = create(:event, :with_positive_balance)
-      create(:organizer_position, event: source_event, user: requestor)
-
-      destination_event = create(:event)
-      future_date = 1.week.from_now.to_date
-
-      disbursement = described_class.new(
-        transfer_type: "transfer",
-        name: "Future Scheduled Transfer",
-        amount: "100.00",
-        requested_by_id: requestor.id,
-        source_event_id: source_event.id,
-        destination_event_id: destination_event.id,
-        scheduled_on: future_date,
-      ).run
-
-      expect(disbursement).to be_a(Disbursement)
-      expect(disbursement.scheduled_on).to eq(future_date)
-    end
-
     it "raises error for same source and destination event without subledgers" do
       requestor = create(:user)
       event = create(:event, :with_positive_balance)

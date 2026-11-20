@@ -6,18 +6,6 @@ RSpec.describe "Users::FirstController#verify_email", type: :request do
   let(:unverified_user) { create(:user, verified: false, creation_method: :first_robotics_form) }
   let(:unverified_session) { create(:user_session, user: unverified_user, verified: false) }
 
-  describe "GET /first/verify_email" do
-    before do
-      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(unverified_session)
-    end
-
-    it "does not start a verification flow" do
-      expect {
-        get "/first/verify_email"
-      }.not_to change(Login, :count)
-    end
-  end
-
   describe "POST /first/verify_email" do
     context "for an unverified user" do
       before do

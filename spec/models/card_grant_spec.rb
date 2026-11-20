@@ -81,13 +81,6 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.ledger.primary?).to be true
       expect(card_grant.ledger.card_grant).to eq(card_grant)
     end
-
-    it "has a primary ledger association" do
-      card_grant = create(:card_grant)
-
-      expect(card_grant).to respond_to(:ledger)
-      expect(card_grant.ledger).to be_a(Ledger)
-    end
   end
 
   describe "#balance" do

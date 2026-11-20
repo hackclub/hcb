@@ -6,7 +6,7 @@ module ConfigurationIntegrity
     # about it if the TIN ever shows up unmasked on the PDFs we serve. Set
     # TAXBANDITS_DUMMY_FORM_ID to that form's PayeeRef (its Tax::Form public ID)
     # and TAXBANDITS_DUMMY_TIN to the TIN it was filed with; without both this
-    # does nothing.
+    # reports that it couldn't run.
     class MaskedTinCheckJob < ApplicationJob
       queue_as :low
       sidekiq_options retry: false

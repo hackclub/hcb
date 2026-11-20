@@ -75,14 +75,18 @@ RSpec.describe ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob do
     expect(sent_emails.first.body.encoded).to include(reason, "tfm_dummy")
   end
 
-  it "does nothing unless both the dummy form and its TIN are configured" do
+  it "reports that it couldn't run unless both the dummy form and its TIN are configured" do
     expect(TaxbanditsService).not_to receive(:get_submission)
 
-    with_dummy_form(id: nil)
-    described_class.perform_now
+    [{ id: nil }, { tin: nil }].each do |missing|
+      sent_emails.clear
+      with_dummy_form(**missing)
 
-    with_dummy_form(tin: nil)
-    described_class.perform_now
+      described_class.perform_now
+
+      expect(sent_emails.map(&:subject)).to eq(["Configuration integrity check couldn't run: #{described_class.name}"])
+      expect(sent_emails.first.body.encoded).to include("Missing dummy W-9 environment variables")
+    end
   end
 
   it "sends nothing while the TIN is masked" do

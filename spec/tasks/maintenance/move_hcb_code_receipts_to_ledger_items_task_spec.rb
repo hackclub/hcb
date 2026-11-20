@@ -61,8 +61,9 @@ RSpec.describe Maintenance::MoveHcbCodeReceiptsToLedgerItemsTask do
       hcb_code = hcb_code_with_ledger_item
       receipt_left_on(hcb_code)
 
-      expect { described_class.new.process(hcb_code) }.not_to have_enqueued_job(Receipt::SuggestPairingsJob)
-      expect { described_class.new.process(hcb_code) }.not_to have_enqueued_job(User::UpdateCardLockingJob)
+      assert_no_enqueued_jobs(only: [Receipt::SuggestPairingsJob, User::UpdateCardLockingJob]) do
+        described_class.new.process(hcb_code)
+      end
     end
 
     it "is idempotent" do

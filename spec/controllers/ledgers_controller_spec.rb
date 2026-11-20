@@ -12,21 +12,6 @@ RSpec.describe LedgersController, type: :controller do
   before { create_session(admin, verified: true) }
 
   describe "GET #show" do
-    it "returns success" do
-      get :show, params: { id: ledger.to_param }
-      expect(response).to be_successful
-    end
-
-    it "returns success with ledger items" do
-      items = create_list(:ledger_item, 3)
-      items.each do |item|
-        create(:ledger_mapping, ledger:, ledger_item: item, on_primary_ledger: true)
-      end
-
-      get :show, params: { id: ledger.to_param }
-      expect(response).to be_successful
-    end
-
     describe "memo rename affordance" do
       render_views
 

@@ -51,10 +51,12 @@ RSpec.describe GSuiteService::Create, type: :model do
       create(:g_suite, event:)
     end
 
-    it "does not create a new gsuite" do
+    it "raises and does not create a new gsuite" do
       expect do
         service.run
       end.to raise_error(ArgumentError, "You already have a GSuite account for this event")
+
+      expect(GSuite.where(event:).count).to eq(1)
     end
   end
 

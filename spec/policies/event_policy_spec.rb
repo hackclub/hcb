@@ -120,7 +120,7 @@ RSpec.describe EventPolicy, type: :policy do
   end
 
   describe "#ledger?" do
-    let(:event) { create(:event) }
+    let(:event) { create(:event, is_public: false) }
     let(:user) { create(:user) }
 
     subject { described_class.new(user, event).ledger? }
@@ -130,6 +130,12 @@ RSpec.describe EventPolicy, type: :policy do
 
       it "is allowed" do
         is_expected.to eq(true)
+      end
+    end
+
+    context "as a non-member" do
+      it "is not allowed" do
+        is_expected.to eq(false)
       end
     end
   end

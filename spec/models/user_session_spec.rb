@@ -8,12 +8,6 @@ RSpec.describe User::Session, type: :model do
     expect(user_session).to be_valid
   end
 
-  it "can be searched by session_token" do
-    token = SecureRandom.urlsafe_base64
-    user_session = create(:user_session, session_token: token)
-    expect(User::Session.find_by(session_token: token)).to eq(user_session)
-  end
-
   context "when user is locked" do
     it "can't be created" do
       user = create(:user, locked_at: Time.now)
@@ -201,7 +195,6 @@ RSpec.describe User::Session, type: :model do
       )
 
       expect(session).not_to be_valid
-      expect { session.errors.full_messages }.not_to raise_error
       expect(session.errors.full_messages.join(" ")).to match(/verified/i)
     end
 
@@ -215,7 +208,7 @@ RSpec.describe User::Session, type: :model do
       )
 
       expect(session).not_to be_valid
-      expect { session.errors.full_messages }.not_to raise_error
+      expect(session.errors.full_messages.join(" ")).to match(/verified/i)
     end
   end
 

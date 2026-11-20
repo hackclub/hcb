@@ -28,11 +28,6 @@ FactoryBot.define do
       sent_at    { 1.hour.ago }
     end
 
-    trait :successful do
-      aasm_state { "successful" }
-      sent_at    { 2.hours.ago }
-    end
-
     trait :failed do
       aasm_state { "failed" }
       failed_at  { 1.hour.ago }

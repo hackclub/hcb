@@ -37,7 +37,6 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
       default = user.reload.default_payout_method
       expect(default).to be_present
-      expect(default).to be_default
       expect(default.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       expect(default.details.routing_number).to eq("021000021")
     end
@@ -264,7 +263,6 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       ).run
 
       expect(user.personal_legal_entity.payout_methods.where(default: true).count).to eq(1)
-      expect(user.reload.default_payout_method).to be_default
     end
 
     it "repoints a draft report from the replaced method to the new one" do

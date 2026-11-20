@@ -57,7 +57,7 @@ RSpec.describe GSuite, type: :model do
   describe "#aasm_state" do
     let(:g_suite) { create(:g_suite) }
 
-    it "defaults to configuring" do
+    it "defaults to creating" do
       expect(g_suite).to be_creating
     end
 

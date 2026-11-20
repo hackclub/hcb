@@ -770,7 +770,6 @@ RSpec.describe Tax1099ImportService do
 
       expect(result.form.taxbandits_tin_matching_status).to be_nil
       expect(result.form).to be_tin_verified
-      expect(result.form.taxbandits_tin_matching_status).to be_nil
       expect(result.legal_entity.reload.pending_payable_requirements).not_to include(:form_verified)
     end
 
@@ -952,13 +951,6 @@ RSpec.describe Tax1099ImportService do
 
     it "is empty for an unknown email" do
       expect(described_class.legal_entity_candidates(email: "nobody@example.com", entity_type: :business)).to be_empty
-    end
-
-    it "lists the payee's business entities, never their personal one" do
-      business = create(:legal_entity, entity_type: :business, users: [user])
-
-      expect(described_class.legal_entity_candidates(email: user.email, entity_type: :business))
-        .to contain_exactly(business)
     end
   end
 

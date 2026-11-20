@@ -6,7 +6,7 @@ describe AchTransfersController do
   include SessionSupport
 
   describe "show" do
-    it "redirects to hcb code only if user is an auditor or admin" do
+    it "redirects an auditor to the HCB code" do
       user = create(:user, :make_auditor)
       event = create(:event)
       create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)

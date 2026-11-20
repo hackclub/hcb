@@ -20,14 +20,24 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::Import::S
   context "when there are previously processed raw pending stripe transactions" do
     let(:raw_pending_stripe_transaction) { create(:raw_pending_stripe_transaction, date_posted: Date.current) }
 
-    before do
-      _processed_stripe_canonical_pending_transaction = create(:canonical_pending_transaction, raw_pending_stripe_transaction:)
+    let!(:canonical_pending_transaction) do
+      create(:canonical_pending_transaction, raw_pending_stripe_transaction:, amount_cents: raw_pending_stripe_transaction.amount_cents)
     end
 
-    it "ignores it when processing" do
+    it "skips it when processing" do
+      expect(PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe).not_to receive(:new)
+
+      described_class.new.run
+    end
+
+    it "re-imports it when the raw amount no longer matches" do
+      raw_pending_stripe_transaction.update!(amount_cents: canonical_pending_transaction.amount_cents + 100)
+
       expect do
         described_class.new.run
-      end.to change { CanonicalPendingTransaction.count }.by(0)
+      end.not_to(change { CanonicalPendingTransaction.count })
+
+      expect(canonical_pending_transaction.reload.amount_cents).to eq(raw_pending_stripe_transaction.amount_cents)
     end
 
     context "when there are also ready to process raw pending stripe transactions" do

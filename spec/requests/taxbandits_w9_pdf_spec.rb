@@ -18,6 +18,9 @@ RSpec.describe "GET /taxbandits/w9_certificate.pdf", type: :request do
     get "/taxbandits/w9_certificate.pdf", params: { token: with }
   end
 
+  # TaxBandits fetches this from infrastructure whose addresses they don't
+  # publish, so neither the webhook IP allowlist nor the webhook HMAC can apply
+  # here. The endpoint has to be reachable without either.
   it "serves the staged PDF" do
     get_pdf
 
@@ -30,15 +33,6 @@ RSpec.describe "GET /taxbandits/w9_certificate.pdf", type: :request do
     get_pdf
 
     expect(response.headers["Cache-Control"]).to include("no-store")
-  end
-
-  # TaxBandits fetches this from infrastructure whose addresses they don't
-  # publish, so neither the webhook IP allowlist nor the webhook HMAC can apply
-  # here. The endpoint has to be reachable without either.
-  it "does not require the webhook's IP or signature" do
-    get_pdf
-
-    expect(response).to have_http_status(:ok)
   end
 
   it "still serves a retry inside the grace period" do

@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe UsersHelper, type: :helper do
   describe "#user_mention" do
-    let(:auditor) { create(:user, :make_admin) }
+    let(:auditor) { create(:user, :make_auditor) }
     let(:mentioned_user) { create(:user) }
 
     before { allow(helper).to receive(:current_user).and_return(auditor) }
@@ -31,6 +31,7 @@ RSpec.describe UsersHelper, type: :helper do
     # HTML doesn't nest links: without the <template>, the browser closes the outer link at
     # the menu's first link and the menu's items land on the page, outside the menu.
     it "keeps the admin tools menu intact when the mention is inside a link" do
+      allow(helper).to receive(:current_user).and_return(create(:user, :make_admin))
       allow(helper).to receive(:current_session).and_return(nil)
 
       page = Nokogiri::HTML5.fragment(%(<a id="outer" href="/stripe_cards/1">#{helper.user_mention(mentioned_user)}</a>))

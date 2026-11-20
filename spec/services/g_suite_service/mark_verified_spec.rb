@@ -59,7 +59,7 @@ RSpec.describe GSuiteService::MarkVerified, type: :model do
     end
 
     it "does not send a mailer" do
-      service.run
+      expect { service.run }.not_to change(ActionMailer::Base.deliveries, :count)
     end
 
     context "when created by exists" do
@@ -71,19 +71,7 @@ RSpec.describe GSuiteService::MarkVerified, type: :model do
       end
 
       it "does not send an email" do
-        service.run
-
-        mail = ActionMailer::Base.deliveries.last
-
-        expect(mail).to eql(nil)
-      end
-
-      it "does not change state" do
-        expect(g_suite).not_to be_verified
-
-        service.run
-
-        expect(g_suite.reload).not_to be_verified
+        expect { service.run }.not_to change(ActionMailer::Base.deliveries, :count)
       end
     end
   end

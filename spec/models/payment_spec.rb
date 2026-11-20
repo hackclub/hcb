@@ -43,13 +43,6 @@ RSpec.describe Payment, type: :model do
       end
     end
 
-    describe "#mark_rejected!" do
-      before do
-        payment.save!
-        payment.update_columns(aasm_state: "under_review")
-      end
-    end
-
   end
 
   describe "after_create" do

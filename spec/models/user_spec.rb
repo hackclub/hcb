@@ -709,7 +709,6 @@ RSpec.describe User, type: :model do
     describe "#default_payout_method" do
       it "is nil when no default payout method exists" do
         expect(user.default_payout_method).to be_nil
-        expect(user.default_payout_method&.details).to be_nil
       end
 
       it "returns the person entity's default payout method and its details" do

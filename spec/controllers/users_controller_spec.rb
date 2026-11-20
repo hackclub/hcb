@@ -172,7 +172,8 @@ RSpec.describe UsersController do
 
       get(:admin_details_emails, params: { id: other.id })
 
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
   end
 

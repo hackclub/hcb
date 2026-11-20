@@ -4,21 +4,6 @@ require "rails_helper"
 
 RSpec.describe Ledger::Mapping, type: :model do
   describe "associations" do
-    it "belongs to ledger" do
-      mapping = Ledger::Mapping.new
-      expect(mapping).to respond_to(:ledger)
-    end
-
-    it "belongs to ledger_item" do
-      mapping = Ledger::Mapping.new
-      expect(mapping).to respond_to(:ledger_item)
-    end
-
-    it "belongs to mapped_by" do
-      mapping = Ledger::Mapping.new
-      expect(mapping).to respond_to(:mapped_by)
-    end
-
     it "mapped_by is optional" do
       ledger = ::Ledger.new(primary: false)
       ledger.save(validate: false)

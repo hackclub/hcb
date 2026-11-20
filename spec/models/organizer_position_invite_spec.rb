@@ -101,9 +101,10 @@ RSpec.describe OrganizerPositionInvite, type: :model do
   describe "#accept" do
     it "can be accepted" do
       invite = create(:organizer_position_invite)
-      expect(OrganizerPosition).to receive(:new)
       expect(invite.accept).to eq(true)
       expect(invite).to be_accepted
+      expect(invite.organizer_position).to be_persisted
+      expect(invite.organizer_position).to have_attributes(event: invite.event, user: invite.user)
     end
 
     it "can't be accepted when canceled" do

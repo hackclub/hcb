@@ -4,26 +4,6 @@ require "rails_helper"
 
 RSpec.describe Ledger, type: :model do
   describe "associations" do
-    it "belongs to event" do
-      ledger = Ledger.new
-      expect(ledger).to respond_to(:event)
-    end
-
-    it "belongs to card_grant" do
-      ledger = Ledger.new
-      expect(ledger).to respond_to(:card_grant)
-    end
-
-    it "has many mappings" do
-      ledger = Ledger.new
-      expect(ledger).to respond_to(:mappings)
-    end
-
-    it "has many items through mappings" do
-      ledger = Ledger.new
-      expect(ledger).to respond_to(:items)
-    end
-
     describe "items association" do
       let(:ledger) do
         l = Ledger.new(primary: false)

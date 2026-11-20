@@ -24,7 +24,6 @@ RSpec.describe Maintenance::BackfillScheduledAchTransferLedgerItemsTask do
     expect(with_item.ledger_item).to be_present
     expect(sent_right_away.ledger_item).to be_present
     expect(described_class.collection).to contain_exactly(pending, scheduled)
-    expect(described_class.collection).not_to include(rejected, with_item, sent_right_away)
   end
 
   it "creates an intended ledger item for the transfer" do

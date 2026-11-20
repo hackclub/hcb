@@ -49,7 +49,7 @@ describe LoginCodeService::Request do
 
 
   context "when a user with a given email does exist" do
-    it "creates that user with login code and emails" do
+    it "creates a login code for the existing user and emails it" do
       user = create(:user)
 
       expect(LoginCodeMailer).to receive_message_chain(:send_code, :deliver_now)
@@ -141,8 +141,7 @@ describe LoginCodeService::Request do
       response = described_class.new(email: user.email, ip_address:, user_agent:).run
       expect(response[:error]).to be_present
 
-      travel(1.hour)
-      Rails.cache.clear
+      travel(1.hour + 1.minute)
 
       allow(LoginCodeMailer).to receive(:send_code).and_return(double(deliver_now: true))
       response = described_class.new(email: user.email, ip_address:, user_agent:).run
@@ -162,8 +161,7 @@ describe LoginCodeService::Request do
       response = described_class.new(email: user.email, sms: true, ip_address:, user_agent:).run
       expect(response[:error]).to be_present
 
-      travel(1.hour)
-      Rails.cache.clear
+      travel(1.hour + 1.minute)
 
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
       response = described_class.new(email: user.email, sms: true, ip_address:, user_agent:).run

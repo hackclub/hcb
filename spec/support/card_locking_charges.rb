@@ -5,7 +5,7 @@ RSpec.shared_context "card locking charges" do
   let(:event) { create(:event, plan_type: Event::Plan::Standard) }
 
   # Enroll the cardholder in the first rollout stage (enforcement start
-  # 2026-07-14) so materialize sets deadlines. Specs exercising pre-enforcement
+  # 2026-07-17) so materialize sets deadlines. Specs exercising pre-enforcement
   # settle charges before that date; specs exercising a non-enrolled cardholder
   # disable this flag.
   before { Flipper.enable(:card_locking_enabled_on_07_17_2026, user) }

@@ -304,6 +304,7 @@ RSpec.describe Disbursement, type: :model do
         disbursement = build(:disbursement, event: event, source_event: event,
                                             source_subledger: source_subledger,
                                             destination_subledger: destination_subledger)
+        disbursement.valid?
         expect(disbursement.errors[:event]).to be_empty
       end
     end
@@ -406,14 +407,6 @@ RSpec.describe Disbursement, type: :model do
       end
     end
 
-    describe "may_mark_* delegation" do
-      %i[may_mark_approved? may_mark_in_transit? may_mark_deposited? may_mark_errored? may_mark_rejected? may_mark_scheduled?].each do |method|
-        it "delegates #{method} to disbursement" do
-          expect(incoming.disbursement).to receive(method)
-          incoming.public_send(method)
-        end
-      end
-    end
   end
 
   describe "Disbursement::Outgoing" do
@@ -461,14 +454,6 @@ RSpec.describe Disbursement, type: :model do
       end
     end
 
-    describe "may_mark_* delegation" do
-      %i[may_mark_approved? may_mark_in_transit? may_mark_deposited? may_mark_errored? may_mark_rejected? may_mark_scheduled?].each do |method|
-        it "delegates #{method} to disbursement" do
-          expect(outgoing.disbursement).to receive(method)
-          outgoing.public_send(method)
-        end
-      end
-    end
   end
 
   describe "helper methods" do
@@ -652,12 +637,6 @@ RSpec.describe Disbursement, type: :model do
     let(:incoming) { disbursement.incoming_disbursement }
     let(:outgoing) { disbursement.outgoing_disbursement }
 
-    it "Disbursement responds to all aasm event methods" do
-      %i[mark_approved! mark_in_transit! mark_deposited! mark_errored! mark_rejected! mark_scheduled!].each do |method|
-        expect(disbursement).to respond_to(method)
-      end
-    end
-
     it "Disbursement has all aasm events defined on the class" do
       expect(Disbursement.aasm.events.map(&:name)).to match_array(
         %i[mark_approved mark_in_transit mark_deposited mark_errored mark_rejected mark_scheduled]
@@ -691,11 +670,6 @@ RSpec.describe Disbursement, type: :model do
       expect(Disbursement.aasm.states.map(&:name)).to match_array(shared_states)
       expect(Disbursement::Incoming.aasm.states.map(&:name)).to match_array(shared_states)
       expect(Disbursement::Outgoing.aasm.states.map(&:name)).to match_array(shared_states)
-    end
-
-    it "Disbursement does not redeclare states from Shared (no duplicate state entries)" do
-      state_names = Disbursement.aasm.states.map(&:name)
-      expect(state_names).to eq(state_names.uniq)
     end
   end
 
@@ -807,16 +781,6 @@ RSpec.describe Disbursement, type: :model do
     # events themselves, so a newly added event can't silently lose its lens guard.
     guard_methods = Disbursement.aasm.events.map { |event| :"may_#{event.name}?" }
 
-    it "derives one guard per Disbursement AASM event" do
-      expect(guard_methods).not_to be_empty
-      expect(guard_methods.size).to eq(Disbursement.aasm.events.size)
-    end
-
-    it "the lenses define no events of their own, so the guards can only be delegated" do
-      expect(Disbursement::Incoming.aasm.events).to be_empty
-      expect(Disbursement::Outgoing.aasm.events).to be_empty
-    end
-
     %i[incoming_disbursement outgoing_disbursement].each do |lens_method|
       context "on ##{lens_method}" do
         guard_methods.each do |guard|
@@ -924,14 +888,6 @@ RSpec.describe Disbursement, type: :model do
   end
 
   describe "AASM state scopes (create_scopes)" do
-    it "generates a scope per state that filters by aasm_state" do
-      deposited = create(:disbursement, :deposited)
-
-      expect(Disbursement.deposited).to include(deposited)
-      expect(Disbursement.deposited).not_to include(disbursement) # reviewing
-      expect(Disbursement.reviewing).to include(disbursement)
-    end
-
     it "backs the app scopes built on AASM states" do
       deposited = create(:disbursement, :deposited)
       in_transit = create(:disbursement, :in_transit)

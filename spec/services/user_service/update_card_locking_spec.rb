@@ -45,7 +45,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
     expect {
       described_class.new(user:, unlock_only: true, notify_progress: true).run
-    }.to have_enqueued_job(User::SendSmsJob)
+    }.to have_enqueued_job(User::SendSmsJob).with(user_id: user.id, body: a_string_matching(/2 receipts are still overdue/))
     expect(user.reload.cards_locked?).to be(true)
   end
 

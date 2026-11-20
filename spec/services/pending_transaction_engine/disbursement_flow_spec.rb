@@ -10,16 +10,6 @@ RSpec.describe PendingTransactionEngine do
   end
 
   context "disbursement moves pending money" do
-    it "creates valid setup data" do
-      source_event = create(:event)
-      destination_event = create(:event)
-      disbursement = create(:disbursement)
-
-      expect(source_event).to be_valid
-      expect(destination_event).to be_valid
-      expect(disbursement).to be_valid
-    end
-
     it "creates raw incoming and outgoing transactions" do
       source_event = create(:event)
       destination_event = create(:event)

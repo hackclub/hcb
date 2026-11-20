@@ -80,8 +80,7 @@ RSpec.describe LoginsController do
       post(:create, params: { email: user.email, login: { purpose: "" } })
       expect(response).to redirect_to(auth_users_path)
 
-      travel(1.hour)
-      Rails.cache.clear
+      travel(1.hour + 1.minute)
 
       post(:create, params: { email: user.email, login: { purpose: "" } })
       expect(response).to redirect_to(email_login_path(Login.last))

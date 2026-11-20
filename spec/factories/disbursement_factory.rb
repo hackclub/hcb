@@ -52,12 +52,5 @@ FactoryBot.define do
         create(:raw_pending_incoming_disbursement_transaction, disbursement:, amount_cents: disbursement.amount)
       end
     end
-
-    trait :with_canonical_transactions do
-      after(:create) do |disbursement|
-        create(:canonical_transaction, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
-        create(:canonical_transaction, hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
-      end
-    end
   end
 end

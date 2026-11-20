@@ -47,14 +47,6 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "private" do
-    before do
-      create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
-      fee_payment = create(:transaction, amount: -10)
-      create(:fee_relationship, is_fee_payment: true, event:, t_transaction: fee_payment)
-    end
-  end
-
   describe "#search_name" do
     context "when the search is a partial match" do
       it "returns the event" do
@@ -386,13 +378,6 @@ RSpec.describe Event, type: :model do
       expect(event.ledger).to be_present
       expect(event.ledger.primary?).to be true
       expect(event.ledger.event).to eq(event)
-    end
-
-    it "has a primary ledger association" do
-      event = create(:event)
-
-      expect(event).to respond_to(:ledger)
-      expect(event.ledger).to be_a(Ledger)
     end
   end
 
