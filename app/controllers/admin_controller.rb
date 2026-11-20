@@ -636,7 +636,10 @@ class AdminController < Admin::BaseController
   end
 
   def stripe_card_personalization_design_create
-    return unless params[:logo].present?
+    if params[:logo].blank?
+      return redirect_to stripe_card_personalization_design_new_admin_index_path,
+                         flash: { error: "A PNG logo is required." }
+    end
 
     ::StripeCardService::PersonalizationDesign::Create.new(
       file: params[:logo],
@@ -646,6 +649,8 @@ class AdminController < Admin::BaseController
     ).run
 
     redirect_to stripe_card_personalization_designs_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
+  rescue => e
+    redirect_to stripe_card_personalization_design_new_admin_index_path, flash: { error: e.message }
   end
 
   def ach_start_approval
@@ -1199,7 +1204,12 @@ class AdminController < Admin::BaseController
   end
 
   def invoice_mark_paid
-    @invoice = Invoice.open.find(params[:id])
+    @invoice = Invoice.find(params[:id])
+
+    unless @invoice.open?
+      return redirect_to invoice_process_admin_path(@invoice),
+                         flash: { error: "This invoice is already #{@invoice.state_text.downcase}." }
+    end
 
     ::InvoiceService::MarkPaid.new(
       invoice_id: @invoice.id,
@@ -1208,7 +1218,9 @@ class AdminController < Admin::BaseController
       user: current_user
     ).run
 
-    redirect_to invoices_admin_index_path, flash: { success: "Success" }
+    redirect_to invoices_admin_index_path, flash: { success: "Marked invoice #{@invoice.number} as paid" }
+  rescue => e
+    redirect_to invoice_process_admin_path(@invoice), flash: { error: e.message }
   end
 
   def sponsors
