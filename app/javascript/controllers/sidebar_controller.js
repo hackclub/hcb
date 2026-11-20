@@ -6,21 +6,26 @@ export default class extends Controller {
   connect() {
     this.handleKeydown = this.handleKeydown.bind(this)
     this.handleResize = this.handleResize.bind(this)
+    this.handleSidebarClick = this.handleSidebarClick.bind(this)
     document.addEventListener('keydown', this.handleKeydown)
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
-    this.sidebarTarget
-      .querySelectorAll(
-        '.dock__item:not(summary.dock__item,.user-menu-trigger)'
-      )
-      .forEach(item => {
-        item.addEventListener('click', this.close.bind(this))
-      })
+    // Delegated, because the admin nav is rendered into a Turbo Frame after
+    // this controller connects, so its items don't exist yet.
+    this.sidebarTarget.addEventListener('click', this.handleSidebarClick)
   }
 
   disconnect() {
     document.removeEventListener('keydown', this.handleKeydown)
     window.removeEventListener('resize', this.handleResize)
+    this.sidebarTarget.removeEventListener('click', this.handleSidebarClick)
+  }
+
+  handleSidebarClick(event) {
+    const item = event.target.closest(
+      '.dock__item:not(summary.dock__item,.user-menu-trigger)'
+    )
+    if (item && this.sidebarTarget.contains(item)) this.close()
   }
 
   handleKeydown(event) {
