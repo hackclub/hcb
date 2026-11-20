@@ -40,3 +40,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libcairo-gobject2 \
     yarn \
     imagemagick
+
+# Install the RWX CLI (https://www.rwx.com/docs/cli-reference)
+RUN tmp="$(mktemp -d)" \
+    && curl -o "$tmp/rwx" -fsSL "https://github.com/rwx-cloud/rwx/releases/download/latest/rwx-linux-$(uname -m)" \
+    && install "$tmp/rwx" /usr/local/bin \
+    && rm -rf "$tmp"
