@@ -18,25 +18,28 @@ preload(
 
 const restrictedFilter = e => !e.demo_mode
 
+const eventAction = event => ({
+  id: event.slug,
+  name: event.name,
+  icon:
+    event.logo && event.logo != 'none' ? (
+      <img
+        src={event.logo}
+        alt=""
+        height="16px"
+        width="16px"
+        style={{ borderRadius: '4px' }}
+      />
+    ) : (
+      <Icon glyph="bank-account" size={16} />
+    ),
+  priority: !event.member ? Priority.LOW : Priority.HIGH,
+  section: event.parent_slug ? 'Sub-organizations' : 'Organizations',
+})
+
 export const generateEventActions = data => {
   return [
-    ...data.map(event => ({
-      id: event.slug,
-      name: event.name,
-      icon:
-        event.logo && event.logo != 'none' ? (
-          <img
-            src={event.logo}
-            height="16px"
-            width="16px"
-            style={{ borderRadius: '4px' }}
-          />
-        ) : (
-          <Icon glyph="bank-account" size={16} />
-        ),
-      priority: !event.member ? Priority.LOW : Priority.HIGH,
-      section: 'Organizations',
-    })),
+    ...data.map(eventAction),
     ...data.map(event => ({
       id: `${event.slug}-home`,
       name: 'Home',
