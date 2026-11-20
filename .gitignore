@@ -63,3 +63,4 @@ yarn-debug.log*
 !.claude/hooks/
 .claude/hooks/*
 !.claude/hooks/block_manual_migrations.rb
+!.claude/hooks/block_force_push.rb
