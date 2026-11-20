@@ -1676,7 +1676,7 @@ RSpec.describe EventsController do
     end
 
     describe "#account_number" do
-      it "leaves the account number out of the page until someone clicks Show", :aggregate_failures do
+      it "leaves the account number out of the page until someone clicks the eye", :aggregate_failures do
         sign_in_organizer_of(event)
 
         get(:account_number, params: { id: event.slug })
@@ -1685,17 +1685,18 @@ RSpec.describe EventsController do
         expect(response.body).not_to include("987654321012")
 
         page = Nokogiri::HTML5(response.body)
-        expect(page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :n)}']")).to be_present
-        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :s)}']")).to be_present
+        inline_eye = page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :n)}']")
+        expect(inline_eye["aria-label"]).to eq("Show account number")
+        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :s)}']")).to be_present
       end
     end
 
     describe "#reveal_account_number" do
-      it "renders the account number into the frame that asked for it", :aggregate_failures do
+      it "renders the account number into the frame that asked for it, with an eye to hide it again", :aggregate_failures do
         sign_in_organizer_of(event)
         request.headers["Turbo-Frame"] = "account_number_modal_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug, tooltip_direction: "s" })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true", tooltip_direction: "s" })
 
         expect(response).to have_http_status(:ok)
         frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_modal_reveal")
@@ -1703,12 +1704,26 @@ RSpec.describe EventsController do
         expect(copy["data-clipboard-text-value"]).to eq("987654321012")
         expect(copy["class"]).to include("tooltipped--s")
         expect(frame.text).to include("987654321012")
+        hide_eye = frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false", tooltip_direction: :s)}']")
+        expect(hide_eye["aria-label"]).to eq("Hide account number")
+      end
+
+      it "hides the account number again when the eye is clicked a second time", :aggregate_failures do
+        sign_in_organizer_of(event)
+        request.headers["Turbo-Frame"] = "account_number_reveal"
+
+        get(:reveal_account_number, params: { id: event.slug, show_details: "false" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_reveal")
+        expect(frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "true", tooltip_direction: :n)}']")).to be_present
       end
 
       it "sends a request from outside a turbo frame back to the account number page" do
         sign_in_organizer_of(event)
 
-        get(:reveal_account_number, params: { id: event.slug })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" })
 
         expect(response).to redirect_to(account_number_event_path(event))
       end
@@ -1717,7 +1732,7 @@ RSpec.describe EventsController do
         create_session(create(:user), verified: true)
         request.headers["Turbo-Frame"] = "account_number_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" })
 
         expect(flash[:error]).to eq("You are not authorized to perform this action.")
         expect(response.body).not_to include("987654321012")

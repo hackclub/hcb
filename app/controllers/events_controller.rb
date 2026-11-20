@@ -640,7 +640,8 @@ class EventsController < ApplicationController
   end
 
   # The account number page doesn't send the account number until someone clicks
-  # "Show". That loads this action into the clicked turbo frame.
+  # the eye beside it, the same way a card's number and CVC are shown. That loads
+  # this action into the clicked turbo frame; clicking the eye again hides it.
   def reveal_account_number
     authorize @event, :account_number?
 
@@ -650,7 +651,7 @@ class EventsController < ApplicationController
 
     render partial: "events/account_number_reveal", locals: {
       frame_id: turbo_frame_request_id,
-      revealed: true,
+      revealed: params[:show_details] == "true",
       tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
     }
   end
