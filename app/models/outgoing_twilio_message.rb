@@ -29,6 +29,10 @@ class OutgoingTwilioMessage < ApplicationRecord
   # attached. Nil for texts that aren't about a transaction (User::SendSmsJob).
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
+  # Messages used to point at the transaction's HCB code. Nothing writes the
+  # column any more; it's dropped once no running code expects it.
+  self.ignored_columns += ["hcb_code_id"]
+
   validates_presence_of :twilio_message
 
 end
