@@ -73,8 +73,8 @@ class Repayment < ApplicationRecord
   #
   # Given a user, only what they may link is returned:
   # - Money in that isn't a transfer, for members of the organization.
-  # - A plain transfer from another organization that should have been sent
-  #   as a repayment, for managers of the sender who can browse this ledger,
+  # - A plain transfer or payment from another organization that should have
+  #   been sent as a repayment, for managers of the sender who can browse this ledger,
   #   which is what sending it as a repayment would have taken. Linking it
   #   moves the expense onto the sender's books, so nobody else can: the
   #   income would leave revenue here without the sender taking the expense.
@@ -85,7 +85,7 @@ class Repayment < ApplicationRecord
   # link. So the money must have actually arrived: a settled transaction,
   # and for a transfer, one that has been deposited.
   def self.repaying_ledger_items(event, user = nil)
-    transfers = Disbursement.where(transfer_type: [nil, "transfer"], source_subledger_id: nil, destination_subledger_id: nil, aasm_state: "deposited")
+    transfers = Disbursement.where(transfer_type: [nil, "transfer", "payment"], source_subledger_id: nil, destination_subledger_id: nil, aasm_state: "deposited")
                             .where.not(source_event_id: event.id)
     if user.nil? || !DisbursementPolicy.new(user, Disbursement.new(destination_event: event)).repay?
       transfers = transfers.none
