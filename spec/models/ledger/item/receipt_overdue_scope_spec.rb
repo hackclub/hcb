@@ -7,7 +7,15 @@ RSpec.describe Ledger::Item do
 
   let(:now) { Time.zone.parse("2026-10-10 12:00:00") }
 
-  around { |ex| travel_to(now) { ex.run } }
+  # Not `travel_to(now) { ex.run }`: that sets ActiveSupport's nested-block
+  # guard, which then trips when `attach_receipt` does its own
+  # `travel_to(at) { ... }` to backdate a receipt upload.
+  around do |ex|
+    travel_to(now)
+    ex.run
+  ensure
+    travel_back
+  end
 
   describe ".receipt_overdue" do
     it "includes an unresolved charge whose receipt_due_at has passed" do
