@@ -186,8 +186,14 @@ class Event
     attr_reader(:start_date_param, :end_date_param)
 
     # Money moved between two included organizations is neither raised nor spent by the group.
+    # Only transfers with both legs in range are left out, so raised + spent still equals net.
     def intra_org_transfer_amounts
-      grouped_transactions.fetch(INTRA_ORG_TRANSFER, []).map(&:amount_cents)
+      grouped_transactions.fetch(INTRA_ORG_TRANSFER, [])
+                          .group_by { |transaction| transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1] }
+                          .values
+                          .select { |legs| legs.sum(&:amount_cents).zero? }
+                          .flatten
+                          .map(&:amount_cents)
     end
 
     memo_wise def grouped_transactions

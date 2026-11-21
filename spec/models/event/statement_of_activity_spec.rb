@@ -386,5 +386,25 @@ RSpec.describe Event::StatementOfActivity do
       expect(instance.total_revenue).to eq(1_000_00)
       expect(instance.total_expense).to eq(0)
     end
+
+    it "still counts an intra-org transfer leg whose other leg falls outside the date range" do
+      # #15898: dropping a lone leg would leave raised + spent no longer adding up to the net change.
+      group = create(:event_group)
+      event_a, event_b = create_list(:event, 2)
+      group.memberships.create!(event: event_a)
+      group.memberships.create!(event: event_b)
+
+      disbursement = create(:disbursement, source_event: event_a, event: event_b)
+      outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -100_00)
+      incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 100_00)
+      outgoing.update!(date: Date.new(2025, 12, 31))
+      incoming.update!(date: Date.new(2026, 1, 1))
+
+      instance = described_class.new(group, start_date_param: "2026-01-01", end_date_param: "2026-01-31")
+
+      expect(instance.net_asset_change).to eq(100_00)
+      expect(instance.total_revenue).to eq(100_00)
+      expect(instance.total_expense).to eq(0)
+    end
   end
 end
