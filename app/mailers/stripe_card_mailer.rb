@@ -21,6 +21,20 @@ class StripeCardMailer < ApplicationMailer
          subject: "New virtual HCB card (ending in #{@card.last4}) for #{@event.name}"
   end
 
+  def expiring_soon
+    @expires_on = @card.expires_on
+
+    mail to: @recipient,
+         subject: "Your HCB card ending in #{@card.last4} expires on #{@expires_on.to_fs(:long)}"
+  end
+
+  def expired
+    @replace_by = @card.expiration_replacement_window.end
+
+    mail to: @recipient,
+         subject: "Your HCB card ending in #{@card.last4} has expired"
+  end
+
   private
 
   def set_shared_variables

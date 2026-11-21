@@ -2626,6 +2626,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.string "name"
     t.datetime "purchased_at", precision: nil
     t.bigint "replacement_for_id"
+    t.string "replacement_reason"
     t.integer "spending_limit_amount"
     t.integer "spending_limit_interval"
     t.text "stripe_brand"

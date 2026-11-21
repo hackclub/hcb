@@ -1,0 +1,46 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<% if flow.damaged? %>
+  <h3 class="mt-0 mb-2">Is your card damaged?</h3>
+  <p class="mt-0">A card is damaged when it still is in your hands but does not work properly anymore. For example:</p>
+  <ul class="mt-0">
+    <li>The magnetic stripe or chip won't read</li>
+    <li>Tap to pay (NFC) has stopped working</li>
+    <li>It cracked, bent, or is worn out so the details are hard to read</li>
+  </ul>
+
+  <div class="field field--checkbox mt-4 mb-0">
+    <input type="checkbox" id="<%= flow.dom_id(:reason_confirmation) %>" data-action="form-disable#run" data-form-disable-target="radioButton">
+    <label for="<%= flow.dom_id(:reason_confirmation) %>">
+      My card is damaged, and it hasn't been lost, stolen, or seen by anyone else.
+    </label>
+  </div>
+<% elsif flow.chooses_reason? %>
+  <h3 class="mt-0 mb-2">What happened to your card?</h3>
+  <p class="mt-0">Either way, we'll cancel your card ending in <%= stripe_card.last4 %> right away so nobody else can use it.</p>
+
+  <div class="field field--options max-w-none mb-0">
+    <% { "lost" => ["search", "It's lost", "You can't find it"], "stolen" => ["spy", "It was stolen", "Someone took it or used it without permission"] }.slice(*flow.reasons).each do |reason, (icon, label, description)| %>
+      <% id = flow.dom_id("reason_#{reason}") %>
+      <%= radio_button_tag :reason, reason, flow.reason == reason, id:, required: true, data: { action: "form-disable#run", form_disable_target: "radioButton" } %>
+      <label for="<%= id %>">
+        <%= inline_icon icon, size: 28 %>
+        <strong><%= label %></strong>
+        <small><%= description %></small>
+      </label>
+    <% end %>
+  </div>
+<% else %>
+  <h3 class="mt-0 mb-2">Were your card details stolen?</h3>
+  <p class="mt-0">
+    If someone used your card without your permission, or you think your card details have been seen by someone else,
+    we'll cancel your card ending in <%= stripe_card.last4 %> right away and give you a new one with a different card number.
+  </p>
+
+  <div class="field field--checkbox mt-4 mb-0">
+    <input type="checkbox" id="<%= flow.dom_id(:reason_confirmation) %>" data-action="form-disable#run" data-form-disable-target="radioButton">
+    <label for="<%= flow.dom_id(:reason_confirmation) %>">
+      My card details were stolen or seen by someone else.
+    </label>
+  </div>
+<% end %>

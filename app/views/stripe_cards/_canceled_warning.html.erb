@@ -4,7 +4,7 @@
   <div class="card border b--info mb-3">
     <div class="flex items-center info">
       <%= inline_icon "info", size: 32, class: "mr1" %>
-      <p class="bold mt0 mb0">This card has been canceled.</p>
+      <p class="bold mt0 mb0"><%= stripe_card.canceled_for_expiration? ? "This card expired and has been canceled." : "This card has been canceled." %></p>
     </div>
     <% if stripe_card.replacement %>
       <p class="mt1 mb0">
