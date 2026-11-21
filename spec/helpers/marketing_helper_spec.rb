@@ -84,15 +84,18 @@ RSpec.describe MarketingHelper, type: :helper do
   end
 
   describe "#ai_safety_ledger_rows" do
-    it "has 8 rows: one grant, its 7% fee, and spending" do
+    it "has one grant, its 7% fee, and spending, with every icon present" do
       rows = helper.ai_safety_ledger_rows
 
-      expect(rows.size).to eq(8)
       expect(rows.count { |r| r[:amount_cents].positive? }).to eq(1)
 
-      # The example has to show the real fee on the grant.
+      # The example has to show the real fee on the grant, and the fee shouldn't read as the main cost.
       grant, fee = rows.first(2)
       expect(fee[:amount_cents]).to eq(-grant[:amount_cents] * 7 / 100)
+      expect(rows.min_by { |r| r[:amount_cents] }).not_to eq(fee)
+
+      # inline_icon raises on a missing icon, so check them all exist.
+      rows.each { |r| expect(Rails.root.join("app/assets/images/icons/#{r[:icon]}.svg")).to exist }
     end
   end
 

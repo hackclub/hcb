@@ -592,15 +592,17 @@ module MarketingHelper
 
   # The example ledger in the /for/ai-safety hero. Illustrative, with no person names.
   def ai_safety_ledger_rows
+    # Oldest first. Icons and type labels match the real HCB ledger (hcb_codes/_icon).
     [
-      { memo: "Grant", amount_cents: 850_000_00 },
-      { memo: "Fiscal sponsorship fee · 7%", amount_cents: -59_500_00, fee: true },
-      { memo: "Payroll · 3 staff", amount_cents: -48_150_00 },
-      { memo: "Cloud GPUs", amount_cents: -12_736_40 },
-      { memo: "Contractor · London (GBP)", amount_cents: -8_125_00 },
-      { memo: "Model API credits", amount_cents: -3_500_00 },
-      { memo: "Flights · research workshop", amount_cents: -1_864_22 },
-      { memo: "Reimbursement · conference fee", amount_cents: -795_00 }
+      { date: "Mar 2", icon: "web", type: "Incoming wire", memo: "Grant · first installment", amount_cents: 150_000_00 },
+      { date: "Mar 2", icon: "bank-icon", type: "Fiscal sponsorship fee", memo: "7% of first installment", amount_cents: -10_500_00, fee: true },
+      { date: "Mar 6", icon: "card", type: "Card charge", memo: "GPU cloud compute", amount_cents: -12_736_40 },
+      { date: "Mar 9", icon: "briefcase", type: "Contractor payment · GBP", memo: "Payment to London contractor for eval design", amount_cents: -8_125_00 },
+      { date: "Mar 12", icon: "card", type: "Card charge", memo: "Model API credits", amount_cents: -3_500_00 },
+      { date: "Mar 14", icon: "email", type: "Mailed check", memo: "Workshop venue deposit", amount_cents: -2_400_00 },
+      { date: "Mar 15", icon: "person", type: "Payroll", memo: "3 staff · March", amount_cents: -48_150_00 },
+      { date: "Mar 20", icon: "card", type: "Card charge", memo: "Flights · research workshop", amount_cents: -1_864_22 },
+      { date: "Mar 24", icon: "reimbursement", type: "Reimbursement", memo: "Conference registration", amount_cents: -795_00 }
     ]
   end
 

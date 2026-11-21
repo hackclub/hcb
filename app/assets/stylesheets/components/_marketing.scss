@@ -4082,6 +4082,7 @@ $mk-term-green: #62d196;
   }
 }
 
+// Example ledger, styled after the HCB transaction list: type icon, date, memo, amount.
 .mk-ais-ledger {
   width: 100%;
   border-collapse: collapse;
@@ -4089,11 +4090,42 @@ $mk-term-green: #62d196;
 
   .mk-ais & td,
   .mk-ais & th {
-    padding: 11px 18px;
+    padding: 10px 14px;
     border-bottom: 1px solid rgba($black, 0.06);
+    vertical-align: middle;
     white-space: normal;
     font-size: 0.9375rem;
     color: $mk-ink;
+  }
+
+  .mk-ais & &__icon {
+    width: 24px;
+    padding-right: 0;
+    line-height: 0;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      fill: $muted;
+    }
+  }
+
+  .mk-ais & &__date {
+    width: 1%;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: $muted-text;
+  }
+
+  &__name {
+    display: block;
+  }
+
+  &__type {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.8125rem;
+    color: $muted-text;
   }
 
   .mk-ais & &__amount {
@@ -4106,10 +4138,8 @@ $mk-term-green: #62d196;
     color: $green-dark;
   }
 
-  // The fee is the line a careful reader looks for, so it gets a quiet highlight.
-  .mk-ais & &__row--fee td {
-    background: rgba($red, 0.04);
-    color: $slate;
+  .mk-ais & tbody tr:hover td {
+    background: $snow;
   }
 
   .mk-ais & tfoot th,
@@ -4121,6 +4151,26 @@ $mk-term-green: #62d196;
 
   .mk-ais & tfoot th {
     text-align: left;
+  }
+
+  &__type-date {
+    display: none;
+  }
+
+  // On phones the date column folds into the type line ("Mar 24 · Reimbursement").
+  @container (max-width: 520px) {
+    .mk-ais & td,
+    .mk-ais & th {
+      padding: 10px;
+    }
+
+    .mk-ais & &__date {
+      display: none;
+    }
+
+    &__type-date {
+      display: inline;
+    }
   }
 }
 

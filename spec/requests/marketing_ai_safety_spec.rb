@@ -60,7 +60,7 @@ RSpec.describe "AI safety landing page", type: :request do
       get ai_safety_path
 
       expect(page.at_css(".mk-ais__head a[href='mailto:aisafety@hackclub.com']")).to be_present
-      expect(page.text).to include("+$850,000.00", "−$48,150.00")
+      expect(page.text).to include("+$150,000.00", "−$48,150.00")
       expect(response.body).not_to include("PayPal")
     end
 
@@ -138,7 +138,7 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/markdown")
       expect(response.headers["X-Robots-Tag"]).to be_nil
-      expect(response.body).to include("# Fiscal sponsorship for AI safety teams", "## Key facts", "+$850,000.00")
+      expect(response.body).to include("# Fiscal sponsorship for AI safety teams", "## Key facts", "+$150,000.00")
       expect(response.body).to include(*helper_faqs.map { |faq| "### #{faq[:q]}" })
       expect(response.body).not_to include("<form", "Ask ChatGPT", "\u2014")
     end

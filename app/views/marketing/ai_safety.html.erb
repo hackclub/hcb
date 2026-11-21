@@ -143,17 +143,28 @@
           <% rows = ai_safety_ledger_rows %>
           <table class="mk-ais-ledger">
             <caption id="example-month-title" class="mk-ais-card__head">Example first month on HCB</caption>
-            <thead class="mk-vh"><tr><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
+            <thead class="mk-vh"><tr><th scope="col" class="mk-ais-ledger__icon">Type</th><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
             <tbody>
-              <% rows.each do |row| %>
-                <%= tag.tr class: class_names("mk-ais-ledger__row", "mk-ais-ledger__row--in": row[:amount_cents].positive?, "mk-ais-ledger__row--fee": row[:fee]) do %>
-                  <td><%= row[:memo] %></td>
+              <% rows.reverse_each do |row| %>
+                <%= tag.tr class: class_names("mk-ais-ledger__row", "mk-ais-ledger__row--in": row[:amount_cents].positive?) do %>
+                  <td class="mk-ais-ledger__icon" title="<%= row[:type] %>"><%= inline_icon row[:icon], size: 24 %></td>
+                  <td class="mk-ais-ledger__date"><%= row[:date] %></td>
+                  <td class="mk-ais-ledger__memo">
+                    <span class="mk-ais-ledger__name"><%= row[:memo] %></span><span class="mk-vh">, </span>
+                    <span class="mk-ais-ledger__type"><span class="mk-ais-ledger__type-date"><%= row[:date] %> · </span><%= row[:type] %></span>
+                  </td>
                   <td class="mk-ais-ledger__amount"><%= ai_safety_ledger_amount(row[:amount_cents]) %></td>
                 <% end %>
               <% end %>
             </tbody>
             <tfoot>
-              <tr><th scope="row">Balance</th><td class="mk-ais-ledger__amount"><%= render_money(rows.sum { |row| row[:amount_cents] }) %></td></tr>
+              <%# Same cells as a row, so hiding the date column on phones keeps the footer aligned. %>
+              <tr>
+                <td class="mk-ais-ledger__icon"></td>
+                <td class="mk-ais-ledger__date"></td>
+                <th scope="row">Balance</th>
+                <td class="mk-ais-ledger__amount"><%= render_money(rows.sum { |row| row[:amount_cents] }) %></td>
+              </tr>
             </tfoot>
           </table>
         </section>
