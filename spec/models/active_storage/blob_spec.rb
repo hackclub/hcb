@@ -14,7 +14,7 @@ RSpec.describe ActiveStorage::Blob, type: :model do
     expect(blob.errors.of_kind?(:byte_size, :greater_than)).to be(true)
   end
 
-  it "does not preview office documents or CSVs" do
+  it "does not preview office documents" do
     {
       "report.doc"  => "application/msword",
       "report.docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -22,7 +22,6 @@ RSpec.describe ActiveStorage::Blob, type: :model do
       "slides.pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       "sheet.xls"   => "application/vnd.ms-excel",
       "sheet.xlsx"  => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "receipt.csv" => "text/csv",
     }.each do |filename, content_type|
       blob = described_class.new(filename:, content_type:)
 

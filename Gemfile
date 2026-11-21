@@ -20,6 +20,7 @@ gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob
 # explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
+gem "csv_preview", "~> 0.1.0" # renders CSV previews in-process with libvips (no LibreOffice)
 gem "mini_magick"
 
 

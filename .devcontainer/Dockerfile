@@ -39,7 +39,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libpoppler-glib-dev \
     libcairo-gobject2 \
     yarn \
-    imagemagick
+    imagemagick \
+    # Draws CSV previews (csv_preview gem)
+    libvips
 
 # Install the RWX CLI (https://www.rwx.com/docs/cli-reference)
 RUN tmp="$(mktemp -d)" \

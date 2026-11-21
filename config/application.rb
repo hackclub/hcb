@@ -123,6 +123,10 @@ module Bank
       config.active_record.encryption.key_derivation_salt = key_derivation_salt
     end
 
+    # CSV previews, drawn in-process by libvips. csv_preview treats every file as untrusted:
+    # it reads at most the first 2 MiB, never starts a process and never decodes images.
+    config.active_storage.previewers.unshift CsvPreview::ActiveStoragePreviewer
+
     config.active_support.deprecation = :notify
 
     config.action_controller.include_all_helpers = false
