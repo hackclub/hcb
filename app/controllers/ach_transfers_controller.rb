@@ -72,6 +72,20 @@ class AchTransfersController < ApplicationController
     end
   end
 
+  def edit
+    authorize @ach_transfer
+  end
+
+  def update
+    authorize @ach_transfer
+
+    if @ach_transfer.update(ach_transfer_update_params)
+      redirect_to ach_start_approval_admin_path(@ach_transfer), flash: { success: "Edited the ACH transfer." }
+    else
+      redirect_to ach_start_approval_admin_path(@ach_transfer), flash: { error: @ach_transfer.errors.full_messages.to_sentence }
+    end
+  end
+
   def cancel
     authorize @ach_transfer
 
@@ -130,6 +144,10 @@ class AchTransfersController < ApplicationController
     end
 
     @ach_transfer_params ||= scope_payment_recipient!(params.require(:ach_transfer).permit(*permitted_params))
+  end
+
+  def ach_transfer_update_params
+    params.require(:ach_transfer).permit(:recipient_name, :recipient_email, :bank_name, :routing_number, :account_number, :payment_for, :invoiced_at)
   end
 
 end
