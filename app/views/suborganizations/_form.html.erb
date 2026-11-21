@@ -1,6 +1,6 @@
 <%# locals: (event:, argosy_grant_amount: nil) %>
 
-<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }, data: { controller: "scoped-tag-picker", scoped_tag_picker_create_url_value: event_scoped_tags_url(event) }) do |form| %>
+<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }, data: { controller: "scoped-tag-picker", scoped_tag_picker_create_url_value: event_scoped_tags_path(event) }) do |form| %>
   <% if argosy_grant_amount.present? %>
     <%= form.hidden_field :argosy_grant_amount, value: argosy_grant_amount %>
   <% end %>
@@ -83,7 +83,7 @@
         <% end %>
       </div>
 
-      <%= link_to event_scoped_tags_url(event), hidden: true, data: { turbo_method: :post, scoped_tag_picker_target: "createLink" } do %>
+      <%= link_to event_scoped_tags_path(event), hidden: true, data: { turbo_method: :post, scoped_tag_picker_target: "createLink" } do %>
         <%= inline_icon "plus", size: 15 %> Create tag
         "<span data-scoped-tag-picker-target="createName"></span>"
       <% end %>

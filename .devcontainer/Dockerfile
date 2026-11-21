@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/devcontainers/base:bookworm
 
 # Install Ruby
-ARG RUBY_VERSION="3.4.13"
+ARG RUBY_VERSION="4.0.10"
 RUN su vscode -c "gpg2 --keyserver keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB"
 RUN su vscode -c "curl -sSL https://get.rvm.io | bash -s stable"
 RUN su vscode -c "/bin/bash -l -c \"rvm install ${RUBY_VERSION}\""
@@ -40,3 +40,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libcairo-gobject2 \
     yarn \
     imagemagick
+
+# Install the RWX CLI (https://www.rwx.com/docs/cli-reference)
+RUN tmp="$(mktemp -d)" \
+    && curl -o "$tmp/rwx" -fsSL "https://github.com/rwx-cloud/rwx/releases/download/latest/rwx-linux-$(uname -m)" \
+    && install "$tmp/rwx" /usr/local/bin \
+    && rm -rf "$tmp"

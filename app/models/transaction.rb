@@ -138,8 +138,7 @@ class Transaction < ApplicationRecord
 
   delegate :url_helpers, to: "Rails.application.routes"
   def link
-    host = Rails.application.config.action_mailer.default_url_options[:host]
-    host + url_helpers.transaction_path(self)
+    url_helpers.transaction_url(self)
   end
 
   def default_values

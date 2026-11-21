@@ -36,15 +36,34 @@ module Reimbursement
     def update
       authorize @expense
 
-      if expense_params[:reimbursement_report_id] && @expense.reimbursement_report_id != expense_params[:reimbursement_report_id]
+      original_report = @expense.report
+      attributes = expense_params
+
+      if params.dig(:reimbursement_expense, :report_reference).present?
+        authorize @expense, :admin_move?
+
+        report = find_report_by_reference(params[:reimbursement_expense][:report_reference])
+        return redirect_to @expense.report, flash: { error: "We couldn't find that reimbursement report." } if report.nil?
+        return redirect_to @expense.report, flash: { error: "Expenses can only be moved into draft reports." } if report.locked?
+
+        attributes = attributes.merge(reimbursement_report_id: report.id)
+      end
+
+      if attributes[:reimbursement_report_id] && @expense.reimbursement_report_id != attributes[:reimbursement_report_id].to_i
         @expense.assign_attributes(expense_number: nil, aasm_state: :pending, approved_by_id: nil)
       end
-      @expense.assign_attributes(expense_params.except(:event_id))
+      @expense.assign_attributes(attributes.except(:event_id))
 
       authorize @expense # we authorize twice in case the reimbursement_report_id changes
 
-      if expense_params[:event_id].presence
-        event = Event.find(expense_params[:event_id])
+      # Managers can act on every report in their event, but an expense should
+      # stay with the person who incurred it. Only admins may reassign it.
+      if @expense.report.user_id != original_report.user_id && !admin_signed_in?
+        return redirect_to original_report, flash: { error: "Expenses can only be moved to another report belonging to the same person." }
+      end
+
+      if attributes[:event_id].presence
+        event = Event.find(attributes[:event_id])
         report = event.reimbursement_reports.build({ user: @expense.report.user })
         authorize report, :change_event?
         ActiveRecord::Base.transaction do
@@ -106,6 +125,19 @@ module Reimbursement
 
     def set_expense
       @expense = Reimbursement::Expense.find(params[:expense_id] || params[:id])
+    end
+
+    # Accepts a report URL (e.g. https://hcb.hackclub.com/reimbursement/reports/QkS9gz),
+    # its hashid, its public ID (rmr_…), or its numeric ID.
+    def find_report_by_reference(reference)
+      reference = reference.to_s.strip
+      reference = reference[/\/reimbursement\/reports\/([^\/?#]+)/, 1] || reference
+
+      if reference.match?(/\A\d+\z/)
+        Reimbursement::Report.find_by(id: reference)
+      else
+        Reimbursement::Report.find_by_public_id(reference) || Reimbursement::Report.find_by_hashid(reference)
+      end
     end
 
     def total_turbo_stream

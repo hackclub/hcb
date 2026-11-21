@@ -71,7 +71,7 @@
   </div>
 <% end %>
 <%= modal "Select receipt", id: "link_receipt_#{instance}", size: :huge do %>
-  <%= turbo_frame_tag dom_id(expense, :link_modal), src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>
+  <%= turbo_frame_tag dom_id(expense, :link_modal), src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false), loading: :lazy do %>
     <strong>Loading...</strong>
   <% end %>
 <% end %>

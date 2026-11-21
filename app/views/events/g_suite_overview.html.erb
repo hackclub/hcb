@@ -1,7 +1,7 @@
 <% title "Google Workspace for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :google_workspace %>
-<% if !@event.g_suites.exists? && !Flipper.enabled?(:google_workspace, @event) %>
+<% if @g_suite.nil? && !Flipper.enabled?(:google_workspace, @event) %>
   <%= render "events/one_pager",
      title: "Google Workspace",
      screenshots: {
@@ -41,9 +41,9 @@
     <% end %>
     <%= content_tag :span, @g_suite.domain, class: "badge bg-info h3 ml0" if @g_suite %>
   </h1>
-  <%= render partial: "application/admin_viewer", locals: { record: @g_suite } %>
-  <div class="mb-2"></div>
   <% if @g_suite.present? %>
+    <%= render partial: "application/admin_viewer", locals: { record: @g_suite } %>
+    <div class="mb-2"></div>
     <% if @g_suite.revocation.present? %>
       <%= render "g_suite_revocations/notice" %>
     <% end %>

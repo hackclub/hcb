@@ -19,6 +19,7 @@ module ApplicationHelper
   include PayeesHelper
   include PopoverHelper
   include ReceiptsHelper
+  include Reimbursement::ExpensesHelper
   include SeasonalHelper
   include SessionsHelper
   include StaticPagesHelper

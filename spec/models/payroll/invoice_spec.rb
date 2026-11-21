@@ -13,7 +13,7 @@ RSpec.describe Payroll::Invoice, type: :model do
   end
 
   def build_invoice(**attrs)
-    position.invoices.build(name: "Engineering hours", amount_cents: 1_000, currency: position.currency, **attrs)
+    position.invoices.build(name: "Engineering hours", amount_cents: 1_000, currency: position.currency, start_date: position.start_date, end_date: position.start_date + 6.days, **attrs)
   end
 
   def stub_balance(cents)
@@ -24,6 +24,22 @@ RSpec.describe Payroll::Invoice, type: :model do
     it "rejects non-positive amounts" do
       expect(build_invoice(amount_cents: 0)).not_to be_valid
       expect(build_invoice(amount_cents: -100)).not_to be_valid
+    end
+
+    it "requires both dates on new invoices" do
+      expect(build_invoice(start_date: nil)).not_to be_valid
+      expect(build_invoice(end_date: nil)).not_to be_valid
+    end
+
+    it "rejects an end date before the start date but allows a single day" do
+      expect(build_invoice(start_date: position.start_date + 2.days, end_date: position.start_date + 1.day)).not_to be_valid
+      expect(build_invoice(end_date: position.start_date)).to be_valid
+    end
+
+    it "rejects dates outside the contract period, inclusive of its boundaries" do
+      expect(build_invoice(start_date: position.start_date - 1.day)).not_to be_valid
+      expect(build_invoice(end_date: position.end_date + 1.day)).not_to be_valid
+      expect(build_invoice(start_date: position.start_date, end_date: position.end_date)).to be_valid
     end
   end
 
@@ -62,6 +78,18 @@ RSpec.describe Payroll::Invoice, type: :model do
 
       expect(invoice.approve(reviewed_by: approver)).to eq(true)
       expect { expect(stale_copy.approve(reviewed_by: approver)).to eq(false) }.not_to change(Payment, :count)
+    end
+
+    # Invoices from before dates existed, or whose contract was later shortened, must stay reviewable.
+    it "still approves invoices that no longer satisfy the date rules" do
+      stub_balance(100_00)
+      legacy = build_invoice.tap(&:save!)
+      legacy.update_columns(start_date: nil, end_date: nil)
+      shortened = build_invoice(end_date: position.end_date).tap(&:save!)
+      position.update_columns(end_date: position.start_date + 1.day)
+
+      expect(legacy.approve(reviewed_by: approver)).to eq(true)
+      expect(Payroll::Invoice.find(shortened.id).approve(reviewed_by: approver)).to eq(true)
     end
   end
 end

@@ -23,7 +23,7 @@ RSpec.describe "Contractor invoice review", type: :system do
   end
 
   def create_invoice(name, amount_cents: 50_00, attachment: true)
-    position.invoices.create!(name:, amount_cents:, currency: "USD").tap do |invoice|
+    position.invoices.create!(name:, amount_cents:, currency: "USD", start_date: position.start_date, end_date: position.start_date).tap do |invoice|
       next unless attachment
 
       Receipt.create!(receiptable: invoice, user: create(:user), upload_method: :contractor_invoice,
