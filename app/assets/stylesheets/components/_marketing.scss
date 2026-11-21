@@ -4225,19 +4225,12 @@ $mk-term-green: #62d196;
   }
 }
 
-// How it works as a timeline: red markers on a connecting line. Runs down the left on
-// narrow columns, across four columns once there's room.
+// How it works as a vertical timeline: red markers on a line down the left.
 .mk-ais-steps {
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
   counter-reset: mk-ais-step;
-
-  @container (min-width: 720px) {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 24px;
-  }
 
   li {
     position: relative;
@@ -4282,22 +4275,19 @@ $mk-term-green: #62d196;
       }
     }
 
-    @container (min-width: 720px) {
-      padding: 52px 0 0;
-
-      &::after {
-        top: 16px;
-        bottom: auto;
-        left: 46px;
-        right: -18px;
-        width: auto;
-        height: 2px;
-        background: linear-gradient(90deg, $red, rgba($red, 0.15));
-      }
+    // With room, the timing pill sits beside the title instead of above it.
+    @container (min-width: 560px) {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas: 'title when' 'text text';
+      align-items: center;
+      column-gap: 12px;
     }
   }
 
   &__when {
+    grid-area: when;
+    justify-self: start;
     display: inline-block;
     margin-bottom: 8px;
     padding: 2px 10px;
@@ -4309,6 +4299,7 @@ $mk-term-green: #62d196;
   }
 
   h3 {
+    grid-area: title;
     margin-bottom: 4px;
     font-family: $font-family;
     font-size: 1rem;
@@ -4316,7 +4307,19 @@ $mk-term-green: #62d196;
   }
 
   p {
+    grid-area: text;
     line-height: 1.55;
+  }
+
+  @container (min-width: 560px) {
+    .mk-ais-steps__when,
+    h3 {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin-top: 4px;
+    }
   }
 }
 
