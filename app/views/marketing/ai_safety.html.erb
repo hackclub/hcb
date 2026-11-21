@@ -81,19 +81,38 @@
     <div class="mk-ais__main">
       <%# ============================ HEADER ============================ %>
       <header class="mk-ais__head">
-        <h1 class="mk-ais__title">Fiscal sponsorship for AI safety teams</h1>
+        <div class="mk-ais__title-row">
+          <h1 class="mk-ais__title">Fiscal sponsorship for AI safety teams</h1>
+          <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
+            <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
+              <%= inline_icon "copy", size: 18, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
+              <%= inline_icon "copy-check", size: 18, class: "mk-ais-ask__icon mk-ais-ask__icon--done" %>
+              <span data-ai-ask-target="label" aria-live="polite">Copy as Markdown</span>
+            </a>
+            <details class="mk-ais-ask__more" data-ai-ask-target="menu">
+              <summary aria-label="Ask an AI about this page"><%= inline_icon "down-caret", size: 18 %></summary>
+              <ul class="mk-ais-ask__menu">
+                <% ai_safety_llm_links.each do |name, url| %>
+                  <li>
+                    <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>">
+                      <span class="mk-ais-ask__item">Ask <%= name %> <%= inline_icon "external", size: 14 %></span>
+                      <span class="mk-ais-ask__hint">Opens with this page loaded</span>
+                    </a>
+                  </li>
+                <% end %>
+                <li>
+                  <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown">
+                    <span class="mk-ais-ask__item">View as Markdown <%= inline_icon "markdown", size: 14 %></span>
+                    <span class="mk-ais-ask__hint">Plain text for any AI tool</span>
+                  </a>
+                </li>
+              </ul>
+            </details>
+          </div>
+        </div>
         <p class="mk-ais__lead">If you have a grant but no nonprofit, run it through HCB, part of Hack Club's <span class="whitespace-nowrap">501(c)(3)</span>. You get a bank account, payroll, and cards. <span class="mk-ais__mark">Setup takes days.</span></p>
         <%= render "marketing/ai_safety_cta", event: "AIS+Hero+CTA" %>
         <p class="mk-ais__contact">Funding a team? Check out <a href="#grantmakers" class="mk-ais__link plausible-event-name=AIS+Grantmakers+CTA">HCB for grantmakers</a></p>
-        <div class="mk-ais-ask">
-          <p class="mk-ais-ask__label">Ask an AI about this page</p>
-          <div class="mk-ais-ask__links">
-            <% ai_safety_llm_links.each do |name, url| %>
-              <a href="<%= url %>" target="_blank" rel="noopener" class="mk-ais-ask__btn plausible-event-name=AIS+Ask+<%= name %>">Ask <%= name %></a>
-            <% end %>
-            <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__btn plausible-event-name=AIS+Copy+Markdown" data-controller="markdown-copy" data-action="markdown-copy#copy" aria-live="polite">Copy as Markdown</a>
-          </div>
-        </div>
       </header>
 
       <%# ============================ KEY FACTS ============================ %>

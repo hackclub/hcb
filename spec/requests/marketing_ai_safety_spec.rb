@@ -102,10 +102,11 @@ RSpec.describe "AI safety landing page", type: :request do
       get ai_safety_path
 
       markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
-      ask = page.css(".mk-ais-ask a").map { |a| a["href"] }
+      ask = page.css(".mk-ais-ask__menu a").map { |a| a["href"] }
       expect(ask.first(3)).to all(include(ERB::Util.url_encode(markdown_url)))
       expect(ask.first(3).map { |href| URI(href).host }).to eq(%w[chatgpt.com claude.ai www.perplexity.ai])
       expect(ask.last).to eq("/for/ai-safety.md")
+      expect(page.at_css(".mk-ais-ask__copy")["href"]).to eq("/for/ai-safety.md")
     end
 
     it "has no em dashes or exclamation marks in the page copy" do

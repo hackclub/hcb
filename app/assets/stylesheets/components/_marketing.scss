@@ -4417,37 +4417,131 @@ $mk-term-green: #62d196;
   }
 }
 
-// "Ask an AI about this page" row under the /for/ai-safety hero.
+// "Copy as Markdown" split button beside the /for/ai-safety title, with a menu of AI apps.
+.mk-ais__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
 .mk-ais-ask {
-  margin-top: 20px;
+  position: relative;
+  display: inline-flex;
+  border: 1px solid rgba($black, 0.18);
+  border-radius: var(--radius-lg);
+  background: $white;
+  font-family: $font-family;
 
-  &__label {
-    margin: 0 0 8px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  &__links {
-    display: flex;
-    flex-wrap: wrap;
+  .mk-ais & &__copy,
+  &__more summary {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-  }
-
-  .mk-ais &__btn {
-    display: inline-block;
     padding: 8px 14px;
-    border: 1px solid rgba($black, 0.18);
-    border-radius: var(--radius-lg);
-    background: $white;
     color: $mk-ink;
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
 
     &:hover {
-      border-color: $mk-ink;
+      background: $snow;
     }
+  }
+
+  .mk-ais & &__copy {
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  }
+
+  &__icon--done,
+  &__copy.is-copied &__icon--copy {
+    display: none;
+  }
+
+  &__copy.is-copied &__icon--done {
+    display: inline;
+    color: $green-dark;
+  }
+
+  &__more {
+    display: flex; // the caret fills the button's full height
+    inline-size: auto;
+    border-left: 1px solid rgba($black, 0.18);
+
+    // The app animates every <details>; a menu should just appear.
+    &::details-content {
+      transition: none;
+    }
+
+    summary {
+      padding: 8px 10px;
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    &[open] summary {
+      background: $snow;
+    }
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    min-width: 260px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba($black, 0.12);
+    border-radius: var(--radius-lg);
+    background: $white;
+    box-shadow: 0 12px 32px -12px rgba($black, 0.25);
+
+    .mk-ais & a {
+      display: grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md, 6px);
+      color: $mk-ink;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        background: $snow;
+      }
+    }
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    svg {
+      color: $muted-text;
+    }
+  }
+
+  &__hint {
+    font-size: 0.8rem;
+    color: $muted-text;
+  }
+}
+
+// On phones the button sits under the title; open the menu leftward from its start.
+@media (max-width: 599.98px) {
+  .mk-ais-ask__menu {
+    right: auto;
+    left: 0;
   }
 }
 
