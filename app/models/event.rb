@@ -485,6 +485,7 @@ class Event < ApplicationRecord
 
   has_many :fees
   has_many :bank_fees
+  has_one :pending_bank_fee, -> { where(aasm_state: :pending) }, class_name: "BankFee"
 
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
@@ -1066,6 +1067,39 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def update_pending_bank_fee
+    # This runs from `Fee#after_commit` on whichever Event instance created the fee, which
+    # may have already memoized the totals before the fee existed.
+    @total_fees_v2_cents = nil
+    @total_fee_payments_v2_cents = nil
+    @fee_balance_v2_cents = nil
+
+    # `has_one` caches a nil as readily as a record, so look again each time.
+    bank_fee = reload_pending_bank_fee
+    own_pending_transaction_ids = bank_fee ? bank_fee.canonical_pending_transactions.map(&:id) : []
+
+    # `fee_balance_v2_cents` nets out every unsettled bank fee pending transaction mapped
+    # to this event, including this fee's own -- but only once
+    # `PendingEventMappingEngine::Map::BankFee` has mapped it, which runs on a half hourly
+    # cron. Add our own contribution back so we write the same amount either way.
+    already_netted = canonical_pending_transactions.bank_fee
+                                                   .unsettled
+                                                   .where(id: own_pending_transaction_ids)
+                                                   .sum(:amount_cents)
+
+    # A regular bank fee is negative; see `HasBookTransfer`.
+    amount_cents = already_netted - fee_balance_v2_cents
+
+    # Most fees are waived (`amount_cents_as_decimal` of 0), so don't open a bank fee for
+    # an event that doesn't owe anything.
+    return if bank_fee.nil? && amount_cents.zero?
+
+    bank_fee ||= bank_fees.build(aasm_state: :pending)
+    bank_fee.amount_cents = amount_cents
+    bank_fee.save!
+    bank_fee
   end
 
   def to_combobox_display
