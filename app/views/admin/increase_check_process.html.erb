@@ -6,7 +6,7 @@
 
   <%= link_to ledger_item_path(@check.ledger_item), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
-    View transaction (<%= pluralize(@check.local_hcb_code.comments.count, "comment") %>)
+    View transaction (<%= pluralize(@check.local_hcb_code.all_comments.count, "comment") %>)
   <% end %>
 </div>
 

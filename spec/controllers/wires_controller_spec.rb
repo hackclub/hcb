@@ -119,6 +119,45 @@ RSpec.describe WiresController do
     end
   end
 
+  describe "reject" do
+    let(:admin) { create(:user, :make_admin) }
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:wire) { create(:wire, :pending, event:) }
+
+    before do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      allow_any_instance_of(Wire).to receive(:mark_rejected!)
+      allow_any_instance_of(Payment).to receive(:legal_entity).and_return(double("LegalEntity", payable?: false, default_payout_method: nil).as_null_object)
+      create_session(admin, verified: true)
+    end
+
+    context "when the wire belongs to a payment" do
+      let(:payee) { create(:payee, event:) }
+      let(:payment) { create(:payment, payee:) }
+      let(:wire) { create(:wire, :pending, event:, account_number: "DE89370400440532013000") }
+
+      before do
+        create(:payment_attempt, :wire, payment:, payout: wire, aasm_state: "rejected", payout_method: create(:legal_entity_payout_method_wire, details: build(:wire_payout_method_details, account_number: "DE89370400440532013000", bic_code: "DEUTDEDB", recipient_country: :DE, address_city: "Berlin", address_postal_code: "10115", address_state: "Berlin")))
+      end
+
+      it "attaches the comment to the payment" do
+        post(:reject, params: { id: wire.id, comment: "bad wire" })
+
+        expect(payment.comments.reload.sole.content).to eq("bad wire")
+        expect(wire.local_hcb_code.comments.reload).to be_empty
+      end
+    end
+
+    context "when the wire does not belong to a payment" do
+      it "attaches the comment to the local hcb code" do
+        post(:reject, params: { id: wire.id, comment: "bad wire" })
+
+        expect(wire.local_hcb_code.comments.reload.sole.content).to eq("bad wire")
+      end
+    end
+  end
+
   describe "send_wire" do
     it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
       admin = create(:user, :make_admin)
