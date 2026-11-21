@@ -78,6 +78,8 @@ class CardGrant < ApplicationRecord
 
   before_validation :create_card_grant_setting, on: :create
 
+  after_initialize :inherit_pre_authorization_setting, if: :new_record?
+
   before_validation do
     self.expiration_at ||= default_expiration_at
   end
@@ -439,6 +441,19 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
+  end
+
+  # Default `pre_authorization_required` from the event's card grant setting so
+  # the "Require pre-authorization?" checkbox is pre-checked when the event has
+  # opted in. The column is `NOT NULL DEFAULT false`, so a plain `nil` check
+  # can't tell an omitted value from an explicit `false`; `_came_from_user?`
+  # is true only when the attribute was assigned (e.g. the form's unchecked
+  # checkbox submits "0"), so an explicit opt-out is preserved.
+  def inherit_pre_authorization_setting
+    return if pre_authorization_required_came_from_user?
+    return if event&.card_grant_setting.nil?
+
+    self.pre_authorization_required = event.card_grant_setting.pre_authorization_required
   end
 
 end
