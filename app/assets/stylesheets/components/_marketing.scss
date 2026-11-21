@@ -3866,6 +3866,13 @@ $mk-term-green: #62d196;
   }
 
   // The big CTA sits in the header, so it gets tighter spacing than at the bottom.
+  &__mark {
+    text-decoration: underline;
+    text-decoration-color: $red;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
   &__head .mk-ais-cta {
     margin: 28px 0 0;
   }
