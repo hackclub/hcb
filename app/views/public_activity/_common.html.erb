@@ -21,7 +21,7 @@
         <%= yield %>
       </span>
       <div class="flex items-center">
-        <% url = hcb_code_path(activity.trackable.hcb_code) if activity.trackable.try(:hcb_code) %>
+        <% url = activity.trackable.try(:hcb_code) ? hcb_code_path(activity.trackable.hcb_code) : nil %>
         <% if defined?(url) && url %>
           <%= link_to url, class: "flex items-center", target: "_blank" do %>
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
