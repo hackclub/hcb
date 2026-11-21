@@ -342,7 +342,7 @@ RSpec.describe Event::StatementOfActivity do
     end
 
     it "leaves intra-org transfers out of revenue and expense for a group, but keeps inter-org ones" do
-      # The summary sentence would otherwise count money moved inside the group as both raised and spent.
+      # #15898: the summary sentence would otherwise count money moved inside the group as both raised and spent.
       group = create(:event_group)
       event_a, event_b, outside = create_list(:event, 3)
       group.memberships.create!(event: event_a)
@@ -358,15 +358,19 @@ RSpec.describe Event::StatementOfActivity do
       external = create(:disbursement, source_event: event_b, event: outside)
       create_disbursement_transaction(disbursement: external, event: event_b, hcb_code: external.outgoing_hcb_code, amount_cents: -30_00)
 
+      # #15898 only drops intra-org transfers, so money coming in from outside the group is still revenue.
+      incoming = create(:disbursement, source_event: outside, event: event_a)
+      create_disbursement_transaction(disbursement: incoming, event: event_a, hcb_code: incoming.incoming_hcb_code, amount_cents: 50_00)
+
       instance = described_class.new(group, start_date_param: "1970-01-01")
 
-      expect(instance.total_revenue).to eq(1_000_00)
+      expect(instance.total_revenue).to eq(1_050_00)
       expect(instance.total_expense).to eq(-30_00)
-      expect(instance.net_asset_change).to eq(970_00)
+      expect(instance.net_asset_change).to eq(1_020_00)
     end
 
     it "leaves intra-org transfers out of revenue and expense for parent/child with include_descendants" do
-      # Same as the group case, for an organization's statement that includes its sub-organizations (e.g. /hq).
+      # #15898: same as the group case, for an organization's statement that includes its sub-organizations (e.g. /hq).
       parent = create(:event)
       child = create(:event, parent:)
 
