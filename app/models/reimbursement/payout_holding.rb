@@ -7,7 +7,9 @@
 #  id                       :bigint           not null, primary key
 #  aasm_state               :string           not null
 #  amount_cents             :integer          not null
+#  failure_reason           :string
 #  hcb_code                 :string
+#  retry_at                 :datetime
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  ach_transfer_id          :bigint
@@ -48,6 +50,10 @@ module Reimbursement
     belongs_to :wire, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :wise_transfer, optional: true, inverse_of: :reimbursement_payout_holding
 
+    scope :ready_for_payout, -> {
+      settled.or(failed.where(failure_reason: "column_unavailable", retry_at: ..Time.current))
+    }
+
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
     has_many :canonical_transactions, through: :local_hcb_code
@@ -81,11 +87,14 @@ module Reimbursement
       end
 
       event :mark_sent do
+        after { update!(failure_reason: nil, retry_at: nil) }
         transitions from: :settled, to: :sent
       end
 
       event :mark_failed do
-        transitions from: [:sent, :settled], to: :failed
+        after { update!(failure_reason: nil, retry_at: nil) }
+        # A bank return can arrive while outage recovery has already failed.
+        transitions from: [:sent, :settled, :failed], to: :failed
       end
 
       event :mark_reversed do
@@ -101,6 +110,10 @@ module Reimbursement
 
     def event
       @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
+    def unresolved_payout?
+      failure_reason.in?(["column_unavailable", "retry_window_expired", "reconciliation_required"])
     end
 
     def payout_transfer
