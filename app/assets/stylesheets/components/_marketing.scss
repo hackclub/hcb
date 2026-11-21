@@ -3787,6 +3787,10 @@ $mk-term-green: #62d196;
   // This page runs wider than the other /for/* pages. Nav and footer widen with it so edges line up.
   .mk-container {
     max-width: 1280px;
+
+    @media (min-width: 1600px) {
+      max-width: 1536px;
+    }
   }
 
   // Sections inside lay out by this column's width (with or without the index), not the viewport.
@@ -4048,6 +4052,12 @@ $mk-term-green: #62d196;
   gap: 20px;
   padding: 32px 0;
   border-top: 1px solid $smoke;
+
+  // Side by side only on very wide screens, where the ledger still fits one line per row.
+  @container (min-width: 1150px) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
 .mk-ais-card {
@@ -4778,6 +4788,10 @@ $mk-term-green: #62d196;
   .marketing-nav__inner,
   .marketing-footer__inner {
     max-width: 1280px;
+
+    @media (min-width: 1600px) {
+      max-width: 1536px;
+    }
   }
 }
 
