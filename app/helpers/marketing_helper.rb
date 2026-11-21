@@ -517,7 +517,7 @@ module MarketingHelper
       {
         id: "funder-needs-sponsor",
         q: "Our funder needs a fiscal sponsor before it pays us. Can you help?",
-        a: "Usually, yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes review, we sign an agreement with you. Then we send your funder our paperwork and open your account."
+        a: "Yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes review, we sign an agreement with you. Then we send your funder our paperwork and open your account."
       },
       {
         id: "how-fast",
