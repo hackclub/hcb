@@ -200,8 +200,9 @@ class Event
       if category.slug == INTERNAL_TRANSFER_SLUG
         disbursement ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
       # A payment between two organizations in the statement is neither's
-      # revenue or expense.
-      elsif disbursement&.transfer_type_payment?
+      # revenue or expense. A leg an admin set to repayment stays one, as
+      # repayments_received already takes it out of revenue.
+      elsif disbursement&.transfer_type_payment? && category.slug != Repayment::CATEGORY_SLUG
         INTRA_ORG_TRANSFER
       else
         category

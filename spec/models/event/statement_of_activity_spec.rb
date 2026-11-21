@@ -417,6 +417,21 @@ RSpec.describe Event::StatementOfActivity do
         expect(result[supplies]).to eq([outgoing])
         expect(result).not_to have_key(described_class::INTRA_ORG_TRANSFER)
       end
+
+      # #15894: repayments_received already takes a repayment leg out of revenue, so moving it to intra-org would count it twice.
+      it "keeps a payment leg an admin set to repayment under repayment" do
+        group = create(:event_group)
+        event_b = create(:event)
+        group.memberships.create!(event: event_a)
+        group.memberships.create!(event: event_b)
+        outgoing, incoming = create_payment(event_b)
+        incoming.category_mapping.update!(category: TransactionCategory.find_or_create_by!(slug: Repayment::CATEGORY_SLUG))
+
+        result = described_class.new(group, start_date_param: "1970-01-01").transactions_by_category
+
+        expect(result[described_class::INTRA_ORG_TRANSFER]).to eq([outgoing])
+        expect(result[TransactionCategory.find_by!(slug: Repayment::CATEGORY_SLUG)]).to eq([incoming.reload])
+      end
     end
   end
 end
