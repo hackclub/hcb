@@ -84,11 +84,15 @@ RSpec.describe MarketingHelper, type: :helper do
   end
 
   describe "#ai_safety_ledger_rows" do
-    it "has 7 rows with exactly one incoming" do
+    it "has 8 rows: one grant, its 7% fee, and spending" do
       rows = helper.ai_safety_ledger_rows
 
-      expect(rows.size).to eq(7)
+      expect(rows.size).to eq(8)
       expect(rows.count { |r| r[:amount_cents].positive? }).to eq(1)
+
+      # The example has to show the real fee on the grant.
+      grant, fee = rows.first(2)
+      expect(fee[:amount_cents]).to eq(-grant[:amount_cents] * 7 / 100)
     end
   end
 

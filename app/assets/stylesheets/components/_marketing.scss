@@ -4042,33 +4042,149 @@ $mk-term-green: #62d196;
   }
 }
 
-// Example month and fees side by side once the column has room.
+// Example month and fees: two matching cards, side by side once the column has room.
 .mk-ais-pair {
   display: grid;
+  gap: 20px;
+  padding: 32px 0;
+  border-top: 1px solid $smoke;
 
   @container (min-width: 720px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 40px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.mk-ais-card {
+  border: 1px solid rgba($black, 0.12);
+  border-radius: var(--radius-lg);
+  background: $white;
+  overflow: hidden;
+
+  // The ledger's <caption> and the fees <h2> share one header style.
+  .mk-ais & &__head {
+    margin: 0;
+    line-height: 1.5; // the caption and the h2 otherwise inherit different line heights
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba($black, 0.1);
+    background: $snow;
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-align: left;
+    color: $mk-ink;
+  }
+
+  // A caption left as a table caption spans the table; display: block would shrink it.
+  caption.mk-ais-card__head {
+    caption-side: top;
   }
 }
 
 .mk-ais-ledger {
-  & &__amount {
-    font-family: $mono;
-    font-size: 0.8125rem;
-    text-align: right;
-    white-space: nowrap;
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  .mk-ais & td,
+  .mk-ais & th {
+    padding: 11px 18px;
+    border-bottom: 1px solid rgba($black, 0.06);
+    white-space: normal;
+    font-size: 0.9375rem;
     color: $mk-ink;
   }
 
-  &__row--in .mk-ais-ledger__amount {
+  .mk-ais & &__amount {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .mk-ais & &__row--in &__amount {
     color: $green-dark;
+  }
+
+  // The fee is the line a careful reader looks for, so it gets a quiet highlight.
+  .mk-ais & &__row--fee td {
+    background: rgba($red, 0.04);
+    color: $slate;
+  }
+
+  .mk-ais & tfoot th,
+  .mk-ais & tfoot td {
+    border-bottom: 0;
+    border-top: 2px solid $mk-ink;
+    font-weight: 700;
+  }
+
+  .mk-ais & tfoot th {
+    text-align: left;
   }
 }
 
-.mk-ais-fees {
-  & td {
-    text-align: right;
+.mk-ais-fee {
+  padding: 18px;
+
+  &__rate {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__big {
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-size: 3.25rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: $red;
+  }
+
+  &__detail {
+    margin: 12px 0 0;
+    line-height: 1.55;
+    color: $slate;
+    text-wrap: pretty;
+  }
+
+  &__list {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
+      padding: 10px 0;
+      border-top: 1px solid rgba($black, 0.08);
+      line-height: 1.45;
+      color: $slate;
+    }
+  }
+
+  &__amt {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: $mk-ink;
+  }
+
+  .mk-ais & &__cta {
+    display: inline-block;
+    margin-top: 16px;
+    font-weight: 600;
+    color: $red;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 

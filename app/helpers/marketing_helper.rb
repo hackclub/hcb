@@ -594,6 +594,7 @@ module MarketingHelper
   def ai_safety_ledger_rows
     [
       { memo: "Grant", amount_cents: 850_000_00 },
+      { memo: "Fiscal sponsorship fee · 7%", amount_cents: -59_500_00, fee: true },
       { memo: "Payroll · 3 staff", amount_cents: -48_150_00 },
       { memo: "Cloud GPUs", amount_cents: -12_736_40 },
       { memo: "Contractor · London (GBP)", amount_cents: -8_125_00 },

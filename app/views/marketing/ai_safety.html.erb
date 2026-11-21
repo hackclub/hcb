@@ -139,38 +139,38 @@
 
       <div class="mk-ais-pair">
         <%# ============================ EXAMPLE LEDGER ============================ %>
-        <section id="example-month" class="mk-ais__section" aria-labelledby="example-month-title">
-          <table class="mk-ais-table mk-ais-ledger">
-            <caption id="example-month-title">Example first month on HCB</caption>
+        <section id="example-month" class="mk-ais-card" aria-labelledby="example-month-title">
+          <% rows = ai_safety_ledger_rows %>
+          <table class="mk-ais-ledger">
+            <caption id="example-month-title" class="mk-ais-card__head">Example first month on HCB</caption>
             <thead class="mk-vh"><tr><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
             <tbody>
-              <% ai_safety_ledger_rows.each do |row| %>
-                <tr class="mk-ais-ledger__row--<%= row[:amount_cents].positive? ? "in" : "out" %>">
+              <% rows.each do |row| %>
+                <%= tag.tr class: class_names("mk-ais-ledger__row", "mk-ais-ledger__row--in": row[:amount_cents].positive?, "mk-ais-ledger__row--fee": row[:fee]) do %>
                   <td><%= row[:memo] %></td>
                   <td class="mk-ais-ledger__amount"><%= ai_safety_ledger_amount(row[:amount_cents]) %></td>
-                </tr>
+                <% end %>
               <% end %>
             </tbody>
+            <tfoot>
+              <tr><th scope="row">Balance</th><td class="mk-ais-ledger__amount"><%= render_money(rows.sum { |row| row[:amount_cents] }) %></td></tr>
+            </tfoot>
           </table>
         </section>
 
         <%# ============================ FEES ============================ %>
-        <section id="fees" class="mk-ais__section" aria-labelledby="fees-title">
-          <h2 id="fees-title" class="mk-ais__h2">Fees</h2>
-          <table class="mk-ais-table mk-ais-table--plain mk-ais-fees">
-            <thead><tr><th scope="col">Item</th><th scope="col">Cost</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Grants and donations</th><td class="mk-ais__num">7%</td></tr>
-              <tr><th scope="row">Setup, legal, monthly, cards</th><td class="mk-ais__num">$0</td></tr>
-              <tr><th scope="row">International transfers</th><td>Provider's cost</td></tr>
-              <tr><th scope="row">Wires under <span class="mk-ais__num">$500</span></th><td class="mk-ais__num">$25</td></tr>
-            </tbody>
-          </table>
-          <ul class="mk-ais-list">
-            <li>The 7% is charged when each grant or donation arrives. A grant paid in two parts is charged in two parts.</li>
-            <li>On a <span class="mk-ais__num">$500,000</span> grant, <span class="mk-ais__num">$465,000</span> goes to your work.</li>
-          </ul>
-          <p class="mk-ais__more"><a href="#talk-to-us">Send us your grant letter</a></p>
+        <section id="fees" class="mk-ais-card" aria-labelledby="fees-title">
+          <h2 id="fees-title" class="mk-ais-card__head">Fees</h2>
+          <div class="mk-ais-fee">
+            <p class="mk-ais-fee__rate"><span class="mk-ais-fee__big">7%</span> of grants and donations</p>
+            <p class="mk-ais-fee__detail">Charged as each one arrives. A grant paid in two parts is charged in two parts. On a $500,000 grant, $465,000 goes to your work.</p>
+            <ul class="mk-ais-fee__list">
+              <li><span class="mk-ais-fee__amt">$0<span class="mk-vh">:</span></span> Setup, legal, monthly, and card fees</li>
+              <li><span class="mk-ais-fee__amt">At cost<span class="mk-vh">:</span></span> International transfers, at our payment provider's rate</li>
+              <li><span class="mk-ais-fee__amt">$25<span class="mk-vh">:</span></span> Wires under $500</li>
+            </ul>
+            <a href="#talk-to-us" class="mk-ais-fee__cta">Send us your grant letter &rarr;</a>
+          </div>
         </section>
       </div>
 
