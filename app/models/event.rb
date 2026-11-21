@@ -61,8 +61,6 @@
 class Event < ApplicationRecord
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
-  self.ignored_columns += ["demo_mode"]
-
   include Hashid::Rails
   hashid_config salt: ""
 
