@@ -9,8 +9,8 @@
     of <%= render_money @donation.recurring_donation.amount %> per month
     to <%= @donation.event.name %>
     has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your
-    card has been charged <%= render_money @donation.amount %>. Please consider
-    this email a receipt for your <%= secondary_payment_term %> for the month of
+    card has been charged <%= render_money @donation.amount %>. Please find
+    attached a receipt for your <%= secondary_payment_term %> for the month of
     <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
   </p>
 <% else %>
@@ -19,7 +19,7 @@
     generous <%= "anonymous " if @donation.anonymous? %> <%= payment_term %>
     of <%= render_money @donation.amount %> to <%= @donation.event.name %>.
     Please
-    consider this email a receipt for your <%= secondary_payment_term %>.
+    find attached a receipt for your <%= secondary_payment_term %>.
   </p>
 <% end %>
 
