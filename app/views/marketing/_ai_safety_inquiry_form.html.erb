@@ -21,7 +21,7 @@
   </div>
 
   <fieldset class="marketing-form__fieldset">
-    <legend class="marketing-form__label">I'm…</legend>
+    <legend class="marketing-form__label">I am</legend>
     <div class="marketing-form__options">
       <% MarketingInquiry::AUDIENCES.each do |key, label| %>
         <label class="marketing-form__option">
@@ -35,7 +35,7 @@
   <div class="marketing-form__field">
     <label for="ai_safety_inquiry_message" class="marketing-form__label">Message <span class="marketing-form__optional">(optional)</span></label>
     <%= f.text_area :message, value: prefill["message"], rows: 4, maxlength: 1000,
-          placeholder: "Your funder, grant size, timeline, and where your team is based.",
+          placeholder: "Funder, grant size, timeline, and where your team is based.",
           class: "marketing-form__input marketing-form__textarea" %>
   </div>
 
@@ -43,5 +43,5 @@
 
   <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">Send</button>
 
-  <p class="marketing-form__hint">To share your grant letter, reply to our email with it attached.</p>
+  <p class="marketing-form__hint">To send your grant letter, reply to our confirmation email with it attached.</p>
 <% end %>

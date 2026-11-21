@@ -512,67 +512,67 @@ module MarketingHelper
       {
         id: "need-a-501c3",
         q: "Do we need a 501(c)(3) to receive an AI safety grant?",
-        a: "No. A fiscal sponsor can receive the grant for you. With HCB, your project becomes a program of The Hack Foundation (Hack Club), a 501(c)(3), so funders can grant to it and donors can give tax-deductibly, without you forming a nonprofit."
+        a: "No. Your project becomes a program of The Hack Foundation (Hack Club), a 501(c)(3). Funders can grant to it, and donors can give tax-deductibly. You don't need to form a nonprofit."
       },
       {
         id: "funder-needs-sponsor",
         q: "Our funder needs a fiscal sponsor before it pays us. Can you help?",
-        a: "Usually, yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes our review, we sign a fiscal sponsorship agreement with you, send your funder our paperwork, and open your account."
+        a: "Usually, yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes review, we sign an agreement with you. Then we send your funder our paperwork and open your account."
       },
       {
         id: "how-fast",
         q: "How fast can we get set up?",
-        a: "Usually within days of your first email: a reply within one business day, then review and a signed agreement. When the money arrives depends on your funder's payment schedule."
+        a: "Usually within days. We reply within one business day, then review your project and sign an agreement. When the money arrives depends on your funder's payment schedule."
       },
       {
         id: "pay-outside-us",
-        q: "Can a fiscal sponsor pay researchers outside the US?",
-        a: "Yes, for contractors, fellows, and reimbursements, by bank transfer in local currency. Every international payment is screened against US sanctions rules, and some countries and people can't be paid under US law. UK team members can be hired as employees through our employer-of-record partner, with local payroll, tax, and pension."
+        q: "Can you pay researchers outside the US?",
+        a: "Yes. We pay contractors, fellows, and reimbursements by bank transfer in local currency. Every international payment is screened against US sanctions rules. US law bars payments to some countries and people. UK employees can be hired through our employer-of-record partner, with local payroll, tax, and pension."
       },
       {
         id: "individuals",
         q: "Can an individual researcher get fiscal sponsorship?",
-        a: "Yes, when your research is a charitable project Hack Club can take on as its own program. You're paid for your work on it as Hack Club staff or a contractor, and the grant stays in the project's account."
+        a: "Yes, if the research is a charitable project Hack Club can take on as its own program. You're paid for the work as Hack Club staff or a contractor. The grant stays in the project's account."
       },
       {
         id: "exposure",
-        q: "Is our project exposed to what other projects on HCB do?",
-        a: "Not its money. Each project's money is restricted to that project and kept in its own books, so other projects can't spend it. All projects are programs of one nonprofit, so Hack Club reviews projects before they join and oversees spending to protect everyone."
+        q: "Can other projects on HCB spend our project's money?",
+        a: "No. Your project's money is restricted to it and kept in its own books. All projects are programs of one nonprofit. So Hack Club reviews each project before it joins and oversees all spending."
       },
       {
         id: "grant-agreement",
         q: "Will you sign our funder's grant agreement?",
-        a: "Yes. Send it over and we'll review it. We keep restricted funds restricted, report as your agreement requires, and can give your funder read access to the project's books."
+        a: "Yes, after we review it. We keep restricted funds restricted and report as the agreement requires. Your funder can also get read access to the project's books."
       },
       {
         id: "private",
         q: "Can we keep our finances private?",
-        a: "Yes. Books are public by default, and you can make them private at any time."
+        a: "Yes. Books are public by default. You can make them private any time."
       },
       {
         id: "policy-work",
         q: "Can we do policy work?",
-        a: "Yes, within the rules for 501(c)(3) charities. Research, nonpartisan analysis, education, and briefing officials on issues are all fine. Lobbying, meaning asking lawmakers or the public to support or oppose specific legislation, is allowed only in limited amounts, counts toward Hack Club's limits as a whole, and some grants can't be used for it at all. Tell us before you lobby and we'll track it with you. Supporting or opposing candidates for office is never allowed."
+        a: "Yes, within the rules for 501(c)(3) charities. Research, nonpartisan analysis, education, and briefing officials on issues are fine. Lobbying means asking lawmakers or the public to support or oppose specific legislation. It's allowed only in limited amounts, and it counts toward Hack Club's limits as a whole. Some grants forbid it. Tell us before you lobby, and we'll track it with you. Supporting or opposing candidates for office is never allowed."
       },
       {
         id: "own-nonprofit",
-        q: "What happens if we want our own nonprofit later?",
-        a: "Yes, and we'll help. Once your new organization has 501(c)(3) status, Hack Club can transfer your project's remaining funds to it, subject to our approval and your funders' terms."
+        q: "Can we move to our own nonprofit later?",
+        a: "Yes, and we'll help. Once your new organization has 501(c)(3) status, Hack Club can transfer your project's remaining funds to it. The transfer needs our approval and must fit your funders' terms."
       },
       {
         id: "not-funded",
         q: "We're not funded yet. Can you help?",
-        a: "Usually not yet. HCB is built for projects that already have funding or are about to. If you're close to a grant, write to us anyway and tell us where things stand."
+        a: "Usually not yet. HCB is for projects that have funding or will soon. If a grant is close, write to us and tell us where things stand."
       },
       {
         id: "teenagers",
         q: "Isn't HCB for teenagers?",
-        a: "No. Hack Club built HCB in 2018 for teen-led hackathons. Today it hosts #{stats[:organizations]} organizations run by adults and teens, from research groups to robotics teams. Your project gets its own account and books."
+        a: "No. Hack Club built HCB in 2018 for teen-led hackathons. It now hosts #{stats[:organizations]} organizations run by adults and teens, from research groups to robotics teams. Your project gets its own account and books."
       },
       {
         id: "cost",
         q: "How much does fiscal sponsorship cost?",
-        a: "7% of grants and donations as they arrive. No setup, monthly, or card fees. International transfers carry our payment provider's cost, and wires under $500 cost $25. On a $500,000 grant, $465,000 goes to your work."
+        a: "7% of grants and donations, charged as they arrive. There are no setup, legal, monthly, or card fees. International transfers carry our payment provider's cost. Wires under $500 cost $25. On a $500,000 grant, $465,000 goes to your work."
       }
     ]
   end

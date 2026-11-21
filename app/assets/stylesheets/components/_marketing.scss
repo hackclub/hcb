@@ -3741,262 +3741,392 @@ $mk-term-green: #62d196;
   }
 }
 
-.mk-ais-hero {
-  .mk-hero__inner {
-    grid-template-areas: 'copy' 'stats' 'media';
-  }
+// A datasheet layout: key facts up top, then compact tables and definition lists,
+// with a sticky section index on desktop. Scoped to .mk-ais.
 
-  .mk-hero__copy {
-    grid-area: copy;
-  }
+.mk-ais {
+  $rule: $smoke;
+  $label: $muted-text;
 
-  .mk-hero__media {
-    grid-area: media;
-  }
-
-  .mk-stats {
-    grid-area: stats;
-    margin-top: 0;
-  }
-
-  @media (min-width: 920px) {
-    .mk-hero__inner {
-      grid-template-areas: 'copy media' 'stats stats';
-    }
-  }
-
-  .mk-hero__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  &__trust {
-    margin-top: 18px;
-    max-width: 520px;
-    font-size: 0.9rem;
-    line-height: 1.55;
-    color: $muted-text; // $muted fails 4.5:1 contrast on snow
-    text-wrap: pretty;
-  }
-}
-
-.mk-ais-ledger {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
+  --mk-ais-gap: 40px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: $slate;
   font-variant-numeric: tabular-nums;
+  padding: 40px 0 72px;
 
-  caption {
-    caption-side: top;
-    text-align: left;
-    padding: 16px 20px 12px;
-    font-family: $mono;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: $muted-text;
-    border-bottom: 1px solid rgba($black, 0.07);
-  }
-
-  td {
-    padding: 13px 20px;
-    border-bottom: 1px solid rgba($black, 0.06);
-    color: $mk-ink;
-    white-space: normal; // the app's global table cells don't wrap
-  }
-
-  tbody tr:last-child td {
-    border-bottom: 0;
-  }
-
-  &__row--in {
-    background: rgba($green, 0.07);
-  }
-
-  &__row--in &__amount {
-    color: $green-dark; // $green fails contrast on white
-  }
-
-  & &__amount {
-    text-align: right;
-    white-space: nowrap;
-    font-weight: 600;
-  }
-
-  @media (max-width: 639.98px) {
-    tbody tr:nth-child(n + 5) {
-      display: none;
-    }
-
-    tbody tr:nth-child(4) td {
-      -webkit-mask-image: linear-gradient(#000 20%, transparent);
-      mask-image: linear-gradient(#000 20%, transparent);
-    }
-  }
-}
-
-.mk-ais-chips {
-  justify-content: flex-start;
-  margin: 0 0 clamp(24px, 3vw, 32px);
-}
-
-.mk-ais-cards {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr;
-
-  @media (min-width: 720px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.mk-ais-card {
-  display: flex;
-  flex-direction: column;
-  padding: 28px 26px;
-  border-radius: var(--radius-xl);
-  background: $white;
-  box-shadow: var(--shadow-border-sm);
-
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    margin-bottom: 18px;
-    border-radius: var(--radius-lg);
-    background: rgba($red, 0.08);
-    color: $red;
-  }
-
-  &__title {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
-  }
-
-  &__lead {
-    color: $slate;
-    line-height: 1.55;
-    text-wrap: pretty;
-  }
-
-  &__lead a {
+  :where(a:not(.marketing-btn)) {
     color: $mk-ink;
     text-decoration: underline;
+    text-decoration-color: rgba($mk-ink, 0.3);
     text-underline-offset: 2px;
+
+    &:hover {
+      text-decoration-color: $red;
+    }
   }
 
-  .mk-ticks {
-    margin-top: 18px;
+  // Numbers only: monospace with tabular figures so columns line up.
+  &__num {
+    font-family: $mono;
+    font-size: 0.92em;
+    letter-spacing: -0.01em;
+    color: $mk-ink;
   }
 
-  .mk-ticks li:last-child {
-    margin-bottom: 0;
+  &__grid {
+    display: grid;
+    gap: var(--mk-ais-gap);
+
+    @media (min-width: 1000px) {
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 56px;
+    }
   }
-}
 
-.mk-ais-fee {
-  display: grid;
-  gap: 16px;
-  margin-top: clamp(40px, 6vw, 64px);
-  padding: clamp(24px, 4vw, 40px);
-  border-radius: var(--radius-2xl);
-  background: $white;
-  box-shadow: var(--shadow-border-md);
+  &__main {
+    min-width: 0;
+    max-width: 780px;
+  }
 
-  @media (min-width: 860px) {
-    grid-template-columns: 0.8fr 1.2fr;
-    gap: 48px;
+  // ---------------------------------------------------------------- index
+  &__index {
+    display: none;
+
+    @media (min-width: 1000px) {
+      display: block;
+      position: sticky;
+      top: calc(var(--mk-nav-h) + 24px);
+      align-self: start;
+      max-height: calc(100vh - var(--mk-nav-h) - 48px);
+      overflow-y: auto;
+      padding-top: 6px;
+    }
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 12px;
+      border-left: 1px solid $rule;
+      display: grid;
+      gap: 2px;
+    }
+
+    a {
+      display: block;
+      padding: 3px 0;
+      font-size: 0.8125rem;
+      color: $slate;
+      text-decoration: none;
+
+      &:hover {
+        color: $red;
+      }
+    }
+  }
+
+  &__index-sub a {
+    padding-left: 12px;
+    color: $label;
+  }
+
+  // ---------------------------------------------------------------- header
+  &__head {
+    padding-bottom: 24px;
   }
 
   &__title {
-    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    font-size: clamp(1.75rem, 3.2vw, 2.25rem);
     text-wrap: balance;
   }
 
-  &__body {
-    color: $slate;
-    line-height: 1.6;
-    text-wrap: pretty;
-  }
-
-  &__pass {
-    margin-top: 12px;
-    font-size: 0.95rem;
+  &__lead {
+    margin-top: 10px;
+    max-width: 60ch;
+    font-size: 1.0625rem;
     line-height: 1.55;
-    color: $muted-text;
     text-wrap: pretty;
   }
 
   &__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
     margin-top: 18px;
+  }
+
+  &__link {
+    font-weight: 600;
+  }
+
+  // The big CTA sits in the header, so it gets tighter spacing than at the bottom.
+  &__head .mk-ais-cta {
+    margin: 28px 0 0;
+  }
+
+  &__contact {
+    margin: 16px 0 0;
+    color: $label;
+  }
+
+  // ---------------------------------------------------------------- sections
+  &__section {
+    padding: 32px 0;
+    border-top: 1px solid $rule;
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+
+    &--facts {
+      padding-top: 0;
+      border-top: 0;
+    }
+  }
+
+  &__h2 {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  &__intro {
+    margin-bottom: 16px;
+    max-width: 64ch;
+  }
+
+  &__note,
+  &__aside {
+    font-size: 0.8125rem;
+    color: $label;
+  }
+
+  &__note {
+    margin-top: 10px;
+  }
+
+  &__more {
+    margin-top: 14px;
+    font-size: 0.875rem;
 
     a {
-      color: $red;
       font-weight: 600;
     }
   }
 }
 
-.mk-ais-intro {
-  margin-top: 28px;
-  color: $slate;
-  line-height: 1.55;
-  text-wrap: pretty;
+// ---------------------------------------------------------------- tables
+.mk-ais-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 
-  strong {
+  caption {
+    text-align: left;
+    caption-side: top;
+    padding-bottom: 8px;
+    border-bottom: 2px solid $mk-ink;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    font-size: 1.25rem;
     color: $mk-ink;
+  }
+
+  // Undo the app's global table look (nowrap cells, row borders, tinted thead).
+  tr {
+    border-bottom: 0;
+    background: none;
+  }
+
+  th,
+  td {
+    white-space: normal;
+    padding: 7px 12px 7px 0;
+    border-bottom: 1px solid $smoke;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  tr > :last-child {
+    padding-right: 0;
+  }
+
+  tbody th {
     font-weight: 600;
+    color: $mk-ink;
   }
 
-  a {
-    color: $red;
+  thead th {
+    font-size: 0.75rem;
     font-weight: 600;
-  }
-}
-
-.mk-ais-grantmakers {
-  display: grid;
-  gap: 28px;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'head' 'checks' 'diligence';
-
-  @media (min-width: 920px) {
-    grid-template-columns: 0.9fr 1.1fr;
-    grid-template-areas: 'head checks' 'diligence checks';
-    column-gap: 48px;
-    align-items: start;
+    color: $muted-text;
+    border-bottom-color: $smoke-dark;
   }
 
-  &__head {
-    grid-area: head;
+  &--plain {
+    margin: 12px 0;
 
-    .mk-section__title {
-      margin-bottom: 16px;
+    tbody th {
+      width: 40%;
     }
   }
 }
 
-.mk-ais-checks {
-  grid-area: checks;
+// The key facts table: framed, zebra-free, label | value | link.
+.mk-ais-facts {
+  tbody th {
+    width: 30%;
+  }
+
+  td:last-child {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+    font-size: 0.8125rem;
+
+    a {
+      color: $muted-text;
+
+      &:hover {
+        color: $red;
+      }
+    }
+  }
+
+  tbody tr:hover {
+    background: rgba($mk-ink, 0.025);
+  }
+
+  // Phone: label and value stack, link sits on the label line.
+  @media (max-width: 599.98px) {
+    display: block;
+
+    caption,
+    tbody {
+      display: block;
+    }
+
+    tbody td:last-child {
+      width: auto;
+    }
+
+    tbody tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 8px 0;
+      border-bottom: 1px solid $smoke;
+    }
+
+    tbody th,
+    tbody td {
+      width: auto;
+      padding: 0;
+      border: 0;
+    }
+
+    tbody td:nth-child(2) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: 2px;
+    }
+  }
+}
+
+.mk-ais-ledger {
+  max-width: 520px;
+
+  & &__amount {
+    font-family: $mono;
+    font-size: 0.8125rem;
+    text-align: right;
+    white-space: nowrap;
+    color: $mk-ink;
+  }
+
+  &__row--in .mk-ais-ledger__amount {
+    color: $green-dark;
+  }
+}
+
+.mk-ais-fees {
+  max-width: 520px;
+
+  & td {
+    text-align: right;
+  }
+}
+
+// ---------------------------------------------------------------- lists
+.mk-ais-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+
+  li::marker {
+    color: $muted;
+  }
+}
+
+.mk-ais-item {
+  display: grid;
+  gap: 4px 24px;
+  padding: 14px 0;
+  border-top: 1px solid $smoke;
+  scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+
+  @media (min-width: 720px) {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+
+  &__name {
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+  }
+}
+
+.mk-ais-steps {
+  list-style: none;
   margin: 0;
-  padding: 8px 26px;
-  border-radius: var(--radius-xl);
-  background: $white;
-  box-shadow: var(--shadow-border-sm);
+  padding: 0;
+  counter-reset: mk-ais-step;
 
-  &__row {
-    padding: 18px 0;
-    border-bottom: 1px solid rgba($black, 0.08);
+  li {
+    counter-increment: mk-ais-step;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 0 8px;
+    padding: 10px 0;
+    border-top: 1px solid $smoke;
 
-    &:last-child {
-      border-bottom: 0;
+    &::before {
+      content: counter(mk-ais-step);
+      grid-row: span 2;
+      font-family: $mono;
+      font-size: 0.8125rem;
+      color: $muted-text;
+      padding-top: 1px;
+    }
+  }
+
+  h3 {
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+  }
+}
+
+.mk-ais-dl {
+  margin: 0;
+
+  > div {
+    display: grid;
+    gap: 2px 24px;
+    padding: 10px 0;
+    border-top: 1px solid $smoke;
+
+    @media (min-width: 720px) {
+      grid-template-columns: 180px minmax(0, 1fr);
     }
   }
 
@@ -4006,75 +4136,213 @@ $mk-term-green: #62d196;
   }
 
   dd {
-    margin: 6px 0 0;
-    color: $slate;
-    line-height: 1.55;
-    text-wrap: pretty;
+    margin: 0;
   }
 }
 
-.mk-ais-diligence {
-  grid-area: diligence;
-  margin-top: 28px;
-  padding: 22px 24px;
-  border-radius: var(--radius-2xl);
-  background: $white;
-  box-shadow: var(--shadow-border-md);
-  color: $slate;
-  line-height: 1.55;
+.mk-ais-faq {
+  display: grid;
 
-  strong {
-    color: $mk-ink;
+  &__item {
+    padding: 12px 0;
+    border-top: 1px solid $smoke;
   }
 
-  .marketing-btn {
-    margin-top: 18px;
-    max-width: 100%;
-    white-space: normal; // long label wraps at phone width instead of widening the grid
-    text-align: center;
+  .mk-faq__q {
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
   }
 
-  &__donor {
-    margin-top: 14px;
-    font-size: 0.95rem;
+  .mk-faq__a {
+    margin-top: 4px;
+    max-width: 68ch;
+  }
+}
 
-    a {
-      color: $mk-ink;
-      text-decoration: underline;
-      text-underline-offset: 2px;
+// ---------------------------------------------------------------- talk to us
+.mk-ais-talk {
+  &__grid {
+    display: grid;
+    gap: 24px 40px;
+
+    @media (min-width: 760px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
     }
   }
 
-  @media (min-width: 920px) {
-    margin-top: 0;
-  }
-}
-
-.mk-ais-talk {
-  display: grid;
-  gap: clamp(32px, 5vw, 56px);
-
-  @media (min-width: 920px) {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .mk-lead a {
+  &__status,
+  &__error {
+    padding: 2px 0 2px 14px;
+    border-left: 3px solid $green-dark;
     color: $mk-ink;
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
-  .mk-team {
-    margin: 32px 0 0;
-    text-align: left;
+  &__error {
+    margin-bottom: 16px;
+    border-left-color: $red;
   }
 
-  .mk-team__list {
-    justify-content: flex-start;
+  .marketing-form--labelled {
+    gap: 14px;
+  }
+
+  .marketing-form .marketing-form__input {
+    height: 42px;
+    font-size: 0.9375rem;
+    border-radius: var(--radius-md, 6px);
+  }
+
+  .marketing-form .marketing-form__textarea {
+    height: auto;
+    padding: 10px 14px;
+  }
+
+  .marketing-form__option {
+    min-height: 40px;
+    border-radius: var(--radius-md, 6px);
+    font-size: 0.875rem;
+  }
+
+  .marketing-form__submit {
+    height: 44px;
+  }
+
+  .marketing-form__hint {
+    margin-top: 4px;
+    font-size: 0.8125rem;
   }
 }
 
-.mk-ais .mk-cta__brandline {
-  text-align: center;
+.mk-ais-team {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: $mk-ink;
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: $snow-dark;
+  }
+}
+
+// Big closing CTA on /for/ai-safety: a red slab with HCB's own hand-drawn dino.
+// Selectors double the .mk-ais-cta class so each direction's scoped link and text rules can't recolor the CTA.
+.mk-ais-cta {
+  container-type: inline-size; // sized by the direction's column, not the viewport
+  margin: clamp(40px, 6vw, 72px) 0;
+  font-family: $font-family;
+
+  &#{&} &__sub {
+    margin-top: 12px;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  // Dino: a red slab with HCB's own hand-drawn dino chasing the money.
+  &--dino {
+    position: relative;
+    padding: clamp(28px, 5vw, 56px);
+    border-radius: 20px;
+    background: $red;
+    color: $white;
+    overflow: hidden;
+
+    .mk-ais-cta__inner {
+      display: grid;
+      gap: 24px;
+      align-items: center;
+
+      @container (min-width: 640px) {
+        grid-template-columns: 1fr auto;
+      }
+    }
+
+    &.mk-ais-cta .mk-ais-cta__title {
+      color: $white;
+      font-family:
+        'Phantom Sans',
+        #{$font-family};
+      font-weight: 700;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+    }
+
+    &.mk-ais-cta .mk-ais-cta__sub {
+      color: rgba($white, 0.92);
+    }
+
+    .mk-ais-cta__dino {
+      width: clamp(160px, 22vw, 270px);
+      height: auto;
+      justify-self: end;
+      filter: invert(1); // white line art on red
+      transform: rotate(-6deg);
+    }
+  }
+
+  &#{&} &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+    margin-top: 28px;
+  }
+
+  &#{&} &__btn {
+    display: inline-block;
+    padding: 18px 32px;
+    border-radius: 999px;
+    background: $white;
+    color: $red;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    font-size: 1.35rem;
+    text-decoration: none;
+    line-height: 1;
+    box-shadow: 0 6px 0 darken($red, 18%);
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+
+    &:hover {
+      transform: translateY(-2px) rotate(-1deg);
+      box-shadow: 0 8px 0 darken($red, 18%);
+    }
+
+    &:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 darken($red, 18%);
+    }
+  }
+
+  &#{&} &__mail {
+    color: $white;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &#{&} &__btn {
+      transition: none;
+    }
+  }
 }

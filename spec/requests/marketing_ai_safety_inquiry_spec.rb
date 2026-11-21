@@ -32,7 +32,7 @@ RSpec.describe "AI safety inquiry form", type: :request do
     expect(response).to redirect_to(ai_safety_path(anchor: "talk-to-us"))
 
     follow_redirect!
-    expect(page.at_css("#talk-to-us [role=status]").text).to include("Thanks, we've got it.")
+    expect(page.at_css("#talk-to-us [role=status]").text).to include("Got it.")
     expect(page.at_css("#talk-to-us form")).to be_nil
 
     # The confirmation rides on flash, so a reload shows the form again.

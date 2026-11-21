@@ -33,7 +33,7 @@ RSpec.describe AiSafetyInquiryMailer do
       expect(body).to include("Hi,")
       expect(body).not_to include("Bob")
       expect(body).not_to include("bit.ly")
-      expect(body).not_to include("here's what you told us")
+      expect(body).not_to include("Here's what you sent us")
     end
 
     it "renders HTML in the message as text" do

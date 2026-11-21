@@ -18,7 +18,7 @@ RSpec.describe "AI safety landing page", type: :request do
       get ai_safety_path
 
       expect(response).to have_http_status(:ok)
-      expect(page.at_css("h1").text.squish).to eq("Fiscal sponsorship for AI safety teams. Set up in days.")
+      expect(page.at_css("h1").text.squish).to eq("Fiscal sponsorship for AI safety teams")
       expect(response.headers["X-Robots-Tag"]).to be_nil
       expect(page.at_css("title").text.scan(" – HCB").size).to eq(1)
     end
@@ -56,10 +56,10 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(graph.find { |node| node["@type"] == "WebPage" }["@id"]).to eq(canonical_url)
     end
 
-    it "shows the fast-track email, the example ledger, and no PayPal" do
+    it "puts the team email in the hero, shows the example ledger, and never mentions PayPal" do
       get ai_safety_path
 
-      expect(page.at_css(".mk-notice--fasttrack a[href='mailto:aisafety@hackclub.com']")).to be_present
+      expect(page.at_css(".mk-ais__head a[href='mailto:aisafety@hackclub.com']")).to be_present
       expect(page.text).to include("+$850,000.00", "−$48,150.00")
       expect(response.body).not_to include("PayPal")
     end
