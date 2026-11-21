@@ -4681,12 +4681,27 @@ $mk-term-green: #62d196;
 }
 
 // "Copy as Markdown" split button beside the /for/ai-safety title, with a menu of AI apps.
+// The button stays at the right end of the title row; the title wraps instead. Only on
+// phone-width columns does the button drop under the title.
 .mk-ais__title-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px 24px;
+
+  .mk-ais__title {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mk-ais-ask {
+    flex: none;
+    margin-top: 4px;
+  }
+
+  @container (max-width: 559.98px) {
+    flex-wrap: wrap;
+  }
 }
 
 .mk-ais-ask {
@@ -4800,8 +4815,8 @@ $mk-term-green: #62d196;
   }
 }
 
-// On phones the button sits under the title; open the menu leftward from its start.
-@media (max-width: 599.98px) {
+// Under the title (phone-width columns) the button sits at the left, so the menu opens rightward.
+@container (max-width: 559.98px) {
   .mk-ais-ask__menu {
     right: auto;
     left: 0;
