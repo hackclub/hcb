@@ -1457,6 +1457,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
     t.text "hcb_code", null: false
     t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
+    t.datetime "receipt_due_at"
     t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
