@@ -9,6 +9,7 @@
   <li><strong>Contractor:</strong> <%= @position.payee.display_name %> (<%= @position.payee.email %>)</li>
   <li><strong>Position:</strong> <%= @position.title %></li>
   <li><strong>Description:</strong> <%= @invoice.name %></li>
+  <li><strong>Period:</strong> <%= @invoice.period_label %></li>
   <% if @invoice.description.present? %>
     <li><strong>Notes:</strong> <%= @invoice.description %></li>
   <% end %>

@@ -16,6 +16,8 @@ module Payroll
       @invoice = @position.invoices.build(
         name: invoice_params[:name],
         description: invoice_params[:description],
+        start_date: invoice_params[:start_date],
+        end_date: invoice_params[:end_date],
         currency: @position.currency,
         amount_cents: Monetize.parse(invoice_params[:amount], @position.currency).cents
       )
@@ -113,7 +115,7 @@ module Payroll
     end
 
     def invoice_params
-      params.require(:payroll_invoice).permit(:name, :amount, :description, file: [])
+      params.require(:payroll_invoice).permit(:name, :amount, :description, :start_date, :end_date, file: [])
     end
 
   end

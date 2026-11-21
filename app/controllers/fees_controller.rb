@@ -16,10 +16,10 @@ class FeesController < ApplicationController
     authorize @fee
 
     if @fee.save
-      redirect_to edit_event_url(@event, tab: :admin), flash: { success: "Fee charged to #{@event.name}" }
+      redirect_to edit_event_path(@event, tab: :admin), flash: { success: "Fee charged to #{@event.name}" }
     else
       flash[:error] = @fee.errors.full_messages.to_sentence || "Fee could not be charged"
-      redirect_to edit_event_url(@event, tab: :admin)
+      redirect_to edit_event_path(@event, tab: :admin)
     end
   end
 

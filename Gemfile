@@ -13,7 +13,7 @@ gem "puma", "~> 7.2" # app server
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.3.8" # background jobs
+gem "sidekiq", "~> 8.1.7" # background jobs
 gem "sidekiq-cron", "~> 2.4" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
 gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
@@ -147,6 +147,7 @@ group :test do
   gem "capybara" # Browser-driven system tests
   gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
+  gem "rspec-abq" # Distributes specs across parallel runners in CI
   gem "simplecov", require: false # Code coverage
   gem "webmock"
 end
@@ -223,6 +224,10 @@ gem "rack-timeout", require: "rack/timeout/base"
 gem "irb"
 
 gem "pstore"
+
+gem "cgi"
+
+gem "ostruct"
 
 gem "bcrypt", "~> 3.1.22"
 

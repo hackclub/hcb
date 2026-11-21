@@ -51,10 +51,6 @@ class Event
       end
     end
 
-    def standard?
-      type == Event::Plan::Standard.name
-    end
-
     def default_values
       {}
     end

@@ -205,7 +205,8 @@ GEM
     business_time (0.13.0)
       activesupport (>= 3.2.0)
       tzinfo
-    byebug (12.0.0)
+    byebug (13.0.0)
+      reline (>= 0.6.0)
     cairo (1.18.5)
       pkg-config (>= 1.2.2)
       red-colors
@@ -232,7 +233,7 @@ GEM
     comma (4.8.0)
       activesupport (>= 4.2.0)
     concurrent-ruby (1.3.8)
-    connection_pool (2.5.5)
+    connection_pool (3.0.2)
     console1984 (0.2.2)
       irb (~> 1.13)
       parser
@@ -346,7 +347,7 @@ GEM
     faraday-em_synchrony (1.0.1)
     faraday-excon (1.1.0)
     faraday-httpclient (1.0.1)
-    faraday-multipart (1.1.1)
+    faraday-multipart (1.2.0)
       multipart-post (~> 2.0)
     faraday-net_http (1.0.2)
     faraday-net_http_persistent (1.2.0)
@@ -580,8 +581,8 @@ GEM
     namae (1.2.0)
       racc (~> 1.7)
     native-package-installer (1.1.9)
-    net-http-persistent (4.0.2)
-      connection_pool (~> 2.2)
+    net-http-persistent (4.0.8)
+      connection_pool (>= 2.2.4, < 4)
     net-imap (0.6.4.1)
       date
       net-protocol
@@ -650,12 +651,13 @@ GEM
     prism (2.1.0)
     prosemirror_to_html (0.2.1)
       nokogiri
-    pry (0.15.2)
+    pry (0.16.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    pry-byebug (3.11.0)
-      byebug (~> 12.0)
-      pry (>= 0.13, < 0.16)
+      reline (>= 0.6.0)
+    pry-byebug (3.12.0)
+      byebug (~> 13.0)
+      pry (>= 0.13, < 0.17)
     pry-rails (0.3.11)
       pry (>= 0.13.0)
     pstore (0.1.4)
@@ -730,7 +732,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    react-rails (3.2.1)
+    react-rails (3.3.1)
       babel-transpiler (>= 0.7.0)
       connection_pool
       execjs
@@ -775,6 +777,8 @@ GEM
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
     rqrcode_core (1.2.0)
+    rspec-abq (1.2.3)
+      rspec-core (>= 3.8.0, < 3.14.0)
     rspec-core (3.13.3)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.3)
@@ -829,12 +833,12 @@ GEM
     secure_headers (7.3.0)
       cgi (>= 0.1)
     securerandom (0.4.1)
-    sidekiq (7.3.8)
-      base64
-      connection_pool (>= 2.3.0)
-      logger
-      rack (>= 2.2.4)
-      redis-client (>= 0.22.2)
+    sidekiq (8.1.7)
+      connection_pool (>= 3.0.0)
+      json (>= 2.16.0)
+      logger (>= 1.7.0)
+      rack (>= 3.2.0)
+      redis-client (>= 0.29.0)
     sidekiq-cron (2.4.0)
       cronex (>= 0.13.0)
       fugit (~> 1.8, >= 1.11.1)
@@ -969,6 +973,7 @@ DEPENDENCIES
   business_time
   byebug
   capybara
+  cgi
   chronic
   comma (~> 4.8)
   console1984
@@ -1027,6 +1032,7 @@ DEPENDENCIES
   money-rails (~> 3.0.0)
   namae
   nondisposable
+  ostruct
   paper_trail (~> 17.0.0)
   pdf-reader
   pg (>= 0.18, < 2.0)
@@ -1058,6 +1064,7 @@ DEPENDENCIES
   reverse_markdown
   rotp
   rqrcode
+  rspec-abq
   rspec-rails (~> 7.1.1)
   rtesseract
   rubocop
@@ -1066,7 +1073,7 @@ DEPENDENCIES
   rubyzip (>= 2.3.0, < 3.0)
   safely_block
   secure_headers
-  sidekiq (~> 7.3.8)
+  sidekiq (~> 8.1.7)
   sidekiq-cron (~> 2.4)
   simplecov
   sprockets-rails (~> 3.5)
@@ -1088,7 +1095,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.4.12p148
+   ruby 4.0.10p0
 
 BUNDLED WITH
    2.5.22

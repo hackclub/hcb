@@ -94,6 +94,31 @@ RSpec.describe Receipt, type: :model do
     expect(charge.ledger_item.reload).not_to be_no_or_lost_receipt
   end
 
+  describe "file size" do
+    let(:receiptable) { create(:ledger_item) }
+
+    # The size validator reads blob.byte_size, so set it instead of uploading 50 MB
+    def receipt_of_size(bytes)
+      build_receipt(receiptable:).tap { |receipt| receipt.file.blob.byte_size = bytes }
+    end
+
+    it "accepts a file of exactly MAX_FILE_SIZE" do
+      receipt = receipt_of_size(Receipt::MAX_FILE_SIZE)
+      receipt.validate
+      expect(receipt.errors[:file]).to be_empty
+    end
+
+    it "rejects a file one byte over MAX_FILE_SIZE" do
+      receipt = receipt_of_size(Receipt::MAX_FILE_SIZE + 1)
+      receipt.validate
+      expect(receipt.errors[:file]).to be_present
+    end
+
+    it "keeps the limit at 50 MB" do
+      expect(Receipt::MAX_FILE_SIZE).to eq(50.megabytes)
+    end
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 

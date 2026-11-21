@@ -55,8 +55,6 @@ class HcbCode < ApplicationRecord
 
   has_many :hcb_code_tags
 
-  has_many :suggested_pairings
-
   has_one :pin, required: false
 
   belongs_to :event, optional: true

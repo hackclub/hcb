@@ -65,6 +65,29 @@ class Ledger
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
+    # Every model that declares `has_one :ledger_item, as: :linked_object`.
+    # Raw bank transactions have no linked object, so nil is allowed.
+    LINKED_OBJECT_TYPES = %w[
+      AchTransfer
+      BankFee
+      CardCharge
+      Check
+      CheckDeposit
+      Disbursement::Incoming
+      Disbursement::Outgoing
+      Donation
+      FeeReimbursementGroup
+      FeeRevenue
+      IncreaseCheck
+      Invoice
+      PaypalTransfer
+      Reimbursement::ExpensePayout
+      Reimbursement::PayoutHolding
+      StripeServiceFee
+      Wire
+      WiseTransfer
+    ].freeze
+
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
@@ -76,6 +99,8 @@ class Ledger
 
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    # Receipt bin suggestions for this item. The database drops them with it.
+    has_many :suggested_pairings, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
     has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayments, through: :repayment_allocations
@@ -97,6 +122,7 @@ class Ledger
     attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
+    validates :linked_object_type, inclusion: { in: LINKED_OBJECT_TYPES }, allow_nil: true
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }

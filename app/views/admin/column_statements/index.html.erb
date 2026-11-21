@@ -28,7 +28,7 @@
         <td><%= render_money statement.closing_balance %></td>
         <td class="flex flex-col">
           <%= link_to "Download Statement", statement.file %>
-          <%= link_to "Bank Account Summary", admin_column_statement_bank_account_summary_report_url(statement) %>
+          <%= link_to "Bank Account Summary", admin_column_statement_bank_account_summary_report_path(statement) %>
         </td>
       </tr>
     <% end %>
