@@ -340,5 +340,47 @@ RSpec.describe Event::StatementOfActivity do
       expect(result[intra_org]).to contain_exactly(outgoing, incoming)
       expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
     end
+
+    it "leaves intra-org transfers out of revenue and expense for a group, but keeps inter-org ones" do
+      # The summary sentence would otherwise count money moved inside the group as both raised and spent.
+      group = create(:event_group)
+      event_a, event_b, outside = create_list(:event, 3)
+      group.memberships.create!(event: event_a)
+      group.memberships.create!(event: event_b)
+
+      donation = create(:canonical_transaction, amount_cents: 1_000_00)
+      create(:canonical_event_mapping, event: event_a, canonical_transaction: donation)
+
+      internal = create(:disbursement, source_event: event_a, event: event_b)
+      create_disbursement_transaction(disbursement: internal, event: event_a, hcb_code: internal.outgoing_hcb_code, amount_cents: -100_00)
+      create_disbursement_transaction(disbursement: internal, event: event_b, hcb_code: internal.incoming_hcb_code, amount_cents: 100_00)
+
+      external = create(:disbursement, source_event: event_b, event: outside)
+      create_disbursement_transaction(disbursement: external, event: event_b, hcb_code: external.outgoing_hcb_code, amount_cents: -30_00)
+
+      instance = described_class.new(group, start_date_param: "1970-01-01")
+
+      expect(instance.total_revenue).to eq(1_000_00)
+      expect(instance.total_expense).to eq(-30_00)
+      expect(instance.net_asset_change).to eq(970_00)
+    end
+
+    it "leaves intra-org transfers out of revenue and expense for parent/child with include_descendants" do
+      # Same as the group case, for an organization's statement that includes its sub-organizations (e.g. /hq).
+      parent = create(:event)
+      child = create(:event, parent:)
+
+      donation = create(:canonical_transaction, amount_cents: 1_000_00)
+      create(:canonical_event_mapping, event: parent, canonical_transaction: donation)
+
+      disbursement = create(:disbursement, source_event: parent, event: child)
+      create_disbursement_transaction(disbursement:, event: parent, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -100_00)
+      create_disbursement_transaction(disbursement:, event: child, hcb_code: disbursement.incoming_hcb_code, amount_cents: 100_00)
+
+      instance = described_class.new(parent, start_date_param: "1970-01-01", include_descendants: true)
+
+      expect(instance.total_revenue).to eq(1_000_00)
+      expect(instance.total_expense).to eq(0)
+    end
   end
 end

@@ -89,11 +89,11 @@ class Event
     # Repayments pay an expense back, so they lower expenses rather than count
     # as revenue.
     memo_wise def total_revenue
-      transactions.where("amount_cents > 0").sum(:amount_cents) - repayments_received
+      transactions.where("amount_cents > 0").sum(:amount_cents) - repayments_received - intra_org_transfer_amounts.select(&:positive?).sum
     end
 
     memo_wise def total_expense
-      transactions.where("amount_cents < 0").sum(:amount_cents) + repayments_received
+      transactions.where("amount_cents < 0").sum(:amount_cents) + repayments_received - intra_org_transfer_amounts.select(&:negative?).sum
     end
 
     memo_wise def repayments_received
@@ -184,6 +184,11 @@ class Event
     private
 
     attr_reader(:start_date_param, :end_date_param)
+
+    # Money moved between two included organizations is neither raised nor spent by the group.
+    def intra_org_transfer_amounts
+      grouped_transactions.fetch(INTRA_ORG_TRANSFER, []).map(&:amount_cents)
+    end
 
     memo_wise def grouped_transactions
       transactions.includes(:category, :local_hcb_code, :event).group_by do |transaction|
