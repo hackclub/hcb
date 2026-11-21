@@ -10,8 +10,9 @@
     </a>
 
     <nav class="marketing-nav__links" aria-label="Primary">
-      <a href="https://hackclub.com/fiscal-sponsorship">Fiscal sponsorship</a>
-      <a href="<%= funders_path %>" aria-current="page">For funders</a>
+      <% marketing_nav_links.each do |label, path| %>
+        <%= link_to label, path, aria: { current: (current_page?(path) ? "page" : nil) } %>
+      <% end %>
     </nav>
 
     <div class="marketing-nav__actions">

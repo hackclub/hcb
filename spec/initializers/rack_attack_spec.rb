@@ -19,8 +19,8 @@ RSpec.describe Rack::Attack, type: :request do
     end
   end
 
-  def request_for(path, method: "GET", session_token: nil, content_length: nil)
-    env = Rack::MockRequest.env_for(path, method:, "REMOTE_ADDR" => "203.0.113.7")
+  def request_for(path, method: "GET", session_token: nil, content_length: nil, params: nil)
+    env = Rack::MockRequest.env_for(path, method:, params:, "REMOTE_ADDR" => "203.0.113.7")
     env["HTTP_COOKIE"] = "session_token=#{session_token}" if session_token
     env["CONTENT_LENGTH"] = content_length.to_s if content_length
     Rack::Attack::Request.new(env)
@@ -67,6 +67,36 @@ RSpec.describe Rack::Attack, type: :request do
       expect(request.env["rack.attack.matched"]).not_to eq("spec office")
     ensure
       Rack::Attack.safelists.delete("spec office")
+    end
+  end
+
+  describe "marketing/inquiry" do
+    it "throttles both inquiry forms by IP, however the path is spelled" do
+      ["/for/ai-safety/inquiry", "/for/ai-safety/inquiry.html", "/for/ai-safety/inquiry/", "/for/funders/inquiry"].each do |path|
+        expect(discriminator("marketing/inquiry/ip", path, method: "POST")).to eq("203.0.113.7"), path
+        expect(discriminator("marketing/inquiry/email", path, method: "POST", params: { "email" => "a@b.co" })).to eq("a@b.co"), path
+      end
+    end
+
+    # MockRequest.env_for reads "//x" as protocol-relative, so set the path Rack would see.
+    it "covers a doubled leading slash" do
+      request = request_for("/for/funders/inquiry", method: "POST")
+      request.env["PATH_INFO"] = "//for/funders/inquiry"
+
+      expect(Rack::Attack.throttles.fetch("marketing/inquiry/ip").block.call(request)).to eq("203.0.113.7")
+    end
+
+    it "keys the email throttle on the normalized recipient" do
+      nested = discriminator("marketing/inquiry/email", "/for/ai-safety/inquiry", method: "POST",
+                                                                                  params: { "ai_safety_inquiry" => { "email" => "A.B+x@GMail.com" } })
+
+      expect(nested).to eq("ab@gmail.com")
+      expect(described_class.normalized_inquiry_email("ab@gmail.com")).to eq(nested)
+    end
+
+    it "ignores GETs and the pages themselves" do
+      expect(discriminator("marketing/inquiry/ip", "/for/ai-safety/inquiry")).to be_nil
+      expect(discriminator("marketing/inquiry/ip", "/for/funders", method: "POST")).to be_nil
     end
   end
 

@@ -4,7 +4,7 @@
     (flash + ?inquiry state survive, anchor scroll works). `detailed` adds name + message
     fields so funders can actually "send a note"; the hero uses the compact email-only form. %>
 <%= form_with url: funder_inquiry_path, method: :post,
-      class: "marketing-form#{' marketing-form--detailed' if detailed}", data: { turbo: false } do %>
+      class: "marketing-form#{' marketing-form--detailed marketing-form--labelled' if detailed}", data: { turbo: false } do %>
   <%# Anti-bot honeypot via the invisible_captcha gem (rejected in MarketingController). %>
   <%= invisible_captcha :subtitle %>
 
@@ -12,13 +12,21 @@
   <% prefill = flash[:funder_form] || {} %>
 
   <% if detailed %>
-    <input type="text" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
-           autocomplete="name" aria-label="Your name" class="marketing-form__input">
-    <input type="email" name="email" value="<%= prefill["email"] %>" required
-           placeholder="you@example.com" autocomplete="email" aria-label="Your email address"
-           class="marketing-form__input">
-    <textarea name="message" rows="3" placeholder="What are you looking to fund? (optional)"
-              aria-label="What you want to fund" class="marketing-form__input marketing-form__textarea"><%= prefill["message"] %></textarea>
+    <div class="marketing-form__field">
+      <label for="funder_inquiry_name" class="marketing-form__label">Name</label>
+      <input type="text" id="funder_inquiry_name" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
+             autocomplete="name" class="marketing-form__input">
+    </div>
+    <div class="marketing-form__field">
+      <label for="funder_inquiry_email" class="marketing-form__label">Email</label>
+      <input type="email" id="funder_inquiry_email" name="email" value="<%= prefill["email"] %>" required
+             placeholder="you@example.com" autocomplete="email" class="marketing-form__input">
+    </div>
+    <div class="marketing-form__field">
+      <label for="funder_inquiry_message" class="marketing-form__label">What do you want to fund? <span class="marketing-form__optional">(optional)</span></label>
+      <textarea id="funder_inquiry_message" name="message" rows="3" placeholder="What are you looking to fund? (optional)"
+                class="marketing-form__input marketing-form__textarea"><%= prefill["message"] %></textarea>
+    </div>
     <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">
       Talk to our team
     </button>

@@ -21,6 +21,7 @@ FriendlyId.defaults do |config|
   # A list of words that aren't allowed to be used as organization URLs, in no particular order.
   config.reserved_words = %w[
     new
+    ai-safety
     edit
     index
     stylesheets

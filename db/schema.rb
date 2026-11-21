@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1825,6 +1825,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.float "time_running", default: 0.0, null: false
     t.datetime "updated_at", null: false
     t.index ["task_name", "status", "created_at"], name: "index_maintenance_tasks_runs", order: { created_at: :desc }
+  end
+
+  create_table "marketing_inquiries", force: :cascade do |t|
+    t.string "audience"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.text "message"
+    t.string "name"
+    t.string "page", null: false
+    t.string "ref"
+    t.datetime "updated_at", null: false
+    t.index ["page", "created_at"], name: "index_marketing_inquiries_on_page_and_created_at"
   end
 
   create_table "metrics", force: :cascade do |t|

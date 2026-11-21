@@ -62,4 +62,40 @@ RSpec.describe MarketingHelper, type: :helper do
       end
     end
   end
+
+  describe "#ai_safety_faqs" do
+    # The answers feed the JSON-LD as well as the page, so they stay plain text, and each one
+    # opens with a direct answer that answer engines can quote.
+    it "returns 13 plain-text FAQs in order, each opening with a direct answer" do
+      faqs = helper.ai_safety_faqs(stats: { organizations: "8,200+" })
+
+      expect(faqs.map { |f| f[:id] }).to eq(%w[
+                                              need-a-501c3 funder-needs-sponsor how-fast pay-outside-us individuals exposure grant-agreement
+                                              private policy-work own-nonprofit not-funded teenagers cost
+                                            ])
+      faqs.each do |faq|
+        text = faq[:q] + faq[:a]
+        expect(text).not_to match(/[<>]/), "#{faq[:id]} has HTML"
+        expect(text).not_to include("\u2014", "!")
+        expect(faq[:a]).to match(/\A(Yes|No|Not|Usually|\d)/), "#{faq[:id]} doesn't open with a direct answer"
+      end
+      expect(faqs.find { |f| f[:id] == "teenagers" }[:a]).to include("8,200+")
+    end
+  end
+
+  describe "#ai_safety_ledger_rows" do
+    it "has 7 rows with exactly one incoming" do
+      rows = helper.ai_safety_ledger_rows
+
+      expect(rows.size).to eq(7)
+      expect(rows.count { |r| r[:amount_cents].positive? }).to eq(1)
+    end
+  end
+
+  describe "#ai_safety_ledger_amount" do
+    it "signs amounts with a plus or a true minus" do
+      expect(helper.ai_safety_ledger_amount(850_000_00)).to eq("+$850,000.00")
+      expect(helper.ai_safety_ledger_amount(-48_150_00)).to eq("\u2212$48,150.00")
+    end
+  end
 end

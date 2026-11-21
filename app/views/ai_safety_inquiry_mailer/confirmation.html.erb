@@ -1,0 +1,14 @@
+<p>Hi<% if @first_name %> <%= @first_name %><% end %>,</p>
+
+<p>Thanks for writing to HCB. Melanie, Paul, or Gary will reply within one business day.</p>
+
+<p>If you have a grant letter, reply to this email with it attached. It helps us move faster.</p>
+
+<% if @message %>
+  <p>In the meantime, here's what you told us:</p>
+  <blockquote style="margin: 0; padding: 12px 16px; border-left: 3px solid #ec3750; background: #f9fafc;">
+    <%= simple_format(h(@message)) %>
+  </blockquote>
+<% end %>
+
+<p>HCB is run by The Hack Foundation (Hack Club), a 501(c)(3) nonprofit, EIN 81-2908499.</p>
