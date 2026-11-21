@@ -4174,70 +4174,6 @@ $mk-term-green: #62d196;
   }
 }
 
-.mk-ais-fee {
-  padding: 18px;
-
-  &__rate {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin: 0;
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  &__big {
-    font-family:
-      'Phantom Sans',
-      #{$font-family};
-    font-size: 3.25rem;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: $red;
-  }
-
-  &__detail {
-    margin: 12px 0 0;
-    line-height: 1.55;
-    color: $slate;
-    text-wrap: pretty;
-  }
-
-  &__list {
-    margin: 18px 0 0;
-    padding: 0;
-    list-style: none;
-
-    li {
-      display: grid;
-      grid-template-columns: 72px minmax(0, 1fr);
-      gap: 12px;
-      padding: 10px 0;
-      border-top: 1px solid rgba($black, 0.08);
-      line-height: 1.45;
-      color: $slate;
-    }
-  }
-
-  &__amt {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: $mk-ink;
-  }
-
-  .mk-ais & &__cta {
-    display: inline-block;
-    margin-top: 16px;
-    font-weight: 600;
-    color: $red;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
 // ---------------------------------------------------------------- lists
 .mk-ais-list {
   margin: 8px 0 0;
@@ -4250,65 +4186,85 @@ $mk-term-green: #62d196;
   }
 }
 
-// The four "pay for" items: matching cards, two per row once there's room.
-.mk-ais-items {
-  display: grid;
-  gap: 16px;
-  margin-top: 20px;
+// "What your grant can pay for": labelled paragraphs, like the key facts.
+.mk-ais-spec {
+  margin: 16px 0 0;
 
-  @container (min-width: 720px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  > div {
+    display: grid;
+    gap: 4px 32px;
+    padding: 16px 0;
+    border-top: 1px solid rgba($black, 0.08);
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+
+    @container (min-width: 640px) {
+      grid-template-columns: 200px minmax(0, 1fr);
+    }
   }
-}
 
-.mk-ais-item {
-  padding: 20px 22px;
-  border: 1px solid rgba($black, 0.12);
-  border-radius: var(--radius-lg);
-  background: $white;
-
-  .mk-ais & &__name {
-    margin: 0;
-    font-family: $font-family;
-    font-size: 1.0625rem;
-    letter-spacing: 0;
+  dt {
+    font-weight: 600;
     color: $mk-ink;
   }
 
-  &__lead {
-    margin: 6px 0 0;
-    line-height: 1.5;
+  dd {
+    margin: 0;
+    line-height: 1.6;
     color: $slate;
+    text-wrap: pretty;
+  }
+}
+
+// Fees card: the 7% worked through on the example installment.
+.mk-ais-fee {
+  padding: 18px;
+
+  &__lead {
+    margin: 0;
+    font-weight: 600;
+    color: $mk-ink;
   }
 
-  &__points {
-    display: grid;
-    gap: 8px;
-    margin: 14px 0 0;
-    padding: 14px 0 0;
-    border-top: 1px solid rgba($black, 0.08);
-    list-style: none;
+  &__math {
+    width: 100%;
+    margin-top: 14px;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
 
-    li {
-      position: relative;
-      padding-left: 24px;
+    .mk-ais & th,
+    .mk-ais & td {
+      padding: 9px 0;
+      border-bottom: 1px solid rgba($black, 0.06);
+      white-space: normal;
       font-size: 0.9375rem;
-      line-height: 1.5;
       color: $slate;
-
-      &::before {
-        content: '\2713' / '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-weight: 700;
-        color: $red;
-      }
     }
 
-    strong {
+    .mk-ais & th {
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .mk-ais & td {
+      text-align: right;
+      white-space: nowrap;
       color: $mk-ink;
     }
+
+    .mk-ais & tfoot th,
+    .mk-ais & tfoot td {
+      border-bottom: 0;
+      border-top: 2px solid $mk-ink;
+      font-weight: 700;
+      color: $mk-ink;
+    }
+  }
+
+  &__note {
+    margin: 14px 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: $slate;
   }
 }
 

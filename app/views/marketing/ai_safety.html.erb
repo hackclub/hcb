@@ -173,15 +173,20 @@
         <section id="fees" class="mk-ais-card" aria-labelledby="fees-title">
           <h2 id="fees-title" class="mk-ais-card__head">Fees</h2>
           <div class="mk-ais-fee">
-            <p class="mk-ais-fee__rate"><span class="mk-ais-fee__big">7%</span> of grants and donations</p>
-            <ul class="mk-ais-fee__list">
-              <li><span class="mk-ais-fee__amt">$0<span class="mk-vh">:</span></span> Setup fee</li>
-              <li><span class="mk-ais-fee__amt">$0<span class="mk-vh">:</span></span> Legal fees</li>
-              <li><span class="mk-ais-fee__amt">$0<span class="mk-vh">:</span></span> Monthly fee</li>
-              <li><span class="mk-ais-fee__amt">$0<span class="mk-vh">:</span></span> Card fees</li>
-              <li><span class="mk-ais-fee__amt">At cost<span class="mk-vh">:</span></span> International transfers, at our payment provider's rate</li>
-            </ul>
-            <a href="#talk-to-us" class="mk-ais-fee__cta">Send us your grant letter &rarr;</a>
+            <p class="mk-ais-fee__lead">7% of grants and donations, taken when each one arrives.</p>
+            <% grant = rows.find { |row| row[:amount_cents].positive? } %>
+            <% fee = rows.find { |row| row[:fee] } %>
+            <table class="mk-ais-fee__math">
+              <thead class="mk-vh"><tr><th scope="col">Item</th><th scope="col">Amount</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Grant installment</th><td><%= render_money(grant[:amount_cents]) %></td></tr>
+                <tr><th scope="row">7% fee</th><td><%= ai_safety_ledger_amount(fee[:amount_cents]) %></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><th scope="row">To your work</th><td><%= render_money(grant[:amount_cents] + fee[:amount_cents]) %></td></tr>
+              </tfoot>
+            </table>
+            <p class="mk-ais-fee__note">No setup, legal, monthly, or card fees. International transfers are at cost.</p>
           </div>
         </section>
       </div>
@@ -190,44 +195,24 @@
       <section id="pay-for" class="mk-ais__section" aria-labelledby="pay-for-title">
         <h2 id="pay-for-title" class="mk-ais__h2">What your grant can pay for</h2>
         <p class="mk-ais__intro">Research teams, fellowships, events, and policy groups use HCB.</p>
-        <div class="mk-ais-items">
-          <div class="mk-ais-item" id="nonprofit-status">
-            <h3 class="mk-ais-item__name">Nonprofit status</h3>
-            <p class="mk-ais-item__lead">Receive grants and tax-deductible donations through Hack Club's <span class="whitespace-nowrap">501(c)(3)</span>.</p>
-            <ul class="mk-ais-item__points">
-              <li>We send your funder our IRS letter, W-9, and recent Form 990.</li>
-              <li>Hack Club files the Form 990, not you.</li>
-              <li>US donors can deduct gifts to the extent the law allows.</li>
-            </ul>
+        <dl class="mk-ais-spec">
+          <div id="nonprofit-status">
+            <dt>Nonprofit status</dt>
+            <dd>Your funder grants to Hack Club's <span class="whitespace-nowrap">501(c)(3)</span> for your project, and US donors can deduct gifts to the extent the law allows. We send your funder our IRS letter, W-9, and recent Form 990. Hack Club files the 990, not you.</dd>
           </div>
-          <div class="mk-ais-item" id="pay-your-team">
-            <h3 class="mk-ais-item__name">Pay your team</h3>
-            <p class="mk-ais-item__lead">US payroll, plus contractors and fellows abroad.</p>
-            <ul class="mk-ais-item__points">
-              <li><strong>US employees:</strong> payroll with benefits. We handle the taxes.</li>
-              <li><strong>UK employees:</strong> hired through our employer-of-record partner, with local payroll, tax, and pension.</li>
-              <li><strong>Everyone else:</strong> contractors and fellows are paid in their own currency.</li>
-            </ul>
+          <div id="pay-your-team">
+            <dt>Pay your team</dt>
+            <dd>US employees go on payroll with benefits, and we handle payroll taxes. UK employees are hired through our employer-of-record partner, with local payroll, tax, and pension. Contractors and fellows elsewhere are paid in their own currency.</dd>
           </div>
-          <div class="mk-ais-item" id="cards">
-            <h3 class="mk-ais-item__name">Cards and reimbursements</h3>
-            <p class="mk-ais-item__lead">Pay for compute, model APIs, travel, and events by card.</p>
-            <ul class="mk-ais-item__points">
-              <li>Each person can have a card with its own limit.</li>
-              <li>Reimburse by direct deposit, check, or international transfer.</li>
-              <li>Each payment keeps its receipt.</li>
-            </ul>
+          <div id="cards">
+            <dt>Cards and reimbursements</dt>
+            <dd>Give each person a card with its own limit for compute, model APIs, travel, and events. Pay people back by direct deposit, check, or international transfer, with the receipt attached.</dd>
           </div>
-          <div class="mk-ais-item" id="books">
-            <h3 class="mk-ais-item__name">Books your funder can see</h3>
-            <p class="mk-ais-item__lead">Every transaction shows up as it happens, with its receipt.</p>
-            <ul class="mk-ais-item__points">
-              <li>Export to CSV or JSON, or use the HCB API.</li>
-              <li>Books are public by default.</li>
-              <li>You can make them private any time.</li>
-            </ul>
+          <div id="books">
+            <dt>Books your funder can see</dt>
+            <dd>Every transaction shows up as it happens, with its receipt. Export to CSV or JSON, or pull it through the HCB API. Books are public by default, and you can make them private any time.</dd>
           </div>
-        </div>
+        </dl>
       </section>
 
       <%# ============================ HOW IT WORKS ============================ %>
