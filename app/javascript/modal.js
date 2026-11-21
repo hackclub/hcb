@@ -87,6 +87,18 @@ function show(dialog) {
   dialog.before(backdropFor(dialog))
   // Focuses the first thing in it, and remembers what to hand focus back to
   dialog.show()
+  // Unless that's an <iframe> (a PDF receipt, say): keys pressed in it go to its
+  // own document, so Escape and Tab would never reach the page
+  if (
+    document.activeElement instanceof HTMLIFrameElement &&
+    dialog.contains(document.activeElement)
+  ) {
+    const control = [...dialog.querySelectorAll(focusable)].find(
+      element => !(element instanceof HTMLIFrameElement) && tabbable(element)
+    )
+    if (control) control.focus()
+    else document.activeElement.blur()
+  }
   trapFocus()
 }
 

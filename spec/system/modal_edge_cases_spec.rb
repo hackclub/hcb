@@ -324,6 +324,17 @@ RSpec.describe "Modal edge cases", type: :system do
       expect_closed("#bare")
     end
 
+    # Like a PDF receipt's preview: keys pressed in an iframe go to its own document
+    it "keeps focus out of an iframe that comes first, so Escape still closes it" do
+      insert(%(<%= modal id: "framed" do %><iframe data-src="about:blank"></iframe><button type="button" id="after_frame" data-modal-close>Close</button><% end %><button type="button" data-modal="framed">Open framed</button>))
+      click_on "Open framed"
+      expect_open("#framed")
+
+      expect(focused_id).to eq("after_frame")
+      press_escape
+      expect_closed("#framed")
+    end
+
     it "focuses an autofocus field when it opens" do
       insert(%(<%= modal "Auto", id: "autofocused" do %><button type="button">Before</button><input id="autofocus_field" autofocus><% end %><button type="button" data-modal="autofocused">Open autofocused</button>))
       click_on "Open autofocused"
