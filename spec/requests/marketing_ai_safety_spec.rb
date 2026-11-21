@@ -72,6 +72,16 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(page.css("input[name='ai_safety_inquiry[audience]'][checked]").map { |i| i["value"] }).to eq(["team"])
     end
 
+    # The due-diligence button fills in the request; other values fill in nothing.
+    it "prefills the message for a known request only" do
+      get ai_safety_path(audience: "funder", request: "diligence")
+      expect(page.at_css("#ai_safety_inquiry_message").text.strip).to start_with("Please send your due-diligence packet")
+      expect(page.css("input[name='ai_safety_inquiry[audience]'][checked]").map { |i| i["value"] }).to eq(["funder"])
+
+      get ai_safety_path(request: "<b>hi</b>")
+      expect(page.at_css("#ai_safety_inquiry_message").text.strip).to be_empty
+    end
+
     it "keeps a clean ref and drops anything else" do
       get ai_safety_path(ref: "Newsletter_1")
       expect(page.at_css("input[name='ai_safety_inquiry[ref]']")["value"]).to eq("newsletter_1")
@@ -93,7 +103,7 @@ RSpec.describe "AI safety landing page", type: :request do
       get ai_safety_path
 
       hrefs = page.css("a").map { |a| a["href"] }
-      expect(hrefs).to include("#grantmakers", "/for/ai-safety?audience=funder#talk-to-us", "/for/funders")
+      expect(hrefs).to include("#grantmakers", "/for/ai-safety?audience=funder&request=diligence#talk-to-us", "/for/funders")
       expect(page.at_css("#grantmakers")).to be_present
     end
 

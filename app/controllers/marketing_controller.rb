@@ -81,8 +81,15 @@ class MarketingController < ApplicationController
     redirect_to funders_path(anchor: "talk-to-us")
   end
 
+  # Messages a link on /for/ai-safety can prefill, by key. Only these, so a link can't
+  # put arbitrary text in someone's form.
+  AI_SAFETY_MESSAGES = {
+    "diligence" => "Please send your due-diligence packet: IRS determination letter, W-9, recent Form 990s, audited financial statements, and a sample fiscal sponsorship agreement."
+  }.freeze
+
   def ai_safety
     @stats = funder_stats
+    @message = AI_SAFETY_MESSAGES[params[:request]]
     @audience = MarketingInquiry::AUDIENCES.key?(params[:audience]) ? params[:audience] : "team"
     @ref = sanitized_ref(params[:ref])
     @skip_layout_og_tags = true # page provides its own meta

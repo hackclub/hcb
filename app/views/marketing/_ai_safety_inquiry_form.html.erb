@@ -34,7 +34,7 @@
 
   <div class="marketing-form__field">
     <label for="ai_safety_inquiry_message" class="marketing-form__label">Message <span class="marketing-form__optional">(optional)</span></label>
-    <%= f.text_area :message, value: prefill["message"], rows: 4, maxlength: 1000,
+    <%= f.text_area :message, value: prefill["message"].presence || @message, rows: 4, maxlength: 1000,
           placeholder: "Funder, grant size, timeline, and where your team is based.",
           class: "marketing-form__input marketing-form__textarea" %>
   </div>
