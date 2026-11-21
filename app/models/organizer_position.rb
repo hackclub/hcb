@@ -71,7 +71,6 @@ class OrganizerPosition < ApplicationRecord
 
   def tourable_options
     {
-      demo: event.demo_mode?,
       initial: initial?
     }
   end

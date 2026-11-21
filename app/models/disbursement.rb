@@ -140,7 +140,6 @@ class Disbursement < ApplicationRecord
   validates :amount, numericality: { greater_than: 0 }
   validate :repayment_allocations_match_amount, if: :transfer_type_repayment?
   validate :events_are_different
-  validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
 
   scope :processing, -> { in_transit }
@@ -295,11 +294,6 @@ class Disbursement < ApplicationRecord
 
   def events_are_different
     self.errors.add(:event, "must be different than source event") if event_id == source_event_id && destination_subledger_id == source_subledger_id
-  end
-
-  def events_are_not_demos
-    self.errors.add(:event, "cannot be a demo event") if event.demo_mode?
-    self.errors.add(:source_event, "cannot be a demo event") if source_event.demo_mode?
   end
 
   def scheduled_on_must_be_in_the_future

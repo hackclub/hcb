@@ -6,7 +6,7 @@ class EmployeePolicy < ApplicationPolicy
   end
 
   def create?
-    !record.event.demo_mode && (admin || manager)
+    admin || manager
   end
 
   def show?

@@ -313,14 +313,13 @@ RSpec.describe DisbursementsController do
       expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([source_event.public_id])
     end
 
-    it "lists public organizations as destinations but hides private, unlisted and demo ones" do
+    it "lists public organizations as destinations but hides private and unlisted ones" do
       user = create(:user)
       # Named so it can't match the "Claude" search below, as a random name could
       create(:event, name: "Hackworth Robotics", organizers: [user])
       public_event = create(:event, name: "Claude Clearinghouse")
       create(:event, name: "Claude Private", is_public: false)
       create(:event, name: "Claude Unlisted", is_indexable: false)
-      create(:event, name: "Claude Demo", demo_mode: true)
       create_session(user, verified: true)
 
       get(:event_search, params: { q: "Claude" }, format: :json)

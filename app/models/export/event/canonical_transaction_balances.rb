@@ -63,7 +63,7 @@ class Export
       private
 
       def events
-        ::Event.all.not_demo_mode.includes(:plan, :config, :users)
+        ::Event.all.includes(:plan, :config, :users)
       end
 
       def header

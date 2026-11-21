@@ -1689,7 +1689,6 @@ class AdminController < Admin::BaseController
 
   def filtered_events(events: Event.all)
     @q = params[:q].presence
-    @demo_mode = params[:demo_mode].presence || "full" # full accounts only by default
     @engaged = params[:engaged] == "1" # unchecked by default
     @pending = params[:pending] == "0" ? nil : true # checked by default
     @unapproved = params[:unapproved] == "0" ? nil : true # checked by default
@@ -1733,8 +1732,6 @@ class AdminController < Admin::BaseController
     relation = relation.organized_by_hack_clubbers if @organized_by == "hack_clubbers"
     relation = relation.organized_by_teenagers if @organized_by == "teenagers"
     relation = relation.not_organized_by_teenagers if @organized_by == "adults"
-    relation = relation.demo_mode if @demo_mode == "demo"
-    relation = relation.not_demo_mode if @demo_mode == "full"
     relation = relation.includes(:event_tags)
     relation = relation.where(event_tags: { id: @tagged_with }) unless @tagged_with == "anything"
     case @risk_level

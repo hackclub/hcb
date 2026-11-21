@@ -18,7 +18,7 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def make_donation?
-    record.event.donation_page_available? && !record.event.demo_mode?
+    record.event.donation_page_available?
   end
 
   def index?

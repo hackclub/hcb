@@ -133,7 +133,7 @@ RSpec.describe EventsController do
       event1 = create(:event, name: "Event 1")
       create(:organizer_position, user:, event: event1, sort_index: 2)
 
-      event2 = create(:event, name: "Event 2", demo_mode: true)
+      event2 = create(:event, name: "Event 2")
       create(:organizer_position, user:, event: event2, sort_index: 1)
       event2.create_config!(subevent_plan: Event::Plan::Standard)
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
@@ -147,20 +147,18 @@ RSpec.describe EventsController do
       expect(response.parsed_body).to eq(
         [
           {
-            "name"      => "Event 2",
-            "slug"      => "event-2",
-            "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
-            "demo_mode" => true,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => true },
+            "name"     => "Event 2",
+            "slug"     => "event-2",
+            "logo"     => Rails.application.routes.url_helpers.url_for(event2.logo),
+            "member"   => true,
+            "features" => { "card_grants" => false, "subevents" => true },
           },
           {
-            "name"      => "Event 1",
-            "slug"      => "event-1",
-            "logo"      => "none",
-            "demo_mode" => false,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => false },
+            "name"     => "Event 1",
+            "slug"     => "event-1",
+            "logo"     => "none",
+            "member"   => true,
+            "features" => { "card_grants" => false, "subevents" => false },
           }
         ]
       )
@@ -172,7 +170,7 @@ RSpec.describe EventsController do
       event1 = create(:event, name: "Event 1")
       create(:organizer_position, user:, event: event1, sort_index: 2)
 
-      event2 = create(:event, name: "Event 2", demo_mode: true)
+      event2 = create(:event, name: "Event 2")
       event2.create_config!(subevent_plan: Event::Plan::Standard)
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
       event2.logo.attach(io: File.open(logo_path), filename: "logo.png", content_type: "image/png")
@@ -185,20 +183,18 @@ RSpec.describe EventsController do
       expect(response.parsed_body).to eq(
         [
           {
-            "name"      => "Event 1",
-            "slug"      => "event-1",
-            "logo"      => "none",
-            "demo_mode" => false,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => false },
+            "name"     => "Event 1",
+            "slug"     => "event-1",
+            "logo"     => "none",
+            "member"   => true,
+            "features" => { "card_grants" => false, "subevents" => false },
           },
           {
-            "name"      => "Event 2",
-            "slug"      => "event-2",
-            "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
-            "demo_mode" => true,
-            "member"    => false,
-            "features"  => { "card_grants" => false, "subevents" => true },
+            "name"     => "Event 2",
+            "slug"     => "event-2",
+            "logo"     => Rails.application.routes.url_helpers.url_for(event2.logo),
+            "member"   => false,
+            "features" => { "card_grants" => false, "subevents" => true },
           },
         ]
       )
@@ -493,17 +489,6 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
-    it "does not let an admin switch an organization into demo mode" do
-      admin = create(:user, :make_admin)
-      event = create(:event, name: "Existing organization")
-      create_session(admin, verified: true)
-
-      patch(:update, params: { id: event.slug, event: { demo_mode: true, short_name: "Updated" } })
-
-      expect(response).to redirect_to(edit_event_path(event))
-      expect(event.reload).to have_attributes(demo_mode: false, short_name: "Updated")
-    end
-
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -1604,19 +1589,6 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Mission statement")
       expect(response.body).not_to include("Run neat events for students")
-    end
-
-    it "does not offer to create an account number for a Playground Mode organization" do
-      user = create(:user)
-      event = create(:event, :demo_mode)
-      create(:organizer_position, user:, event:, role: :manager)
-      create_session(user, verified: true)
-
-      get(:show, params: { id: event.slug })
-
-      modal = Nokogiri::HTML5(response.body).at_css("#account_number")
-      expect(modal.text).to include("Unavailable in Playground Mode")
-      expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
     end
 
     describe "the insights timeframe" do
