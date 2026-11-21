@@ -9,7 +9,7 @@
         Upload a CSV
       <% end %>
     <% end %>
-    <%= link_to new_event_card_grant_path(@event), class: "w-full btn bg-success", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>
+    <%= link_to new_event_card_grant_path(@event), class: "w-full btn bg-success", data: { modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>
       <%= inline_icon "card-add" %>
       Send a grant
     <% end %>

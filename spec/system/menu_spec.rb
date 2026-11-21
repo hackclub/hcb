@@ -34,6 +34,64 @@ RSpec.describe "Menus", type: :system do
     expect(page).to have_no_link("Sign out")
   end
 
+  it "closes again when clicked twice before it's positioned" do
+    # Both clicks land before floating-ui's position promise resolves
+    execute_script("const t = document.querySelector('.user-menu-trigger'); t.click(); t.click()")
+
+    expect(page).to have_no_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("false")
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+  end
+
+  it "hands focus back to its button when closed with Escape from inside" do
+    toggle.click
+    # Focus a link inside, as Tab would
+    execute_script("[...document.querySelectorAll('a')].find(a => a.textContent.includes('Sign out') && a.checkVisibility()).focus()")
+    expect(evaluate_script("document.activeElement.textContent")).to include("Sign out")
+    press_escape
+
+    expect(page).to have_no_link("Sign out")
+    expect(evaluate_script("document.activeElement === document.querySelector('.user-menu-trigger')")).to be(true)
+  end
+
+  it "leaves one copy open when toggled three times quickly, and none once closed" do
+    execute_script("const t = document.querySelector('.user-menu-trigger'); t.click(); t.click(); t.click()")
+    expect(page).to have_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("true")
+    # The one closed on the way animates out; once it's gone, just the open one is left
+    expect(page).to have_css("body > .menu__content", count: 1, visible: :all)
+
+    press_escape
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+  end
+
+  it "takes its open copy with it when its toggle is removed from the page" do
+    toggle.click
+    expect(page).to have_link("Sign out")
+
+    execute_script("document.querySelector('.user-menu-trigger').closest('[data-controller~=menu]').remove()")
+
+    expect(page).to have_no_link("Sign out")
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+    # And Escape has nothing left of it to close
+    execute_script("document.body.insertAdjacentHTML('beforeend', '<input type=search id=search value=lunch>'); document.getElementById('search').focus()")
+    press_escape
+    expect(evaluate_script("document.getElementById('search').value")).to eq("")
+  end
+
+  it "closes when a modal opens" do
+    toggle.click
+    expect(page).to have_link("Sign out")
+
+    html = ApplicationController.render(inline: %(<%= modal "Opened", id: "opened" do %><p>Opened body</p><% end %>))
+    stream = ApplicationController.render(inline: %(<%= turbo_stream.open_modal("opened") %>))
+    execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0]); Turbo.renderStreamMessage(arguments[1])", html, stream)
+
+    expect(page).to have_no_link("Sign out")
+    expect(page).to have_css("#opened[open]")
+    expect(toggle["aria-expanded"]).to eq("false")
+  end
+
   it "signs out through its Turbo DELETE link" do
     toggle.click
     click_on "Sign out"

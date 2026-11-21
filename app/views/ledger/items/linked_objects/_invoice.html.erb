@@ -11,13 +11,12 @@
   <%= link_to "Process", invoice_process_admin_path(invoice), class: "btn" %>
   <%= link_to "View on Stripe", invoice.stripe_dashboard_url, class: "btn bg-accent" %>
   <% if invoice.paid? %>
-    <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
+    <button class="btn bg-error" data-modal="refund">Issue refund</button>
   <% end %>
 <% end %>
 
 <% if admin_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
-    <%= modal_header "Issue refund" %>
+  <%= modal "Issue refund", id: "refund" do %>
     <%= form_with url: refund_invoice_path(id: invoice.id) do |form| %>
       <div class="field">
         <%= form.label :amount, "Amount to refund" %>
@@ -31,7 +30,7 @@
       </div>
       <%= form.submit "Refund invoice", class: "bg-error" %>
     <% end %>
-  </section>
+  <% end %>
 <% end %>
 
 <% if invoice.void_v2? && !invoice.manually_marked_as_paid? %>
@@ -214,7 +213,7 @@
     </h2>
     <section class="ledger-item--details">
       <% if invoice.payment_method_type == 'card' %>
-        <div data-behavior="modal_trigger" data-modal="payment_details" class="flex flex-col pointer" tabindex="0">
+        <div data-modal="payment_details" class="flex flex-col pointer" tabindex="0">
           <strong>
             <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
             <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -297,8 +296,7 @@
 <% end %>
 
 <% if invoice.payment_method_type == 'card' %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
-    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(invoice, class: "h3 font-sans slate dark:text-white regular") %>
+  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(invoice, class: "h3 font-sans slate dark:text-white regular"), id: "payment_details" do %>
 
     <article class="details-horiz">
       <div class="details">
@@ -334,5 +332,5 @@
         </p>
       </div>
     </article>
-  </section>
+  <% end %>
 <% end %>

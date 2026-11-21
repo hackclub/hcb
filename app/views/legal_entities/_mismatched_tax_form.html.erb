@@ -50,10 +50,9 @@
   <% end %>
 
   <% if mismatched.entity_business? %>
-    <%= link_to "Create new legal entity", "#", class: "btn", data: { behavior: "modal_trigger", modal: "create_new_le" } %>
+    <%= link_to "Create new legal entity", "#", class: "btn", data: { modal: "create_new_le" } %>
 
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_new_le">
-      <%= modal_header "Create new legal entity" %>
+    <%= modal "Create new legal entity", id: "create_new_le" do %>
 
       <p>
         You're creating a new legal entity with TIN <%= masked_tin_tag mismatched, viewable: show_tin %>.
@@ -72,7 +71,7 @@
 
         <%= form.submit "Create" %>
       <% end %>
-    </section>
+    <% end %>
   <% end %>
 
   <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn", form: { data: { turbo_frame: "_top" } } %>

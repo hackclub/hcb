@@ -13,7 +13,7 @@
                       class: "mb-1 tooltipped tooltipped--s",
                       aria: { label: @view == "list" ? "Grid view" : "List view" },
                       data: { turbo_prefetch: "false" } %>
-      <button class="btn bg-success mb-1" data-behavior="modal_trigger" data-modal="order_card" <% if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %> disabled<% end %>>
+      <button class="btn bg-success mb-1" data-modal="order_card" <% if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %> disabled<% end %>>
         <%= inline_icon "card-add" %>
         Order a card
       </button>
@@ -54,10 +54,9 @@
       <% end %>
     </div>
   <% end %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
-    <%= modal_header "Order a card" %>
+  <%= modal "Order a card", id: "order_card" do %>
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
-  </section>
+  <% end %>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
   <% if @cards_by_event.any? %>
     <% @cards_by_event.each do |event, stripe_cards| %>

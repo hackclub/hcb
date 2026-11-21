@@ -37,32 +37,31 @@
 <div class="flex flex-col gap-4 -mt-3">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden mt-3">
-      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { modal: "send_transfer" } do %>
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
       <%= render "events/transfers/modal" %>
       <%= render "card_grants/create_modal" if @event.plan.card_grants_enabled? %>
 
-      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
+      <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
       <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
 
       <% if policy(@event.check_deposits.build).create? %>
-        <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
+        <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { modal: "deposit_check" }  do %>
           <%= inline_icon "cheque", size: 20 %>
           Deposit a check
         <% end %>
-        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
-          <%= modal_header "Deposit a check" %>
+        <%= modal "Deposit a check", id: "deposit_check" do %>
           <%= render "check_deposits/new", event: @event %>
-        </section>
+        <% end %>
       <% end %>
 
       <% if policy(@event).account_number? %>
-        <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_number" } do %>
+        <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { modal: "account_number" } do %>
           <%= inline_icon "bank-account", size: 20 %>
           Account numbers
         <% end %>
@@ -70,7 +69,7 @@
       <% end %>
 
       <% if InvoicePolicy.new(current_user, @event).create? %>
-        <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+        <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { modal: "new_invoice" } do %>
           <%= inline_icon "briefcase", size: 20 %>
           Send an invoice
         <% end %>

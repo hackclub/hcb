@@ -1,4 +1,4 @@
-<section data-behavior="modal" role="dialog" id="create_employee_payment" class="modal modal--scroll bg-snow">
+<%= modal id: "create_employee_payment" do %>
   <%= form_with(model: Employee::Payment, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }, data: { turbo: false }) do |form| %>
     <%= modal_header "Get paid through HCB" %>
 
@@ -38,4 +38,4 @@
       <%= form.submit "Request payment", class: "mt2" %>
     </div>
   <% end %>
-</section>
+<% end %>

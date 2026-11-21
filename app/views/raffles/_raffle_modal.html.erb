@@ -1,6 +1,6 @@
 <%# locals: (id:, program:) %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= id %>">
+<%= modal id: do %>
   <%= turbo_frame_tag :raffle_modal do %>
     <%= modal_header "Join the raffle" %>
       <strong>Name:</strong> <%= current_user&.name %>
@@ -8,4 +8,4 @@
       <strong>Email:</strong> <%= current_user&.email %>
     <%= render "raffles/raffle_form", program: %>
   <% end %>
-</section>
+<% end %>

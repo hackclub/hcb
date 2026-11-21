@@ -41,8 +41,10 @@ export default function CommandBar({
       >
         <ButtonTrigger />
         <KBarPortal>
+          {/* Over modals, and looks after its own focus (app/javascript/modal.js) */}
           <KBarPositioner
-            style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
+            data-above-modals
+            style={{ zIndex: 3000, backgroundColor: 'var(--kbar-dim)' }}
           >
             <SearchAndResults />
           </KBarPositioner>

@@ -12,7 +12,7 @@
       <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
         <div class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
                 data-menu-target="toggle"
-                data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                data-action="click->menu#toggle">
           <%= @legal_entity.display_name %>
           <%= inline_icon "down-caret", size: 20 %>
                 </div>
@@ -111,20 +111,16 @@
 
         <div class="mt-auto">
           <% if position.status == :active %>
-            <%= link_to "#", class: "btn bg-success w-full justify-center", data: { behavior: "modal_trigger", modal: dom_id(position, :submit_invoice) } do %>
+            <%= link_to "#", class: "btn bg-success w-full justify-center", data: { modal: dom_id(position, :submit_invoice) } do %>
               <%= inline_icon "cloud-upload" %>
               Submit invoice
             <% end %>
 
-            <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
-              id="<%= dom_id(position, :submit_invoice) %>"
-              data-controller="turbo-frame-modal"
-              data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
-              <%= modal_header "Submit an invoice" %>
+            <%= modal "Submit an invoice", id: dom_id(position, :submit_invoice), data: { controller: "turbo-frame-modal", action: "turbo:submit-end->turbo-frame-modal#submitEnd" } do %>
               <%= turbo_frame_tag dom_id(position, :invoice_form), src: new_payroll_position_invoice_path(position), loading: :lazy do %>
                 <%= render "application/loading_container", klass: "py-8" %>
               <% end %>
-            </section>
+            <% end %>
           <% elsif next_step %>
             <% contractor_party = position.contract&.party(:contractor) if next_step[:key] == :contractor_signature %>
             <% case next_step[:key] %>

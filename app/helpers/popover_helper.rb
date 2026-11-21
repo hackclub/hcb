@@ -8,7 +8,6 @@ module PopoverHelper
   def popover_data(title:, src:, frame_id:, state_url:, external_link: nil, state_title: nil, size: nil)
     {
       turbo_frame: "_top",
-      behavior: "modal_trigger",
       modal: "shared_popover",
       popover_title: title,
       popover_src: src,

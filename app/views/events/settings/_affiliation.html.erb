@@ -48,12 +48,11 @@
       <%= pop_icon_to "edit",
         "#",
         class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this affiliation",
-        data: { behavior: "modal_trigger", modal: "edit_affiliation_#{affiliation.id}" },
+        data: { modal: "edit_affiliation_#{affiliation.id}" },
         disabled: %>
-      <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_affiliation_<%= affiliation.id %>">
-        <%= modal_header("Edit affiliation") %>
+      <%= modal "Edit affiliation", id: "edit_affiliation_#{affiliation.id}", class: "max-w-md" do %>
         <%= render "events/settings/affiliation_form", affiliation:, url: affiliation_path(affiliation.id), method: :patch, actions_disabled: disabled %>
-      </section>
+      <% end %>
     </div>
     <%= pop_icon_to "delete",
       affiliation_path(affiliation.id),

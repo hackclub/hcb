@@ -92,7 +92,7 @@
         <button
           type="button"
           class="btn menu__toggle overflow-visible"
-          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          data-action="menu#toggle"
           data-menu-target="toggle">
             <%= inline_icon "download", size: 16 %>
             Export
@@ -169,12 +169,11 @@
   <% end %>
 
   <% if organizer_signed_in? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
-      <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
+    <%= modal "Settings", id: "donation_settings", external_link: edit_event_path(@event, tab: "donations") do %>
       <%= turbo_frame_tag :donations_settings, src: edit_event_path(@event, tab: "donations", params: { frame: true }), loading: "lazy" do %>
         <strong>Loading...</strong>
       <% end %>
-    </section>
+    <% end %>
   <% end %>
 <% else %>
   <%= render "events/one_pager",

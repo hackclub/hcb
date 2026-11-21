@@ -44,7 +44,6 @@ RSpec.describe "CheckDepositsController#index", type: :request do
 
     link = Nokogiri::HTML(response.body).at_css("a.stretched-link[href='#{ledger_item_path(check_deposit.reload.ledger_item)}']")
 
-    expect(link["data-behavior"]).to eq("modal_trigger")
     expect(link["data-modal"]).to eq("shared_popover")
     expect(link["data-popover-title"]).to eq("Check deposit of $25.00")
     expect(link["data-popover-src"]).to eq(check_deposit.local_hcb_code.popover_path)

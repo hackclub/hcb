@@ -1,53 +1,84 @@
-/* adapted from https://github.com/kylefox/jquery-modal/blob/master/jquery.modal.css */
-.blocker {
-  opacity: 0;
+// Native <dialog>s (ModalHelper#modal), opened without the browser's top layer
+// and `::backdrop` (app/javascript/modal.js explains why), so they're fixed
+// over the page here, each above its own `.modal-backdrop`. They animate out
+// while still open, marked `data-closing`, so every browser shows it.
+.modal,
+.modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 12;
-  background-color: rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
+  inset: 0;
+  // Above everything on the page and beneath SweetAlert, tours and tooltips.
+  // One opened from another is deeper, so on top wherever it is in the page.
+  z-index: calc(2000 + var(--modal-depth, 0));
 }
-.blocker.behind {
-  background-color: transparent;
+
+.modal-backdrop {
+  background-color: $backdrop;
+  transition: opacity 0.2s;
+
+  [data-dark='true'] & {
+    background-color: $backdrop-dark;
+  }
+
+  @starting-style {
+    opacity: 0;
+  }
+
+  // Leaving, quicker than it came in
+  &[data-closing] {
+    opacity: 0;
+    transition-duration: 0.15s;
+  }
 }
 
 .modal {
+  border: 0;
+  color: inherit;
   background-color: $white;
   box-shadow: var(--shadow-modal);
   padding: 2rem 1rem;
   border-radius: var(--radius-2xl);
   overflow: hidden;
-  display: none;
   margin: auto;
+  max-width: 100vw;
   max-height: 92vh;
-  vertical-align: middle;
-  position: relative;
-  z-index: 2;
   text-align: left;
-  transform: scale(0.9);
-  transition: transform 0.2s ease-in-out;
+  opacity: 0;
+  scale: 0.9;
+  // Leaving, quicker than it came in (the open state's 0.2s), so closing feels instant
+  transition:
+    opacity 0.15s,
+    scale 0.15s,
+    translate 0.15s;
 
-  .jquery-modal:not(:not([style*='opacity: 1'])) & {
-    transform: scale(1);
+  // `none`, not 1: a transformed modal would anchor fixed menus inside it
+  &[open]:not([data-closing]) {
+    opacity: 1;
+    scale: none;
+    transition:
+      translate 0.2s,
+      scale 0.2s;
+  }
+
+  // Matches the open state's selector, or it would win and nothing would animate
+  @starting-style {
+    &[open]:not([data-closing]) {
+      opacity: 0;
+      scale: 0.9;
+    }
   }
 
   &.modal--popover {
-    position: absolute;
-    right: 0px;
-    transform: translateX(100%) scale(0.9);
-    bottom: 0px;
+    inset: auto 0 0 auto;
+    margin: 0;
     max-width: 800px;
     max-height: 100dvh;
-    border-radius: 0rem;
     width: 66vw;
-    transition: transform 0.2s;
+    scale: none;
 
-    .jquery-modal:not(:not([style*='opacity: 1'])) & {
-      transform: translateX(0%);
+    @starting-style {
+      &[open]:not([data-closing]) {
+        scale: none;
+      }
     }
 
     &.modal--popover--sm {
@@ -56,14 +87,24 @@
 
     @media (min-width: 48em) {
       height: calc(100dvh - 24px);
-      border-radius: var(--radius-xl);
       margin: 12px;
+      translate: 10%;
+
+      &[open]:not([data-closing]) {
+        translate: none;
+      }
+
+      @starting-style {
+        &[open]:not([data-closing]) {
+          translate: 10%;
+        }
+      }
     }
 
     @media (max-width: 48em) {
+      border-radius: $sheet-radius;
       width: 100vw;
       max-width: 100vw;
-      transform: translateX(0%);
       height: 80vh;
     }
   }
@@ -103,15 +144,10 @@
 
   @media screen and (max-width: 32em) {
     padding: 2rem 1rem 3rem;
-    border-radius: 1rem 1rem 0 0;
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    border-radius: $sheet-radius;
+    inset: auto 0 0;
     margin: 0;
-    border: 0;
-    z-index: 999;
+    width: auto;
     max-width: 100vw;
 
     @supports (padding: calc(env(safe-area-inset-bottom))) {
@@ -196,6 +232,15 @@
   }
 }
 
+// In a modal with no header or side panel, like an enlarged screenshot
+.modal__close.modal__close--corner {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  margin: 0;
+  z-index: 1;
+}
+
 .modal__external {
   float: right;
   width: 32px;
@@ -224,14 +269,6 @@
   }
 }
 
-// NOTE: text for screenreader users to close modal. hidden onscreen
-.close-modal {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
+html:has(.modal[open]) {
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

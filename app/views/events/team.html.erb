@@ -25,7 +25,7 @@
   <% end %>
 
   <% if policy(@event).can_invite_user? %>
-    <%= link_to new_event_organizer_position_invite_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite_member" }, disabled: !policy(@event).can_invite_user? do %>
+    <%= link_to new_event_organizer_position_invite_path(event_id: @event.slug), class: "btn bg-success", data: { modal: "invite_member" }, disabled: !policy(@event).can_invite_user? do %>
       <%= inline_icon "member-add" %>
       Invite
     <% end %>
@@ -122,11 +122,10 @@
   </h2>
   <ul class="grid grid--narrow text-left w-full mt-2">
     <% @invite_requests.each do |invite_request| %>
-      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="approve_invite_request_<%= invite_request.hashid %>">
-        <%= modal_header "Approve invite request" %>
+      <%= modal "Approve invite request", id: "approve_invite_request_#{invite_request.hashid}" do %>
 
         <%= render "organizer_position_invite/requests/approval_form", invite_request: %>
-      </section>
+      <% end %>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
           <%= user_mention invite_request.requester %>
@@ -135,7 +134,6 @@
                           approve_request_path(invite_request),
                           class: "success tooltipped tooltipped--w h-8 w-8",
                           data: {
-                            behavior: "modal_trigger",
                             modal: "approve_invite_request_#{invite_request.hashid}",
                           },
                           'aria-label': "Approve",
@@ -187,9 +185,8 @@
 <% end %>
 
 <% if policy(@event).can_invite_user? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
-    <%= modal_header "Invite a team member" %>
+  <%= modal "Invite a team member", id: "invite_member" do %>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
     <%= render "events/invite_links_section", event: @event, invite_links: @invite_links %>
-  </section>
+  <% end %>
 <% end %>

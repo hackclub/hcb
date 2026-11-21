@@ -18,7 +18,7 @@
       <%= link_to(
             "Setup",
             "#",
-            data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "discord_integration" },
+            data: { turbo_frame: "_top", modal: "discord_integration" },
             class: "btn bg-blue",
             disabled:
           ) %>
@@ -32,6 +32,6 @@
   <% end %>
 </div>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="discord_integration">
+<%= modal id: "discord_integration" do %>
   <%= yield %>
-</section>
+<% end %>
