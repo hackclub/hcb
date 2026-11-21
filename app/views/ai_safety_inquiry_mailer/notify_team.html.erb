@@ -1,0 +1,15 @@
+<p>New inquiry from <a href="<%= @page_url %>"><%= @page_url %></a></p>
+
+<p>
+  <strong>Name:</strong> <%= @name || "Not given" %><br>
+  <strong>Email:</strong> <%= @email %><br>
+  <strong>I'm:</strong> <%= @audience_label %><br>
+  <strong>Ref:</strong> <%= @ref || "None" %>
+</p>
+
+<p><strong>Message:</strong></p>
+<% if @message %>
+  <%= simple_format(h(@message)) %>
+<% else %>
+  <p>None</p>
+<% end %>

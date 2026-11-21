@@ -3663,3 +3663,1164 @@ $mk-term-green: #62d196;
     }
   }
 }
+
+// ---------------------------------------------------------------- AI safety landing page (/for/ai-safety)
+.mk-ais [id] {
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when jumped to
+}
+
+.marketing-form {
+  &--labelled {
+    gap: 18px;
+  }
+
+  &__field {
+    display: grid;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__optional {
+    font-weight: 400;
+    color: $muted-text;
+  }
+
+  &__fieldset {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__options {
+    display: grid;
+    gap: 8px;
+
+    @media (min-width: 560px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    font-weight: 500;
+    color: $mk-ink;
+    cursor: pointer;
+
+    input {
+      flex: none;
+      margin: 0;
+      accent-color: $red;
+    }
+
+    &:has(input:checked) {
+      box-shadow: inset 0 0 0 1.5px $red;
+    }
+
+    &:has(input:focus-visible) {
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
+  }
+}
+
+// A datasheet layout: key facts up top, then compact tables and definition lists,
+// with a sticky section index on desktop. Scoped to .mk-ais.
+
+.mk-ais {
+  $rule: $smoke;
+  $label: $muted-text;
+
+  --mk-ais-gap: 40px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: $slate;
+  font-variant-numeric: tabular-nums;
+  padding: 40px 0 72px;
+
+  :where(a:not(.marketing-btn)) {
+    color: $mk-ink;
+    text-decoration: underline;
+    text-decoration-color: rgba($mk-ink, 0.3);
+    text-underline-offset: 2px;
+
+    &:hover {
+      text-decoration-color: $red;
+    }
+  }
+
+  // Numbers only: monospace with tabular figures so columns line up.
+  &__num {
+    font-family: $mono;
+    font-size: 0.92em;
+    letter-spacing: -0.01em;
+    color: $mk-ink;
+  }
+
+  &__grid {
+    display: grid;
+    gap: var(--mk-ais-gap);
+
+    @media (min-width: 1000px) {
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 56px;
+    }
+  }
+
+  // This page runs wider than the other /for/* pages. Nav and footer widen with it so edges line up.
+  .mk-container {
+    max-width: 1280px;
+
+    @media (min-width: 1600px) {
+      max-width: 1536px;
+    }
+  }
+
+  // Sections inside lay out by this column's width (with or without the index), not the viewport.
+  &__main {
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  // ---------------------------------------------------------------- index
+  &__index {
+    display: none;
+
+    @media (min-width: 1000px) {
+      display: block;
+      position: sticky;
+      top: calc(var(--mk-nav-h) + 24px);
+      align-self: start;
+      max-height: calc(100vh - var(--mk-nav-h) - 48px);
+      overflow-y: auto;
+      padding-top: 6px;
+    }
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 12px;
+      border-left: 1px solid $rule;
+      display: grid;
+      gap: 2px;
+    }
+
+    a {
+      display: block;
+      padding: 3px 0;
+      font-size: 0.8125rem;
+      color: $slate;
+      text-decoration: none;
+
+      &:hover {
+        color: $red;
+      }
+    }
+  }
+
+  &__index-sub a {
+    padding-left: 12px;
+    color: $label;
+  }
+
+  // ---------------------------------------------------------------- header
+  &__head {
+    padding-bottom: 24px;
+  }
+
+  &__title {
+    font-size: clamp(1.75rem, 3.2vw, 2.25rem);
+    text-wrap: balance;
+  }
+
+  &__lead {
+    margin-top: 10px;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  &__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin-top: 18px;
+  }
+
+  &__link {
+    font-weight: 600;
+  }
+
+  // The big CTA sits in the header, so it gets tighter spacing than at the bottom.
+  &__mark {
+    text-decoration: underline;
+    text-decoration-color: $red;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  &__head .mk-ais-cta {
+    margin: 28px 0 0;
+  }
+
+  &__contact {
+    margin: 16px 0 0;
+    color: $label;
+  }
+
+  // ---------------------------------------------------------------- sections
+  &__section {
+    padding: 32px 0;
+    border-top: 1px solid $rule;
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+
+    &--facts {
+      padding-top: 0;
+      border-top: 0;
+    }
+  }
+
+  &__h2 {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  &__intro {
+    margin-bottom: 16px;
+  }
+
+  &__note,
+  &__aside {
+    font-size: 0.8125rem;
+    color: $label;
+  }
+
+  &__note {
+    margin-top: 10px;
+  }
+
+  &__more {
+    margin-top: 14px;
+    font-size: 0.875rem;
+
+    a {
+      font-weight: 600;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- tables
+.mk-ais-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  caption {
+    text-align: left;
+    caption-side: top;
+    padding-bottom: 8px;
+    border-bottom: 2px solid $mk-ink;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: $mk-ink;
+  }
+
+  // Undo the app's global table look (nowrap cells, row borders, tinted thead).
+  tr {
+    border-bottom: 0;
+    background: none;
+  }
+
+  th,
+  td {
+    white-space: normal;
+    padding: 7px 12px 7px 0;
+    border-bottom: 1px solid $smoke;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  tr > :last-child {
+    padding-right: 0;
+  }
+
+  tbody th {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $muted-text;
+    border-bottom-color: $smoke-dark;
+  }
+
+  &--plain {
+    margin: 12px 0;
+
+    tbody th {
+      width: 40%;
+    }
+  }
+}
+
+// The key facts table: framed, zebra-free, label | value | link.
+.mk-ais-facts {
+  tbody th {
+    width: 30%;
+  }
+
+  td:last-child {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+    font-size: 0.8125rem;
+
+    a {
+      color: $muted-text;
+
+      &:hover {
+        color: $red;
+      }
+    }
+  }
+
+  tbody tr:hover {
+    background: rgba($mk-ink, 0.025);
+  }
+
+  // Phone: label and value stack, link sits on the label line.
+  @media (max-width: 599.98px) {
+    display: block;
+
+    caption,
+    tbody {
+      display: block;
+    }
+
+    tbody td:last-child {
+      width: auto;
+    }
+
+    tbody tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 8px 0;
+      border-bottom: 1px solid $smoke;
+    }
+
+    tbody th,
+    tbody td {
+      width: auto;
+      padding: 0;
+      border: 0;
+    }
+
+    tbody td:nth-child(2) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: 2px;
+    }
+  }
+}
+
+// Example month and fees: two matching cards, stacked so the ledger gets the full width.
+.mk-ais-pair {
+  display: grid;
+  gap: 20px;
+  padding: 32px 0;
+  border-top: 1px solid $smoke;
+
+  // Side by side only on very wide screens, where the ledger still fits one line per row.
+  @container (min-width: 1150px) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.mk-ais-card {
+  border: 1px solid rgba($black, 0.12);
+  border-radius: var(--radius-lg);
+  background: $white;
+  overflow: hidden;
+
+  // The ledger's <caption> and the fees <h2> share one header style.
+  .mk-ais & &__head {
+    margin: 0;
+    line-height: 1.5; // the caption and the h2 otherwise inherit different line heights
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba($black, 0.1);
+    background: $snow;
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-align: left;
+    color: $mk-ink;
+  }
+
+  // A caption left as a table caption spans the table; display: block would shrink it.
+  caption.mk-ais-card__head {
+    caption-side: top;
+  }
+}
+
+// Example ledger, styled after the HCB transaction list: type icon, date, memo, amount.
+.mk-ais-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  .mk-ais & td,
+  .mk-ais & th {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba($black, 0.06);
+    vertical-align: middle;
+    white-space: normal;
+    font-size: 0.9375rem;
+    color: $mk-ink;
+  }
+
+  .mk-ais & &__icon {
+    width: 24px;
+    padding-right: 0;
+    line-height: 0;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      fill: $muted;
+    }
+  }
+
+  .mk-ais & &__date {
+    width: 1%;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: $muted-text;
+  }
+
+  &__name {
+    display: block;
+  }
+
+  &__type {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.8125rem;
+    color: $muted-text;
+  }
+
+  .mk-ais & &__amount {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .mk-ais & &__row--in &__amount {
+    color: $green-dark;
+  }
+
+  .mk-ais & tbody tr:hover td {
+    background: $snow;
+  }
+
+  .mk-ais & tfoot th,
+  .mk-ais & tfoot td {
+    border-bottom: 0;
+    border-top: 2px solid $mk-ink;
+    font-weight: 700;
+  }
+
+  .mk-ais & tfoot th {
+    text-align: left;
+  }
+
+  &__type-date {
+    display: none;
+  }
+
+  // On phones the date column folds into the type line ("Mar 24 · Reimbursement").
+  @container (max-width: 520px) {
+    .mk-ais & td,
+    .mk-ais & th {
+      padding: 10px;
+    }
+
+    .mk-ais & &__date {
+      display: none;
+    }
+
+    &__type-date {
+      display: inline;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- lists
+.mk-ais-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+
+  li::marker {
+    color: $muted;
+  }
+}
+
+// "What your grant can pay for": labelled paragraphs, like the key facts.
+.mk-ais-spec {
+  margin: 16px 0 0;
+
+  > div {
+    display: grid;
+    gap: 4px 32px;
+    padding: 16px 0;
+    border-top: 1px solid rgba($black, 0.08);
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+
+    @container (min-width: 640px) {
+      grid-template-columns: 200px minmax(0, 1fr);
+    }
+  }
+
+  dt {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  dd {
+    margin: 0;
+    line-height: 1.6;
+    color: $slate;
+    text-wrap: pretty;
+  }
+}
+
+// Fees card: the 7% worked through on the example installment.
+.mk-ais-fee {
+  padding: 18px;
+
+  &__lead {
+    margin: 0;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__math {
+    width: 100%;
+    margin-top: 14px;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+
+    .mk-ais & th,
+    .mk-ais & td {
+      padding: 9px 0;
+      border-bottom: 1px solid rgba($black, 0.06);
+      white-space: normal;
+      font-size: 0.9375rem;
+      color: $slate;
+    }
+
+    .mk-ais & th {
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .mk-ais & td {
+      text-align: right;
+      white-space: nowrap;
+      color: $mk-ink;
+    }
+
+    .mk-ais & tfoot th,
+    .mk-ais & tfoot td {
+      border-bottom: 0;
+      border-top: 2px solid $mk-ink;
+      font-weight: 700;
+      color: $mk-ink;
+    }
+  }
+
+  &__note {
+    margin: 14px 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: $slate;
+  }
+}
+
+// How it works as a vertical timeline: red markers on a line down the left.
+.mk-ais-steps {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  counter-reset: mk-ais-step;
+
+  li {
+    position: relative;
+    counter-increment: mk-ais-step;
+    padding: 0 0 28px 52px;
+
+    // The numbered marker.
+    &::before {
+      content: counter(mk-ais-step);
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: $red;
+      color: $white;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 0 0 5px rgba($red, 0.14);
+    }
+
+    // The line to the next marker.
+    &::after {
+      content: '';
+      position: absolute;
+      top: 42px;
+      bottom: 4px;
+      left: 16px;
+      width: 2px;
+      border-radius: 2px;
+      background: linear-gradient($red, rgba($red, 0.15));
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    // With room, the timing pill sits beside the title instead of above it.
+    @container (min-width: 560px) {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas: 'title when' 'text text';
+      align-items: center;
+      column-gap: 12px;
+    }
+  }
+
+  &__when {
+    grid-area: when;
+    justify-self: start;
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba($red, 0.08);
+    color: darken($red, 8%);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    grid-area: title;
+    margin-bottom: 4px;
+    font-family: $font-family;
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+
+  p {
+    grid-area: text;
+    line-height: 1.55;
+  }
+
+  @container (min-width: 560px) {
+    .mk-ais-steps__when,
+    h3 {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin-top: 4px;
+    }
+  }
+}
+
+.mk-ais-dl {
+  margin: 0;
+
+  @container (min-width: 720px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
+  }
+
+  > div {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    padding: 10px 0;
+    border-top: 1px solid $smoke;
+  }
+
+  dt {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+// Accordion. Answers stay in the HTML for crawlers and no-JS readers.
+// One question per line: the column never gets wide enough for two without wrapping.
+.mk-ais-faq {
+  display: grid;
+
+  &__item {
+    border-top: 1px solid $smoke;
+  }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      flex: none;
+      font-size: 1.125rem;
+      line-height: 1;
+      color: $muted-text;
+    }
+
+    &:hover .mk-faq__q {
+      color: $red;
+    }
+  }
+
+  &__item[open] summary::after {
+    content: '\2212';
+  }
+
+  .mk-faq__q {
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+  }
+
+  .mk-faq__a {
+    margin: 0 0 14px;
+    max-width: 68ch;
+  }
+}
+
+// ---------------------------------------------------------------- talk to us
+.mk-ais-talk {
+  &__grid {
+    display: grid;
+    gap: 24px 40px;
+
+    @media (min-width: 760px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    }
+  }
+
+  &__status,
+  &__error {
+    padding: 2px 0 2px 14px;
+    border-left: 3px solid $green-dark;
+    color: $mk-ink;
+  }
+
+  &__error {
+    margin-bottom: 16px;
+    border-left-color: $red;
+  }
+
+  .marketing-form--labelled {
+    gap: 14px;
+  }
+
+  .marketing-form .marketing-form__input {
+    height: 42px;
+    font-size: 0.9375rem;
+    border-radius: var(--radius-md, 6px);
+  }
+
+  .marketing-form .marketing-form__textarea {
+    height: auto;
+    padding: 10px 14px;
+  }
+
+  .marketing-form__option {
+    min-height: 40px;
+    border-radius: var(--radius-md, 6px);
+    font-size: 0.875rem;
+  }
+
+  .marketing-form__submit {
+    height: 44px;
+  }
+
+  .marketing-form__hint {
+    margin-top: 4px;
+    font-size: 0.8125rem;
+  }
+}
+
+.mk-ais-team {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: $mk-ink;
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: $snow-dark;
+  }
+}
+
+// Big closing CTA on /for/ai-safety: a red slab with HCB's own hand-drawn dino.
+// Selectors double the .mk-ais-cta class so each direction's scoped link and text rules can't recolor the CTA.
+.mk-ais-cta {
+  container-type: inline-size; // sized by the direction's column, not the viewport
+  margin: clamp(40px, 6vw, 72px) 0;
+  font-family: $font-family;
+
+  &#{&} &__sub {
+    margin-top: 12px;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  // Dino: a red slab with HCB's own hand-drawn dino chasing the money.
+  &--dino {
+    position: relative;
+    padding: clamp(28px, 5vw, 56px);
+    border-radius: 20px;
+    background: $red;
+    color: $white;
+    overflow: hidden;
+
+    .mk-ais-cta__inner {
+      display: grid;
+      gap: 24px;
+      align-items: center;
+
+      @container (min-width: 640px) {
+        grid-template-columns: 1fr auto;
+      }
+    }
+
+    &.mk-ais-cta .mk-ais-cta__title {
+      color: $white;
+      font-family:
+        'Phantom Sans',
+        #{$font-family};
+      font-weight: 700;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+    }
+
+    &.mk-ais-cta .mk-ais-cta__sub {
+      color: rgba($white, 0.92);
+    }
+
+    .mk-ais-cta__dino {
+      width: clamp(160px, 22vw, 270px);
+      height: auto;
+      justify-self: end;
+      filter: invert(1); // white line art on red
+      transform: rotate(-6deg);
+
+      // Stacked under the button it just floats in empty space, so it only shows beside the copy.
+      @container (max-width: 639.98px) {
+        display: none;
+      }
+    }
+  }
+
+  &#{&} &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+    margin-top: 28px;
+  }
+
+  &#{&} &__btn {
+    display: inline-block;
+    padding: 18px 32px;
+    border-radius: 999px;
+    background: $white;
+    color: $red;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    font-size: 1.35rem;
+    text-decoration: none;
+    line-height: 1;
+    box-shadow: 0 6px 0 darken($red, 18%);
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+
+    &:hover {
+      transform: translateY(-2px) rotate(-1deg);
+      box-shadow: 0 8px 0 darken($red, 18%);
+    }
+
+    &:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 darken($red, 18%);
+    }
+  }
+
+  &#{&} &__mail {
+    color: $white;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &#{&} &__btn {
+      transition: none;
+    }
+  }
+}
+
+// "Copy as Markdown" split button beside the /for/ai-safety title, with a menu of AI apps.
+// The button stays at the right end of the title row; the title wraps instead. Only on
+// phone-width columns does the button drop under the title.
+.mk-ais__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+
+  .mk-ais__title {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mk-ais-ask {
+    flex: none;
+    margin-top: 4px;
+  }
+
+  @container (max-width: 559.98px) {
+    flex-wrap: wrap;
+  }
+}
+
+.mk-ais-ask {
+  position: relative;
+  display: inline-flex;
+  border: 1px solid rgba($black, 0.18);
+  border-radius: var(--radius-lg);
+  background: $white;
+  font-family: $font-family;
+
+  .mk-ais & &__copy,
+  &__more summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    color: $mk-ink;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      background: $snow;
+    }
+  }
+
+  .mk-ais & &__copy {
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  }
+
+  &__icon--done,
+  &__copy.is-copied &__icon--copy {
+    display: none;
+  }
+
+  &__copy.is-copied &__icon--done {
+    display: inline;
+    color: $green-dark;
+  }
+
+  &__more {
+    display: flex; // the caret fills the button's full height
+    inline-size: auto;
+    border-left: 1px solid rgba($black, 0.18);
+
+    // The app animates every <details>; a menu should just appear.
+    &::details-content {
+      transition: none;
+    }
+
+    summary {
+      padding: 8px 10px;
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    &[open] summary {
+      background: $snow;
+    }
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    min-width: 260px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba($black, 0.12);
+    border-radius: var(--radius-lg);
+    background: $white;
+    box-shadow: 0 12px 32px -12px rgba($black, 0.25);
+
+    .mk-ais & a {
+      display: grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md, 6px);
+      color: $mk-ink;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        background: $snow;
+      }
+    }
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    svg {
+      color: $muted-text;
+    }
+  }
+
+  &__hint {
+    font-size: 0.8rem;
+    color: $muted-text;
+  }
+}
+
+// Under the title (phone-width columns) the button sits at the left, so the menu opens rightward.
+@container (max-width: 559.98px) {
+  .mk-ais-ask__menu {
+    right: auto;
+    left: 0;
+  }
+}
+
+.marketing:has(.mk-ais) {
+  .marketing-nav__inner,
+  .marketing-footer__inner {
+    max-width: 1280px;
+
+    @media (min-width: 1600px) {
+      max-width: 1536px;
+    }
+  }
+}
+
+// Secondary links on /for/ai-safety: HCB red, bold, with an arrow that nudges on hover.
+.mk-ais .mk-ais-go {
+  color: $red;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &::after {
+    content: '\2192' / '';
+    display: inline-block;
+    margin-left: 4px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &::after {
+      transform: translateX(3px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
+}

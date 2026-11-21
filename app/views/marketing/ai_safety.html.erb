@@ -1,0 +1,301 @@
+<% content_for :title, "Fiscal sponsorship for AI safety teams" %>
+
+<% content_for :head do %>
+  <% description = "Hack Club, a 501(c)(3), sponsors funded AI safety teams through HCB. US payroll, cards, and live books for 7% of incoming funds. Setup usually takes days." %>
+  <% share_title = "Fiscal sponsorship for AI safety teams on HCB" %>
+  <% share_image = "#{request.base_url}/brand/hcb-icon-icon-original.png" %>
+  <%# Built from the configured host, never the request's Host header, and without the query string. %>
+  <% canonical_url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https") %>
+  <meta name="description" content="<%= description %>">
+  <link rel="canonical" href="<%= canonical_url %>">
+  <link rel="alternate" type="text/markdown" href="<%= ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https") %>">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="HCB">
+  <meta property="og:url" content="<%= canonical_url %>">
+  <meta property="og:title" content="<%= share_title %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:image" content="<%= share_image %>">
+  <meta property="og:image:alt" content="HCB logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= share_title %>">
+  <meta name="twitter:description" content="<%= description %>">
+  <meta name="twitter:image" content="<%= share_image %>">
+
+  <link rel="preconnect" href="https://assets.hackclub.com" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2" crossorigin>
+
+  <%# Static helper data only, never params or flash. The FAQPage matches the visible Q&A below. %>
+  <script type="application/ld+json"> <%# erb_lint:disable AllowedScriptType %>
+    <%= raw({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "name": "HCB",
+              "legalName": "The Hack Foundation",
+              "url": "https://hcb.hackclub.com",
+              "logo": "https://hcb.hackclub.com/brand/hcb-icon-icon-original.png",
+              "taxID": "81-2908499",
+              "identifier": { "@type": "PropertyValue", "propertyID": "EIN", "value": "81-2908499" },
+              "sameAs": ["https://github.com/hackclub/hcb", "https://hackclub.com", "https://en.wikipedia.org/wiki/Hack_Club", "https://projects.propublica.org/nonprofits/organizations/812908499"]
+            },
+            {
+              "@type": "WebPage",
+              "@id": canonical_url,
+              "url": canonical_url,
+              "name": "Fiscal sponsorship for AI safety teams",
+              "about": [{ "@type": "Thing", "name": "Fiscal sponsorship" }, { "@type": "Thing", "name": "AI safety" }]
+            },
+            {
+              "@type": "FAQPage",
+              "mainEntity": ai_safety_faqs(stats: @stats).map { |faq|
+                { "@type": "Question", "name": faq[:q], "acceptedAnswer": { "@type": "Answer", "text": faq[:a] } }
+              }
+            }
+          ]
+        }.to_json) %>
+  </script>
+<% end %>
+
+<div class="mk-ais">
+  <div class="mk-container mk-ais__grid">
+    <nav class="mk-ais__index" aria-label="On this page">
+      <ol>
+        <li><a href="#key-facts">Key facts</a></li>
+        <li><a href="#example-month">Example first month</a></li>
+        <li><a href="#fees">Fees</a></li>
+        <li><a href="#pay-for">What your grant can pay for</a></li>
+        <li class="mk-ais__index-sub"><a href="#nonprofit-status">Nonprofit status</a></li>
+        <li class="mk-ais__index-sub"><a href="#pay-your-team">Pay your team</a></li>
+        <li class="mk-ais__index-sub"><a href="#cards">Cards and reimbursements</a></li>
+        <li class="mk-ais__index-sub"><a href="#books">Books</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#sponsor">What Hack Club does</a></li>
+        <li><a href="#grantmakers">For grantmakers</a></li>
+        <li><a href="#questions">Questions</a></li>
+        <li><a href="#talk-to-us">Talk to us</a></li>
+      </ol>
+    </nav>
+
+    <div class="mk-ais__main">
+      <%# ============================ HEADER ============================ %>
+      <header class="mk-ais__head">
+        <div class="mk-ais__title-row">
+          <h1 class="mk-ais__title">Fiscal sponsorship for AI safety teams</h1>
+          <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
+            <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
+              <%= inline_icon "copy", size: 18, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
+              <%= inline_icon "copy-check", size: 18, class: "mk-ais-ask__icon mk-ais-ask__icon--done" %>
+              <span data-ai-ask-target="label" aria-live="polite">Copy as Markdown</span>
+            </a>
+            <details class="mk-ais-ask__more" data-ai-ask-target="menu">
+              <summary aria-label="Ask an AI about this page"><%= inline_icon "down-caret", size: 18 %></summary>
+              <ul class="mk-ais-ask__menu">
+                <% ai_safety_llm_links.each do |name, url| %>
+                  <li>
+                    <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>">
+                      <span class="mk-ais-ask__item">Ask <%= name %> <%= inline_icon "external", size: 14 %></span>
+                      <span class="mk-ais-ask__hint">Opens with this page loaded</span>
+                    </a>
+                  </li>
+                <% end %>
+                <li>
+                  <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown">
+                    <span class="mk-ais-ask__item">View as Markdown <%= inline_icon "markdown", size: 14 %></span>
+                    <span class="mk-ais-ask__hint">Plain text for any AI tool</span>
+                  </a>
+                </li>
+              </ul>
+            </details>
+          </div>
+        </div>
+        <p class="mk-ais__lead">If you have a grant but no nonprofit, run it through HCB, part of Hack Club's <span class="whitespace-nowrap">501(c)(3)</span>. You get a bank account, payroll, and cards. <span class="mk-ais__mark">Setup takes days.</span></p>
+        <%= render "marketing/ai_safety_cta", event: "AIS+Hero+CTA" %>
+        <p class="mk-ais__contact">Funding a team? Check out <a href="#grantmakers" class="mk-ais__link plausible-event-name=AIS+Grantmakers+CTA">HCB for grantmakers</a></p>
+      </header>
+
+      <%# ============================ KEY FACTS ============================ %>
+      <section id="key-facts" class="mk-ais__section mk-ais__section--facts" aria-labelledby="key-facts-title">
+        <table class="mk-ais-table mk-ais-facts">
+          <caption id="key-facts-title">Key facts</caption>
+          <thead class="mk-vh"><tr><th scope="col">Item</th><th scope="col">Value</th><th scope="col">Details</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Time to set up</th><td>Days</td><td><a href="#how-it-works">How it works</a></td></tr>
+            <tr><th scope="row">Reply time</th><td>One business day, from a person</td><td><a href="#talk-to-us">Talk to us</a></td></tr>
+            <tr><th scope="row">US payroll</th><td>With benefits. We handle the taxes.</td><td><a href="#pay-your-team">Pay your team</a></td></tr>
+            <tr><th scope="row">UK employees</th><td>Through our employer-of-record partner</td><td><a href="#pay-your-team">Pay your team</a></td></tr>
+            <tr><th scope="row">Contractors and fellows abroad</th><td>Paid in their own currency</td><td><a href="#pay-your-team">Pay your team</a></td></tr>
+            <tr><th scope="row">Cards</th><td>A card for each person, with its own limit</td><td><a href="#cards">Cards</a></td></tr>
+            <tr><th scope="row">Books</th><td>Live, public by default. CSV, JSON, HCB API.</td><td><a href="#books">Books</a></td></tr>
+            <tr><th scope="row">Legal structure</th><td>A program of The Hack Foundation, a <span class="whitespace-nowrap">501(c)(3)</span></td><td><a href="#nonprofit-status">Nonprofit status</a></td></tr>
+            <tr><th scope="row">Contracts</th><td>Hack Club reviews and signs as the legal party</td><td><a href="#sponsor">What Hack Club does</a></td></tr>
+            <tr><th scope="row">Fee</th><td><span class="mk-ais__num">7%</span> of grants and donations</td><td><a href="#fees">Fees</a></td></tr>
+            <tr><th scope="row">Other fees</th><td>No setup, legal, monthly, or card fees.</td><td><a href="#fees">Fees</a></td></tr>
+          </tbody>
+        </table>
+        <p class="mk-ais__note">HCB is run by The Hack Foundation (Hack Club), a 501(c)(3) nonprofit. It has hosted AI safety teams since 2023. <span class="mk-ais__num"><%= @stats[:moved] %></span> moved through HCB. <span class="mk-ais__num"><%= @stats[:organizations] %></span> organizations. Operating since <span class="mk-ais__num"><%= @stats[:founded] %></span>.</p>
+      </section>
+
+      <div class="mk-ais-pair">
+        <%# ============================ EXAMPLE LEDGER ============================ %>
+        <section id="example-month" class="mk-ais-card" aria-labelledby="example-month-title">
+          <% rows = ai_safety_ledger_rows %>
+          <table class="mk-ais-ledger">
+            <caption id="example-month-title" class="mk-ais-card__head">Example first month on HCB</caption>
+            <thead class="mk-vh"><tr><th scope="col" class="mk-ais-ledger__icon">Type</th><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
+            <tbody>
+              <% rows.reverse_each do |row| %>
+                <%= tag.tr class: class_names("mk-ais-ledger__row", "mk-ais-ledger__row--in": row[:amount_cents].positive?) do %>
+                  <td class="mk-ais-ledger__icon" title="<%= row[:type] %>"><%= inline_icon row[:icon], size: 24 %></td>
+                  <td class="mk-ais-ledger__date"><%= row[:date] %></td>
+                  <td class="mk-ais-ledger__memo">
+                    <span class="mk-ais-ledger__name"><%= row[:memo] %></span><span class="mk-vh">, </span>
+                    <span class="mk-ais-ledger__type"><span class="mk-ais-ledger__type-date"><%= row[:date] %> · </span><%= row[:type] %></span>
+                  </td>
+                  <td class="mk-ais-ledger__amount"><%= ai_safety_ledger_amount(row[:amount_cents]) %></td>
+                <% end %>
+              <% end %>
+            </tbody>
+            <tfoot>
+              <%# Same cells as a row, so hiding the date column on phones keeps the footer aligned. %>
+              <tr>
+                <td class="mk-ais-ledger__icon"></td>
+                <td class="mk-ais-ledger__date"></td>
+                <th scope="row">Balance</th>
+                <td class="mk-ais-ledger__amount"><%= render_money(rows.sum { |row| row[:amount_cents] }) %></td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <%# ============================ FEES ============================ %>
+        <section id="fees" class="mk-ais-card" aria-labelledby="fees-title">
+          <h2 id="fees-title" class="mk-ais-card__head">Fees</h2>
+          <div class="mk-ais-fee">
+            <p class="mk-ais-fee__lead">7% of grants and donations, taken when each one arrives.</p>
+            <% grant = rows.find { |row| row[:amount_cents].positive? } %>
+            <% fee = rows.find { |row| row[:fee] } %>
+            <table class="mk-ais-fee__math">
+              <thead class="mk-vh"><tr><th scope="col">Item</th><th scope="col">Amount</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Grant installment</th><td><%= render_money(grant[:amount_cents]) %></td></tr>
+                <tr><th scope="row">7% fee</th><td><%= ai_safety_ledger_amount(fee[:amount_cents]) %></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><th scope="row">To your work</th><td><%= render_money(grant[:amount_cents] + fee[:amount_cents]) %></td></tr>
+              </tfoot>
+            </table>
+            <p class="mk-ais-fee__note">No setup, legal, monthly, or card fees. International transfers are at cost.</p>
+          </div>
+        </section>
+      </div>
+
+      <%# ============================ WHAT YOUR GRANT CAN PAY FOR ============================ %>
+      <section id="pay-for" class="mk-ais__section" aria-labelledby="pay-for-title">
+        <h2 id="pay-for-title" class="mk-ais__h2">What your grant can pay for</h2>
+        <p class="mk-ais__intro">Research teams, fellowships, events, and policy groups use HCB.</p>
+        <dl class="mk-ais-spec">
+          <div id="nonprofit-status">
+            <dt>Nonprofit status</dt>
+            <dd>Your funder grants to Hack Club's <span class="whitespace-nowrap">501(c)(3)</span> for your project, and US donors can deduct gifts to the extent the law allows. We send your funder our IRS letter, W-9, and recent Form 990. Hack Club files the 990, not you.</dd>
+          </div>
+          <div id="pay-your-team">
+            <dt>Pay your team</dt>
+            <dd>US employees go on payroll with benefits, and we handle payroll taxes. UK employees are hired through our employer-of-record partner, with local payroll, tax, and pension. Contractors and fellows elsewhere are paid in their own currency.</dd>
+          </div>
+          <div id="cards">
+            <dt>Cards and reimbursements</dt>
+            <dd>Give each person a card with its own limit for compute, model APIs, travel, and events. Pay people back by direct deposit, check, or international transfer, with the receipt attached.</dd>
+          </div>
+          <div id="books">
+            <dt>Books your funder can see</dt>
+            <dd>Every transaction shows up as it happens, with its receipt. Export to CSV or JSON, or pull it through the HCB API. Books are public by default, and you can make them private any time.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <%# ============================ HOW IT WORKS ============================ %>
+      <section id="how-it-works" class="mk-ais__section" aria-labelledby="how-it-works-title">
+        <h2 id="how-it-works-title" class="mk-ais__h2">How it works</h2>
+        <ol class="mk-ais-steps">
+          <li><span class="mk-ais-steps__when">Today</span><h3>Send your grant letter.</h3><p>Tell us about the work. A person replies within one business day.</p></li>
+          <li><span class="mk-ais-steps__when">Within days</span><h3>Sign the agreement.</h3><p>We check that your project fits Hack Club's charitable mission and passes review. Then we sign a fiscal sponsorship agreement and send your funder what it needs to pay us. This usually takes days.</p></li>
+          <li><span class="mk-ais-steps__when">On your funder's schedule</span><h3>Your funder pays.</h3><p>Your funder pays The Hack Foundation for your project. The money goes into your project's account.</p></li>
+          <li><span class="mk-ais-steps__when">Ongoing</span><h3>Start spending.</h3><p>Hire people and pay costs. We file Hack Club's taxes, including the Form 990, and payroll taxes for US staff.</p></li>
+        </ol>
+      </section>
+
+      <%# ============================ WHAT HACK CLUB DOES ============================ %>
+      <section id="sponsor" class="mk-ais__section" aria-labelledby="sponsor-title">
+        <h2 id="sponsor-title" class="mk-ais__h2">What Hack Club does as your fiscal sponsor</h2>
+        <dl class="mk-ais-dl">
+          <div><dt>You set the research agenda.</dt><dd>Your team picks the questions and methods. Hack Club oversees spending, so money goes to its stated purpose and follows your grant's terms.</dd></div>
+          <div><dt>Your money is restricted to your project.</dt><dd>It is tracked in the project's own account and books. Other projects can't spend it. Legally, Hack Club holds the funds, which is why gifts are tax-deductible.</dd></div>
+          <div><dt>We sign contracts for your project.</dt><dd>Send us grant agreements, NDAs, data-access agreements, and contractor or vendor contracts. Hack Club reviews them and signs as the legal party.</dd></div>
+          <div><dt>Running since 2018.</dt><dd>HCB is open source, and Hack Club runs its own money on it. <a href="https://hcb.hackclub.com/hq" class="mk-ais-go">See our finances</a></dd></div>
+        </dl>
+        <p class="mk-ais__more">We can introduce you to an AI safety team already on HCB. <a href="#talk-to-us" class="mk-ais-go">Ask us</a></p>
+      </section>
+
+      <%# ============================ FOR GRANTMAKERS ============================ %>
+      <section id="grantmakers" class="mk-ais__section" aria-labelledby="grantmakers-title">
+        <h2 id="grantmakers-title" class="mk-ais__h2">For grantmakers</h2>
+        <p class="mk-ais__intro">Make the grant to The Hack Foundation for the project. The money is restricted to that team's work. You can see it being spent.</p>
+        <dl class="mk-ais-dl">
+          <div><dt>What we check</dt><dd>We review each project before it joins. We screen international payments against US sanctions lists. We check spending against grant terms and can pause it if something is wrong.</dd></div>
+          <div><dt>Your grant terms</dt><dd>We sign your grant agreement, keep restricted funds restricted, and report on them. You can make read access to the books a grant condition.</dd></div>
+          <div><dt>Whole programs</dt><dd>You can run a fellowship, prize, or regranting program through Hack Club. We set up a fair selection process and pay people and organizations.</dd></div>
+          <div><dt>Scale</dt><dd>The Argosy Foundation funds <span class="mk-ais__num">500+</span> teams a year through one program on HCB.</dd></div>
+          <div><dt>Diligence</dt><dd>We can send our IRS determination letter, W-9, recent Form 990s, audited financial statements, and a sample fiscal sponsorship agreement.</dd></div>
+        </dl>
+        <div class="mk-ais__cta">
+          <a href="<%= ai_safety_path(audience: "funder", request: "diligence", anchor: "talk-to-us") %>" class="marketing-btn marketing-btn--ghost plausible-event-name=AIS+Diligence+CTA">Request the due-diligence packet</a>
+          <span class="mk-ais__aside">Giving as a donor? <a href="<%= funders_path %>" class="mk-ais-go">See HCB for funders</a></span>
+        </div>
+      </section>
+
+      <%# ============================ FAQ ============================ %>
+      <section id="questions" class="mk-ais__section" aria-labelledby="questions-title">
+        <h2 id="questions-title" class="mk-ais__h2">Questions</h2>
+        <div class="mk-ais-faq">
+          <% ai_safety_faqs(stats: @stats).each do |faq| %>
+            <details class="mk-ais-faq__item">
+              <summary><h3 class="mk-faq__q" id="<%= faq[:id] %>"><%= faq[:q] %></h3></summary>
+              <p class="mk-faq__a"><%= faq[:a] %></p>
+            </details>
+          <% end %>
+        </div>
+      </section>
+
+      <%# ============================ TALK TO US ============================ %>
+      <%= render "marketing/ai_safety_cta", event: "AIS+Big+CTA" %>
+      <section id="talk-to-us" class="mk-ais__section mk-ais-talk" aria-labelledby="talk-to-us-title">
+        <h2 id="talk-to-us-title" class="mk-ais__h2">Talk to us</h2>
+        <% if flash[:ai_safety_inquiry] == "received" %>
+          <p class="mk-ais-talk__status" role="status"><strong>Got it.</strong> Melanie, Paul, or Gary will reply within one business day. To send your grant letter, reply to our email with it attached.</p>
+        <% else %>
+          <div class="mk-ais-talk__grid">
+            <div>
+              <p class="mk-ais__intro">Melanie, Paul, and Gary read every message and reply within one business day. You can also email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>.</p>
+              <ul class="mk-ais-team">
+                <% funder_team.each do |member| %>
+                  <li>
+                    <img src="<%= member[:avatar] %>" alt="" width="72" height="72" loading="lazy" decoding="async">
+                    <%= member[:name] %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+            <div>
+              <% if flash[:error].present? %>
+                <p class="mk-ais-talk__error" role="alert"><%= flash[:error] %></p>
+              <% end %>
+              <%= render "marketing/ai_safety_inquiry_form" %>
+            </div>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+</div>

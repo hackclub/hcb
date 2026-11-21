@@ -6,4 +6,5 @@
 # Mime::Type.register "text/richtext", :rtf
 
 Mime::Type.register "text/ledger", :ledger
+Mime::Type.register "text/markdown", :md
 Mime::Type.register "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", :xlsx

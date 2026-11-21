@@ -496,4 +496,118 @@ module MarketingHelper
       { name: "Gary Tou", avatar: "https://cdn.hackclub.com/019e7570-7d87-707e-bb85-4d39a3fc5114/image.png" }
     ]
   end
+
+  # Links in the shared marketing nav, as [label, path]. The nav marks the current page.
+  def marketing_nav_links
+    [
+      ["Fiscal sponsorship", "https://hackclub.com/fiscal-sponsorship"],
+      ["AI safety", ai_safety_path],
+      ["For funders", funders_path]
+    ]
+  end
+
+  # Q&A for /for/ai-safety. Plain text only: the same strings feed the FAQPage JSON-LD.
+  def ai_safety_faqs(stats:)
+    [
+      {
+        id: "need-a-501c3",
+        q: "Do we need a 501(c)(3) to receive an AI safety grant?",
+        a: "No. Your project becomes a program of The Hack Foundation (Hack Club), a 501(c)(3). Funders can grant to it, and donors can give tax-deductibly. You don't need to form a nonprofit."
+      },
+      {
+        id: "funder-needs-sponsor",
+        q: "Our funder needs a fiscal sponsor before it pays us. Can you help?",
+        a: "Yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes review, we sign an agreement with you. Then we send your funder our paperwork and open your account."
+      },
+      {
+        id: "how-fast",
+        q: "How fast can we get set up?",
+        a: "Usually within days. We reply within one business day, then review your project and sign an agreement. When the money arrives depends on your funder's payment schedule."
+      },
+      {
+        id: "pay-outside-us",
+        q: "Can you pay researchers outside the US?",
+        a: "Yes. We pay contractors, fellows, and reimbursements by bank transfer in local currency. Every international payment is screened against US sanctions rules. US law bars payments to some countries and people. UK employees can be hired through our employer-of-record partner, with local payroll, tax, and pension."
+      },
+      {
+        id: "individuals",
+        q: "Can an individual researcher get fiscal sponsorship?",
+        a: "Yes, if the research is a charitable project Hack Club can take on as its own program. You're paid for the work as Hack Club staff or a contractor. The grant stays in the project's account."
+      },
+      {
+        id: "exposure",
+        q: "Can other projects on HCB spend our project's money?",
+        a: "No. Your project's money is restricted to it and kept in its own books. All projects are programs of one nonprofit. So Hack Club reviews each project before it joins and oversees all spending."
+      },
+      {
+        id: "grant-agreement",
+        q: "Will you sign our funder's grant agreement?",
+        a: "Yes, after we review it. We keep restricted funds restricted and report as the agreement requires. Your funder can also get read access to the project's books."
+      },
+      {
+        id: "private",
+        q: "Can we keep our finances private?",
+        a: "Yes. Books are public by default. You can make them private any time."
+      },
+      {
+        id: "policy-work",
+        q: "Can we do policy work?",
+        a: "Yes, within the rules for 501(c)(3) charities. Research, nonpartisan analysis, education, and briefing officials on issues are fine. Lobbying means asking lawmakers or the public to support or oppose specific legislation. It's allowed only in limited amounts, and it counts toward Hack Club's limits as a whole. Some grants forbid it. Tell us before you lobby, and we'll track it with you. Supporting or opposing candidates for office is never allowed."
+      },
+      {
+        id: "own-nonprofit",
+        q: "Can we move to our own nonprofit later?",
+        a: "Yes, and we'll help. Once your new organization has 501(c)(3) status, Hack Club can transfer your project's remaining funds to it. The transfer needs our approval and must fit your funders' terms."
+      },
+      {
+        id: "not-funded",
+        q: "We're not funded yet. Can you help?",
+        a: "Usually not yet. HCB is for projects that have funding or will soon. If a grant is close, write to us and tell us where things stand."
+      },
+      {
+        id: "teenagers",
+        q: "Isn't HCB for teenagers?",
+        a: "No. Hack Club built HCB in 2018 for teen-led hackathons. It now hosts #{stats[:organizations]} organizations run by adults and teens, from research groups to robotics teams. Your project gets its own account and books."
+      },
+      {
+        id: "cost",
+        q: "How much does fiscal sponsorship cost?",
+        a: "7% of grants and donations, charged as they arrive. There are no setup, legal, monthly, or card fees. International transfers carry our payment provider's cost. Wires under $500 cost $25. On a $500,000 grant, $465,000 goes to your work."
+      }
+    ]
+  end
+
+  # "Ask an AI" links on /for/ai-safety. Each app opens with a prompt pointing at the
+  # page's Markdown version. Gemini has no URL parameter for a prompt, so it isn't listed.
+  def ai_safety_llm_links
+    markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
+    prompt = ERB::Util.url_encode("Read #{markdown_url}. It describes HCB, Hack Club's fiscal sponsorship for AI safety teams. " \
+                                  "Answer my questions using only that page. If it doesn't cover something, say so and suggest emailing aisafety@hackclub.com.")
+    [
+      ["ChatGPT", "https://chatgpt.com/?q=#{prompt}"],
+      ["Claude", "https://claude.ai/new?q=#{prompt}"],
+      ["Perplexity", "https://www.perplexity.ai/search?q=#{prompt}"]
+    ]
+  end
+
+  # The example ledger in the /for/ai-safety hero. Illustrative, with no person names.
+  def ai_safety_ledger_rows
+    # Oldest first. Icons and type labels match the real HCB ledger (hcb_codes/_icon).
+    [
+      { date: "Mar 2", icon: "web", type: "Incoming wire", memo: "Grant · first installment", amount_cents: 150_000_00 },
+      { date: "Mar 2", icon: "bank-icon", type: "Fiscal sponsorship fee", memo: "7% of first installment", amount_cents: -10_500_00, fee: true },
+      { date: "Mar 6", icon: "card", type: "Card charge", memo: "GPU cloud compute", amount_cents: -12_736_40 },
+      { date: "Mar 9", icon: "briefcase", type: "Contractor payment · GBP", memo: "Payment to London contractor for eval design", amount_cents: -8_125_00 },
+      { date: "Mar 12", icon: "card", type: "Card charge", memo: "Model API credits", amount_cents: -3_500_00 },
+      { date: "Mar 14", icon: "email", type: "Mailed check", memo: "Workshop venue deposit", amount_cents: -2_400_00 },
+      { date: "Mar 15", icon: "person", type: "Payroll", memo: "3 staff · March", amount_cents: -48_150_00 },
+      { date: "Mar 20", icon: "card", type: "Card charge", memo: "Flights · research workshop", amount_cents: -1_864_22 },
+      { date: "Mar 24", icon: "reimbursement", type: "Reimbursement", memo: "Conference registration", amount_cents: -795_00 }
+    ]
+  end
+
+  # "+$850,000.00" and "−$48,150.00" (U+2212 minus). render_money alone gives a hyphen and no plus.
+  def ai_safety_ledger_amount(cents)
+    "#{cents.negative? ? "−" : "+"}#{render_money(cents.abs)}"
+  end
 end
