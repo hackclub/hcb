@@ -1,4 +1,4 @@
-<%# locals: (item:, show_author: true, receipt_upload_button: false) %>
+<%# locals: (item:, show_author: true, receipt_upload_button: false, show_event_name: false) %>
 
 <% date = time_tag(item.datetime, item.datetime.strftime("%b %e, %Y")) %>
 
@@ -37,6 +37,11 @@
             <%= render "ledger/items/memo/memo", item: %>
           </div>
         </div>
+
+        <%# The org that owns the item's primary ledger, or whose card grant does. %>
+        <% if show_event_name %>
+          <%= render "ledger/items/event_name", event: item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
+        <% end %>
 
         <%= render layout: "ledger/items/mobile_subtitle", locals: { datetime: item.datetime, author: (item.author if show_author) } do %>
           <%= render "ledger/items/status", ledger_item: item %>

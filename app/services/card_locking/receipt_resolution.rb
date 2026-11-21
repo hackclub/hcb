@@ -10,59 +10,37 @@ module CardLocking
     # A receipt was created or updated. Materialize synchronously so the unlock
     # job sees the resolution, then recompute the lock. notify_progress lets a
     # still-locked cardholder hear that this upload landed but more remain.
+    #
+    # Receipts attach to all sorts of records; only a Ledger::Item can be a
+    # charge. Reloaded so the resolution reads the receipt_count the Receipt's
+    # touch recounted in the database, not whatever this copy last loaded.
     def on_receipt_upsert(receipt)
-      charge = hcb_code_or_self(receipt.receiptable)
-      charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
-      enqueue_unlock(cardholder_for(charge), notify_progress: true)
+      charge = charge_for(receipt.receiptable)
+      charge.materialize_card_locking! if charge&.card_locking_chargeable?
+      enqueue_unlock(charge&.card_locking_cardholder, notify_progress: true)
     end
 
-    # A receipt was destroyed or detached from its previous transaction.
+    # A receipt was destroyed or detached from its previous transaction. Only
+    # losing the charge's last receipt matters: it leaves the charge missing a
+    # receipt again, so its 7-day countdown restarts from now rather than the
+    # charge counting as overdue the moment the receipt is gone. Deleting one of
+    # several receipts, or a receipt on a charge that is also marked no/lost,
+    # leaves the charge resolved and its deadline untouched.
     def on_receipt_destroy(receipt, receiptable: receipt.receiptable)
-      charge = hcb_code_or_self(receiptable)
-      # receipt_resolved_at is only ever cleared here, never revised. Once a charge
-      # is resolved the timestamp is frozen, so destroying an earlier receipt while
-      # a later one remains (card_locking_resolved? still true) leaves the original
-      # resolution timestamp in place. It resets to nil only when the charge becomes
-      # genuinely unresolved again (no receipts, not marked no/lost).
-      if charge.is_a?(HcbCode) && charge.card_locking_chargeable? && !charge.card_locking_resolved?
-        charge.update_columns(receipt_resolved_at: nil)
-      end
-      enqueue_unlock(cardholder_for(charge))
+      charge = charge_for(receiptable)
+      charge.restart_card_locking_countdown! if charge&.card_locking_chargeable? && charge.missing_receipt?
+      enqueue_unlock(charge&.card_locking_cardholder)
     end
 
-    # A charge was marked as having no/lost receipt (also a resolution).
+    # A charge was marked as having no/lost receipt (also a resolution). Called
+    # from the item's own column hook (CardLocking::ChargeBehavior).
     def on_no_or_lost_receipt(charge)
-      charge = hcb_code_or_self(charge)
-      charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
-      enqueue_unlock(cardholder_for(charge))
+      charge.materialize_card_locking! if charge.card_locking_chargeable?
+      enqueue_unlock(charge.card_locking_cardholder)
     end
 
-    # Card-locking state (materialize_card_locking!, card_locking_chargeable?,
-    # stripe_card, ...) is only ever defined on HcbCode (CardLocking::ChargeBehavior).
-    # Receiptable#no_or_lost_receipt! and receipt attach/destroy can each be
-    # triggered from either an HcbCode or its Ledger::Item (ReceiptablesController
-    # and ReceiptsController both accept Ledger::Item as a receiptable_type), so a
-    # Ledger::Item resolves to its hcb_code here - or, if it has none yet, falls
-    # back to itself, letting the is_a?(HcbCode) checks below no-op the same way
-    # they already do for any other non-HcbCode receiptable.
-    def hcb_code_or_self(record)
-      return record.hcb_code || record if record.is_a?(::Ledger::Item)
-
-      record
-    end
-
-    # The cardholder whose cards lock is always the person on the charge, never
-    # the person who uploaded the receipt: an org teammate may upload it, or an
-    # unauthenticated email-link upload has no user at all (receipt.user is
-    # nullable). Resolve through the Stripe card association (the reliable path
-    # materialize_card_locking! also uses), not HcbCode#author, whose cardholder
-    # lookup keys off a stripe_transaction JSON field that is not always present.
-    # A non-card-charge receiptable has no cardholder, so this is nil and
-    # enqueue_unlock is a no-op.
-    def cardholder_for(charge)
-      return unless charge.is_a?(HcbCode)
-
-      charge.stripe_card&.stripe_cardholder&.user
+    def charge_for(receiptable)
+      receiptable.reload if receiptable.is_a?(::Ledger::Item)
     end
 
     def enqueue_unlock(user, notify_progress: false)

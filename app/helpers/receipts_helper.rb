@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 module ReceiptsHelper
-  # Buckets a charge that is missing a receipt by when its receipt is due:
-  # a single :overdue bucket, then one bucket per calendar day, then :pending
-  # for charges that haven't settled yet, then :none for charges that never had
-  # a deadline (cardholders outside enforcement).
-  def receipt_due_group(hcb_code, now: Time.current)
-    due_at = hcb_code.receipt_due_at
+  # Buckets a charge (a Ledger::Item) that is missing a receipt by when its
+  # receipt is due: a single :overdue bucket, then one bucket per calendar day,
+  # then :pending for charges that haven't settled yet, then :none for charges
+  # that never had a deadline (cardholders outside enforcement).
+  def receipt_due_group(item, now: Time.current)
+    due_at = item.receipt_due_at
 
     # A pending charge has no deadline because its clock only starts once it
     # settles. That makes it the newest thing on the page, not the oldest, so it
     # gets its own bucket rather than sitting with the undated long tail.
-    return hcb_code.canonical_transactions.empty? ? :pending : :none if due_at.nil?
+    return item.settled_at.nil? ? :pending : :none if due_at.nil?
     return :overdue if due_at <= now
 
     due_at.to_date

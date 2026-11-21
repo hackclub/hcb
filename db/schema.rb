@@ -1643,6 +1643,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
     t.integer "not_admin_only_comment_count", default: 0, null: false
     t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
+    t.datetime "receipt_due_at"
     t.boolean "receipt_required"
     t.datetime "settled_at"
     t.text "short_code"
@@ -1655,6 +1656,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
+    t.index ["receipt_due_at"], name: "index_ledger_items_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND receipt_required AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
   end
