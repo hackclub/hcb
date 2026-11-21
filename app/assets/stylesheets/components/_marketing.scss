@@ -4200,28 +4200,65 @@ $mk-term-green: #62d196;
   }
 }
 
-.mk-ais-item {
-  display: grid;
-  align-content: start; // rows stretch to the taller neighbor; keep text at the top
-  gap: 4px 24px;
-  padding: 14px 0;
-  border-top: 1px solid $smoke;
-  scroll-margin-top: calc(var(--mk-nav-h) + 16px);
-
-  &__name {
-    font-family: $font-family;
-    font-size: 0.9375rem;
-    letter-spacing: 0;
-  }
-}
-
-// The four "pay for" items, two per row.
+// The four "pay for" items: matching cards, two per row once there's room.
 .mk-ais-items {
   display: grid;
+  gap: 16px;
+  margin-top: 20px;
 
   @container (min-width: 720px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 40px;
+  }
+}
+
+.mk-ais-item {
+  padding: 20px 22px;
+  border: 1px solid rgba($black, 0.12);
+  border-radius: var(--radius-lg);
+  background: $white;
+
+  .mk-ais & &__name {
+    margin: 0;
+    font-family: $font-family;
+    font-size: 1.0625rem;
+    letter-spacing: 0;
+    color: $mk-ink;
+  }
+
+  &__lead {
+    margin: 6px 0 0;
+    line-height: 1.5;
+    color: $slate;
+  }
+
+  &__points {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 14px 0 0;
+    border-top: 1px solid rgba($black, 0.08);
+    list-style: none;
+
+    li {
+      position: relative;
+      padding-left: 24px;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      color: $slate;
+
+      &::before {
+        content: '\2713' / '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 700;
+        color: $red;
+      }
+    }
+
+    strong {
+      color: $mk-ink;
+    }
   }
 }
 
