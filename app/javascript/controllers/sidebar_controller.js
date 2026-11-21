@@ -1,9 +1,17 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['sidebar', 'overlay', 'toggle']
+  static targets = [
+    'sidebar',
+    'overlay',
+    'toggle',
+    'scrollContainer',
+    'dropdown',
+  ]
+  static values = { key: String }
 
   connect() {
+    this.restoreState()
     this.handleKeydown = this.handleKeydown.bind(this)
     this.handleResize = this.handleResize.bind(this)
     document.addEventListener('keydown', this.handleKeydown)
@@ -19,8 +27,36 @@ export default class extends Controller {
   }
 
   disconnect() {
+    cancelAnimationFrame(this.restoreScrollFrame)
     document.removeEventListener('keydown', this.handleKeydown)
     window.removeEventListener('resize', this.handleResize)
+  }
+
+  saveState() {
+    sessionStorage.setItem(
+      `sidebar:${this.keyValue}`,
+      JSON.stringify({
+        scrollTop: this.scrollContainerTarget.scrollTop,
+        dropdowns: this.dropdownTargets
+          .filter(dropdown => dropdown.open)
+          .map(dropdown => dropdown.dataset.sidebarDropdownKey),
+      })
+    )
+  }
+
+  restoreState() {
+    const state = JSON.parse(sessionStorage.getItem(`sidebar:${this.keyValue}`))
+    if (!state) return
+
+    // Keep the server's active section open, including on direct settings links.
+    this.dropdownTargets.forEach(dropdown => {
+      dropdown.open ||= state.dropdowns.includes(
+        dropdown.dataset.sidebarDropdownKey
+      )
+    })
+    this.restoreScrollFrame = requestAnimationFrame(() => {
+      this.scrollContainerTarget.scrollTop = state.scrollTop
+    })
   }
 
   handleKeydown(event) {
