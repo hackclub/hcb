@@ -4346,3 +4346,37 @@ $mk-term-green: #62d196;
     }
   }
 }
+
+// "Ask an AI about this page" row under the /for/ai-safety hero.
+.mk-ais-ask {
+  margin-top: 20px;
+
+  &__label {
+    margin: 0 0 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .mk-ais &__btn {
+    display: inline-block;
+    padding: 8px 14px;
+    border: 1px solid rgba($black, 0.18);
+    border-radius: var(--radius-lg);
+    background: $white;
+    color: $mk-ink;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      border-color: $mk-ink;
+    }
+  }
+}

@@ -8,6 +8,7 @@
   <% canonical_url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https") %>
   <meta name="description" content="<%= description %>">
   <link rel="canonical" href="<%= canonical_url %>">
+  <link rel="alternate" type="text/markdown" href="<%= ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https") %>">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="HCB">
@@ -84,6 +85,15 @@
         <p class="mk-ais__lead">If you have a grant but no nonprofit, run it through HCB, part of Hack Club's <span class="whitespace-nowrap">501(c)(3)</span>. You get a bank account, payroll, and cards. Setup usually takes days.</p>
         <%= render "marketing/ai_safety_cta", event: "AIS+Hero+CTA" %>
         <p class="mk-ais__contact">Funding a team? <a href="#grantmakers" class="mk-ais__link plausible-event-name=AIS+Grantmakers+CTA">For grantmakers</a></p>
+        <div class="mk-ais-ask">
+          <p class="mk-ais-ask__label">Ask an AI about this page</p>
+          <div class="mk-ais-ask__links">
+            <% ai_safety_llm_links.each do |name, url| %>
+              <a href="<%= url %>" target="_blank" rel="noopener" class="mk-ais-ask__btn plausible-event-name=AIS+Ask+<%= name %>">Ask <%= name %></a>
+            <% end %>
+            <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__btn plausible-event-name=AIS+Copy+Markdown" data-controller="markdown-copy" data-action="markdown-copy#copy" aria-live="polite">Copy as Markdown</a>
+          </div>
+        </div>
       </header>
 
       <%# ============================ KEY FACTS ============================ %>

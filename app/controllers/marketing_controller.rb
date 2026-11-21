@@ -86,6 +86,12 @@ class MarketingController < ApplicationController
     @audience = MarketingInquiry::AUDIENCES.key?(params[:audience]) ? params[:audience] : "team"
     @ref = sanitized_ref(params[:ref])
     @skip_layout_og_tags = true # page provides its own meta
+
+    respond_to do |format|
+      format.html
+      # /for/ai-safety.md, for pasting into or pointing an LLM at.
+      format.md { render plain: ai_safety_markdown, content_type: "text/markdown" }
+    end
   end
 
   def ai_safety_inquiry
@@ -129,6 +135,31 @@ class MarketingController < ApplicationController
   end
 
   private
+
+  # The page's own HTML as Markdown, so the two never drift. Drops navigation, the
+  # calls to action, and the form, which mean nothing outside the page.
+  def ai_safety_markdown
+    page = Nokogiri::HTML5.fragment(render_to_string(:ai_safety, layout: false, formats: [:html]))
+    page.css("script, style, nav, form, img, .mk-ais-cta, .mk-ais-ask, .mk-ais__contact").each(&:remove)
+    url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https")
+
+    # ReverseMarkdown glues these together, so give them plain structure first.
+    page.css("caption").each do |caption|
+      caption.name = "h2"
+      caption.parent.add_previous_sibling(caption)
+    end
+    page.css("dt").each { |term| term.name = "h3" }
+    page.css("dd").each { |definition| definition.name = "p" }
+    page.css("li > h3").each { |step| step.name = "strong" }
+    page.css("li > p").each do |text|
+      text.name = "span"
+      text.add_previous_sibling(" ")
+    end
+    page.css(".mk-ais__cta > *").each { |action| action.wrap("<p></p>") }
+    page.css("a[href^='#'], a[href^='/']").each { |link| link["href"] = URI.join(url, link["href"]).to_s }
+
+    "Source: #{url}\n\n#{ReverseMarkdown.convert(page.to_html, unknown_tags: :bypass, github_flavored: true).strip}\n"
+  end
 
   def sanitized_ref(raw)
     raw.to_s.downcase if raw.is_a?(String) && raw.match?(/\A[a-z0-9_-]{1,64}\z/i)

@@ -577,6 +577,19 @@ module MarketingHelper
     ]
   end
 
+  # "Ask an AI" links on /for/ai-safety. Each app opens with a prompt pointing at the
+  # page's Markdown version. Gemini has no URL parameter for a prompt, so it isn't listed.
+  def ai_safety_llm_links
+    markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
+    prompt = ERB::Util.url_encode("Read #{markdown_url}. It describes HCB, Hack Club's fiscal sponsorship for AI safety teams. " \
+                                  "Answer my questions using only that page. If it doesn't cover something, say so and suggest emailing aisafety@hackclub.com.")
+    [
+      ["ChatGPT", "https://chatgpt.com/?q=#{prompt}"],
+      ["Claude", "https://claude.ai/new?q=#{prompt}"],
+      ["Perplexity", "https://www.perplexity.ai/search?q=#{prompt}"]
+    ]
+  end
+
   # The example ledger in the /for/ai-safety hero. Illustrative, with no person names.
   def ai_safety_ledger_rows
     [

@@ -97,6 +97,17 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(page.at_css("#grantmakers")).to be_present
     end
 
+    # Each chat app opens with a prompt that points at the Markdown version of the page.
+    it "links to ChatGPT, Claude, and Perplexity with a prompt, and to the Markdown version" do
+      get ai_safety_path
+
+      markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
+      ask = page.css(".mk-ais-ask a").map { |a| a["href"] }
+      expect(ask.first(3)).to all(include(ERB::Util.url_encode(markdown_url)))
+      expect(ask.first(3).map { |href| URI(href).host }).to eq(%w[chatgpt.com claude.ai www.perplexity.ai])
+      expect(ask.last).to eq("/for/ai-safety.md")
+    end
+
     it "has no em dashes or exclamation marks in the page copy" do
       get ai_safety_path
 
@@ -105,6 +116,20 @@ RSpec.describe "AI safety landing page", type: :request do
       text = main.text
       expect(text).not_to include("\u2014")
       expect(text).not_to include("!")
+    end
+  end
+
+  # The Markdown version is the page itself, converted, minus navigation and the form.
+  describe "GET /for/ai-safety.md" do
+    it "returns the page as indexable Markdown" do
+      get ai_safety_path(format: :md)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/markdown")
+      expect(response.headers["X-Robots-Tag"]).to be_nil
+      expect(response.body).to include("# Fiscal sponsorship for AI safety teams", "## Key facts", "+$850,000.00")
+      expect(response.body).to include(*helper_faqs.map { |faq| "### #{faq[:q]}" })
+      expect(response.body).not_to include("<form", "Ask ChatGPT", "\u2014")
     end
   end
 
