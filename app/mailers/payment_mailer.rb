@@ -19,7 +19,7 @@ class PaymentMailer < ApplicationMailer
 
   def acceptance_reminder
     @tax_incomplete = !@payment.legal_entity&.payable?
-    @payout_incomplete = @payment.legal_entity&.default_payout_method.blank?
+    @payout_incomplete = !@payment.legal_entity&.default_payout_method_ready?
     mail to: @recipients, subject: "[Action Required] Finish setup to receive your payment for \"#{@payment.purpose}\" from #{@payment.event.name}"
   end
 

@@ -94,6 +94,25 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_payout with an incomplete payout method" do
+    render_views
+
+    it "flags the method and offers a form for just the missing date of birth" do
+      user = create(:user)
+      payout_method = user.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+      payout_method.details.update!(recipient_birthday: nil)
+      create_session(user, verified: true)
+
+      get(:edit_payout)
+
+      body = Nokogiri::HTML5(response.body)
+      form = body.at_css("form[action='#{complete_details_payout_method_path(payout_method)}']")
+      expect(body.css(".payout-methods__row .badge").map(&:text)).to include("Incomplete")
+      expect(response.body).to include("missing the recipient&#39;s date of birth")
+      expect(form.css("input[name^='payout_method_details']").map { |input| input["name"] }).to eq(["payout_method_details[recipient_birthday]"])
+    end
+  end
+
   describe "#edit_admin card locking control" do
     render_views
 

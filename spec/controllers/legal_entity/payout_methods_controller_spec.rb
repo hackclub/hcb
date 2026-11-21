@@ -195,4 +195,42 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       expect(locked_pm.reload).not_to be_default
     end
   end
+
+  describe "#complete_details" do
+    let!(:payout_method) do
+      legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details)).tap do |pm|
+        pm.details.update!(recipient_birthday: nil)
+      end
+    end
+
+    it "fills in the missing date of birth even while a report locks the method" do
+      create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested, legal_entity_payout_method: payout_method)
+
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "01/15/1990" } })
+
+      expect(flash[:success]).to eq("Payout method updated.")
+      expect(payout_method.reload).to be_ready_for_payout
+    end
+
+    it "does not change fields that weren't missing" do
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "01/15/1990", address_line1: "999 Elsewhere" } })
+
+      expect(payout_method.details.reload.address_line1).to eq("123 Main St")
+    end
+
+    it "shows an error for an invalid date" do
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "13/45/1990" } })
+
+      expect(flash[:error]).to include("MM/DD/YYYY")
+      expect(payout_method.reload).to be_incomplete
+    end
+
+    it "doesn't let another user complete the method" do
+      create_session(create(:user), verified: true)
+
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "01/15/1990" } })
+
+      expect(payout_method.reload).to be_incomplete
+    end
+  end
 end
