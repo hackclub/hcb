@@ -4348,14 +4348,9 @@ $mk-term-green: #62d196;
 }
 
 // Accordion. Answers stay in the HTML for crawlers and no-JS readers.
+// One question per line: the column never gets wide enough for two without wrapping.
 .mk-ais-faq {
   display: grid;
-  align-items: start;
-
-  @container (min-width: 720px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 40px;
-  }
 
   &__item {
     border-top: 1px solid $smoke;
