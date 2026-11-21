@@ -4042,17 +4042,12 @@ $mk-term-green: #62d196;
   }
 }
 
-// Example month and fees: two matching cards, side by side once the column has room.
+// Example month and fees: two matching cards, stacked so the ledger gets the full width.
 .mk-ais-pair {
   display: grid;
   gap: 20px;
   padding: 32px 0;
   border-top: 1px solid $smoke;
-
-  @container (min-width: 720px) {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    align-items: start;
-  }
 }
 
 .mk-ais-card {
