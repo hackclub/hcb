@@ -1,0 +1,39 @@
+<% title "Lost receipt statement" %>
+<% charged = @transaction.try(:amount_cents)&.abs %>
+<% merchant = @transaction.try(:memo).presence || "the merchant" %>
+<% date = (@transaction.try(:date) || @transaction.try(:datetime))&.strftime("%B %-d") %>
+<% subtitle [@transaction.try(:memo), (render_money(charged) if charged)].compact.join(" · ") %>
+<%= render "receiptables/lost_receipt_steps" %>
+
+<h3 class="mb-2">Have you tried these?</h3>
+<div class="card mb-4 flex flex-col gap-4">
+  <% [
+       ["message", "Ask the merchant", "Ask #{merchant} to reprint or re-send your receipt. A reprint is fine as long as it matches this transaction."],
+       ["email", "Search your email", "Look for an order confirmation from #{merchant}#{" around #{date}" if date}#{", or search for #{render_money(charged)}" if charged}."],
+       ["bag", "Check your account with the merchant", "Online stores usually keep receipts under your order history."],
+       ["photo", "Check your photos and Receipt Bin", "You may have already photographed or uploaded it."],
+     ].each do |icon, heading, body| %>
+    <div class="flex items-start gap-3">
+      <%= inline_icon icon, size: 32, class: "muted shrink-0" %>
+      <div>
+        <strong class="block"><%= heading %></strong>
+        <span class="muted"><%= body %></span>
+      </div>
+    </div>
+  <% end %>
+</div>
+<p class="muted mt-0">
+  More in our help article:
+  <%= link_to "What do I do if I lost a receipt or never got one?", "https://help.hcb.hackclub.com/en/articles/15410231-what-do-i-do-if-i-lost-a-receipt-or-never-got-one", target: "_blank", rel: "noopener" %>
+</p>
+
+<div class="flex flex-col sm:flex-row gap-2 mt-4">
+  <%= link_to @upload_url, class: "btn bg-success flex-1 gap-2" do %>
+    <%= inline_icon "checkmark" %>
+    I found it
+  <% end %>
+  <%= link_to receiptable_lost_receipt_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id, s: params[:s], return_to: @return_to, continue: 1), class: "btn bg-muted flex-1 gap-2" do %>
+    I still don't have it
+    <%= inline_icon "view-forward" %>
+  <% end %>
+</div>

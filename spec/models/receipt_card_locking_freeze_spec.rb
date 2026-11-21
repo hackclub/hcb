@@ -76,14 +76,31 @@ RSpec.describe Receipt, type: :model do
       expect(charge).not_to be_missing_receipt
     end
 
-    it "leaves the deadline alone when the charge is also marked no/lost" do
+    it "leaves the deadline alone when a lost receipt statement remains on file" do
+      allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4")
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      statement = LostReceipt::Statement.new(date: Date.current, merchant: "Test Merchant", purpose: "Supplies", signer_name: user.full_name, confirmed: true,
+                                             items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 10_00 }])
+      expect(statement.submit(receiptable: charge.hcb_code)).to eq(true)
+      statement.attach_pdf!
+      charge.update!(receipt_due_at: 53.days.ago)
+
+      charge.receipts.where.not(id: statement.receipt).sole.destroy!
+
+      expect(charge.reload.receipt_due_at).to be_within(1.second).of(53.days.ago)
+      expect(charge).not_to be_missing_receipt
+    end
+
+    # A no/lost mark without a statement is legacy data; losing its last receipt clears it.
+    it "restarts the countdown when the last receipt of a charge marked no/lost without a statement is deleted" do
       charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
       charge.no_or_lost_receipt!
       charge.update!(receipt_due_at: 53.days.ago)
 
       charge.receipts.sole.destroy!
 
-      expect(charge.reload.receipt_due_at).to be_within(1.second).of(53.days.ago)
+      expect(charge.reload).to be_missing_receipt
+      expect(charge.receipt_due_at).to be_within(1.second).of(now + 7.days)
     end
 
     it "sets no deadline for a cardholder in no rollout stage" do

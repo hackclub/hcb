@@ -18,6 +18,8 @@
 
 <%# if @can_transfer is nil, assume we can transfer %>
 <% can_transfer = @can_transfer != false %>
+<%# Other forms borrow this layout; they set @hide_transfer_notes to drop the transfer-only notices. %>
+<% transfer_notes = can_transfer && !@hide_transfer_notes %>
 <% steps = content_for?(:table_of_contents) && can_transfer %>
 <% sidebar = steps || can_transfer || content_for?(:sidebar_footer) %>
 
@@ -39,14 +41,14 @@
         <% if content_for?(:sidebar_footer) %>
           <%= yield :sidebar_footer %>
         <% end %>
-        <%= render "application/ooo_callout", resource: "transfer", financial: true if can_transfer %>
+        <%= render "application/ooo_callout", resource: "transfer", financial: true if transfer_notes %>
       </div>
     </div>
   <% end %>
   <div class="flex-1 md:pt-3 sm:mb-24">
     <%= render "application/flash", klass: "mb-2" unless sidebar %>
     <%= yield %>
-    <% if can_transfer %>
+    <% if transfer_notes %>
       <% if controller_path == "payroll/positions" %>
         <p class="muted mt-3 text-center text-sm">
           We'll email the contractor to sign their contract and complete onboarding. Payments can't be sent until that's done.

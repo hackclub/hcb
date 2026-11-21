@@ -90,4 +90,28 @@ RSpec.describe ReceiptsHelper, type: :helper do
       end
     end
   end
+
+  describe "#no_or_lost_receipt_label" do
+    it "says the statement is generating until its PDF is attached, and only keeps reloading for a while" do
+      allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4")
+      hcb_code = create(:canonical_pending_transaction, amount_cents: -100).local_hcb_code
+      expect(helper.no_or_lost_receipt_label(hcb_code)).to eq("Marked no/lost receipt")
+
+      statement = LostReceipt::Statement.new(date: Date.current, merchant: "Shop", purpose: "Supplies", signer_name: "Alex", confirmed: true,
+                                             items_attributes: [{ description: "Pens", quantity: 1, unit_amount_cents: 100 }])
+      expect(statement.submit(receiptable: hcb_code)).to eq(true)
+      expect(helper.no_or_lost_receipt_label(hcb_code)).to include("Generating lost receipt statement", 'data-controller="reload"')
+      # The ledger item's page shows the same thing.
+      expect(helper.no_or_lost_receipt_label(hcb_code.ledger_item)).to include("Generating lost receipt statement")
+
+      travel_to(3.minutes.from_now) do
+        label = helper.no_or_lost_receipt_label(hcb_code)
+        expect(label).to include("Generating")
+        expect(label).not_to include("reload")
+      end
+
+      statement.attach_pdf!
+      expect(helper.no_or_lost_receipt_label(hcb_code)).to eq("Marked no/lost receipt")
+    end
+  end
 end
