@@ -4621,6 +4621,11 @@ $mk-term-green: #62d196;
       justify-self: end;
       filter: invert(1); // white line art on red
       transform: rotate(-6deg);
+
+      // Stacked under the button it just floats in empty space, so it only shows beside the copy.
+      @container (max-width: 639.98px) {
+        display: none;
+      }
     }
   }
 
