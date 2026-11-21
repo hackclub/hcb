@@ -3784,9 +3784,15 @@ $mk-term-green: #62d196;
     }
   }
 
+  // This page runs wider than the other /for/* pages. Nav and footer widen with it so edges line up.
+  .mk-container {
+    max-width: 1280px;
+  }
+
+  // Sections inside lay out by this column's width (with or without the index), not the viewport.
   &__main {
     min-width: 0;
-    max-width: 780px;
+    container-type: inline-size;
   }
 
   // ---------------------------------------------------------------- index
@@ -4031,9 +4037,17 @@ $mk-term-green: #62d196;
   }
 }
 
-.mk-ais-ledger {
-  max-width: 520px;
+// Example month and fees side by side once the column has room.
+.mk-ais-pair {
+  display: grid;
 
+  @container (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
+  }
+}
+
+.mk-ais-ledger {
   & &__amount {
     font-family: $mono;
     font-size: 0.8125rem;
@@ -4048,8 +4062,6 @@ $mk-term-green: #62d196;
 }
 
 .mk-ais-fees {
-  max-width: 520px;
-
   & td {
     text-align: right;
   }
@@ -4069,19 +4081,26 @@ $mk-term-green: #62d196;
 
 .mk-ais-item {
   display: grid;
+  align-content: start; // rows stretch to the taller neighbor; keep text at the top
   gap: 4px 24px;
   padding: 14px 0;
   border-top: 1px solid $smoke;
   scroll-margin-top: calc(var(--mk-nav-h) + 16px);
 
-  @media (min-width: 720px) {
-    grid-template-columns: 180px minmax(0, 1fr);
-  }
-
   &__name {
     font-family: $font-family;
     font-size: 0.9375rem;
     letter-spacing: 0;
+  }
+}
+
+// The four "pay for" items, two per row.
+.mk-ais-items {
+  display: grid;
+
+  @container (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
   }
 }
 
@@ -4091,9 +4110,16 @@ $mk-term-green: #62d196;
   padding: 0;
   counter-reset: mk-ais-step;
 
+  @container (min-width: 720px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
+  }
+
   li {
     counter-increment: mk-ais-step;
     display: grid;
+    align-content: start;
     grid-template-columns: 28px minmax(0, 1fr);
     gap: 0 8px;
     padding: 10px 0;
@@ -4119,15 +4145,18 @@ $mk-term-green: #62d196;
 .mk-ais-dl {
   margin: 0;
 
+  @container (min-width: 720px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
+  }
+
   > div {
     display: grid;
-    gap: 2px 24px;
+    align-content: start;
+    gap: 2px;
     padding: 10px 0;
     border-top: 1px solid $smoke;
-
-    @media (min-width: 720px) {
-      grid-template-columns: 180px minmax(0, 1fr);
-    }
   }
 
   dt {
@@ -4140,12 +4169,48 @@ $mk-term-green: #62d196;
   }
 }
 
+// Accordion. Answers stay in the HTML for crawlers and no-JS readers.
 .mk-ais-faq {
   display: grid;
+  align-items: start;
+
+  @container (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 40px;
+  }
 
   &__item {
-    padding: 12px 0;
     border-top: 1px solid $smoke;
+  }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      flex: none;
+      font-size: 1.125rem;
+      line-height: 1;
+      color: $muted-text;
+    }
+
+    &:hover .mk-faq__q {
+      color: $red;
+    }
+  }
+
+  &__item[open] summary::after {
+    content: '\2212';
   }
 
   .mk-faq__q {
@@ -4156,7 +4221,7 @@ $mk-term-green: #62d196;
   }
 
   .mk-faq__a {
-    margin-top: 4px;
+    margin: 0 0 14px;
     max-width: 68ch;
   }
 }
@@ -4378,5 +4443,12 @@ $mk-term-green: #62d196;
     &:hover {
       border-color: $mk-ink;
     }
+  }
+}
+
+.marketing:has(.mk-ais) {
+  .marketing-nav__inner,
+  .marketing-footer__inner {
+    max-width: 1280px;
   }
 }

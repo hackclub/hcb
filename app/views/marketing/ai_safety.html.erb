@@ -64,13 +64,13 @@
       <ol>
         <li><a href="#key-facts">Key facts</a></li>
         <li><a href="#example-month">Example first month</a></li>
+        <li><a href="#fees">Fees</a></li>
         <li><a href="#pay-for">What your grant can pay for</a></li>
         <li class="mk-ais__index-sub"><a href="#nonprofit-status">Nonprofit status</a></li>
         <li class="mk-ais__index-sub"><a href="#pay-your-team">Pay your team</a></li>
         <li class="mk-ais__index-sub"><a href="#cards">Cards and reimbursements</a></li>
         <li class="mk-ais__index-sub"><a href="#books">Books</a></li>
         <li><a href="#how-it-works">How it works</a></li>
-        <li><a href="#fees">Fees</a></li>
         <li><a href="#sponsor">What Hack Club does</a></li>
         <li><a href="#grantmakers">For grantmakers</a></li>
         <li><a href="#questions">Questions</a></li>
@@ -118,26 +118,48 @@
         <p class="mk-ais__note">HCB is run by The Hack Foundation (Hack Club), a 501(c)(3) nonprofit. It has hosted AI safety teams since 2023. <span class="mk-ais__num"><%= @stats[:moved] %></span> moved through HCB. <span class="mk-ais__num"><%= @stats[:organizations] %></span> organizations. Operating since <span class="mk-ais__num"><%= @stats[:founded] %></span>.</p>
       </section>
 
-      <%# ============================ EXAMPLE LEDGER ============================ %>
-      <section id="example-month" class="mk-ais__section" aria-labelledby="example-month-title">
-        <table class="mk-ais-table mk-ais-ledger">
-          <caption id="example-month-title">Example first month on HCB</caption>
-          <thead class="mk-vh"><tr><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
-          <tbody>
-            <% ai_safety_ledger_rows.each do |row| %>
-              <tr class="mk-ais-ledger__row--<%= row[:amount_cents].positive? ? "in" : "out" %>">
-                <td><%= row[:memo] %></td>
-                <td class="mk-ais-ledger__amount"><%= ai_safety_ledger_amount(row[:amount_cents]) %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </section>
+      <div class="mk-ais-pair">
+        <%# ============================ EXAMPLE LEDGER ============================ %>
+        <section id="example-month" class="mk-ais__section" aria-labelledby="example-month-title">
+          <table class="mk-ais-table mk-ais-ledger">
+            <caption id="example-month-title">Example first month on HCB</caption>
+            <thead class="mk-vh"><tr><th scope="col">Description</th><th scope="col">Amount</th></tr></thead>
+            <tbody>
+              <% ai_safety_ledger_rows.each do |row| %>
+                <tr class="mk-ais-ledger__row--<%= row[:amount_cents].positive? ? "in" : "out" %>">
+                  <td><%= row[:memo] %></td>
+                  <td class="mk-ais-ledger__amount"><%= ai_safety_ledger_amount(row[:amount_cents]) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </section>
+
+        <%# ============================ FEES ============================ %>
+        <section id="fees" class="mk-ais__section" aria-labelledby="fees-title">
+          <h2 id="fees-title" class="mk-ais__h2">Fees</h2>
+          <table class="mk-ais-table mk-ais-table--plain mk-ais-fees">
+            <thead><tr><th scope="col">Item</th><th scope="col">Cost</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Grants and donations</th><td class="mk-ais__num">7%</td></tr>
+              <tr><th scope="row">Setup, legal, monthly, cards</th><td class="mk-ais__num">$0</td></tr>
+              <tr><th scope="row">International transfers</th><td>Provider's cost</td></tr>
+              <tr><th scope="row">Wires under <span class="mk-ais__num">$500</span></th><td class="mk-ais__num">$25</td></tr>
+            </tbody>
+          </table>
+          <ul class="mk-ais-list">
+            <li>The 7% is charged when each grant or donation arrives. A grant paid in two parts is charged in two parts.</li>
+            <li>On a <span class="mk-ais__num">$500,000</span> grant, <span class="mk-ais__num">$465,000</span> goes to your work.</li>
+          </ul>
+          <p class="mk-ais__more"><a href="#talk-to-us">Send us your grant letter</a></p>
+        </section>
+      </div>
 
       <%# ============================ WHAT YOUR GRANT CAN PAY FOR ============================ %>
       <section id="pay-for" class="mk-ais__section" aria-labelledby="pay-for-title">
         <h2 id="pay-for-title" class="mk-ais__h2">What your grant can pay for</h2>
         <p class="mk-ais__intro">Research teams, fellowships, events, and policy groups use HCB.</p>
+        <div class="mk-ais-items">
 
         <div class="mk-ais-item" id="nonprofit-status">
           <h3 class="mk-ais-item__name">Nonprofit status</h3>
@@ -187,6 +209,7 @@
             </ul>
           </div>
         </div>
+        </div>
       </section>
 
       <%# ============================ HOW IT WORKS ============================ %>
@@ -198,25 +221,6 @@
           <li><h3>Your funder pays.</h3><p>Your funder pays The Hack Foundation for your project. The money goes into your project's account.</p></li>
           <li><h3>Start spending.</h3><p>Hire people and pay costs. We file Hack Club's taxes, including the Form 990, and payroll taxes for US staff.</p></li>
         </ol>
-      </section>
-
-      <%# ============================ FEES ============================ %>
-      <section id="fees" class="mk-ais__section" aria-labelledby="fees-title">
-        <h2 id="fees-title" class="mk-ais__h2">Fees</h2>
-        <table class="mk-ais-table mk-ais-table--plain mk-ais-fees">
-          <thead><tr><th scope="col">Item</th><th scope="col">Cost</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">Grants and donations</th><td class="mk-ais__num">7%</td></tr>
-            <tr><th scope="row">Setup, legal, monthly, cards</th><td class="mk-ais__num">$0</td></tr>
-            <tr><th scope="row">International transfers</th><td>Provider's cost</td></tr>
-            <tr><th scope="row">Wires under <span class="mk-ais__num">$500</span></th><td class="mk-ais__num">$25</td></tr>
-          </tbody>
-        </table>
-        <ul class="mk-ais-list">
-          <li>The 7% is charged when each grant or donation arrives. A grant paid in two parts is charged in two parts.</li>
-          <li>On a <span class="mk-ais__num">$500,000</span> grant, <span class="mk-ais__num">$465,000</span> goes to your work.</li>
-        </ul>
-        <p class="mk-ais__more"><a href="#talk-to-us">Send us your grant letter</a></p>
       </section>
 
       <%# ============================ WHAT HACK CLUB DOES ============================ %>
@@ -253,10 +257,10 @@
         <h2 id="questions-title" class="mk-ais__h2">Questions</h2>
         <div class="mk-ais-faq">
           <% ai_safety_faqs(stats: @stats).each do |faq| %>
-            <div class="mk-ais-faq__item">
-              <h3 class="mk-faq__q" id="<%= faq[:id] %>"><%= faq[:q] %></h3>
+            <details class="mk-ais-faq__item">
+              <summary><h3 class="mk-faq__q" id="<%= faq[:id] %>"><%= faq[:q] %></h3></summary>
               <p class="mk-faq__a"><%= faq[:a] %></p>
-            </div>
+            </details>
           <% end %>
         </div>
       </section>
