@@ -234,10 +234,10 @@
       <section id="how-it-works" class="mk-ais__section" aria-labelledby="how-it-works-title">
         <h2 id="how-it-works-title" class="mk-ais__h2">How it works</h2>
         <ol class="mk-ais-steps">
-          <li><h3>Send your grant letter.</h3><p>Tell us about the work. A person replies within one business day.</p></li>
-          <li><h3>Sign the agreement.</h3><p>We check that your project fits Hack Club's charitable mission and passes review. Then we sign a fiscal sponsorship agreement and send your funder what it needs to pay us. This usually takes days.</p></li>
-          <li><h3>Your funder pays.</h3><p>Your funder pays The Hack Foundation for your project. The money goes into your project's account.</p></li>
-          <li><h3>Start spending.</h3><p>Hire people and pay costs. We file Hack Club's taxes, including the Form 990, and payroll taxes for US staff.</p></li>
+          <li><span class="mk-ais-steps__when">Today</span><h3>Send your grant letter.</h3><p>Tell us about the work. A person replies within one business day.</p></li>
+          <li><span class="mk-ais-steps__when">Within days</span><h3>Sign the agreement.</h3><p>We check that your project fits Hack Club's charitable mission and passes review. Then we sign a fiscal sponsorship agreement and send your funder what it needs to pay us. This usually takes days.</p></li>
+          <li><span class="mk-ais-steps__when">When your funder pays</span><h3>Your funder pays.</h3><p>Your funder pays The Hack Foundation for your project. The money goes into your project's account.</p></li>
+          <li><span class="mk-ais-steps__when">Ongoing</span><h3>Start spending.</h3><p>Hire people and pay costs. We file Hack Club's taxes, including the Form 990, and payroll taxes for US staff.</p></li>
         </ol>
       </section>
 
@@ -248,9 +248,9 @@
           <div><dt>You set the research agenda.</dt><dd>Your team picks the questions and methods. Hack Club oversees spending, so money goes to its stated purpose and follows your grant's terms.</dd></div>
           <div><dt>Your money is restricted to your project.</dt><dd>It is tracked in the project's own account and books. Other projects can't spend it. Legally, Hack Club holds the funds, which is why gifts are tax-deductible.</dd></div>
           <div><dt>We sign contracts for your project.</dt><dd>Send us grant agreements, NDAs, data-access agreements, and contractor or vendor contracts. Hack Club reviews them and signs as the legal party.</dd></div>
-          <div><dt>Running since 2018.</dt><dd>HCB is open source, and Hack Club runs its own money on it. <a href="https://hcb.hackclub.com/hq">See our finances</a></dd></div>
+          <div><dt>Running since 2018.</dt><dd>HCB is open source, and Hack Club runs its own money on it. <a href="https://hcb.hackclub.com/hq" class="mk-ais-go">See our finances</a></dd></div>
         </dl>
-        <p class="mk-ais__more">We can introduce you to an AI safety team already on HCB. <a href="#talk-to-us">Ask us</a></p>
+        <p class="mk-ais__more">We can introduce you to an AI safety team already on HCB. <a href="#talk-to-us" class="mk-ais-go">Ask us</a></p>
       </section>
 
       <%# ============================ FOR GRANTMAKERS ============================ %>
@@ -266,7 +266,7 @@
         </dl>
         <div class="mk-ais__cta">
           <a href="<%= ai_safety_path(audience: "funder", anchor: "talk-to-us") %>" class="marketing-btn marketing-btn--ghost plausible-event-name=AIS+Diligence+CTA">Request the due-diligence packet</a>
-          <span class="mk-ais__aside">Giving as a donor? <a href="<%= funders_path %>">See HCB for funders</a></span>
+          <span class="mk-ais__aside">Giving as a donor? <a href="<%= funders_path %>" class="mk-ais-go">See HCB for funders</a></span>
         </div>
       </section>
 

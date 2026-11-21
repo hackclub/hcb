@@ -4225,41 +4225,98 @@ $mk-term-green: #62d196;
   }
 }
 
+// How it works as a timeline: red markers on a connecting line. Runs down the left on
+// narrow columns, across four columns once there's room.
 .mk-ais-steps {
   list-style: none;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
   counter-reset: mk-ais-step;
 
   @container (min-width: 720px) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 40px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
   }
 
   li {
+    position: relative;
     counter-increment: mk-ais-step;
-    display: grid;
-    align-content: start;
-    grid-template-columns: 28px minmax(0, 1fr);
-    gap: 0 8px;
-    padding: 10px 0;
-    border-top: 1px solid $smoke;
+    padding: 0 0 28px 52px;
 
+    // The numbered marker.
     &::before {
       content: counter(mk-ais-step);
-      grid-row: span 2;
-      font-family: $mono;
-      font-size: 0.8125rem;
-      color: $muted-text;
-      padding-top: 1px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: $red;
+      color: $white;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 0 0 5px rgba($red, 0.14);
+    }
+
+    // The line to the next marker.
+    &::after {
+      content: '';
+      position: absolute;
+      top: 42px;
+      bottom: 4px;
+      left: 16px;
+      width: 2px;
+      border-radius: 2px;
+      background: linear-gradient($red, rgba($red, 0.15));
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    @container (min-width: 720px) {
+      padding: 52px 0 0;
+
+      &::after {
+        top: 16px;
+        bottom: auto;
+        left: 46px;
+        right: -18px;
+        width: auto;
+        height: 2px;
+        background: linear-gradient(90deg, $red, rgba($red, 0.15));
+      }
     }
   }
 
+  &__when {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba($red, 0.08);
+    color: darken($red, 8%);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
   h3 {
+    margin-bottom: 4px;
     font-family: $font-family;
-    font-size: 0.9375rem;
+    font-size: 1rem;
     letter-spacing: 0;
+  }
+
+  p {
+    line-height: 1.55;
   }
 }
 
@@ -4665,5 +4722,35 @@ $mk-term-green: #62d196;
   .marketing-nav__inner,
   .marketing-footer__inner {
     max-width: 1280px;
+  }
+}
+
+// Secondary links on /for/ai-safety: HCB red, bold, with an arrow that nudges on hover.
+.mk-ais .mk-ais-go {
+  color: $red;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &::after {
+    content: '\2192' / '';
+    display: inline-block;
+    margin-left: 4px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &::after {
+      transform: translateX(3px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
   }
 }

@@ -140,7 +140,7 @@ class MarketingController < ApplicationController
   # calls to action, and the form, which mean nothing outside the page.
   def ai_safety_markdown
     page = Nokogiri::HTML5.fragment(render_to_string(:ai_safety, layout: false, formats: [:html]))
-    page.css("script, style, nav, form, img, .mk-ais-cta, .mk-ais-ask, .mk-ais__contact").each(&:remove)
+    page.css("script, style, nav, form, img, .mk-ais-cta, .mk-ais-ask, .mk-ais__contact, .mk-ais-steps__when").each(&:remove)
     url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https")
 
     # ReverseMarkdown glues these together, so give them plain structure first.
