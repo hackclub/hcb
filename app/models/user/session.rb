@@ -85,6 +85,7 @@ class User
     LAST_SEEN_AT_COOLDOWN = 5.minutes
 
     MAX_SESSION_DURATION = 3.weeks
+    MAX_SESSION_EXTENSION = 24.hours
     MAX_UNVERIFIED_SESSION_DURATION = 7.days
 
     def update_session_timestamps
@@ -104,8 +105,12 @@ class User
       updates = { last_seen_at: Time.now }
       unless impersonated?
         effective_max = unverified? ? MAX_UNVERIFIED_SESSION_DURATION : MAX_SESSION_DURATION
+        max_expiry = created_at + effective_max
+        # Give active sessions an hour at a time near the absolute limit,
+        # without extending them more than a day beyond that limit.
+        max_expiry = 1.hour.from_now.clamp(max_expiry, max_expiry + MAX_SESSION_EXTENSION)
         preference = (underlying_user || User.new).session_validity_preference.seconds.from_now
-        updates[:expiration_at] = [created_at + effective_max, preference].min
+        updates[:expiration_at] = [max_expiry, preference].min
       end
       update_columns(**updates)
     end
