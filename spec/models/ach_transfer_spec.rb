@@ -220,6 +220,31 @@ RSpec.describe AchTransfer, type: :model do
       expect(item.reload.status).to eq("rejected")
     end
 
+    it "show the intended item as rejected when an admin rejects it after scheduling" do
+      item = scheduled_transfer.ledger_item
+      scheduled_transfer.mark_scheduled!
+
+      scheduled_transfer.mark_rejected!(create(:user))
+
+      expect(scheduled_transfer.reload.processor).to be_present
+      expect(item.reload.status).to eq("rejected")
+    end
+
+    it "show the intended item as failed when the transfer fails before its pending transaction is imported" do
+      allow(ColumnService).to receive(:post).with(/\/account-numbers\z/, anything).and_return(
+        { "id" => "acno_1234", "account_number" => "1234", "routing_number" => "1234", "bic" => "1234" }
+      )
+      allow(ColumnService).to receive(:post).with("/transfers/ach", anything).and_return({ "id" => "acht_1234" })
+      item = scheduled_transfer.ledger_item
+      scheduled_transfer.mark_scheduled!
+      scheduled_transfer.send_ach_transfer!
+
+      scheduled_transfer.mark_failed!(reason: "Transfer canceled by sender")
+
+      expect(scheduled_transfer.canonical_pending_transaction).to be_nil
+      expect(item.reload.status).to eq("failed")
+    end
+
     it "don't apply to a transfer sent right away, whose pending transaction creates the item" do
       transfer = create(:ach_transfer, event:)
 
