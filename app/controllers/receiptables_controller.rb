@@ -17,7 +17,7 @@ class ReceiptablesController < ApplicationController
       merchant: @transaction.try(:memo),
       submitter: current_user
     )
-    @statement.items << LostReceipt::Item.new(quantity: 1)
+    @statement.items.build(quantity: 1)
     render_page(:lost_receipt)
   end
 

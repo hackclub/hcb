@@ -78,7 +78,8 @@ RSpec.describe ReceiptablesController do
         post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details.merge(items_attributes: [item])), as: :json, format: :html)
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.body).to include("Unit amount cents is not a number")
+        # false casts to 0 on the integer column, so the total check is what rejects it.
+        expect(response.body).to include(price.values.first ? "Unit amount cents is not a number" : "The items add up to $0.00")
         expect(hcb_code.receipts).to be_empty
       end
     end

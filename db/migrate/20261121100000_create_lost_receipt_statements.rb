@@ -12,10 +12,18 @@ class CreateLostReceiptStatements < ActiveRecord::Migration[8.1]
       t.string :merchant, null: false
       t.date :date, null: false
       t.text :purpose, null: false
-      t.jsonb :items, null: false, default: []
       t.integer :total_amount_cents, null: false
       t.string :signer_name, null: false
       t.datetime :confirmed_at, null: false
+
+      t.timestamps
+    end
+
+    create_table :lost_receipt_items do |t|
+      t.references :statement, null: false, foreign_key: { to_table: :lost_receipt_statements }
+      t.string :description, null: false
+      t.integer :quantity, null: false
+      t.integer :unit_amount_cents, null: false
 
       t.timestamps
     end

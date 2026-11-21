@@ -7,7 +7,6 @@
 #  id                 :bigint           not null, primary key
 #  confirmed_at       :datetime         not null
 #  date               :date             not null
-#  items              :jsonb            not null
 #  merchant           :string           not null
 #  purpose            :text             not null
 #  signer_name        :string           not null
@@ -44,6 +43,10 @@ module LostReceipt
     belongs_to :receiptable, polymorphic: true
     belongs_to :event, optional: true
     belongs_to :submitter, class_name: "User", optional: true
+    # Item errors come from items_are_valid, which numbers them, rather than Rails' "Items description ..." ones.
+    has_many :items, -> { order(:id) }, dependent: :destroy, inverse_of: :statement, validate: false
+    # The limit is checked before any item is built so a huge request can't allocate them all.
+    accepts_nested_attributes_for :items, reject_if: :all_blank, limit: 50
 
     attribute :confirmed, :boolean
 
@@ -59,24 +62,6 @@ module LostReceipt
     validate :items_are_valid
     validate :total_matches_transaction
     validate :signer_name_matches_account
-
-    def items_attributes=(attributes)
-      attributes = attributes.values if attributes.is_a?(Hash)
-      # Checked before building items so a huge request can't allocate them all.
-      raise ActiveRecord::NestedAttributes::TooManyRecords if attributes.size > 50
-
-      self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
-    end
-
-    # Stored as JSON, used as Items.
-    def items
-      @items ||= Array(self[:items]).map { |item| Item.new(item) }
-    end
-
-    def items=(items)
-      @items = items
-      self[:items] = items.map { |item| { description: item.description, quantity: Integer(item.quantity, exception: false) || item.quantity, unit_amount_cents: item.unit_amount_cents } }
-    end
 
     # Saves the statement and marks the transaction no/lost right away. The PDF
     # takes a few seconds to render, so it's attached as the receipt by a job.

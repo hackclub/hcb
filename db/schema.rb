@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1457,7 +1457,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.text "hcb_code", null: false
     t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
-    t.datetime "receipt_due_at"
     t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
@@ -1793,12 +1792,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
 
+  create_table "lost_receipt_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "description", null: false
+    t.integer "quantity", null: false
+    t.bigint "statement_id", null: false
+    t.integer "unit_amount_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["statement_id"], name: "index_lost_receipt_items_on_statement_id"
+  end
+
   create_table "lost_receipt_statements", force: :cascade do |t|
     t.datetime "confirmed_at", null: false
     t.datetime "created_at", null: false
     t.date "date", null: false
     t.bigint "event_id"
-    t.jsonb "items", default: [], null: false
     t.string "merchant", null: false
     t.text "purpose", null: false
     t.bigint "receipt_id"
@@ -3270,6 +3278,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
+  add_foreign_key "lost_receipt_items", "lost_receipt_statements", column: "statement_id"
   add_foreign_key "lost_receipt_statements", "events"
   add_foreign_key "lost_receipt_statements", "receipts"
   add_foreign_key "lost_receipt_statements", "users", column: "submitter_id"
