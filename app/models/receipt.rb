@@ -92,6 +92,10 @@ class Receipt < ApplicationRecord
     if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.persisted?
       errors.add(:lost_receipt_statement, "must come from the lost receipt form")
     end
+    # It describes one transaction; on another it would resolve a charge nobody itemized.
+    if lost_receipt_statement? && persisted? && receiptable.present? && (will_save_change_to_receiptable_id? || will_save_change_to_receiptable_type?)
+      errors.add(:base, "A lost receipt statement can't be moved to another transaction")
+    end
   end
 
   # A real receipt clears the no/lost mark, unless a lost receipt statement is on file.

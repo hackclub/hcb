@@ -78,6 +78,22 @@ RSpec.describe Receipt, type: :model do
     expect(charge.reload).to be_missing_receipt
   end
 
+  it "does not let a lost receipt statement resolve a different transaction" do
+    charge, other = Array.new(2) { create(:canonical_pending_transaction, amount_cents: -100).local_hcb_code }
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true, submitter: create(:user, full_name: "Alex Example"),
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    statement.submit(receiptable: charge)
+    statement.attach_pdf!
+    receipt = statement.receipt
+
+    expect(receipt.update(receiptable: other.ledger_item)).to eq(false)
+    # Not by way of the receipt bin either.
+    receipt.reload.update!(receiptable: nil)
+    expect(receipt.update(receiptable: other.ledger_item)).to eq(false)
+    expect(other.ledger_item.reload).not_to be_no_or_lost_receipt
+  end
+
   it "marks the transaction missing a receipt again when its only statement is removed" do
     transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
     create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
