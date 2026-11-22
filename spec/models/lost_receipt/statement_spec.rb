@@ -116,4 +116,24 @@ RSpec.describe LostReceipt::Statement do
     expect(service.exist?(key)).to eq(false)
     expect(hcb_code.receipts).to be_empty
   end
+
+  it "attaches only one PDF when two statements are filed for the same transaction" do
+    first, second = Array.new(2) { described_class.new(details).tap { |statement| statement.submit(receiptable: hcb_code) } }
+
+    first.attach_pdf!
+    second.attach_pdf!
+    expect(hcb_code.reload.receipts.count).to eq(1)
+    expect(described_class.all).to eq([first])
+    expect(ActiveStorage::Blob.count).to eq(1)
+  end
+
+  it "puts the transaction back to missing a receipt when the PDF can't be generated" do
+    allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
+    statement = described_class.new(details)
+
+    perform_enqueued_jobs { statement.submit(receiptable: hcb_code) }
+    expect(described_class.count).to eq(0)
+    expect(hcb_code.reload).not_to be_no_or_lost_receipt
+    expect(hcb_code.ledger_item.reload).not_to be_no_or_lost_receipt
+  end
 end

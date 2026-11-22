@@ -85,10 +85,29 @@ module LostReceipt
       blob.upload(io)
       receipt = Receipt.new(receiptable: receipt_target, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
       receipt.file.attach(blob)
-      # Saving the receipt points this statement at it.
-      receipt.save!
+      # Locked so two statements filed for one transaction can't both attach; the later one is dropped.
+      receipt_target.with_lock do
+        next destroy! if receipt_target.receipts.lost_receipt_statement.exists?
+
+        # Saving the receipt points this statement at it.
+        receipt.save!
+      end
     ensure
       blob&.purge if blob && !receipt&.persisted?
+    end
+
+    # The PDF never got made: put the transaction back to missing a receipt so they can try again.
+    def abandon!(receiptable)
+      return if receipt.present?
+
+      self.receiptable = receiptable
+      transaction do
+        destroy!
+        unless receipt_target.receipts.lost_receipt_statement.exists?
+          receipt_target.update!(marked_no_or_lost_receipt_at: nil)
+          receipt_target.sync_no_or_lost_receipt!
+        end
+      end
     end
 
     # The transaction being described.
