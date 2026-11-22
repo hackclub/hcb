@@ -4,7 +4,6 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
-require_relative "../lib/active_storage/previewer/document_previewer"
 require_relative "../app/middleware/set_current_request_ip"
 require_relative "../app/middleware/opt_out_csp_for_mounted_engines"
 
@@ -124,8 +123,9 @@ module Bank
       config.active_record.encryption.key_derivation_salt = key_derivation_salt
     end
 
-    # CSV previews
-    config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
+    # CSV previews, drawn in-process by libvips. csv_preview treats every file as untrusted:
+    # it reads at most the first 2 MiB, never starts a process and never decodes images.
+    config.active_storage.previewers.unshift CsvPreview::ActiveStoragePreviewer
 
     config.active_support.deprecation = :notify
 
