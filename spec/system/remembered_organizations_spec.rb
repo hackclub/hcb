@@ -61,6 +61,22 @@ RSpec.describe "Remembered organizations", type: :system do
     expect(page).to have_no_css("#signed_out_organizer", visible: true)
   end
 
+  it "still prompts on another organization after closing the modal on one" do
+    other_event = create(:event, organizers: [user], is_public: true).tap do |other|
+      other.organizer_positions.update_all(first_time: false)
+    end
+    user_session = sign_in_as(user)
+    visit event_path(event)
+    expect(remembered_organizations).to contain_exactly(event.public_id, other_event.public_id)
+
+    user_session.update!(expiration_at: 1.minute.ago)
+    visit event_path(event)
+    within("#signed_out_organizer") { click_link "Keep browsing" }
+    visit event_path(other_event)
+
+    expect(page).to have_css("#signed_out_organizer", visible: true)
+  end
+
   it "does not nudge on organizations the user doesn't manage" do
     other_event = create(:event, is_public: true)
     user_session = sign_in_as(user)

@@ -45,18 +45,27 @@ export default class extends Controller {
     }
   }
 
-  // However the modal is closed, don't open it again for the rest of this
-  // tab's session; the sign-in nudge stays as a reminder.
+  // However the modal is closed, don't open it again for this organization for
+  // the rest of this tab's session; the sign-in nudge stays as a reminder.
   openModal() {
     $(this.modalTarget)
-      .one($.modal.CLOSE, () =>
-        safely(() => sessionStorage.setItem(DISMISSED_KEY, 'true'))
-      )
+      .one($.modal.CLOSE, () => this.dismiss())
       .modal({ fadeDuration: 200, closeExisting: false })
   }
 
+  dismiss() {
+    const ids = this.dismissedIds()
+    if (!ids.includes(this.currentEventValue)) ids.push(this.currentEventValue)
+    safely(() => sessionStorage.setItem(DISMISSED_KEY, JSON.stringify(ids)))
+  }
+
   dismissed() {
-    return safely(() => sessionStorage.getItem(DISMISSED_KEY) === 'true', false)
+    return this.dismissedIds().includes(this.currentEventValue)
+  }
+
+  dismissedIds() {
+    const ids = safely(() => JSON.parse(sessionStorage.getItem(DISMISSED_KEY)))
+    return Array.isArray(ids) ? ids : []
   }
 
   read() {
