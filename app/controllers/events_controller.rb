@@ -704,8 +704,6 @@ class EventsController < ApplicationController
       deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.succeeded_and_not_refunded
-
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
@@ -732,7 +730,7 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+    @donations = @all_donations.page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
 
