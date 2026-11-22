@@ -29,6 +29,12 @@ module Column
   class AccountNumber < ApplicationRecord
     belongs_to :event
 
+    # Column's account numbers are 12 digits, its routing numbers 9, and its BICs 8
+    # characters. The page shows that many dots for a detail that isn't generated yet.
+    ACCOUNT_NUMBER_LENGTH = 12
+    ROUTING_NUMBER_LENGTH = 9
+    BIC_CODE_LENGTH = 8
+
     has_encrypted :account_number, :routing_number, :bic_code
 
     blind_index :account_number

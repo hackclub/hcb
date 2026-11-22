@@ -11,16 +11,13 @@
 #  ignored_at     :datetime
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  hcb_code_id    :bigint           not null
-#  ledger_item_id :bigint
+#  ledger_item_id :bigint           not null
 #  receipt_id     :bigint           not null
 #
 # Indexes
 #
-#  index_suggested_pairings_on_hcb_code_id                    (hcb_code_id)
 #  index_suggested_pairings_on_ledger_item_id                 (ledger_item_id)
 #  index_suggested_pairings_on_receipt_id                     (receipt_id)
-#  index_suggested_pairings_on_receipt_id_and_hcb_code_id     (receipt_id,hcb_code_id) UNIQUE
 #  index_suggested_pairings_on_receipt_id_and_ledger_item_id  (receipt_id,ledger_item_id) UNIQUE
 #
 # Foreign Keys
@@ -29,12 +26,7 @@
 #
 class SuggestedPairing < ApplicationRecord
   belongs_to :receipt
-  belongs_to :hcb_code
-  # The transaction's ledger item, where the receipt is attached on acceptance.
-  # Pairings are written from the HCB code for now
-  # (https://github.com/hackclub/hcb/issues/15698), so this is nil for the few
-  # codes without a ledger item until the backfill has run.
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item"
 
   include AASM
 
@@ -50,7 +42,7 @@ class SuggestedPairing < ApplicationRecord
 
     event :mark_accepted do
       before do
-        receipt.update!(receiptable: hcb_code.ledger_item)
+        receipt.update!(receiptable: ledger_item)
       end
 
       transitions from: :unreviewed, to: :accepted

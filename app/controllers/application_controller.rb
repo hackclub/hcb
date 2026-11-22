@@ -120,6 +120,11 @@ class ApplicationController < ActionController::Base
     send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
   end
 
+  # Called by the audits1984 engine (mounted at /console) to authenticate auditors.
+  def find_current_auditor
+    current_user if auditor_signed_in?
+  end
+
   def safe_per(default, max: 200)
     (params[:per] || default).to_i.clamp(1, max)
   end
@@ -143,7 +148,10 @@ class ApplicationController < ActionController::Base
   end
 
   def info_for_paper_trail
-    { impersonated_by_id: current_session&.impersonated_by_id }
+    {
+      impersonated_by_id: current_session&.impersonated_by_id,
+      user_session_id: current_session&.id
+    }
   end
 
   def not_found

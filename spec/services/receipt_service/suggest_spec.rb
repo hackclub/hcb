@@ -31,15 +31,33 @@ RSpec.describe ReceiptService::Suggest do
       allow(ReceiptService::Extract).to receive(:new).with(receipt:).and_return(instance_double(ReceiptService::Extract, run!: receipt))
     end
 
-    it "writes a pairing with the charge's HCB code and its ledger item" do
+    it "writes a pairing with the charge's ledger item" do
       hcb_code = create_pending_card_charge
       allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
 
       described_class.new(receipt:).run!
 
-      pairing = SuggestedPairing.find_by!(receipt:, hcb_code:)
-      expect(pairing.ledger_item).to eq(hcb_code.ledger_item)
+      pairing = SuggestedPairing.find_by!(receipt:, ledger_item: hcb_code.ledger_item)
       expect(pairing).to be_unreviewed
+    end
+
+    it "rescores a pairing it already wrote rather than duplicating it" do
+      hcb_code = create_pending_card_charge
+      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
+
+      2.times { described_class.new(receipt:).run! }
+
+      expect(SuggestedPairing.where(receipt:).count).to eq(1)
+    end
+
+    it "skips a charge whose HCB code has no ledger item" do
+      hcb_code = create_pending_card_charge
+      hcb_code.update_column(:ledger_item_id, nil)
+      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
+
+      described_class.new(receipt:).run!
+
+      expect(SuggestedPairing.where(receipt:)).to be_empty
     end
 
     it "pairs the receipt automatically when a charge matches closely" do
