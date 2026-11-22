@@ -55,6 +55,12 @@
         <%= user_mention ledger_item.author %>
       <% end %>
     </div>
+    <% if card_charge.foreign_currency? %>
+      <div>
+        <strong>Charged in <%= card_charge.merchant_amount.currency.iso_code %></strong>
+        <span><%= card_charge.merchant_amount.format(with_currency: true) %></span>
+      </div>
+    <% end %>
     <% if card_charge.stripe_atm_fee %>
       <div>
         <strong>ATM fee</strong>
