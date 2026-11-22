@@ -644,6 +644,7 @@ Rails.application.routes.draw do
         get :candidates
       end
       post "toggle_tag", to: "items#toggle_tag"
+      get "subscriptions/transactions", to: "subscriptions#transactions"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable

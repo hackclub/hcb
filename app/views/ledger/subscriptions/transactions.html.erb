@@ -1,0 +1,14 @@
+<%= turbo_frame_tag :subscriptions do %>
+  <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pl2 pr2">Previous transactions for this subscription</h2>
+
+  <div class="table-container mb4">
+    <table>
+      <tbody>
+        <%# Every charge on the card is the cardholder's, so the author column says nothing. %>
+        <%= render partial: "ledger/item", collection: @items, as: :item, locals: { show_author: false, receipt_upload_button: @receipt_upload } %>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+<% end %>

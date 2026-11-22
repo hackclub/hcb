@@ -150,6 +150,30 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
         expect(response.body).not_to include(dispute_hcb_code_path(charge.local_hcb_code))
       end
+
+      it "embeds the charge's subscription list" do
+        create_session(create(:user, :make_admin), verified: true)
+        stripe_card = create(:stripe_card, :with_stripe_id, event:)
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card:, stripe_merchant_category_code: "5462"))
+        charge_item = charge.local_hcb_code.ledger_item
+
+        get :show, params: { id: charge_item.hashid }
+
+        frame = response.parsed_body.at_css("turbo-frame#subscriptions")
+        expect(frame["src"]).to eq(ledger_item_subscriptions_transactions_path(charge_item, receipt_upload: true))
+      end
+
+      it "doesn't ask for receipt buttons on the subscription list in the popover" do
+        create_session(create(:user, :make_admin), verified: true)
+        stripe_card = create(:stripe_card, :with_stripe_id, event:)
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card:, stripe_merchant_category_code: "5462"))
+        charge_item = charge.local_hcb_code.ledger_item
+
+        get :show, params: { id: charge_item.hashid, frame: true }
+
+        frame = response.parsed_body.at_css("turbo-frame#subscriptions")
+        expect(frame["src"]).to eq(ledger_item_subscriptions_transactions_path(charge_item))
+      end
     end
 
     context "when asked to reverse a receipt pairing" do

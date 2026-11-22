@@ -127,6 +127,8 @@
     <% end %>
   <% end %>
 
+  <%= turbo_frame_tag :subscriptions, src: ledger_item_subscriptions_transactions_path(@item, receipt_upload: (true unless @frame)) if @item.linked_object_type == "CardCharge" %>
+
   <% if @item.hcb_code.present? %>
     <%= render "comments/list", comments: @item.hcb_code.all_comments, viewing_commentable: @item.hcb_code %>
     <% viewing_disbursement = @item.hcb_code.outgoing_disbursement || @item.hcb_code.incoming_disbursement %>
