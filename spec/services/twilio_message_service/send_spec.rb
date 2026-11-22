@@ -20,15 +20,15 @@ RSpec.describe TwilioMessageService::Send do
 
     expect(messages).to have_received(:create).with(from: "+15555550100", to: user.phone_number, body: "hi")
     expect(sent).to have_attributes(to: user.phone_number, from: "+15555550100", body: "hi", twilio_sid: "SM1", twilio_account_sid: "AC1")
-    expect(sent.outgoing_twilio_message).to have_attributes(hcb_code: nil, ledger_item: nil)
+    expect(sent.outgoing_twilio_message.ledger_item).to be_nil
   end
 
   it "records the transaction the text is about" do
-    hcb_code = create(:canonical_pending_transaction).local_hcb_code
+    ledger_item = create(:canonical_pending_transaction).ledger_item
 
-    sent = described_class.new(user, "hi", hcb_code:, ledger_item: hcb_code.ledger_item).run!
+    sent = described_class.new(user, "hi", ledger_item:).run!
 
-    expect(sent.outgoing_twilio_message).to have_attributes(hcb_code:, ledger_item: hcb_code.ledger_item)
+    expect(sent.outgoing_twilio_message.ledger_item).to eq(ledger_item)
   end
 
   it "texts a given number when the user has none" do

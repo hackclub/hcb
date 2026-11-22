@@ -524,6 +524,17 @@ class User < ApplicationRecord
     User::ReceiptBin.new(self)
   end
 
+  # This cardholder's Stripe card charges that still need a receipt, pending
+  # and settled alike: what the Receipt Bin lists, and what card locking counts
+  # (its outstanding pile is the settled, enforcement-era part of this; see
+  # CardLocking::CardholderBehavior). The item's own missing receipt logic.
+  #
+  # hcb_code_ids_missing_receipt and transactions_missing_receipt below are the
+  # HCB code version, read by the pages and mailers not yet on ledger items.
+  def card_charges_missing_receipt
+    Ledger::Item.card_charges_for_cardholder(id).missing_receipt
+  end
+
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
       user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)

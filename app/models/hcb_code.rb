@@ -55,8 +55,6 @@ class HcbCode < ApplicationRecord
 
   has_many :hcb_code_tags
 
-  has_many :suggested_pairings
-
   has_one :pin, required: false
 
   belongs_to :event, optional: true
@@ -72,9 +70,6 @@ class HcbCode < ApplicationRecord
   # replacing the `has_many` Receiptable declared. A code with no ledger item
   # has none. Read-only like `tags` — attach via the ledger item.
   has_many :receipts, through: :ledger_item, source: :receipts
-
-  # Card-locking scopes, columns, and the materializer. See the concern.
-  include CardLocking::ChargeBehavior
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
