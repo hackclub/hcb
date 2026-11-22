@@ -747,6 +747,8 @@ Rails.application.routes.draw do
           get :available_icons
         end
 
+        resources :transaction_categories, only: [:index]
+
         resources :users, only: [:show] do
           collection do
             get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
