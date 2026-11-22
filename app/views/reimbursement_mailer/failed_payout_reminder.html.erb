@@ -1,3 +1,7 @@
-Your payout for "<%= link_to @report.name, @report %>" failed to send <%= pluralize(@days, "day") %> ago and still hasn't gone through.
+<p>
+  Your payout for "<%= link_to @report.name, @report %>" failed to send <%= pluralize(@days, "day") %> ago and still hasn't gone through.
+</p>
 
-Please <%= link_to "update your payout details", settings_payouts_url %>; afterwards, we'll reattempt the payout.
+<p>
+  Please <%= link_to "update your payout details", settings_payouts_url %>; afterwards, we'll reattempt the payout.
+</p>
