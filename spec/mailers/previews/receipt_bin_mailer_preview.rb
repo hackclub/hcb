@@ -23,7 +23,7 @@ class ReceiptBinMailerPreview < ActionMailer::Preview
     ReceiptBinMailer.with(
       to: "test@example.com",
       receipts_count: 1,
-      pairs: []
+      paired_ledger_items: []
     ).bounce_success
   end
 

@@ -24,9 +24,10 @@ module DisbursementService
       fronted: false,
       source_transaction_category_slug: nil,
       destination_transaction_category_slug: nil,
+      payment_category_slug: nil,
       category_assignment_strategy: "manual",
       transfer_type: nil,
-      repaid_ledger_item_id: nil
+      repaid_ledger_item_ids: []
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -44,9 +45,10 @@ module DisbursementService
       @fronted = fronted
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
+      @payment_category_slug = payment_category_slug
       @category_assignment_strategy = category_assignment_strategy
       @transfer_type = transfer_type
-      @repaid_ledger_item = Ledger::Item.find(repaid_ledger_item_id) if repaid_ledger_item_id.present?
+      @repaid_ledger_items = Ledger::Item.find(repaid_ledger_item_ids.uniq).sort_by(&:id)
     end
 
     def run
@@ -63,14 +65,19 @@ module DisbursementService
         end
 
         ActiveRecord::Base.transaction do
-          disbursement = Disbursement.create!(attrs)
+          # Two transfers repaying the same transaction at once would both
+          # pass the "already repaid" check without this.
+          @repaid_ledger_items.each(&:lock!)
 
-          if @repaid_ledger_item
-            # Two transfers repaying the same transaction at once would both
-            # pass the "already repaid" check without this.
-            @repaid_ledger_item.lock!
-            disbursement.repayments.create!(repaid_ledger_item: @repaid_ledger_item, amount_cents:).apply_categories!
+          disbursement = Disbursement.new(attrs)
+          if @repaid_ledger_items.any?
+            repayment = disbursement.build_repayment
+            @repaid_ledger_items.each do |item|
+              repayment.allocations.build(repaid_ledger_item: item, amount_cents: -item.amount_cents)
+            end
           end
+          disbursement.save!
+          disbursement.repayment&.allocations&.each(&:apply_categories!)
 
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
@@ -153,7 +160,20 @@ module DisbursementService
     def validate_transfer_type!
       raise UserError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(@transfer_type)
 
-      raise UserError, "Choose the transaction you're repaying." if @transfer_type == "repayment" && @repaid_ledger_item.nil?
+      raise UserError, "Choose the transactions you're repaying." if @transfer_type == "repayment" && @repaid_ledger_items.empty?
+      raise UserError, "Only repayments can repay transactions." if @transfer_type != "repayment" && @repaid_ledger_items.any?
+
+      if @transfer_type == "payment"
+        # Admins can pick any category, or set each side with the overrides.
+        categorized = if requested_by&.admin?
+                        slugs = [@payment_category_slug, @source_transaction_category_slug, @destination_transaction_category_slug].compact_blank
+                        (@payment_category_slug.present? || (@source_transaction_category_slug.present? && @destination_transaction_category_slug.present?)) &&
+                          slugs.all? { |slug| TransactionCategory::Definition::ALL.key?(slug) }
+                      else
+                        TransactionCategory::Definition.payment_selectable.key?(@payment_category_slug)
+                      end
+        raise UserError, "Choose a category for this payment." unless categorized
+      end
     end
 
     # An explicit slug (from admins, or HCB-created transfers like card grants)
@@ -163,8 +183,11 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      # The source takes on the expense, so it gets the expense's category.
-      when "repayment" then Repayment.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
+      when "payment" then @payment_category_slug
+      # A transfer has one category, so only inherit a shared expense category.
+      when "repayment"
+        slugs = @repaid_ledger_items.map { |item| Repayment::Allocation.new(repaid_ledger_item: item).repaid_category&.slug }.uniq
+        slugs.first if slugs.size == 1
       end
     end
 
@@ -174,6 +197,7 @@ module DisbursementService
       case @transfer_type
       when "transfer" then "internal-transfer"
       when "repayment" then Repayment::CATEGORY_SLUG
+      when "payment" then @payment_category_slug
       end
     end
 

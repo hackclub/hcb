@@ -17,6 +17,7 @@ module Api
       before_action :authenticate!
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
+      before_action :set_paper_trail_controller_info
 
       def not_found
         skip_authorization
@@ -33,6 +34,10 @@ module Api
 
       private
 
+      def info_for_paper_trail
+        { api_token_id: current_token&.id }
+      end
+
       def pundit_user
         current_user && ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
       end
@@ -44,6 +49,7 @@ module Api
         end
 
         @current_user = current_token&.user
+        current_token.touch_last_used_at
       end
 
       def require_admin_scope!(level)
@@ -79,6 +85,25 @@ module Api
 
       def set_expand
         @expand = params[:expand].to_s.split(",").map { |e| e.strip.to_sym }
+      end
+
+      LEDGER_ENGINE_FLAG = :new_ledger_api_2026_09_28
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = current_user.present? && Flipper.enabled?(LEDGER_ENGINE_FLAG, current_user)
+      end
+
+      def resolve_engine(hcb_code)
+        resolve_engines([hcb_code]).first
+      end
+
+      def resolve_engines(hcb_codes)
+        return hcb_codes unless ledger_engine?
+
+        ActiveRecord::Associations::Preloader.new(records: hcb_codes, associations: :ledger_item).call
+        hcb_codes.map { |hcb_code| hcb_code.ledger_item || hcb_code }
       end
 
       attr_reader :current_token

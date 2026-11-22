@@ -5,8 +5,8 @@ class CardLockingMailer < ApplicationMailer
 
   def cards_locked(user:)
     @user = user
-    @hcb_codes = user.card_locking_overdue_charges.to_a
-    @count = @hcb_codes.size
+    @items = charges_to_list(user.card_locking_overdue_charges)
+    @count = @items.size
     @show_org = user.events.size > 1
     mail to: user.email, subject: "[Urgent] Your HCB cards are locked until you upload your receipts"
   end
@@ -22,8 +22,8 @@ class CardLockingMailer < ApplicationMailer
     @suppressed_until = suppressed_until
 
     if @suppressed_until
-      @hcb_codes = user.card_locking_overdue_charges.to_a
-      @count = @hcb_codes.size
+      @items = charges_to_list(user.card_locking_overdue_charges)
+      @count = @items.size
       @show_org = user.events.size > 1
       @timezone = user.assumed_timezone
 
@@ -35,8 +35,8 @@ class CardLockingMailer < ApplicationMailer
 
   def warning(user:)
     @user = user
-    @hcb_codes = user.card_locking_outstanding_charges.to_a
-    @count = @hcb_codes.size
+    @items = charges_to_list(user.card_locking_outstanding_charges)
+    @count = @items.size
     # Same countdown the warning SMS carries, off the same pile. Taken from the
     # loaded rows rather than a second query, so mail and text agree exactly.
     @due_in = CardLocking.time_remaining_in_words(@user.card_locking_next_due_at)
@@ -45,6 +45,13 @@ class CardLockingMailer < ApplicationMailer
   end
 
   private
+
+  # What the transactions table renders for each charge: its card charge (for
+  # the merchant), its HCB code (for the signed upload link) and the event that
+  # owns its primary ledger.
+  def charges_to_list(charges)
+    charges.preload(:linked_object, :hcb_code, primary_ledger: [:event, { card_grant: :event }]).to_a
+  end
 
   # The countdown is repeated in the subject so the deadline is visible in an
   # inbox list, without opening the mail. Falls back to the bare count when the

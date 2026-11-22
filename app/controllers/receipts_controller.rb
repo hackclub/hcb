@@ -11,6 +11,7 @@ class ReceiptsController < ApplicationController
 
   def destroy
     @receiptable = @receipt.receiptable
+    @hcb_code = @receipt.hcb_code
     authorize @receipt
 
     success = @receipt.destroy
@@ -49,7 +50,7 @@ class ReceiptsController < ApplicationController
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
         if params[:show_link]
-          flash[:success] = { text: "Receipt linked!", link: (hcb_code_path(@receiptable) if @receiptable.instance_of?(HcbCode)), link_text: "View" }
+          flash[:success] = { text: "Receipt linked!", link: (hcb_code_path(@hcb_code) if @hcb_code), link_text: "View" }
         else
           flash[:success] = "Receipt added!"
         end
@@ -61,7 +62,7 @@ class ReceiptsController < ApplicationController
         if (safe_redirect = url_from(params[:redirect_url]))
           redirect_to safe_redirect
         else
-          redirect_back fallback_location: @receiptable.try(:hcb_code) || @receiptable
+          redirect_back fallback_location: @hcb_code || @receiptable
         end
       }
     end
@@ -79,7 +80,8 @@ class ReceiptsController < ApplicationController
       @popover = params[:popover]
     end
 
-    if @receiptable.instance_of?(HcbCode)
+    # Receipts the suggester already matched with this transaction come first.
+    if @receiptable.is_a?(Ledger::Item)
       pairings_sql = <<~SQL
         LEFT JOIN (#{@receiptable.suggested_pairings.to_sql}) sp
         ON sp.receipt_id = receipts.id
@@ -104,7 +106,7 @@ class ReceiptsController < ApplicationController
         authorize @receiptable, :upload?, policy_class: ReceiptablePolicy
       end
     rescue Pundit::NotAuthorizedError
-      raise unless @receiptable.is_a?(HcbCode) && HcbCode.find_signed(params[:s], purpose: :receipt_upload) == @receiptable
+      raise unless @hcb_code && HcbCode.find_signed(params[:s], purpose: :receipt_upload) == @hcb_code
     end
 
     return unless params[file_param].present?
@@ -118,7 +120,7 @@ class ReceiptsController < ApplicationController
         attachments: [file],
         upload_method: params[:upload_method]
       ).run!
-      next if @receiptable && !on_hcb_code_page? && !on_ledger_item_page?
+      next if @receiptable && !on_page_of_receipt_hcb_code? && !on_ledger_item_page?
 
       streams.append(turbo_stream.prepend(
                        @ledger_instance.present? ? "#{@ledger_instance}_receipts_list" : "receipts_list",
@@ -146,11 +148,11 @@ class ReceiptsController < ApplicationController
         receipt_upload_form_config[:enable_linking] = true
         receipt_upload_form_config[:receiptable] = @receiptable
       end
-      if @receiptable && @frame && on_hcb_code_page?
+      if @hcb_code && @frame && on_hcb_code_page?
         receipt_upload_form_config[:restricted_dropzone] = true
         receipt_upload_form_config[:inline_linking] = true
         receipt_upload_form_config[:upload_method] = "transaction_popover"
-        receipt_upload_form_config[:popover] = "HcbCode:#{@receiptable.hashid}"
+        receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}"
         receipt_upload_form_config[:show_receipt_button] = @show_receipt_button
         receipt_upload_form_config[:show_author_img] = @show_author_img
       end
@@ -161,7 +163,7 @@ class ReceiptsController < ApplicationController
 
     flash_type = :success
     if params[:show_link]
-      flash_message = { text: "#{"Receipt".pluralize(params[file_param].length)} added!", link: (hcb_code_path(@receiptable) if @receiptable.instance_of?(HcbCode)), link_text: "View" }
+      flash_message = { text: "#{"Receipt".pluralize(params[file_param].length)} added!", link: (hcb_code_path(@hcb_code) if @hcb_code), link_text: "View" }
     else
       flash_message = "#{"Receipt".pluralize(params[file_param].length)} added!"
     end
@@ -171,6 +173,13 @@ class ReceiptsController < ApplicationController
 
     flash_type = :error
     flash_message = "There was an error uploading your receipt. Please try again."
+
+    # The form replaced below is the receipts page's. A transaction's own form
+    # or row has no such element, so show the error in the page's flash instead.
+    if @receiptable
+      flash.now[:error] = flash_message
+      streams.append(turbo_stream.replace("flash-container", partial: "application/flash"))
+    end
 
     streams.append(
       turbo_stream.replace(
@@ -189,8 +198,8 @@ class ReceiptsController < ApplicationController
         flash[flash_type] = flash_message if flash_message && flash_type
         if (safe_redirect = url_from(params[:redirect_url]))
           redirect_to safe_redirect
-        elsif @receiptable.is_a?(HcbCode) && @receiptable.stripe_card&.card_grant.present?
-          redirect_to @receiptable.stripe_card.card_grant
+        elsif @hcb_code&.stripe_card&.card_grant.present?
+          redirect_to @hcb_code.stripe_card.card_grant
         else
           if params[:popover]&.starts_with?("HcbCode:")
             flash[:popover] = params[:popover].gsub("HcbCode:", "")
@@ -205,6 +214,7 @@ class ReceiptsController < ApplicationController
   def reverse
     authorize @receipt
     @receiptable = @receipt.receiptable
+    @hcb_code = @receipt.hcb_code
 
     if @receipt.suggested_pairings.accepted.any?
       pairing = @receipt.suggested_pairings.accepted.first
@@ -237,7 +247,9 @@ class ReceiptsController < ApplicationController
 
   private
 
-  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+  # A transaction's receipts are attached to its ledger item, never its HCB code
+  # (https://github.com/hackclub/hcb/issues/14106).
+  RECEIPTABLE_TYPE_MAP = [CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
                           Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item, Payment,
                           Payroll::Invoice].index_by(&:to_s).freeze
@@ -249,6 +261,9 @@ class ReceiptsController < ApplicationController
 
     @klass = RECEIPTABLE_TYPE_MAP[params[:receiptable_type]]
     @receiptable = @klass.find(params[:receiptable_id])
+    # The transaction's HCB code, whether the receipt is being attached to the
+    # code itself or to its ledger item. Nil for every other receiptable.
+    @hcb_code = @receiptable.try(:receipt_hcb_code)
   end
 
   def generate_streams
@@ -272,11 +287,9 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @receiptable.is_a?(HcbCode)
-      @hcb_code = @receiptable
-
-      if @receiptable.canonical_transactions&.any?
-        @receiptable.canonical_transactions.each do |ct|
+    if @hcb_code
+      if @hcb_code.canonical_transactions&.any?
+        @hcb_code.canonical_transactions.each do |ct|
           streams.append(turbo_stream.remove("transaction_details_#{ct.__id__}"))
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
@@ -285,7 +298,7 @@ class ReceiptsController < ApplicationController
                          ))
         end
       else
-        @receiptable.canonical_pending_transactions&.each do |pt|
+        @hcb_code.canonical_pending_transactions&.each do |pt|
           streams.append(turbo_stream.remove("transaction_details_#{pt.__id__}"))
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
@@ -314,24 +327,22 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @receiptable.is_a?(HcbCode) && (on_hcb_code_page? || on_ledger_item_page?) && !@receiptable.stripe_refund?
-      if on_hcb_code_page?
-        # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
-        # the ledger item show page has replaced the HCB code transaction page.
-        # The ledger equivalent is streamed below.
-        streams.append(
-          turbo_stream.replace(
-            "#{@ledger_instance}_stripe_card_receipts",
-            partial: "hcb_codes/stripe_card_receipts",
-          )
+    if @hcb_code && on_page_of_receipt_hcb_code? && !@hcb_code.stripe_refund?
+      # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
+      # the ledger item show page has replaced the HCB code transaction page.
+      # The ledger equivalent is streamed below.
+      streams.append(
+        turbo_stream.replace(
+          "#{@ledger_instance}_stripe_card_receipts",
+          partial: "hcb_codes/stripe_card_receipts",
         )
-      end
+      )
 
       streams.append(
         turbo_stream.replace(
           "#{@ledger_instance}_receipts_list",
           partial: "receipts/list_v2",
-          locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
+          locals: { receipts: @hcb_code.receipts, popover: (@frame ? "HcbCode:#{@hcb_code.hashid}" : nil), transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
         )
       )
     end
@@ -353,12 +364,22 @@ class ReceiptsController < ApplicationController
       )
     end
 
+    # The ledger item show page lists the item's own receipts (see
+    # ledger/items/show), so refresh the list from the item, code or no code.
     if ledger_item.present? && on_ledger_item_page?
       streams.append(
         turbo_stream.replace(
           "#{ledger_item.hashid}_stripe_card_receipts",
           partial: "ledger/items/stripe_card_receipts",
           locals: { ledger_item: }
+        )
+      )
+
+      streams.append(
+        turbo_stream.replace(
+          "#{@ledger_instance}_receipts_list",
+          partial: "receipts/list_v2",
+          locals: { receipts: ledger_item.receipts, popover: (@frame && ledger_item.hcb_code.present? ? "HcbCode:#{ledger_item.hcb_code.hashid}" : nil), transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
         )
       )
     end
@@ -368,7 +389,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item }))
     end
 
-    if @receipt && on_hcb_code_page?
+    if @receipt && on_page_of_receipt_hcb_code?
       streams.append(turbo_stream.append(
                        :receipts_list,
                        partial: "receipts/receipt",
@@ -407,6 +428,22 @@ class ReceiptsController < ApplicationController
   def on_hcb_code_page?
     route = Rails.application.routes.recognize_path(request.referrer)
     return route[:controller].classify == "HcbCode"
+  end
+
+  # On the HCB code page of the transaction the receipt is for, rather than one
+  # that lists it among a subscription's other charges. Only the former shows
+  # this transaction's receipt list, so only it gets the streams updating it.
+  #
+  # TODO: `on_ledger_item_page?` needs the same check once the ledger item page
+  # lists a subscription's transactions.
+  def on_page_of_receipt_hcb_code?
+    return false unless on_hcb_code_page?
+    # A popover is always about its own transaction, whatever page it's open on.
+    # Receiptables with no HCB code behave as they did before this check.
+    return true if @frame || @hcb_code.nil?
+
+    route = Rails.application.routes.recognize_path(request.referrer)
+    route[:id].in?([@hcb_code.hashid, @hcb_code.hcb_code])
   end
 
   def on_ledger_item_page?

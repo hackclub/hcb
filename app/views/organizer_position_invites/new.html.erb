@@ -1,7 +1,15 @@
-<% title "Invite another member" %>
-<% page_sm %>
+<% title "Invite a team member to #{@event.name}" %>
+<%= render "events/nav", selected: :team %>
 
-<%= link_to @invite.event.name, @invite.event, class: "breadcrumb" %>
-<h1>Invite Another Member</h1>
+<div class="max-w-xl">
+  <h1 class="heading">Invite a team member</h1>
 
-<%= render "organizer_position_invites/form", invite: @invite %>
+  <p class="muted mt-0 mb-6">
+    We'll email them an invitation to join <strong><%= @event.name %></strong> on HCB.
+    <% if @event.ancestor_organizer_positions.none? %>
+      This organization has no team members yet, so choose <strong>Manager</strong> if they should be able to manage it.
+    <% end %>
+  </p>
+
+  <%= render "organizer_position_invites/form", invite: @invite %>
+</div>

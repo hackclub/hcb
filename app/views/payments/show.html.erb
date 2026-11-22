@@ -66,7 +66,7 @@
       <% if @payment.payroll_position.present? %>
         <p>
           <strong>Contractor</strong>
-          <%= link_to @payment.payee.display_name, event_payroll_position_path(@payment.event, @payment.payroll_position) %>
+          <%= link_to @payment.payee.display_name, payroll_position_path(@payment.payroll_position) %>
         </p>
       <% end %>
       <p>
@@ -112,7 +112,7 @@
         <div class="card flex items-center w-full">
           <p class="my-0">
             <% if attempt.payout.present? %>
-              <%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %>
+              <%= link_to "Attempt ##{index + 1}", ledger_item_path(attempt.payout.ledger_item) %>
             <% else %>
               Attempt #<%= index + 1 %>
             <% end %>

@@ -2,7 +2,7 @@
 
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
-    <%= form.label :file, label, class: "font-semibold" %>
+    <%= form.label :file, label, for: input_html.fetch(:id, form.field_id(:file)), class: "font-semibold" %>
     <span class="muted">
       <% if hint %>
         <%= hint %>
@@ -25,11 +25,12 @@
         accept: accept,
         data: {
           "file-drop-target"   => "fileInput",
-          "file-upload-target" => "input"
+          "file-upload-target" => "input",
+          **input_html.fetch(:data, {})
         },
         disabled:,
-        **input_html %>
+        **input_html.except(:data) %>
     <button data-file-upload-target="preview" type="button"></button>
-    <%= content_tag :div, "", data: { "file-upload-target" => "clear" }, **clear_html %>
+    <%= content_tag :div, "", data: { "file-upload-target" => "clear", **clear_html.fetch(:data, {}) }, **clear_html.except(:data) %>
   </div>
 </div>

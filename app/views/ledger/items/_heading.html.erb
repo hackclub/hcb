@@ -11,7 +11,7 @@
           <%= yield %>
         </span>
       <% end %>
-      <span <%= "hidden" if show_yield %> data-memo-target="memoDisplay">
+      <span <% if show_yield %> hidden<% end %> data-memo-target="memoDisplay">
         <span data-memo-target="tooltip" data-memo-for="<%= dom_id(ledger_item) %>" title="<%= ledger_item.memo %>">
           <%= render "ledger/items/memo/memo_text", item: ledger_item %>
         </span>
@@ -61,5 +61,5 @@
     <% end %>
   <% end %>
 
-  <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: ledger_item.hcb_code } if ledger_item.hcb_code.present? %>
+  <%= render "ledger/items/meatballs", ledger_item: %>
 </h2>

@@ -111,8 +111,18 @@ class ApplicationController < ActionController::Base
       raise
     else
       Rails.error.report(exception)
-      redirect_to root_url
+      redirect_to root_path
     end
+  end
+
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+  end
+
+  # Called by the audits1984 engine (mounted at /console) to authenticate auditors.
+  def find_current_auditor
+    current_user if auditor_signed_in?
   end
 
   def safe_per(default, max: 200)
@@ -138,7 +148,10 @@ class ApplicationController < ActionController::Base
   end
 
   def info_for_paper_trail
-    { impersonated_by_id: current_session&.impersonated_by_id }
+    {
+      impersonated_by_id: current_session&.impersonated_by_id,
+      user_session_id: current_session&.id
+    }
   end
 
   def not_found
@@ -149,10 +162,18 @@ class ApplicationController < ActionController::Base
     not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
-  def set_streaming_headers
+  # Streams `body` (a String or an Enumerator yielding chunks) to the client as
+  # a file. Unlike `send_data`, the body is not buffered, so large exports
+  # start downloading right away.
+  def stream_file(body, filename:, type:, disposition: "attachment")
+    headers["Content-Type"] = type
+    headers["Content-Disposition"] = ActionDispatch::Http::ContentDisposition.format(disposition:, filename:)
     headers["X-Accel-Buffering"] = "no"
     headers["Cache-Control"] ||= "no-cache"
     headers.delete("Content-Length")
+
+    response.status = 200
+    self.response_body = body
   end
 
   def confetti!(emojis: nil)

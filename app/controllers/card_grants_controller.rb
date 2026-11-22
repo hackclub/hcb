@@ -58,10 +58,8 @@ class CardGrantsController < ApplicationController
 
     @per = safe_per(25)
     @table_only = true
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      @ledger = @event.ledger
-      @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
-    end
+    @ledger = @event.ledger
+    @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
   end
 
   def new
@@ -154,10 +152,6 @@ class CardGrantsController < ApplicationController
               disposition: "attachment"
   end
 
-  def edit_overview
-    authorize @card_grant
-  end
-
   def edit_purpose
     authorize @card_grant
   end
@@ -212,14 +206,14 @@ class CardGrantsController < ApplicationController
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
 
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def clear_purpose
     authorize @card_grant, :update?
     @card_grant.update!(purpose: nil)
     flash[:success] = "Purpose has been successfully cleared!"
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def show
@@ -237,19 +231,15 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
 
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      @per = safe_per(25)
-      @table_only = true
-      @ledger = @card_grant.ledger
-      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
-    end
+    @per = safe_per(25)
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     render :show, layout: !@frame
 
@@ -262,7 +252,6 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.local_hcb_codes
 
     @per = safe_per(25)
     @table_only = true
@@ -270,7 +259,6 @@ class CardGrantsController < ApplicationController
     @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     if organizer_signed_in? && !@frame
       # If trying to view spending page outside a frame, redirect to the show page
