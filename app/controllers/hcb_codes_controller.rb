@@ -166,7 +166,7 @@ class HcbCodesController < ApplicationController
       raise Pundit::NotAuthorizedError
     end
 
-    file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
+    file_name = @hcb_code.ledger_item&.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
 
     send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
