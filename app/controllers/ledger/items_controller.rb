@@ -55,7 +55,7 @@ class Ledger
       can_dispute, error_reason = Ledger::Item::CanDispute.new(ledger_item: @item).run
 
       if can_dispute
-        redirect_to helpers.disputed_transactions_airtable_form_url(embed: false, ledger_item: @item, user: current_user), allow_other_host: true
+        redirect_to helpers.disputed_transactions_airtable_form_url(ledger_item: @item, user: current_user), allow_other_host: true
       else
         redirect_back fallback_location: @item, flash: { error: error_reason }
       end
