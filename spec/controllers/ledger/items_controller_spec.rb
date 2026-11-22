@@ -131,6 +131,47 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "tags" do
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+
+      before { item.tags << tag }
+
+      it "shows the item's tags to an auditor who can't change them" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Snacks")
+        expect(response.body).to include(%(id="ledger_item_#{item.hashid}_tag_#{tag.id}"))
+        expect(response.body).not_to include("+ Add tag")
+      end
+
+      it "offers the add-tag menu to an admin" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("+ Add tag")
+        expect(response.body).to include(ledger_item_toggle_tag_path(item))
+      end
+
+      it "renders the row on a linked object with no details list of its own" do
+        hcb_event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+        allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+        group = create(:fee_reimbursement_group, key: "2026_42")
+        hcb_tag = hcb_event.tags.create!(label: "Fees", emoji: "🏦", color: "muted")
+        group.ledger_item.tags << hcb_tag
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: group.ledger_item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(id="ledger_item_#{group.ledger_item.hashid}_tag_#{hcb_tag.id}"))
+      end
+    end
+
     it "updates the counts on the item's ledger row when shown in a popover" do
       create_session(create(:user, :make_auditor), verified: true)
       target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
