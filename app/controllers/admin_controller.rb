@@ -118,8 +118,7 @@ class AdminController < Admin::BaseController
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
       tags: params[:tags],
-      risk_level: params[:risk_level],
-      demo_mode: params[:demo_mode].to_i == 1
+      risk_level: params[:risk_level]
     ).run
 
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
@@ -144,8 +143,7 @@ class AdminController < Admin::BaseController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags:,
-      demo_mode: true
+      tags:
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
@@ -441,6 +439,15 @@ class AdminController < Admin::BaseController
 
     @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
+  end
+
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
   end
 
   def event_search
