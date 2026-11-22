@@ -7,17 +7,21 @@ module CardLocking
   # For a trusted cardholder it slides to `last_charge + RECEIPT_DUE_WINDOW`,
   # never below the base and never past `settled_at + RECEIPT_MAX_AGE`.
   #
-  # When recomputation would move an existing deadline *earlier*, it may not drop
-  # below `now + DEADLINE_SHORTENING_FLOOR`, so losing trust cannot make a pile of
-  # receipts overdue in the same instant.
+  # An outstanding deadline that is still in the future never moves earlier. A
+  # deadline can sit past its computed target for reasons this class can't see:
+  # the countdown restarted when the charge's last receipt was deleted
+  # (ChargeBehavior#restart_card_locking_countdown!), rollout grace, or a trusted
+  # slide the cardholder has since lost. Recomputing would claw each of those
+  # back, so a recompute may only lengthen.
   class Deadline
-    def initialize(settled_at:, trusted:, last_settled_charge_at:, current_due_at:, now:, resolved: false)
+    def initialize(settled_at:, trusted:, last_settled_charge_at:, current_due_at:, now:, resolved: false, cards_locked: false)
       @settled_at = settled_at
       @trusted = trusted
       @last_settled_charge_at = last_settled_charge_at
       @current_due_at = current_due_at
       @now = now
       @resolved = resolved
+      @cards_locked = cards_locked
     end
 
     def compute
@@ -31,14 +35,21 @@ module CardLocking
       # it forward would recast a late upload as on-time. Not hypothetical:
       # BackfillCardLockingTimingTask materializes all history at Time.current, so
       # clamping there would inflate trust wholesale.
-      return [target, @now + DEADLINE_SHORTENING_FLOOR].max if @current_due_at.nil? && !@resolved
+      #
+      # Unlocked cardholders only. The floor exists to warn before a lock, and a
+      # cardholder whose cards are already locked has had that warning and the
+      # lock. Flooring their charges would instead clear every overdue deadline
+      # for 72 hours, so the next sweep would unlock them, mail them that their
+      # cards work again, and lock them back three days later. That is exactly
+      # what happens when deadlines are first materialized onto ledger items
+      # that have none yet, so this is what lets the sweep fill them from
+      # scratch without a notification going out.
+      return [target, @now + FIRST_DEADLINE_FLOOR].max if @current_due_at.nil? && !@resolved && !@cards_locked
       return target if @current_due_at.nil?
       return @current_due_at if @current_due_at <= @now # already overdue: frozen
 
-      return target if target >= @current_due_at # lengthening is always allowed
-
-      # Shortening: clamp between the 72h floor and the old value.
-      [[target, @now + DEADLINE_SHORTENING_FLOOR].max, @current_due_at].min
+      # Lengthening is always allowed; shortening never is.
+      [target, @current_due_at].max
     end
 
     private

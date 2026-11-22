@@ -1,7 +1,13 @@
 <%# locals: (klass: "") -%>
 
+<% messages = renderable_flash -%>
+<% if turbo_frame_request? && messages.any? -%>
+  <% messages.each_key { |key| flash.discard(key) } -%>
+  <% response.headers["X-Flash"] = "true" -%>
+<% end -%>
+
 <div id="flash-container">
-  <% flash.to_h.except("confetti", "confetti_emojis", "popover").each_with_index do |(key, value), index| %>
+  <% messages.each_with_index do |(key, value), index| %>
     <article
       role="alertdialog"
       class="flash flex items-center <%= "mt2" unless index == 0 %> shrink-none <%= key %> <%= klass %>"

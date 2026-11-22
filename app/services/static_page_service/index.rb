@@ -2,16 +2,27 @@
 
 module StaticPageService
   class Index
+    # Associations rendered by `events/_event_card`, preloaded so each card
+    # doesn't issue its own queries for the logo, background image, and
+    # organizer avatars.
+    EVENT_CARD_PRELOADS = [
+      { logo_attachment: :blob },
+      { background_image_attachment: :blob },
+      { organizer_positions: { user: { profile_picture_attachment: :blob } } },
+    ].freeze
+
     def initialize(current_user:)
       @current_user = current_user
     end
 
-    def redirect_to_first_event?
-      !auditor? && events.count == 1 && invites.none?
+    def events
+      @current_user.events.reorder("organizer_positions.sort_index ASC", "events.id ASC").preload(*EVENT_CARD_PRELOADS)
     end
 
-    def events
-      @current_user.events.reorder("organizer_positions.sort_index ASC", "events.id ASC").includes(:stripe_cards, organizer_positions: :user)
+    # { event_id => count } of active, main-ledger cards, matching the count
+    # shown on each event card. One grouped query instead of one per card.
+    def active_card_counts(events)
+      StripeCard.active.on_main_ledger.where(event_id: events.map(&:id)).group(:event_id).count
     end
 
     def organizer_positions
@@ -28,42 +39,6 @@ module StaticPageService
 
     def applications
       @current_user.applications.active
-    end
-
-    # Counts
-
-    def checks_count
-      Check.in_transit.count
-    end
-
-    def ach_transfers_count
-      AchTransfer.pending.count
-    end
-
-    def fee_reimbursements_count
-      FeeReimbursement.unprocessed.count
-    end
-
-    def g_suites_needs_ops_review_count
-      GSuite.needs_ops_review.count
-    end
-
-    def organizer_position_deletion_requests_count
-      OrganizerPositionDeletionRequest.under_review.count
-    end
-
-    def transactions_count
-      Transaction.needs_action.count
-    end
-
-    def disbursements_count
-      Disbursement.pending.count
-    end
-
-    private
-
-    def auditor?
-      @current_user.auditor?
     end
 
   end

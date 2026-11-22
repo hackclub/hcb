@@ -1,3 +1,44 @@
+.filter-menu__count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background-color: map-get($palette, primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+// Keep the dot fully opaque on inactive tabs by dimming only the label text.
+[data-tabs-target='btn'].filter-menu__tab {
+  opacity: 1;
+  align-items: flex-start;
+
+  &:not(.active) .filter-menu__tab-label {
+    opacity: 0.6;
+  }
+}
+
+.filter-menu__tab-label {
+  align-self: center;
+}
+
+.filter-menu__tab-dot {
+  width: 5px;
+  height: 5px;
+  margin-top: 3px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background-color: map-get($palette, info);
+  flex-shrink: 0;
+}
+
 .filter-menu {
   display: flex;
   gap: 1rem;

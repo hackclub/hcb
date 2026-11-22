@@ -61,16 +61,6 @@ class Raffle < ApplicationRecord
     number
   end
 
-  def pending?
-    !confirmed?
-  end
-
-  def confirm!
-    return if confirmed?
-
-    update!(confirmed: true)
-  end
-
   def tickets
     1 + extra_tickets
   end
@@ -88,11 +78,6 @@ class Raffle < ApplicationRecord
     end
     tickets += referrals.to_i / REFERRAL_TICKET_FINAL_TIER.to_i
     tickets
-  end
-
-  def referrals_needed_for_next_ticket
-    tix = extra_tickets
-    tix > REFERRAL_TICKET_TIERS.length - 1 ? REFERRAL_TICKET_FINAL_TIER : REFERRAL_TICKET_TIERS[tix]
   end
 
   def tier_progress

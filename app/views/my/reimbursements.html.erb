@@ -91,7 +91,7 @@
   <% end %>
 
   <% if @sections[:unassigned].exists? %>
-    <h3 class="mt3 mb1">Awaiting review by any manager</h3>
+    <h3 class="mt3 mb1">Awaiting review</h3>
     <%= turbo_frame_tag :my_reimbursements_unassigned, src: my_reimbursements_section_path(:unassigned, q: params[:q].presence) do %>
       <p class="muted">Loading reports…</p>
     <% end %>

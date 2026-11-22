@@ -22,6 +22,11 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
+    if @card.frozen?
+      flash[:error] = "Card is already frozen"
+      return redirect_back_or_to stripe_card_path(@card)
+    end
+
     begin
       @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"
@@ -166,7 +171,7 @@ class StripeCardsController < ApplicationController
       flash[:error] = card.errors.full_messages.to_sentence || "Card's name could not be updated"
     end
 
-    redirect_to stripe_card_url(card)
+    redirect_to stripe_card_path(card)
   end
 
   def enable_cash_withdrawal
@@ -179,7 +184,7 @@ class StripeCardsController < ApplicationController
     else
       flash[:success] = "You've disabled cash withdrawals for this card."
     end
-    redirect_to stripe_card_url(card)
+    redirect_to stripe_card_path(card)
   end
 
   def ephemeral_keys

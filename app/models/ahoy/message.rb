@@ -33,10 +33,6 @@ module Ahoy
       @as_mail ||= Mail.new(content)
     end
 
-    def text_content
-      as_mail.parts[0].body.decoded
-    end
-
     def html_content
       as_mail.parts[1].body.decoded
     end

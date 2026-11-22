@@ -17,7 +17,7 @@ module Admin
       @check_deposit = CheckDeposit.find(params[:id])
 
       unless @check_deposit.manual_submission_required?
-        redirect_to hcb_code_url(@check_deposit.local_hcb_code)
+        redirect_to ledger_item_path(@check_deposit.ledger_item)
       end
     end
 
@@ -29,6 +29,10 @@ module Admin
         # error, but rather return a string (301 status code), when given an
         # empty string.
         flash.now[:error] = "Column ID is required."
+        return render :show, status: :unprocessable_content
+      end
+      unless params[:column_id].match?(/\A[a-z]+_[A-Za-z0-9]+\z/)
+        flash.now[:error] = "Column ID is not valid."
         return render :show, status: :unprocessable_content
       end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"

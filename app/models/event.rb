@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -117,10 +118,8 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
-  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
-  scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
@@ -147,11 +146,6 @@ class Event < ApplicationRecord
       # unrecognized category, return nothing, though this should never make it this far since values: constraint
       none
     end
-  }
-
-  scope :flag_enabled, ->(flag) {
-    joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
-      .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
   # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
@@ -489,8 +483,6 @@ class Event < ApplicationRecord
                          .distinct)
   }
 
-  scope :dormant, -> { where.not(id: Event.engaged) }
-
   has_many :fees
   has_many :bank_fees
 
@@ -544,6 +536,8 @@ class Event < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+
+  include Event::HasReimbursementReviewers
 
   validate :point_of_contact_is_admin
 
@@ -660,10 +654,6 @@ class Event < ApplicationRecord
     # desc
   end
 
-  def disbursement_dropdown_description
-    "#{name} (#{ApplicationController.helpers.render_money balance_available})"
-  end
-
   # displayed on /negative_events
   def self.negatives
     select { |event| event.balance_v2_cents < 0 }
@@ -755,10 +745,6 @@ class Event < ApplicationRecord
     sum_fronted_amount(pts)
   end
 
-  def pending_balance_v2_cents(start_date: nil, end_date: nil)
-    pending_incoming_balance_v2_cents(start_date:, end_date:) + pending_outgoing_balance_v2_cents(start_date:, end_date:)
-  end
-
   def pending_incoming_balance_v2_cents(start_date: nil, end_date: nil)
     cpt = canonical_pending_transactions.incoming.unsettled.not_fronted
 
@@ -845,17 +831,10 @@ class Event < ApplicationRecord
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
-  end
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
 
-  # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
-  # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
-  def revenue_fees_v2_cents(start_date: nil, end_date: nil)
-    revenue_fees = fees.revenue
-    revenue_fees = revenue_fees.where(created_at: start_date..end_date) if start_date || end_date
-
-    revenue_fees.sum(:amount_cents_as_decimal).ceil
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   def increase_account_number_id
@@ -918,14 +897,6 @@ class Event < ApplicationRecord
     2
   end
 
-  def engaged?
-    canonical_transactions.where("date >= ?", 6.months.ago).any?
-  end
-
-  def dormant?
-    !engaged?
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -956,10 +927,6 @@ class Event < ApplicationRecord
     ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
   end
 
-  def default_stripe_card_personalization_design
-    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
-  end
-
   def config
     super || create_config
   end
@@ -976,6 +943,12 @@ class Event < ApplicationRecord
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
+  end
+
+  # How donations and invoice payments show up on bank and card statements,
+  # e.g. "HCB* Hack Club".
+  def statement_descriptor
+    StripeService::StatementDescriptor.format(short_name, as: :full)
   end
 
   monetize :minimum_wire_amount_cents
@@ -1095,11 +1068,7 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{name} (ID: #{id})" if admin
-
+  def to_combobox_display
     name
   end
 
