@@ -20,8 +20,8 @@ RSpec.describe "PaperTrail attribution tracking", type: :request, versioning: tr
 
       version = user.versions.last
       expect(version.whodunnit).to eq(user.id.to_s)
-      expect(version.user_session_id).to eq(session.id)
-      expect(version.api_token_id).to be_nil
+      expect(version.user_session).to eq(session)
+      expect(version.api_token).to be_nil
     end
 
     it "leaves the session blank on versions created without one" do
@@ -49,8 +49,8 @@ RSpec.describe "PaperTrail attribution tracking", type: :request, versioning: tr
 
       version = PaperTrail::Version.where(event: "create", item_type: "OrganizerPositionInvite").order(:id).last
       expect(version.whodunnit).to eq(organizer.id.to_s)
-      expect(version.api_token_id).to eq(token.id)
-      expect(version.user_session_id).to be_nil
+      expect(version.api_token).to eq(token)
+      expect(version.user_session).to be_nil
     end
   end
 end
