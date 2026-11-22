@@ -6,11 +6,7 @@
   <div class="field event-select-target">
     <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
     <%= form.select(:reimbursement_report_id,
-          admin_signed_in? ?
-            (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
-          current_user == expense.report.user ?
-            current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
-            expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
+          move_expense_report_options(expense.report),
           { prompt: "Select a report…", required: false, include_blank: "Select a report..." }, data: { herb_set: "selected_reimbursement_report_id=$value" }) %>
     <% unless admin_signed_in? %>
       <span class="muted mt1">You can transfer an expense to any report of yours.</span>
@@ -20,7 +16,7 @@
     <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
     <%= form.select(
           :event_id,
-          current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
+          move_expense_event_options,
           { prompt: "Select an event…", required: false }, data: { herb_set: "selected_event_id=$value" }
         ) %>
     <% unless admin_signed_in? %>
@@ -30,4 +26,16 @@
   <div hidden="<%= selected_reimbursement_report_id.blank? && selected_event_id.blank? %>">
     <%= form.submit "Update expense", class: "mt2" %>
   </div>
+<% end %>
+
+<% if admin_signed_in? %>
+  <% admin_tool("mt2") do %>
+    <%= form_with(model: expense.becomes(Reimbursement::Expense), local: true, data: { turbo: false }) do |form| %>
+      <div class="field mb1">
+        <%= form.label :report_reference, "Move to any draft report", for: "report_reference_#{expense.id}", class: "bold" %>
+        <%= form.text_field :report_reference, value: "", id: "report_reference_#{expense.id}", required: true, placeholder: "https://hcb.hackclub.com/reimbursement/reports/… or report ID" %>
+      </div>
+      <%= form.submit "Move expense" %>
+    <% end %>
+  <% end %>
 <% end %>

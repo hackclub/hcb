@@ -128,6 +128,7 @@ HCB-specific setup instructions.
    ```bash
    brew install pkg-config cairo libpq
    ```
+    CSV receipt previews are drawn with libvips. Install it with `brew install vips` (without it, CSV files simply have no preview).
 
 4. Install node packages
    ```bash
