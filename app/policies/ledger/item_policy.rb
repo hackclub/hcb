@@ -29,6 +29,10 @@ class Ledger
       admin_or_member?
     end
 
+    def dispute?
+      admin_or_member?
+    end
+
     # Members link money in on their own ledger. A manager of another
     # organization can link a transfer it sent, from here or from their own
     # side. Repayment.match_candidates decides which transactions each sees.

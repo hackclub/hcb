@@ -3,7 +3,9 @@
 require "cgi"
 
 module HcbCodeHelper
-  def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, user: nil)
+  # The form's "Transaction Code" takes an HCB code's hashid. A ledger item has
+  # no code ops could look up, so its page's link goes there instead.
+  def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, ledger_item: nil, user: nil)
     # The airtable form is located within the Bank Promotions base
     form_id = "7dq8JWC4Fsus"
     embed_url = "https://forms.hackclub.com/t/#{form_id}"
@@ -13,6 +15,7 @@ module HcbCodeHelper
     prefill << "prefill_Your+Name=#{CGI.escape(user.name)}" if user
     prefill << "prefill_Login+Email=#{CGI.escape(user.email)}" if user
     prefill << "prefill_Transaction+Code=#{CGI.escape(hcb_code.hashid)}" if hcb_code
+    prefill << "prefill_Transaction+Code=#{CGI.escape(ledger_item_url(ledger_item))}" if ledger_item
 
     "#{embed ? embed_url : url}?#{prefill.join("&")}"
   end

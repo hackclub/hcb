@@ -635,6 +635,7 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      get "dispute"
       post "pin"
       post "unpin"
       patch "rename"

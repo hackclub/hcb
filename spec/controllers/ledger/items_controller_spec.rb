@@ -56,6 +56,25 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "GET #dispute" do
+      it "sends a disputable transaction to the dispute form with a link to the item" do
+        create(:canonical_transaction, amount_cents: -500, date: 10.days.ago, ledger_item_id: item.id)
+
+        get :dispute, params: { item_id: item.hashid }
+
+        expect(response).to redirect_to(a_string_starting_with("https://forms.hackclub.com/"))
+        expect(response.location).to include(CGI.escape(ledger_item_url(item)))
+        expect(response.location).not_to include("HcbCode")
+      end
+
+      it "explains why a transaction can't be disputed" do
+        get :dispute, params: { item_id: item.hashid }
+
+        expect(response).to redirect_to(ledger_item_path(item))
+        expect(flash[:error]).to eq("This is not a valid transaction")
+      end
+    end
+
     describe "POST #invoice_as_personal_transaction" do
       before { create(:hcb_code, ledger_item: item) }
 
@@ -100,6 +119,24 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         create_session(create(:user), verified: true)
 
         expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+      end
+    end
+
+    context "for a card charge" do
+      it "offers the transaction's actions through ledger item routes" do
+        create_session(create(:user, :make_admin), verified: true)
+        stripe_card = create(:stripe_card, :with_stripe_id, event:)
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card:, stripe_merchant_category_code: "5462"))
+        charge_item = charge.local_hcb_code.ledger_item
+
+        get :show, params: { id: charge_item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Dispute this transaction")
+        expect(response.body).to include(ledger_item_dispute_path(charge_item))
+        expect(response.body).to include("Flag as personal transaction")
+        expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
+        expect(response.body).not_to include(dispute_hcb_code_path(charge.local_hcb_code))
       end
     end
 
@@ -275,6 +312,15 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(item.reload.memo).not_to eq("Nope")
+    end
+
+    it "denies disputing" do
+      create(:canonical_transaction, amount_cents: -500, date: 10.days.ago, ledger_item_id: item.id)
+
+      get :dispute, params: { item_id: item.hashid }
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
   end
 end
