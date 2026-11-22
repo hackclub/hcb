@@ -119,6 +119,24 @@ RSpec.describe CardCharge, type: :model do
     end
   end
 
+  describe "#refunded_amount_cents" do
+    it "sums the charge's refunds, leaving the captures out" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_refunded")
+      create(:raw_stripe_transaction, stripe_authorization_id: "iauth_refunded", amount_cents: -1500)
+      create(:raw_stripe_transaction, :refund, stripe_authorization_id: "iauth_refunded", amount_cents: 1500)
+      create(:raw_stripe_transaction, :refund, stripe_authorization_id: "iauth_refunded", amount_cents: 500)
+
+      expect(rpst.card_charge.reload.refunded_amount_cents).to eq(2000)
+    end
+
+    it "is zero for a charge that hasn't been refunded" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_unrefunded")
+      create(:raw_stripe_transaction, stripe_authorization_id: "iauth_unrefunded", amount_cents: -1500)
+
+      expect(rpst.card_charge.reload.refunded_amount_cents).to eq(0)
+    end
+  end
+
   describe "#stripe_card" do
     it "is set automatically when the charge is created" do
       rst = create(:raw_stripe_transaction)

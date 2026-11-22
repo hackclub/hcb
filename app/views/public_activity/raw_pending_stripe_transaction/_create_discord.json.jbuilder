@@ -10,7 +10,7 @@ user = activity.user&.name
 json.embed do
   if ledger_item.present?
     if card_charge&.stripe_refund?
-      json.description "#{user} was refunded #{render_money(ledger_item.amount_cents.abs)} from #{ledger_item.memo} for #{Discord.link_to(event&.name, event_url(event))}"
+      json.description "#{user} was refunded #{render_money(card_charge.refunded_amount_cents)} from #{ledger_item.memo} for #{Discord.link_to(event&.name, event_url(event))}"
     elsif ledger_item.declined?
       json.description "#{possessive(user)} #{Discord.link_to(event&.name, event_url(event))} card was declined for #{render_money(activity.trackable.amount_cents.abs)} at #{ledger_item.memo}"
     elsif card_charge&.stripe_cash_withdrawal?

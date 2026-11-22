@@ -26,7 +26,7 @@ RSpec.describe "public_activity/comment/_create" do
     hrefs = html.css("a").map { |a| a["href"] }
 
     expect(html.text.squish).to include("You commented on Lunch")
-    expect(hrefs).to include(ledger_item_url(ledger_item, anchor: "comment-#{comment.hashid}"))
+    expect(hrefs).to include(ledger_item_path(ledger_item, anchor: "comment-#{comment.hashid}"))
     expect(hrefs).to include(ledger_item_path(ledger_item))
     expect(hrefs).not_to include(a_string_matching(/\/hcb\//))
   end
@@ -36,6 +36,6 @@ RSpec.describe "public_activity/comment/_create" do
     hrefs = html.css("a").map { |a| a["href"] }
 
     expect(html.text.squish).to include("You commented on #{event.name}")
-    expect(hrefs).to include(event_url(event, anchor: "comment-#{comment.hashid}"))
+    expect(hrefs).to include(event_path(event, anchor: "comment-#{comment.hashid}"))
   end
 end

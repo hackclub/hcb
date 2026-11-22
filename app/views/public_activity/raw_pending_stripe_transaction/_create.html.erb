@@ -8,7 +8,7 @@
 <% if ledger_item %>
   <% if card_charge&.stripe_refund? %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
-      was refunded <%= render_money ledger_item.amount_cents.abs %> from <i><%= ledger_item.memo %></i> for <%= link_to event&.name, event %>
+      was refunded <%= render_money card_charge.refunded_amount_cents %> from <i><%= ledger_item.memo %></i> for <%= link_to event&.name, event %>
     <% end %>
   <% elsif ledger_item.declined? %>
     <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, card: activity.trackable.stripe_card, url: ledger_item_path(ledger_item) } do %>
