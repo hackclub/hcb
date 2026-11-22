@@ -42,8 +42,15 @@ class OrganizerPosition
         allowances.sum(:amount_cents)
       end
 
+      # Matches HcbCode#amount_cents in two queries instead of one or two per charge:
+      # settled charges use their canonical transactions, the rest use their pending ones.
+      # This runs while answering Stripe's authorization webhook, which has a 2 second limit.
       def total_spent_cents
-        transactions.sum(&:amount_cents) * -1
+        hcb_codes = transactions.select(:hcb_code)
+        settled = CanonicalTransaction.where(hcb_code: hcb_codes).group(:hcb_code).sum(:amount_cents)
+        pending = CanonicalPendingTransaction.where(hcb_code: hcb_codes).where.not(hcb_code: settled.keys).sum(:amount_cents)
+
+        (settled.values.sum + pending) * -1
       end
 
       def transactions
