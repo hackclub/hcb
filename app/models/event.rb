@@ -1040,18 +1040,16 @@ class Event < ApplicationRecord
     emails
   end
 
+  # Each merchant the org's cards were charged by, with how many settled and
+  # pending charges it has, most used first.
   def merchants
-    settled_merchants = canonical_transactions.map do |ct|
-      rst = ct.raw_stripe_transaction
-      stripe_transaction_merchant(rst) if rst.present?
-    end.select(&:present?)
+    settled = merchant_counts(canonical_transactions.stripe_transaction, "raw_stripe_transactions")
+    pending = merchant_counts(canonical_pending_transactions.joins(:raw_pending_stripe_transaction), "raw_pending_stripe_transactions")
 
-    pending_merchants = canonical_pending_transactions.map do |cpt|
-      rpst = cpt.raw_pending_stripe_transaction
-      stripe_transaction_merchant(rpst) if rpst.present?
-    end.select(&:present?)
-
-    settled_merchants.concat(pending_merchants)
+    (settled + pending).group_by(&:first).map { |network_id, rows|
+      name = YellowPages::Merchant.lookup(network_id:).name || rows.first.second.titleize
+      { id: network_id, name:, count: rows.sum(&:third) }
+    }.sort_by { |merchant| -merchant[:count] }
   end
 
   def point_of_contact_history
@@ -1161,10 +1159,9 @@ class Event < ApplicationRecord
     update!(plan.default_values)
   end
 
-  def stripe_transaction_merchant(transaction)
-    merchant_data = transaction.stripe_transaction["merchant_data"]
-    yp_merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
-    { id: merchant_data["network_id"], name: yp_merchant.name || merchant_data["name"].titleize }
+  def merchant_counts(relation, table)
+    network_id = Arel.sql("#{table}.stripe_transaction->'merchant_data'->>'network_id'")
+    relation.group(network_id).pluck(network_id, Arel.sql("MIN(#{table}.stripe_transaction->'merchant_data'->>'name')"), Arel.sql("COUNT(*)"))
   end
 
   def parent_id_is_acyclical
