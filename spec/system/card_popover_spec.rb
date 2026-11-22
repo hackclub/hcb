@@ -32,8 +32,12 @@ RSpec.describe "Card popovers", type: :system do
       expect(page).to have_current_path(event_cards_overview_path(event, popover: stripe_card_path(card)))
 
       # Clicking a transaction used to close and reopen the popover, and the
-      # close handler emptied the body it had just been filled with
-      find("#{popover} [data-popover-frame-id='#{hcb_code.public_id}']").click
+      # close handler emptied the body it had just been filled with.
+      #
+      # Dispatched from script rather than with the mouse: hovering the row
+      # reveals its "Add tag" button, and in the narrow card popover that can
+      # squeeze the memo link to nothing, so a mouse click lands on the button.
+      find("#{popover} [data-popover-frame-id='#{hcb_code.public_id}']").execute_script("this.click()")
 
       expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]")
       expect(page).to have_no_css(card_frame)
