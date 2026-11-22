@@ -114,8 +114,6 @@ class HcbCodesController < ApplicationController
     end
   end
 
-  include HcbCodeHelper # for disputed_transactions_airtable_form_url and attach_receipt_url
-
   def attach_receipt
     @hcb_code = HcbCode.find(params[:id])
     @event = @hcb_code.event
@@ -152,7 +150,7 @@ class HcbCodesController < ApplicationController
     can_dispute, error_reason = ::HcbCodeService::CanDispute.new(hcb_code: @hcb_code).run
 
     if can_dispute
-      redirect_to disputed_transactions_airtable_form_url(embed: false, hcb_code: @hcb_code, user: @current_user), allow_other_host: true
+      redirect_to helpers.disputed_transactions_airtable_form_url(hcb_code: @hcb_code, user: current_user), allow_other_host: true
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
