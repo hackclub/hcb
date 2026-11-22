@@ -471,6 +471,54 @@ RSpec.describe MyController do
 
           expect(response.body).to include("1 of 2 transactions")
         end
+
+        describe "row receipt upload forms" do
+          def create_pending_inbox_charge
+            card = (@inbox_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder: user.stripe_cardholder || create(:stripe_cardholder, user:), event:))
+            cpt = create(:canonical_pending_transaction, amount_cents: -10_00,
+                                                         raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card, amount_cents: -10_00))
+            create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:)
+            cpt.local_hcb_code.reload
+          end
+
+          def upload_forms
+            Nokogiri::HTML5(response.body).css("td.transaction__receipt-action form[action='#{receipts_path}']")
+          end
+
+          def expect_direct_upload_row_form(form)
+            input = form.at_css("input[type=file]")
+            expect(input["accept"]).to eq("image/*,image/heic,.pdf")
+            expect(input["data-direct-upload-url"]).to be_present
+
+            expect(form["data-controller"].split).to include("uploading")
+            expect(form["data-action"]).to include("submit->uploading#start")
+            button = form.at_css("##{form["data-uploading-button-value"]}")
+            expect(button).to be_present
+            expect(button.at_css("span").text.strip).to eq("Upload receipt")
+          end
+
+          it "gives each settled row's form a filtered direct-upload input and its own busy button", :aggregate_failures do
+            2.times { create_inbox_charge(receipt_due_at: nil) }
+
+            get :inbox
+
+            forms = upload_forms
+            expect(forms.size).to eq(2)
+            forms.each { |form| expect_direct_upload_row_form(form) }
+            expect(forms.map { |form| form["data-uploading-button-value"] }.uniq.size).to eq(2)
+          end
+
+          it "gives each pending row's form a filtered direct-upload input and its own busy button", :aggregate_failures do
+            2.times { create_pending_inbox_charge }
+
+            get :inbox
+
+            forms = upload_forms
+            expect(forms.size).to eq(2)
+            forms.each { |form| expect_direct_upload_row_form(form) }
+            expect(forms.map { |form| form["data-uploading-button-value"] }.uniq.size).to eq(2)
+          end
+        end
       end
 
       it "counts a group across every page, not just the page being shown" do
