@@ -54,7 +54,6 @@ RSpec.describe LedgersController, type: :controller do
 
         before do
           create(:organizer_position, event:, user: member_user, role: :member)
-          Flipper.enable_actor(:new_ledger_2026_07_17, member_user)
           create_session(member_user, verified: true)
         end
 
@@ -71,7 +70,6 @@ RSpec.describe LedgersController, type: :controller do
 
         before do
           create(:organizer_position, event:, user: reader_user, role: :reader)
-          Flipper.enable_actor(:new_ledger_2026_07_17, reader_user)
           create_session(reader_user, verified: true)
         end
 

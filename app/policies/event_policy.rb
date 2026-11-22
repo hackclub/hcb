@@ -304,10 +304,6 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  def toggle_new_ledger?
-    is_public || auditor_or_reader?
-  end
-
   alias hide_onboarding_message? request_call?
 
   private
