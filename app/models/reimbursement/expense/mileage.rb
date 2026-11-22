@@ -4,21 +4,22 @@
 #
 # Table name: reimbursement_expenses
 #
-#  id                      :bigint           not null, primary key
-#  aasm_state              :string           not null
-#  amount_cents            :integer          default(0), not null
-#  approved_at             :datetime
-#  category                :integer
-#  deleted_at              :datetime
-#  description             :text
-#  expense_number          :integer          not null
-#  memo                    :text
-#  type                    :string
-#  value                   :decimal(, )      default(0.0), not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  approved_by_id          :bigint
-#  reimbursement_report_id :bigint           not null
+#  id                        :bigint           not null, primary key
+#  aasm_state                :string           not null
+#  amount_cents              :integer          default(0), not null
+#  approved_at               :datetime
+#  category                  :integer
+#  deleted_at                :datetime
+#  description               :text
+#  expense_number            :integer          not null
+#  memo                      :text
+#  transaction_category_slug :string
+#  type                      :string
+#  value                     :decimal(, )      default(0.0), not null
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  approved_by_id            :bigint
+#  reimbursement_report_id   :bigint           not null
 #
 # Indexes
 #

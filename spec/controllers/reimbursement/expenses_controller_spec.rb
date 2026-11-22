@@ -6,7 +6,7 @@ RSpec.describe Reimbursement::ExpensesController do
   include SessionSupport
 
   describe "#create" do
-    it "categorizes new mileage expenses as Mileage" do
+    it "categorizes new mileage expenses as travel" do
       user = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
@@ -16,7 +16,7 @@ RSpec.describe Reimbursement::ExpensesController do
 
       post(:create, params: { report_id: report.id, type: "mileage" })
 
-      expect(report.expenses.sole).to have_attributes(type: "Reimbursement::Expense::Mileage", category: "Mileage")
+      expect(report.expenses.sole).to have_attributes(type: "Reimbursement::Expense::Mileage", transaction_category_slug: "travel")
     end
   end
 

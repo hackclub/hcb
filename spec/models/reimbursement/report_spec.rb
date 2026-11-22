@@ -141,13 +141,13 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
 
     it "requires every expense to have a category" do
-      add_expense(category: "Project Supplies")
+      add_expense(transaction_category_slug: "project-supplies")
       uncategorized = add_expense
 
       expect(report.missing_categories?).to be(true)
       expect(report.may_mark_submitted?).to be(false)
 
-      uncategorized.update!(category: "Prizes")
+      uncategorized.update!(transaction_category_slug: "prizes")
 
       expect(report.missing_categories?).to be(false)
       expect(report.may_mark_submitted?).to be(true)
@@ -161,14 +161,14 @@ RSpec.describe Reimbursement::Report, type: :model do
       end
 
       it "can't be submitted as a new report" do
-        add_expense(category: "Project Supplies")
+        add_expense(transaction_category_slug: "project-supplies")
 
         expect(report.unsupported_payout_method?).to be(true)
         expect(report.may_mark_submitted?).to be(false)
       end
 
       it "doesn't block a report that was already submitted" do
-        add_expense(category: "Project Supplies")
+        add_expense(transaction_category_slug: "project-supplies")
         report.update_columns(aasm_state: "reimbursement_requested")
 
         expect(report.unsupported_payout_method?).to be(false)
@@ -177,7 +177,7 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
 
     it "does not require a category on fees" do
-      add_expense(category: "Project Supplies")
+      add_expense(transaction_category_slug: "project-supplies")
       report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)
 
       expect(report.missing_categories?).to be(false)
@@ -214,8 +214,8 @@ RSpec.describe Reimbursement::Report, type: :model do
   describe "#expenses_missing_category" do
     it "returns non-fee expenses without a category" do
       report = create(:reimbursement_report)
-      uncategorized = create(:reimbursement_expense, report:, category: nil)
-      create(:reimbursement_expense, report:, category: "Software")
+      uncategorized = create(:reimbursement_expense, report:, transaction_category_slug: nil)
+      create(:reimbursement_expense, report:, transaction_category_slug: "software-subscriptions")
 
       expect(report.expenses_missing_category).to contain_exactly(uncategorized)
       expect(report.missing_categories?).to be(true)
@@ -224,7 +224,7 @@ RSpec.describe Reimbursement::Report, type: :model do
 
     it "is empty when every expense has a category" do
       report = create(:reimbursement_report)
-      create(:reimbursement_expense, report:, category: "Travel")
+      create(:reimbursement_expense, report:, transaction_category_slug: "travel")
 
       expect(report.expenses_missing_category).to be_empty
       expect(report.missing_categories?).to be(false)

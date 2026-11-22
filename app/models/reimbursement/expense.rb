@@ -4,21 +4,22 @@
 #
 # Table name: reimbursement_expenses
 #
-#  id                      :bigint           not null, primary key
-#  aasm_state              :string           not null
-#  amount_cents            :integer          default(0), not null
-#  approved_at             :datetime
-#  category                :integer
-#  deleted_at              :datetime
-#  description             :text
-#  expense_number          :integer          not null
-#  memo                    :text
-#  type                    :string
-#  value                   :decimal(, )      default(0.0), not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  approved_by_id          :bigint
-#  reimbursement_report_id :bigint           not null
+#  id                        :bigint           not null, primary key
+#  aasm_state                :string           not null
+#  amount_cents              :integer          default(0), not null
+#  approved_at               :datetime
+#  category                  :integer
+#  deleted_at                :datetime
+#  description               :text
+#  expense_number            :integer          not null
+#  memo                      :text
+#  transaction_category_slug :string
+#  type                      :string
+#  value                     :decimal(, )      default(0.0), not null
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  approved_by_id            :bigint
+#  reimbursement_report_id   :bigint           not null
 #
 # Indexes
 #
@@ -69,6 +70,9 @@ module Reimbursement
     validates :expense_number, uniqueness: { scope: :reimbursement_report_id }
     validate :valid_expense_type
 
+    # Legacy accounting codes, replaced by transaction_category_slug. Kept only
+    # until Maintenance::BackfillReimbursementExpenseTransactionCategoriesTask
+    # has run, after which the column is dropped.
     enum :category, {
       "Advertising / Marketing": 7000,
       "Customs Fees": 7031,
@@ -88,6 +92,10 @@ module Reimbursement
       "Training": 8150,
       "Travel": 8110
     }, instance_methods: false
+
+    # What the expense's payout is categorized as on the ledger, picked by the
+    # reimbursee from the same categories as every other transaction.
+    validates :transaction_category_slug, inclusion: { in: TransactionCategory::Definition::ALL.keys }, allow_nil: true
 
     before_validation do
       unless self.expense_number
@@ -133,7 +141,7 @@ module Reimbursement
     end
 
     before_update do
-      if approved? && (memo_changed? || amount_cents_changed? || category_changed? || description_changed?)
+      if approved? && (memo_changed? || amount_cents_changed? || transaction_category_slug_changed? || description_changed?)
         mark_pending!
         self.approved_by = nil
       end
@@ -205,7 +213,7 @@ module Reimbursement
     delegate :currency, to: :report
 
     def missing_category?
-      !is_fee? && category.nil?
+      !is_fee? && transaction_category_slug.nil?
     end
 
     def card_label

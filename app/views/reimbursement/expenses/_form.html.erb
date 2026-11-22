@@ -21,8 +21,8 @@
   </div>
   <% unless expense.is_fee? %>
     <div class="field mt1 mb1 flex flex-col w-100">
-      <%= form.label :category, "Category", class: "bold" %>
-      <%= form.select :category, Reimbursement::Expense.categories.keys, { prompt: "Select a category" }, { style: "max-width: 100vw;", data: { "expense-form-target": "field" } } %>
+      <%= form.label :transaction_category_slug, "Category", class: "bold" %>
+      <%= form.select :transaction_category_slug, TransactionCategory::Definition.payment_selectable.values.map { |definition| [definition.label, definition.slug] }, { prompt: "Select a category" }, { style: "max-width: 100vw;", data: { "expense-form-target": "field" } } %>
     </div>
   <% end %>
   <% unless expense.is_fee? %>

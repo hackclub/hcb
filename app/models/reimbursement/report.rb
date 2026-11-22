@@ -352,7 +352,7 @@ module Reimbursement
     end
 
     def expenses_missing_category
-      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil)
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(transaction_category_slug: nil)
     end
 
     def missing_categories?
