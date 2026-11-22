@@ -127,6 +127,20 @@ RSpec.describe RepaymentService::Mark do
       expect(Repayment.match_candidates(expense.ledger_item.reload, user)).to be_empty
     end
 
+    # A payment sent in place of a repayment should be fixable like a plain transfer (#15894).
+    it "marks a deposited payment like a transfer, giving the sender's side the expense's category" do
+      create(:organizer_position, user:, event: sender, role: :manager)
+      create(:organizer_position, user:, event:, role: :member)
+      transfer.update_columns(transfer_type: "payment")
+
+      expect(Repayment.match_candidates(expense.ledger_item.reload, user)).to include(income.ledger_item)
+
+      mark(income, expense)
+
+      expect(income.reload.category.slug).to eq(Repayment::CATEGORY_SLUG)
+      expect(outgoing.reload.category.slug).to eq("food-fun")
+    end
+
     it "won't mark a transfer that was sent as a repayment" do
       create(:organizer_position, user:, event: sender, role: :manager)
       create(:organizer_position, user:, event:, role: :reader)
