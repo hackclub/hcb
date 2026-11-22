@@ -13,22 +13,16 @@
 #  total_amount_cents :integer          not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  event_id           :bigint
 #  receipt_id         :bigint
-#  receiptable_id     :bigint           not null
-#  receiptable_type   :string           not null
 #  submitter_id       :bigint
 #
 # Indexes
 #
-#  index_lost_receipt_statements_on_event_id      (event_id)
 #  index_lost_receipt_statements_on_receipt_id    (receipt_id) UNIQUE
-#  index_lost_receipt_statements_on_receiptable   (receiptable_type,receiptable_id)
 #  index_lost_receipt_statements_on_submitter_id  (submitter_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (receipt_id => receipts.id)
 #  fk_rails_...  (submitter_id => users.id)
 #
@@ -39,9 +33,6 @@ module LostReceipt
 
     # Nil until the PDF has been generated and attached, which happens in the background.
     belongs_to :receipt, optional: true, inverse_of: :lost_receipt_statement
-    # The transaction being described.
-    belongs_to :receiptable, polymorphic: true
-    belongs_to :event, optional: true
     belongs_to :submitter, class_name: "User", optional: true
     # Item errors come from items_are_valid, which numbers them, rather than Rails' "Items description ..." ones.
     has_many :items, -> { order(:id) }, dependent: :destroy, inverse_of: :statement, validate: false
@@ -49,12 +40,15 @@ module LostReceipt
     accepts_nested_attributes_for :items, reject_if: :all_blank, limit: 50
 
     attribute :confirmed, :boolean
+    # Handed in until the PDF is attached; after that it's whatever the receipt is on.
+    attr_writer :receiptable
 
     # Only once the items are known to be valid numbers.
     before_save { self[:total_amount_cents] = total_amount_cents }
 
     validates :date, :merchant, :purpose, :signer_name, presence: true
     validates :merchant, :signer_name, length: { maximum: 255 }
+    validates :purpose, length: { maximum: 2000 }
     # Not stored, so only checkable when the form is submitted.
     validates :confirmed, acceptance: { accept: true, allow_nil: false }, on: :create
     validates :items, length: { minimum: 1, maximum: 50 }
@@ -67,7 +61,6 @@ module LostReceipt
     # takes a few seconds to render, so it's attached as the receipt by a job.
     def submit(receiptable: self.receiptable)
       self.receiptable = receiptable
-      self.event = receiptable.try(:event)
       self.confirmed_at = Time.current
       return false unless valid?
 
@@ -75,13 +68,15 @@ module LostReceipt
         save!
         receipt_target.no_or_lost_receipt!
       end
-      AttachPdfJob.perform_later(self)
+      AttachPdfJob.perform_later(self, receiptable)
       true
     end
 
     # Renders the PDF and attaches it to the transaction as its receipt.
-    def attach_pdf!
+    def attach_pdf!(receiptable = self.receiptable)
       return if receipt.present?
+
+      self.receiptable = receiptable
 
       html = ApplicationController.render(template: "lost_receipt/statements/statement", formats: [:pdf], layout: false, assigns: { statement: self })
       io = StringIO.new(CloudflareBrowserRun.pdf(html))
@@ -94,6 +89,11 @@ module LostReceipt
       receipt.save!
     ensure
       blob&.purge if blob && !receipt&.persisted?
+    end
+
+    # The transaction being described.
+    def receiptable
+      @receiptable || receipt&.receiptable
     end
 
     def total_amount_cents
@@ -114,7 +114,8 @@ module LostReceipt
     end
 
     def date_is_not_in_the_future
-      errors.add(:date, "can't be in the future") if date && date > Date.current
+      # Tomorrow, because the purchaser's time zone can be ahead of the server's.
+      errors.add(:date, "can't be in the future") if date && date > Date.tomorrow
     end
 
     def signer_name_matches_account

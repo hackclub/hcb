@@ -32,8 +32,15 @@ RSpec.describe ReceiptablesController do
       expect(CloudflareBrowserRun).to have_received(:pdf).with(a_string_including("Alex Example", "Receipt request link (not signed in)"))
       expect(receipt.user).to be_nil
       expect(hcb_code.reload).to be_no_or_lost_receipt
-      expect(flash[:success]).to eq("Lost receipt statement submitted. The PDF will appear here in a moment.")
+      expect(flash[:success]).to eq("Lost receipt statement submitted.")
       expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
+    end
+
+    it "does not file a second statement for the same transaction" do
+      2.times { post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details)) }
+
+      expect(LostReceipt::Statement.count).to eq(1)
+      expect(flash[:info]).to eq("This transaction already has a lost receipt statement.")
     end
 
     it "does not resolve the missing receipt without statement details" do

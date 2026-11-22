@@ -26,7 +26,7 @@ class ReceiptablesController < ApplicationController
     @statement.submitter = current_user
 
     if @statement.submit(receiptable: @transaction)
-      flash[:success] = "Lost receipt statement submitted. The PDF will appear here in a moment."
+      flash[:success] = "Lost receipt statement submitted."
       redirect_to safe_url(params[:return_to]) || fallback_location
     else
       render_page :lost_receipt, status: :unprocessable_entity
@@ -58,6 +58,8 @@ class ReceiptablesController < ApplicationController
 
     # The page may be opened for the ledger item; the statement describes its HCB code.
     @transaction = hcb_code || @receiptable
+    # Going back and submitting again would file a second statement.
+    redirect_to fallback_location, flash: { info: "This transaction already has a lost receipt statement." } if @transaction.receipts.lost_receipt_statement.exists?
   end
 
   # Signed link visitors can't view the transaction itself.

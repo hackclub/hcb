@@ -8,8 +8,8 @@ module LostReceipt
       retry_on Faraday::Error, ActiveStorage::Error, wait: :polynomially_longer, attempts: 5
       discard_on ActiveJob::DeserializationError
 
-      def perform(statement)
-        statement.attach_pdf!
+      def perform(statement, receiptable)
+        statement.attach_pdf!(receiptable)
       end
 
     end

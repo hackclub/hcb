@@ -1809,19 +1809,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
     t.datetime "confirmed_at", null: false
     t.datetime "created_at", null: false
     t.date "date", null: false
-    t.bigint "event_id"
     t.string "merchant", null: false
     t.text "purpose", null: false
     t.bigint "receipt_id"
-    t.bigint "receiptable_id", null: false
-    t.string "receiptable_type", null: false
     t.string "signer_name", null: false
     t.bigint "submitter_id"
     t.integer "total_amount_cents", null: false
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_lost_receipt_statements_on_event_id"
     t.index ["receipt_id"], name: "index_lost_receipt_statements_on_receipt_id", unique: true
-    t.index ["receiptable_type", "receiptable_id"], name: "index_lost_receipt_statements_on_receiptable"
     t.index ["submitter_id"], name: "index_lost_receipt_statements_on_submitter_id"
   end
 
@@ -3282,7 +3277,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_100000) do
   add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
   add_foreign_key "lost_receipt_items", "lost_receipt_statements", column: "statement_id"
-  add_foreign_key "lost_receipt_statements", "events"
   add_foreign_key "lost_receipt_statements", "receipts"
   add_foreign_key "lost_receipt_statements", "users", column: "submitter_id"
   add_foreign_key "mailbox_addresses", "users"

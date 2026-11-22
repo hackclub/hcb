@@ -87,8 +87,9 @@ class Receipt < ApplicationRecord
   MAX_FILE_SIZE = 50.megabytes
   validates :file, size: { less_than_or_equal_to: MAX_FILE_SIZE }, if: -> { attachment_changes["file"].present? }
   validates :file, content_type: "application/pdf", if: :lost_receipt_statement?
+  # The statement was validated when it was submitted; the name or amount it was checked against may have changed since.
   validate do
-    if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.valid?
+    if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.persisted?
       errors.add(:lost_receipt_statement, "must come from the lost receipt form")
     end
   end
@@ -125,7 +126,7 @@ class Receipt < ApplicationRecord
   after_create_commit do
     # Queue async job to extract text from newly upload receipt
     # and to suggest pairings
-    unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s)
+    unless Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(upload_method.to_s) || lost_receipt_statement?
       # certain interfaces run suggestions synchronously
       # Receipt::ExtractTextualContentJob.perform_later(self)
       # see https://github.com/hackclub/hcb/issues/7123

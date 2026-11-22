@@ -20,7 +20,7 @@ RSpec.describe LostReceipt::Statement do
                                                   }))
 
     expect { expect(statement.submit(receiptable: hcb_code)).to eq(true) }
-      .to have_enqueued_job(described_class::AttachPdfJob).with(statement)
+      .to have_enqueued_job(described_class::AttachPdfJob).with(statement, hcb_code)
     # Marked right away; the PDF follows in the background.
     expect(hcb_code.reload).to be_no_or_lost_receipt
     expect(statement.receipt).to be_nil
@@ -36,7 +36,7 @@ RSpec.describe LostReceipt::Statement do
 
     saved = statement.receipt.lost_receipt_statement.reload
     expect(saved).to have_attributes(merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example",
-                                     date: Date.current, total_amount_cents: 879, event: hcb_code.event, submitter: nil)
+                                     date: Date.current, total_amount_cents: 879, receiptable: hcb_code.ledger_item, submitter: nil)
     expect(saved.items.map(&:description)).to eq(["Notebooks", "Pens"])
     expect(saved.items.first).to have_attributes(description: "Notebooks", quantity: 3, unit_amount_cents: 127)
     expect(saved.items.map(&:total_amount_cents)).to eq([381, 498])
@@ -47,12 +47,15 @@ RSpec.describe LostReceipt::Statement do
   end
 
   it "requires complete, confirmed details and valid quantities and amounts" do
-    [details.merge(confirmed: false), details.except(:confirmed), details.merge(date: Date.tomorrow),
-     details.merge(purpose: ""), details.merge(signer_name: ""), details.merge(items_attributes: []),
+    [details.merge(confirmed: false), details.except(:confirmed), details.merge(date: Date.tomorrow + 1),
+     details.merge(purpose: ""), details.merge(purpose: "a" * 2001), details.merge(signer_name: ""), details.merge(items_attributes: []),
      details.merge(items_attributes: [{ description: "Pens", quantity: "1.5", unit_amount_cents: 100 }]),
      details.merge(items_attributes: [{ description: "Pens", quantity: 0, unit_amount_cents: 100 }]),
      details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount_cents: -1 }]),
-     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: "NaN" }])].each do |invalid_details|
+     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: "NaN" }]),
+     # Absurdly large numbers are dropped rather than parsed.
+     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: "1e999999" }]),
+     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount_cents: 10**80_000 }])].each do |invalid_details|
       statement = described_class.new(invalid_details)
       expect(statement.submit(receiptable: hcb_code)).to eq(false)
       expect(statement.errors).to be_present
@@ -66,6 +69,16 @@ RSpec.describe LostReceipt::Statement do
     expect(statement.submit(receiptable: hcb_code)).to eq(false)
     expect(statement.errors[:base]).to include("The items add up to $8.78, but the transaction was $8.79")
     expect(hcb_code.receipts).to be_empty
+  end
+
+  it "still attaches the PDF if the signer's account name changes after submitting" do
+    user = create(:user, full_name: "Alex Example")
+    statement = described_class.new(details.merge(submitter: user))
+    expect(statement.submit(receiptable: hcb_code)).to eq(true)
+
+    user.update!(full_name: "Alex Renamed")
+    statement.attach_pdf!
+    expect(statement.receipt).to be_persisted
   end
 
   it "leaves the statement without a receipt if PDF generation fails, so the job can retry" do
