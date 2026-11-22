@@ -3,7 +3,8 @@
 class CanonicalPendingTransaction
   class SendTwilioReceiptMessageJob < ApplicationJob
     queue_as :critical
-    include HcbCodeHelper # for attach_receipt_url
+
+    include HcbCodeHelper
 
     def perform(cpt_id:, user_id:)
       @cpt = CanonicalPendingTransaction.find(cpt_id)
@@ -15,7 +16,7 @@ class CanonicalPendingTransaction
       ledger_item = @cpt.ledger_item
       message = "Your card was charged $#{@cpt.amount.abs} at '#{@cpt.memo}'."
       if ledger_item.receipt_required?
-        message += " To attach a receipt, text us an image within ten minutes, or upload one to #{attach_receipt_url @cpt.local_hcb_code}."
+        message += " To attach a receipt, text us an image within ten minutes, or upload one to #{short_attach_receipt_url @cpt.local_hcb_code}."
       end
 
       TwilioMessageService::Send.new(@user, message, ledger_item:).run!

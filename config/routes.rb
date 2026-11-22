@@ -576,6 +576,8 @@ Rails.application.routes.draw do
     end
   end
 
+  get "r/:id/:token", to: "hcb_codes#receipt_link", as: :short_receipt_link, constraints: { token: /[^\/]+/ }
+
   resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"

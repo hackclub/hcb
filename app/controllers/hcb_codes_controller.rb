@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:attach_receipt, :receipt_status, :show]
-  skip_after_action :verify_authorized, only: [:receipt_status]
+  skip_before_action :signed_in_user, only: [:attach_receipt, :receipt_status, :receipt_link, :show]
+  skip_after_action :verify_authorized, only: [:receipt_status, :receipt_link]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -125,6 +125,22 @@ class HcbCodesController < ApplicationController
 
   rescue Pundit::NotAuthorizedError
     raise unless HcbCode.find_signed(@secret, purpose: :receipt_upload) == @hcb_code
+  end
+
+  def receipt_link
+    hcb_code = HcbCode.find(params[:id])
+    expiry = HcbCodeHelper.receipt_link_expires_at(hcb_code, params[:token])
+
+    raise ActionController::RoutingError.new("Not Found") if expiry.nil?
+
+    signed_id_ttl = [expiry - Time.current, 2.weeks].min.clamp(1.second, 2.weeks)
+
+    redirect_to attach_receipt_hcb_code_path(
+      id: hcb_code.hashid,
+      s: hcb_code.signed_id(expires_in: signed_id_ttl, purpose: :receipt_upload)
+    )
+  rescue ActiveRecord::RecordNotFound
+    raise ActionController::RoutingError.new("Not Found")
   end
 
   def send_receipt_sms
