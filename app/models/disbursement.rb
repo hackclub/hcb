@@ -129,7 +129,7 @@ class Disbursement < ApplicationRecord
 
   # What the transfer is for. Decides how each side is categorized. Nil only
   # on transfers made before types existed.
-  enum :transfer_type, { transfer: "transfer", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
+  enum :transfer_type, { transfer: "transfer", repayment: "repayment", payment: "payment" }, prefix: true, validate: { allow_nil: true }
   validates :transfer_type, presence: true, on: :create
 
   validates_presence_of :source_event_id,

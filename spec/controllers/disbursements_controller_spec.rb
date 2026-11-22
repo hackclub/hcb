@@ -180,6 +180,42 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  # Organizers pick a payment's category, but plain transfers stay categorized for them (#15894).
+  describe "#create with a category from an organizer" do
+    let(:sender) { create(:user) }
+    let(:source_event) { create(:event, :with_positive_balance, organizers: [sender]) }
+    let(:destination_event) { create(:event, organizers: [sender]) }
+
+    before { create_session(sender, verified: true) }
+
+    def send_transfer(**options)
+      post(:create, params: { disbursement: { name: "Boba Drops", source_event_id: source_event.public_id, event_id: destination_event.public_id, amount: "10", **options } })
+    end
+
+    it "categorizes both sides of a payment" do
+      send_transfer(transfer_type: "payment", payment_category_slug: "food-fun")
+
+      disbursement = Disbursement.last
+      expect(disbursement).to be_transfer_type_payment
+      expect(disbursement.source_transaction_category.slug).to eq("food-fun")
+      expect(disbursement.destination_transaction_category.slug).to eq("food-fun")
+
+      # Manual, so an automatic categorization can't overwrite the organizer's choice; settling copies it to the settled transactions.
+      [disbursement.raw_pending_outgoing_disbursement_transaction, disbursement.raw_pending_incoming_disbursement_transaction].each do |raw|
+        expect(raw.canonical_pending_transaction.category_mapping).to have_attributes(category: have_attributes(slug: "food-fun"), assignment_strategy: "manual")
+      end
+    end
+
+    # A payment's category must not leak onto a plain transfer, which is always an internal transfer (#15894).
+    it "ignores a payment category on a plain transfer" do
+      send_transfer(transfer_type: "transfer", payment_category_slug: "food-fun")
+
+      disbursement = Disbursement.last
+      expect(disbursement.source_transaction_category.slug).to eq("internal-transfer")
+      expect(disbursement.destination_transaction_category.slug).to eq("internal-transfer")
+    end
+  end
+
   describe "#set_transaction_categories" do
     it "allows categories to be set by admins" do
       admin = create(:user, :make_admin)

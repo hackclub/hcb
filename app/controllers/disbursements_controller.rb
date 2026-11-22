@@ -235,6 +235,7 @@ class DisbursementsController < ApplicationController
           fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
           source_transaction_category_slug:,
           destination_transaction_category_slug:,
+          payment_category_slug: disbursement_params[:payment_category_slug].presence,
           category_assignment_strategy:,
           transfer_type:,
           repaid_ledger_item_ids: items.map(&:id)
@@ -402,6 +403,7 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
+      :payment_category_slug, # only used by payments
       { repaid_ledger_item_ids: [] },
       { file: [] }
     ]

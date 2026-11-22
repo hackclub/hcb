@@ -52,7 +52,7 @@ export const generateEventActions = data => {
     ...data.map(event => ({
       id: `${event.slug}-transactions`,
       name: 'Transactions',
-      perform: navigate(`/${event.slug}/transactions`),
+      perform: navigate(`/${event.slug}/ledger`),
       icon: <Icon glyph="bank-account" size={16} />,
       parent: event.slug,
       keywords: 'ledger payments',
