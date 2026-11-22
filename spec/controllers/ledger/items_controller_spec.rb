@@ -115,6 +115,18 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(item.memo)
       end
 
+      it "lists the item's receipts for an auditor" do
+        create_session(create(:user, :make_auditor), verified: true)
+        receipt = Receipt.new(receiptable: item, user: create(:user), upload_method: :api)
+        receipt.file.attach(io: File.open(file_fixture("receipt.png")), filename: "receipt.png", content_type: "image/png")
+        receipt.save!
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.parsed_body.at_css("#receipt_#{receipt.id}")).to be_present
+      end
+
       it "responds with not found for a non-auditor" do
         create_session(create(:user), verified: true)
 
