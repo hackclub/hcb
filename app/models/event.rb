@@ -1043,8 +1043,8 @@ class Event < ApplicationRecord
   # Each merchant the org's cards were charged by, with how many settled and
   # pending charges it has, most used first.
   def merchants
-    settled = merchant_counts(canonical_transactions.stripe_transaction, "raw_stripe_transactions")
-    pending = merchant_counts(canonical_pending_transactions.joins(:raw_pending_stripe_transaction), "raw_pending_stripe_transactions")
+    settled = merchant_counts(canonical_transactions.stripe_transaction)
+    pending = merchant_counts(canonical_pending_transactions.joins(:raw_pending_stripe_transaction))
 
     (settled + pending).group_by(&:first).map { |network_id, rows|
       name = YellowPages::Merchant.lookup(network_id:).name || rows.first.second.titleize
@@ -1159,9 +1159,9 @@ class Event < ApplicationRecord
     update!(plan.default_values)
   end
 
-  def merchant_counts(relation, table)
-    network_id = Arel.sql("#{table}.stripe_transaction->'merchant_data'->>'network_id'")
-    relation.group(network_id).pluck(network_id, Arel.sql("MIN(#{table}.stripe_transaction->'merchant_data'->>'name')"), Arel.sql("COUNT(*)"))
+  def merchant_counts(relation)
+    network_id = Arel.sql("stripe_transaction->'merchant_data'->>'network_id'")
+    relation.group(network_id).pluck(network_id, Arel.sql("MIN(stripe_transaction->'merchant_data'->>'name')"), Arel.sql("COUNT(*)"))
   end
 
   def parent_id_is_acyclical
