@@ -142,12 +142,9 @@ module ReceiptService
       @receipt.user
     end
 
-    # The user's card charges missing a receipt. They still come as HCB codes
-    # (see User#transactions_missing_receipt); a code without a ledger item
-    # (none in practice: card charges always have a pending transaction, so
-    # always a ledger item) can't be paired.
+    # The user's card charges missing a receipt: the Receipt Bin's pile.
     def potential_ledger_items
-      user.transactions_missing_receipt.includes(:ledger_item).filter_map(&:ledger_item)
+      user.card_charges_missing_receipt
     end
 
   end

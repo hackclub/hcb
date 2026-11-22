@@ -8,11 +8,11 @@ class ReceiptableMailerPreview < ActionMailer::Preview
   def receipt_report
     user = User.first
     user_id = user.id
-    # Normally this would be just requiring receipt, but this shows all
-    hcb_ids = user.stripe_cards.map{ |c| c.local_hcb_codes }.flatten
+    # Normally this would be just the charges missing a receipt, but this shows all
+    ledger_item_ids = Ledger::Item.card_charges_for_cardholder(user_id).pluck(:id)
     ReceiptableMailer.with(
       user_id:,
-      hcb_ids:
+      ledger_item_ids:
     ).receipt_report
   end
 

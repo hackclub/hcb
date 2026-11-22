@@ -330,11 +330,11 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
-    # TODO: add change here in receipt bin PR
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
-                                       .order(created_at: :desc)
-                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(safe_per(10))
+    # What the ledger row renders (see ledger/_item and MyController#inbox)
+    @items = @user.card_charges_missing_receipt
+                  .order(datetime: :desc)
+                  .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+                  .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_reimbursement_reports
