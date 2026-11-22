@@ -157,6 +157,16 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(ledger_item_toggle_tag_path(item))
       end
 
+      it "offers tag deletion to a member who may delete the tag" do
+        create(:organizer_position, event:, user: (member = create(:user, :make_auditor)), role: :member)
+        create_session(member, verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(action="#{event_tag_path(event, tag)}"))
+      end
+
       it "renders the row on a linked object with no details list of its own" do
         hcb_event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
         allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
