@@ -82,6 +82,41 @@ RSpec.describe Api::V4::DisbursementsController do
       end
     end
 
+    context "sending a payment" do
+      def pay(**params)
+        post(:create, params: { event_id: source_event.public_id, to_organization_id: destination_event.public_id, name: "Paying for pizza", amount_cents: 100_00, transfer_type: "payment", **params }, as: :json)
+      end
+
+      it "categorizes both sides with the chosen category" do
+        pay(payment_category_slug: "food-fun")
+
+        expect(response).to have_http_status(:created)
+        expect(response.parsed_body["transfer_type"]).to eq("payment")
+
+        disbursement = Disbursement.last
+        expect(disbursement).to be_transfer_type_payment
+        expect(disbursement.source_transaction_category.slug).to eq("food-fun")
+        expect(disbursement.destination_transaction_category.slug).to eq("food-fun")
+      end
+
+      it "requires a category organizers can pick" do
+        [nil, "internal-transfer", "repayment"].each do |slug|
+          pay(payment_category_slug: slug)
+
+          expect(response).to have_http_status(:bad_request)
+          expect(response.parsed_body["messages"]).to eq(["Choose a category for this payment."])
+        end
+        expect(Disbursement.count).to eq(0)
+      end
+    end
+
+    it "ignores a payment category on a plain transfer" do
+      post(:create, params: { event_id: source_event.public_id, to_organization_id: destination_event.public_id, name: "Test", amount_cents: 100_00, payment_category_slug: "food-fun" }, as: :json)
+
+      expect(response).to have_http_status(:created)
+      expect(Disbursement.last.source_transaction_category.slug).to eq("internal-transfer")
+    end
+
     it "only fronts transfers into organizations the user manages" do
       user = create(:user)
       source_event = create(:event, :with_positive_balance, organizers: [user], plan_type: Event::Plan::HackClubAffiliate)

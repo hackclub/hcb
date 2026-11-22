@@ -34,7 +34,9 @@ module Api
           fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
           transfer_type:,
           repaid_ledger_item_ids: Array(repaid_ledger_item&.id),
-          # Repayments categorize both sides deliberately, so they're manual.
+          # Only used by payments; the service checks it against the categories organizers can pick.
+          payment_category_slug: params[:payment_category_slug].presence,
+          # Repayments and payments categorize both sides deliberately, so they're manual.
           category_assignment_strategy: transfer_type == "transfer" ? "automatic" : "manual"
         ).run
 
