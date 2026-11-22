@@ -119,6 +119,21 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
+  describe "#preview" do
+    it "renders a CSV receipt's preview once per instance" do
+      receipt = described_class.new(receiptable: create(:hcb_code), upload_method: :api)
+      receipt.file.attach(io: StringIO.new("Merchant,Amount\nHack Club,12.34\n"), filename: "receipt.csv", content_type: "text/csv")
+      receipt.save!
+
+      expect(receipt.file).to receive(:previewable?).once.and_call_original
+      first = receipt.preview
+      expect(receipt.preview).to eq(first)
+
+      # CI installs libvips; locally a missing libvips just means no preview.
+      expect(first).to be_present if CsvPreview.text_supported? || ENV["CI"]
+    end
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 

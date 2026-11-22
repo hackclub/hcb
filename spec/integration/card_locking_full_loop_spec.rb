@@ -2,6 +2,9 @@
 
 require "rails_helper"
 
+RSpec::Matchers.define_negated_matcher :not_enqueue_job, :have_enqueued_job
+RSpec::Matchers.define_negated_matcher :not_enqueue_mail, :have_enqueued_mail
+
 RSpec.describe "Card locking, end to end", type: :model do
   include ActiveJob::TestHelper
   include_context "card locking charges"
@@ -9,6 +12,15 @@ RSpec.describe "Card locking, end to end", type: :model do
   before do
     Flipper.enable(:card_locking)
     # The stage flag (enforcement start 2026-07-14) comes from the shared context.
+  end
+
+  # No mail, no SMS: the mailers and the SMS are all jobs. Checked per job
+  # rather than as "no job at all": creating the charge's event mapping
+  # broadcasts a Turbo refresh of the ledger, and Turbo debounces that
+  # broadcast on a background thread, so its job can be enqueued at any point
+  # in the next half second, including during the sweep.
+  def expect_no_notification(&)
+    expect(&).to not_enqueue_mail(CardLockingMailer).and(not_enqueue_job(User::SendSmsJob))
   end
 
   it "settles, sweeps a deadline, does not lock before it, locks after it via the cron, then unlocks on upload" do
@@ -57,8 +69,7 @@ RSpec.describe "Card locking, end to end", type: :model do
         user.update!(cards_locked: true)
         expect(charge.receipt_due_at).to be_nil
 
-        # No mail, no SMS, nothing: the mailers and the SMS are all jobs.
-        expect { User::UpdateCardLocking::RecurringJob.perform_now }.not_to have_enqueued_job
+        expect_no_notification { User::UpdateCardLocking::RecurringJob.perform_now }
 
         expect(user.reload.cards_locked?).to be(true)
         expect(charge.reload.receipt_due_at).to be_within(1.second).of(10.days.ago + 7.days)
@@ -69,7 +80,7 @@ RSpec.describe "Card locking, end to end", type: :model do
       travel_to Time.zone.parse("2026-10-10 09:00:00") do
         charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
 
-        expect { User::UpdateCardLocking::RecurringJob.perform_now }.not_to have_enqueued_job
+        expect_no_notification { User::UpdateCardLocking::RecurringJob.perform_now }
 
         expect(user.reload.cards_locked?).to be(false)
         expect(charge.reload.receipt_due_at).to be_within(1.second).of(72.hours.from_now)

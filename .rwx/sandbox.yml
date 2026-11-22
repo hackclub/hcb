@@ -2,6 +2,10 @@ on:
   cli:
     init:
       commit-sha: ${{ event.git.sha }}
+      # From an hcb-private checkout, pass:
+      #   --init repository=https://github.com/hackclub/hcb-private.git --init visibility=private
+      repository: https://github.com/hackclub/hcb.git
+      visibility: public
 
 base:
   image: ubuntu:26.04
@@ -9,9 +13,9 @@ base:
 
 tasks:
   - key: code
-    call: git/clone 2.4.1
+    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
     with:
-      repository: https://github.com/hackclub/hcb.git
+      repository: ${{ init.repository }}
       ref: ${{ init.commit-sha }}
       preserve-git-dir: true
 
@@ -20,7 +24,7 @@ tasks:
     call: ${{ run.dir }}/packages/setup.yml
 
   - key: sandbox
-    use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome, setup.imagemagick]
+    use: [setup.docker-images, setup.bundle-install, setup.yarn-install, setup.chrome, setup.image-libraries]
     docker: true
     background-processes:
       - key: postgres

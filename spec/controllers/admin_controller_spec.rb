@@ -145,14 +145,16 @@ RSpec.describe AdminController do
     it "renders for a non-admin auditor" do
       stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
         .to_return_json(status: 200, body: { country_code: "DE" })
-      wire = create(:wire, :pending, event: create(:event, :with_positive_balance))
+      # A fixed name: the factory's Faker name can carry an apostrophe, which
+      # the page HTML-escapes, so matching the raw name on the body is flaky.
+      wire = create(:wire, :pending, recipient_name: "Orpheus", event: create(:event, :with_positive_balance))
 
       create_session(create(:user, :make_auditor), verified: true)
 
       get :wire_process, params: { id: wire.id }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(wire.recipient_name)
+      expect(response.body).to include("Orpheus")
     end
   end
 

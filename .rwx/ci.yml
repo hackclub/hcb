@@ -3,11 +3,17 @@ on:
     init:
       commit-sha: ${{ event.git.sha }}
       pull-request: true
+      # From an hcb-private checkout, pass:
+      #   --init repository=https://github.com/hackclub/hcb-private.git --init visibility=private
+      repository: https://github.com/hackclub/hcb.git
+      visibility: public
   github:
     pull_request:
       init:
         commit-sha: ${{ event.git.sha }}
         pull-request: true
+        repository: ${{ event.github.pull_request.repository.clone_url }}
+        visibility: ${{ event.github.pull_request.repository.visibility }}
       status-checks:
         name: CI
     push:
@@ -15,12 +21,16 @@ on:
         init:
           commit-sha: ${{ event.git.sha }}
           pull-request: false
+          repository: ${{ event.github.push.repository.clone_url }}
+          visibility: ${{ event.github.push.repository.visibility }}
         status-checks:
           name: CI
   cache-rebuild:
     init:
       commit-sha: ${{ event.git.sha }}
       pull-request: false
+      repository: https://github.com/hackclub/hcb.git
+      visibility: public
 
 base:
   image: ubuntu:26.04
@@ -68,10 +78,11 @@ aliases:
     ready-check: docker exec redis redis-cli ping
 
 tasks:
+  # Public runs have no `github` context, so the token lives only in the private package.
   - key: code
-    call: git/clone 2.4.1
+    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
     with:
-      repository: https://github.com/hackclub/hcb.git
+      repository: ${{ init.repository }}
       ref: ${{ init.commit-sha }}
 
   - key: setup
@@ -252,7 +263,7 @@ tasks:
       filesystem: false
 
   - key: rspec
-    use: [setup.docker-images, db-schema, assets, setup.chrome, setup.imagemagick, captain, abq]
+    use: [setup.docker-images, db-schema, assets, setup.chrome, setup.image-libraries, captain, abq]
     docker: true
     runner:
       cpus: 16
@@ -286,12 +297,18 @@ tasks:
         - key: coverage
           path: coverage/coverage.json
 
+  - key: main-code
+    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
+    with:
+      repository: ${{ init.repository }}
+      ref: main
+      path: main-checkout
+
   - key: new-migrations
-    use: code
-    filter: [db/migrate]
+    use: [code, main-code]
+    filter: [db/migrate, main-checkout/db/migrate]
     run: |
-      git clone --quiet --depth 1 --filter=blob:none --no-checkout https://github.com/hackclub/hcb.git /tmp/main
-      versions=$(comm -13 <(git -C /tmp/main ls-tree --name-only HEAD db/migrate/ | sort) <(ls -d db/migrate/* | sort) | sed -E 's#.*/([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
+      versions=$(comm -13 <(ls main-checkout/db/migrate | sort) <(ls db/migrate | sort) | sed -E 's#^([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
       echo "New migrations: ${versions:-none}"
       printf '%s' "${versions:-none}" > "$RWX_VALUES/versions"
     outputs:
