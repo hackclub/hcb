@@ -231,6 +231,26 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "the donor edit modal on a donation" do
+      let(:recurring_donation) do
+        RecurringDonation.create!(event:, name: "Jane Smith", email: "jane@example.com", amount: 10_00, anonymous: true,
+                                  stripe_subscription_id: "sub_test", stripe_customer_id: "cus_test", stripe_status: "active")
+      end
+      let(:donation) { create(:donation, event:, recurring_donation:, anonymous: false, aasm_state: :deposited) }
+      let(:item) { create(:ledger_item, linked_object: donation) }
+
+      it "pre-checks anonymous from the recurring donation and warns that edits apply to the whole series" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        modal = Nokogiri::HTML5(response.body).at_css("#update")
+        expect(modal.at_css("input[name='donation[anonymous]'][type='checkbox']")["checked"]).to be_present
+        expect(modal.text).to include("Updating the donor's details will update them for all past and future donations.")
+      end
+    end
+
     it "updates the counts on the item's ledger row when shown in a popover" do
       create_session(create(:user, :make_auditor), verified: true)
       target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
