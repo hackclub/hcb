@@ -7,7 +7,7 @@ RSpec.describe ReceiptableMailer, type: :mailer do
 
   describe "#receipt_report" do
     it "links each charge to its upload page that works without signing in" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago).hcb_code
 
       mail = described_class.with(user_id: user.id, hcb_ids: [hcb_code.id]).receipt_report
 

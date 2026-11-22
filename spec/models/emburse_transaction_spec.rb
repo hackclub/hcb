@@ -29,7 +29,7 @@ RSpec.describe EmburseTransaction, type: :model do
         expect(emburse_transaction.memo).to eql("Transfer from bank account")
       end
 
-      it "is a transfer from bank account" do
+      it "is a transfer" do
         expect(emburse_transaction).to be_transfer
       end
     end
@@ -41,7 +41,7 @@ RSpec.describe EmburseTransaction, type: :model do
         expect(emburse_transaction.memo).to eql("Transfer from bank account")
       end
 
-      it "is still a transfer from bank account" do
+      it "is still a transfer" do
         expect(emburse_transaction).to be_transfer
       end
     end

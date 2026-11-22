@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1644,6 +1644,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.integer "not_admin_only_comment_count", default: 0, null: false
     t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
+    t.datetime "receipt_due_at"
     t.boolean "receipt_required"
     t.datetime "settled_at"
     t.text "short_code"
@@ -1656,6 +1657,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
+    t.index ["receipt_due_at"], name: "index_ledger_items_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND receipt_required AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
   end
@@ -2003,10 +2005,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
 
   create_table "outgoing_twilio_messages", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "hcb_code_id"
+    t.bigint "ledger_item_id"
     t.bigint "twilio_message_id"
     t.datetime "updated_at", null: false
-    t.index ["hcb_code_id"], name: "index_outgoing_twilio_messages_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_outgoing_twilio_messages_on_ledger_item_id"
     t.index ["twilio_message_id"], name: "index_outgoing_twilio_messages_on_twilio_message_id"
   end
 
@@ -2684,14 +2686,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.datetime "accepted_at"
     t.datetime "created_at", null: false
     t.float "distance"
-    t.bigint "hcb_code_id", null: false
     t.datetime "ignored_at"
-    t.bigint "ledger_item_id"
+    t.bigint "ledger_item_id", null: false
     t.bigint "receipt_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["hcb_code_id"], name: "index_suggested_pairings_on_hcb_code_id"
     t.index ["ledger_item_id"], name: "index_suggested_pairings_on_ledger_item_id"
-    t.index ["receipt_id", "hcb_code_id"], name: "index_suggested_pairings_on_receipt_id_and_hcb_code_id", unique: true
     t.index ["receipt_id", "ledger_item_id"], name: "index_suggested_pairings_on_receipt_id_and_ledger_item_id", unique: true
     t.index ["receipt_id"], name: "index_suggested_pairings_on_receipt_id"
   end
@@ -3016,6 +3015,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   end
 
   create_table "versions", force: :cascade do |t|
+    t.bigint "api_token_id"
     t.datetime "created_at", precision: nil
     t.string "event", null: false
     t.bigint "impersonated_by_id"
@@ -3023,6 +3023,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
     t.string "item_type", null: false
     t.jsonb "object"
     t.jsonb "object_changes"
+    t.bigint "user_session_id"
     t.string "whodunnit"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
@@ -3273,6 +3274,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_010000) do
   add_foreign_key "organizer_positions", "contracts", column: "fiscal_sponsorship_contract_id"
   add_foreign_key "organizer_positions", "events"
   add_foreign_key "organizer_positions", "users"
+  add_foreign_key "outgoing_twilio_messages", "ledger_items", on_delete: :nullify
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"

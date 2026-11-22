@@ -121,7 +121,7 @@
 <% end %>
 
 <% if @grouping == "due_date" %>
-  <% @due_date_groups.each do |group, hcb_codes| %>
+  <% @due_date_groups.each do |group, items| %>
     <% style = receipt_due_group_style(group, now: @now) %>
     <%# Charges with no deadline are a long tail nobody is on the hook for, so
         they collapse behind a disclosure instead of padding out the page. %>
@@ -138,7 +138,7 @@
             <%# When a group spills onto other pages, say so rather than repeating
                 the same total above a partial list. %>
             <% total = @due_date_group_counts[group] %>
-            <%= badge_for hcb_codes.size == total ? pluralize(total, "transaction") : "#{hcb_codes.size} of #{total} transactions", class: style[:badge_class] %>
+            <%= badge_for items.size == total ? pluralize(total, "transaction") : "#{items.size} of #{total} transactions", class: style[:badge_class] %>
 
             <% if collapsible %>
               <span class="muted line-height-0"><%= inline_icon "down-caret", size: 24, class: "flip-when-open" %></span>
@@ -147,7 +147,7 @@
         </h2>
       <% end %>
 
-      <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true %>
+      <%= render "my/missing_receipt_transactions", items:, show_event_name: true %>
     <% end %>
   <% end %>
 <% else %>
@@ -163,7 +163,7 @@
       </h2>
 
       <%# The org is already in this section's header, so it isn't repeated per row. %>
-      <%= render "my/missing_receipt_transactions", hcb_codes: @card_hcb_codes[card.to_global_id.to_s] %>
+      <%= render "my/missing_receipt_transactions", items: @card_items[card.id] %>
     </section>
   <% end %>
 <% end %>
@@ -180,4 +180,4 @@
   }
 </style>
 
-<%= paginate @hcb_codes %>
+<%= paginate @items %>
