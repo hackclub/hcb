@@ -1,10 +1,11 @@
-<% item_user = item.is_a?(OrganizerPosition::Spending::Control::Allowance) ? item.authorized_by : item.stripe_cardholder.user %> <!-- Item is either an allowance or an HCB code. -->
+<% transaction = item.is_a?(Ledger::Item) %>
+<% item_user = transaction ? item.author : item.authorized_by %>
 
-<tr class="<%= item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative" %>">
+<tr class="<%= !transaction && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative" %>">
   <td><%= format_date(spending_item_created_date(item)) %></td>
   <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis;">
-    <% if item.is_a?(HcbCode) %>
-      <%= link_to url_for(item), data: hcb_code_popover_data(item, event: @event, transaction_show_receipt_button: false, transaction_show_author_img: false) do %>
+    <% if transaction %>
+      <%= link_to ledger_item_path(item), data: ledger_item_popover_data(item) do %>
         <%= item.memo %>
       <% end %>
     <% else %>
@@ -13,8 +14,10 @@
   </td>
 
   <td class="flex items-center g1">
-    <%= avatar_for item_user %>
-    <%= item_user.name %>
+    <% if item_user %>
+      <%= avatar_for item_user %>
+      <%= item_user.name %>
+    <% end %>
   </td>
   <td><%= render_money item.amount_cents %></td>
 </tr>
