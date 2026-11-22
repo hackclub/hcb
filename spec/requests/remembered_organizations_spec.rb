@@ -23,12 +23,13 @@ RSpec.describe "remembered organizations", type: :request do
     it "lists transparent organizations and their sub-organizations, excluding private ones" do
       parent = create(:event, organizers: [user], is_public: true)
       child = create(:event, parent:, is_public: true)
+      grandchild = create(:event, parent: child, is_public: true)
       private_event = create(:event, organizers: [user], is_public: false)
 
       get event_path(parent)
 
       ids = JSON.parse(data_value("event-ids"))
-      expect(ids).to contain_exactly(parent.public_id, child.public_id)
+      expect(ids).to contain_exactly(parent.public_id, child.public_id, grandchild.public_id)
       expect(ids).not_to include(private_event.public_id)
     end
 
