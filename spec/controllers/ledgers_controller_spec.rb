@@ -82,6 +82,40 @@ RSpec.describe LedgersController, type: :controller do
         end
       end
     end
+
+    describe "add-tag menu" do
+      render_views
+
+      let(:item) { create(:ledger_item) }
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+      let(:delete_button) { %(action="#{event_tag_path(event, tag)}") }
+
+      before do
+        create(:ledger_mapping, :on_primary, ledger:, ledger_item: item)
+        item.update_columns(ct_count: 1)
+        tag
+      end
+
+      it "lists the event's tags to toggle, each with a delete button for an admin" do
+        get :show, params: { id: ledger.to_param }
+
+        expect(response).to be_successful
+        expect(response.body).to include("+ Add tag")
+        expect(response.body).to include(ledger_item_toggle_tag_path(item))
+        expect(response.body).to include(delete_button)
+      end
+
+      it "offers the delete button to a member who may delete the tag" do
+        create(:organizer_position, event:, user: (member_user = create(:user)), role: :member)
+        create_session(member_user, verified: true)
+
+        get :show, params: { id: ledger.to_param }
+
+        expect(response).to be_successful
+        expect(response.body).to include("+ Add tag")
+        expect(response.body).to include(delete_button)
+      end
+    end
   end
 
 end

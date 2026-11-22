@@ -110,6 +110,7 @@
       <% end %>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 
   <% if increase_check.may_mark_rejected? || increase_check.column_id.present? || auditor_signed_in? %>
