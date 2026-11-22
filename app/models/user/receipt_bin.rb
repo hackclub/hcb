@@ -18,7 +18,8 @@ class User
         # Only get the closest pairing for each receipt
         .order(:receipt_id, distance: :asc)
         .select("DISTINCT ON (receipt_id) suggested_pairings.*")
-        .select { |pairing| pairing.hcb_code.missing_receipt? }
+        .preload(:ledger_item)
+        .select { |pairing| pairing.ledger_item.missing_receipt? }
     end
 
   end

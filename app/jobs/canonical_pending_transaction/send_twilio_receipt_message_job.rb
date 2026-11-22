@@ -12,13 +12,13 @@ class CanonicalPendingTransaction
 
       return unless @user.phone_number.present? && @user.phone_number_verified?
 
-      hcb_code = @cpt.local_hcb_code
+      ledger_item = @cpt.ledger_item
       message = "Your card was charged $#{@cpt.amount.abs} at '#{@cpt.memo}'."
-      if hcb_code.receipt_required?
-        message += " To attach a receipt, text us an image within ten minutes, or upload one to #{attach_receipt_url hcb_code}."
+      if ledger_item.receipt_required?
+        message += " To attach a receipt, text us an image within ten minutes, or upload one to #{attach_receipt_url @cpt.local_hcb_code}."
       end
 
-      TwilioMessageService::Send.new(@user, message, hcb_code:, ledger_item: @cpt.ledger_item).run!
+      TwilioMessageService::Send.new(@user, message, ledger_item:).run!
     end
 
   end

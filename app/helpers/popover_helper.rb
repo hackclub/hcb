@@ -68,6 +68,12 @@ module PopoverHelper
   end
 
   def stripe_card_popover_data(stripe_card)
+    # StripeCardsController#show sends everyone but auditors to the card grant
+    # page for a grant card, and that page has no turbo frame to fill the
+    # popover with (Turbo shows "Content missing"), so those links open the
+    # grant as a full page instead.
+    return { turbo_frame: "_top" } if stripe_card.card_grant.present? && !auditor_signed_in?
+
     popover_data(
       title: stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card",
       src: stripe_card.popover_path,

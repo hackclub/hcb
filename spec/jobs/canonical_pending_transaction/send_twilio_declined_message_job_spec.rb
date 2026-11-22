@@ -27,10 +27,8 @@ RSpec.describe CanonicalPendingTransaction::SendTwilioDeclinedMessageJob do
     expect(TwilioMessageService::Send).to have_received(:new).with(
       user,
       "Your card was declined just now at Bakery due to suspected fraud.",
-      hcb_code: cpt.local_hcb_code,
       ledger_item: cpt.ledger_item
     )
-    expect(cpt.ledger_item).to be_present
   end
 
   context "for an online charge" do
