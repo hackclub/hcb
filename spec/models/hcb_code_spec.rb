@@ -3,6 +3,13 @@
 require "rails_helper"
 
 RSpec.describe HcbCode, type: :model do
+  def query_count(&block)
+    count = 0
+    callback = ->(*, payload) { count += 1 unless payload[:name] == "SCHEMA" || payload[:cached] }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
+    count
+  end
+
   describe "disbursement integration" do
     describe "#outgoing_disbursement?" do
       it "returns true for HCB-500-* codes" do
@@ -172,9 +179,17 @@ RSpec.describe HcbCode, type: :model do
 
         it "returns both source and destination events" do
           hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
-          hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.events).to contain_exactly(source_event, destination_event)
+        end
+
+        # The ledger calls this once per row, so a miss here is an N+1 across the
+        # whole page.
+        it "does not re-run the mapping lookup on repeat calls" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
+
+          expect(query_count { hcb_code.events.to_a }).to be_positive
+          expect(query_count { hcb_code.events.to_a }).to eq(0)
         end
       end
 
@@ -215,7 +230,6 @@ RSpec.describe HcbCode, type: :model do
 
         it "returns the first event" do
           hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
-          hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.event).to eq(source_event)
         end
