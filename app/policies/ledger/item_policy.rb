@@ -29,6 +29,13 @@ class Ledger
       admin_or_member?
     end
 
+    # Members link money in on their own ledger. A manager of another
+    # organization can link a transfer it sent, from here or from their own
+    # side. Repayment.match_candidates decides which transactions each sees.
+    def mark_repayment?
+      admin_or_member? || (user.present? && user.manageable_events.exists? && DisbursementPolicy.new(user, Disbursement.new(destination_event: record.primary_ledger&.event)).repay?)
+    end
+
     def toggle_tag?(tag = nil)
       # A ledger item belongs to a single primary ledger (owned by an event or a
       # card grant), so a tag can only be applied within that one event.

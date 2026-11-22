@@ -307,6 +307,12 @@ module EventsHelper
     }
   ].freeze
 
+  # Dots in place of an account detail: either it's hidden until someone clicks
+  # the eye, or it hasn't been generated yet and `length` is how long it will be.
+  def masked_account_detail(value, length)
+    "•" * (value.present? ? value.length : length)
+  end
+
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
       item.dup.tap do |h|

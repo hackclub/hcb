@@ -303,10 +303,6 @@ class Event
       0
     end
 
-    def political?
-      political_description.present? && political_description.strip.length.positive?
-    end
-
     def contract_notify_when_sent
       false
     end

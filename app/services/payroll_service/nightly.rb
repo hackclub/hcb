@@ -35,7 +35,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: check.local_hcb_code
+              receiptable: check.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
             ).run!
 
             check.send_check! if payment.previously_paid?
@@ -64,7 +64,7 @@ module PayrollService
               uploader: payment.employee.user,
               attachments: [payment.invoice.file.blob],
               upload_method: :employee_payment,
-              receiptable: ach_transfer.local_hcb_code
+              receiptable: ach_transfer.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
             ).run!
 
             if payment.previously_paid?

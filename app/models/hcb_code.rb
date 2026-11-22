@@ -55,8 +55,6 @@ class HcbCode < ApplicationRecord
 
   has_many :hcb_code_tags
 
-  has_many :suggested_pairings
-
   has_one :pin, required: false
 
   belongs_to :event, optional: true
@@ -67,9 +65,11 @@ class HcbCode < ApplicationRecord
   # `belongs_to :ledger_item` since a `through:` needs its association defined
   # first. Nested through, so read-only — write via `ledger_item.tags`.
   has_many :tags, through: :ledger_item, source: :tags, class_name: "::Tag"
-
-  # Card-locking scopes, columns, and the materializer. See the concern.
-  include CardLocking::ChargeBehavior
+  # Receipts live on the ledger item as well
+  # (https://github.com/hackclub/hcb/issues/14106); this reads through to them,
+  # replacing the `has_many` Receiptable declared. A code with no ledger item
+  # has none. Read-only like `tags` — attach via the ledger item.
+  has_many :receipts, through: :ledger_item, source: :receipts
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
@@ -687,6 +687,13 @@ class HcbCode < ApplicationRecord
     return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
+  end
+
+  # A code's receipts live on its ledger item (see `has_many :receipts`), so a
+  # code has a receipt when its item does. Keyed on the code's own columns so
+  # the receipt scopes and the raw transaction queries can use it without a join.
+  def self.receipts_exist_sql
+    "EXISTS (#{Receipt.select("1").where("receipts.receiptable_type = 'Ledger::Item' AND receipts.receiptable_id = hcb_codes.ledger_item_id").to_sql})"
   end
 
   def local_hcb_code

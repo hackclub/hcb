@@ -102,8 +102,7 @@ class AdminController < Admin::BaseController
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
       tags: params[:tags],
-      risk_level: params[:risk_level],
-      demo_mode: params[:demo_mode].to_i == 1
+      risk_level: params[:risk_level]
     ).run
 
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
@@ -128,8 +127,7 @@ class AdminController < Admin::BaseController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags:,
-      demo_mode: true
+      tags:
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
@@ -425,6 +423,15 @@ class AdminController < Admin::BaseController
 
     @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
+  end
+
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
   end
 
   def event_search
@@ -1504,11 +1511,11 @@ class AdminController < Admin::BaseController
           end
         end
 
-        stream_data("text/csv", "#{filename}.csv", csv)
+        stream_file(csv, filename: "#{filename}.csv", type: "text/csv")
       end
 
       format.json do
-        stream_data("application/json", "#{filename}.json", @data.to_json, false)
+        stream_file(@data.to_json, filename: "#{filename}.json", type: "application/json", disposition: "inline")
       end
 
     end
@@ -1678,16 +1685,6 @@ class AdminController < Admin::BaseController
     Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
       block.call
     end
-  end
-
-  def stream_data(content_type, filename, data, download = true)
-    headers["Content-Type"] = content_type
-    headers["Content-disposition"] = "#{download ? 'attachment; ' : ''}filename=#{filename}"
-    headers["X-Accel-Buffering"] = "no"
-    headers.delete("Content-Length")
-
-    response.status = 200
-    self.response_body = data
   end
 
   def filtered_events(events: Event.all)

@@ -1,4 +1,4 @@
-We're writing to let you know your <%= link_to "recent Wise transfer to #{@wise_transfer.recipient_name}", hcb_code_url(@wise_transfer.local_hcb_code) %> was rejected and failed to send. Here's the explanation given by our operations team:
+We're writing to let you know your <%= link_to "recent Wise transfer to #{@wise_transfer.recipient_name}", ledger_item_url(@wise_transfer.ledger_item) %> was rejected and failed to send. Here's the explanation given by our operations team:
 
 <pre><%= @reason %></pre>
 

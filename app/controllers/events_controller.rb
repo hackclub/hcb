@@ -120,7 +120,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).preloaded_for_feed.first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -330,7 +330,7 @@ class EventsController < ApplicationController
     @settings_tab = params[:tab]
     @frame = params[:frame]
     @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
@@ -482,11 +482,12 @@ class EventsController < ApplicationController
     # Derived from cards rather than @event.users so removed members' cards stay filterable
     cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
     sorted_cardholders = cardholders.sort_by(&:name)
-    @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
+    # Public ids, since slugs are built from the name a user signed up with
+    @user = cardholders.find_by_public_id(params[:user]) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
-      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.slug] } },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.public_id] } },
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
 
@@ -639,19 +640,22 @@ class EventsController < ApplicationController
   end
 
   # The account number page doesn't send the account number until someone clicks
-  # "Show". That loads this action into the clicked turbo frame.
+  # the eye beside it, the same way a card's number and CVC are shown. The eye
+  # asks for a turbo stream, and the stream fills in both places the number is
+  # shown (inline on the page and in the account numbers modal), so they agree on
+  # whether it's showing. Clicking the eye again hides it the same way.
   def reveal_account_number
     authorize @event, :account_number?
 
-    unless turbo_frame_request? && @event.column_account_number.present?
+    unless request.format.turbo_stream? && @event.column_account_number.present?
       return redirect_to account_number_event_path(@event)
     end
 
-    render partial: "events/account_number_reveal", locals: {
-      frame_id: turbo_frame_request_id,
-      revealed: true,
-      tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
-    }
+    revealed = params[:show_details] == "true"
+    render turbo_stream: [
+      turbo_stream.replace("account_number_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_reveal", revealed:, tooltip_direction: :n }),
+      turbo_stream.replace("account_number_modal_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_modal_reveal", revealed:, tooltip_direction: :s })
+    ]
   end
 
   def g_suite_overview
@@ -1374,17 +1378,19 @@ class EventsController < ApplicationController
 
     @merchant = params[:merchant]
 
-    merchants_hash = {}
+    @merchants = Rails.cache.fetch("merchants_filter_#{@event.id}", expires_in: 5.minutes) do
+      merchants_hash = {}
 
-    @event.merchants.each do |merchant|
-      if merchants_hash.key?(merchant[:id])
-        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
-      else
-        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      @event.merchants.each do |merchant|
+        if merchants_hash.key?(merchant[:id])
+          merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+        else
+          merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+        end
       end
-    end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+      merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    end
   end
 
   def request_call
@@ -1512,7 +1518,6 @@ class EventsController < ApplicationController
       :start,
       :end,
       :address,
-      :demo_mode,
       :emburse_department_id,
       :country,
       :postal_code,

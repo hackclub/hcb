@@ -1,3 +1,1 @@
-This directory is served by GitHub Pages.
-
-Heroku is configured to serve these as their error/maintenance mode page.
+This directory is served by GitHub Pages. It holds HCB's error and maintenance-mode pages.

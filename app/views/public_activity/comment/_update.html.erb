@@ -4,7 +4,7 @@
 
 <% if activity.trackable.present? && activity.trackable.commentable.present? %>
   <% if Pundit.policy(current_user, activity.trackable).show? %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: polymorphic_url(activity.trackable.commentable, anchor: "comment-#{activity.trackable.hashid}") } do %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: polymorphic_path(activity.trackable.commentable, anchor: "comment-#{activity.trackable.hashid}") } do %>
       edited a comment on <%= link_to activity.trackable.commentable.try(:name) || activity.trackable.commentable.try(:memo) || "an item", activity.trackable.commentable %>
     <% end %>
   <% end %>

@@ -105,7 +105,7 @@
   <ul class="grid grid--wide mt0 mb-12 pb-2">
     <% current_user.onboarding_contractor_positions.each do |position| %>
       <% next_step = position.next_onboarding_step %>
-      <%= link_to onboarding_payroll_position_url(position) do %>
+      <%= link_to onboarding_payroll_position_path(position) do %>
         <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
           <span>
             <%= status_badge "warning" %>
@@ -180,7 +180,7 @@
         data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
         data-action="sortable:stop->event-sort#sort">
 
-        <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
+        <%= render partial: "events/event_card", collection: @visible_events, as: :event, locals: { active_card_counts: @active_card_counts } %>
 
         <%= link_to apply_path do %>
           <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
@@ -195,11 +195,11 @@
       </ul>
     <% end %>
 
-    <% if @events.hidden.any? %>
+    <% if @hidden_events.any? %>
       <details class="w-full text-left">
         <summary><h4 class="inline-block pb-0 mb-2 border-none muted">Hidden organizations</h4></summary>
         <ul class="grid grid--medium-narrow text-left mt-0">
-          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
+          <%= render partial: "events/event_card", collection: @hidden_events, as: :event, locals: { active_card_counts: @active_card_counts } %>
         </ul>
       </details>
     <% end %>

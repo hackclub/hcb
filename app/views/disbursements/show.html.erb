@@ -139,13 +139,15 @@
 <% if @hcb_code %>
   <h2>Receipts</h2>
   <%= render "receipts/list_v2", hcb_code: @hcb_code %>
-  <%= render partial: "receipts/form_v3", locals: {
-        receiptable: @hcb_code,
-        enable_linking: true,
-        upload_method: "transaction_page",
-        include_spacing: true,
-        turbo: false
-      } %>
+  <% if @hcb_code.ledger_item %>
+    <%= render partial: "receipts/form_v3", locals: {
+          receiptable: @hcb_code.ledger_item,
+          enable_linking: true,
+          upload_method: "transaction_page",
+          include_spacing: true,
+          turbo: false
+        } %>
+  <% end %>
 
   <h2>Comments</h2>
   <%= render "comments/list", comments: @disbursement.all_comments, viewing_commentable: @disbursement %>

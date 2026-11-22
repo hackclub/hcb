@@ -210,11 +210,20 @@ RSpec.describe EventsController do
 
     it "lists outgoing disbursements as Disbursement::Outgoing and renders the recipient org" do
       organizer = create(:user)
-      event = create(:event)
+      event = create(:event, :with_positive_balance)
       create(:organizer_position, user: organizer, event:)
 
       recipient = create(:event, name: "Receiving Organization")
-      create(:disbursement, source_event: event, event: recipient)
+      # The list links each transfer to its ledger item, which a disbursement
+      # gets from the pending transaction DisbursementService::Create imports.
+      DisbursementService::Create.new(
+        name: "Shared pizza",
+        amount: "10.00",
+        requested_by_id: organizer.id,
+        source_event_id: event.id,
+        destination_event_id: recipient.id,
+        transfer_type: "transfer"
+      ).run
 
       create_session(organizer, verified: true)
 
@@ -319,17 +328,18 @@ RSpec.describe EventsController do
           Nokogiri::HTML5(response.body).at_css("tr.transaction")
         end
 
-        it "makes ledger rows a drop target for receipts on the item's HCB code" do
+        it "makes ledger rows a drop target for receipts on the item" do
           get(:ledger, params: { event_id: event.slug })
 
+          item = hcb_code.reload.ledger_item
           row = ledger_row
           expect(row["data-controller"]).to eq("file-drop")
-          expect(row["data-file-drop-receiptable-value"]).to eq("HcbCode:#{hcb_code.id}")
+          expect(row["data-file-drop-receiptable-value"]).to eq("Ledger::Item:#{item.id}")
 
           form = row.at_css("form[data-file-drop-target='form']")
           expect(form["action"]).to eq(receipts_path)
-          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
-          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(hcb_code.id.to_s)
+          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("Ledger::Item")
+          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.id.to_s)
         end
 
         it "doesn't make ledger rows a drop target for users who can't upload receipts" do
@@ -480,6 +490,17 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    it "does not let an admin switch an organization into demo mode" do
+      admin = create(:user, :make_admin)
+      event = create(:event, name: "Existing organization")
+      create_session(admin, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { demo_mode: true, short_name: "Updated" } })
+
+      expect(response).to redirect_to(edit_event_path(event))
+      expect(event.reload).to have_attributes(demo_mode: false, short_name: "Updated")
+    end
+
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -634,11 +655,21 @@ RSpec.describe EventsController do
       Nokogiri::HTML5(body).css("article.table-container tbody tr")
     end
 
+    # A paid donation always has a pending transaction, and so a ledger item for
+    # the overview to link to: StripeController imports one in the same webhook
+    # that moves the donation out of pending. The factory skips that, so mirror it.
+    def create_deposited_donation(**attrs)
+      donation = create(:donation, event:, aasm_state: "deposited", **attrs)
+      rpdt = create(:raw_pending_donation_transaction, donation_transaction_id: donation.id.to_s, amount_cents: donation.amount, date_posted: Date.current)
+      create(:canonical_pending_transaction, raw_pending_donation_transaction: rpdt, amount_cents: donation.amount, event:)
+      donation
+    end
+
     before { stub_donation_payment_intent_creation }
 
     let(:event) { create(:event, is_public: true) }
-    let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
-    let!(:public_donation) { create(:donation, event:, name: "Jane Jones", email: "jane.jones@example.com", anonymous: false, aasm_state: "deposited") }
+    let!(:anonymous_donation) { create_deposited_donation(name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true) }
+    let!(:public_donation) { create_deposited_donation(name: "Jane Jones", email: "jane.jones@example.com", anonymous: false) }
 
     context "as a signed out visitor" do
       it "lists anonymous donors when there is no search" do
@@ -840,7 +871,7 @@ RSpec.describe EventsController do
       create_card(former_member, name: "Former Member Card")
       create_card(organizer, name: "Organizer Card")
 
-      page = page_for(user: former_member.slug)
+      page = page_for(user: former_member.public_id)
 
       expect(page.text).to include("Former Member Card")
       expect(page.text).not_to include("Organizer Card")
@@ -867,11 +898,28 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview for auditors" do
+    render_views
+
+    it "shows them the last four digits and card links in the list view", :aggregate_failures do
+      event = create(:event)
+      card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder), initially_activated: true, last4: "4242")
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.text).to include("•••• •••• •••• 4242")
+      expect(page.css("a[href='#{stripe_card_path(card)}']")).to be_present
+    end
+  end
+
   describe "#card_overview for viewers without access to cards" do
     render_views
 
     let(:event) { create(:event, is_public: true) }
-    let(:cardholder) { create(:user, full_name: "Legal Name", preferred_name: "Chosen Name") }
+    # The slug is built at sign up, before the preferred name is set
+    let(:cardholder) { create(:user, full_name: "Legal Name").tap { |user| user.update!(preferred_name: "Chosen Name") } }
     let!(:stripe_card) do
       create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder), name: "Snacks")
     end
@@ -885,10 +933,16 @@ RSpec.describe EventsController do
       expect(page_for(q: stripe_card.last4).text).not_to include("Snacks")
     end
 
-    it "doesn't reveal a cardholder's legal name" do
+    it "doesn't reveal a cardholder's legal name, even through their slug", :aggregate_failures do
       page_for
 
+      expect(cardholder.slug).to eq("legal-name")
       expect(response.body).not_to include("Legal Name")
+      expect(response.body).not_to include(cardholder.slug)
+    end
+
+    it "doesn't find cardholders by slug" do
+      expect(page_for(user: cardholder.slug).text).not_to include("Snacks")
     end
 
     context "when signed in without a role on the organization" do
@@ -907,7 +961,6 @@ RSpec.describe EventsController do
         expect(page.text).to include("Chosen Name")
         expect(page.css("tr.clickable, a[href='#{stripe_card_path(stripe_card)}']")).to be_empty
       end
-
     end
 
     context "on a private organization" do
@@ -1631,7 +1684,8 @@ RSpec.describe EventsController do
     end
 
     describe "#account_number" do
-      it "leaves the account number out of the page until someone clicks Show", :aggregate_failures do
+      it "shows masked numbers with an eye that generates the account number when there isn't one yet", :aggregate_failures do
+        event.column_account_number.destroy!
         sign_in_organizer_of(event)
 
         get(:account_number, params: { id: event.slug })
@@ -1640,39 +1694,82 @@ RSpec.describe EventsController do
         expect(response.body).not_to include("987654321012")
 
         page = Nokogiri::HTML5(response.body)
-        expect(page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :n)}']")).to be_present
-        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :s)}']")).to be_present
+        details = page.at_css("turbo-frame#account_number_details")
+        expect(details.text).to include("•" * 12).and include("•" * 9).and include("deposit-only")
+        generate = details.at_css("form[action='#{event_column_account_number_path(event)}'][method='post']")
+        expect(generate.at_css("button")["aria-label"]).to eq("Show account number")
+        expect(details.at_css("a[href^='#{reveal_account_number_event_path(event)}']")).to be_nil
+
+        modal = page.at_css("turbo-frame#account_number_modal")
+        expect(modal.text).to include("Receive-only").and include("•" * 12).and include("•" * 8)
+        expect(modal.at_css("form[action='#{event_column_account_number_path(event)}'][method='post'] button")["aria-label"]).to eq("Show account number")
+        expect(modal.at_css("form[action='#{event_column_account_number_path(event)}'] input[name='_method']")).to be_nil
+        expect(page.text).to include("No transactions yet")
+      end
+
+      it "leaves the account number out of the page until someone clicks the eye", :aggregate_failures do
+        sign_in_organizer_of(event)
+
+        get(:account_number, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+
+        page = Nokogiri::HTML5(response.body)
+        inline_eye = page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true")}']")
+        expect(inline_eye["aria-label"]).to eq("Show account number")
+        expect(inline_eye["data-turbo-stream"]).to be_present
+        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, show_details: "true")}']")).to be_present
       end
     end
 
     describe "#reveal_account_number" do
-      it "renders the account number into the frame that asked for it", :aggregate_failures do
+      it "streams the account number into both the inline frame and the modal's, each with an eye to hide it again", :aggregate_failures do
         sign_in_organizer_of(event)
-        request.headers["Turbo-Frame"] = "account_number_modal_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug, tooltip_direction: "s" })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" }, format: :turbo_stream)
 
         expect(response).to have_http_status(:ok)
-        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_modal_reveal")
-        copy = frame.at_css("[data-controller='clipboard']")
-        expect(copy["data-clipboard-text-value"]).to eq("987654321012")
-        expect(copy["class"]).to include("tooltipped--s")
-        expect(frame.text).to include("987654321012")
+        expect(response.media_type).to eq(Mime[:turbo_stream])
+        streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream[action='replace']")
+        expect(streams.map { |stream| stream["target"] }).to eq(%w[account_number_reveal account_number_modal_reveal])
+
+        inline, modal = streams.map { |stream| Nokogiri::HTML5.fragment(stream.at_css("template").inner_html) }
+        expect(inline.at_css("turbo-frame#account_number_reveal [data-controller='clipboard']")["data-clipboard-text-value"]).to eq("987654321012")
+        expect(inline.at_css("[data-controller='clipboard']")["class"]).to include("tooltipped--n")
+        expect(modal.at_css("turbo-frame#account_number_modal_reveal [data-controller='clipboard']")["data-clipboard-text-value"]).to eq("987654321012")
+        expect(modal.at_css("[data-controller='clipboard']")["class"]).to include("tooltipped--s")
+        [inline, modal].each do |frame|
+          expect(frame.at_css("a[href='#{reveal_account_number_event_path(event, show_details: "false")}']")["aria-label"]).to eq("Hide account number")
+        end
       end
 
-      it "sends a request from outside a turbo frame back to the account number page" do
+      it "hides the account number in both places when the eye is clicked a second time", :aggregate_failures do
         sign_in_organizer_of(event)
 
-        get(:reveal_account_number, params: { id: event.slug })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "false" }, format: :turbo_stream)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+        streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream[action='replace']")
+        expect(streams.map { |stream| stream["target"] }).to eq(%w[account_number_reveal account_number_modal_reveal])
+        streams.each do |stream|
+          expect(stream.inner_html).to include(reveal_account_number_event_path(event, show_details: "true"))
+        end
+      end
+
+      it "sends a plain page request back to the account number page" do
+        sign_in_organizer_of(event)
+
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" })
 
         expect(response).to redirect_to(account_number_event_path(event))
       end
 
       it "doesn't reveal the account number to someone outside the organization", :aggregate_failures do
         create_session(create(:user), verified: true)
-        request.headers["Turbo-Frame"] = "account_number_reveal"
 
-        get(:reveal_account_number, params: { id: event.slug })
+        get(:reveal_account_number, params: { id: event.slug, show_details: "true" }, format: :turbo_stream)
 
         expect(flash[:error]).to eq("You are not authorized to perform this action.")
         expect(response.body).not_to include("987654321012")
@@ -1753,6 +1850,61 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(account.address)
       expect(response.body).not_to include("Reset password")
+    end
+
+    context "as an admin" do
+      before { create_session(create(:user, :make_admin), verified: true) }
+
+      it "renders the admin inspector for the active G Suite" do
+        g_suite
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Inspect \"g_suite\" record")
+      end
+
+      it "renders the setup form without an inspector when there is no G Suite" do
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("already own")
+        expect(response.body).not_to include("Inspect \"nil_class\" record")
+      end
+
+      it "ignores a deleted G Suite" do
+        g_suite.destroy!
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("already own")
+        expect(response.body).not_to include("Inspect \"")
+      end
+    end
+
+    context "without the google_workspace flag" do
+      before do
+        Flipper.disable(:google_workspace, event)
+        allow(GWaitlistTable).to receive(:all).and_return([])
+      end
+
+      it "renders the waitlist when there is no G Suite" do
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Join the waitlist")
+      end
+
+      it "renders the existing G Suite instead of the waitlist" do
+        g_suite
+
+        get(:g_suite_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(g_suite.domain)
+        expect(response.body).not_to include("Join the waitlist")
+      end
     end
   end
 end

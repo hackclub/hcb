@@ -10,9 +10,13 @@ module PendingTransactionEngine
     end
 
     def perform
-      Appsignal::CheckIn.cron("pending_transaction_engine_nightly_job") do
-        ::PendingTransactionEngine::Nightly.new.run
-      end
+      ::PendingTransactionEngine::Nightly.new.run
+
+      # Finish-only check-in. A start event (the block form) would be sent again
+      # by every restart of an interrupted run, and AppSignal counts each extra
+      # start as a separate unscheduled run, leaving the scheduled one missed even
+      # when the job completes in time.
+      Appsignal::CheckIn.cron("pending_transaction_engine_nightly_job")
     end
 
   end

@@ -430,8 +430,8 @@ module Reimbursement
           payout_method.account_holder.presence
         end
 
-      ActiveRecord::Base.transaction do
-        wise_transfer = WiseTransfer.create!(
+      wise_transfer = ActiveRecord::Base.transaction do
+        transfer = WiseTransfer.create!(
           user: as,
           event:,
           amount:,
@@ -450,24 +450,31 @@ module Reimbursement
           allow_unsupported_recipient: true, # already approved, so let it through
         )
 
-        comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
-        wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
-
-        expenses.each do |expense|
-          expense.receipts.each do |receipt|
-            ::ReceiptService::Create.new(
-              receiptable: wise_transfer.local_hcb_code,
-              uploader: as,
-              attachments: [receipt.file.blob],
-              upload_method: :duplicate
-            ).run!
-          end
-        end
+        transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
 
         mark_rejected!(skip_mailer: true)
 
-        wise_transfer
+        transfer
       end
+
+      # The transfer's ledger item only exists once its pending transaction
+      # commits, so the comment linking to it and the receipts that belong on it
+      # both wait until after the transaction above.
+      ledger_item = wise_transfer.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
+      comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.ledger_item_url(ledger_item)}", user: User.system_user)
+
+      expenses.each do |expense|
+        expense.receipts.each do |receipt|
+          ::ReceiptService::Create.new(
+            receiptable: ledger_item,
+            uploader: as,
+            attachments: [receipt.file.blob],
+            upload_method: :duplicate
+          ).run!
+        end
+      end
+
+      wise_transfer
     end
 
     private
