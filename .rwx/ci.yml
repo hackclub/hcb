@@ -1,0 +1,345 @@
+on:
+  cli:
+    init:
+      commit-sha: ${{ event.git.sha }}
+      pull-request: true
+      # From an hcb-private checkout, pass:
+      #   --init repository=https://github.com/hackclub/hcb-private.git --init visibility=private
+      repository: https://github.com/hackclub/hcb.git
+      visibility: public
+  github:
+    pull_request:
+      init:
+        commit-sha: ${{ event.git.sha }}
+        pull-request: true
+        repository: ${{ event.github.pull_request.repository.clone_url }}
+        visibility: ${{ event.github.pull_request.repository.visibility }}
+      status-checks:
+        name: CI
+    push:
+      - if: ${{ event.git.branch == 'main' || starts-with(event.git.branch, 'gh-readonly-queue/') }}
+        init:
+          commit-sha: ${{ event.git.sha }}
+          pull-request: false
+          repository: ${{ event.github.push.repository.clone_url }}
+          visibility: ${{ event.github.push.repository.visibility }}
+        status-checks:
+          name: CI
+  cache-rebuild:
+    init:
+      commit-sha: ${{ event.git.sha }}
+      pull-request: false
+      repository: https://github.com/hackclub/hcb.git
+      visibility: public
+
+base:
+  image: ubuntu:26.04
+  config: rwx/base 1.2.2
+
+tool-cache:
+  vault: hcb-main
+
+aliases:
+  rails-test-env: &rails-test-env
+    RAILS_ENV: test
+    CI: true
+    DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+    REDIS_URL: redis://localhost:6379
+
+  rails-app: &rails-app
+    - app
+    - "!app/javascript"
+    - bin
+    - config
+    - db
+    - lib
+    - public
+    - vendor
+    - config.ru
+    - Rakefile
+    - Gemfile
+    - Gemfile.lock
+    - .ruby-version
+
+  postgres: &postgres
+    key: postgres
+    terminate-grace-period-seconds: 0
+    run: |
+      exec docker run --rm --name postgres --network host \
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+        -v pgdata:/var/lib/postgresql/data \
+        postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+    ready-check: docker exec postgres pg_isready -h localhost -U postgres
+
+  redis: &redis
+    key: redis
+    terminate-grace-period-seconds: 0
+    run: exec docker run --rm --name redis --network host redis:latest redis-server --save "" --appendonly no
+    ready-check: docker exec redis redis-cli ping
+
+tasks:
+  # Public runs have no `github` context, so the token lives only in the private package.
+  - key: code
+    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
+    with:
+      repository: ${{ init.repository }}
+      ref: ${{ init.commit-sha }}
+
+  - key: setup
+    use: code
+    call: ${{ run.dir }}/packages/setup.yml
+
+  - key: captain
+    call: rwx/install-captain 1.2.0
+
+  - key: abq
+    call: rwx/install-abq 1.2.0
+
+  - key: eslint
+    use: setup.yarn-install
+    filter:
+      - app/javascript
+      - eslint.config.mjs
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn lint
+    outputs:
+      filesystem: false
+      problems:
+        - matcher: eslint
+
+  - key: prettier
+    use: setup.yarn-install
+    filter:
+      - app/javascript
+      - app/assets/stylesheets
+      - .prettierrc
+      - .gitignore
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn format:check
+    outputs:
+      filesystem: false
+
+  - key: herb
+    use: setup.yarn-install
+    filter:
+      - "**/*.erb"
+      - "**/*.html"
+      - "**/*.herb"
+      - "**/*.rhtml"
+      - .herb.yml
+      - package.json
+      - yarn.lock
+      - node_modules
+    run: yarn lint:herb
+    outputs:
+      filesystem: false
+
+  - key: rubocop
+    use: setup.bundle-install
+    filter:
+      - "**/*.rb"
+      - "**/*.rake"
+      - "**/*.jbuilder"
+      - "**/*.ru"
+      - "**/*.builder"
+      - .simplecov
+      - bin
+      - Gemfile
+      - Gemfile.lock
+      - Rakefile
+      - .rubocop.yml
+      - .rubocop_todo.yml
+      - .ruby-version
+    tool-cache: ci-rubocop
+    run: bundle exec rubocop
+    outputs:
+      problems:
+        - matcher: rubocop
+
+  - key: erblint
+    use: setup.bundle-install
+    filter:
+      - app/views
+      - lib/rubocop
+      - bin/erb_lint
+      - .erb_lint.yml
+      - .rubocop.yml
+      - .rubocop_todo.yml
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+    run: bin/erb_lint
+    outputs:
+      filesystem: false
+      problems:
+        - matcher: erb-lint
+
+  - key: brakeman
+    use: setup.bundle-install
+    filter:
+      - app
+      - "!app/javascript"
+      - config
+      - db
+      - lib
+      - Gemfile
+      - Gemfile.lock
+      - .ruby-version
+    run: bundle exec brakeman -q
+    outputs:
+      filesystem: false
+      problems:
+        - matcher: brakeman
+
+  - key: zeitwerk
+    use: setup.bundle-install
+    filter: *rails-app
+    run: bundle exec rails zeitwerk:check
+    env:
+      RAILS_ENV: test
+      CI: true
+    outputs:
+      filesystem: false
+
+  - key: assets
+    use: setup.yarn-install
+    filter:
+      - app/javascript
+      - app/assets
+      - app/views
+      - app/helpers
+      - package.json
+      - yarn.lock
+      - node_modules
+      - webpack.config.js
+      - postcss.config.js
+      - tailwind.config.js
+    run: yarn build && yarn build:css
+    outputs:
+      filesystem:
+        filter:
+          workspace: [app/assets/builds]
+          system: []
+
+  - key: db-schema
+    use: [setup.bundle-install, setup.docker-images]
+    docker: preserve-data
+    runner:
+      tmpfs: true
+    filter: *rails-app
+    run: |
+      docker volume create pgdata
+      docker run --detach --name postgres --network host \
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+        -v pgdata:/var/lib/postgresql/data \
+        postgres:15 -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+      until docker exec postgres pg_isready -h localhost -U postgres; do sleep 0.5; done
+      bundle exec rails db:create db:schema:load
+      docker rm --force postgres
+    env: *rails-test-env
+    outputs:
+      filesystem:
+        filter:
+          workspace: []
+          system: []
+
+  - key: annotate
+    use: [setup.docker-images, db-schema]
+    docker: true
+    runner:
+      tmpfs: true
+    filter:
+      - *rails-app
+      - .annotaterb.yml
+    background-processes:
+      - *postgres
+    run: bundle exec annotaterb models --frozen
+    env: *rails-test-env
+    outputs:
+      filesystem: false
+
+  - key: rspec
+    use: [setup.docker-images, db-schema, assets, setup.chrome, setup.image-libraries, captain, abq]
+    docker: true
+    runner:
+      cpus: 16
+      memory: 32gb
+      tmpfs: true
+    filter:
+      - *rails-app
+      - spec
+      - storage
+      - .rspec
+      - .simplecov
+    background-processes:
+      - *postgres
+      - *redis
+    run: |
+      captain run hcb-rspec \
+        --command "abq test --local --reporter rwx-v1-json=tmp/abq.json -- bin/abq-rspec" \
+        --retry-command "env RETRY=1 ABQ_RUNNERS=1 abq test --local --reporter rwx-v1-json=tmp/abq.json -- bin/abq-rspec {{ tests }}" \
+        --retries 1 \
+        --fail-on-duplicate-test-id \
+        --test-results tmp/abq.json \
+        --print-summary
+      TEST_ENV_NUMBER=merge bundle exec ruby -r simplecov -e ''
+    env:
+      <<: *rails-test-env
+      ABQ_RUNNERS: "15"
+      CC_TEST_REPORTER_ID: "1"
+    outputs:
+      filesystem: false
+      artifacts:
+        - key: coverage
+          path: coverage/coverage.json
+
+  - key: main-code
+    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
+    with:
+      repository: ${{ init.repository }}
+      ref: main
+      path: main-checkout
+
+  - key: new-migrations
+    use: [code, main-code]
+    filter: [db/migrate, main-checkout/db/migrate]
+    run: |
+      versions=$(comm -13 <(ls main-checkout/db/migrate | sort) <(ls db/migrate | sort) | sed -E 's#^([0-9]+)_.*#\1#' | sort -r | tr '\n' ' ')
+      echo "New migrations: ${versions:-none}"
+      printf '%s' "${versions:-none}" > "$RWX_VALUES/versions"
+    outputs:
+      filesystem: false
+
+  - key: reversible-migrations
+    use: [setup.docker-images, db-schema]
+    docker: true
+    runner:
+      tmpfs: true
+    filter:
+      - *rails-app
+    if: ${{ init.pull-request && tasks.new-migrations.values.versions != 'none' }}
+    background-processes:
+      - *postgres
+    run: |
+      echo "Applying all migrations to get to latest state..."
+      bundle exec rails db:migrate
+
+      OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+      ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+      ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
+
+      echo "Rolling back to VERSION=${ROLLBACK_TO:-0}..."
+      bundle exec rails db:migrate VERSION=${ROLLBACK_TO:-0}
+
+      echo "Re-applying all migrations..."
+      bundle exec rails db:migrate
+      echo "All migrations are reversible!"
+    env:
+      <<: *rails-test-env
+      VERSIONS: ${{ tasks.new-migrations.values.versions }}
+    outputs:
+      filesystem: false

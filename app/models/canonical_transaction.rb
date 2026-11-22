@@ -33,6 +33,9 @@ class CanonicalTransaction < ApplicationRecord
 
   include Receiptable
   include Categorizable
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -164,10 +167,6 @@ class CanonicalTransaction < ApplicationRecord
     friendly_memo_in_memory_backup
   end
 
-  def likely_disbursement?
-    memo.to_s.upcase.include?("HCB DISBURSE")
-  end
-
   def likely_hack_club_fee?
     hcb_code.starts_with?("HCB-700-") || memo.to_s.upcase.include?("HACK CLUB BANK FEE TO ACCOUNT")
   end
@@ -274,28 +273,10 @@ class CanonicalTransaction < ApplicationRecord
     raw_stripe_transaction.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_stripe_transaction
 
     raw_stripe_transaction.stripe_transaction["authorization"]
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
-  end
-
-  def likely_waveable_for_fee?
-    likely_check_clearing_dda? ||
-      likely_card_transaction_refund? ||
-      likely_disbursement?
   end
 
   # DEPRECATED

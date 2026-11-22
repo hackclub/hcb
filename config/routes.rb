@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    get "settings/tax", to: "users#edit_tax"
     resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
       member do
         patch :set_default
@@ -159,6 +160,7 @@ Rails.application.routes.draw do
     member do
       get "address", to: "users#edit_address"
       get "payouts", to: "users#edit_payout"
+      get "tax", to: "users#edit_tax"
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"
@@ -168,6 +170,7 @@ Rails.application.routes.draw do
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
       get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emails", to: "users#admin_details_emails"
       get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
       get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
       get "admin_details_invoices", to: "users#admin_details_invoices"
@@ -216,7 +219,6 @@ Rails.application.routes.draw do
         post "verify_email", to: "first#verify_email"
         post "request_org_invite", to: "first#request_org_invite"
         delete "sign_out", to: "first#sign_out"
-        get "macbook_qr_code"
       end
     end
 
@@ -272,6 +274,7 @@ Rails.application.routes.draw do
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "ledger_items", to: "admin#ledger_items"
+      get "ledger_items/:id", to: "admin#ledger_item", as: :ledger_item
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
@@ -286,6 +289,7 @@ Rails.application.routes.draw do
       get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
+      get "wire_lookup", to: "admin#wire_lookup"
       get "wise_transfers", to: "admin#wise_transfers"
       get "events", to: "admin#events"
       get "event_new", to: "admin#event_new"
@@ -368,6 +372,9 @@ Rails.application.routes.draw do
     end
     resources :legal_entities, only: [:index]
     resources :tax_forms, only: [:index]
+    resources :tax1099_imports, only: [:new, :create] do
+      get :legal_entities, on: :collection
+    end
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -385,8 +392,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_paypal_transfer/:id", to: "admin#set_paypal_transfer", as: :set_paypal_transfer
-  post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
   resources :organizer_position_invites, only: [:show], path: "invites" do
@@ -453,7 +458,6 @@ Rails.application.routes.draw do
     post "unarchive"
     post "void"
     get "hosted"
-    get "pdf"
     member do
       post "refund"
     end
@@ -530,7 +534,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
+  resources :disbursements, only: [:new, :create, :show], concerns: :commentable do
     collection do
       get :event_search
       get :repayable_transactions
@@ -559,9 +563,7 @@ Rails.application.routes.draw do
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
       get "attach_receipt"
-      get "memo_frame"
       get "dispute"
-      post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
       scope module: "hcb_code" do
@@ -576,15 +578,6 @@ Rails.application.routes.draw do
 
   get "r/:id/:token", to: "hcb_codes#receipt_link", as: :short_receipt_link, constraints: { token: /[^\/]+/ }
 
-  scope module: "hcb_code" do
-    namespace :tag do
-      resources :suggestions, only: [] do
-        post "accept"
-        post "reject"
-      end
-    end
-  end
-
   resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
@@ -595,7 +588,6 @@ Rails.application.routes.draw do
     member do
       post "waive_fee"
       post "unwaive_fee"
-      post "mark_bank_fee"
       post "set_category"
     end
   end
@@ -649,6 +641,10 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      resource :repayment, only: [:create] do
+        get :candidates
+      end
+      post "toggle_tag", to: "items#toggle_tag"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -669,6 +665,20 @@ Rails.application.routes.draw do
     member do
       post "cancel"
       post "retry"
+    end
+  end
+
+  resources :payroll_positions, only: [:show, :edit, :update], controller: "payroll/positions" do
+    member do
+      get "contract"
+      post "terminate"
+    end
+  end
+
+  resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+    member do
+      post "approve"
+      post "reject"
     end
   end
 
@@ -715,6 +725,7 @@ Rails.application.routes.draw do
 
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
+    controllers applications: "oauth_applications"
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
@@ -845,6 +856,9 @@ Rails.application.routes.draw do
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
   post "taxbandits/webhook", to: "taxbandits#webhook"
+  # The one-time URL handed to TaxBandits as PdfUrl. The token lives in the query
+  # string so Rails' parameter filtering keeps it out of the request log.
+  get "taxbandits/w9_certificate", to: "taxbandits#w9_pdf", as: :taxbandits_w9_pdf, format: true
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -856,8 +870,6 @@ Rails.application.routes.draw do
   get "discord/unlink_user", to: "discord#unlink_user"
   post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
-
-  post "extract/invoice", to: "extraction#invoice"
 
   get "negative_events", to: "admin#negative_events"
 
@@ -958,6 +970,7 @@ Rails.application.routes.draw do
       post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
+      get "download"
     end
   end
 
@@ -979,6 +992,8 @@ Rails.application.routes.draw do
         get "submission"
         get "airtable"
         get "edit"
+        get "unsubscribe"
+        post "unsubscribe"
         post "submit"
         post "archive"
         post "unarchive"
@@ -999,7 +1014,6 @@ Rails.application.routes.draw do
     get :team_stats
     get :recent_activity
     get :balance_transactions
-    get :money_movement
     get :merchants_chart
     get :categories_chart
     get :tags_chart
@@ -1032,7 +1046,6 @@ Rails.application.routes.draw do
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
-    get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
@@ -1047,18 +1060,11 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
-      member do
-        get :contract
-        post :terminate
-      end
-    end
-    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
-      member do
-        post :approve
-        post :reject
-      end
-    end
+    resources :payroll_positions, only: [:new, :create], controller: "payroll/positions"
+    get "payroll_positions/*path", to: redirect { |params, req|
+      path = "/payroll_positions/#{ActionDispatch::Journey::Router::Utils.escape_path(params[:path])}"
+      req.query_string.present? ? "#{path}?#{req.query_string}" : path
+    }
     resources :payees, only: [:index, :create, :update] do
       collection do
         get :check_email
@@ -1092,7 +1098,6 @@ Rails.application.routes.draw do
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
     resources :fees, only: [:create]
-    resources :paypal_transfers, only: [:new, :create]
     resources :wires, only: [:new, :create]
     resources :wise_transfers, only: [:new, :create]
     resources :ach_transfers, only: [:new, :create]
@@ -1145,7 +1150,6 @@ Rails.application.routes.draw do
         post "disable_pre_authorization"
         post "permit_merchant"
 
-        get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
         get "edit/expiration", to: "card_grants#edit_expiration"
         get "edit/purpose", to: "card_grants#edit_purpose"
@@ -1164,7 +1168,7 @@ Rails.application.routes.draw do
       scope module: "organizer_position" do
         namespace :spending do
           resources :controls, only: [:index, :create, :destroy] do
-            resources :allowances, only: [:new, :create], controller: "control/allowances"
+            resources :allowances, only: [:create], controller: "control/allowances"
           end
         end
       end
@@ -1180,6 +1184,7 @@ Rails.application.routes.draw do
 
     member do
       get "account-number", to: "events#account_number"
+      get "account-number/reveal", to: "events#reveal_account_number", as: :reveal_account_number
       post "toggle_event_tag/:event_tag_id", to: "events#toggle_event_tag", as: :toggle_event_tag
       get "audit_log"
       post "validate_slug"

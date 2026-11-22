@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs RSpec as one ABQ runner, with its own database, Redis database and storage root.
+set -euo pipefail
+
+n=${ABQ_RUNNER:-1}
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/bank_test$n
+export REDIS_URL=redis://localhost:6379/$n
+export TEST_ENV_NUMBER=${RETRY:+retry}$n
+
+if ! docker exec postgres psql -U postgres -Atc "select 1 from pg_database where datname = 'bank_test$n'" | grep -q 1; then
+  docker exec postgres createdb -U postgres -T bank_test "bank_test$n"
+fi
+
+exec bundle exec rspec --tag '~skip' "$@"

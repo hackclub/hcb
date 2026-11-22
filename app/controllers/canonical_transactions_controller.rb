@@ -9,7 +9,7 @@ class CanonicalTransactionsController < ApplicationController
 
     authorize @canonical_transaction
 
-    redirect_to transaction_url(params[:id])
+    redirect_to transaction_path(params[:id])
   end
 
   def set_category
@@ -49,7 +49,7 @@ class CanonicalTransactionsController < ApplicationController
     fee.reason = :revenue_waived
     fee.save!
 
-    redirect_to transaction_url(params[:id])
+    redirect_to transaction_path(params[:id])
   end
 
   def unwaive_fee
@@ -65,19 +65,7 @@ class CanonicalTransactionsController < ApplicationController
     fee.reason = :revenue
     fee.save!
 
-    redirect_to transaction_url(params[:id])
-  end
-
-  def mark_bank_fee
-    authorize CanonicalTransaction
-
-    ct = CanonicalTransaction.find(params[:id])
-
-    fee = ct.fee
-    fee.reason = :hack_club_fee
-    fee.save!
-
-    redirect_to transaction_url(params[:id])
+    redirect_to transaction_path(params[:id])
   end
 
 end

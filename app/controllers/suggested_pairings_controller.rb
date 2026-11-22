@@ -22,7 +22,7 @@ class SuggestedPairingsController < ApplicationController
 
     @pairing.mark_accepted!
 
-    @receiptable = @pairing.hcb_code
+    @receiptable = @pairing.ledger_item
     @receipt = @pairing.receipt
 
     if params[:memo] == "true"
@@ -33,7 +33,7 @@ class SuggestedPairingsController < ApplicationController
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
-        flash[:success] = { text: "Receipt linked!", link: hcb_code_path(@pairing.hcb_code), link_text: "View" }
+        flash[:success] = { text: "Receipt linked!", link: ledger_item_path(@receiptable), link_text: "View" }
         redirect_back fallback_location: my_inbox_path
       }
     end
@@ -54,24 +54,13 @@ class SuggestedPairingsController < ApplicationController
       )
     )
 
+    # The item's ledger row, if it's on the page: its receipt count and its
+    # receipt buttons (see ledger/items/_receipt_action), like
+    # ReceiptsController does after an upload.
     if @receiptable
-      if @receiptable.canonical_transactions&.any?
-        @receiptable.canonical_transactions.each do |ct|
-          streams.append(turbo_stream.replace(
-                           ct.local_hcb_code.hashid,
-                           partial: "canonical_transactions/canonical_transaction",
-                           locals: { ct:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
-                         ))
-        end
-      else
-        @receiptable.canonical_pending_transactions&.each do |pt|
-          streams.append(turbo_stream.replace(
-                           pt.local_hcb_code.hashid,
-                           partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: { pt:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
-                         ))
-        end
-      end
+      @receiptable.reload
+      streams.append(turbo_stream.replace([@receiptable, :badges], partial: "ledger/items/badges", locals: { item: @receiptable }))
+      streams.append(turbo_stream.replace([@receiptable, :receipt_action], partial: "ledger/items/receipt_action", locals: { item: @receiptable, updated: true }))
     end
 
     if @receipt
