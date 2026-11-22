@@ -226,6 +226,10 @@ module SessionsHelper
   # This is its own cookie rather than part of `session`: a request that was
   # already running when the user signed out would write its stale copy of the
   # session back and drop the flag.
+  #
+  # If the page after sign-out has no nav (like the sign-in page), the cookie
+  # waits for the next page that does. That's fine: clearing runs before the new
+  # list is written, so signing straight back in still ends with the right list.
   def forget_remembered_organizations!
     cookies[:forget_remembered_organizations] = { value: "1", httponly: true }
   end
@@ -236,7 +240,9 @@ module SessionsHelper
   # sessions return nil so an admin's list isn't replaced with someone else's.
   #
   # Cached per session so it isn't recomputed on every page; each sign-in gets
-  # a fresh list, and membership changes are picked up within the TTL.
+  # a fresh list, and membership changes are picked up within the TTL. Stale
+  # data only means a missing or extra sign-in prompt, and the list only holds
+  # public organizations.
   def remembered_organizer_event_ids
     return if !signed_in? || current_session.impersonated?
 
