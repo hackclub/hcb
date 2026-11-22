@@ -99,7 +99,6 @@ class StripeCardsController < ApplicationController
 
     if params[:frame] == "true" && turbo_frame_request?
       @frame = true
-      @force_no_popover = true
       render :show, layout: false
     else
       @frame = false

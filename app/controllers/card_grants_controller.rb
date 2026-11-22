@@ -240,7 +240,6 @@ class CardGrantsController < ApplicationController
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     render :show, layout: !@frame
 
@@ -260,7 +259,6 @@ class CardGrantsController < ApplicationController
     @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     if organizer_signed_in? && !@frame
       # If trying to view spending page outside a frame, redirect to the show page
