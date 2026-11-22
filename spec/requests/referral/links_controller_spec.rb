@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Referral::LinksController", type: :request do
   let(:creator) { create(:user, verified: true) }
-  let(:program) { Referral::Program.create!(name: "Referral test program", creator:) }
+  let(:program) { Referral::Program.create!(name: "Referral test program", creator:, redirect_to: "https://example.com/welcome?ref=hcb") }
   let(:link)    { program.links.create!(name: "Primary", creator:) }
 
   describe "GET /referrals/:slug" do
@@ -12,6 +12,7 @@ RSpec.describe "Referral::LinksController", type: :request do
       expect { get "/referrals/#{link.slug}" }.to change { User::Session.count }.by(1)
 
       expect(Referral::Attribution.last.user_session).to eq(User::Session.last)
+      expect(response).to redirect_to(program.redirect_to)
     end
 
     it "does not create a session for an unrecognized slug" do

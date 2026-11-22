@@ -20,6 +20,7 @@ gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob
 # explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
+gem "csv_preview", "~> 0.1.0" # renders CSV previews in-process with libvips (no LibreOffice)
 gem "mini_magick"
 
 
@@ -147,6 +148,7 @@ group :test do
   gem "capybara" # Browser-driven system tests
   gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
+  gem "rspec-abq" # Distributes specs across parallel runners in CI
   gem "simplecov", require: false # Code coverage
   gem "webmock"
 end
@@ -223,6 +225,10 @@ gem "rack-timeout", require: "rack/timeout/base"
 gem "irb"
 
 gem "pstore"
+
+gem "cgi"
+
+gem "ostruct"
 
 gem "bcrypt", "~> 3.1.22"
 

@@ -205,7 +205,8 @@ GEM
     business_time (0.13.0)
       activesupport (>= 3.2.0)
       tzinfo
-    byebug (12.0.0)
+    byebug (13.0.0)
+      reline (>= 0.6.0)
     cairo (1.18.5)
       pkg-config (>= 1.2.2)
       red-colors
@@ -259,6 +260,9 @@ GEM
     cssbundling-rails (1.4.3)
       railties (>= 6.0.0)
     csv (3.3.5)
+    csv_preview (0.1.0)
+      csv (>= 3.2.8, < 4)
+      ruby-vips (>= 2.2.2, < 3)
     cuprite (0.18)
       capybara (~> 3.0)
       ferrum (~> 0.18.0)
@@ -346,7 +350,7 @@ GEM
     faraday-em_synchrony (1.0.1)
     faraday-excon (1.1.0)
     faraday-httpclient (1.0.1)
-    faraday-multipart (1.1.1)
+    faraday-multipart (1.2.0)
       multipart-post (~> 2.0)
     faraday-net_http (1.0.2)
     faraday-net_http_persistent (1.2.0)
@@ -650,12 +654,13 @@ GEM
     prism (2.1.0)
     prosemirror_to_html (0.2.1)
       nokogiri
-    pry (0.15.2)
+    pry (0.16.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    pry-byebug (3.11.0)
-      byebug (~> 12.0)
-      pry (>= 0.13, < 0.16)
+      reline (>= 0.6.0)
+    pry-byebug (3.12.0)
+      byebug (~> 13.0)
+      pry (>= 0.13, < 0.17)
     pry-rails (0.3.11)
       pry (>= 0.13.0)
     pstore (0.1.4)
@@ -775,6 +780,8 @@ GEM
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
     rqrcode_core (1.2.0)
+    rspec-abq (1.2.3)
+      rspec-core (>= 3.8.0, < 3.14.0)
     rspec-core (3.13.3)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.3)
@@ -969,12 +976,14 @@ DEPENDENCIES
   business_time
   byebug
   capybara
+  cgi
   chronic
   comma (~> 4.8)
   console1984
   countries
   country_select (~> 8.0)
   cssbundling-rails (~> 1.4)
+  csv_preview (~> 0.1.0)
   cuprite
   diffy
   discordrb
@@ -1027,6 +1036,7 @@ DEPENDENCIES
   money-rails (~> 3.0.0)
   namae
   nondisposable
+  ostruct
   paper_trail (~> 17.0.0)
   pdf-reader
   pg (>= 0.18, < 2.0)
@@ -1058,6 +1068,7 @@ DEPENDENCIES
   reverse_markdown
   rotp
   rqrcode
+  rspec-abq
   rspec-rails (~> 7.1.1)
   rtesseract
   rubocop
@@ -1088,7 +1099,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.4.13p195
+   ruby 4.0.10p0
 
 BUNDLED WITH
    2.5.22

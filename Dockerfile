@@ -1,4 +1,5 @@
-FROM ruby:3.4.13
+# Local development image, built by docker-compose.yml (see docker_setup.sh and docker_start.sh).
+FROM ruby:4.0.10
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -6,8 +7,8 @@ WORKDIR /usr/src/app
 RUN apt-get -y update -qq
 
 # install postgresql-client for easy importing of production database & vim
-# for easy editing of credentials
-RUN apt-get -y install postgresql-client vim poppler-utils
+# for easy editing of credentials. libvips draws CSV previews (csv_preview gem).
+RUN apt-get -y install postgresql-client vim poppler-utils libvips
 ENV EDITOR=vim
 
 # Install node24 & yarn

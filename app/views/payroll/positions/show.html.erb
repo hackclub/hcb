@@ -146,6 +146,7 @@
             <th>Status</th>
             <th>Reviewed by</th>
             <th>Description</th>
+            <th>Period</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
           </tr>
@@ -174,6 +175,7 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <td class="nowrap"><%= invoice.period_label || tag.span("—", class: "muted") %></td>
               <td>
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">

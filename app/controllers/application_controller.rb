@@ -111,13 +111,18 @@ class ApplicationController < ActionController::Base
       raise
     else
       Rails.error.report(exception)
-      redirect_to root_url
+      redirect_to root_path
     end
   end
 
   def render_pdf(filename, template: "#{controller_path}/#{action_name}")
     html = render_to_string(template:, formats: :pdf, layout: false)
     send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+  end
+
+  # Called by the audits1984 engine (mounted at /console) to authenticate auditors.
+  def find_current_auditor
+    current_user if auditor_signed_in?
   end
 
   def safe_per(default, max: 200)
