@@ -64,7 +64,6 @@ class AdminController < Admin::BaseController
   def events
     @page = params[:page] || 1
     @per = safe_per(100)
-    @csv_export = params[:format] == "csv"
 
     @events = filtered_events
     @count = @events.count
@@ -1427,8 +1426,22 @@ class AdminController < Admin::BaseController
 
     @events = filtered_events
 
+    # Each column summed for every org at once, rather than a few queries per org.
+    event_ids = @events.select(:id)
+    settled = CanonicalTransaction.joins(:canonical_event_mapping)
+                                  .merge(CanonicalEventMapping.on_main_ledger)
+                                  .where(canonical_event_mappings: { event_id: event_ids })
+    settled = settled.where("canonical_transactions.date >= ?", @start_date) if @start_date
+    settled = settled.where("canonical_transactions.date <= ?", @end_date) if @end_date
+    sums = {
+      balance_v2_cents: Event.ledger_balances(event_ids, start_date: @start_date, end_date: @end_date)
+                             .pluck("ledgers.event_id", Arel.sql("SUM(ledger_items.amount_cents)")).to_h,
+      settled_outgoing_balance_cents: settled.where("canonical_transactions.amount_cents < 0").group("canonical_event_mappings.event_id").sum(:amount_cents),
+      settled_incoming_balance_cents: settled.where("canonical_transactions.amount_cents > 0").group("canonical_event_mappings.event_id").sum(:amount_cents)
+    }
+
     render_balance = ->(event, type) {
-      ApplicationController.helpers.render_money(event.send(type, start_date: @start_date, end_date: @end_date))
+      ApplicationController.helpers.render_money(sums[type].fetch(event.id, 0))
     }
 
     render_monthly_revenue = ->(event, year, month) {
@@ -1455,7 +1468,7 @@ class AdminController < Admin::BaseController
     if @monthly_breakdown
       template.concat(
         [
-          [:tags, ->(e) { e.event_tags.pluck(:name).join(",") }],
+          [:tags, ->(e) { e.event_tags.map(&:name).join(",") }],
           [:joined, ->(e) { (e.activated_at || e.created_at).strftime("%Y-%m-%d") }],
         ]
       )
@@ -1487,7 +1500,7 @@ class AdminController < Admin::BaseController
       end
     end
 
-    @data = @events.map { |event| serializer.call(event) }
+    @data = @events.includes(:event_tags).map { |event| serializer.call(event) }
     header_syms = template.transpose.first
     @headers = header_syms.map { |h| h.is_a?(String) ? h : h.to_s.titleize(keep_id_suffix: true) }
     @rows = @data.map { |d| d.values }
@@ -1766,10 +1779,11 @@ class AdminController < Admin::BaseController
 
     # Sorting
     case @sort_by
-    when "balance_asc"
-      relation = @csv_export ? relation.sort_by(&:balance_v2_cents) : Kaminari.paginate_array(relation.sort_by(&:balance_v2_cents))
-    when "balance_desc"
-      relation = @csv_export ? relation.sort_by(&:balance_v2_cents).reverse! : Kaminari.paginate_array(relation.sort_by(&:balance_v2_cents).reverse!)
+    when "balance_asc", "balance_desc"
+      balances = Event.ledger_balances(relation.select(:id))
+      direction = @sort_by == "balance_asc" ? "ASC" : "DESC"
+      relation = relation.joins("LEFT JOIN (#{balances.to_sql}) event_balances ON event_balances.event_id = events.id")
+                         .reorder(Arel.sql("COALESCE(event_balances.balance_cents, 0) #{direction}, events.id #{direction}"))
     else # Default sort is "date_desc"
       relation = relation.reorder(Arel.sql("COALESCE(events.activated_at, events.created_at) desc"))
     end

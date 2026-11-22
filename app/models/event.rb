@@ -697,6 +697,23 @@ class Event < ApplicationRecord
     (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1 - ledger.repayments_received_cents
   end
 
+  # balance_v2_cents for many organizations at once, as a relation of
+  # event_id and balance_cents rows. Orgs without ledger items have no row.
+  def self.ledger_balances(events, start_date: nil, end_date: nil)
+    end_date = end_date&.to_date&.end_of_day
+    dates = [
+      ({ datetime: { "$gte": start_date } } if start_date),
+      ({ datetime: { "$lte": end_date } } if end_date)
+    ].compact
+
+    Ledger::Query.new({ "$and": dates }).execute(all_ledgers: true).unscope(:order).except(:preload)
+                 .joins("INNER JOIN ledger_mappings ON ledger_mappings.ledger_item_id = ledger_items.id")
+                 .joins("INNER JOIN ledgers ON ledgers.id = ledger_mappings.ledger_id")
+                 .where(ledgers: { event_id: events })
+                 .group("ledgers.event_id")
+                 .select("ledgers.event_id, SUM(ledger_items.amount_cents) AS balance_cents")
+  end
+
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
     end_date = end_date&.to_date&.end_of_day
 
