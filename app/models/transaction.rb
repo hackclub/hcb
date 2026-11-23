@@ -89,8 +89,6 @@ class Transaction < ApplicationRecord
     where(is_event_related: true, fee_relationship_id: nil)
       .select { |t| !t.potential_fee_reimbursement? || t.date < 3.weeks.ago }
   }
-  # used by the unified transaction list shown on the event show page
-  scope :unified_list, -> { where(fee_reimbursement_id: nil) }
   scope :renamed, -> { where("display_name != name") }
 
   belongs_to :bank_account
