@@ -35,6 +35,10 @@ RSpec.describe "Contractor invoice review", type: :system do
   def visit_without_animations(path)
     visit path
     page.execute_script("jQuery.fx.off = true")
+    # The sidebar's badges load in their own turbo frames, and any frame rendering
+    # removes the modals opened from inside another frame (see application.js),
+    # so a badge landing late would close the invoice modal mid-review
+    expect(page).to have_no_css("turbo-frame[src]:not([loading=lazy]):not([complete])", visible: :all, wait: 10)
   end
 
   # The rendered status, since a stray test-only favicon request can swallow the flash
@@ -173,6 +177,8 @@ RSpec.describe "Contractor invoice review", type: :system do
       visit_without_animations event_contractors_path(event_id: event.slug)
 
       open_row("Fiona Hackworth")
+      # The popover fetches the contract page, whose receipt previews are resized on render
+      expect(page).to have_css("#shared_popover tr.clickable", text: invoice.name, wait: 10)
       open_invoice(invoice)
       within_invoice_modal(invoice) { click_button "Approve" }
 
