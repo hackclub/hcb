@@ -1,15 +1,27 @@
 <% title "You’ve been invited to #{@invite.event.name}" %>
 
 <% if @invite.contract && !@invite.contract.signed? %>
-  <% pending_signee = @invite.contract.pending_signee_information %>
-  <%= render "application/callout", type: "warning", title: "You have a pending contract for this organization." do %>
-    <% if pending_signee %>
-      The contract is still pending because <%= pending_signee[:label] %> (<%= pending_signee[:email] %>) hasn't signed it yet.
+  <% contract = @invite.contract %>
+  <% signee = contract.party(:signee) %>
+  <% cosigner = contract.party(:cosigner) %>
+  <div class="max-w-3xl mx-auto">
+    <% if signee&.signed? %>
+      <%= render "application/callout", type: "warning", title: "You've signed the contract for this organization. It's under review." do %>
+        <% if cosigner && !cosigner.signed? %>
+          We're waiting for your parent / legal guardian to sign it.
+        <% else %>
+          The HCB team is reviewing it. We'll email you once it's complete.
+        <% end %>
+        <%= help_message %>
+      <% end %>
     <% else %>
-      If you have signed the contract, it may still be pending because your parent / legal guardian or HCB point of contact hasn't signed it.
+      <%= render "application/callout", type: "warning", title: "You have a pending contract for this organization." do %>
+        The contract is still pending because you (<%= signee&.email %>) haven't signed it yet.
+        This is a fiscal sponsorship agreement between you and HCB. We need it signed before you can help manage this organization's funds.
+        <%= help_message %>
+      <% end %>
     <% end %>
-    <%= help_message %>
-  <% end %>
+  </div>
 <% end %>
 
 <main class="center max-w-3xl card mt4 md-p3 mx-auto">
