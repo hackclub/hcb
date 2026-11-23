@@ -716,8 +716,8 @@ RSpec.describe CardGrantsController do
 
       link = page.at_css("tbody tr.transaction td.transaction__memo a[href='#{ledger_item_path(item)}']")
       expect(link).to be_present
-      expect(link["data-popover-src"]).to eq(item.hcb_code.popover_path)
-      expect(link["data-popover-frame-id"]).to eq(item.hcb_code.public_id)
+      expect(link["data-popover-src"]).to eq(item.popover_path)
+      expect(link["data-popover-frame-id"]).to eq(item.public_id)
     end
   end
 
