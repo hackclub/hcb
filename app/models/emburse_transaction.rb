@@ -73,10 +73,6 @@ class EmburseTransaction < ApplicationRecord
     false # Emburse isn't used anymore
   end
 
-  def awaiting_receipt?
-    !amount.zero? && approved && missing_receipt?
-  end
-
   def self.during(start_time, end_time)
     self.where(["emburse_transactions.transaction_time >= ? and emburse_transactions.transaction_time <= ?", start_time, end_time])
   end
