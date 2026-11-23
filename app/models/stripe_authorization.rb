@@ -38,10 +38,6 @@ class StripeAuthorization < ApplicationRecord
   scope :successful, -> { approved.closed }
   scope :renamed, -> { where("display_name != name") }
 
-  def awaiting_receipt?
-    !amount.zero? && approved && missing_receipt?
-  end
-
   def declined?
     !approved
   end
