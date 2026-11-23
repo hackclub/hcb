@@ -79,6 +79,7 @@ export default class extends Controller {
   save() {
     // showDisplay's hidden toggle can force a blur that re-enters here; ignore it.
     if (this.closingForm) return
+    if (this.formTarget.hidden) return
 
     this.formTarget.requestSubmit()
   }

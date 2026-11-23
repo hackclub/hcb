@@ -84,10 +84,6 @@ class HcbCodesController < ApplicationController
 
     authorize @hcb_code
 
-    if params[:inline].present?
-      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
-    end
-
     @frame = turbo_frame_request?
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
   end
@@ -101,8 +97,8 @@ class HcbCodesController < ApplicationController
 
     @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
-    if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
+    if request.format.turbo_stream?
+      return render partial: "hcb_codes/memo/stream", locals: { hcb_code: @hcb_code }, formats: :turbo_stream
     end
 
     if @hcb_code.card_grant?

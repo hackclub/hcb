@@ -1,24 +1,53 @@
 <%# locals: (hcb_code:, render_memo: false) %>
 
-<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
-  <%= turbo_frame_tag hcb_code, class: "flex items-center py-3 gap-2 flex-grow" do %>
-    <% if hcb_code.custom_memo.nil? && !render_memo %>
-      <%= yield %>
-    <% else %>
-      <span>
-        <span data-memo-for="<%= dom_id(hcb_code) %>"><%= hcb_code.memo %></span>
-        <span class="regular muted"> for </span>
-        <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event).abs %></span>
-      </span>
-    <% end %>
+<% can_rename = organizer_signed_in?(hcb_code.event, as: :member) %>
+<% show_yield = hcb_code.custom_memo.nil? && !render_memo %>
 
-    <%= render "hcb_codes/memo/stream", hcb_code: %>
-    <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } %>
-    <div class="flex-1"></div>
-    <%= pop_icon_to "edit",
-        edit_hcb_code_path(hcb_code),
-        class: "align-middle tooltipped tooltipped--s", "aria-label": "Rename",
-        data: { turbo: true } if organizer_signed_in?(as: :member) %>
-    <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: } %>
+<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch" data-controller="<%= "memo" if can_rename %>">
+  <div style="min-width: 0; flex-grow: 1;">
+    <%= turbo_frame_tag dom_id(hcb_code), style: "display: block; min-width: 0;" do %>
+      <div style="min-width: 0; flex-grow: 1;" data-memo-target="display">
+        <% if show_yield %>
+          <span data-memo-target="yield" style="display: contents;">
+            <%= yield %>
+          </span>
+        <% end %>
+        <span <%= "hidden" if show_yield %> data-memo-target="memoDisplay">
+          <span data-memo-target="tooltip" data-memo-for="<%= dom_id(hcb_code) %>" title="<%= hcb_code.memo %>">
+            <%= hcb_code.memo %>
+          </span>
+          <span class="regular muted"> for </span>
+          <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event).abs %></span>
+        </span>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } %>
+
+  <% if can_rename %>
+    <%= form_with model: hcb_code, url: hcb_code_path(hcb_code), method: :patch, class: "renaming flex items-center gap-1", html: { hidden: true, style: "flex-grow: 1; min-width: 0;" }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
+      <%= form.text_field :memo,
+                          value: hcb_code.memo,
+                          id: "#{dom_id(hcb_code)}_heading_memo",
+                          autocomplete: "off",
+                          data: { memo_target: "input", action: "blur->memo#save keydown->memo#keydown" },
+                          class: "bg-transparent fit",
+                          style: "border-color: #338eda; padding: 0.125rem 0 0.125rem 4px; min-height: 0; min-width: 0; font-size: 1.5rem; letter-spacing: -0.02em; width: 100%" %>
+      <button type="submit" class="pop border-none cursor-pointer tooltipped tooltipped--e" aria-label="Save">
+        <%= inline_icon "check", size: 28 %>
+      </button>
+    <% end %>
   <% end %>
+
+  <div class="flex-1"></div>
+  <% if can_rename %>
+    <%= link_to "#",
+        class: "pop align-middle tooltipped tooltipped--s",
+        "aria-label": "Rename",
+        data: { action: "click->memo#edit" } do %>
+      <%= inline_icon "edit", size: 28 %>
+    <% end %>
+  <% end %>
+  <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: } %>
 </h2>

@@ -3,6 +3,11 @@ import { Turbo } from '@hotwired/turbo-rails'
 
 export default class extends Controller {
   navigate({ params: { location, frame } }) {
+    const target = event.target.closest(
+      '[data-action*="navigation#navigateOnShiftClick"]'
+    )
+    if (target) return
+
     const frameElement = frame ? document.getElementById(frame) : null
 
     if (frameElement) {
