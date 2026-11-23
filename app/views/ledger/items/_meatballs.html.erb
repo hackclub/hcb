@@ -1,0 +1,119 @@
+<%# locals: (ledger_item:) -%>
+
+<% event = ledger_item.primary_ledger&.event %>
+<% card_charge = ledger_item.linked_object if ledger_item.linked_object_type == "CardCharge" %>
+<% invoice = ledger_item.linked_object if ledger_item.linked_object_type == "Invoice" %>
+<% incoming_disbursement = ledger_item.linked_object if ledger_item.linked_object_type == "Disbursement::Incoming" %>
+
+<% is_pinned = ledger_item.pinned? %>
+<% pinnable = ledger_item.pinnable? %>
+<% flaggable = card_charge&.stripe_card.present? && ledger_item.personal_transaction.nil? %>
+<% open_invoice = invoice.present? && invoice.open_v2? %>
+<% disputable = Ledger::Item::CanDispute.new(ledger_item:).run.first %>
+<% reversible_disbursement = incoming_disbursement.present? && policy(incoming_disbursement.destination_event).create_transfer? && ledger_item.repaying_repayment.nil? %>
+<% repayable = event.present? && policy(Disbursement.new(destination_event: event)).repay? && Repayment.unrepaid_ledger_items(event).exists?(id: ledger_item.id) %>
+<%# Only offered when there's something of the same amount to match it with. A transfer's sender links it through the incoming side. %>
+<% repayment_item = Repayment.markable_item(ledger_item) %>
+<% markable_repayment = repayment_item.present? && policy(repayment_item).mark_repayment? && Repayment.match_candidates(repayment_item, current_user).exists? %>
+
+<% card_grant = card_charge&.stripe_card&.card_grant %>
+<% merchant = card_charge&.stripe_merchant_data %>
+<% merchant_not_allowed = card_grant.present? && ledger_item.canonical_pending_transactions.first&.hcb_decline_reason == :merchant_not_allowed %>
+<% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, card_grant).permit_merchant? && !card_grant.merchant_lock.include?(merchant["network_id"]) %>
+<% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, card_grant.event).permit_merchant? && !card_grant.event.card_grant_setting.merchant_lock.include?(merchant["network_id"]) %>
+
+<%# A transfer's sender can link it as a repayment without being a member here; everything else is for members. %>
+<% disputable = flaggable = pinnable = open_invoice = reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(as: :member) %>
+
+<% if disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || markable_repayment || allowable_on_card || allowable_on_event %>
+  <div data-controller="menu" data-menu-placement-value="bottom-end">
+    <%= pop_icon_to "more",
+        "#",
+        class: "align-middle", "aria-label": "More Options",
+        data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
+    <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+      <% if pinnable %>
+        <%= link_to is_pinned ? ledger_item_unpin_path(ledger_item) : ledger_item_pin_path(ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+          <%= inline_icon "pin-fill", size: 24 %>
+          <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
+        <% end %>
+      <% end %>
+      <% if reversible_disbursement %>
+        <%= link_to new_disbursement_path(
+              source_event_id: incoming_disbursement.destination_event.id,
+              event_id: incoming_disbursement.source_event.id,
+              amount: incoming_disbursement.amount,
+              message: "Reversing: #{incoming_disbursement.name}"
+            ), class: "flex items-center" do %>
+          <%= inline_icon "reply", size: 24 %>
+          Reverse HCB transfer
+        <% end %>
+      <% end %>
+      <% if repayable %>
+        <%= link_to new_disbursement_path(event_id: event.slug, repaid_ledger_item_id: ledger_item.hashid), class: "flex items-center" do %>
+          <%= inline_icon "payment", size: 24 %>
+          Repay this
+        <% end %>
+      <% end %>
+      <% if markable_repayment %>
+        <%= link_to "#", data: { modal: "mark_repayment" }, class: "flex items-center" do %>
+          <%= inline_icon "link", size: 24 %>
+          <%= repayment_item.amount_cents.negative? ? "Mark as repaid" : "Mark as a repayment" %>
+        <% end %>
+      <% end %>
+      <% if flaggable %>
+        <%= link_to ledger_item_invoice_as_personal_transaction_path(ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{ledger_item.author&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
+          <%= inline_icon "sad", size: 24 %>
+          Flag as personal transaction
+        <% end %>
+      <% end %>
+      <% if open_invoice %>
+        <%= link_to "#", data: { modal: "manually_mark_as_paid" }, class: "flex items-center" do %>
+          <%= inline_icon "checkmark", size: 24 %>
+          Manually mark as paid
+        <% end %>
+      <% end %>
+      <% if ledger_item.linked_object_type == "Donation" && organizer_signed_in?(as: :member) %>
+        <%= link_to "#", data: { modal: "update" }, class: "flex items-center" do %>
+          <%= inline_icon "person", size: 24 %>
+          Edit donor
+        <% end %>
+      <% end %>
+      <% if disputable %>
+        <%= link_to ledger_item_dispute_path(ledger_item), target: "_blank" do %>
+          <%= inline_icon "flag-fill", size: 24 %>
+          Dispute this transaction
+        <% end %>
+      <% end %>
+      <% if allowable_on_card %>
+        <%= link_to permit_merchant_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug, merchant: merchant["network_id"]), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name merchant} on this grant card." } do %>
+          <%= inline_icon "checkmark", size: 24 %>
+          Allow merchant on this card
+        <% end %>
+      <% end %>
+      <% if allowable_on_event %>
+        <%= link_to permit_merchant_event_path(card_grant.event.slug, merchant: merchant["network_id"]), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name merchant} across all grant cards for #{card_grant.event.name}." } do %>
+          <%= inline_icon "event-check", size: 24 %>
+          Allow merchant across <%= card_grant.event.name %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if markable_repayment %>
+  <%= render "ledger/repayments/picker", ledger_item: repayment_item %>
+<% end %>
+
+<% if open_invoice %>
+  <%= modal "Mark as paid", id: "manually_mark_as_paid" do %>
+    <p>
+      This will void the invoice; only use this tool if the sponsor has paid this invoice through alternative means.
+      <span class="bold">Please provide context about how this invoice was paid below:</span>
+    </p>
+    <%= form_with url: invoice_manually_mark_as_paid_path(invoice), method: :post do |form| %>
+      <%= form.text_area :manually_marked_as_paid_reason, class: "card mb2 overflow-visible", placeholder: "This was paid by…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px", required: true %>
+      <%= form.submit "Mark as paid" %>
+    <% end %>
+  <% end %>
+<% end %>

@@ -266,7 +266,7 @@
             Reimburse <%= report.amount_to_reimburse.format %>
           <% end %>
         <% elsif report.submitted? && (report.currency == "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_to_reimburse_cents, report.event) || report.event.financially_frozen?) && policy(report).request_reimbursement? %>
-          <div class="tooltipped tooltipped--n" aria-label="This event can not fulfill this request.">
+          <div class="tooltipped tooltipped--n" aria-label="This event cannot fulfill this request.">
             <div class="btn bg-info disabled">
               <%= inline_icon "payment-transfer" %>
               Reimburse <%= report.amount_to_reimburse.format %>

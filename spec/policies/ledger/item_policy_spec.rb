@@ -89,4 +89,24 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
       expect(described_class.new(nil, item).toggle_tag?(tag)).to be(false)
     end
   end
+
+  describe "#dispute?" do
+    before { create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item) }
+
+    it "permits a member of the item's event" do
+      member = create(:user).tap { |u| create(:organizer_position, user: u, event:, role: :member) }
+
+      expect(described_class.new(member, item).dispute?).to be(true)
+    end
+
+    it "refuses a reader" do
+      reader = create(:user).tap { |u| create(:organizer_position, user: u, event:, role: :reader) }
+
+      expect(described_class.new(reader, item).dispute?).to be(false)
+    end
+
+    it "refuses a signed-out visitor" do
+      expect(described_class.new(nil, item).dispute?).to be(false)
+    end
+  end
 end

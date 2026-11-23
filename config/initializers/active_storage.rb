@@ -5,7 +5,11 @@ ActiveSupport.on_load(:active_storage_blob) do
 end
 
 Rails.application.config.to_prepare do
-  ActiveStorage::PreviewImageJob.discard_on ActiveStorage::PreviewError
+  # Unpreviewable files (e.g. a binary file labelled text/csv) are expected, but report them so a
+  # systemic failure, such as libvips losing text support after an image change, isn't silent.
+  ActiveStorage::PreviewImageJob.discard_on(ActiveStorage::PreviewError) do |job, error|
+    Rails.error.report(error, handled: true, context: { active_storage_blob_id: job.arguments.first&.id })
+  end
 end
 
 Rails.application.config.after_initialize do

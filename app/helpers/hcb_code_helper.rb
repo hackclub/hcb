@@ -1,22 +1,6 @@
 # frozen_string_literal: true
 
-require "cgi"
-
 module HcbCodeHelper
-  def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "7dq8JWC4Fsus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Your+Name=#{CGI.escape(user.name)}" if user
-    prefill << "prefill_Login+Email=#{CGI.escape(user.email)}" if user
-    prefill << "prefill_Transaction+Code=#{CGI.escape(hcb_code.hashid)}" if hcb_code
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
-  end
-
   def attach_receipt_url(hcb_code)
     Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
       id: hcb_code.hashid,

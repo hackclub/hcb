@@ -55,6 +55,12 @@
         <%= user_mention ledger_item.author %>
       <% end %>
     </div>
+    <% if card_charge.foreign_currency? %>
+      <div>
+        <strong>Charged in <%= card_charge.merchant_amount.currency.iso_code %></strong>
+        <span><%= card_charge.merchant_amount.format(with_currency: true) %></span>
+      </div>
+    <% end %>
     <% if card_charge.stripe_atm_fee %>
       <div>
         <strong>ATM fee</strong>
@@ -158,7 +164,7 @@
             <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
             <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
             <% if merchant_event.present? %>
-              <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+              <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
             <% end %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
@@ -256,6 +262,7 @@
       <% end %>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 
   <%= render "ledger/items/stripe_card_receipts", ledger_item: %>
@@ -315,7 +322,7 @@
       <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
       <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
       <% if merchant_event.present? %>
-        <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+        <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
       <% end %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">

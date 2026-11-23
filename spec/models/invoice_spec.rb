@@ -40,5 +40,14 @@ RSpec.describe Invoice, type: :model do
       expect(cpt.reload.ledger_item).to eq(eager_item)
       expect(Ledger::Item.where(linked_object: invoice).count).to eq(1)
     end
+
+    it "shows the intended item as canceled when the invoice is voided before payment" do
+      invoice = create(:invoice)
+      item = invoice.ledger_item
+
+      invoice.mark_void!
+
+      expect(item.reload.status).to eq("canceled")
+    end
   end
 end

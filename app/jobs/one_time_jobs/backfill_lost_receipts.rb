@@ -8,13 +8,13 @@
 module OneTimeJobs
   class BackfillLostReceipts
     def self.perform(user, date)
-      user.transactions_missing_receipt.find_each do |txn|
-        if txn.created_at < date
-          txn.no_or_lost_receipt!
-          txn.comments.build({
-                               content: "The receipts for this transaction were marked as lost/missing automatically.",
-                               user: User.system_user
-                             }).save
+      user.card_charges_missing_receipt.find_each do |item|
+        if item.created_at < date
+          item.no_or_lost_receipt!
+          item.hcb_code.comments.build({
+                                         content: "The receipts for this transaction were marked as lost/missing automatically.",
+                                         user: User.system_user
+                                       }).save
         end
       end
     end

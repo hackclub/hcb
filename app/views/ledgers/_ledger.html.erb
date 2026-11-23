@@ -1,4 +1,4 @@
-<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true, receipt_upload_button: false) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true, receipt_upload_button: false, blankslate_text: "This ledger has no items yet") %>
 
 <%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger" do %>
   <% if !table_only && ledger.present? %>
@@ -64,6 +64,6 @@
 
     <%= paginate items %>
   <% else %>
-    <%= blankslate "This ledger has no items yet" %>
+    <%= blankslate blankslate_text %>
   <% end %>
 <% end %>

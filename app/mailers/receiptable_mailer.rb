@@ -7,11 +7,14 @@ class ReceiptableMailer < ApplicationMailer
           subject: -> { @subject }
 
   def receipt_report
-    @user = User.includes(:stripe_cards).find params[:user_id]
+    @user = User.find params[:user_id]
 
-    @hcb_ids = params[:hcb_ids]
-    @hcb_codes = HcbCode.where(id: @hcb_ids)
-    @subject = "[WEEKLY] Missing #{"receipt".pluralize(@hcb_ids.size)} on HCB"
+    @ledger_item_ids = params[:ledger_item_ids]
+    # What the table renders: the card charge for the merchant, the HCB code for
+    # the signed upload link, the primary ledger's event (or its card grant's)
+    # for the org name.
+    @items = Ledger::Item.where(id: @ledger_item_ids).preload(:linked_object, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+    @subject = "[WEEKLY] Missing #{"receipt".pluralize(@ledger_item_ids.size)} on HCB"
 
     @show_flavor_text = Flipper.enabled?(:flavored_receipt_report_2023_05_12, @user)
     @flavor_text = flavor_text.sample if @show_flavor_text

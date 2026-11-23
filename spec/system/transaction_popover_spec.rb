@@ -26,6 +26,8 @@ RSpec.describe "Transaction popovers", type: :system do
     sign_in(user)
     visit event_transactions_path(event)
     click_on "No thanks, bring me straight to HCB"
+    # The overlay fades out over a second and intercepts clicks until it is gone
+    expect(page).to have_no_css(".welcome")
   end
 
   it "loads the transaction into the popover and shows its URL" do

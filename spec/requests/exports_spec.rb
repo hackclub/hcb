@@ -34,7 +34,7 @@ RSpec.describe "Transaction exports", type: :request do
       get "/exports/#{event.slug}.pdf", params: { start_date: Date.today.beginning_of_month.to_s }
 
       expect(response).to have_http_status(:bad_request)
-      expect(response.body).to eq("Can not create a financial statement for #{Date.today.strftime("%B %Y")}.")
+      expect(response.body).to eq("Cannot create a financial statement for #{Date.today.strftime("%B %Y")}.")
     end
 
     it "returns a 400 when the end date is before the start date" do
