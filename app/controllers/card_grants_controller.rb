@@ -53,6 +53,9 @@ class CardGrantsController < ApplicationController
     @subledger = true
 
     @use_card_grant_ledgers = true
+    # Card grant ledgers only ever hold card charges, so neither a type nor a
+    # direction could narrow them.
+    @hidden_ledger_filters = %i[type direction]
     set_ledger_filters
     return if performed?
 

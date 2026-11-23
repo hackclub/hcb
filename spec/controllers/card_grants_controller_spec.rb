@@ -640,6 +640,44 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#transaction_index" do
+    let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
+
+    before do
+      Flipper.enable(:new_ledger_everywhere_2026_07_13)
+      organizer = create(:user)
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+      request.headers["Turbo-Frame"] = "card_grant_transaction_overview"
+    end
+
+    it "leaves the type and direction filters out of the menu and keeps its links on the overview", :aggregate_failures do
+      get(:transaction_index, params: { event_id: event.friendly_id })
+
+      expect(response).to have_http_status(:ok)
+      page = response.parsed_body
+      menu = page.at_css("[data-controller='tabs']")
+      expect(menu.css("[data-tabs-target='btn']").map(&:text)).to eq(%w[User Date Amount Category Merchant Receipts])
+      expect(menu.css("[data-tabs-target='tab']").map { |tab| tab["id"] }).to eq(%w[user date amount category merchant receipts])
+      expect(menu["data-tabs-default-tab-value"]).to eq("user")
+      expect(menu.text).not_to include("Revenue or expenses?")
+
+      expect(menu.at_css("a[href='#{event_card_grant_transaction_overview_path(event, missing_receipts: true, page: 1)}']")).to be_present
+      expect(page.css("a[href^='#{event_ledger_path(event)}']")).to be_empty
+    end
+
+    it "shows the applied filters as chips that clear back to the overview", :aggregate_failures do
+      get(:transaction_index, params: { event_id: event.friendly_id, minimum_amount: "30", missing_receipts: "true" })
+
+      expect(response).to have_http_status(:ok)
+      page = response.parsed_body
+      chips = page.css(".filter-menu__chips .badge")
+      expect(chips.map { |chip| chip.text.squish }).to eq(["More than $30.00", "Missing receipts"])
+      expect(chips.first.at_css("a")["href"]).to eq(event_card_grant_transaction_overview_path(event, missing_receipts: "true"))
+      expect(page.at_css("[aria-label='Clear filters']")["href"]).to eq(event_card_grant_transaction_overview_path(event))
+    end
+  end
+
   describe "rows on the new ledger" do
     let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
     let(:grantee) { create(:user) }
