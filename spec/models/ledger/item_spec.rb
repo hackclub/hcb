@@ -424,6 +424,46 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.receipt_required).to eq(true)
     end
 
+    it "does not require a receipt for a Gusto payroll debit" do
+      primary_ledger = create(:event).ledger
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
+      create(:canonical_transaction, amount_cents: -500, memo: "GUSTO NET  PAY", transaction_source_type: "RawColumnTransaction", ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.receipt_required).to eq(false)
+    end
+
+    it "still requires a receipt when GUSTO only appears later in the memo" do
+      primary_ledger = create(:event).ledger
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
+      create(:canonical_transaction, amount_cents: -500, memo: "PAYMENT TO GUSTO", transaction_source_type: "RawColumnTransaction", ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.receipt_required).to eq(true)
+    end
+
     it "overrides the system memo with the custom memo in the memo column" do
       stub_donation_payment_intent_creation
       donation = create(:donation)
