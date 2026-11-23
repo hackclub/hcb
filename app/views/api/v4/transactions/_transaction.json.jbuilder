@@ -56,8 +56,8 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.wire_transfer  { json.partial! "api/v4/transactions/wire_transfer",  wire_transfer:  hcb_code.wire                               } if hcb_code.wire?
 
     if (ledger_item = is_ledger ? tx : hcb_code.ledger_item)
-      repaid_by = ledger_item.repaid_by_items
-      repays = ledger_item.repays_items
+      repaid_by = repaid_by_ledger_items(ledger_item)
+      repays = repaid_ledger_items(ledger_item)
       json.repayment { json.partial! "api/v4/transactions/repayment", repaid_by:, repays: } if repaid_by.any? || repays.any?
     end
   end

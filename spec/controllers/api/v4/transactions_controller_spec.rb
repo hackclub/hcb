@@ -201,7 +201,10 @@ RSpec.describe Api::V4::TransactionsController do
 
     it "hides the other side when it's in an organization the user can't see" do
       elsewhere = create(:canonical_transaction, event: create(:event, is_public: false), amount_cents: 100_00)
-      allow_any_instance_of(Ledger::Item).to receive(:repaid_by_items).and_return([elsewhere.ledger_item.reload])
+      # Money in on another ledger can't be marked, so skip the checks to stand in for a link the user can't see.
+      repayment = Repayment.new(repaying_ledger_item: elsewhere.ledger_item.reload)
+      repayment.allocations.build(repaid_ledger_item: expense.ledger_item.reload, amount_cents: 100_00)
+      repayment.save!(validate: false)
 
       get :show, params: { id: expense.local_hcb_code.public_id }, as: :json
 
