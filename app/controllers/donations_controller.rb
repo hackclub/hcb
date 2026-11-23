@@ -54,7 +54,7 @@ class DonationsController < ApplicationController
 
     respond_to do |format|
       format.pdf do
-        send_data DonationService::ReceiptPdf.new(donation: @donation).run,
+        send_data CloudflareBrowserRun.pdf(render_to_string(formats: :pdf, layout: false)),
                   filename: "Donation receipt #{@donation.public_id}.pdf",
                   type: "application/pdf", disposition: "attachment"
       end
