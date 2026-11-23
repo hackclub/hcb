@@ -115,6 +115,22 @@ module Reimbursement
       ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
+    # ReportsController#update drops maximum_amount unless this allows it.
+    def set_maximum_amount?
+      (admin || manager) && details_editable
+    end
+
+    # ReportsController#update drops reviewer_id unless this or
+    # #set_own_reviewer? allows it.
+    def set_reviewer?
+      admin || manager
+    end
+
+    # Card grant recipients may pick their own reviewer.
+    def set_own_reviewer?
+      creator && record.reviewer_assignable_by_creator? && details_editable
+    end
+
     private
 
     def admin
@@ -143,6 +159,10 @@ module Reimbursement
 
     def unlocked
       !record.locked?
+    end
+
+    def details_editable
+      record.draft? || record.submitted?
     end
 
   end

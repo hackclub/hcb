@@ -61,10 +61,19 @@
         <%= wire.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: wire } %>
+
       <% if wire.return_reason.present? %>
         <p>
           <strong>Return reason</strong>
           <%= wire.return_reason %>
+        </p>
+      <% end %>
+
+      <% if wire.uetr.present? %>
+        <p>
+          <strong>UETR</strong>
+          <%= link_to wire.uetr, wire_lookup_admin_index_path(uetr: wire.uetr), title: "Look up SWIFT tracking", data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
 
@@ -82,10 +91,11 @@
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
       <%= render "ledger/items/repayments", ledger_item: %>
+      <%= render "ledger/items/tags_detail", item: ledger_item %>
     </section>
   </turbo-frame>
 
-  <% if admin_signed_in? %>
+  <% if auditor_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden">
       <% admin_tool "w-fit" do %>
         <%= button_to "Process", wire_process_admin_path(wire), class: "btn", method: :get, data: { turbo_frame: "_top" } %>

@@ -1,0 +1,10 @@
+<html>
+  <head>
+    <%= csrf_meta_tags %>
+    <%= yield :head %>
+  </head>
+  <body>
+    <%= yield %>
+    <%= render "application/flash" %>
+  </body>
+</html>

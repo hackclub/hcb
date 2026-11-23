@@ -68,18 +68,18 @@
           <%= form.label :invite_message, "Invitation message", class: "bold" %>
           <%= form.text_area :invite_message, placeholder: "We’re excited to see your expenses…" %>
         </div>
-        <% unless @event.reviewer_selection_disabled? %>
-          <% eligible_reviewers = Reimbursement::Report.new(event: @event).eligible_reviewers %>
-          <div id="reimbursement_report_reviewer_wrapper" class="field">
-            <%= form.label :reviewer_id, @event.reviewer_selection_required? ? "Reviewer" : "Reviewer (optional)", class: "bold" %>
-            <%= form.collection_select :reviewer_id,
-              eligible_reviewers,
-              :public_id, :name,
-              { selected: (current_user.public_id if eligible_reviewers.include?(current_user)), **(@event.reviewer_selection_required? ? { prompt: "Select a reviewer..." } : { include_blank: "No preference" }) },
-              { required: @event.reviewer_selection_required?, disabled: true } %>
-          </div>
-        <% end %>
       </div>
+      <% unless @event.reviewer_selection_disabled? %>
+        <% eligible_reviewers = Reimbursement::Report.new(event: @event).eligible_reviewers %>
+        <div id="reimbursement_report_reviewer_wrapper" class="field">
+          <%= form.label :reviewer_id, @event.reviewer_selection_required? ? "Reviewer" : "Reviewer (optional)", class: "bold" %>
+          <%= form.collection_select :reviewer_id,
+            eligible_reviewers,
+            :public_id, :name,
+            @event.reviewer_selection_required? ? { prompt: "Select a reviewer..." } : { include_blank: "No preference" },
+            { required: @event.reviewer_selection_required?, data: { invite_default: (current_user.public_id if eligible_reviewers.include?(current_user)) } } %>
+        </div>
+      <% end %>
     <% else %>
       <%= form.hidden_field :user_id, value: current_user.id %>
       <%= form.hidden_field :email, value: current_user.email %>

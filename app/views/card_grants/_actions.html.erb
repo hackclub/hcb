@@ -1,22 +1,56 @@
 <%# locals: (card_grant:) %>
 
 <% if card_grant.active? %>
-  <div class="card card--breakdown flex flex-col p-1">
-    <p class="eyebrow mb-0 px-4 opacity-50">Controls</p>
-    <% if organizer_signed_in?(as: :member) %>
-      <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
-      <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report" %>
-      <% if card_grant.user == current_user %>
-        <%= render "card_grants/actions/return", card_grant: %>
-      <% else %>
-        <%= render "card_grants/actions/cancel", card_grant: %>
-      <% end %>
-      <%= render "card_grants/actions/support", card_grant: %>
-    <% elsif card_grant.user == current_user %>
-      <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
-      <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: "Get reimbursed" %>
-      <%= render "card_grants/actions/return", card_grant: %>
-      <%= render "card_grants/actions/support", card_grant: %>
+  <% own = card_grant.user == current_user %>
+  <% stripe_card = card_grant.stripe_card %>
+
+  <%# Rendered up front since several hide themselves, and an empty card shouldn't show. %>
+  <% controls = [] %>
+  <% if organizer_signed_in?(as: :member) || own %>
+    <% controls << render("stripe_cards/actions/freeze", stripe_card:, variant: "control", label: "Pause spending", subtitle: "You can unfreeze it yourself at any time") if stripe_card.present? %>
+    <% controls << render("card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: own ? "I paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement") %>
+    <% if own %>
+      <% controls << render("card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}") %>
+    <% else %>
+      <% controls << render("card_grants/actions/cancel", card_grant:, variant: "control", label: "Return the balance to #{card_grant.event.name}") %>
     <% end %>
-  </div>
+  <% end %>
+  <% controls.reject!(&:blank?) %>
+  <% can_get_support = organizer_signed_in?(as: :member) || own %>
+  <% support = can_get_support ? render("card_grants/actions/support", card_grant:, title: own ? "Questions about this grant?" : "Need help?") : nil %>
+  <% answers = own ? render("card_grants/quick_answers") : nil %>
+
+  <%# With controls, help articles and support all present, support gets its own
+      card under the controls so the two columns come out the same height. %>
+  <% split = controls.any? && answers.present? && support.present? %>
+
+  <% if controls.any? || answers.present? || support.present? %>
+    <div class="grant-assist <%= "grant-assist--split" if split %>">
+      <% if controls.any? %>
+        <div class="card grant-controls">
+          <div class="grant-assist__head">
+            <h3 class="grant-subheading">Controls</h3>
+          </div>
+          <div class="grant-list">
+            <%= safe_join controls %>
+          </div>
+          <%# Without help articles there's no second column, so support closes out this card. %>
+          <%= support if answers.blank? %>
+        </div>
+      <% end %>
+
+      <% if answers.present? || (support.present? && controls.empty?) %>
+        <div class="card grant-help">
+          <%= answers %>
+          <%= support unless split %>
+        </div>
+      <% end %>
+
+      <% if split %>
+        <div class="card grant-contact">
+          <%= support %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

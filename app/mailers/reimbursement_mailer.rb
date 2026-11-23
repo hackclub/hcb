@@ -55,6 +55,14 @@ class ReimbursementMailer < ApplicationMailer
     mail subject: "[Reimbursements] Wire transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
+  def wise_transfer_failed
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+    @reason = params[:reason]
+
+    mail subject: "[Reimbursements] Wise transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
   def paypal_transfer_failed
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report
@@ -68,6 +76,14 @@ class ReimbursementMailer < ApplicationMailer
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] Mailed check for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
+  def failed_payout_reminder
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+    @days = params[:days]
+
+    mail subject: "[Reimbursements] Reminder: your payout for #{@report.name} still needs attention", to: @report.user.email_address_with_name, from: hcb_email_with_name_of(@report.event)
   end
 
   def expenses_approved

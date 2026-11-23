@@ -45,6 +45,7 @@
       <%= form.check_box :anonymous, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
+    <%= render "donations/admin_donor_fields", form:, donation: %>
     <%= form.submit "Edit donor" %>
   <% end %>
 </section>
@@ -160,6 +161,7 @@
       </p>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 </article>
 

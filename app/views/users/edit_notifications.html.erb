@@ -74,7 +74,6 @@
             <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
               <%= form.label :monthly_donation_summary do %>
                 <%= form.check_box :monthly_donation_summary,
-                  data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                   switch: true,
                   disabled: %>
                 <span class="slider"></span>
@@ -91,7 +90,6 @@
             <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
               <%= form.label :monthly_follower_summary do %>
                 <%= form.check_box :monthly_follower_summary,
-                  data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                   switch: true,
                   disabled: %>
                 <span class="slider"></span>

@@ -109,8 +109,8 @@ RSpec.describe Reimbursement::ReportService::BulkCreate do
 
     it "accepts no preference or an eligible reviewer, including managers opted out of unassigned reviews" do
       reviewer = create(:user)
-      create(:organizer_position, :manager, event:, user: reviewer)
-      event.reimbursement_reviewer_opt_outs.create!(user: reviewer)
+      position = create(:organizer_position, :manager, event:, user: reviewer)
+      event.reimbursement_reviewer_opt_ins.find_by!(organizer_position: position).destroy!
 
       [nil, "", reviewer.public_id].each do |reviewer_id|
         result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id:)
@@ -152,8 +152,10 @@ RSpec.describe Reimbursement::ReportService::BulkCreate do
       [nil, outsider.public_id].each do |reviewer_id|
         result = nil
         expect {
-          result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id:)
-        }.not_to(change { [User.count, Reimbursement::Report.count, enqueued_jobs.size] })
+          expect {
+            result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id:)
+          }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
+        }.not_to(change { [User.count, Reimbursement::Report.count] })
 
         expect(result.success?).to be false
         expect(result.errors).to include("Please select an eligible reviewer for these reports")

@@ -29,22 +29,29 @@ RSpec.describe OrganizerPosition, type: :model do
     end
   end
 
-  describe "losing manager access" do
-    it "clears reimbursement reviewer opt-outs on organizations they no longer manage" do
-      parent = create(:event)
-      child = create(:event, parent:)
-      parent_manager = create(:user)
-      dual_manager = create(:user)
-      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
-      dual_parent_position = create(:organizer_position, user: dual_manager, event: parent, role: :manager)
-      create(:organizer_position, user: dual_manager, event: child, role: :manager)
-      child.reimbursement_reviewer_opt_outs.create!(user: parent_manager)
-      child.reimbursement_reviewer_opt_outs.create!(user: dual_manager)
+  describe "reimbursement reviewer opt-ins" do
+    it "follow the manager role" do
+      position = create(:organizer_position, role: :member)
 
-      parent_position.update!(role: :member)
-      dual_parent_position.destroy!
+      expect(position.reimbursement_reviewer_opt_ins).to be_empty
 
-      expect(child.reimbursement_reviewer_opt_outs.map(&:user)).to contain_exactly(dual_manager)
+      position.update!(role: :manager)
+
+      expect(position.reimbursement_reviewer_opt_ins.reload.map(&:event)).to eq([position.event])
+
+      position.update!(role: :member)
+
+      expect(position.reimbursement_reviewer_opt_ins.reload).to be_empty
+    end
+
+    it "are removed along with the position" do
+      position = create(:organizer_position, role: :manager)
+      opt_in = position.reimbursement_reviewer_opt_ins.sole
+
+      position.destroy!
+
+      expect(position.reload).to be_deleted
+      expect(Event::ReimbursementReviewer::OptIn.exists?(opt_in.id)).to be(false)
     end
   end
 end
