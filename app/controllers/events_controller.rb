@@ -286,11 +286,11 @@ class EventsController < ApplicationController
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
-      @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+      @all_positions = @all_positions.where(user: User.active_teenager)
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
+    @positions = @all_positions.includes(:user).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
 
     if @event.parent
       # `ancestor_organizer_positions` covers this organization as well as its
@@ -613,22 +613,15 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-        @ledger = @event.ledger
-        # The column-transaction narrowing has no expression in Ledger::Query, so
-        # it chains onto the executed relation. Everything the query does own —
-        # pending first, the rest newest first — still comes from the query, which
-        # is the whole point of going through it for the parts that do fit.
-        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
-                                     .execute(ledgers: [@ledger])
-                                     .where(id: column_transactions.select(:ledger_item_id))
-                                     .page((params[:page] || 1).to_i).per(safe_per(25))
-      else
-        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                           .order(created_at: :desc)
-        page = (params[:page] || 1).to_i
-        @transactions = @transactions.page(page).per(safe_per(25))
-      end
+      @ledger = @event.ledger
+      # The column-transaction narrowing has no expression in Ledger::Query, so
+      # it chains onto the executed relation. Everything the query does own —
+      # pending first, the rest newest first — still comes from the query, which
+      # is the whole point of going through it for the parts that do fit.
+      @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                   .execute(ledgers: [@ledger])
+                                   .where(id: column_transactions.select(:ledger_item_id))
+                                   .page((params[:page] || 1).to_i).per(safe_per(25))
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
@@ -711,8 +704,6 @@ class EventsController < ApplicationController
       deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.succeeded_and_not_refunded
-
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
@@ -739,7 +730,7 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+    @donations = @all_donations.page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
 
@@ -1420,18 +1411,6 @@ class EventsController < ApplicationController
                          .page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
-  end
-
-  def toggle_new_ledger
-    authorize @event
-
-    if params[:enabled] == "true"
-      Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_ledger_path(@event)
-    else
-      Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_transactions_path(@event)
-    end
   end
 
   private

@@ -87,14 +87,6 @@ class FeeReimbursement < ApplicationRecord
     end
   end
 
-  def transaction_display_name
-    if donation
-      return "Fee refund for #{donation.anonymous? ? "anonymous donation" : "donation from #{donation.name(show_anonymous: true)}"}"
-    else
-      return "Fee refund for invoice to #{invoice.sponsor.name}"
-    end
-  end
-
   def process
     processed_at = DateTime.now
   end

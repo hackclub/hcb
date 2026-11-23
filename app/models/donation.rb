@@ -300,10 +300,6 @@ class Donation < ApplicationRecord
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
   end
 
-  def fee_reimbursed?
-    fee_reimbursement.canonical_transaction.present?
-  end
-
   def recurring?
     recurring_donation_id.present?
   end
