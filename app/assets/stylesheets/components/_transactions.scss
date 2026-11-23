@@ -248,7 +248,7 @@ details.receipt-card {
   visibility: visible;
 }
 
-.transaction:not(:hover) .add-tag-badge {
+.transaction:not(:hover) .add-tag-badge:not([aria-expanded='true']) {
   width: 1px;
 }
 

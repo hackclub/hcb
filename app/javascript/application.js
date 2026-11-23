@@ -33,6 +33,9 @@ document.addEventListener('turbo:before-cache', () => {
 
   if (currentModal) {
     currentModal.options.doFade = false
+    // Turbo owns the URL from here (it is leaving the page, or snapshotting it on
+    // popstate), so closing must not push a history entry (see BEFORE_CLOSE in ui.js)
+    currentModal.options.keepHistory = true
     currentModal.close()
   }
 

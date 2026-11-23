@@ -285,4 +285,32 @@ RSpec.describe HcbCodesController, type: :controller do
       it_behaves_like "a Process button for staff"
     end
   end
+
+  describe "GET #dispute" do
+    let(:event) { create(:event) }
+    let(:member) { create(:user) }
+
+    before do
+      create(:organizer_position, event:, user: member, role: :member)
+      create_session(member, verified: true)
+    end
+
+    it "sends a disputable transaction to the dispute form with its code" do
+      hcb_code = create(:canonical_transaction, event:, amount_cents: -500, date: 10.days.ago).local_hcb_code
+
+      get :dispute, params: { id: hcb_code.hashid }
+
+      expect(response).to redirect_to(a_string_starting_with("https://forms.hackclub.com/"))
+      expect(response.location).to include("prefill_Transaction+Code=#{CGI.escape(hcb_code.hashid)}")
+    end
+
+    it "explains why a transaction can't be disputed" do
+      hcb_code = create(:canonical_transaction, event:, amount_cents: -500, date: 91.days.ago).local_hcb_code
+
+      get :dispute, params: { id: hcb_code.hashid }
+
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
+      expect(flash[:error]).to eq("Bank account transactions older than 90 days can not be disputed.")
+    end
+  end
 end

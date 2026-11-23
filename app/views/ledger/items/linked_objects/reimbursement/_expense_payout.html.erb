@@ -31,6 +31,7 @@
       </p>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 
   <% if expense.is_fee? %>
