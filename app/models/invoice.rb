@@ -191,12 +191,6 @@ class Invoice < ApplicationRecord
 
   before_create :set_defaults
 
-  after_create_commit -> {
-    unless OrganizerPosition.role_at_least?(creator, event, :manager)
-      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
-    end
-  }
-
   # An invoice doesn't create a canonical (pending) transaction until it's paid,
   # so eagerly create its ledger item on creation. It starts "intended" (no CTs or
   # CPTs) and is filled in when the invoice is paid and its CPT maps back to it.
@@ -209,6 +203,15 @@ class Invoice < ApplicationRecord
       create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
     end
   end
+
+  # Declared after the ledger item callback: after_commit callbacks run in
+  # definition order, and the notification email links to the ledger item, so
+  # it has to exist before the mail job is enqueued.
+  after_create_commit -> {
+    unless OrganizerPosition.role_at_least?(creator, event, :manager)
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
