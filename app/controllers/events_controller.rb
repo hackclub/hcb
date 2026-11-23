@@ -287,11 +287,11 @@ class EventsController < ApplicationController
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
-      @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+      @all_positions = @all_positions.where(user: User.active_teenager)
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
+    @positions = @all_positions.includes(:user).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
 
     if @event.parent
       # `ancestor_organizer_positions` covers this organization as well as its
@@ -705,8 +705,6 @@ class EventsController < ApplicationController
       deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.succeeded_and_not_refunded
-
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
@@ -733,7 +731,7 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+    @donations = @all_donations.page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
 

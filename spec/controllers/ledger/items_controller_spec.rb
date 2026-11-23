@@ -127,10 +127,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.parsed_body.at_css("#receipt_#{receipt.id}")).to be_present
       end
 
-      it "responds with not found for a non-auditor" do
+      it "renders for a member" do
+        create(:organizer_position, event:, user: (user = create(:user)), role: :member)
+        create_session(user, verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item.memo)
+      end
+
+      it "is not authorized for a user outside the event" do
         create_session(create(:user), verified: true)
 
-        expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+        get :show, params: { id: item.hashid }
+
+        expect(response).to redirect_to(root_path)
+        expect(flash[:error]).to include("not authorized")
       end
     end
 
@@ -160,17 +173,9 @@ RSpec.describe Ledger::ItemsController, type: :controller do
 
       before { create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE, ledger_item: item) }
 
-      it "carries the receipt through the redirect to the HCB code page for a non-auditor" do
+      it "asks a member to confirm the reversal" do
         create(:organizer_position, event:, user: (user = create(:user)))
         create_session(user, verified: true)
-
-        get :show, params: { id: item.hashid, reverse: receipt.id }
-
-        expect(response).to redirect_to(hcb_code_path(item.hcb_code, reverse: receipt.id))
-      end
-
-      it "asks an auditor to confirm the reversal" do
-        create_session(create(:user, :make_auditor), verified: true)
 
         get :show, params: { id: item.hashid, reverse: receipt.id }
 

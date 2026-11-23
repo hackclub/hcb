@@ -744,7 +744,7 @@ RSpec.describe CardGrantsController do
         }
       )
 
-      expect(flash[:success]).to eq("Successfully topped up grant.")
+      expect(flash[:success]).to eq("Grant topped up.")
       expect(response).to redirect_to(card_grant_path(card_grant))
 
       expect(card_grant.reload.balance).to eq(Money.new(69_12, :usd))
