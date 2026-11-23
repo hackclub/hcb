@@ -53,6 +53,11 @@ RSpec.describe WiseTransfer do
       instance.validate
       expect(instance.errors[:wise_id]).to be_empty
       expect(instance.wise_id).to eq("0987654321")
+
+      instance.wise_id = "https://wise.com/transactions/activities/by-resource/TRANSFER/1122334455?origin=activity-list"
+      instance.validate
+      expect(instance.errors[:wise_id]).to be_empty
+      expect(instance.wise_id).to eq("1122334455")
     end
   end
 
@@ -91,6 +96,41 @@ RSpec.describe WiseTransfer do
       instance.validate
       expect(instance.errors[:wise_recipient_id]).to be_empty
       expect(instance.wise_recipient_id).to eq("3e219880-5f3e-4230-8a5a-9c8c25af26bb")
+    end
+  end
+
+  describe "unsupported recipients" do
+    it "rejects new CNY transfers" do
+      instance = build_instance(currency: "CNY", account_type: "unionpay")
+      instance.validate
+
+      expect(instance.errors[:base]).to eq(["Wise transfers in CNY are currently not supported. Please send an international wire instead."])
+    end
+
+    it "lets ops create CNY transfers that were already in flight, which can still be approved" do
+      wise_transfer = WiseTransfer.create!(
+        event: create(:event),
+        user: create(:user),
+        amount_cents: 100_00,
+        currency: "CNY",
+        recipient_country: "CN",
+        address_postal_code: "100000",
+        recipient_name: "Fiona Hackworth",
+        recipient_email: "fiona@example.com",
+        payment_for: "Event venue",
+        quoted_usd_amount_cents: 14_00, # skips generate_quote!, which needs a live exchange rate
+        allow_unsupported_recipient: true
+      )
+
+      WiseTransfer.find(wise_transfer.id).mark_approved!
+      expect(wise_transfer.reload).to be_approved
+    end
+
+    it "suggests a local bank transfer via Wise, then an international wire, for unsupported rails" do
+      instance = build_instance(currency: "CAD", account_type: "interac")
+      instance.validate
+
+      expect(instance.errors[:base].sole).to end_with("We recommend using a local bank transfer via Wise instead. If that isn't possible, please send an international wire.")
     end
   end
 

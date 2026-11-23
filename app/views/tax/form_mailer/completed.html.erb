@@ -1,0 +1,14 @@
+<p>Hello <%= @legal_entity.name %>,</p>
+
+<p>
+  Thank you for submitting your tax information to HCB.
+  If you wish, you can <%= link_to "download a copy of your submission", download_tax_form_url(@form) %>.
+</p>
+
+<%= render partial: "tax/form_mailer/legal_entity_summary", locals: { legal_entity: @legal_entity } %>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

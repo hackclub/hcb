@@ -29,7 +29,7 @@ class Metric
       include Subject
 
       def calculate
-        user.transactions_missing_receipt_count
+        user.card_charges_missing_receipt.count
       end
 
     end

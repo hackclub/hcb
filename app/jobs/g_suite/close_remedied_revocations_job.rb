@@ -17,7 +17,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  CloseRemediedRevocations = GSuite::CloseRemediedRevocationsJob
-end

@@ -74,7 +74,6 @@ module Reimbursement
                     reimbursement_payout_holding: payout_holding,
                     reason: message
                   ).check_failed.deliver_later
-                  Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
                 end
               end
             when LegalEntity::PayoutMethod::AchTransfer

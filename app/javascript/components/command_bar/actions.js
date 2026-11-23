@@ -54,7 +54,7 @@ export const generateEventActions = data => {
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transactions`,
       name: 'Transactions',
-      perform: navigate(`/${event.slug}/transactions`),
+      perform: navigate(`/${event.slug}/ledger`),
       icon: <Icon glyph="bank-account" size={16} />,
       parent: event.slug,
       keywords: 'ledger payments',
@@ -383,6 +383,15 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Wires',
       icon: <Icon glyph="web" size={16} />,
       perform: navigate('/admin/wires'),
+    },
+    {
+      id: 'admin-wire-lookup',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Wire lookup',
+      keywords: 'uetr swift tracking wire',
+      icon: <Icon glyph="web" size={16} />,
+      perform: navigate('/admin/wire_lookup'),
     },
     {
       id: 'admin-wise-transfers',

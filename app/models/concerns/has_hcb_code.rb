@@ -7,11 +7,12 @@ module HasHcbCode
     # Defines `hcb_code` and `local_hcb_code` methods on the model.
     #
     # @param code_constant [String] The HCB code constant (e.g., "200" for donations)
+    # @param identifier [Symbol] The attribute the code is suffixed with (defaults to `id`)
     # @param persisted_only [Boolean] If true, `local_hcb_code` returns nil when the record is not yet persisted
     # @param eager_create [Boolean] If true, adds an `after_create` callback to eagerly create the HcbCode record
-    def has_hcb_code(code_constant, persisted_only: false, eager_create: false)
+    def has_hcb_code(code_constant, identifier: :id, persisted_only: false, eager_create: false)
       define_method(:hcb_code) do
-        "HCB-#{code_constant}-#{id}"
+        "HCB-#{code_constant}-#{public_send(identifier)}"
       end
 
       if persisted_only

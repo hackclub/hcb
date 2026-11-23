@@ -100,33 +100,40 @@ RSpec.describe User::Session, type: :model do
   end
 
   describe "public activity" do
+    # The rendered copy ends in a relative timestamp, so the clock is frozen:
+    # "less than a minute ago" turns into "1 minute ago" if a slow CI runner
+    # takes 30 seconds between creating the session and rendering it.
     specify "new sessions are tracked in public activity" do
-      user = create(:user, full_name: "Hack Clubber")
+      freeze_time do
+        user = create(:user, full_name: "Hack Clubber")
 
-      PublicActivity.with_tracking do
-        create(:user_session, verified: true, user:)
+        PublicActivity.with_tracking do
+          create(:user_session, verified: true, user:)
+        end
+
+        activity = PublicActivity::Activity.sole
+        rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
+        expect(rendered).to eq("You logged into HCB less than a minute ago")
       end
-
-      activity = PublicActivity::Activity.sole
-      rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
-      expect(rendered).to eq("You logged into HCB less than a minute ago")
     end
 
     specify "impersonated sessions are only rendered to admins" do
-      admin = create(:user, :make_admin, full_name: "Orpheus the Dinosaur")
-      user = create(:user, full_name: "Hack Clubber")
+      freeze_time do
+        admin = create(:user, :make_admin, full_name: "Orpheus the Dinosaur")
+        user = create(:user, full_name: "Hack Clubber")
 
-      PublicActivity.with_tracking do
-        create(:user_session, verified: true, user:, impersonated_by: admin)
+        PublicActivity.with_tracking do
+          create(:user_session, verified: true, user:, impersonated_by: admin)
+        end
+
+        activity = PublicActivity::Activity.sole
+        user_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
+        expect(user_rendered).to eq("")
+
+        activity = PublicActivity::Activity.sole
+        admin_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: admin))
+        expect(admin_rendered).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
       end
-
-      activity = PublicActivity::Activity.sole
-      user_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: user))
-      expect(user_rendered).to eq("")
-
-      activity = PublicActivity::Activity.sole
-      admin_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: admin))
-      expect(admin_rendered).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
     end
 
     def rendered_text(raw_html)

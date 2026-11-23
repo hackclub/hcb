@@ -9,7 +9,7 @@ class Event
     def create
       unless signed_in?
         skip_authorization
-        return redirect_to auth_users_path(return_to: event_url(@event), require_reload: true)
+        return redirect_to auth_users_path(return_to: event_path(@event), require_reload: true)
       end
 
       attrs = {

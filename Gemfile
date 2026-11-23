@@ -13,13 +13,14 @@ gem "puma", "~> 7.2" # app server
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
-gem "sidekiq", "~> 7.3.8" # background jobs
+gem "sidekiq", "~> 8.1.7" # background jobs
 gem "sidekiq-cron", "~> 2.4" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
 gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
 # explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
+gem "csv_preview", "~> 0.1.0" # renders CSV previews in-process with libvips (no LibreOffice)
 gem "mini_magick"
 
 
@@ -28,6 +29,8 @@ gem "terser", "~> 1.2" # JS compressor
 gem "jquery-rails"
 gem "react-rails"
 gem "turbo-rails", "~> 2.0.17"
+gem "reactionview", "~> 0.6.1" # `.html.herb` templates: Herb-compiled, with reactive state and actions. Keep in step with the `reactionview` npm package.
+gem "prism", "~> 2.1" # Herb hands ReActionView Ruby syntax trees serialized by Prism 2; an older Prism can't read them ("Invalid serialization")
 
 gem "invisible_captcha"
 gem "local_time" # client-side timestamp converter for cache-safe rendering
@@ -40,7 +43,8 @@ gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
-gem "aws-sdk-s3", require: false
+gem "aws-sdk-s3"
+gem "pdf-reader" # ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob checks a dummy form PDF for an unmasked TIN
 
 gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
@@ -68,13 +72,11 @@ gem "phonelib" # phone number validations
 
 gem "money-rails", "~> 3.0.0"
 gem "monetize", "~> 2.0.0"
-gem "rounding"
 
 gem "business_time"
 
 
 gem "poppler" # PDF parsing
-gem "wicked_pdf" # HTML to PDF conversion
 
 gem "write_xlsx" # Export Excel files
 gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
@@ -98,11 +100,10 @@ gem "flipper-ui"
 gem "pundit" # implements authorization policies
 
 # API V3
-gem "grape"
+gem "grape", "~> 4.0"
 gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-entity )
 gem "grape-kaminari"
-gem "grape-route-helpers"
-gem "grape-swagger"
+gem "grape-swagger", "~> 2.2"
 gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
@@ -128,7 +129,6 @@ gem "comma", "~> 4.8" # CSV generation
 gem "faker" # Create mock data
 
 gem "chronic" # time/date parsing
-gem "rinku", require: "rails_rinku" # auto-linking URLs in text
 
 gem "geocoder" # lookup lat/lng for Stripe Cards shipment tracking
 gem "validates_zipcode" # validation for event's zip codes
@@ -147,6 +147,7 @@ group :test do
   gem "capybara" # Browser-driven system tests
   gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
+  gem "rspec-abq" # Distributes specs across parallel runners in CI
   gem "simplecov", require: false # Code coverage
   gem "webmock"
 end
@@ -168,7 +169,6 @@ end
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
-gem "wkhtmltopdf-binary", "0.12.6.8"
 
 group :development do
   gem "annotaterb" # comment models with database schema
@@ -180,9 +180,8 @@ group :development do
 
   gem "letter_opener_web" # preview emails
 
-  # Ruby language server
-  gem "solargraph", require: false
-  gem "solargraph-rails", "~> 1.2.0", require: false
+  # Solargraph (the Ruby language server) isn't bundled: it requires Prism 1.x
+  # and Herb needs Prism 2. docker-compose.solargraph.yml installs it on its own.
 
   gem "htmlbeautifier", require: false # for https://marketplace.visualstudio.com/items?itemName=tomclose.format-erb
 
@@ -225,6 +224,10 @@ gem "rack-timeout", require: "rack/timeout/base"
 gem "irb"
 
 gem "pstore"
+
+gem "cgi"
+
+gem "ostruct"
 
 gem "bcrypt", "~> 3.1.22"
 

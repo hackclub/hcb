@@ -78,7 +78,7 @@
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
       Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
     <% elsif hcb_decline_reason == :user_cards_locked %>
-      Upload your overdue receipts and your card will work again in seconds. Manage them on the <%= link_to "receipts page", my_inbox_url %>.
+      Upload your overdue receipts and your card will work again in seconds. Manage them on the <%= link_to "receipts page", my_inbox_path %>.
     <% elsif stripe_decline_reason == :authorization_controls %>
       This transaction exceeded daily limits set by our card issuer. Please try again later, or use a different card for this transaction.
     <% elsif stripe_decline_reason == :webhook_timeout %>
@@ -87,13 +87,13 @@
       <% if card.nil? %>
         Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
       <% elsif card.initially_activated? %>
-        You can defrost your card at any time <%= link_to "here", stripe_card_url(card) %>.
+        You can <%= link_to "defrost your card", stripe_card_path(card) %> at any time.
       <% else %>
-        Activate your new card <%= link_to "here", stripe_card_url(card) %> before using it.
+        <%= link_to "Activate your new card", stripe_card_path(card) %> before using it.
       <% end %>
     <% elsif stripe_decline_reason == :card_canceled %>
       <% if card&.replacement %>
-        Try using its <%= link_to "replacement card", stripe_card_url(card.replacement) %> ending in <%= card.replacement.last4 %>.
+        Try using its <%= link_to "replacement card", stripe_card_path(card.replacement) %> ending in <%= card.replacement.last4 %>.
       <% else %>
         Try using another card.
       <% end %>
@@ -154,7 +154,7 @@
 
       <br>
 
-      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again.<% if card %> If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(card), data: { turbo_method: :post } %>.<% end %></span>
+      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again.<% if card %> If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_path(card), data: { turbo_method: :post } %>.<% end %></span>
     <% elsif hcb_decline_reason != :inadequate_balance %>
       Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
 
