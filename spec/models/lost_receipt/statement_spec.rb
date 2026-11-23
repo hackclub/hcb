@@ -128,12 +128,15 @@ RSpec.describe LostReceipt::Statement do
   end
 
   it "puts the transaction back to missing a receipt when the PDF can't be generated" do
-    allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::TimeoutError)
-    statement = described_class.new(details)
+    # A remote failure after its retries, and one that retrying wouldn't fix.
+    [Faraday::TimeoutError, RuntimeError].each do |error|
+      allow(CloudflareBrowserRun).to receive(:pdf).and_raise(error)
+      statement = described_class.new(details)
 
-    perform_enqueued_jobs { statement.submit(receiptable: hcb_code) }
-    expect(described_class.count).to eq(0)
-    expect(hcb_code.reload).not_to be_no_or_lost_receipt
-    expect(hcb_code.ledger_item.reload).not_to be_no_or_lost_receipt
+      perform_enqueued_jobs { statement.submit(receiptable: hcb_code) }
+      expect(described_class.count).to eq(0)
+      expect(hcb_code.reload).not_to be_no_or_lost_receipt
+      expect(hcb_code.ledger_item.reload).not_to be_no_or_lost_receipt
+    end
   end
 end
