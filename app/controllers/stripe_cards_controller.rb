@@ -84,28 +84,21 @@ class StripeCardsController < ApplicationController
     @show_card_details = params[:show_details] == "true"
     @event = @card.event
 
-    @hcb_codes = @card.local_hcb_codes
-                      .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
-                      .page(params[:page]).per(safe_per(25))
-
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      # Grant cards (viewable here by auditors) keep their charges on the card
-      # grant's ledger rather than the event's.
-      @per = safe_per(25)
-      @table_only = true
-      @ledger = @card.card_grant&.ledger || @event.ledger
-      # Narrowing to this card's charges has no expression in Ledger::Query, so it
-      # chains onto the executed relation. The charges go in as a relation, which
-      # lands as an IN (subquery) rather than a list of ids to carry around.
-      @items = Ledger::Query.new({ linked_object_type: "CardCharge" })
-                            .execute(ledgers: [@ledger])
-                            .where(linked_object_id: @card.card_charges.select(:id))
-                            .page(params[:page]).per(@per)
-    end
+    # Grant cards (viewable here by auditors) keep their charges on the card
+    # grant's ledger rather than the event's.
+    @per = safe_per(25)
+    @table_only = true
+    @ledger = @card.card_grant&.ledger || @event.ledger
+    # Narrowing to this card's charges has no expression in Ledger::Query, so it
+    # chains onto the executed relation. The charges go in as a relation, which
+    # lands as an IN (subquery) rather than a list of ids to carry around.
+    @items = Ledger::Query.new({ linked_object_type: "CardCharge" })
+                          .execute(ledgers: [@ledger])
+                          .where(linked_object_id: @card.card_charges.select(:id))
+                          .page(params[:page]).per(@per)
 
     if params[:frame] == "true" && turbo_frame_request?
       @frame = true
-      @force_no_popover = true
       render :show, layout: false
     else
       @frame = false

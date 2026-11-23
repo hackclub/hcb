@@ -635,6 +635,7 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      get "dispute"
       post "pin"
       post "unpin"
       patch "rename"
@@ -1027,7 +1028,6 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
-    post "toggle_new_ledger"
     get "stats"
     get "merchants_filter"
     put "toggle_hidden"

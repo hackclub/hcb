@@ -25,8 +25,7 @@ RSpec.describe Api::V4::TransactionsController do
 
   # A card authorization as the Stripe webhook imports it, on a card that
   # belongs to the event. It stays pending until it's declined or captured.
-  def create_card_authorization(approved: true, status: "pending")
-    stripe_card = create(:stripe_card, :with_stripe_id, event:)
+  def create_card_authorization(approved: true, status: "pending", stripe_card: create(:stripe_card, :with_stripe_id, event:))
     raw_pending_stripe_transaction = create(
       :raw_pending_stripe_transaction, amount_cents: -45_00, date_posted: Date.current,
       stripe_transaction: {
@@ -97,6 +96,24 @@ RSpec.describe Api::V4::TransactionsController do
       end
 
       expect(paged_ids).to eq(all_ids)
+    end
+  end
+
+  describe "#missing_receipt" do
+    it "lists the user's card charges missing a receipt" do
+      stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
+      stripe_card = create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:)
+      charge = create_card_authorization(stripe_card:)
+      receipted = create_card_authorization(stripe_card:)
+      receipt = Receipt.new(receiptable: receipted.ledger_item, user:, upload_method: :api)
+      receipt.file.attach(io: File.open(file_fixture("receipt.png")), filename: "receipt.png", content_type: "image/png")
+      receipt.save!
+
+      get :missing_receipt, format: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"].map { |tx| tx["id"] }).to eq([charge.local_hcb_code.public_id])
+      expect(response.parsed_body["data"].first["missing_receipt"]).to be(true)
     end
   end
 

@@ -5,7 +5,7 @@
   <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
   <%= form.label :report_to, "Report to", class: "mt2" %>
   <%= form.text_field :report_to, value: @report.user.email, readonly: true %>
-  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) %>
+  <% if policy(@report).set_maximum_amount? %>
     <%= form.label :maximum_amount, "Maximum reimbursable value (optional)", class: "mt2" %>
     <div class="field">
       <div class="flex items-center">
@@ -30,12 +30,12 @@
       <% end %>
     </div>
   <% end %>
-  <% if organizer_signed_in? && (@report.submitted? || @report.draft?) && @report.event %>
-   <div class="field">
+  <% if policy(@report).set_reviewer? && (@report.submitted? || @report.draft?) && @report.event %>
+    <div class="field">
       <%= form.label :reviewer_id, "Assigned reviewer", class: "mt2" %>
-      <%= form.collection_select :reviewer_id, @report.event.managers, :id, :name, include_blank: "Anyone" %>
+      <%= form.collection_select :reviewer_id, @report.eligible_reviewers, :id, :name, include_blank: "Anyone" %>
     </div>
-  <% elsif @report.reviewer_assignable_by_creator? && current_user == @report.user && (@report.submitted? || @report.draft?) %>
+  <% elsif policy(@report).set_own_reviewer? %>
     <div class="field">
       <%= form.label :reviewer_id, "Reviewer", class: "mt2" %>
       <%= form.collection_select :reviewer_id, @report.eligible_reviewers, :id, :name, include_blank: "No preference" %>

@@ -61,7 +61,6 @@ class EmburseTransaction < ApplicationRecord
   scope :undeclined, -> { where.not(state: "declined") }
   scope :under_review, -> { where(event_id: nil).undeclined }
   scope :awaiting_receipt, -> { missing_receipt.completed.where.not(amount: 0) }
-  scope :unified_list, -> { undeclined }
 
   belongs_to :event, optional: true
   belongs_to :emburse_card, optional: true
@@ -71,10 +70,6 @@ class EmburseTransaction < ApplicationRecord
 
   def receipt_required?
     false # Emburse isn't used anymore
-  end
-
-  def awaiting_receipt?
-    !amount.zero? && approved && missing_receipt?
   end
 
   def self.during(start_time, end_time)

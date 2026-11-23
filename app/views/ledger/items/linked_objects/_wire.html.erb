@@ -61,6 +61,8 @@
         <%= wire.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: wire } %>
+
       <% if wire.return_reason.present? %>
         <p>
           <strong>Return reason</strong>
@@ -89,6 +91,7 @@
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
       <%= render "ledger/items/repayments", ledger_item: %>
+      <%= render "ledger/items/tags_detail", item: ledger_item %>
     </section>
   </turbo-frame>
 

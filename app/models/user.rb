@@ -270,7 +270,7 @@ class User < ApplicationRecord
     name
     slug "url" do |slug| "https://hcb.hackclub.com/users/#{slug}/admin" end
     email
-    transactions_missing_receipt_count "Missing Receipts"
+    card_charges_missing_receipt "Missing Receipts" do |items| items.count end
   end
 
   SYSTEM_USER_EMAIL = "bank@hackclub.com"
@@ -528,31 +528,8 @@ class User < ApplicationRecord
   # and settled alike: what the Receipt Bin lists, and what card locking counts
   # (its outstanding pile is the settled, enforcement-era part of this; see
   # CardLocking::CardholderBehavior). The item's own missing receipt logic.
-  #
-  # hcb_code_ids_missing_receipt and transactions_missing_receipt below are the
-  # HCB code version, read by the pages and mailers not yet on ledger items.
   def card_charges_missing_receipt
     Ledger::Item.card_charges_for_cardholder(id).missing_receipt
-  end
-
-  def hcb_code_ids_missing_receipt
-    @hcb_code_ids_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
-      user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
-    end
-  end
-
-  memo_wise def transactions_missing_receipt(from: nil, to: nil)
-    return HcbCode.none unless hcb_code_ids_missing_receipt.any?
-
-    user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
-    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
-    user_hcb_codes.order(created_at: :desc)
-  end
-
-  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
-    transactions_missing_receipt(from:, to:).size
   end
 
   def email_address_with_name(full_name: false)
