@@ -20,6 +20,15 @@ module Reimbursement
 
       authorize @report
 
+      if @report.reviewer_selectable? && params[:reimbursement_report][:reviewer_id].present?
+        reviewer = User.find_by_public_id!(params[:reimbursement_report][:reviewer_id])
+        unless @report.eligible_reviewers.exists?(reviewer.id)
+          return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
+        end
+
+        @report.reviewer = reviewer
+      end
+
       if @report.save
         if report_params[:receipt_id]
           receipt = Receipt.find(report_params[:receipt_id])
@@ -49,15 +58,20 @@ module Reimbursement
       authorize @report, :create?
 
       if @report.save
-        @expense = @report.expenses.create!(amount_cents: 0)
-        receipt = ::ReceiptService::Create.new(
-          receiptable: @expense,
-          uploader: current_user,
-          attachments: params[:reimbursement_report][:file],
-          upload_method: :quick_expense
-        ).run!
-        @expense.update(memo: receipt.first.suggested_memo, amount_cents: receipt.first.extracted_total_amount_cents) if receipt&.first&.suggested_memo
-        redirect_to reimbursement_report_path(@report, edit: @expense.id)
+        files = Array(params[:reimbursement_report][:file]).compact_blank
+
+        # One expense per uploaded file, or a single blank expense when there are none.
+        expenses = Array.new([files.size, 1].max) { @report.expenses.create!(amount_cents: 0) }
+        expenses.zip(files).each do |expense, file|
+          expense.attach_quick_expense_receipt!(file, uploader: current_user) if file
+        end
+
+        # Open a lone expense for editing; with several, land on the report to review them.
+        if expenses.one?
+          redirect_to reimbursement_report_path(@report, edit: expenses.first.id)
+        else
+          redirect_to reimbursement_report_path(@report)
+        end
       else
         redirect_to event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
@@ -176,6 +190,7 @@ module Reimbursement
         end
         redirect_to @report
       else
+        flash.now[:error] = @report.errors.full_messages.to_sentence
         render :edit, status: :unprocessable_content
       end
     end
@@ -198,6 +213,15 @@ module Reimbursement
 
     def submit
       authorize @report
+
+      if @report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? && (@report.assigned_reviewer_required? || params[:reviewer_id].present?)
+        reviewer = User.find_by_public_id!(params[:reviewer_id])
+        unless @report.eligible_reviewers.exists?(reviewer.id)
+          flash[:error] = "The selected reviewer is not eligible for this report."
+          redirect_to @report and return
+        end
+        @report.reviewer = reviewer
+      end
 
       begin
         @report.mark_submitted!
@@ -334,6 +358,7 @@ module Reimbursement
           wise_recipient_id: params[:wise_recipient_id],
           sent_at: Time.now,
           recipient_phone_number: @report.user.phone_number,
+          allow_unsupported_recipient: true, # already approved and sent, so let it through
         )
         wise_transfer.mark_approved!
         wise_transfer.mark_sent!
@@ -348,19 +373,20 @@ module Reimbursement
       redirect_to @report
     end
 
-    def approve_all_expenses
+    def approve
       authorize @report
 
       begin
-        @report.expenses.each do |expense|
-          expense.mark_approved!
+        @report.expenses.pending.each do |expense|
+          expense.mark_approved!(current_user)
         end
-        flash[:success] = "All expenses have been approved; the report creator will be notified."
+        @report.mark_reimbursement_requested!
+        flash[:success] = "All expenses have been approved and the reimbursement has been requested; the HCB team will review the request promptly."
+      rescue AASM::InvalidTransition
+        flash[:error] = @report.reload.reimbursement_requested? ? "This report was already sent for reimbursement." : "This report could not be sent for reimbursement."
       rescue => e
         flash[:error] = e.message
       end
-
-      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -459,9 +485,8 @@ module Reimbursement
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
-      reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
-      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
+      reimbursement_report_params.delete(:maximum_amount) unless policy(@report).set_maximum_amount?
+      reimbursement_report_params.delete(:reviewer_id) unless policy(@report).set_reviewer? || policy(@report).set_own_reviewer?
       reimbursement_report_params
     end
 

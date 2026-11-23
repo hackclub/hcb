@@ -40,7 +40,8 @@ class Payment
 
     has_one :legal_entity, through: :payment
 
-    scope :not_failed, -> { where.not(aasm_state: "failed" ) }
+    scope :active, -> { where.not(aasm_state: ["failed", "rejected", "canceled"] ) }
+    def active? = !(failed? || rejected? || canceled?)
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
@@ -67,6 +68,25 @@ class Payment
         transitions from: :under_review, to: :sent
         after do
           payment.mark_sent!
+
+          fee = if payout.is_a?(WiseTransfer)
+                  if payout.ledger_item.nil?
+                    Rails.error.unexpected "Missing ledger item for WiseTransfer #{payout.id} on payment attempt #{id}"
+                    0
+                  else
+                    payout.ledger_item.amount_cents.abs - MoneyService.convert_to_usd_wise(payment.amount_cents, payment.currency)
+                  end
+                elsif payout.is_a?(Wire) && payout.usd_amount_cents < payment.event.minimum_wire_amount_cents
+                  Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
+                else
+                  0
+                end
+
+          if fee.positive?
+            Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
+          elsif fee.negative?
+            Rails.error.unexpected "Negative fee (#{fee}) calculated for payment #{id}"
+          end
         end
       end
 
@@ -78,7 +98,7 @@ class Payment
       end
 
       event :mark_failed do
-        transitions from: :sent, to: :failed
+        transitions from: [:pending, :sent], to: :failed
         after do |reason: nil|
           Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
@@ -92,6 +112,15 @@ class Payment
         end
       end
 
+      # Only reject the attempt/payout, and reset the payment back to pending LE state
+      event :mark_rejected_retryable do
+        transitions from: :under_review, to: :rejected
+        after do
+          payout&.mark_rejected!
+          payment.mark_pending_legal_entity!
+        end
+      end
+
       event :mark_canceled do
         transitions from: [:pending, :under_review, :sent], to: :canceled, if: -> { payout.nil? || payout&.can_cancel? }
         after do
@@ -102,6 +131,20 @@ class Payment
 
     after_create :create_transfer!
 
+    def state_color
+      return "info" if pending? || under_review? || sent?
+      return "success" if successful?
+      return "error" if rejected? || failed?
+
+      "muted" # canceled
+    end
+
+    def state_text
+      return "Processing" if pending? || under_review?
+
+      return aasm_state.humanize
+    end
+
     private
 
     def create_transfer!
@@ -111,33 +154,56 @@ class Payment
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
         end
 
-        safely do
-          transfer = payout_method.create_transfer(
-            payment.event,
-            amount: payment.amount_cents,
-            memo: "Payment for \"#{payment.purpose}\".",
-            payment_for: "Payment for \"#{payment.purpose}\".",
-            recipient_name: payment.payee.display_name,
-            recipient_email: payment.payee.email,
-            currency: payment.currency,
-            user: payment.creator,
-          )
+        begin
+          # Savepoint so a failure here rolls back only the transfer (and its
+          # pending transaction), leaving the attempt itself persisted so it
+          # can be marked as failed below.
+          transaction(requires_new: true) do
+            transfer = payout_method.create_transfer(
+              payment.event,
+              amount: payment.amount_cents,
+              memo: "Payment for \"#{payment.purpose}\".",
+              payment_for: "Payment for \"#{payment.purpose}\".",
+              recipient_name: payment.payee.display_name,
+              recipient_email: payment.payee.email,
+              currency: payment.currency,
+              user: payment.creator,
+              purpose: :payment
+            )
 
-          transfer.save!
+            # Attach the attempt before saving so the transfer's create
+            # callbacks (and any failure handling in them) can see it.
+            transfer.payment_attempt = self
+            self.payout = transfer
+            transfer.save!
+            save!
 
-          self.payout = transfer
-          save!
+            # The payment's receipts belong on the transfer's ledger item, which
+            # only exists once its pending transaction commits. Attempts are
+            # created inside their callers' transactions (the payment's lock,
+            # a payee reassignment), so wait for the outermost one. A
+            # rolled-back savepoint drops the block.
+            ActiveRecord.after_all_transactions_commit do
+              Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.reload_ledger_item) # the association was cached as nil while the transfer's pending transaction was being created
+            end
 
-          Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
+            mark_under_review!
+          end
+        rescue => e
+          Rails.error.report(e)
+
+          # Discard in-memory changes from the rolled-back savepoint (e.g. the
+          # unsaved payout) so they aren't autosaved by mark_failed!.
+          reload
+          payment.reload
+          mark_failed!
         end
-
-        mark_under_review!
       end
     end
 
     def other_attempts_failed
-      if Payment::Attempt.not_failed.where(payment:).excluding(self).any?
-        errors.add(:base, "all other attempts for this payment must be failed before creating a new attempt")
+      if Payment::Attempt.active.where(payment:).excluding(self).any?
+        errors.add(:base, "all other attempts for this payment must be failed, rejected, or canceled before creating a new attempt")
       end
     end
 
@@ -154,7 +220,7 @@ class Payment
     end
 
     def legal_entity_payable
-      unless legal_entity.payable?
+      unless legal_entity.payable?(requires_tax_form: payment.requires_tax_form)
         errors.add(:legal_entity, "must be payable")
       end
     end

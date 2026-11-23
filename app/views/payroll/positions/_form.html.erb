@@ -1,4 +1,6 @@
-<%# locals: (event:, payee: nil, position: nil) %>
+<%# locals: (event:, payee: nil, position: nil, initial_file: position&.persisted? && position.file.attached? ? position.file.filename.to_s : "", initial_rate_type: position&.fixed_rate? ? "fixed" : "recurring") %>
+<%# herb:slots client %>
+<%# herb:state (selected_file: initial_file, selected_rate_type: initial_rate_type) %>
 
 <% if payee && params[:edit_payee].present? && policy(payee).update? %>
   <%= render "payees/edit_section", event:, payee:, destination: "contractors", selected: params[:selected] %>
@@ -21,7 +23,7 @@
   <% end %>
 
   <% unless disabled && payee.nil? %>
-    <div data-controller="payee-picker manual-payee">
+    <div>
       <% if editing %>
         <div data-scroll-seek-target="section">
           <h3 class="mb-2">Recipient</h3>
@@ -38,10 +40,9 @@
               manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
       <% end %>
 
-      <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
+      <% form_url = editing ? payroll_position_path(position) : event_payroll_positions_path(event_id: event.slug) %>
       <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
-        <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
         <div data-scroll-seek-target="section">
           <h3 class="mb-2">Contract details</h3>
@@ -56,7 +57,7 @@
 
             <div class="menu__divider my-0"></div>
 
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4" data-controller="rate-type" data-rate-type-fixed-unit-value="<%= Payroll::Position::FIXED_RATE_UNIT %>">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div class="pr-2">
                 <%= form.label :rate, "Rate" %>
                 <span class="muted block">How the contractor is paid</span>
@@ -64,10 +65,10 @@
 
               <div class="flex flex-col items-end gap-2">
                 <div class="inline-flex gap-0.5 p-0.5 rounded-lg bg-black/5 dark:bg-white/10">
-                  <%= radio_button_tag "rate_type", "recurring", !position&.fixed_rate?, disabled:, class: "peer/recurring hidden", data: { action: "change->rate-type#update" } %>
+                  <%= radio_button_tag "rate_type", "recurring", !position&.fixed_rate?, disabled:, class: "peer/recurring hidden", data: { herb_set: "selected_rate_type=$value" } %>
                   <%= label_tag "rate_type_recurring", "Recurring", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors hover:muted peer-checked/recurring:bg-blue peer-checked/recurring:text-white peer-checked/recurring:shadow-sm" %>
 
-                  <%= radio_button_tag "rate_type", "fixed", position&.fixed_rate?, disabled:, class: "peer/fixed hidden", data: { action: "change->rate-type#update" } %>
+                  <%= radio_button_tag "rate_type", "fixed", position&.fixed_rate?, disabled:, class: "peer/fixed hidden", data: { herb_set: "selected_rate_type=$value" } %>
                   <%= label_tag "rate_type_fixed", "Fixed", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors peer-checked/fixed:bg-blue peer-checked/fixed:text-white peer-checked/fixed:shadow-sm" %>
                 </div>
 
@@ -77,16 +78,18 @@
                     <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
                   </div>
 
-                  <span class="flex items-center gap-2" data-rate-type-target="recurring">
+                  <%# A fixed rate is stored as the unit "contract". The typed unit stays in its disabled field, so switching back restores it. %>
+                  <fieldset class="flex items-center gap-2" hidden="<%= selected_rate_type == "fixed" %>" disabled="<%= selected_rate_type == "fixed" %>">
                     <span class="bold muted">per</span>
-                    <%= form.text_field :rate_unit, value: (position&.fixed_rate? ? nil : position&.rate_unit.presence) || "hour", placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", aria: { label: "Rate unit" }, data: { "rate-type-target": "unitField" }, class: "!max-w-[95px]" %>
+                    <%= form.text_field :rate_unit, value: (position&.fixed_rate? ? nil : position&.rate_unit.presence) || "hour", placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", aria: { label: "Rate unit" }, class: "!max-w-[95px]" %>
                     <datalist id="contractor_rate_units">
                       <option value="hour">Paid per hour worked</option>
                       <option value="week">Paid per week worked</option>
                       <option value="month">Paid per month worked</option>
                     </datalist>
-                  </span>
-                  <span class="muted whitespace-nowrap" data-rate-type-target="fixed" hidden>/ whole contract</span>
+                  </fieldset>
+                  <input type="hidden" name="<%= form.field_name(:rate_unit) %>" value="<%= Payroll::Position::FIXED_RATE_UNIT %>" disabled="<%= selected_rate_type != "fixed" %>">
+                  <span class="muted whitespace-nowrap" hidden="<%= selected_rate_type != "fixed" %>">/ whole contract</span>
                 </div>
               </div>
             </div>
@@ -118,6 +121,17 @@
 
             <div class="menu__divider my-0"></div>
 
+            <div class="flex justify-between items-center gap-4">
+              <div class="pr-2">
+                <%= form.label :manager_id, "Manager" %>
+                <span class="muted block">Responsible for approving invoices</span>
+              </div>
+              <%= form.collection_select :manager_id, event.managers, :id, :name,
+      { selected: position&.manager_id || current_user.id, include_blank: "No manager" } %>
+            </div>
+
+            <div class="menu__divider my-0"></div>
+
             <% if editing && position.file.attached? %>
               <p class="muted text-sm m-0">
                 Current attachment:
@@ -125,12 +139,29 @@
               </p>
             <% end %>
 
+            <%# Picking a file shows the combine option and clearing it hides it again. The
+                actions are named outside the render call: herb-lint reads a state's name in
+                a render argument as a computed read, even inside an action string. %>
+            <% attachment_input_html = { data: { herb_set: "change->selected_file=$value" } } %>
+            <% attachment_clear_html = { data: { herb_set: "selected_file=''" } } %>
             <%= render "events/transfers/attach_receipt", form:, disabled:, required: false, accept: ".pdf,application/pdf",
-                  label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)" %>
+                  label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)",
+                  input_html: attachment_input_html, clear_html: attachment_clear_html %>
+
+            <div hidden="<%= selected_file.blank? %>">
+              <%= form.label :combine_contract_attachment do %>
+                <%= form.check_box :combine_contract_attachment, checked: editing ? position.combine_contract_attachment : true %>
+                Combine attachment with
+                <%= link_to "HCB's standard contracting agreement", "https://cdn.hackclub.com/01a0983f-2439-7df6-93fb-5b24bc12cc88/hcb_contractor_agreement.pdf", target: "_blank" %>
+              <% end %>
+              <p class="muted text-sm m-0 mt-1">
+                If unchecked, the uploaded PDF is used as the entire contract, so it must contain a <%= link_to "DocuSeal signature tag", "https://www.docuseal.com/guides/use-embedded-text-field-tags-in-the-pdf-to-create-a-fillable-form", target: "_blank" %> for each of the Organizer, Contractor, and HCB roles (e.g. <code>{{Signature;type=signature;role=HCB}}</code>) or DocuSeal will reject the submission.
+              </p>
+            </div>
           </div>
         </div>
 
-        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
           <% if editing %>
             Save changes
             <%= inline_icon "checkmark" %>

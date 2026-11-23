@@ -1,9 +1,28 @@
 import { Controller } from '@hotwired/stimulus'
+import swal from 'sweetalert'
 
 export default class extends Controller {
+  // `label`: the part of the button to swap for the confirm text, where
+  // replacing the whole button would drop its icon.
+  static targets = ['label']
+
   static values = {
     text: String,
     confirmText: String,
+    shareText: String,
+  }
+
+  // Hand the current URL to the OS share sheet, falling back to the clipboard on
+  // browsers without one.
+  share(e) {
+    e.preventDefault()
+
+    try {
+      navigator.share({ text: this.shareTextValue, url: window.location.href })
+    } catch {
+      navigator.clipboard.writeText(window.location.href)
+      swal('Copied!', 'URL copied to clipboard.', 'success')
+    }
   }
 
   copy(e) {
@@ -22,11 +41,12 @@ export default class extends Controller {
     }
 
     if (this.hasConfirmTextValue) {
-      const previousText = button.innerText
-      button.innerText = this.confirmTextValue
+      const label = this.hasLabelTarget ? this.labelTarget : button
+      const previousText = label.innerText
+      label.innerText = this.confirmTextValue
 
       setTimeout(() => {
-        button.innerText = previousText
+        label.innerText = previousText
       }, 1500)
     }
   }

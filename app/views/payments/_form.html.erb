@@ -14,7 +14,7 @@
     <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
   <% end %>
 
-  <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
+  <div>
     <% unless disabled && payee.nil? %>
       <% if editing %>
         <div data-scroll-seek-target="section">
@@ -29,7 +29,7 @@
         </div>
       <% else %>
         <%= render "payees/recipient_section", event:, payee:, destination: "payments",
-              manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
+              manual_title: "Manual", manual_subtitle: "Payment details entered directly" %>
       <% end %>
     <% end %>
 
@@ -38,13 +38,18 @@
         <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
-        <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
 
         <div id="payment-details" data-scroll-seek-target="section">
           <h3 class="mb-2">Payment details</h3>
           <div class="card mb-4 flex flex-col gap-3">
             <div class="flex justify-between items-center">
-              <%= form.label :amount, "Amount" %>
+              <%= form.label :amount, class: "flex items-center gap-1" do %>
+                Amount
+                <span class="info tooltipped tooltipped--e inline-flex" aria-label="In USD. Additional fees may be charged for <%= event.minimum_wire_amount_cents > 100 ? "wire or " : "" %>Wise transfers">
+                  <%= inline_icon "info", size: 20 %>
+                </span>
+              <% end %>
+
               <div class="flex items-center">
                 <div class="input flex gap-2 items-center py-0">
                   <span class="bold muted">$</span>
@@ -58,10 +63,16 @@
               <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
               <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
             </div>
+
+            <div class="field">
+              <%= form.label :classification %>
+              <span class="muted mb-1 block">Used for tax purposes.</span>
+              <%= form.select :classification, Payment.classifications.map { |k, v| [k.humanize, v] }, { selected: "general_services" }, class: "!max-w-full" %>
+            </div>
           </div>
         </div>
 
-        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+        <div data-scroll-seek-target="section" <% unless manual %> hidden<% end %>>
           <h3 class="mb-2">Payout method</h3>
           <% if existing_payout_method %>
             <details class="card mb-4 p-0 overflow-hidden">
@@ -84,14 +95,9 @@
             </details>
           <% else %>
             <div class="card mb-4 flex flex-col gap-3">
-              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method", required: manual %>
             </div>
           <% end %>
-        </div>
-
-        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-          <h3 class="mb-2">Tax information</h3>
-          <div class="card mb-4 p-20"></div>
         </div>
 
         <div data-scroll-seek-target="section">
@@ -101,7 +107,7 @@
           </div>
         </div>
 
-        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+        <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <% if disabled %> disabled<% end %>>
           Send payment
           <%= inline_icon "send" %>
         </button>

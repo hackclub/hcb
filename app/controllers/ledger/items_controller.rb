@@ -7,14 +7,31 @@ class Ledger
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
-      # Non-engineers see the user-facing HCB code page rather than the raw
+      # Non-auditors see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
-      unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
+      unless auditor_signed_in?
         skip_authorization
-        return redirect_to hcb_code_path(@item.hcb_code)
+        return not_found if @item.hcb_code.nil?
+
+        return redirect_to hcb_code_path(@item.hcb_code, reverse: params[:reverse].presence)
+      end
+
+      @reverse_receipt_id = params[:reverse]
+
+      if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
+        # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
+        @show_ach_details = true
       end
 
       authorize @item
+
+      if params[:frame]
+        @frame = true
+        render :show, layout: false
+      else
+        @frame = false
+        render :show
+      end
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They
       # used to also live at `/transactions/*`
@@ -30,6 +47,18 @@ class Ledger
       authorize @item
 
       redirect_to hcb_code_path(@item.hcb_code)
+    end
+
+    def dispute
+      authorize @item
+
+      can_dispute, error_reason = Ledger::Item::CanDispute.new(ledger_item: @item).run
+
+      if can_dispute
+        redirect_to helpers.disputed_transactions_airtable_form_url(ledger_item: @item, user: current_user), allow_other_host: true
+      else
+        redirect_back fallback_location: @item, flash: { error: error_reason }
+      end
     end
 
     def pin
@@ -72,6 +101,31 @@ class Ledger
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
     end
 
+    def toggle_tag
+      tag = Tag.find(params[:tag_id])
+      @event = tag.event
+
+      authorize tag
+      raise Pundit::NotAuthorizedError unless policy(@item).toggle_tag?(tag)
+
+      removed = false
+      if @item.tags.exists?(tag.id)
+        removed = true
+        @item.tags.destroy(tag)
+      else
+        suppress(ActiveRecord::RecordNotUnique) do
+          @item.tags << tag
+        end
+      end
+
+      respond_to do |format|
+        format.turbo_stream do
+          render partial: (removed ? "tags/destroy" : "tags/create"), locals: { item: @item, tag: }
+        end
+        format.any { redirect_back fallback_location: @event }
+      end
+    end
+
     def invoice_as_personal_transaction
       authorize @item
 
@@ -82,9 +136,9 @@ class Ledger
         return redirect_to personal_tx.invoice
       end
 
-      if @item.personal_transaction.present?
+      if (existing = @item.reload_personal_transaction)
         flash[:error] = "A repayment invoice already exists for this transaction."
-        redirect_to @item.personal_transaction.invoice
+        redirect_to existing.invoice
       else
         flash[:error] = personal_tx.errors.full_messages.to_sentence
         redirect_to @item.hcb_code

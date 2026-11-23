@@ -8,13 +8,19 @@ module Api
       included do
         private
 
-        def paginate_cursor(list, &block)
+        def pagination_limit
           limit = params[:limit]&.to_i || 25
-          return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
+          raise ArgumentError, "Limit is capped at 100. '#{params[:limit]}' is invalid." if limit > 100
+
+          limit
+        end
+
+        def paginate_cursor(list, &block)
+          limit = pagination_limit
 
           start_index = if params[:after]
                           index = list.index { |item| block.call(item) == params[:after] }
-                          return render json: { error: "invalid_operation", messages: ["After parameter '#{params[:after]}' not found"] }, status: :bad_request if index.nil?
+                          raise ArgumentError, "After parameter '#{params[:after]}' not found" if index.nil?
 
                           index + 1
                         else

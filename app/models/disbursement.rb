@@ -15,6 +15,7 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
 #  destination_subledger_id            :bigint
@@ -88,6 +89,7 @@ class Disbursement < ApplicationRecord
     event :mark_errored do
       after do
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayment&.revert_categories!
       end
       transitions from: [:pending, :in_transit], to: :errored
     end
@@ -96,6 +98,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayment&.revert_categories!
         create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
       transitions from: [:scheduled, :reviewing, :pending], to: :rejected
@@ -121,6 +124,13 @@ class Disbursement < ApplicationRecord
   def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
+  has_one :repayment, dependent: :destroy, autosave: true, inverse_of: :disbursement
+  has_many :repaid_ledger_items, through: :repayment
+
+  # What the transfer is for. Decides how each side is categorized. Nil only
+  # on transfers made before types existed.
+  enum :transfer_type, { transfer: "transfer", repayment: "repayment", payment: "payment" }, prefix: true, validate: { allow_nil: true }
+  validates :transfer_type, presence: true, on: :create
 
   validates_presence_of :source_event_id,
                         :event_id,
@@ -128,6 +138,7 @@ class Disbursement < ApplicationRecord
                         :name
 
   validates :amount, numericality: { greater_than: 0 }
+  validate :repayment_allocations_match_amount, if: :transfer_type_repayment?
   validate :events_are_different
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
@@ -176,6 +187,13 @@ class Disbursement < ApplicationRecord
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.destination_event }, event_id: proc { |controller, record| record.source_event.id }, only: [:create]
+
+  # Fronting lets the destination spend a transfer before it settles. Only
+  # front transfers into an organization the requester manages, so an
+  # unsolicited transfer can't raise its balance before an admin reviews it.
+  def self.frontable?(source_event:, destination_event:, requested_by:)
+    source_event.plan.front_disbursements_enabled? && OrganizerPosition.role_at_least?(requested_by, destination_event, :manager)
+  end
 
   def approve_by_admin(user)
     # Don't check admin transfer limits for card grants. This method is also
@@ -268,6 +286,12 @@ class Disbursement < ApplicationRecord
   end
 
   private
+
+  def repayment_allocations_match_amount
+    unless repayment && repayment.allocations.reject(&:marked_for_destruction?).sum { |allocation| allocation.amount_cents.to_i } == amount
+      errors.add(:amount, "must match the selected transaction total. Review your selection and try again.")
+    end
+  end
 
   def events_are_different
     self.errors.add(:event, "must be different than source event") if event_id == source_event_id && destination_subledger_id == source_subledger_id

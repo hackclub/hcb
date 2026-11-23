@@ -1,6 +1,6 @@
 # IntraFi and SVB Sweep account
 
-Column is our main bank account, however, it has a low interest rate (APY). As a
+Column is our main bank account; however, it has a low interest rate (APY). As a
 result, we sweep 🧹 excess money to IntraFi to earn a higher interest rate.
 
 Our IntraFi account is managed through SVB. Every day, SVB will push/pull money
@@ -16,21 +16,21 @@ The memos of these transactions look like:
 
 ## Bank Transactions (from IntraFi's perspective)
 
-IntraFi's ICS (IntraFi Cash Sweep) dashboard, provides a 45-day transaction
+IntraFi's ICS (IntraFi Cash Sweep) dashboard provides a 45-day transaction
 history. Types of transactions include:
 
 - `Deposit`: Money came in from SVB
 - `Withdrawal`: Money went out to SVB
 - `Interest Capitalization`: oooh, free money! 🤑
 
-What's "Interest Capitalization" you ask? well, read on 📖
+What's "Interest Capitalization" you ask? Well, read on 📖
 
 ## Interest Accrual & Capitalization
 
-IntraFi's interest rate fluctuates. As of time of writing (2025-01-14), our APY
+IntraFi's interest rate fluctuates. As of the time of writing (2025-01-14), our APY
 is 3.35%; down from 3.55% in 2024-12-18. Interest is accrued based on our
 **IntraFi Principal Balance**. This is the amount of money that's currently in our
-IntraFi account; which excludes any interest that's been accrued but not yet
+IntraFi account, which excludes any interest that's been accrued but not yet
 paid out.
 
 On the last day of each month, IntraFi pays out the accrued interest via an
@@ -39,9 +39,9 @@ interest from that month and adds it to our **IntraFi Principal Balance**.
 
 ## Transaction Syncing to HCB
 
-Usually, we sync all of Hack Club's active bank account into HCB. However,
+Usually, we sync all of Hack Club's active bank accounts into HCB. However,
 IntraFi is the one exception. IntraFi unfortunately doesn't play well with Plaid.
-Therefore, we sync IntraFi's transactions into this HCB manually. IntraFi
+Therefore, we sync IntraFi's transactions into HCB manually. IntraFi
 provides a CSV export with the following headings: `Date`, `Account Activity`,
 `Amount`, and `Balance`. Each row represents a transaction and should be
 imported as a [`RawIntrafiTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/raw_intrafi_transaction.rb):

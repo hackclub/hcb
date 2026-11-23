@@ -88,12 +88,17 @@ RSpec.describe Payment::Attempt, type: :model do
     end
 
     describe "#mark_sent!" do
+      let(:ledger_amount_cents) { -attempt.payment.amount_cents }
+      let(:payout) { AchTransfer.new }
+
       before do
         attempt.save!
         attempt.update_columns(aasm_state: "under_review")
         # The mark_sent after block calls payment.mark_sent!; stub it so we
         # don't have to put the payment into under_review state as well.
         allow(attempt.payment).to receive(:mark_sent!)
+        allow(payout).to receive(:ledger_item).and_return(double("ledger_item", amount_cents: ledger_amount_cents))
+        allow(attempt).to receive(:payout).and_return(payout)
       end
 
       it "transitions to sent" do
@@ -104,6 +109,31 @@ RSpec.describe Payment::Attempt, type: :model do
       it "calls mark_sent! on the parent payment" do
         expect(attempt.payment).to receive(:mark_sent!)
         attempt.mark_sent!
+      end
+
+      it "does not send the fee email when there is no fee" do
+        expect(Payment::AttemptMailer).not_to receive(:with)
+        attempt.mark_sent!
+      end
+
+      it "does not send the fee email for a non-Wise payout that cost more than the payment amount" do
+        allow(payout.ledger_item).to receive(:amount_cents).and_return(-(attempt.payment.amount_cents + 5_00))
+        expect(Payment::AttemptMailer).not_to receive(:with)
+        attempt.mark_sent!
+      end
+
+      context "when a Wise transfer cost more than the payment amount" do
+        subject(:attempt) { build(:payment_attempt, :wise) }
+
+        let(:payout) { WiseTransfer.new }
+        let(:ledger_amount_cents) { -(attempt.payment.amount_cents + 5_00) }
+
+        it "sends the fee email with the difference" do
+          mail = double("mail", deliver_later: true)
+          expect(Payment::AttemptMailer).to receive(:with).with(attempt:, fee: 5_00).and_return(double(sent_with_fee: mail))
+          attempt.mark_sent!
+          expect(mail).to have_received(:deliver_later)
+        end
       end
     end
 
@@ -206,11 +236,107 @@ RSpec.describe Payment::Attempt, type: :model do
     end
   end
 
+  describe "after_create create_transfer! with a real transfer" do
+    let(:payment) { create(:payment) }
+    let(:payout_method) { create(:legal_entity_payout_method) }
+
+    def create_attempt
+      attempt = Payment::Attempt.new(payment:, payout_method:)
+      allow(attempt).to receive(:legal_entity_payable)
+      allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
+      attempt.save!
+      attempt
+    end
+
+    before do
+      allow(Payment::AttemptMailer).to receive(:with).and_return(double.as_null_object)
+      allow(PaymentMailer).to receive(:with).and_return(double.as_null_object)
+      allow(ColumnService).to receive(:get).and_return({ "full_name" => "Test Bank" })
+      allow(Rails.error).to receive(:report)
+    end
+
+    context "when the transfer is created successfully" do
+      before { allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_000) }
+
+      it "links the transfer and the attempt" do
+        attempt = create_attempt
+        transfer = attempt.reload.payout
+
+        expect(transfer).to be_a(AchTransfer)
+        expect(transfer.reload.payment_attempt).to eq(attempt)
+        expect(attempt).to be_under_review
+      end
+
+      it "copies the payment's receipts onto the transfer's ledger item once everything has committed" do
+        ReceiptService::Create.new(
+          receiptable: payment,
+          uploader: payment.creator,
+          attachments: [file_fixture("receipt.png")],
+          upload_method: :payment_page
+        ).run!
+
+        # Attempts are created inside their callers' transactions, before the
+        # transfer's ledger item exists.
+        attempt = nil
+        ActiveRecord::Base.transaction do
+          attempt = create_attempt
+          expect(Receipt.where(receiptable: payment).count).to eq(1)
+          expect(Receipt.count).to eq(1)
+        end
+
+        hcb_code = attempt.reload.payout.local_hcb_code.reload
+        expect(hcb_code.ledger_item).to be_present
+        expect(hcb_code.ledger_item.receipts.count).to eq(1)
+        expect(Receipt.where(receiptable: hcb_code)).to be_empty
+      end
+    end
+
+    context "when building the transfer raises" do
+      before { allow(payout_method).to receive(:create_transfer).and_raise(StandardError, "boom") }
+
+      it "persists the attempt as failed without a payout" do
+        attempt = create_attempt
+
+        expect(attempt).to be_persisted
+        expect(attempt.reload).to be_failed
+        expect(attempt.payout).to be_nil
+        expect(payment.attempts.reload).to eq([attempt])
+      end
+    end
+
+    context "when the transfer fails validation" do
+      before { allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(0) }
+
+      it "persists the attempt as failed without a payout" do
+        attempt = create_attempt
+
+        expect(attempt.reload).to be_failed
+        expect(attempt.payout).to be_nil
+        expect(AchTransfer.count).to eq(0)
+      end
+    end
+
+    context "when a step after saving the transfer raises" do
+      before do
+        allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(1_000_000)
+        allow_any_instance_of(Payment::Attempt).to receive(:mark_under_review!).and_raise(StandardError, "boom")
+      end
+
+      it "rolls back the transfer and persists the attempt as failed" do
+        expect { @attempt = create_attempt }.not_to change(AchTransfer, :count)
+
+        expect(@attempt.reload).to be_failed
+        expect(@attempt.payout).to be_nil
+        expect(payment.reload).to be_pending_legal_entity
+      end
+    end
+  end
+
   describe "after_create create_transfer!" do
     # These tests exercise the branching on payout_method.details type.
     # We call create_transfer! directly to avoid triggering Rails' save
-    # machinery on association doubles. We stub `safely` to be a no-op so
-    # external-service calls inside each branch are skipped.
+    # machinery on association doubles. We stub payout_method.create_transfer
+    # so external-service calls inside each branch are skipped.
 
     def build_attempt_with_payout_method(payout_method)
       attempt = build(:payment_attempt)
@@ -220,9 +346,13 @@ RSpec.describe Payment::Attempt, type: :model do
       payment_double = double("payment").as_null_object
       allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_double)
-      # Make safely a no-op so external-service calls inside each branch are
-      # skipped; we only care that mark_under_review! is called at the end.
-      allow(attempt).to receive(:safely)
+      # Stub the external-service boundary directly so each branch skips real
+      # API calls; we only care that mark_under_review! is called at the end.
+      transfer_double = double("transfer", save!: true, "payment_attempt=": nil, reload_ledger_item: double("ledger_item"))
+      allow(payout_method).to receive(:create_transfer).and_return(transfer_double)
+      allow(attempt).to receive(:payout=)
+      allow(attempt).to receive(:save!)
+      allow(Receipt).to receive(:reupload)
       attempt
     end
 
@@ -262,7 +392,7 @@ RSpec.describe Payment::Attempt, type: :model do
       end
     end
 
-    it "calls Receipt.reupload to transfer payment receipts to the new transfer's hcb_code" do
+    it "calls Receipt.reupload to transfer payment receipts to the new transfer's ledger item after the transaction commits" do
       payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
       attempt = build(:payment_attempt)
       allow(attempt).to receive(:create_transfer!).and_call_original
@@ -272,8 +402,8 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:payout=)
 
       payee_dbl = double("payee", display_name: "Alice", email: "alice@example.com")
-      hcb_code  = double("hcb_code")
-      check     = double("check", save!: nil, local_hcb_code: hcb_code)
+      ledger_item = double("ledger_item")
+      check = double("check", save!: nil, "payment_attempt=": nil, reload_ledger_item: ledger_item)
       checks_rel = double("checks_rel", build: check)
       event_dbl  = double("event", increase_checks: checks_rel)
       payment_dbl = double("payment",
@@ -287,7 +417,7 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:payment).and_return(payment_dbl)
 
       allow(User).to receive(:system_user).and_return(double("system_user"))
-      expect(Receipt).to receive(:reupload).with(old_receiptable: payment_dbl, new_receiptable: hcb_code)
+      expect(Receipt).to receive(:reupload).with(old_receiptable: payment_dbl, new_receiptable: ledger_item)
       attempt.send(:create_transfer!)
     end
   end

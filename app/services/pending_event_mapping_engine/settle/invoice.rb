@@ -26,9 +26,9 @@ module PendingEventMappingEngine
             # 2.b special case if invoice is quite old & now results
             # cts = event.canonical_transactions.where("memo ilike '%DONAT% #{prefix[0]}%'") if cts.count < 1 && invoice.created_at < Time.utc(2020, 1, 1) # shorter prefix. see  id 1 for example.
 
-            next if cts.count < 1 # no match found yet. not processed.
+            next if cts.empty? # no match found yet. not processed.
 
-            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.many?
             ct = cts.first
 
             # 3. mark no longer pending
@@ -60,7 +60,7 @@ module PendingEventMappingEngine
               next
             end
 
-            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.count > 1
+            Rails.error.unexpected("matched more than 1 canonical transaction for canonical pending transaction #{cpt.id}") if cts.many?
             ct = cts.first
 
             # this code is dangerous: https://hackclub.slack.com/archives/C047Y01MHJQ/p1748710247626659

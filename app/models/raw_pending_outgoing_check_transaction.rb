@@ -37,10 +37,6 @@ class RawPendingOutgoingCheckTransaction < ApplicationRecord
 
   private
 
-  def raw_memo
-    check.memo
-  end
-
   def raw_name
     check.lob_address.name
   end

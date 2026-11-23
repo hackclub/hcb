@@ -1,10 +1,10 @@
-<%= turbo_frame_tag "link_modal_#{@receiptable.id}" do %>
+<%= turbo_frame_tag dom_id(@receiptable, :link_modal) do %>
   <%= form_with url: link_receipts_path, method: :post, class: "relative", data: {
         controller: "receipt-select",
         turbo: @streams
       } do |form| %>
     <% if @receipts.empty? %>
-      <%= blankslate "Receipt Bin is empty." %>
+      <%= blankslate "Receipt Bin is empty" %>
     <% else %>
       <div class="receipt__search mb3 m0 p0">
         <input data-receipt-select-target="search" data-action="keyup->receipt-select#search" placeholder="Search" style="max-width: none;" type="text" id="q">
@@ -29,16 +29,19 @@
         <% end %>
       </ul>
 
-      <%= blankslate "No receipts found.", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
+      <%= blankslate "No receipts found", class: "mt3 mb5", data: { "receipt-select-target": "noResults" }, style: "display: none;" %>
     <% end %>
 
-    <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
+    <% popover = defined?(@popover) && @popover %>
+    <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 <%= "mt2" if popover %>" style="<%= "border-top: none;" if popover %>">
       <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
         Manage receipts
       <% end %>
       <%= form.submit "Add to transaction", class: "btn bg-success", style: "transition: 0.2s all;", data: {
-            "receipt-select-target" => "confirm"
-          }, onclick: "$.modal.close()", disabled: true %>
+            "receipt-select-target": "confirm",
+            controller: "turbo-frame-modal",
+            action: "turbo-frame-modal#close"
+          }, disabled: true %>
 
     </footer>
 

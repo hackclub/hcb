@@ -27,6 +27,10 @@ class Announcement
       include HasFlexibleStartDate
       include HasEndDate
 
+      def partial_name
+        "top_spenders"
+      end
+
       delegate :empty?, to: :users
 
       def custom_locals

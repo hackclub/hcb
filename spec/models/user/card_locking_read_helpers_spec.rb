@@ -32,21 +32,21 @@ RSpec.describe User do
   describe "#card_locking_overdue_charges" do
     it "includes a charge past its deadline with no resolution" do
       hc = create_settled_card_charge(user:, settled_at: 2.days.ago)
-      hc.update!(receipt_due_at: 1.day.ago, receipt_resolved_at: nil)
+      hc.update!(receipt_due_at: 1.day.ago)
 
       expect(user.card_locking_overdue_charges(now:)).to include(hc)
     end
 
     it "excludes a charge that is not yet due" do
       hc = create_settled_card_charge(user:, settled_at: 2.days.ago)
-      hc.update!(receipt_due_at: 1.day.from_now, receipt_resolved_at: nil)
+      hc.update!(receipt_due_at: 1.day.from_now)
 
       expect(user.card_locking_overdue_charges(now:)).not_to include(hc)
     end
 
     it "excludes a resolved charge" do
       hc = create_settled_card_charge(user:, settled_at: 2.days.ago)
-      hc.update!(receipt_due_at: 1.day.ago, receipt_resolved_at: 1.hour.ago)
+      hc.update!(receipt_due_at: 1.day.ago, marked_no_or_lost_receipt_at: 1.hour.ago)
 
       expect(user.card_locking_overdue_charges(now:)).not_to include(hc)
     end
@@ -55,21 +55,21 @@ RSpec.describe User do
   describe "#card_locking_has_approaching_charge?" do
     it "is true when a charge is due within the warning lead time" do
       hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_due_at: 1.day.from_now, receipt_resolved_at: nil)
+      hc.update!(receipt_due_at: 1.day.from_now)
 
       expect(user.card_locking_has_approaching_charge?(now:)).to eq(true)
     end
 
     it "is true when a charge is already overdue" do
       hc = create_settled_card_charge(user:, settled_at: 8.days.ago)
-      hc.update!(receipt_due_at: 1.day.ago, receipt_resolved_at: nil)
+      hc.update!(receipt_due_at: 1.day.ago)
 
       expect(user.card_locking_has_approaching_charge?(now:)).to eq(true)
     end
 
     it "is false when the only outstanding charge is still fresh" do
       hc = create_settled_card_charge(user:, settled_at: 1.hour.ago)
-      hc.update!(receipt_due_at: 6.days.from_now, receipt_resolved_at: nil)
+      hc.update!(receipt_due_at: 6.days.from_now)
 
       expect(user.card_locking_has_approaching_charge?(now:)).to eq(false)
     end

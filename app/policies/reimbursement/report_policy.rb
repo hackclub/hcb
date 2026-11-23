@@ -47,10 +47,16 @@ module Reimbursement
     # on each expense, stale reviewer_id, etc.). The intended long-term
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
+    #
+    # Exception: the creator of a still-eventless report (email, SMS, Discord)
+    # may place it on any event they could `create?` a report on. `persisted?`
+    # keeps the unsaved-report path in ExpensesController#update manager-only.
     def change_event?
       return false if record.card_grant_id.present?
+      return true if admin || manager
 
-      admin || manager
+      creator && record.persisted? && record.event_id_in_database.nil? &&
+        (record.event ? create? : record.event_id.nil?)
     end
 
     def submit?
@@ -73,7 +79,7 @@ module Reimbursement
       (admin || manager) && open
     end
 
-    def approve_all_expenses?
+    def approve?
       (admin || (manager && !creator)) && open
     end
 
@@ -105,6 +111,22 @@ module Reimbursement
       ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
     end
 
+    # ReportsController#update drops maximum_amount unless this allows it.
+    def set_maximum_amount?
+      (admin || manager) && details_editable
+    end
+
+    # ReportsController#update drops reviewer_id unless this or
+    # #set_own_reviewer? allows it.
+    def set_reviewer?
+      admin || manager
+    end
+
+    # Card grant recipients may pick their own reviewer.
+    def set_own_reviewer?
+      creator && record.reviewer_assignable_by_creator? && details_editable
+    end
+
     private
 
     def admin
@@ -133,6 +155,10 @@ module Reimbursement
 
     def unlocked
       !record.locked?
+    end
+
+    def details_editable
+      record.draft? || record.submitted?
     end
 
   end

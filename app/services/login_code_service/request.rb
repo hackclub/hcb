@@ -52,6 +52,10 @@ module LoginCodeService
         return { error: "You're requesting too many login codes. Please try again later.", method: :email }
       end
 
+      # Only the newest code works. Otherwise every resend adds another valid
+      # code, and each guess has that many more chances of matching one.
+      user.login_codes.active.update_all(used_at: Time.current)
+
       login_code = user.login_codes.create(
         ip_address: @ip_address,
         user_agent: @user_agent

@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= link_to event_feed_path(@event, format: :atom), class: "pop tooltipped tooltipped--s", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
   <%= inline_icon "rss", size: 30 %>
 <% end %>

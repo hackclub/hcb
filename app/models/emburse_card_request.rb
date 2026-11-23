@@ -76,19 +76,6 @@ class EmburseCardRequest < ApplicationRecord
     :pending
   end
 
-  def shipping_address_full
-    # NOTE: when HCB was first written, EmburseCardRequest had a single field for
-    # address. We later switched to a more structured address format
-    # (street_one, street_two, city, state, zip) but this method wraps both
-    # for backwards compatibility.
-    if shipping_address.blank?
-      street_two = shipping_address_street_two ? "#{shipping_address_street_two}\n" : ""
-      "#{shipping_address_street_one}\n#{street_two}#{shipping_address_city}, #{shipping_address_state} #{shipping_address_zip}"
-    else
-      shipping_address
-    end
-  end
-
   def under_review?
     rejected_at.nil? && canceled_at.nil? && accepted_at.nil?
   end

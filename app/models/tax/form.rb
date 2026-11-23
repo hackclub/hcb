@@ -20,10 +20,12 @@
 #  form_type                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
+#  source                         :string           default("taxbandits"), not null
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
 #  tin_type                       :string
+#  tin_verified                   :boolean          default(FALSE), not null
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
@@ -31,9 +33,11 @@
 #
 # Indexes
 #
-#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
-#  index_tax_forms_on_tin_hash         (tin_hash)
+#  index_tax_forms_on_legal_entity_id            (legal_entity_id)
+#  index_tax_forms_on_tin_hash                   (tin_hash)
+#  index_tax_forms_unique_live_tax1099_tin_hash  (tin_hash) UNIQUE WHERE (((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))
 #
+
 module Tax
   class Form < ApplicationRecord
     include AASM
@@ -49,8 +53,12 @@ module Tax
     belongs_to :legal_entity
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
+    enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
+
+    # External service describes what service the form is currently linked to
+    # Source describes where the data initially came from
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
-    enum :entity_type, { person: "person", business: "business" }, prefix: :entity
+    enum :source, { taxbandits: "taxbandits", tax1099: "tax1099", manual: "manual" }
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[
@@ -65,6 +73,7 @@ module Tax
       invalid
       bounced
       order_not_created
+      expired
     ].index_with(&:itself), prefix: :taxbandits
 
     enum :taxbandits_tin_matching_status, %w[
@@ -84,23 +93,27 @@ module Tax
       mark_completed! if may_mark_completed?
     end
 
+    # tin_verified is what payability reads (LegalEntity#pending_payable_requirements).
+    # For a form collected through TaxBandits it follows TaxBandits' TIN match.
+    # Tax1099 imports are never TIN-matched, so their status never changes:
+    # Tax1099ImportService sets tin_verified from the admin's answer when it
+    # creates them, without going through the match-status emails below.
+    before_save if: :will_save_change_to_taxbandits_tin_matching_status? do
+      self.tin_verified = taxbandits_tin_match_success?
+    end
+
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
+      Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
+
       legal_entity.refresh_pending_contractors_payments!
     end
 
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed) } do
+      Tax::FormMailer.with(form: self).verification_failed.deliver_later if legal_entity.requires_tax_verification?
+    end
+
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      # Locked: a legal entity's TIN can never change once set, and two forms
-      # completing concurrently would otherwise both see a nil hash and race.
-      #
-      # A form whose entity type disagrees with the legal entity's is a filing
-      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
-      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
-      # flags it and the payee is prompted to discard it.
-      legal_entity.with_lock do
-        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
-          legal_entity.update!(tin_hash:)
-        end
-      end
+      adopt_tin_hash_on_legal_entity!
     end
 
     aasm timestamps: true do
@@ -119,6 +132,7 @@ module Tax
         after do
           import_taxbandits_data if sent_with_taxbandits?
 
+          Tax::FormMailer.with(form: self).completed.deliver_later
           legal_entity.refresh_pending_contractors_payments!
         end
       end
@@ -147,6 +161,27 @@ module Tax
       mark_sent!
     end
 
+    # Gives the legal entity this form's TIN identity, if it has none yet. Runs
+    # when a form's tin_hash is first set; Tax1099ImportService, which creates
+    # its forms with a tin_hash already set, calls it once TaxBandits has
+    # accepted the form, so a TIN TaxBandits rejects never reaches the entity.
+    def adopt_tin_hash_on_legal_entity!
+      return if tin_hash.nil?
+
+      # Locked: a legal entity's TIN can never change once set, and two forms
+      # completing concurrently would otherwise both see a nil hash and race.
+      #
+      # A form whose entity type disagrees with the legal entity's is a filing
+      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
+      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
+      # flags it and the payee is prompted to discard it.
+      legal_entity.with_lock do
+        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
+          legal_entity.update!(tin_hash:)
+        end
+      end
+    end
+
     def sync_with_taxbandits
       # A manually entered form has no certificate at TaxBandits to sync against.
       return unless sent_with_taxbandits?
@@ -169,6 +204,8 @@ module Tax
         tin_match_status = form_hash["TINMatching"]&.[]("Status")
       else
         status_response = TaxbanditsService.get_status(public_id)
+        return if status_response.nil?
+
         form_status = status_response["FormStatus"]
         tin_match_status = status_response["TINMatching"]&.[]("Status")
       end
@@ -220,6 +257,50 @@ module Tax
       queries["whid"].first
     end
 
+    # Returns the raw bytes of the completed form PDF.
+    # This should only be used in Tax::FormsController#download.
+    def pdf_content
+      submission = begin
+        remote_taxbandits_submission
+      rescue
+        nil
+      end
+
+      return nil if submission.nil?
+
+      self.class.taxbandits_pdf(submission)
+    end
+
+    class << self
+      # The PDF TaxBandits generated for a submission, or nil if there isn't one yet.
+      def taxbandits_pdf(submission)
+        submission_form_type = submission["FormType"]
+        pdf_url = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]["PdfUrl"]
+
+        return nil if pdf_url.blank?
+
+        object_key = URI.parse(pdf_url).path.delete_prefix("/")
+
+        taxbandits_s3_bucket.object(object_key).get(
+          sse_customer_algorithm: "AES256",
+          sse_customer_key: Base64.strict_decode64(Credentials.fetch(:TAXBANDITS, :PDF_KEY))
+        ).body.read
+      end
+
+      private
+
+      def taxbandits_s3_bucket
+        Aws::S3::Resource.new(
+          region: "us-east-1",
+          credentials: Aws::Credentials.new(
+            Credentials.fetch(:TAXBANDITS, :S3_ACCESS_KEY_ID),
+            Credentials.fetch(:TAXBANDITS, :S3_SECRET_ACCESS_KEY)
+          )
+        ).bucket(Credentials.fetch(:TAXBANDITS, :S3_BUCKET))
+      end
+
+    end
+
     private
 
     # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside
@@ -264,16 +345,7 @@ module Tax
 
       return if address.blank?
 
-      us_tin, foreign_tin = case submission_form_type
-                            when "FormW9"
-                              [form_data["TIN"], nil]
-                            when "FormW8BEN"
-                              [form_data["USTIN"], form_data["ForeignTIN"]]
-                            when "FormW8ECI"
-                              [form_data["TIN"], form_data["ForeignTIN"]]
-                            when "FormW8BENE", "FormW8IMY", "FormW8EXP"
-                              [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
-                            end
+      us_tin, foreign_tin = submission_tins(submission_form_type, form_data)
 
       entity_type = entity_type_from(submission_form_type, form_data)
       tin, tin_type, country = identify_tin(us_tin, foreign_tin, entity_type, submission_form_type, form_data)
@@ -307,10 +379,31 @@ module Tax
       raise ImportError, "failed to import TaxBandits data for #{public_id} (#{e.class})", cause: nil
     end
 
+    def submission_tins(submission_form_type, form_data)
+      case submission_form_type
+      when "FormW9"
+        [form_data["TIN"], nil]
+      when "FormW8BEN"
+        [form_data["USTIN"], form_data["ForeignTIN"]]
+      when "FormW8ECI"
+        [form_data["TIN"], form_data["ForeignTIN"]]
+      when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+        [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
+      else
+        [nil, nil]
+      end
+    end
+
     def entity_type_from(submission_form_type, form_data)
       case submission_form_type
       when "FormW9"
-        form_data["TINType"] == "SSN" ? :person : :business
+        if form_data["FederalTaxClassification"]&.downcase&.include?("corporation")
+          :corporation
+        elsif form_data["TINType"] == "SSN"
+          :person
+        else
+          :business
+        end
       when "FormW8BEN"
         :person
       when "FormW8ECI"

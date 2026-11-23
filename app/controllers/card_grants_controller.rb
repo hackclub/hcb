@@ -17,6 +17,11 @@ class CardGrantsController < ApplicationController
   def card_index
     authorize @event, :card_grant_overview?
 
+    unless turbo_frame_request?
+      redirect_to event_card_grant_overview_path(@event, request.query_parameters)
+      return
+    end
+
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
@@ -24,8 +29,21 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = safe_per(20)
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
-    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    status_options = CardGrant::FILTERABLE_STATES.map { |state, label| [label, state] }
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: status_options }
+    ]
+    @has_filter = CardGrant::FILTERABLE_STATES.key?(params[:status])
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :ledger, :reimbursement_report).order(created_at: :desc)
+    if params[:q].present?
+      @card_grants = if organizer_signed_in?
+                       @card_grants.search(params[:q])
+                     else
+                       @card_grants.public_search(params[:q])
+                     end
+    end
+    @card_grants = @card_grants.filter_by_state(params[:status])
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
@@ -40,12 +58,8 @@ class CardGrantsController < ApplicationController
 
     @per = safe_per(25)
     @table_only = true
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      @ledger = @event.ledger
-      @items = ledger_query.execute(ledgers: @ledgers)
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
-      @items = @items.page(params[:page]).per(@per)
-    end
+    @ledger = @event.ledger
+    @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
   end
 
   def new
@@ -56,6 +70,8 @@ class CardGrantsController < ApplicationController
     @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
+    @card_grant.purpose = params[:purpose].to_s.first(CardGrant::MAXIMUM_PURPOSE_LENGTH) if params[:purpose]
+    @card_grant.instructions = params[:instructions] if params[:instructions]
   end
 
   def create
@@ -126,18 +142,14 @@ class CardGrantsController < ApplicationController
     authorize @event, :bulk_upload_card_grants?
 
     csv_content = CSV.generate do |csv|
-      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
-      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+      csv << %w[email amount_cents purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "Please only purchase pizza for the meeting.", "false", "false", "Thanks for your help!", "", "", "", "", ""]
     end
 
     send_data csv_content,
               filename: "card_grants_template.csv",
               type: "text/csv",
               disposition: "attachment"
-  end
-
-  def edit_overview
-    authorize @card_grant
   end
 
   def edit_purpose
@@ -194,14 +206,14 @@ class CardGrantsController < ApplicationController
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
 
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def clear_purpose
     authorize @card_grant, :update?
     @card_grant.update!(purpose: nil)
     flash[:success] = "Purpose has been successfully cleared!"
-    redirect_to card_grant_url(@card_grant)
+    redirect_to card_grant_path(@card_grant)
   end
 
   def show
@@ -219,19 +231,15 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card_grant.visible_hcb_codes
 
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      @per = safe_per(25)
-      @table_only = true
-      @ledger = @card_grant.ledger
-      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
-    end
+    @per = safe_per(25)
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     render :show, layout: !@frame
 
@@ -244,15 +252,13 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.local_hcb_codes
 
     @per = safe_per(25)
     @table_only = true
     @ledger = @card_grant.ledger
-    @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     if organizer_signed_in? && !@frame
       # If trying to view spending page outside a frame, redirect to the show page
