@@ -27,6 +27,8 @@
   <% end %>
 </h1>
 
+<%= render "users/payout_form/attention_callout", payout_method: current_user.default_payout_method %>
+
 <% if @jobs.onboarding.any? %>
   <%= render "application/callout", type: "info", title: "Congrats on the new #{@jobs.onboarding.size > 1 ? "jobs" : "job with #{@jobs.onboarding.first.event.name}"}!" do %>
     <div>

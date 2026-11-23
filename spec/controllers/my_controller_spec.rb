@@ -36,6 +36,12 @@ RSpec.describe MyController do
     user
   end
 
+  def create_incomplete_payout_method(legal_entity)
+    legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details)).tap do |payout_method|
+      payout_method.details.update!(recipient_birthday: nil)
+    end
+  end
+
   describe "GET #cards" do
     it "renders for an unverified user" do
       sign_in_unverified
@@ -254,6 +260,27 @@ RSpec.describe MyController do
       get :reimbursements
 
       expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible, opted_in)
+    end
+
+    it "flags a payout method that's missing required details" do
+      user = sign_in_verified
+      create_incomplete_payout_method(user.personal_legal_entity)
+
+      get :reimbursements
+
+      expect(response.body).to include("Your payout method needs attention", "recipient&#39;s date of birth")
+    end
+  end
+
+  describe "GET #payroll" do
+    it "flags a payout method that's missing required details" do
+      user = sign_in_verified
+      create_incomplete_payout_method(user.personal_legal_entity)
+
+      get :payroll
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Your payout method needs attention", "recipient&#39;s date of birth")
     end
   end
 
@@ -536,6 +563,26 @@ RSpec.describe MyController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(settings_payouts_path(legal_entity_id: legal_entity.id))
+    end
+
+    it "flags a payout method that's missing required details" do
+      user = sign_in_verified
+      create_incomplete_payout_method(user.personal_legal_entity)
+
+      get :pay
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Your payout method needs attention", "recipient&#39;s date of birth")
+    end
+
+    it "doesn't flag a complete payout method" do
+      user = sign_in_verified
+      user.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+
+      get :pay
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Your payout method needs attention")
     end
   end
 end

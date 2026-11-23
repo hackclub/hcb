@@ -1,0 +1,9 @@
+<%# locals: (payout_method:, legal_entity_id: nil) %>
+<% attention = payout_method&.incomplete_details || payout_method&.unsupported_details %>
+
+<% if attention %>
+  <%= render "application/callout", type: "warning", title: "Your payout method needs attention" do %>
+    <p class="mt0 mb1"><%= attention[:reason] %></p>
+    <%= link_to "Update payout method", settings_payouts_path(legal_entity_id:), class: "btn btn-small bg-warning" %>
+  <% end %>
+<% end %>
