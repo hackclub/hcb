@@ -1,5 +1,5 @@
 name: Set up Node
-description: Sets up Node from package.json, caches the yarn download and node_modules, and installs JS packages.
+description: Sets up Node from .node-version, caches the yarn download and node_modules, and installs JS packages.
 runs:
   using: composite
   steps:
@@ -7,7 +7,7 @@ runs:
       id: setup-node
       uses: actions/setup-node@v6
       with:
-        node-version-file: package.json
+        node-version-file: .node-version
         # Handles the yarn download cache automatically, keyed on
         # yarn.lock — no separate actions/cache step needed for it.
         cache: yarn
