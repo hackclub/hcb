@@ -256,6 +256,18 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    it "offers a receipt's AI memo suggestion on an item with no HCB code" do
+      Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                      file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :show, params: { id: item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+      expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}"))
+    end
+
     it "updates the counts on the item's ledger row when shown in a popover" do
       create_session(create(:user, :make_auditor), verified: true)
       target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
