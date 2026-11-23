@@ -356,6 +356,26 @@ RSpec.describe EventsController do
         end
       end
     end
+
+    context "when the organization is public" do
+      let(:event) { create(:event, is_public: true) }
+
+      it "emits only the organization's Open Graph image" do
+        get(:ledger, params: { event_id: event.slug })
+
+        images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+        expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
+      end
+
+      it "links the organization's announcements feed" do
+        event.announcements.create!(author: admin, title: "Hello", content: {})
+
+        get(:ledger, params: { event_id: event.slug })
+
+        feed = Nokogiri::HTML5(response.body).at_css("link[type='application/atom+xml']")
+        expect(feed["href"]).to eq(event_feed_url(event, format: :atom))
+      end
+    end
   end
 
   describe "#transactions" do
@@ -372,18 +392,6 @@ RSpec.describe EventsController do
       end
     end
 
-    context "when the organization is public" do
-      render_views
-
-      it "emits only the organization's Open Graph image" do
-        public_event = create(:event, is_public: true)
-
-        get(:transactions, params: { event_id: public_event.slug })
-
-        images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
-        expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{public_event.slug}"])
-      end
-    end
   end
 
   describe "#edit" do
