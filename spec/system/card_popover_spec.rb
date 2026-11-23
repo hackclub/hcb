@@ -10,7 +10,7 @@ RSpec.describe "Card popovers", type: :system do
     raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, stripe_card: card, amount_cents: -1234, stripe_merchant_category_code: "5462")
     create(:canonical_pending_transaction, raw_pending_stripe_transaction:, amount_cents: -1234, event:)
   end
-  let(:hcb_code) { charge.local_hcb_code }
+  let(:item) { charge.local_hcb_code.ledger_item }
   let(:popover) { "#shared_popover" }
   let(:card_frame) { "#{popover} turbo-frame#stripe_card_#{card.public_id}" }
 
@@ -25,39 +25,27 @@ RSpec.describe "Card popovers", type: :system do
     expect(page).to have_no_css(".welcome")
   end
 
-  shared_examples "a card popover" do
-    it "swaps a transaction into the open popover and returns to the card on back" do
-      find("[data-popover-frame-id='stripe_card_#{card.public_id}']").click
-      expect(page).to have_css("#{card_frame}[complete]")
-      expect(page).to have_current_path(event_cards_overview_path(event, popover: stripe_card_path(card)))
+  it "swaps a transaction into the open popover and returns to the card on back" do
+    find("[data-popover-frame-id='stripe_card_#{card.public_id}']").click
+    expect(page).to have_css("#{card_frame}[complete]")
+    expect(page).to have_current_path(event_cards_overview_path(event, popover: stripe_card_path(card)))
 
-      # Clicking a transaction used to close and reopen the popover, and the
-      # close handler emptied the body it had just been filled with.
-      #
-      # Dispatched from script rather than with the mouse: hovering the row
-      # reveals its "Add tag" button, and in the narrow card popover that can
-      # squeeze the memo link to nothing, so a mouse click lands on the button.
-      find("#{popover} [data-popover-frame-id='#{hcb_code.public_id}']").execute_script("this.click()")
+    # Clicking a transaction used to close and reopen the popover, and the
+    # close handler emptied the body it had just been filled with.
+    #
+    # Dispatched from script rather than with the mouse: hovering the row
+    # reveals its "Add tag" button, and in the narrow card popover that can
+    # squeeze the memo link to nothing, so a mouse click lands on the button.
+    find("#{popover} [data-popover-frame-id='#{item.public_id}']").execute_script("this.click()")
 
-      expect(page).to have_css("#{popover} turbo-frame##{hcb_code.public_id}[complete]")
-      expect(page).to have_no_css(card_frame)
-      expect(page).to have_current_path(event_cards_overview_path(event, popover: hcb_code_path(hcb_code)))
+    expect(page).to have_css("#{popover} turbo-frame##{item.public_id}[complete]")
+    expect(page).to have_no_css(card_frame)
+    expect(page).to have_current_path(event_cards_overview_path(event, popover: ledger_item_path(item)))
 
-      go_back
+    go_back
 
-      expect(page).to have_css("#{card_frame}[complete]")
-      expect(page).to have_no_css("#{popover} turbo-frame##{hcb_code.public_id}")
-      expect(page).to have_current_path(event_cards_overview_path(event, popover: stripe_card_path(card)))
-    end
-  end
-
-  context "with the new ledger" do
-    before { Flipper.enable(:new_ledger_everywhere_2026_07_13, user) }
-
-    include_examples "a card popover"
-  end
-
-  context "with the legacy transaction table" do
-    include_examples "a card popover"
+    expect(page).to have_css("#{card_frame}[complete]")
+    expect(page).to have_no_css("#{popover} turbo-frame##{item.public_id}")
+    expect(page).to have_current_path(event_cards_overview_path(event, popover: stripe_card_path(card)))
   end
 end
