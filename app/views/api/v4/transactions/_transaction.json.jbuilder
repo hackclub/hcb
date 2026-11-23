@@ -10,6 +10,7 @@ hcb_code = case tx
            when HcbCode then tx
            else tx.local_hcb_code
            end
+ledger_item = is_ledger ? tx : hcb_code.ledger_item
 is_cpt = tx.is_a?(CanonicalPendingTransaction)
 is_hcb_code = tx.is_a?(HcbCode)
 amount = transaction_amount(tx, event: @event)
@@ -30,7 +31,7 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.emoji tag.emoji
   end
   json.code hcb_code.hcb_i1
-  json.missing_receipt hcb_code.missing_receipt?(@event)
+  json.missing_receipt ledger_item.present? && ledger_item.missing_receipt?
   json.lost_receipt hcb_code.no_or_lost_receipt?
   json.appearance hcb_code.incoming_disbursement.special_appearance_name if hcb_code.incoming_disbursement&.special_appearance?
 

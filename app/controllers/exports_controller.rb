@@ -142,7 +142,7 @@ class ExportsController < ApplicationController
 
     @start = start_date.beginning_of_month
     if @start >= Date.today.beginning_of_month
-      return render plain: "Can not create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
+      return render plain: "Cannot create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
     end
 
     @end = end_date.end_of_month

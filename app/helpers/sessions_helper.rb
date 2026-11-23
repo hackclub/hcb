@@ -138,6 +138,10 @@ module SessionsHelper
         role_num = OrganizerPosition.roles[op.role]
         next false unless role_num.present?
 
+        if inner_as.to_s == "member" && op.event_id != inner_event.id
+          next op.manager?
+        end
+
         # Allows higher roles to succeed when checking for lower role
         # For example, `organizer_signed_in?(as: :member)` returns true if you're a manager
         role_num >= required_role_num

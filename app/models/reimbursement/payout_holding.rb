@@ -41,6 +41,8 @@ module Reimbursement
 
     has_paper_trail
 
+    REMINDER_DAYS = [3, 7, 14].freeze
+
     has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
@@ -92,7 +94,19 @@ module Reimbursement
       end
 
       event :mark_failed do
-        after { update!(failure_reason: nil, retry_at: nil) }
+        after do
+          update!(failure_reason: nil, retry_at: nil)
+          # Reminders from the earlier failure are still queued and use the same failure id.
+          next if aasm.from_state == :failed
+
+          failure_id = current_failure_id
+          next if failure_id.nil?
+
+          REMINDER_DAYS.each do |days|
+            Reimbursement::FailedPayoutReminderJob.set(wait: days.days).perform_later(self, days, failure_id)
+          end
+        end
+
         # A bank return can arrive while outage recovery has already failed.
         transitions from: [:sent, :settled, :failed], to: :failed
       end
@@ -118,6 +132,11 @@ module Reimbursement
 
     def payout_transfer
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
+    end
+
+    # Version id of the latest transition into `failed`, used to tie reminder jobs to a single failure.
+    def current_failure_id
+      versions.where_object_changes_to(aasm_state: "failed").last&.id
     end
 
     def reverse!

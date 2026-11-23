@@ -47,13 +47,18 @@ class Tag < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_label, against: :label
 
+  # Memoized: every row of a ledger page renders a delete button for each of the
+  # event's tags, and they all share the same Tag records.
   def removal_confirmation_message
-    message = "Are you sure you'd like to delete this tag?"
+    @removal_confirmation_message ||= begin
+      message = "Are you sure you'd like to delete this tag?"
+      count = ledger_items.count
 
-    if ledger_items.any?
-      message + " It will be removed from #{pluralize(ledger_items.size, 'transaction')}."
-    else
-      message
+      if count.positive?
+        message + " It will be removed from #{pluralize(count, 'transaction')}."
+      else
+        message
+      end
     end
   end
 

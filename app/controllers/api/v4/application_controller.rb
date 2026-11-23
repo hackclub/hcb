@@ -17,6 +17,7 @@ module Api
       before_action :authenticate!
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
+      before_action :set_paper_trail_controller_info
 
       def not_found
         skip_authorization
@@ -32,6 +33,10 @@ module Api
       append_before_action :check_restricted_scopes!
 
       private
+
+      def info_for_paper_trail
+        { api_token_id: current_token&.id }
+      end
 
       def pundit_user
         current_user && ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
