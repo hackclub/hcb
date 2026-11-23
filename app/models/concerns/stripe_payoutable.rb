@@ -26,10 +26,10 @@ module StripePayoutable
 
   def set_fields_from_stripe_payout(payout)
     self.amount = payout.amount
-    self.arrival_date = Util.unixtime(payout.arrival_date)
+    self.arrival_date = Time.at(payout.arrival_date)
     self.automatic = payout.automatic
     self.stripe_balance_transaction_id = payout.balance_transaction
-    self.stripe_created_at = Util.unixtime(payout.created)
+    self.stripe_created_at = Time.at(payout.created)
     self.currency = payout.currency
     self.description = payout.description
     self.stripe_destination_id = payout.destination
