@@ -42,7 +42,7 @@
             fully_shipped: true,
             name: "Two Factor Authentication",
             classes: ["feature-two-factor-authentication"],
-            description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
+            description: "Looking to keep your account secure? This feature flag will require you to sign in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
             footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", @user == current_user ? my_settings_path : edit_user_path(@user), data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?),
             user: @user
           } %>
