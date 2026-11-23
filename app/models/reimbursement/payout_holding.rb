@@ -43,6 +43,12 @@ module Reimbursement
 
     REMINDER_DAYS = [3, 7, 14].freeze
 
+    enum :failure_reason, {
+      column_unavailable: "column_unavailable",
+      retry_window_expired: "retry_window_expired",
+      reconciliation_required: "reconciliation_required"
+    }, prefix: true, validate: { allow_nil: true }
+
     has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
@@ -53,7 +59,7 @@ module Reimbursement
     belongs_to :wise_transfer, optional: true, inverse_of: :reimbursement_payout_holding
 
     scope :ready_for_payout, -> {
-      settled.or(failed.where(failure_reason: "column_unavailable", retry_at: ..Time.current))
+      settled.or(failed.failure_reason_column_unavailable.where(retry_at: ..Time.current))
     }
 
     after_create :set_and_create_hcb_code
@@ -127,7 +133,7 @@ module Reimbursement
     end
 
     def unresolved_payout?
-      failure_reason.in?(["column_unavailable", "retry_window_expired", "reconciliation_required"])
+      failure_reason.present?
     end
 
     def payout_transfer

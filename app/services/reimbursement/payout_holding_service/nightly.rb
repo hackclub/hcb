@@ -7,11 +7,11 @@ module Reimbursement
         clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.ready_for_payout.find_each(batch_size: 100) do |payout_holding|
           payout_holding.with_lock do
-            next unless payout_holding.settled? || (payout_holding.failed? && payout_holding.failure_reason == "column_unavailable")
+            next unless payout_holding.settled? || (payout_holding.failed? && payout_holding.failure_reason_column_unavailable?)
             next if payout_holding.retry_at&.future?
 
             recovering_transfer = payout_holding.unresolved_payout? ? payout_holding.payout_transfer : nil
-            if payout_holding.failure_reason == "reconciliation_required" ||
+            if payout_holding.failure_reason_reconciliation_required? ||
                (recovering_transfer && (recovering_transfer.aasm.current_state.in?([:rejected, :failed]) ||
                  (recovering_transfer.is_a?(IncreaseCheck) && (recovering_transfer.column_rejected? || recovering_transfer.column_stopped?))))
               require_reconciliation!(payout_holding)
@@ -20,8 +20,8 @@ module Reimbursement
 
             # Column may expire idempotency keys after 30 days. Leave a margin
             # and require reconciliation rather than risk resending a payment.
-            if payout_holding.failure_reason.in?(["column_unavailable", "retry_window_expired"]) && payout_holding.payout_transfer&.created_at&.<=(29.days.ago)
-              require_reconciliation!(payout_holding, reason: "retry_window_expired")
+            if (payout_holding.failure_reason_column_unavailable? || payout_holding.failure_reason_retry_window_expired?) && payout_holding.payout_transfer&.created_at&.<=(29.days.ago)
+              require_reconciliation!(payout_holding, reason: :retry_window_expired)
               next
             end
 
@@ -135,7 +135,7 @@ module Reimbursement
               require_reconciliation!(payout_holding)
             rescue Faraday::Error
               payout_holding.mark_failed!
-              payout_holding.update!(failure_reason: "column_unavailable", retry_at: 24.hours.from_now)
+              payout_holding.update!(failure_reason: :column_unavailable, retry_at: 24.hours.from_now)
               raise
             end
           end
@@ -145,7 +145,7 @@ module Reimbursement
 
       private
 
-      def require_reconciliation!(payout_holding, reason: "reconciliation_required")
+      def require_reconciliation!(payout_holding, reason: :reconciliation_required)
         payout_holding.mark_failed! if payout_holding.settled?
         payout_holding.update!(failure_reason: reason, retry_at: nil)
         Rails.error.report(RuntimeError.new("Reimbursement payout holding #{payout_holding.id} requires reconciliation before retrying"))
