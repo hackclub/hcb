@@ -262,9 +262,7 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    context "when the user has opted into the new ledger" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
+    context "when viewing the ledger" do
       it "renders the new ledger" do
         get(:ledger, params: { event_id: event.slug })
 
@@ -347,7 +345,6 @@ RSpec.describe EventsController do
         it "doesn't make ledger rows a drop target for users who can't upload receipts" do
           reader = create(:user)
           create(:organizer_position, event:, user: reader, role: :reader)
-          Flipper.enable_actor(:new_ledger_2026_07_17, reader)
           create_session(reader, verified: true)
 
           get(:ledger, params: { event_id: event.slug })
@@ -1793,7 +1790,6 @@ RSpec.describe EventsController do
 
     before do
       create_session(admin, verified: true)
-      Flipper.enable_actor(:new_ledger_2026_07_17, admin)
 
       # The row renders alongside the table, which only renders with an item in it.
       item = create(:ledger_item, custom_memo: "A transaction", datetime: Time.current)

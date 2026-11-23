@@ -2,10 +2,6 @@ on:
   cli:
     init:
       commit-sha: ${{ event.git.sha }}
-      # From an hcb-private checkout, pass:
-      #   --init repository=https://github.com/hackclub/hcb-private.git --init visibility=private
-      repository: https://github.com/hackclub/hcb.git
-      visibility: public
 
 base:
   image: ubuntu:26.04
@@ -13,9 +9,9 @@ base:
 
 tasks:
   - key: code
-    call: ${{ run.dir }}/packages/clone-${{ init.visibility }}.yml
+    call: git/clone 2.4.1
     with:
-      repository: ${{ init.repository }}
+      repository: https://github.com/hackclub/hcb.git
       ref: ${{ init.commit-sha }}
       preserve-git-dir: true
 

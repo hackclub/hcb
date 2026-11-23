@@ -331,11 +331,11 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
-    # TODO: add change here in receipt bin PR
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
-                                       .order(created_at: :desc)
-                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(safe_per(10))
+    # What the ledger row renders (see ledger/_item and MyController#inbox)
+    @items = @user.card_charges_missing_receipt
+                  .order(datetime: :desc)
+                  .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+                  .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_reimbursement_reports
@@ -356,21 +356,14 @@ class UsersController < ApplicationController
   def admin_details_stripe_transactions
     authorize @user
 
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      # A cardholder's charges span every organization they hold a card for, so
-      # this is one of the few queries that legitimately crosses ledgers. The
-      # page is auditor-gated (see UserPolicy#admin_details?), and the author
-      # filter — which for a CardCharge resolves to the cardholder — bounds the
-      # result to this user either way.
-      @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
-                                          .execute(all_ledgers: true)
-                                          .page(params[:page] || 1).per(safe_per(10))
-    else
-      @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
-                                    .order(created_at: :desc)
-                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                    .page(params[:page] || 1).per(safe_per(10))
-    end
+    # A cardholder's charges span every organization they hold a card for, so
+    # this is one of the few queries that legitimately crosses ledgers. The
+    # page is auditor-gated (see UserPolicy#admin_details?), and the author
+    # filter — which for a CardCharge resolves to the cardholder — bounds the
+    # result to this user either way.
+    @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
+                                        .execute(all_ledgers: true)
+                                        .page(params[:page] || 1).per(safe_per(10))
   end
 
   def suppress_card_locking

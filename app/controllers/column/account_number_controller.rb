@@ -24,10 +24,8 @@ module Column
           ]
         end
 
-        if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-          @ledger = @event.ledger
-          @ledger_items = @ledger.items.none.page(1)
-        end
+        @ledger = @event.ledger
+        @ledger_items = @ledger.items.none.page(1)
 
         render "events/account_number", status: :unprocessable_content
       else

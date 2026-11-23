@@ -8,7 +8,7 @@
         <span class="stat__value -mb-2"><%= render_money_amount @event.total_raised %></span>
       </div>
       <% if organizer_signed_in? %>
-        <%= link_to event_transactions_path(@event, direction: "revenue"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
+        <%= link_to event_ledger_path(@event, direction: "revenue"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
           See transactions
           <%= inline_icon "view-forward" %>
         <% end %>
@@ -23,7 +23,7 @@
         <span class="stat__value -mb-2"><%= render_money_amount @event.total_spent_cents %></span>
       </div>
       <% if organizer_signed_in? %>
-        <%= link_to event_transactions_path(@event, direction: "expenses"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
+        <%= link_to event_ledger_path(@event, direction: "expenses"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
           See transactions
           <%= inline_icon "view-forward" %>
         <% end %>

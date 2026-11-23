@@ -33,7 +33,7 @@ RSpec.describe ReceiptService::Suggest do
 
     it "writes a pairing with the charge's ledger item" do
       hcb_code = create_pending_card_charge
-      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
+      allow(user).to receive(:card_charges_missing_receipt).and_return(Ledger::Item.where(id: hcb_code.ledger_item_id))
 
       described_class.new(receipt:).run!
 
@@ -43,28 +43,18 @@ RSpec.describe ReceiptService::Suggest do
 
     it "rescores a pairing it already wrote rather than duplicating it" do
       hcb_code = create_pending_card_charge
-      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
+      allow(user).to receive(:card_charges_missing_receipt).and_return(Ledger::Item.where(id: hcb_code.ledger_item_id))
 
       2.times { described_class.new(receipt:).run! }
 
       expect(SuggestedPairing.where(receipt:).count).to eq(1)
     end
 
-    it "skips a charge whose HCB code has no ledger item" do
-      hcb_code = create_pending_card_charge
-      hcb_code.update_column(:ledger_item_id, nil)
-      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
-
-      described_class.new(receipt:).run!
-
-      expect(SuggestedPairing.where(receipt:)).to be_empty
-    end
-
     it "pairs the receipt automatically when a charge matches closely" do
       hcb_code = create_pending_card_charge(amount_cents: -12_34)
       receipt.update!(extracted_total_amount_cents: 12_34, extracted_card_last4: stripe_card.last4,
                       extracted_date: hcb_code.date, extracted_merchant_name: "merchant 1")
-      allow(user).to receive(:transactions_missing_receipt).and_return(HcbCode.where(id: hcb_code.id))
+      allow(user).to receive(:card_charges_missing_receipt).and_return(Ledger::Item.where(id: hcb_code.ledger_item_id))
 
       pairing = described_class.new(receipt:).run!
 

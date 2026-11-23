@@ -216,10 +216,6 @@ class Invoice < ApplicationRecord
     local_hcb_code.has_pending_expired?
   end
 
-  def fee_reimbursed?
-    !fee_reimbursement.nil?
-  end
-
   def manually_marked_as_paid?
     manually_marked_as_paid_at.present?
   end
