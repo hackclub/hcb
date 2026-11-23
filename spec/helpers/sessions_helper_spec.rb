@@ -30,5 +30,26 @@ RSpec.describe SessionsHelper, type: :helper do
       expect(helper.organizer_signed_in?(event)).to be(false)
       expect(helper.organizer_signed_in?(event, as: :member)).to be(false)
     end
+
+    context "in a sub-organization" do
+      let(:parent) { create(:event) }
+      let(:event) { create(:event, parent:) }
+      let(:user) { create(:user) }
+
+      before { sign_in_as(user) }
+
+      it "doesn't give a parent organization's members member access", :aggregate_failures do
+        create(:organizer_position, event: parent, user:, role: :member)
+
+        expect(helper.organizer_signed_in?(event)).to be(true)
+        expect(helper.organizer_signed_in?(event, as: :member)).to be(false)
+      end
+
+      it "gives a parent organization's managers member access" do
+        create(:organizer_position, event: parent, user:, role: :manager)
+
+        expect(helper.organizer_signed_in?(event, as: :member)).to be(true)
+      end
+    end
   end
 end

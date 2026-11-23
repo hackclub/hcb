@@ -1,5 +1,5 @@
 # Local development image, built by docker-compose.yml (see docker_setup.sh and docker_start.sh).
-FROM ruby:3.4.13
+FROM ruby:4.0.10
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -7,8 +7,8 @@ WORKDIR /usr/src/app
 RUN apt-get -y update -qq
 
 # install postgresql-client for easy importing of production database & vim
-# for easy editing of credentials
-RUN apt-get -y install postgresql-client vim poppler-utils
+# for easy editing of credentials. libvips draws CSV previews (csv_preview gem).
+RUN apt-get -y install postgresql-client vim poppler-utils libvips
 ENV EDITOR=vim
 
 # Install node24 & yarn
@@ -18,8 +18,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
   apt-get install -y nodejs
 
 RUN corepack enable
-
-RUN gem install bundler -v 2.5.17
 
 ADD yarn.lock /usr/src/app/yarn.lock
 ADD package.json /usr/src/app/package.json

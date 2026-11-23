@@ -182,7 +182,7 @@
                 <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_ledger_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
@@ -337,7 +337,7 @@
           <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_ledger_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.

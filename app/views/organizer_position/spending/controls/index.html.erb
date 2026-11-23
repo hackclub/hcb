@@ -90,7 +90,7 @@
   <% end %>
 <% else %>
   <% user_is_you = @organizer_position.user == current_user %>
-  <%= render "application/callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
+  <%= render "application/callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} cannot have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
     <ul class="m0">
       <li>Roles can be changed on the <%= link_to "team page", event_team_path(@event.slug) %>.</li>
       <% if @inactive_control_count.zero? %>

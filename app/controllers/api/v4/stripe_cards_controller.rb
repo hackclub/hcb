@@ -24,7 +24,7 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
-        @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
+        @hcb_codes = @hcb_codes.joins(:ledger_item).merge(Ledger::Item.missing_receipt) if params[:missing_receipts] == "true"
 
         @transactions = resolve_engines(paginate_cursor(@hcb_codes, &:public_id))
       end

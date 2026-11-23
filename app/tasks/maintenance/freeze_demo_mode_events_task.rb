@@ -5,7 +5,7 @@ module Maintenance
   # removing demo mode checks. Run once after deploying, before deploying that removal.
   class FreezeDemoModeEventsTask < MaintenanceTasks::Task
     def collection
-      Event.with_deleted.where(demo_mode: true, financially_frozen: false)
+      Event.with_deleted.unscope(:order).where(demo_mode: true, financially_frozen: false)
     end
 
     def process(event)

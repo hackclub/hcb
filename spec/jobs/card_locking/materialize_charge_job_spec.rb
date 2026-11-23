@@ -8,16 +8,26 @@ RSpec.describe CardLocking::MaterializeChargeJob do
   before { travel_to(Time.zone.parse("2026-10-10 12:00:00")) }
 
   it "materializes card-locking timing for a settled card charge" do
-    hc = create_settled_card_charge(user:, settled_at: 1.day.ago)
+    charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
 
-    described_class.perform_now(hcb_code_id: hc.id)
+    described_class.perform_now(ledger_item_id: charge.id)
 
-    hc.reload
-    expect(hc.card_charge_settled_at).to be_present
-    expect(hc.receipt_due_at).to be_present
+    charge.reload
+    expect(charge.receipt_due_at).to be_present
   end
 
-  it "does not raise for a missing hcb_code id" do
-    expect { described_class.perform_now(hcb_code_id: -1) }.not_to raise_error
+  # Jobs enqueued before card locking moved onto ledger items name the charge
+  # by its HCB code. The sweep materializes those charges, so the job just
+  # drops them rather than looking the code up.
+  it "ignores a job enqueued before the move, which names the charge by HCB code" do
+    charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+    expect { described_class.perform_now(hcb_code_id: charge.hcb_code.id) }.not_to raise_error
+
+    expect(charge.reload.receipt_due_at).to be_nil
+  end
+
+  it "does not raise for a missing ledger item id" do
+    expect { described_class.perform_now(ledger_item_id: -1) }.not_to raise_error
   end
 end
