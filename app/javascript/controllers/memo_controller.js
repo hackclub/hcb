@@ -31,12 +31,14 @@ export default class extends Controller {
     this.inputTarget.defaultValue = memo
     this.tooltipTarget.title = memo
 
-    // If we were showing yielded content in place of the memo (e.g. no
-    // custom memo set yet), a successful rename means there's now a real
-    // memo to show instead.
+    // The heading yields the linked object's own description until the item
+    // has a custom memo, so a rename swaps in the memo and clearing it swaps
+    // the description back. The streamed memo text says which state we're in.
     if (this.hasYieldTarget) {
-      this.yieldTarget.hidden = true
-      this.memoDisplayTarget.hidden = false
+      const custom =
+        this.tooltipTarget.querySelector('[data-custom-memo="true"]') !== null
+      this.yieldTarget.hidden = custom
+      this.memoDisplayTarget.hidden = !custom
     }
   }
 

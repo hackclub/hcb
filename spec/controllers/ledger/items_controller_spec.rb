@@ -32,6 +32,35 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("New memo")
         expect(response.body).to include("turbo-stream")
       end
+
+      context "with an AI memo suggestion from a receipt" do
+        let(:ai_memo_stream) { "turbo-stream[action='replace'][target='#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}']" }
+
+        before do
+          Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                          file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+        end
+
+        it "marks the memo custom and withdraws the suggestion" do
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
+
+          expect(response.body).to include(%(data-custom-memo="true">New memo</span>))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo).to be_present
+          expect(ai_memo.to_html).not_to include("data-memo-suggestion-param")
+        end
+
+        it "offers the suggestion again when the memo is cleared" do
+          item.update_custom_memo!("Old memo")
+
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "" } }
+
+          expect(item.reload.custom_memo).to be_nil
+          expect(response.body).to include(%(data-custom-memo="false"))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo.to_html).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+        end
+      end
     end
 
     describe "POST #toggle_tag" do
