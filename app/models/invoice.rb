@@ -167,6 +167,7 @@ class Invoice < ApplicationRecord
     end
 
     event :mark_void do
+      after_commit :refresh_ledger_item
       transitions from: :open_v2, to: :void_v2
     end
 
@@ -410,6 +411,12 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  # An unpaid invoice's ledger item has no transactions, so it takes its status
+  # from the invoice and nothing else refreshes it when the invoice is voided.
+  def refresh_ledger_item
+    safely { reload_ledger_item&.refresh! }
+  end
 
   def raw_pending_invoice_transaction
     raw_pending_invoice_transactions.first
