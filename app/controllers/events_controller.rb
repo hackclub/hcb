@@ -1566,6 +1566,10 @@ class EventsController < ApplicationController
       }
     ]
 
+    # Reparenting is deliberately gated on a per-user flag on top of the admin
+    # check: moving an organization under a different parent is rarely needed
+    # and easy to get wrong, so it is kept out of reach of most admins. The
+    # flag is not a rollout; don't remove it just because it has been around.
     if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user)
       permitted_params << :parent_id
     end
