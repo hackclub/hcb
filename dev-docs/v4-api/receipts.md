@@ -32,7 +32,7 @@ Beyond the standard [`object_shape`](./standards.md#object-shape) fields (`id`, 
 | Field | Type | Description |
 |-------|------|-------------|
 | `url` | string | URL to the original uploaded file. |
-| `preview_url` | string \| null | URL to a generated image preview. `null` for files with no preview (e.g. CSV uploads) or if preview generation fails. |
+| `preview_url` | string \| null | URL to a generated image preview. For CSV uploads, this is an image of the first rows of the file. `null` for files with no preview or if preview generation fails. |
 | `filename` | string | Original filename. |
 | `uploader` | object \| null | The `user` who uploaded it, or `null`. |
 

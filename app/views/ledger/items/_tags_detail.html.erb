@@ -1,0 +1,40 @@
+<%# locals: (item:, wrap: false) %>
+
+<%#
+  The "Tags" row of a ledger item's details: its tag chips and the "+ Add tag"
+  menu, the ledger item counterpart of hcb_codes/_tags. Tags are event-scoped,
+  so the event is the one owning the item's primary ledger (or that ledger's
+  card grant), the same event Ledger::ItemPolicy#toggle_tag? checks against.
+
+  Pass `wrap: true` from a partial with no details list to put the row in; the
+  row then brings its own section, and nothing renders when the row is empty.
+%>
+<% event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
+<% can_toggle = event.present? && policy(item).toggle_tag? %>
+<% if event.present? && !event.demo_mode? && (item.tags.any? || can_toggle) %>
+  <% row = capture do %>
+    <div>
+      <strong>Tags</strong>
+      <div class="flex items-center flex-wrap" style="gap: 0.25rem">
+        <div class="flex items-center flex-wrap ledger_item_<%= item.hashid %>_tags" style="gap: 0.25rem">
+          <%= render partial: "ledger/items/tag", collection: item.tags, as: :tag, locals: { item: } %>
+        </div>
+
+        <% if can_toggle %>
+          <div data-controller="menu">
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <%= render "ledger/items/tag_menu_content", item:, event: %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if wrap %>
+    <section class="ledger-item--info">
+      <%= row %>
+    </section>
+  <% else %>
+    <%= row %>
+  <% end %>
+<% end %>

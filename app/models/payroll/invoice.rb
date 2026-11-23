@@ -10,8 +10,10 @@
 #  approved_at         :datetime
 #  currency            :string           default("USD"), not null
 #  description         :text
+#  end_date            :date
 #  name                :text             not null
 #  rejected_at         :datetime
+#  start_date          :date
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  payment_id          :bigint
@@ -34,6 +36,8 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
     include Receiptable
+    include HasPeriod
+    include Hashid::Rails
 
     has_paper_trail
 
@@ -47,6 +51,9 @@ module Payroll
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
+    validates :start_date, :end_date, presence: true, on: :create
+    validate :end_date_not_before_start_date
+    validate :dates_within_position_period, on: :create
 
     after_create_commit :notify_manager
 
@@ -106,17 +113,27 @@ module Payroll
       nil
     end
 
+    def estimated_fee_details
+      payout_method = payroll_position.legal_entity&.default_payout_method
+      return nil if payout_method.nil?
+
+      fee_cents = Payment.estimated_fee_cents(amount, payroll_position.event, payout_method)
+      return nil if fee_cents.zero?
+
+      { amount_cents: fee_cents, reason: payout_method.fee_reason }
+    end
+
     private
 
     # The document the contractor uploaded is the receipt for the payment their
     # invoice triggers, so hand it over on approval. Payment::Attempt makes the
     # same hand-off from payment to transfer, but only at the moment it creates
     # the transfer — when the payee was ready to be paid straight away that
-    # already happened, so catch the transfer's HCB code up here too.
+    # already happened, so catch the transfer's ledger item up here too.
     def copy_receipts_to_payment!
       return if payment.nil?
 
-      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
+      [payment, payment.latest_payout&.ledger_item].compact.each do |receiptable|
         Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
       end
     end
@@ -132,6 +149,18 @@ module Payroll
       return if currency == payroll_position.currency
 
       errors.add(:currency, "must match the position's currency")
+    end
+
+    def end_date_not_before_start_date
+      return if start_date.blank? || end_date.blank?
+
+      errors.add(:end_date, "can't be before the start date") if end_date < start_date
+    end
+
+    def dates_within_position_period
+      period = payroll_position.start_date..payroll_position.end_date
+      errors.add(:start_date, "must be within the contract period") if start_date.present? && !period.cover?(start_date)
+      errors.add(:end_date, "must be within the contract period") if end_date.present? && !period.cover?(end_date)
     end
 
   end

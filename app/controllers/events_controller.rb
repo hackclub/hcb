@@ -61,6 +61,10 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
+    # The Insights timeframe links only navigate their own frame, so there's
+    # no need to render the rest of the page for them.
+    return render partial: "events/home/insights", locals: { event: @event } if turbo_frame_request_id == "insights"
+
     render_tour @organizer_position, :welcome
     @requesting_call = params[:request_call] == "true" && policy(@event).request_call?
   end
@@ -105,19 +109,6 @@ class EventsController < ApplicationController
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def money_movement
-    authorize @event
-
-    pending_transactions = _show_pending_transactions
-    canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-    all_transactions = [*pending_transactions, *canonical_transactions]
-
-    @money_in = all_transactions.reject { |t| t.amount_cents <= 0 }.first(3)
-    @money_out = all_transactions.reject { |t| t.amount_cents >= 0 }.first(3)
-
-    render partial: "events/home/money_movement", locals: { heatmap: @heatmap, event: @event }
-  end
-
   def team_stats
     authorize @event
 
@@ -129,7 +120,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).preloaded_for_feed.first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -147,7 +138,7 @@ class EventsController < ApplicationController
 
     @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
+    render partial: "events/home/spenders_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
   def stats
@@ -339,7 +330,7 @@ class EventsController < ApplicationController
     @settings_tab = params[:tab]
     @frame = params[:frame]
     @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
     CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
@@ -415,6 +406,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
+        @settings_tab = params[:event][:tab]
         render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
@@ -475,20 +467,39 @@ class EventsController < ApplicationController
   end
 
   def card_overview
+    authorize @event
+
     @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
+    @q = params[:q].presence
 
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
+    event_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+    all_stripe_cards = event_cards
 
-    @has_filter = @status.present? || @type.present? || @user.present?
+    # Derived from cards rather than @event.users so removed members' cards stay filterable
+    cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id"))
+    sorted_cardholders = cardholders.sort_by(&:name)
+    # Public ids, since slugs are built from the name a user signed up with
+    @user = cardholders.find_by_public_id(params[:user]) if params[:user]
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
+      { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
+      { key: "user", label: "Cardholder", type: "select", options: sorted_cardholders.map { |u| [u.name, u.public_id] } },
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
 
-    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user).includes(:card_grant)
-                             .order("stripe_status asc, created_at desc")
+    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
+    all_stripe_cards = all_stripe_cards.where(user: { id: @user&.id }) if params[:user]
+
+    if @q
+      # Last four digits are hidden from non-organizers, so they must not be searchable either
+      searchable = organizer_signed_in? ? "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q" : "stripe_cards.name ILIKE :q"
+      all_stripe_cards = all_stripe_cards.where(searchable, q: "%#{StripeCard.sanitize_sql_like(@q)}%")
+    end
 
     all_stripe_cards = case @status
                        when "active"
@@ -512,6 +523,13 @@ class EventsController < ApplicationController
                          all_stripe_cards
                        end
 
+    page = (params[:page] || 1).to_i
+    per_page = safe_per(18)
+    grouped = !(params[:user] || @q)
+
+    all_stripe_cards = all_stripe_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
+                                       .order("stripe_status asc, created_at desc")
+
     if current_user.present?
       @stripe_cards = all_stripe_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
       @user_stripe_cards = all_stripe_cards.where(stripe_cardholder: current_user.stripe_cardholder)
@@ -519,14 +537,6 @@ class EventsController < ApplicationController
       @stripe_cards = all_stripe_cards
       @user_stripe_cards = StripeCard.none
     end
-
-    @stripe_cardholders = StripeCardholder.where(user_id: @event.users.pluck(:id)).includes(:user).order("created_at desc")
-    @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
-
-    authorize @event
-
-    page = (params[:page] || 1).to_i
-    per_page = safe_per(18)
 
     display_cards = [
       @user_stripe_cards.active,
@@ -536,13 +546,16 @@ class EventsController < ApplicationController
     ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
-    @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
-  end
 
-  def documentation
-    @event_name = @event.name
+    if grouped
+      user_groups = display_cards
+                    .group_by(&:user)
+                    .reject { |user, _| user.nil? }
+                    .sort_by { |user, _| [user == current_user ? 0 : 1, user.name.to_s] }
 
-    authorize @event
+      @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
+      @cards_by_user = @paginated_user_groups.to_h
+    end
   end
 
   def async_balance
@@ -600,22 +613,15 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-        @ledger = @event.ledger
-        # The column-transaction narrowing has no expression in Ledger::Query, so
-        # it chains onto the executed relation. Everything the query does own —
-        # pending first, the rest newest first — still comes from the query, which
-        # is the whole point of going through it for the parts that do fit.
-        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
-                                     .execute(ledgers: [@ledger])
-                                     .where(id: column_transactions.select(:ledger_item_id))
-                                     .page((params[:page] || 1).to_i).per(safe_per(25))
-      else
-        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                           .order(created_at: :desc)
-        page = (params[:page] || 1).to_i
-        @transactions = @transactions.page(page).per(safe_per(25))
-      end
+      @ledger = @event.ledger
+      # The column-transaction narrowing has no expression in Ledger::Query, so
+      # it chains onto the executed relation. Everything the query does own —
+      # pending first, the rest newest first — still comes from the query, which
+      # is the whole point of going through it for the parts that do fit.
+      @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                   .execute(ledgers: [@ledger])
+                                   .where(id: column_transactions.select(:ledger_item_id))
+                                   .page((params[:page] || 1).to_i).per(safe_per(25))
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
@@ -624,6 +630,25 @@ class EventsController < ApplicationController
     end
 
     authorize @event
+  end
+
+  # The account number page doesn't send the account number until someone clicks
+  # the eye beside it, the same way a card's number and CVC are shown. The eye
+  # asks for a turbo stream, and the stream fills in both places the number is
+  # shown (inline on the page and in the account numbers modal), so they agree on
+  # whether it's showing. Clicking the eye again hides it the same way.
+  def reveal_account_number
+    authorize @event, :account_number?
+
+    unless request.format.turbo_stream? && @event.column_account_number.present?
+      return redirect_to account_number_event_path(@event)
+    end
+
+    revealed = params[:show_details] == "true"
+    render turbo_stream: [
+      turbo_stream.replace("account_number_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_reveal", revealed:, tooltip_direction: :n }),
+      turbo_stream.replace("account_number_modal_reveal", partial: "events/account_number_reveal", locals: { frame_id: "account_number_modal_reveal", revealed:, tooltip_direction: :s })
+    ]
   end
 
   def g_suite_overview
@@ -907,6 +932,7 @@ class EventsController < ApplicationController
     @active_teenagers_count = @event.users.active_teenager.count
 
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+    @member_perks_available = OrganizerPosition.role_at_least?(current_user, @event, :member) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
     @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)
@@ -1219,7 +1245,7 @@ class EventsController < ApplicationController
         redirect_to @event
       end
       format.pdf do
-        render pdf: "Termination Letter for #{@event.name}", page_height: "11in", page_width: "8.5in"
+        render_pdf "Termination Letter for #{@event.name}"
       end
     end
   end
@@ -1345,17 +1371,19 @@ class EventsController < ApplicationController
 
     @merchant = params[:merchant]
 
-    merchants_hash = {}
+    @merchants = Rails.cache.fetch("merchants_filter_#{@event.id}", expires_in: 5.minutes) do
+      merchants_hash = {}
 
-    @event.merchants.each do |merchant|
-      if merchants_hash.key?(merchant[:id])
-        merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
-      else
-        merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+      @event.merchants.each do |merchant|
+        if merchants_hash.key?(merchant[:id])
+          merchants_hash[merchant[:id]][:count] = merchants_hash[merchant[:id]][:count] + 1
+        else
+          merchants_hash[merchant[:id]] = { name: merchant[:name], count: 1 }
+        end
       end
-    end
 
-    @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+      merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+    end
   end
 
   def request_call
@@ -1385,18 +1413,6 @@ class EventsController < ApplicationController
                          .page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
-  end
-
-  def toggle_new_ledger
-    authorize @event
-
-    if params[:enabled] == "true"
-      Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_ledger_path(@event)
-    else
-      Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
-      redirect_to event_transactions_path(@event)
-    end
   end
 
   private
@@ -1495,7 +1511,6 @@ class EventsController < ApplicationController
       :start,
       :end,
       :address,
-      :demo_mode,
       :emburse_department_id,
       :country,
       :postal_code,

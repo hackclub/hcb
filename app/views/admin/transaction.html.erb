@@ -75,7 +75,6 @@
   <thead>
     <tr>
       <th>Map to an Event</th>
-      <th>Map to a Wire</th>
       <th>Map to a Wise transfer</th>
     </tr>
   </thead>
@@ -95,12 +94,6 @@
         <% end %>
       </td>
       <td>
-        <%= form_with model: false, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
-          <%= form.collection_select(:wire_id, Wire.approved + [@canonical_transaction.wire].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wire&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
-        <% end %>
-      </td>
-      <td>
         <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:wise_transfer_id, WiseTransfer.sent + [@canonical_transaction.wise_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wise_transfer&.id }, { style: "width: 300px;" }) %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
@@ -117,17 +110,19 @@
 
   <% @hcb_code = @canonical_transaction.local_hcb_code %>
   <div style="margin-left: -2rem;" class="mt2">
-    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+    <%= render "receipts/list_v2", receipts: @hcb_code.receipts %>
   </div>
 
-  <div style="width: 250px;">
-    <%= render partial: "receipts/form_v3", locals: {
-          receiptable: @canonical_transaction.local_hcb_code,
-          upload_method: "attach_receipt_page",
-          turbo: false,
-          redirect_url: ledger_admin_index_path
-        } %>
-  </div>
+  <% if @hcb_code.ledger_item %>
+    <div style="width: 250px;">
+      <%= render partial: "receipts/form_v3", locals: {
+            receiptable: @hcb_code.ledger_item,
+            upload_method: "attach_receipt_page",
+            turbo: false,
+            redirect_url: ledger_admin_index_path
+          } %>
+    </div>
+  <% end %>
 <% end %>
 
 <h4 class="mb2">Comments</h4>

@@ -58,6 +58,46 @@ const populateSharedPopover = trigger => {
   }
 }
 
+const sharedPopoverIsOpen = () =>
+  $.modal.getCurrent()?.$elm?.[0]?.id === 'shared_popover'
+
+// Pushes the popover's URL and swaps in its title; the page's own title is kept for closing
+const recordSharedPopoverState = popover => {
+  if (!document.documentElement.dataset.returnToStateTitle) {
+    document.documentElement.dataset.returnToStateTitle = document.title
+  }
+  document.title = popover.dataset.stateTitle
+
+  const url = new URL(location.href)
+  if (url.searchParams.get('popover') !== popover.dataset.stateUrl) {
+    url.searchParams.set('popover', popover.dataset.stateUrl)
+    // Pushed through Turbo so the entry is one of its own: going back or forward to
+    // it is then a restoration visit, and turbo:load reopens the popover in the URL
+    Turbo.session.history.push(url)
+  }
+}
+
+const openSharedPopover = (trigger, modalClass) => {
+  if (sharedPopoverIsOpen()) {
+    // Opened from inside the popover (e.g. a transaction on a card popover) or by
+    // going back to it: swap the content in place. Reopening it would close it
+    // first, and the close handler empties the body we just filled.
+    window.unexpandReceipt()
+    populateSharedPopover(trigger)
+    const popover = document.getElementById('shared_popover')
+    popover.scrollTop = 0
+    recordSharedPopoverState(popover)
+    return
+  }
+
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+    modalClass,
+  })
+}
+
 // Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
 const openPopoverFromUrl = () => {
   const link = new URL(location.href).searchParams.get('popover')
@@ -68,11 +108,7 @@ const openPopoverFromUrl = () => {
   )
   if (!trigger) return false
 
-  populateSharedPopover(trigger)
-  BK.s('modal', '#shared_popover').modal({
-    fadeDuration: 200,
-    fadeDelay: 0.75,
-  })
+  openSharedPopover(trigger)
   return true
 }
 
@@ -151,15 +187,17 @@ const loadModals = element => {
       e.stopPropagation()
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
+    const modalClass = $(this).parents('turbo-frame').length
+      ? 'turbo-frame-modal'
+      : undefined
     if ($(this).data('modal') === 'shared_popover') {
-      populateSharedPopover(this)
+      openSharedPopover(this, modalClass)
+      return this.blur()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
       fadeDelay: 0.75,
-      modalClass: $(this).parents('turbo-frame').length
-        ? 'turbo-frame-modal'
-        : undefined,
+      modalClass,
     })
     BK.s('modal', '#' + $(this).data('modal'))
       .find('iframe[data-src]')
@@ -714,74 +752,6 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-const initPayoutMethodToggles = function () {
-  if (
-    BK.thereIs('check_payout_method_inputs') &&
-    BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('wire_payout_method_inputs') &&
-    BK.thereIs('wise_transfer_payout_method_inputs')
-  ) {
-    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s(
-      'ach_transfer_payout_method_inputs'
-    )
-    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
-    const wiseTransferPayoutMethodInputs = BK.s(
-      'wise_transfer_payout_method_inputs'
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodcheck',
-      e => {
-        if (e.target.checked)
-          checkPayoutMethodInputs.slideDown() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodachtransfer',
-      e => {
-        if (e.target.checked)
-          achTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodwire',
-      e => {
-        if (e.target.checked)
-          checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodwisetransfer',
-      e => {
-        if (e.target.checked)
-          wiseTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on('change', '[name="user[payout_method_type]"]', e => {
-      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
-    })
-  }
-}
-
-$(document).on('turbo:load', initPayoutMethodToggles)
-$(document).on('turbo:frame-load', initPayoutMethodToggles)
-
 $(document).on(
   'keydown',
   '[data-behavior~=ctrl_enter_submit]',
@@ -894,31 +864,24 @@ $(document).on('wheel', 'input[type=number]', e => {
   e.target.blur()
 })
 
-// this allows for popovers to change the URL in the browser when opened.
-// it also handles using the back button, to reopen or close a popover.
+// Opening a popover puts its URL in the address bar as a Turbo history entry, so the
+// back and forward buttons are restoration visits: the popover closes with the page
+// (turbo:before-cache, see application.js) and turbo:load reopens the one in the URL.
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateTitle) {
-      document.documentElement.dataset.returnToStateTitle = document.title
-    }
-    document.title = modal.elm[0].dataset.stateTitle
-
-    const url = new URL(location.href)
-    if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
-      url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
-      window.history.pushState({ modal: modal.elm[0].id }, '', url)
-    }
+    recordSharedPopoverState(modal.elm[0])
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    // Closing via the back button has already removed the param
+    // Closing via the back button has already removed the param, and a close for
+    // Turbo's snapshot cache (see application.js) leaves the URL to Turbo
     const url = new URL(location.href)
-    if (url.searchParams.has('popover')) {
+    if (!modal.options?.keepHistory && url.searchParams.has('popover')) {
       url.searchParams.delete('popover')
-      window.history.pushState(null, '', url)
+      Turbo.session.history.push(url)
     }
 
     if (document.documentElement.dataset.returnToStateTitle) {
@@ -939,14 +902,6 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
       popoverEl.classList.remove('modal--popover--receipt-expanded')
       popoverEl.classList.remove('modal--popover--sm')
     }
-  }
-})
-
-window.addEventListener('popstate', e => {
-  if (e.state?.modal) {
-    openPopoverFromUrl()
-  } else {
-    $.modal.close()
   }
 })
 
