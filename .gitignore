@@ -63,3 +63,6 @@ yarn-debug.log*
 !.claude/hooks/
 .claude/hooks/*
 !.claude/hooks/block_manual_migrations.rb
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/rwx/

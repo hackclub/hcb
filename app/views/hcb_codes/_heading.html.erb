@@ -13,7 +13,7 @@
     <% end %>
 
     <%= render "hcb_codes/memo/stream", hcb_code: %>
-    <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } %>
+    <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } if policy(hcb_code).edit? %>
     <div class="flex-1"></div>
     <%= pop_icon_to "edit",
         edit_hcb_code_path(hcb_code),
