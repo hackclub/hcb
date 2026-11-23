@@ -13,7 +13,7 @@ module Reimbursement
 
       # One expense per uploaded file, or a single blank expense when there are none.
       @expenses = Array.new([files.size, 1].max) do
-        @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage)).tap { |expense| authorize expense }
+        @report.expenses.build(amount_cents: 0, type:, transaction_category_slug: ("travel" if mileage)).tap { |expense| authorize expense }
       end
 
       @expenses.zip(files).each do |expense, file|
@@ -120,7 +120,7 @@ module Reimbursement
     private
 
     def expense_params
-      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type, :category).compact_blank
+      params.require(:reimbursement_expense).permit(:value, :memo, :description, :reimbursement_report_id, :event_id, :type, :transaction_category_slug).compact_blank
     end
 
     def set_expense
