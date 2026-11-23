@@ -1814,7 +1814,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_120000) do
     t.bigint "receipt_id"
     t.string "signer_name", null: false
     t.bigint "submitter_id"
-    t.integer "total_amount_cents", null: false
+    t.bigint "total_amount_cents", null: false
     t.datetime "updated_at", null: false
     t.index ["receipt_id"], name: "index_lost_receipt_statements_on_receipt_id", unique: true
     t.index ["submitter_id"], name: "index_lost_receipt_statements_on_submitter_id"

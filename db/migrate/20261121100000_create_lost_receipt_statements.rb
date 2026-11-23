@@ -10,7 +10,7 @@ class CreateLostReceiptStatements < ActiveRecord::Migration[8.1]
       t.string :merchant, null: false
       t.date :date, null: false
       t.text :purpose, null: false
-      t.integer :total_amount_cents, null: false
+      t.bigint :total_amount_cents, null: false
       t.string :signer_name, null: false
       t.datetime :confirmed_at, null: false
 

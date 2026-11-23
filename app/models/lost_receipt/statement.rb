@@ -10,7 +10,7 @@
 #  merchant           :string           not null
 #  purpose            :text             not null
 #  signer_name        :string           not null
-#  total_amount_cents :integer          not null
+#  total_amount_cents :bigint           not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  receipt_id         :bigint
