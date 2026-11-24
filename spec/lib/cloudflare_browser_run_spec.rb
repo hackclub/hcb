@@ -47,6 +47,15 @@ RSpec.describe CloudflareBrowserRun do
     end
   end
 
+  it "scrubs HTML that arrives as raw bytes instead of failing to encode it as JSON" do
+    stub = stub_request(:post, /browser-rendering/)
+           .with(body: hash_including("html" => "<p>\uFFFD Shop</p>"))
+           .to_return(status: 200, body: "%PDF-1.4")
+
+    described_class.pdf("<p>\xA9 Shop</p>".b)
+    expect(stub).to have_been_requested
+  end
+
   it "raises on API errors instead of returning an error body as a PDF" do
     stub_request(:post, /browser-rendering/).to_return(status: 401)
 
