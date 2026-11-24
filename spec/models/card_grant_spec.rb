@@ -114,8 +114,8 @@ RSpec.describe CardGrant, type: :model do
       card_grant = create(:card_grant, event:, amount_cents: 1_000, sent_by: sender, stripe_card: nil)
       disbursement = card_grant.disbursement
 
-      create(:canonical_transaction, memo: disbursement.outgoing_disbursement.transaction_memo, amount_cents: -1_000)
-      create(:canonical_transaction, memo: disbursement.incoming_disbursement.transaction_memo, amount_cents: 1_000)
+      create(:canonical_transaction, memo: disbursement.outgoing_disbursement.short_code_memo, amount_cents: -1_000)
+      create(:canonical_transaction, memo: disbursement.incoming_disbursement.short_code_memo, amount_cents: 1_000)
       EventMappingEngine::Map::HcbCodes::Short.new.run
 
       expect(card_grant.subledger.legacy_balance_cents).to eq(2_000)

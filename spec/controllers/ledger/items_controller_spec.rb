@@ -32,6 +32,35 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("New memo")
         expect(response.body).to include("turbo-stream")
       end
+
+      context "with an AI memo suggestion from a receipt" do
+        let(:ai_memo_stream) { "turbo-stream[action='replace'][target='#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}']" }
+
+        before do
+          Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                          file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+        end
+
+        it "marks the memo custom and withdraws the suggestion" do
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
+
+          expect(response.body).to include(%(data-custom-memo="true">New memo</span>))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo).to be_present
+          expect(ai_memo.to_html).not_to include("data-memo-suggestion-param")
+        end
+
+        it "offers the suggestion again when the memo is cleared" do
+          item.update_custom_memo!("Old memo")
+
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "" } }
+
+          expect(item.reload.custom_memo).to be_nil
+          expect(response.body).to include(%(data-custom-memo="false"))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo.to_html).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+        end
+      end
     end
 
     describe "POST #toggle_tag" do
@@ -234,6 +263,38 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response).to be_successful
         expect(response.body).to include(%(id="ledger_item_#{group.ledger_item.hashid}_tag_#{hcb_tag.id}"))
       end
+    end
+
+    describe "the donor edit modal on a donation" do
+      let(:recurring_donation) do
+        RecurringDonation.create!(event:, name: "Jane Smith", email: "jane@example.com", amount: 10_00, anonymous: true,
+                                  stripe_subscription_id: "sub_test", stripe_customer_id: "cus_test", stripe_status: "active")
+      end
+      let(:donation) { create(:donation, event:, recurring_donation:, anonymous: false, aasm_state: :deposited) }
+      let(:item) { create(:ledger_item, linked_object: donation) }
+
+      it "pre-checks anonymous from the recurring donation and warns that edits apply to the whole series" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        modal = Nokogiri::HTML5(response.body).at_css("#update")
+        expect(modal.at_css("input[name='donation[anonymous]'][type='checkbox']")["checked"]).to be_present
+        expect(modal.text).to include("Updating the donor's details will update them for all past and future donations.")
+      end
+    end
+
+    it "offers a receipt's AI memo suggestion on an item with no HCB code" do
+      Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                      file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :show, params: { id: item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+      expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}"))
     end
 
     it "updates the counts on the item's ledger row when shown in a popover" do
