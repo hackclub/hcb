@@ -47,6 +47,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Wire < ApplicationRecord
+  MINIMUM_AMOUNT_CENTS = 500_00
   SMALL_WIRE_FEE_AMOUNT_CENTS = 25_00
 
   has_paper_trail
@@ -201,7 +202,7 @@ class Wire < ApplicationRecord
   end
 
   def below_minimum?
-    usd_amount_cents < 500_00
+    usd_amount_cents < MINIMUM_AMOUNT_CENTS
   end
 
   def fee_chargeable?
