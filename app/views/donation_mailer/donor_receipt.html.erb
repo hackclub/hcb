@@ -1,5 +1,6 @@
 <% payment_term = @donation.tax_deductible ? "donation" : "payment" %>
 <% secondary_payment_term = @donation.tax_deductible ? "gift" : "payment" %>
+<% receipt_phrase = @receipt_attached ? "find attached a receipt" : "consider this email a receipt" %>
 
 <p>Hi <%= @donation.name(show_anonymous: true) %>,</p>
 
@@ -9,8 +10,8 @@
     of <%= render_money @donation.recurring_donation.amount %> per month
     to <%= @donation.event.name %>
     has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your
-    card has been charged <%= render_money @donation.amount %>. Please find
-    attached a receipt for your <%= secondary_payment_term %> for the month of
+    card has been charged <%= render_money @donation.amount %>. Please
+    <%= receipt_phrase %> for your <%= secondary_payment_term %> for the month of
     <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
   </p>
 <% else %>
@@ -19,7 +20,7 @@
     generous <%= "anonymous " if @donation.anonymous? %> <%= payment_term %>
     of <%= render_money @donation.amount %> to <%= @donation.event.name %>.
     Please
-    find attached a receipt for your <%= secondary_payment_term %>.
+    <%= receipt_phrase %> for your <%= secondary_payment_term %>.
   </p>
 <% end %>
 

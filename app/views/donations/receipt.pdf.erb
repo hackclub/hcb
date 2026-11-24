@@ -1,4 +1,5 @@
 <% payment_term = @donation.tax_deductible ? "gift" : "payment" %>
+<% period = " for the month of #{@donation.created_at.strftime("%B %Y")}" if @donation.recurring? %>
 <head>
   <title><%= @donation.event.name %> <%= @donation.tax_deductible ? "Gift Acknowledgement" : "Payment Receipt" %></title>
   <meta charset="utf-8" />
@@ -30,11 +31,6 @@
     a {
       color: #1155cc;
     }
-
-    .auto-page-break {
-      page-break-before: auto;
-      page-break-inside: avoid;
-    }
   </style>
 </head>
 <body>
@@ -48,7 +44,7 @@
           West Hollywood, CA 90069<br />
           hcb@hackclub.com
         </p>
-      <%= image_tag(wicked_pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
+      <%= image_tag(pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
     </div>
     <br />
     <br />
@@ -61,7 +57,7 @@
       <p>Dear <%= @donation.name(show_anonymous: true) %>,</p>
       <% if @donation.tax_deductible %>
         <p>
-          Please consider this letter an acknowledgment of your gift of <%= render_money @donation.amount %>
+          Please consider this letter an acknowledgment of your <%= "monthly " if @donation.recurring? %>gift of <%= render_money @donation.amount %><%= period %>
           to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation).
           You can share this with your accountant for tax purposes. Thank you for your generosity.
         </p>
@@ -72,7 +68,7 @@
         </p>
       <% else %>
         <p>
-          Please consider this letter a receipt for your payment of <%= render_money @donation.amount %>
+          Please consider this letter a receipt for your <%= "monthly " if @donation.recurring? %>payment of <%= render_money @donation.amount %><%= period %>
           to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation). Thank you.
         </p>
       <% end %>
@@ -90,7 +86,7 @@
     <p>
       Best regards,
     </p>
-    <%= image_tag(wicked_pdf_asset_base64('zach_signature.png'), width: 200, height: 118, dpi: 96) %>
+    <%= image_tag(pdf_asset_base64('zach_signature.png'), width: 200, height: 118) %>
     <p style="line-height: 1.25">
       Zach Latta<br />
       Executive Director<br />
