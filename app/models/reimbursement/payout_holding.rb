@@ -130,6 +130,8 @@ module Reimbursement
     rescue => e
       Rails.error.report(e, context: { reimbursement_payout_holding_id: id })
       false
+    end
+
     # Version id of the latest transition into `failed`, used to tie reminder jobs to a single failure.
     def current_failure_id
       versions.where_object_changes_to(aasm_state: "failed").last&.id
