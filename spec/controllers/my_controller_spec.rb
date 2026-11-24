@@ -471,6 +471,33 @@ RSpec.describe MyController do
 
           expect(response.body).to include("1 of 2 transactions")
         end
+
+        # The "Create tag" link needs the create_tag modal of an org page, and
+        # the inbox lists charges across orgs, so a row's menu offers only the
+        # org's tags: no link, and no divider dangling where it would go.
+        describe "add-tag menu" do
+          before { create(:organizer_position, user:, event:, role: :member) }
+
+          it "offers the org's tags without a Create tag link or its divider" do
+            event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted")
+            charge = create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).to include("+ Add tag")
+            expect(response.body).to include(ledger_item_toggle_tag_path(charge))
+            expect(response.body).not_to include("Create tag")
+            expect(response.body).not_to include("tags__divider")
+          end
+
+          it "omits the menu when the org has no tags to offer" do
+            create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).not_to include("+ Add tag")
+          end
+        end
       end
 
       it "counts a group across every page, not just the page being shown" do

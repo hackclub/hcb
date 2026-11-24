@@ -10,7 +10,12 @@
   row then brings its own section, and nothing renders when the row is empty.
 %>
 <% event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
-<% can_toggle = event.present? && policy(item).toggle_tag? %>
+<%#
+  The page sets @event only for an event-owned ledger (ledger/items/show), so
+  a card grant's item gets no "Create tag" link in its menu (see
+  ledger/items/_tag_menu_content) and, without tags to toggle, no menu at all.
+%>
+<% can_toggle = event.present? && policy(item).toggle_tag? && (event.tags.any? || @event.present?) %>
 <% if event.present? && !event.demo_mode? && (item.tags.any? || can_toggle) %>
   <% row = capture do %>
     <div>
