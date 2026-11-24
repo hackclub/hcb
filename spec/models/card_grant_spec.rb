@@ -173,4 +173,80 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.expiration_at).to be_present
     end
   end
+
+  describe "pre_authorization_required default" do
+    let(:event) { create(:event) }
+
+    it "inherits the event's setting when not provided" do
+      create(:card_grant_setting, event:, pre_authorization_required: true)
+
+      card_grant = event.card_grants.build
+
+      expect(card_grant.pre_authorization_required).to be(true)
+    end
+
+    it "stays false when the event's setting is off" do
+      create(:card_grant_setting, event:, pre_authorization_required: false)
+
+      card_grant = event.card_grants.build
+
+      expect(card_grant.pre_authorization_required).to be(false)
+    end
+
+    it "stays false when the event has no setting yet" do
+      card_grant = event.card_grants.build
+
+      expect(card_grant.pre_authorization_required).to be(false)
+    end
+
+    it "keeps an explicit false even when the event's setting is on" do
+      create(:card_grant_setting, event:, pre_authorization_required: true)
+
+      card_grant = event.card_grants.build(pre_authorization_required: false)
+
+      expect(card_grant.pre_authorization_required).to be(false)
+    end
+
+    it "keeps an unchecked checkbox value even when the event's setting is on" do
+      create(:card_grant_setting, event:, pre_authorization_required: true)
+
+      card_grant = event.card_grants.build(pre_authorization_required: "0")
+
+      expect(card_grant.pre_authorization_required).to be(false)
+    end
+
+    it "keeps an explicit true even when the event's setting is off" do
+      create(:card_grant_setting, event:, pre_authorization_required: false)
+
+      card_grant = event.card_grants.build(pre_authorization_required: true)
+
+      expect(card_grant.pre_authorization_required).to be(true)
+    end
+
+    it "does not touch persisted card grants" do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      card_grant = create(:card_grant, event:, pre_authorization_required: false)
+      event.card_grant_setting.update!(pre_authorization_required: true)
+
+      expect(CardGrant.find(card_grant.id).pre_authorization_required).to be(false)
+    end
+
+    it "creates a pre-authorization when the inherited setting is on" do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      create(:card_grant_setting, event:, pre_authorization_required: true)
+      user = create(:user)
+
+      card_grant = event.card_grants.build(
+        email: user.email,
+        amount_cents: 1_000,
+        user:,
+        sent_by: create(:user),
+        stripe_card: create(:stripe_card, :with_stripe_id, event:)
+      )
+      card_grant.save!
+
+      expect(card_grant.pre_authorization_required).to be(true)
+      expect(card_grant.pre_authorization).to be_present
+    end
+  end
 end
