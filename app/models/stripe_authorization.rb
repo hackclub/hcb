@@ -57,15 +57,6 @@ class StripeAuthorization < ApplicationRecord
 
   validates_presence_of :stripe_id, :stripe_status, :authorization_method, :amount, :name
 
-  def filter_data
-    {
-      exists: true,
-      fee_applies: false,
-      fee_payment: false,
-      card: true
-    }
-  end
-
   def status_text
     return "Declined" unless approved?
     return "Pending" if pending?
