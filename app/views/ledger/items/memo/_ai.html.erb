@@ -1,8 +1,14 @@
 <%# locals: (item:) -%>
 
+<%#
+  The memo an AI suggested from the item's newest receipt, offered while the
+  item hasn't been renamed. ReceiptService::Extract replaces this span over the
+  item's "ai_memo" stream once it has read a receipt.
+%>
+<% suggested_memo = item.receipts.where.not(suggested_memo: nil).order(:created_at).last&.suggested_memo %>
+
 <span id="<%= dom_id(item, :ai_memo) %>">
-  <%= turbo_stream_from item.hcb_code, "ai_memo" if item.hcb_code.present? %>
-  <% suggested_memo = item.hcb_code&.suggested_memos&.last %>
+  <%= turbo_stream_from item, "ai_memo" %>
   <% if suggested_memo.present? && item.custom_memo.nil? %>
     <span class="pointer tooltipped tooltipped--w"
       aria-label="Use AI to generate a memo"

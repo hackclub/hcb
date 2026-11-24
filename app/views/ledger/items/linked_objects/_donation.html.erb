@@ -42,10 +42,13 @@
       <%= form.text_field :name, value: donation.name(show_anonymous: true), placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
     </div>
     <div class="field field--checkbox mb2">
-      <%= form.check_box :anonymous, style: "margin-left: 0;" %>
+      <%= form.check_box :anonymous, checked: donation.anonymous? || donation.recurring_donation&.anonymous?, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
     <%= render "donations/admin_donor_fields", form:, donation: %>
+    <% if donation.recurring? %>
+      <p class="muted">This donation is part of a recurring donation. Updating the donor's details will update them for all past and future donations.</p>
+    <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
 </section>
@@ -161,6 +164,7 @@
       </p>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 </article>
 

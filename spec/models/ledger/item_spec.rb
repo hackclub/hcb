@@ -347,6 +347,18 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe ".unmapped" do
+    it "returns items without a primary mapping" do
+      unmapped = create(:ledger_item)
+      mapped = create(:ledger_item, :with_primary_ledger)
+      secondary_only = create(:ledger_item)
+      create(:ledger_mapping, ledger: create(:ledger), ledger_item: secondary_only)
+
+      expect(described_class.unmapped).to contain_exactly(unmapped, secondary_only)
+      expect(described_class.unmapped).not_to include(mapped)
+    end
+  end
+
   describe "#refresh!" do
     it "sets amount_cents to 0 when there are no transactions" do
       item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)

@@ -17,6 +17,7 @@
 #  not_admin_only_comment_count :integer          default(0), not null
 #  pending_at                   :datetime
 #  receipt_count                :integer          default(0), not null
+#  receipt_due_at               :datetime
 #  receipt_required             :boolean
 #  settled_at                   :datetime
 #  short_code                   :text
@@ -31,13 +32,14 @@
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents     (amount_cents)
-#  index_ledger_items_on_author_id        (author_id)
-#  index_ledger_items_on_datetime         (datetime)
-#  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
-#  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
-#  index_ledger_items_on_short_code       (short_code) UNIQUE
-#  index_ledger_items_on_status           (status)
+#  index_ledger_items_on_amount_cents         (amount_cents)
+#  index_ledger_items_on_author_id            (author_id)
+#  index_ledger_items_on_datetime             (datetime)
+#  index_ledger_items_on_linked_object        (linked_object_type,linked_object_id)
+#  index_ledger_items_on_open_receipt_due_at  (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND receipt_required AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))
+#  index_ledger_items_on_receipt_missing      (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
+#  index_ledger_items_on_short_code           (short_code) UNIQUE
+#  index_ledger_items_on_status               (status)
 #
 # Foreign Keys
 #
@@ -58,6 +60,8 @@ class Ledger
 
     include Commentable
     include Receiptable
+    # Card-locking scopes, columns, and the materializer. See the concern.
+    include CardLocking::ChargeBehavior
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
@@ -99,6 +103,8 @@ class Ledger
 
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    # Receipt bin suggestions for this item. The database drops them with it.
+    has_many :suggested_pairings, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
     has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayments, through: :repayment_allocations
@@ -139,6 +145,7 @@ class Ledger
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    scope :unmapped, -> { where.missing(:primary_mapping) }
 
     def status_text
       status.humanize

@@ -121,8 +121,7 @@ class AdminController < Admin::BaseController
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
       tags: params[:tags],
-      risk_level: params[:risk_level],
-      demo_mode: params[:demo_mode].to_i == 1
+      risk_level: params[:risk_level]
     ).run
 
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
@@ -147,8 +146,7 @@ class AdminController < Admin::BaseController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags:,
-      demo_mode: true
+      tags:
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
@@ -435,7 +433,7 @@ class AdminController < Admin::BaseController
                  Ledger::Item.all
                end
 
-    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+    relation = relation.unmapped if @unmapped.present? && @q.blank?
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
     relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
@@ -444,6 +442,15 @@ class AdminController < Admin::BaseController
 
     @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
+  end
+
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
   end
 
   def event_search
@@ -1164,7 +1171,7 @@ class AdminController < Admin::BaseController
     relation = HcbCode
 
     relation = relation.where("hcb_codes.hcb_code ILIKE ?", "%#{@q}%") if @q
-    relation = relation.receipt_required.missing_receipt if @has_receipt == "no"
+    relation = relation.joins(:ledger_item).merge(Ledger::Item.missing_receipt) if @has_receipt == "no"
     relation = relation.has_receipt_or_marked_no_or_lost if @has_receipt == "yes"
     relation = relation.lost_receipt if @has_receipt == "lost"
 

@@ -104,6 +104,27 @@
   font-size: 15px;
 }
 
+.user-menu-trigger--nudge {
+  border-radius: 0.5rem;
+  outline: 2px solid rgba(map-get($palette, primary), 0.4);
+  outline-offset: 2px;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: sign-in-nudge 1.5s ease-out 3;
+  }
+}
+
+@keyframes sign-in-nudge {
+  0% {
+    outline-color: rgba(map-get($palette, primary), 0.8);
+    outline-offset: 0;
+  }
+  100% {
+    outline-color: rgba(map-get($palette, primary), 0.4);
+    outline-offset: 4px;
+  }
+}
+
 .container {
   width: 100%;
   margin: 0 auto;

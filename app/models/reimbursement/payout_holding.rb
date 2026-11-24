@@ -30,6 +30,7 @@ module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
+    include HasHcbCode
 
     include Hashid::Rails
     hashid_config salt: ""
@@ -38,6 +39,8 @@ module Reimbursement
     set_public_id_prefix :rph
 
     has_paper_trail
+
+    REMINDER_DAYS = [3, 7, 14].freeze
 
     has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
@@ -50,7 +53,6 @@ module Reimbursement
 
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
-    has_many :canonical_transactions, through: :local_hcb_code
     has_one :canonical_pending_transaction, foreign_key: "reimbursement_payout_holding_id", inverse_of: :reimbursement_payout_holding
 
     after_create do
@@ -85,6 +87,15 @@ module Reimbursement
       end
 
       event :mark_failed do
+        after do
+          failure_id = current_failure_id
+          next if failure_id.nil?
+
+          REMINDER_DAYS.each do |days|
+            Reimbursement::FailedPayoutReminderJob.set(wait: days.days).perform_later(self, days, failure_id)
+          end
+        end
+
         transitions from: [:sent, :settled], to: :failed
       end
 
@@ -119,6 +130,9 @@ module Reimbursement
     rescue => e
       Rails.error.report(e, context: { reimbursement_payout_holding_id: id })
       false
+    # Version id of the latest transition into `failed`, used to tie reminder jobs to a single failure.
+    def current_failure_id
+      versions.where_object_changes_to(aasm_state: "failed").last&.id
     end
 
     def reverse!
@@ -152,7 +166,7 @@ module Reimbursement
                            currency_code: "USD",
                            sender_bank_account_id:,
                            receiver_bank_account_id:,
-                           description: "HCB-#{local_hcb_code.short_code}"
+                           description: short_code_memo
       end
 
       expense_payouts.each do |expense_payout|

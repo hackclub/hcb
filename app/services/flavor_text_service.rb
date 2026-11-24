@@ -523,7 +523,7 @@ class FlavorTextService
       "I like my fiscal sponsors like I like my relationships: regulated and auditable",
       "🤧 ACHoo",
       '#{FlavorTextService.new.generate}', # rubocop:disable Lint/InterpolationCheck
-      -> { missing_receipts = HcbCode.missing_receipt.receipt_required.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
+      -> { missing_receipts = Ledger::Item.missing_receipt.count; "only #{missing_receipts} missing #{"receipt".pluralize(missing_receipts)}!" }, # => "only 20 missing receipts!"
     ]
   end
 

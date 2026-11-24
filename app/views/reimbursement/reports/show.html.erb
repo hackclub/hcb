@@ -31,7 +31,7 @@
     <% end %>
     <% if @report.payout_holding&.failed? %>
       <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;padding:0", 'aria-label': "Cancel this reimbursement" do %>
-        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", data: { turbo_method: :post, turbo_confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them.", turbo_confirm_danger: true } do %>
+        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", data: { turbo_method: :post, turbo_confirm: "After canceling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them.", turbo_confirm_danger: true } do %>
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
       <% end %>
@@ -263,7 +263,7 @@
         <p>If Wise returns the funds after the transfer was sent, map the returned transaction back to the original Wise transfer using "Map to a Wise transfer return" on its admin transaction page. That fails the transfer, cancels this report, returns the funds to <%= @report.event.name %>, and emails the user.</p>
         <p>If it fails while you're sending it, reach out to the user to request new information from them (for example an updated account number or address). Inform them that the USD amount of this report has been locked at <%= locked_usd_amount %> and that after we receive the updated information from them, we will send the <%= @report.currency %> equivalent of <%= locked_usd_amount %>.</p>
         <p><strong>Upon resending the new information, send a Wise transfer with the updated information with a USD value of <%= locked_usd_amount %>.</strong></p>
-        <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Cancelling a report is a destructive action and the report can not be resubmitted afterwards.</p>
+        <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Canceling a report is a destructive action and the report cannot be resubmitted afterwards.</p>
       </div>
     </div>
   <% end %>

@@ -58,15 +58,15 @@ RSpec.describe DisbursementService::Nightly do
         described_class.new.run
       end
 
-      it "uses the transaction memo in the description" do
+      it "uses the short code memo in the description" do
         expect(ColumnService).to receive(:post).with(
           "/transfers/book",
-          hash_including(description: disbursement.outgoing_disbursement.transaction_memo)
+          hash_including(description: disbursement.outgoing_disbursement.short_code_memo)
         ).once
 
         expect(ColumnService).to receive(:post).with(
           "/transfers/book",
-          hash_including(description: disbursement.incoming_disbursement.transaction_memo)
+          hash_including(description: disbursement.incoming_disbursement.short_code_memo)
         ).once
 
         described_class.new.run
