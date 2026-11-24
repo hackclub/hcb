@@ -215,10 +215,6 @@ class Invoice < ApplicationRecord
   # Stripe syncing…
   before_destroy :close_stripe_invoice
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   def manually_marked_as_paid?
     manually_marked_as_paid_at.present?
   end
@@ -385,10 +381,6 @@ class Invoice < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
 
   def canonical_pending_transactions
     return [] unless raw_pending_invoice_transaction

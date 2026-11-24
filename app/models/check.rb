@@ -107,10 +107,6 @@ class Check < ApplicationRecord
     end
   end
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   def state_text
     status.to_s.humanize
   end
@@ -170,10 +166,6 @@ class Check < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
 
   def canonical_pending_transactions
     @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
