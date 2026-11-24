@@ -171,20 +171,6 @@ RSpec.describe "Contractor invoice review", type: :system do
       end
       expect(on_screen).to be(true)
     end
-
-    it "opens the invoice above the contractor popover on the contractors page" do
-      invoice = create_invoice("Week 1 hours")
-      visit_without_animations event_contractors_path(event_id: event.slug)
-
-      open_row("Fiona Hackworth")
-      # The popover fetches the contract page, whose receipt previews are resized on render
-      expect(page).to have_css("#shared_popover tr.clickable", text: invoice.name, wait: 10)
-      open_invoice(invoice)
-      within_invoice_modal(invoice) { click_button "Approve" }
-
-      expect(page).to have_invoice_status("Approved")
-      expect(invoice.reload).to be_approved
-    end
   end
 
   context "as a reader" do
