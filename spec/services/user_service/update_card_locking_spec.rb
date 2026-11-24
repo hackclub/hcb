@@ -11,7 +11,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
   it "locks and notifies when a charge is overdue" do
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
-    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(Ledger::Item.none)
     expect {
       described_class.new(user:).run
     }.to change { user.reload.cards_locked? }.from(false).to(true)
@@ -66,6 +66,25 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
     }.to change { user.reload.cards_locked? }.from(true).to(false)
   end
 
+  # The unlock decision is made on persisted deadlines. A charge that has not
+  # been materialized yet (its settlement job still queued, or every charge
+  # right after deadlines moved onto ledger items) has none, so without a
+  # refresh it would read as on time and the cards would unlock with it overdue.
+  describe "in unlock_only mode" do
+    include_context "card locking charges"
+
+    it "refreshes deadlines before deciding, so a charge with none yet keeps the cards locked" do
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      expect(charge.receipt_due_at).to be_nil
+      user.update!(cards_locked: true)
+
+      expect {
+        described_class.new(user:, unlock_only: true).run
+      }.not_to(change { user.reload.cards_locked? })
+      expect(charge.reload.receipt_due_at).to be_within(2.seconds).of(10.days.ago + 7.days)
+    end
+  end
+
   it "is a no-op in unlock_only mode when the card is already unlocked" do
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(false)
     expect { described_class.new(user:, unlock_only: true).run }.not_to(change { user.reload.cards_locked? })
@@ -82,7 +101,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
   it "tells a cardholder unlocked by suppression when the exception ends" do
     user.update!(cards_locked: true, card_locking_suppressed_until: 24.hours.from_now)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
-    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(Ledger::Item.none)
 
     expect {
       described_class.new(user:).run

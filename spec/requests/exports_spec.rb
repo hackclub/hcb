@@ -7,6 +7,8 @@ RSpec.describe "Transaction exports", type: :request do
   let(:last_month) { Date.today.prev_month.beginning_of_month.to_s }
 
   describe "GET /exports/:event.pdf" do
+    before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
     it "renders the statement for a valid month" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month }
 
@@ -32,7 +34,7 @@ RSpec.describe "Transaction exports", type: :request do
       get "/exports/#{event.slug}.pdf", params: { start_date: Date.today.beginning_of_month.to_s }
 
       expect(response).to have_http_status(:bad_request)
-      expect(response.body).to eq("Can not create a financial statement for #{Date.today.strftime("%B %Y")}.")
+      expect(response.body).to eq("Cannot create a financial statement for #{Date.today.strftime("%B %Y")}.")
     end
 
     it "returns a 400 when the end date is before the start date" do

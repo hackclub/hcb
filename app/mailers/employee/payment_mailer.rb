@@ -20,7 +20,7 @@ class Employee
       @payment = params[:payment]
       @employee = @payment.employee
 
-      mail to: @employee.event.users.excluding(@employee.user).map(&:email_address_with_name),
+      mail to: @employee.event.organizer_contact_emails(include_contact_email: false) { |users| users.excluding(@employee.user) },
            subject: "[Payroll / #{@employee.event.name}] Review Requested: #{@payment.title}"
     end
 

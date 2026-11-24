@@ -2,6 +2,9 @@
 
 require "rails_helper"
 
+RSpec::Matchers.define_negated_matcher :not_enqueue_job, :have_enqueued_job
+RSpec::Matchers.define_negated_matcher :not_enqueue_mail, :have_enqueued_mail
+
 RSpec.describe "Card locking, end to end", type: :model do
   include ActiveJob::TestHelper
   include_context "card locking charges"
@@ -9,6 +12,15 @@ RSpec.describe "Card locking, end to end", type: :model do
   before do
     Flipper.enable(:card_locking)
     # The stage flag (enforcement start 2026-07-14) comes from the shared context.
+  end
+
+  # No mail, no SMS: the mailers and the SMS are all jobs. Checked per job
+  # rather than as "no job at all": creating the charge's event mapping
+  # broadcasts a Turbo refresh of the ledger, and Turbo debounces that
+  # broadcast on a background thread, so its job can be enqueued at any point
+  # in the next half second, including during the sweep.
+  def expect_no_notification(&)
+    expect(&).to not_enqueue_mail(CardLockingMailer).and(not_enqueue_job(User::SendSmsJob))
   end
 
   it "settles, sweeps a deadline, does not lock before it, locks after it via the cron, then unlocks on upload" do
@@ -20,7 +32,6 @@ RSpec.describe "Card locking, end to end", type: :model do
       charge = create_settled_card_charge(user:, settled_at: Time.current)
       UserService::RefreshReceiptDeadlines.new(user:).run
       charge.reload
-      expect(charge.card_charge_settled_at).to be_within(1.second).of(Time.current)
       expect(charge.receipt_due_at).to be_within(1.second).of(Time.current + 7.days)
     end
 
@@ -42,8 +53,38 @@ RSpec.describe "Card locking, end to end", type: :model do
       perform_enqueued_jobs(only: User::UpdateCardLockingJob) do
         attach_receipt(charge, uploaded_by: user)
       end
-      expect(charge.reload.receipt_resolved_at).to be_present # frozen on upload
-      expect(user.reload.cards_locked?).to be(false)          # card came back
+      expect(charge.reload).not_to be_missing_receipt
+      expect(user.reload.cards_locked?).to be(false) # card came back
+    end
+  end
+
+  # Deadlines are materialized onto ledger items from scratch (nothing is copied
+  # from HCB codes), so the first sweep after the move sees charges with no
+  # deadline at all. It must not read that as "nothing overdue" and release
+  # every locked cardholder with a "your cards work again".
+  describe "the sweep that first materializes deadlines" do
+    it "keeps a locked cardholder locked, without any notification" do
+      travel_to Time.zone.parse("2026-10-10 09:00:00") do
+        charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+        user.update!(cards_locked: true)
+        expect(charge.receipt_due_at).to be_nil
+
+        expect_no_notification { User::UpdateCardLocking::RecurringJob.perform_now }
+
+        expect(user.reload.cards_locked?).to be(true)
+        expect(charge.reload.receipt_due_at).to be_within(1.second).of(10.days.ago + 7.days)
+      end
+    end
+
+    it "gives an unlocked cardholder's old charge the 72-hour floor rather than locking on the spot" do
+      travel_to Time.zone.parse("2026-10-10 09:00:00") do
+        charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+
+        expect_no_notification { User::UpdateCardLocking::RecurringJob.perform_now }
+
+        expect(user.reload.cards_locked?).to be(false)
+        expect(charge.reload.receipt_due_at).to be_within(1.second).of(72.hours.from_now)
+      end
     end
   end
 end

@@ -94,6 +94,8 @@
       <%= increase_check.payment_for %>
     </p>
 
+    <%= render partial: "hcb_codes/associated_payment", locals: { payout: increase_check } %>
+
     <% if increase_check.check_number.present? %>
       <p>
         <strong>Check number</strong>
@@ -108,6 +110,7 @@
       <% end %>
     <% end %>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 
   <% if increase_check.may_mark_rejected? || increase_check.column_id.present? || auditor_signed_in? %>

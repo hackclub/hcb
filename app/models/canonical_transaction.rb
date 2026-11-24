@@ -43,8 +43,6 @@ class CanonicalTransaction < ApplicationRecord
 
   scope :unmapped, -> { includes(:canonical_event_mapping).where(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_event_mapping).where.not(canonical_event_mappings: { canonical_transaction_id: nil }) }
-  scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
-  scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
@@ -167,10 +165,6 @@ class CanonicalTransaction < ApplicationRecord
     friendly_memo_in_memory_backup
   end
 
-  def likely_disbursement?
-    memo.to_s.upcase.include?("HCB DISBURSE")
-  end
-
   def likely_hack_club_fee?
     hcb_code.starts_with?("HCB-700-") || memo.to_s.upcase.include?("HACK CLUB BANK FEE TO ACCOUNT")
   end
@@ -281,12 +275,6 @@ class CanonicalTransaction < ApplicationRecord
     return nil unless raw_stripe_transaction
 
     raw_stripe_transaction.stripe_transaction["authorization"]
-  end
-
-  def likely_waveable_for_fee?
-    likely_check_clearing_dda? ||
-      likely_card_transaction_refund? ||
-      likely_disbursement?
   end
 
   # DEPRECATED

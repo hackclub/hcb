@@ -32,15 +32,10 @@ class StripeAuthorization < ApplicationRecord
 
   default_scope { order(created_at: :desc) }
   scope :awaiting_receipt, -> { missing_receipt.where.not(amount: 0).where(approved: true) }
-  scope :unified_list, -> { approved.where.not(stripe_status: :reversed) }
   scope :approved, -> { where(approved: true) }
   scope :declined, -> { where(approved: false) }
   scope :successful, -> { approved.closed }
   scope :renamed, -> { where("display_name != name") }
-
-  def awaiting_receipt?
-    !amount.zero? && approved && missing_receipt?
-  end
 
   def declined?
     !approved
