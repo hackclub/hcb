@@ -256,6 +256,9 @@ RSpec.describe "Modals", type: :system do
       expect_open("#once")
       click_on "Go to cards"
       expect(page).to have_current_path("/my/cards")
+      # Back while its frames load cancels their requests, which Turbo leaves as an
+      # unhandled AbortError that fails the spec
+      expect(page).to have_no_css("turbo-frame[busy]", visible: :all)
 
       go_back
 

@@ -128,6 +128,9 @@ RSpec.describe "Transaction popovers", type: :system do
     open_popover
     execute_script("Turbo.visit('/my/cards')")
     expect(page).to have_current_path("/my/cards")
+    # Back while its frames load cancels their requests, which Turbo leaves as an
+    # unhandled AbortError that fails the spec
+    expect(page).to have_no_css("turbo-frame[busy]", visible: :all)
 
     go_back
 

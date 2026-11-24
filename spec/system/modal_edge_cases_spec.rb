@@ -463,6 +463,9 @@ RSpec.describe "Modal edge cases", type: :system do
       expect(page).to have_current_path("/my/cards")
       expect(page).to have_no_css(".modal-backdrop", visible: :all)
       expect(page_overflow).to eq("visible")
+      # Back while its frames load cancels their requests, which Turbo leaves as an
+      # unhandled AbortError that fails the spec
+      expect(page).to have_no_css("turbo-frame[busy]", visible: :all)
 
       go_back
       expect(page).to have_current_path(my_reimbursements_path)
