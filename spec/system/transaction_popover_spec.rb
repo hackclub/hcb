@@ -53,10 +53,21 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(transitions).to include("translate")
     expect(page).to have_css(popover, style: { translate: "none", opacity: "1" })
 
-    find("#{popover} .modal__close").click
-
-    expect(page).to have_css("#{popover}[data-closing] turbo-frame##{hcb_code.public_id}")
-    expect(transitions).to include("translate")
+    # Read in the same task as the click: the slide-out lasts 0.15s, which a
+    # slow run can miss between polls
+    closing = evaluate_script(<<~JS)
+      (() => {
+        const popover = document.querySelector('#shared_popover')
+        popover.querySelector('.modal__close').click()
+        return {
+          closing: popover.hasAttribute('data-closing'),
+          showing: !!popover.querySelector('turbo-frame##{hcb_code.public_id}'),
+          transitions: popover.getAnimations().map(a => a.transitionProperty)
+        }
+      })()
+    JS
+    expect(closing).to include("closing" => true, "showing" => true)
+    expect(closing["transitions"]).to include("translate")
     expect_closed(popover)
     expect(page).to have_no_css("#{popover} turbo-frame", visible: :all)
   end
