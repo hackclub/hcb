@@ -7,6 +7,7 @@
 #  id                                   :bigint           not null, primary key
 #  attempted_amount_cents               :integer          not null
 #  current_limit_amount_cents           :integer          not null
+#  current_limit_boost_amount_cents     :integer          default(0), not null
 #  current_limit_remaining_amount_cents :integer          not null
 #  current_limit_used_amount_cents      :integer          not null
 #  current_limit_window_ended_at        :datetime         not null
@@ -72,7 +73,7 @@ module Governance
           # deterministic string.
           insufficient_limit: ->(attempt) do
             <<~STR.squish
-              This transfer exceeds your limit of #{attempt.current_limit_amount.format}
+              This transfer exceeds your limit of #{attempt.current_limit_effective_amount.format}
               for the past #{ApplicationController.helpers.distance_of_time_in_words(Limit::WINDOW_DURATION)}
               (since #{attempt.current_limit_window_started_at}).
               You have #{attempt.current_limit_remaining_amount.format} remaining in your transfer limit."
