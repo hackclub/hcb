@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
-import swal from 'sweetalert'
+import swal from '../common/swal'
 
 export default class extends Controller {
   // `label`: the part of the button to swap for the confirm text, where

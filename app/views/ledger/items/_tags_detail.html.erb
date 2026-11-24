@@ -27,7 +27,7 @@
 
         <% if can_toggle %>
           <div data-controller="menu">
-            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless h-full" style="height: 1.6rem" data-menu-target="toggle" data-action="menu#toggle">+ Add tag</button>
             <%= render "ledger/items/tag_menu_content", item:, event: %>
           </div>
         <% end %>
