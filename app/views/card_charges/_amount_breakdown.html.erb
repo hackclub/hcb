@@ -1,0 +1,32 @@
+<%# locals: (breakdown:, modal_id:) %>
+
+<% if breakdown.entries.any? %>
+  <div>
+    <span style="height: 100%;">
+      <strong>Amount breakdown</strong>
+    </span>
+    <% summary = capture do %>
+      <% if breakdown.charged_amount %>
+        <%= breakdown.charged_amount.format %> charged<% if breakdown.refunds.any? %>, <%= breakdown.refunded_amount.format %> refunded<% end %>
+      <% else %>
+        <%= breakdown.entries.first.label %> <%= breakdown.entries.first.amount.format %>
+      <% end %>
+    <% end %>
+    <% if defined?(@frame) && @frame %>
+      <details>
+        <summary class="inline-flex select-none">
+          <%= summary %>
+          <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
+        </summary>
+        <%= render "card_charges/amount_breakdown_table", breakdown: %>
+      </details>
+    <% else %>
+      <action data-behavior="modal_trigger" data-modal="<%= modal_id %>" class="pointer" tabindex="0">
+        <span class="inline-flex">
+          <%= summary %>
+          <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+        </span>
+      </action>
+    <% end %>
+  </div>
+<% end %>
