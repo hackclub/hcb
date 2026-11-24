@@ -72,7 +72,6 @@ class CanonicalTransaction < ApplicationRecord
                       .or(where(memo: "COLUMN*COLUMN NA INTEREST"))
   }
   scope :likely_column_account_number, -> { column_transaction.joins("INNER JOIN column_account_numbers ON column_transaction->>'account_number_id' = column_account_numbers.column_id") }
-  scope :likely_hack_club_fee, -> { where("memo ilike '%Hack Club Bank Fee TO ACCOUNT%'") }
   scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'") }
   scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%' and memo not ilike '%STRIPE Stripe Top%') or memo is null") }
   scope :hcb_sweep, -> { where("memo ilike '%COLUMN*THE HACK HCB-SWEEP%'") }

@@ -104,8 +104,6 @@ class User < ApplicationRecord
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
-  has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
-  has_many :organizer_position_deletion_requests, inverse_of: :closed_by
   has_many :webauthn_credentials
   has_many :mailbox_addresses
   has_many :api_tokens
