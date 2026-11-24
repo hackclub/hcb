@@ -147,8 +147,7 @@
         </h2>
       <% end %>
 
-      <%# No frame: several of these tables share the page, and @items is paginated once below. %>
-      <%= render "ledgers/ledger", items:, frame_id: nil, show_pagination: false, show_author: false, receipt_upload_button: true, show_event_name: true %>
+      <%= render "my/missing_receipt_transactions", items:, show_event_name: true %>
     <% end %>
   <% end %>
 <% else %>
@@ -164,7 +163,7 @@
       </h2>
 
       <%# The org is already in this section's header, so it isn't repeated per row. %>
-      <%= render "ledgers/ledger", items: @card_items[card.id], frame_id: nil, show_pagination: false, show_author: false, receipt_upload_button: true %>
+      <%= render "my/missing_receipt_transactions", items: @card_items[card.id] %>
     </section>
   <% end %>
 <% end %>
