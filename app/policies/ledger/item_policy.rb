@@ -40,6 +40,24 @@ class Ledger
       admin_or_member? || (user.present? && user.manageable_events.exists? && DisbursementPolicy.new(user, Disbursement.new(destination_event: record.primary_ledger&.event)).repay?)
     end
 
+    # Who may attach receipts to this item, through ReceiptablePolicy. A
+    # transaction's receipts are attached to its ledger item
+    # (https://github.com/hackclub/hcb/issues/14106), but who may upload them is
+    # still the HCB code's call: the people on the transaction (the cardholder,
+    # say) may upload without being members of the organization, and a code can
+    # span more than one event. An item nothing has mapped to yet has no code and
+    # falls back to its primary ledger's event.
+    def receiptable_upload?
+      return HcbCodePolicy.new(user, record.hcb_code).receiptable_upload? if record.hcb_code
+
+      user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
+    end
+
+    # Who may delete a receipt attached to this item, through ReceiptPolicy.
+    def receipt_destroy?
+      OrganizerPosition.role_at_least?(user, event, :member)
+    end
+
     def toggle_tag?(tag = nil)
       # A ledger item belongs to a single primary ledger (owned by an event or a
       # card grant), so a tag can only be applied within that one event.
