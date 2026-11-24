@@ -55,6 +55,19 @@ RSpec.describe Tax::Form, type: :model do
       expect(form.reload.entity_type).to eq("business")
     end
 
+    it "records an ITIN W-9 as an individual, fingerprinted like an SSN" do
+      allow(TaxbanditsService).to receive(:get_submission).and_return(w9_submission(tin_type: "ITIN"))
+      form.mark_completed!
+
+      allow(TaxbanditsService).to receive(:get_submission).and_return(w9_submission(tin_type: "SSN"))
+      ssn_form = create(:tax_form, :sent, legal_entity: create(:legal_entity, :person))
+      ssn_form.mark_completed!
+
+      expect(form.reload.entity_type).to eq("person")
+      expect(legal_entity.reload.tin_hash).to eq(form.tin_hash)
+      expect(form.tin_hash).to eq(ssn_form.reload.tin_hash)
+    end
+
     it "copies the fingerprint onto a legal entity that has none" do
       form.mark_completed!
 
