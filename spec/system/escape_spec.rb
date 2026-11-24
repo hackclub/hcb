@@ -27,6 +27,27 @@ RSpec.describe "Escape", type: :system do
     expect(evaluate_script("document.getElementById('search').value")).to eq("")
   end
 
+  it "closes the command bar before a modal beneath it" do
+    visit my_reimbursements_path
+    html = ApplicationController.render(inline: %(<%= modal "Beneath", id: "beneath" do %>Under the command bar<% end %><button type="button" data-modal="beneath">Open beneath</button>))
+    execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0])", html)
+    click_on "Open beneath"
+    expect(page).to have_css("#beneath[open]", style: { scale: "none" })
+
+    # Its triggers are under the backdrop, as they would be for ⌘K
+    execute_script("document.querySelector('[data-behavior~=command_bar_trigger]').click()")
+    expect(page).to have_css("[data-above-modals] [role=combobox]")
+    expect(evaluate_script("!!document.activeElement.closest('[data-above-modals]')")).to be(true)
+
+    press_escape
+    expect(page).to have_no_css("[data-above-modals]")
+    # Not on its way out either: closing marks it at once and keeps `open` while it animates
+    expect(page).to have_css("#beneath[open]:not([data-closing])")
+
+    press_escape
+    expect(page).to have_no_css("#beneath[open]", visible: :all)
+  end
+
   it "closes a modal opened while editing an expense before cancelling the edit" do
     report = create(:reimbursement_report, user:, event:)
     expense = create(:reimbursement_expense, report:, memo: "Lunch")

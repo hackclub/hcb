@@ -19,13 +19,16 @@ function prune() {
 }
 
 // On window, so it runs last: anything that handles Escape itself (a combobox's
-// suggestions, an inline edit) claims it first with preventDefault
+// suggestions, an inline edit) claims it first with preventDefault. What's shown
+// over modals (`data-above-modals`, like the command bar) closes itself, from a
+// window listener of its own that may only run after this one.
 window.addEventListener('keydown', event => {
   if (
     event.key !== 'Escape' ||
     event.isComposing ||
     event.defaultPrevented ||
-    !layers.size
+    !layers.size ||
+    event.target.closest?.('[data-above-modals]')
   )
     return
 
