@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -840,7 +840,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.bigint "event_id"
     t.boolean "fee_covered", default: false, null: false
     t.bigint "fee_reimbursement_id"
-    t.text "hcb_code"
     t.boolean "in_person", default: false
     t.datetime "in_transit_at"
     t.inet "ip_address"
@@ -1565,7 +1564,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.bigint "ending_balance"
     t.bigint "fee_reimbursement_id"
     t.datetime "finalized_at", precision: nil
-    t.text "hcb_code"
     t.text "hosted_invoice_url"
     t.text "invoice_pdf"
     t.bigint "item_amount"
@@ -3015,6 +3013,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
   end
 
   create_table "versions", force: :cascade do |t|
+    t.bigint "api_token_id"
     t.datetime "created_at", precision: nil
     t.string "event", null: false
     t.bigint "impersonated_by_id"
@@ -3022,6 +3021,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_110000) do
     t.string "item_type", null: false
     t.jsonb "object"
     t.jsonb "object_changes"
+    t.bigint "user_session_id"
     t.string "whodunnit"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end

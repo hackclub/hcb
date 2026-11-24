@@ -1,6 +1,11 @@
-<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true, receipt_upload_button: false) %>
+<%# locals: (ledger: nil, items:, frame_id: ledger.present? ? dom_id(ledger) : "ledger", table_only: true, filter: nil, show_fee: false, show_author: true, receipt_upload_button: false, show_event_name: false, show_pagination: true, blankslate_text: "This ledger has no items yet") %>
 
-<%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger" do %>
+<%#
+  `frame_id: nil` renders the table without a turbo frame, for pages that put
+  several of these tables side by side (see my/inbox). `show_pagination: false`
+  leaves the paginator to the caller, for lists that aren't a Kaminari page.
+%>
+<% ledger_content = capture do %>
   <% if !table_only && ledger.present? %>
     <section class="details mb-4">
       <div>
@@ -42,7 +47,7 @@
     <%= filter %>
   <% end %>
 
-  <% if items.load.any? %>
+  <% if items.present? %>
     <div class="table-container">
       <table>
         <thead>
@@ -57,13 +62,19 @@
         </thead>
         <tbody>
           <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
-          <%= render partial: "ledger/item", locals: { show_author:, receipt_upload_button: }, collection: items, as: :item %>
+          <%= render partial: "ledger/item", locals: { show_author:, receipt_upload_button:, show_event_name: }, collection: items, as: :item %>
         </tbody>
       </table>
     </div>
 
-    <%= paginate items %>
+    <%= paginate items if show_pagination %>
   <% else %>
-    <%= blankslate "This ledger has no items yet" %>
+    <%= blankslate blankslate_text %>
   <% end %>
+<% end %>
+
+<% if frame_id %>
+  <%= turbo_frame_tag(frame_id) { ledger_content } %>
+<% else %>
+  <%= ledger_content %>
 <% end %>

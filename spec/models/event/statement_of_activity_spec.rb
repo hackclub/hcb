@@ -262,8 +262,8 @@ RSpec.describe Event::StatementOfActivity do
   end
 
   describe "internal transfer splitting" do
-    def create_disbursement_transaction(disbursement:, event:, hcb_code:, amount_cents:)
-      ct = create(:canonical_transaction, amount_cents:, category_slug: "internal-transfer")
+    def create_disbursement_transaction(disbursement:, event:, hcb_code:, amount_cents:, category_slug: "internal-transfer")
+      ct = create(:canonical_transaction, amount_cents:, category_slug:)
       create(:canonical_event_mapping, event:, canonical_transaction: ct)
       # Must set hcb_code after all after_create_commit callbacks have completed,
       # since write_hcb_code overwrites it based on the transaction source.
@@ -405,6 +405,99 @@ RSpec.describe Event::StatementOfActivity do
       expect(instance.net_asset_change).to eq(100_00)
       expect(instance.total_revenue).to eq(100_00)
       expect(instance.total_expense).to eq(0)
+    end
+
+    describe "payments (#15894)" do
+      let(:event_a) { create(:event) }
+      let(:supplies) { TransactionCategory.find_or_create_by!(slug: "project-supplies") }
+
+      def create_payment(destination)
+        disbursement = create(:disbursement, source_event: event_a, event: destination, transfer_type: "payment", source_transaction_category: supplies, destination_transaction_category: supplies)
+        outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00, category_slug: "project-supplies")
+        incoming = create_disbursement_transaction(disbursement:, event: destination, hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00, category_slug: "project-supplies")
+        [outgoing, incoming]
+      end
+
+      # #15894: paying an organization outside the statement is real spending.
+      it "keeps a payment under its category when only one side is in the statement" do
+        outgoing, _incoming = create_payment(create(:event))
+
+        instance = described_class.new(event_a, start_date_param: "1970-01-01")
+
+        expect(instance.transactions_by_category[supplies]).to eq([outgoing])
+        expect(instance.category_totals).to eq("project-supplies" => -10_00)
+      end
+
+      # #15894: a payment between two organizations in the statement is neither's revenue or expense.
+      it "moves both sides of a payment within the statement to intra-org transfers" do
+        group = create(:event_group)
+        event_b = create(:event)
+        group.memberships.create!(event: event_a)
+        group.memberships.create!(event: event_b)
+        outgoing, incoming = create_payment(event_b)
+        rent = create(:canonical_transaction, amount_cents: -3_00, category_slug: "rent")
+        create(:canonical_event_mapping, event: event_a, canonical_transaction: rent)
+
+        instance = described_class.new(group, start_date_param: "1970-01-01")
+        result = instance.transactions_by_category
+
+        expect(result[described_class::INTRA_ORG_TRANSFER]).to contain_exactly(outgoing, incoming)
+        expect(result).not_to have_key(supplies)
+        expect(instance.category_totals).to include("intra-organization-transfer" => 0, "rent" => -3_00)
+        expect(instance.category_totals["project-supplies"].to_i).to eq(0)
+      end
+
+      # #15894: a sub-organization's payment from its parent nets out in the parent's combined statement.
+      it "moves a payment between parent and child to intra-org transfers with include_descendants" do
+        outgoing, incoming = create_payment(create(:event, parent: event_a))
+
+        instance = described_class.new(event_a, start_date_param: "1970-01-01", include_descendants: true)
+
+        expect(instance.transactions_by_category[described_class::INTRA_ORG_TRANSFER]).to contain_exactly(outgoing, incoming)
+        expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
+      end
+
+      # #15894: a payment marked as repaying an expense moves that expense onto the sender, so it must stay
+      # under the expense's category, even when that's the payment's own category.
+      it "keeps a payment that was marked as a repayment under the repaid expense's category" do
+        group = create(:event_group)
+        event_b = create(:event)
+        group.memberships.create!(event: event_a)
+        group.memberships.create!(event: event_b)
+        expense = create(:canonical_transaction, amount_cents: -10_00, category_slug: "project-supplies")
+        create(:canonical_event_mapping, event: event_b, canonical_transaction: expense)
+        disbursement = create(:disbursement, :deposited, source_event: event_a, event: event_b, amount: 10_00, transfer_type: "payment", source_transaction_category: supplies, destination_transaction_category: supplies)
+        outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -10_00, category_slug: "project-supplies")
+        incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 10_00, category_slug: "project-supplies")
+        [[outgoing, disbursement.outgoing_disbursement], [incoming, disbursement.incoming_disbursement]].each do |transaction, side|
+          transaction.ledger_item.update_columns(linked_object_type: side.class.polymorphic_name, linked_object_id: side.id)
+        end
+        user = create(:user)
+        create(:organizer_position, user:, event: event_a, role: :manager)
+        create(:organizer_position, user:, event: event_b, role: :member)
+        # The sender's side takes the expense's category, the recipient's becomes a repayment.
+        RepaymentService::Mark.new(ledger_item: incoming.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+
+        result = described_class.new(group, start_date_param: "1970-01-01").transactions_by_category
+
+        expect(result[supplies]).to eq([outgoing])
+        expect(result).not_to have_key(described_class::INTRA_ORG_TRANSFER)
+      end
+
+      # #15894: repayments_received already takes a repayment leg out of revenue, so moving it to intra-org would count it twice.
+      it "keeps a payment leg an admin set to repayment under repayment" do
+        group = create(:event_group)
+        event_b = create(:event)
+        group.memberships.create!(event: event_a)
+        group.memberships.create!(event: event_b)
+        outgoing, incoming = create_payment(event_b)
+        incoming.category_mapping.update!(category: TransactionCategory.find_or_create_by!(slug: Repayment::CATEGORY_SLUG))
+
+        result = described_class.new(group, start_date_param: "1970-01-01").transactions_by_category
+
+        expect(result[described_class::INTRA_ORG_TRANSFER]).to eq([outgoing])
+        expect(result[TransactionCategory.find_by!(slug: Repayment::CATEGORY_SLUG)]).to eq([incoming.reload])
+      end
     end
   end
 end

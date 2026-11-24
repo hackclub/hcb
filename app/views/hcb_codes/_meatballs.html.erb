@@ -21,7 +21,7 @@
     <%= pop_icon_to "more",
         "#",
         class: "align-middle", "aria-label": "More Options",
-        data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+        data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
     <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
       <% if pinnable %>
         <%= link_to is_pinned ? ledger_item_unpin_path(hcb_code.ledger_item) : ledger_item_pin_path(hcb_code.ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>

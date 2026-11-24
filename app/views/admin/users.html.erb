@@ -99,7 +99,7 @@
           <% end %>
         </td>
         <td>
-          <%= user.transactions_missing_receipt.count %>
+          <%= user.card_charges_missing_receipt.count %>
         </td>
         <td>
           <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>

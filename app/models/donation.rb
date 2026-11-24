@@ -11,7 +11,6 @@
 #  anonymous                            :boolean          default(FALSE), not null
 #  email                                :text
 #  fee_covered                          :boolean          default(FALSE), not null
-#  hcb_code                             :text
 #  in_person                            :boolean          default(FALSE)
 #  in_transit_at                        :datetime
 #  ip_address                           :inet
@@ -140,10 +139,6 @@ class Donation < ApplicationRecord
     event :mark_failed do
       transitions from: [:pending, :in_transit], to: :failed
     end
-  end
-
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
   end
 
   def set_fields_from_stripe_payment_intent(payment_intent)
@@ -284,10 +279,6 @@ class Donation < ApplicationRecord
     canonical_pending_transactions.first
   end
 
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
-
   def canonical_pending_transactions
     @canonical_pending_transactions ||= begin
       return [] unless raw_pending_donation_transaction.present?
@@ -298,10 +289,6 @@ class Donation < ApplicationRecord
 
   def remote_donation
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
-  end
-
-  def fee_reimbursed?
-    fee_reimbursement.canonical_transaction.present?
   end
 
   def recurring?
