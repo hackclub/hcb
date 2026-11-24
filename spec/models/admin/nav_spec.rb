@@ -27,6 +27,16 @@ RSpec.describe Admin::Nav do
 
       expect(instance.active_section.items.find(&:active?).name).to eq("Donations")
     end
+
+    it "counts unmapped ledger items on the Ledger Items item" do
+      create(:ledger_item)
+      create(:ledger_item, :with_primary_ledger)
+
+      instance = described_class.new(page_title: "")
+      item = instance.sections.flat_map(&:items).find { |i| i.name == "Ledger Items" }
+
+      expect(item.count).to eq(1)
+    end
   end
 
   describe described_class::Section do
