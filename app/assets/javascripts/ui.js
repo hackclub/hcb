@@ -302,12 +302,17 @@ $(document).keydown(function (e) {
   }
 })
 
-window.attachTooltipListener = () => {
-  const tooltip = document.getElementById('tooltip-container')
+// Tooltip handlers are delegated from the document so elements Turbo streams
+// in later (e.g. the AI memo button after a rename) get them without any
+// rebinding. The container is looked up on each use: Turbo swaps the body out
+// on every visit, so a reference taken once would go stale.
+{
+  const tooltipContainer = () => document.getElementById('tooltip-container')
   let mutationObserver = null
 
   const removeTooltips = () => {
-    tooltip.className = ''
+    const tooltip = tooltipContainer()
+    if (tooltip) tooltip.className = ''
     // Stop observing when tooltip is closed
     if (mutationObserver) {
       mutationObserver.disconnect()
@@ -315,7 +320,7 @@ window.attachTooltipListener = () => {
     }
   }
 
-  const updateTooltipPosition = trigger => {
+  const updateTooltipPosition = (tooltip, trigger) => {
     const triggerRect = trigger.getBoundingClientRect()
     const placement =
       [...trigger.classList]
@@ -349,7 +354,8 @@ window.attachTooltipListener = () => {
   }
 
   const showTooltip = trigger => {
-    if (!trigger.classList.contains('tooltipped')) return
+    const tooltip = tooltipContainer()
+    if (!tooltip) return
     const label = trigger.getAttribute('aria-label')?.trim()
     if (!label) return
 
@@ -361,7 +367,7 @@ window.attachTooltipListener = () => {
       if (trigger.classList.contains(cls)) tooltip.classList.add(cls)
     })
 
-    updateTooltipPosition(trigger)
+    updateTooltipPosition(tooltip, trigger)
 
     // Observe trigger for aria-label changes
     if (mutationObserver) mutationObserver.disconnect()
@@ -369,7 +375,7 @@ window.attachTooltipListener = () => {
       const updatedLabel = trigger.getAttribute('aria-label').trim()
       if (updatedLabel) {
         tooltip.textContent = updatedLabel
-        updateTooltipPosition(trigger)
+        updateTooltipPosition(tooltip, trigger)
       }
     })
     mutationObserver.observe(trigger, {
@@ -378,19 +384,21 @@ window.attachTooltipListener = () => {
     })
   }
 
-  $('.tooltipped').on({
-    mouseenter(event) {
-      if (window.innerWidth < 768) return
-      const trigger = event.currentTarget
-      showTooltip(trigger)
+  $(document).on(
+    {
+      mouseenter(event) {
+        if (window.innerWidth < 768) return
+        showTooltip(event.currentTarget)
+      },
+      touchstart(event) {
+        const trigger = event.currentTarget
+        if (!trigger.classList.contains('tooltipped--tappable')) return
+        showTooltip(trigger)
+      },
+      mouseleave: removeTooltips,
     },
-    touchstart(event) {
-      const trigger = event.currentTarget
-      if (!trigger.classList.contains('tooltipped--tappable')) return
-      showTooltip(trigger)
-    },
-    mouseleave: removeTooltips,
-  })
+    '.tooltipped'
+  )
 
   $(document).on('click', function (event) {
     // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
@@ -407,12 +415,7 @@ window.attachTooltipListener = () => {
   $(document).on('turbo:frame-load', removeTooltips)
 }
 
-$(document).on('turbo:frame-load', window.attachTooltipListener)
-$(document).on('turbo:after-stream-render', window.attachTooltipListener)
-
 $(document).on('turbo:load', function () {
-  window.attachTooltipListener()
-
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }

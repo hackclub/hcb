@@ -31,6 +31,8 @@ RSpec.describe "Renaming a transaction from its page", type: :system do
 
   it "swaps the heading between the charge's description and the memo without a reload" do
     expect(page).to have_css(heading, text: "Purchase at")
+    # The AI button sits between the status badge and the rename button
+    expect(page).to have_css("#{heading} .badge + ##{ActionView::RecordIdentifier.dom_id(item, :ai_memo)} + [aria-label='Rename']", visible: :all)
     expect(page).to have_css(ai_memo_button)
 
     rename_to("Team lunch")
@@ -50,5 +52,9 @@ RSpec.describe "Renaming a transaction from its page", type: :system do
     expect(page).to have_no_css(heading, text: "Team lunch")
     expect(page).to have_css(ai_memo_button)
     expect(item.reload.custom_memo).to be_nil
+
+    # The button was streamed in after the page loaded and still has its tooltip
+    find(ai_memo_button).hover
+    expect(page).to have_css("#tooltip-container.active", text: "Use AI to generate a memo")
   end
 end
