@@ -206,6 +206,19 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response).to be_successful
         expect(response.body).not_to include("Sign in to view")
       end
+
+      it "offers a grant card charge's actions to a member of the grant's organization" do
+        grant_event = create(:event, :with_positive_balance)
+        create(:organizer_position, event: grant_event, user: (member = create(:user)), role: :member)
+        create_session(member, verified: true)
+        card_grant = create(:card_grant, event: grant_event)
+        charge_item = create(:ledger_item, linked_object: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card, stripe_merchant_category_code: "5462").card_charge)
+        create(:ledger_mapping, :on_primary, ledger: card_grant.ledger, ledger_item: charge_item)
+
+        get :show, params: { id: charge_item.hashid }
+
+        expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
+      end
     end
 
     context "when asked to reverse a receipt pairing" do

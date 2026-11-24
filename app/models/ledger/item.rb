@@ -409,6 +409,12 @@ class Ledger
       :zero
     end
 
+    # The organization this item belongs to. A card grant's ledger has no event
+    # of its own, so its items belong to the grant's organization.
+    def owning_event
+      primary_ledger&.event || primary_ledger&.card_grant&.event
+    end
+
     def pinnable?
       (ct_count > 0 || cpt_count > 0) && primary_ledger&.event.present?
     end

@@ -65,11 +65,11 @@ class Ledger
     end
 
     def event
-      @event ||= record.primary_ledger&.event || record.primary_ledger&.card_grant&.event
+      @event ||= record.owning_event
     end
 
     def admin_or_member?
-      user&.admin? || OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+      user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
     end
 
   end

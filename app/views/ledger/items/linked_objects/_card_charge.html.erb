@@ -1,8 +1,7 @@
 <%# locals: (ledger_item:) %>
 
 <% card_charge = ledger_item.linked_object %>
-<%# A card grant's ledger has no event of its own, so check membership in the grant's event %>
-<% owning_event = ledger_item.primary_ledger&.event || ledger_item.primary_ledger&.card_grant&.event %>
+<% owning_event = ledger_item.owning_event %>
 
 <% instance = ledger_item.hashid %>
 
@@ -345,7 +344,7 @@
     </section>
   <% end %>
 
-  <% if organizer_signed_in?(owning_event) && ledger_item.cpt_count > 0 %>
+  <% if (ledger_item.author == current_user || organizer_signed_in?(owning_event)) && ledger_item.cpt_count > 0 %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verification_details_<%= instance %>">
       <%= modal_header "Charge details" %>
       <% verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>

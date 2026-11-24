@@ -131,5 +131,25 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
     it "refuses a signed-out visitor" do
       expect(described_class.new(nil, item).dispute?).to be(false)
     end
+
+    context "on a card grant's ledger" do
+      let(:grant_event) { create(:event, :with_positive_balance) }
+      let(:grant_item) { create(:ledger_item) }
+
+      before do
+        create(:ledger_mapping, :on_primary, ledger: create(:card_grant, event: grant_event).ledger, ledger_item: grant_item)
+      end
+
+      it "permits a member of the grant's organization" do
+        member = create(:user).tap { |u| create(:organizer_position, user: u, event: grant_event, role: :member) }
+
+        expect(described_class.new(member, grant_item).dispute?).to be(true)
+        expect(described_class.new(member, grant_item).rename?).to be(true)
+      end
+
+      it "refuses someone outside the grant's organization" do
+        expect(described_class.new(create(:user), grant_item).dispute?).to be(false)
+      end
+    end
   end
 end

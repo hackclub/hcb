@@ -23,7 +23,7 @@
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, card_grant.event).permit_merchant? && !card_grant.event.card_grant_setting.merchant_lock.include?(merchant["network_id"]) %>
 
 <%# A transfer's sender can link it as a repayment without being a member here; everything else is for members. %>
-<% disputable = flaggable = pinnable = open_invoice = reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(as: :member) %>
+<% disputable = flaggable = pinnable = open_invoice = reversible_disbursement = repayable = allowable_on_card = allowable_on_event = false unless organizer_signed_in?(ledger_item.owning_event, as: :member) %>
 
 <% if disputable || flaggable || pinnable || open_invoice || reversible_disbursement || repayable || markable_repayment || allowable_on_card || allowable_on_event %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
@@ -73,7 +73,7 @@
           Manually mark as paid
         <% end %>
       <% end %>
-      <% if ledger_item.linked_object_type == "Donation" && organizer_signed_in?(as: :member) %>
+      <% if ledger_item.linked_object_type == "Donation" && organizer_signed_in?(ledger_item.owning_event, as: :member) %>
         <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
           <%= inline_icon "person", size: 24 %>
           Edit donor
