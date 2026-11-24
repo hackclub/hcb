@@ -12,7 +12,10 @@
   <%= render "events/settings/account_info", event: @event %>
   <%= render "events/settings/details", event: @event %>
 <% elsif @settings_tab == "donations" %>
-  <%= render "events/settings/donations", event: @event, frame: @frame %>
+  <%# The frame wraps the partial so its herb state survives a frame load. %>
+  <%= turbo_frame_tag :donations_settings do %>
+    <%= render "events/settings/donations", event: @event, frame: @frame %>
+  <% end %>
 <% elsif @settings_tab == "reimbursements" %>
   <%= render "events/settings/reimbursements", event: @event, frame: @frame %>
 <% elsif @settings_tab == "card_grants" %>

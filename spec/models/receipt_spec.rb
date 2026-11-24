@@ -13,6 +13,46 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
+  describe "file size" do
+    let(:receiptable) { create(:ledger_item) }
+
+    # The size validator reads blob.byte_size, so set it instead of uploading 50 MB
+    def receipt_of_size(bytes)
+      build_receipt(receiptable:).tap { |receipt| receipt.file.blob.byte_size = bytes }
+    end
+
+    it "accepts a file of exactly MAX_FILE_SIZE" do
+      receipt = receipt_of_size(Receipt::MAX_FILE_SIZE)
+      receipt.validate
+      expect(receipt.errors[:file]).to be_empty
+    end
+
+    it "rejects a file one byte over MAX_FILE_SIZE" do
+      receipt = receipt_of_size(Receipt::MAX_FILE_SIZE + 1)
+      receipt.validate
+      expect(receipt.errors[:file]).to be_present
+    end
+
+    it "keeps the limit at 50 MB" do
+      expect(Receipt::MAX_FILE_SIZE).to eq(50.megabytes)
+    end
+  end
+
+  describe "#preview" do
+    it "renders a CSV receipt's preview once per instance" do
+      receipt = described_class.new(receiptable: create(:hcb_code), upload_method: :api)
+      receipt.file.attach(io: StringIO.new("Merchant,Amount\nHack Club,12.34\n"), filename: "receipt.csv", content_type: "text/csv")
+      receipt.save!
+
+      expect(receipt.file).to receive(:previewable?).once.and_call_original
+      first = receipt.preview
+      expect(receipt.preview).to eq(first)
+
+      # CI installs libvips; locally a missing libvips just means no preview.
+      expect(first).to be_present if CsvPreview.text_supported? || ENV["CI"]
+    end
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 

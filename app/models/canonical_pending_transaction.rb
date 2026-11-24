@@ -21,7 +21,6 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
-#  raw_pending_fee_reimbursement_transaction_id     :bigint
 #  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -55,7 +54,6 @@
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
-#  index_cpts_on_raw_pending_fee_reimbursement_tx_id                (raw_pending_fee_reimbursement_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
@@ -69,6 +67,9 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
   include Categorizable
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
@@ -136,7 +137,6 @@ class CanonicalPendingTransaction < ApplicationRecord
       .includes(:canonical_pending_declined_mapping)
       .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
   }
-  scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
   scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
@@ -221,10 +221,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def decline_reason
     hcb_decline_reason || stripe_decline_reason
-  end
-
-  def declined_by
-    hcb_decline_reason ? "HCB" : "Stripe"
   end
 
   def unsettled?
@@ -376,22 +372,10 @@ class CanonicalPendingTransaction < ApplicationRecord
     raw_stripe_transaction.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_pending_stripe_transaction
 
     raw_pending_stripe_transaction.stripe_transaction_id
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   # DEPRECATED

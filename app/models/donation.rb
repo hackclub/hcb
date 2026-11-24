@@ -11,7 +11,6 @@
 #  anonymous                            :boolean          default(FALSE), not null
 #  email                                :text
 #  fee_covered                          :boolean          default(FALSE), not null
-#  hcb_code                             :text
 #  in_person                            :boolean          default(FALSE)
 #  in_transit_at                        :datetime
 #  ip_address                           :inet
@@ -101,6 +100,7 @@ class Donation < ApplicationRecord
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates_email_format_of :email, on: :update, if: :will_save_change_to_email? # e.g. an admin correcting a donor's typo
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
@@ -111,7 +111,6 @@ class Donation < ApplicationRecord
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
-  scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
   scope :tax_deductible, -> { where(tax_deductible: true) }
 
@@ -191,10 +190,6 @@ class Donation < ApplicationRecord
 
   def state_icon
     return "checkmark" if deposited? || in_transit?
-  end
-
-  def unpaid?
-    pending?
   end
 
   def includes_message?
@@ -284,6 +279,12 @@ class Donation < ApplicationRecord
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
 
+  # The hcb_code column was added in March 2021 to be backfilled with a
+  # stored code, but has_hcb_code derived the code from the id two weeks
+  # later and the column was never written. It's dropped once no running
+  # code expects it.
+  self.ignored_columns += ["hcb_code"]
+
   def canonical_pending_transaction
     canonical_pending_transactions.first
   end
@@ -302,18 +303,6 @@ class Donation < ApplicationRecord
 
   def remote_donation
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
-  end
-
-  def remote_refunded?
-    remote_donation[:charges][:data][0][:refunded]
-  end
-
-  def amount_settled
-    canonical_transactions.sum(:amount_cents)
-  end
-
-  def fee_reimbursed?
-    fee_reimbursement.canonical_transaction.present?
   end
 
   def recurring?
@@ -337,15 +326,31 @@ class Donation < ApplicationRecord
   end
 
   def update_donor_details(attrs)
-    attrs = attrs.to_h.symbolize_keys
-    return false unless update(attrs.slice(:name, :anonymous))
+    attrs = attrs.to_h.symbolize_keys.slice(:name, :anonymous, :email)
+    attrs.delete(:email) if attrs[:email].blank? && email.blank?
 
-    if recurring_donation
-      recurring_donation.update(attrs.slice(:name, :anonymous))
-      recurring_donation.sync_stripe_customer!
+    saved = transaction do
+      if recurring_donation
+        unless recurring_donation.update(attrs)
+          errors.merge!(recurring_donation.errors)
+          raise ActiveRecord::Rollback
+        end
+
+        attrs = attrs.except(:email)
+      end
+
+      update(attrs) || raise(ActiveRecord::Rollback)
     end
 
+    return false unless saved
+
+    recurring_donation&.sync_stripe_customer!
+
     true
+  end
+
+  def receipt_resendable?
+    email.present? && (in_transit? || deposited?)
   end
 
   def referrer_domain

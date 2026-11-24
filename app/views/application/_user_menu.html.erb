@@ -51,10 +51,11 @@
           <% end %>
         </div>
       <% else %>
-        <%= link_to auth_users_path, class: "dock__item user-menu-trigger max-w-full" do %>
+        <%= link_to sign_in_path_returning_here, class: "dock__item user-menu-trigger max-w-full", data: { remembered_organizations_target: "signIn" } do %>
           <%= inline_icon "door-enter", size: 28 %>
           <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
             <span class="truncate">Sign in</span>
+            <span class="text-xs -mt-0.5 block opacity-60 truncate hidden" style="font-weight: 400" data-remembered-organizations-target="hint">You’ve been signed out</span>
           </div>
         <% end %>
       <% end %>
