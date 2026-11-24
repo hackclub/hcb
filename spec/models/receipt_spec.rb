@@ -83,6 +83,17 @@ RSpec.describe Receipt, type: :model do
         .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true, notify_progress: false)
     end
 
+    # Same as deleting it: the charge is outstanding again, so its countdown restarts.
+    it "restarts the countdown when the last receipt moves to the receipt bin" do
+      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
+      charge.update!(receipt_due_at: 53.days.ago)
+
+      charge.receipts.sole.update!(receiptable: nil)
+
+      expect(charge.reload).to be_missing_receipt
+      expect(charge.receipt_due_at).to be_within(1.second).of(Time.current + 7.days)
+    end
+
     it "does not enqueue anything for a receiptable that is not a card charge" do
       expect { build_receipt(receiptable: create(:hcb_code), user: uploader).save! }
         .not_to have_enqueued_job(User::UpdateCardLockingJob)
