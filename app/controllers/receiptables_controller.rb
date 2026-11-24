@@ -71,7 +71,7 @@ class ReceiptablesController < ApplicationController
     return {} unless params.key?(:lost_receipt_statement)
 
     params.expect(lost_receipt_statement: [:date, :merchant, :purpose, :signer_name, :confirmed,
-                                           { items_attributes: [[:description, :quantity, :unit_amount, :unit_amount_cents]] }])
+                                           { items_attributes: [[:description, :quantity, :unit_amount]] }])
   end
 
   def authorize_receiptable

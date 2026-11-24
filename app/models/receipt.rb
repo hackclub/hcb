@@ -121,7 +121,6 @@ class Receipt < ApplicationRecord
       # After the commit, not inside it: saving a second copy of the old receiptable in the same
       # transaction makes Rails skip the deferred touch that recounts the ledger item's receipts.
       clear_lost_receipt_marker_without_statement(previous)
-      CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
     end
   end
 

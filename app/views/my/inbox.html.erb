@@ -8,11 +8,6 @@
   </span>
 </h1>
 
-<% lost_receipt_statements = current_user.receipts.lost_receipt_statement.count %>
-<% if lost_receipt_statements > 0 %>
-  <p class="muted">You've filed <%= pluralize lost_receipt_statements, "lost receipt statement" %>.</p>
-<% end %>
-
 <% if CardLocking.enabled? %>
   <% locked = current_user.cards_locked? %>
   <% due_in = CardLocking.time_remaining_in_words(@locking_next_due_at) %>
@@ -152,7 +147,8 @@
         </h2>
       <% end %>
 
-      <%= render "my/missing_receipt_transactions", items:, show_event_name: true %>
+      <%# No frame: several of these tables share the page, and @items is paginated once below. %>
+      <%= render "ledgers/ledger", items:, frame_id: nil, show_pagination: false, show_author: false, receipt_upload_button: true, show_event_name: true %>
     <% end %>
   <% end %>
 <% else %>
@@ -168,7 +164,7 @@
       </h2>
 
       <%# The org is already in this section's header, so it isn't repeated per row. %>
-      <%= render "my/missing_receipt_transactions", items: @card_items[card.id] %>
+      <%= render "ledgers/ledger", items: @card_items[card.id], frame_id: nil, show_pagination: false, show_author: false, receipt_upload_button: true %>
     </section>
   <% end %>
 <% end %>

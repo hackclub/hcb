@@ -55,7 +55,8 @@ RSpec.describe LostReceipt::Statement do
      details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: "NaN" }]),
      # Absurdly large numbers are dropped rather than parsed.
      details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: "1e999999" }]),
-     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount_cents: 10**80_000 }])].each do |invalid_details|
+     details.merge(items_attributes: [{ description: "Pens", quantity: 1, unit_amount: 10**80_000 }]),
+     details.merge(items_attributes: [{ description: "Pens", quantity: 10**80_000, unit_amount: "1.00" }])].each do |invalid_details|
       statement = described_class.new(invalid_details)
       expect(statement.submit(receiptable: hcb_code)).to eq(false)
       expect(statement.errors).to be_present

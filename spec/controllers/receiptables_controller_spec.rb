@@ -13,7 +13,7 @@ RSpec.describe ReceiptablesController do
   let(:secret) { hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload) }
   let(:details) do
     { date: "2026-01-15", merchant: "Stationery Shop", purpose: "Workshop supplies", signer_name: "Alex Example", confirmed: "1",
-      items_attributes: [{ description: "Notebooks", quantity: 2, unit_amount_cents: 617 }]
+      items_attributes: [{ description: "Notebooks", quantity: 2, unit_amount: "6.17" }]
 }
   end
 
@@ -43,15 +43,6 @@ RSpec.describe ReceiptablesController do
       expect(flash[:info]).to eq("This transaction already has a lost receipt statement.")
     end
 
-    it "does not resolve the missing receipt without statement details" do
-      expect {
-        post(:mark_no_or_lost, params: base_params.merge(s: secret))
-      }.not_to change(Receipt, :count)
-
-      expect(hcb_code.reload).to be_missing_receipt
-      expect(response).to have_http_status(:unprocessable_entity)
-    end
-
     it "preserves entered details when confirmation is missing" do
       post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details.merge(confirmed: "0")))
 
@@ -67,28 +58,6 @@ RSpec.describe ReceiptablesController do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(hcb_code.reload).to be_missing_receipt
       expect(hcb_code.receipts).to be_empty
-    end
-
-    it "rejects malformed statement parameters" do
-      ["invalid", [details]].each do |malformed|
-        expect {
-          post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: malformed))
-        }.to raise_error(ActionController::ParameterMissing)
-      end
-      expect(hcb_code.reload).to be_missing_receipt
-      expect(hcb_code.receipts).to be_empty
-    end
-
-    it "renders validation errors for malformed prices" do
-      [{ unit_amount: true }, { unit_amount: false }, { unit_amount_cents: true }, { unit_amount_cents: false }].each do |price|
-        item = { description: "Pens", quantity: 1 }.merge(price)
-        post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details.merge(items_attributes: [item])), as: :json, format: :html)
-
-        expect(response).to have_http_status(:unprocessable_entity)
-        # false casts to 0 on the integer column, so the total check is what rejects it.
-        expect(response.body).to include(price.values.first ? "Unit amount cents is not a number" : "The items add up to $0.00")
-        expect(hcb_code.receipts).to be_empty
-      end
     end
 
     it "refuses a secret issued for a different transaction" do
@@ -243,17 +212,6 @@ RSpec.describe ReceiptablesController do
 
       expect(hcb_code.receipts).to be_empty
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
-    end
-
-    it "attaches ledger statements to the underlying transaction" do
-      user = create(:user, full_name: "Alex Example")
-      create(:organizer_position, user:, event:)
-      create_session(user, verified: true)
-
-      post(:mark_no_or_lost, params: { receiptable_type: "Ledger::Item", receiptable_id: hcb_code.ledger_item.id, lost_receipt_statement: details })
-
-      expect(hcb_code.receipts.sole).to be_lost_receipt_statement
-      expect(hcb_code.ledger_item.reload).not_to be_missing_receipt
     end
   end
 

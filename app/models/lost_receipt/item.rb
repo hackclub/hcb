@@ -33,21 +33,16 @@ module LostReceipt
       Money.new(unit_amount_cents, "USD") unless unit_amount_cents.nil?
     end
 
-    # A JSON body can carry an integer thousands of digits long, which takes seconds to print back on the form.
+    # A JSON body can carry an integer millions of digits long, which takes seconds to print back on the form.
     def quantity=(value)
       super(within_bounds(value))
     end
 
-    def unit_amount_cents=(value)
-      super(within_bounds(value))
-    end
-
-    # The form takes dollars; anything that isn't a number is kept so validation can reject it.
-    # So is anything absurdly large: "1e999999" would otherwise become a million-digit integer.
+    # The form takes dollars. Anything that isn't a number, or is absurdly large ("1e999999"
+    # would become a million-digit integer), is left nil for validation to reject.
     def unit_amount=(value)
-      value = within_bounds(value)
-      amount = BigDecimal(value.to_s, exception: false)
-      self.unit_amount_cents = amount&.finite? && amount.abs < 1_000_000_000 ? Money.from_amount(amount, "USD").cents : value
+      amount = BigDecimal(within_bounds(value).to_s, exception: false)
+      self.unit_amount_cents = (Money.from_amount(amount, "USD").cents if amount&.finite? && amount.abs < 1_000_000_000)
     end
 
     def total_amount_cents
@@ -57,7 +52,7 @@ module LostReceipt
     private
 
     def within_bounds(value)
-      value unless value.is_a?(Numeric) && !value.abs.between?(0, 10**12)
+      value unless value.is_a?(Integer) && value.abs > 10**12
     end
 
   end

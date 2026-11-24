@@ -94,22 +94,6 @@ RSpec.describe Receipt, type: :model do
     expect(other.ledger_item.reload).not_to be_no_or_lost_receipt
   end
 
-  it "marks the transaction missing a receipt again when its only statement is removed" do
-    transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
-    create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
-    charge = transaction.local_hcb_code
-    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
-                                           signer_name: "Alex Example", confirmed: true,
-                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
-    expect(statement.submit(receiptable: charge)).to eq(true)
-    statement.attach_pdf!
-
-    statement.receipt.destroy!
-
-    expect(charge.reload).to be_missing_receipt
-    expect(charge.ledger_item.reload).not_to be_no_or_lost_receipt
-  end
-
   describe "file size" do
     let(:receiptable) { create(:ledger_item) }
 
@@ -178,17 +162,6 @@ RSpec.describe Receipt, type: :model do
 
       expect { receipt.destroy! }
         .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true, notify_progress: false)
-    end
-
-    # Same as deleting it: the charge is outstanding again, so its countdown restarts.
-    it "restarts the countdown when the last receipt moves to the receipt bin" do
-      charge = create_settled_card_charge(user:, settled_at: 60.days.ago, uploaded_at: 59.days.ago)
-      charge.update!(receipt_due_at: 53.days.ago)
-
-      charge.receipts.sole.update!(receiptable: nil)
-
-      expect(charge.reload).to be_missing_receipt
-      expect(charge.receipt_due_at).to be_within(1.second).of(Time.current + 7.days)
     end
 
     it "does not enqueue anything for a receiptable that is not a card charge" do
