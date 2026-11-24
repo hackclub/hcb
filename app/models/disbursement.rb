@@ -247,17 +247,6 @@ class Disbursement < ApplicationRecord
     @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
   end
 
-  def filter_data
-    {
-      exists: true,
-      reviewing: reviewing?,
-      pending: pending?,
-      processing: processed? && !fulfilled?,
-      fulfilled: fulfilled?,
-      rejected: rejected?,
-    }
-  end
-
   def v3_api_state
     state_text.underscore
   end

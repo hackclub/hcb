@@ -108,15 +108,6 @@ class EmburseTransaction < ApplicationRecord
     "https://app.emburse.com/transactions/#{emburse_id}"
   end
 
-  def filter_data
-    {
-      exists: true,
-      fee_applies: false,
-      fee_payment: false,
-      card: true
-    }
-  end
-
   def status_badge_type
     s = state.to_sym
     return :success if s == :completed

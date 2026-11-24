@@ -298,10 +298,6 @@ class CanonicalTransaction < ApplicationRecord
     memo
   end
 
-  def filter_data
-    {} # TODO
-  end
-
   def fee_payment?
     return @fee_payment if defined?(@fee_payment)
 
