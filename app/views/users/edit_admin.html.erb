@@ -130,6 +130,91 @@
       <% end %>
     </section>
     <% if @limit %>
+      <section class="mt-6">
+        <h4 class="mb2">Temporary boosts</h4>
+        <p class="muted">
+          A boost raises this user's admin transfer limit for a set time, for example to approve a one-off transfer larger than their usual limit.
+          Approved transfers count against the limit for <%= distance_of_time_in_words(Governance::Admin::Transfer::Limit::WINDOW_DURATION) %>, so a boost should outlast that window after it's used.
+        </p>
+        <% if @limit.boost_amount_cents.positive? %>
+          <p>
+            Effective limit right now: <strong><%= @limit.effective_amount.format %></strong>
+            (<%= @limit.amount.format %> usual + <%= @limit.boost_amount.format %> boosted)
+          </p>
+        <% end %>
+
+        <% if @limit_boosts.any? %>
+          <section class="table-container mt-3">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Amount</th>
+                  <th>Granted</th>
+                  <th>Expires</th>
+                  <th>Granted by</th>
+                  <th>Reason</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @limit_boosts.each do |boost| %>
+                  <tr>
+                    <td><%= boost.amount.format %></td>
+                    <td><%= format_datetime boost.created_at %></td>
+                    <td>
+                      <%= format_datetime boost.expires_at %>
+                      <% unless boost.active? %><span class="muted">(expired)</span><% end %>
+                    </td>
+                    <td><%= user_mention boost.granted_by %></td>
+                    <td><%= boost.reason %></td>
+                    <td>
+                      <% if boost.active? && superadmin_signed_in? %>
+                        <%= button_to "Revoke", revoke_admin_transfer_limit_boost_user_path(@user, boost_id: boost.id),
+                                      method: :post,
+                                      class: "btn btn-small bg-error",
+                                      form: { data: { turbo_frame: "_top", turbo_confirm: "Revoke this #{boost.amount.format} boost now?" } } %>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </section>
+        <% end %>
+
+        <% if superadmin_signed_in? %>
+          <%= form_with url: create_admin_transfer_limit_boost_user_path(@user), method: :post, class: "mt-3", data: { turbo_frame: "_top" } do |form| %>
+            <div class="field">
+              <%= form.label :amount, "Boost amount (dollars)" %>
+              <%= form.number_field :amount, step: 0.01, min: 0.01, required: true %>
+            </div>
+            <div class="field">
+              <%= form.label :duration_in_hours, "Duration (hours)" %>
+              <%= form.number_field :duration_in_hours,
+                                    value: Governance::Admin::Transfer::Limit::Boost::DEFAULT_DURATION_IN_HOURS,
+                                    min: Governance::Admin::Transfer::Limit::Boost::MINIMUM_DURATION_IN_HOURS,
+                                    max: Governance::Admin::Transfer::Limit::Boost::MAXIMUM_DURATION_IN_HOURS,
+                                    step: 1,
+                                    required: true %>
+            </div>
+            <div class="field">
+              <%= form.label :reason %>
+              <%= form.text_field :reason, placeholder: "Approving the $1M grant to …", required: true %>
+            </div>
+            <div class="actions flex">
+              <%# The confirmation names the amount in the field, which only the browser knows. %>
+              <%= form.submit "Boost admin transfer limit", data: {
+                    turbo_confirm: "Boost the admin transfer limit for this user by $0.00?",
+                    controller: "confirm-amount",
+                    action: "click->confirm-amount#update",
+                    confirm_amount_field_value: "amount",
+                    confirm_amount_template_value: "Boost the admin transfer limit for this user by $%{amount}?"
+                  } %>
+            </div>
+          <% end %>
+        <% end %>
+      </section>
+
       <%= turbo_frame_tag "transfer_limit_history",
             src: admin_transfer_limit_history_user_path(@user),
             loading: :lazy do %>

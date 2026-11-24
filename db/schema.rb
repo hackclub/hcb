@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_120001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1350,6 +1350,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
     t.integer "attempted_amount_cents", null: false
     t.datetime "created_at", null: false
     t.integer "current_limit_amount_cents", null: false
+    t.integer "current_limit_boost_amount_cents", default: 0, null: false
     t.integer "current_limit_remaining_amount_cents", null: false
     t.integer "current_limit_used_amount_cents", null: false
     t.datetime "current_limit_window_ended_at", null: false
@@ -1366,6 +1367,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
     t.index ["governance_request_context_id"], name: "idx_on_governance_request_context_id_bec1adb1c2"
     t.index ["transfer_type", "transfer_id"], name: "index_governance_admin_transfer_approval_attempts_on_transfer"
     t.index ["user_id"], name: "index_governance_admin_transfer_approval_attempts_on_user_id"
+  end
+
+  create_table "governance_admin_transfer_limit_boosts", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "governance_admin_transfer_limit_id", null: false
+    t.bigint "granted_by_id", null: false
+    t.text "reason", null: false
+    t.datetime "updated_at", null: false
+    t.index ["governance_admin_transfer_limit_id"], name: "idx_on_governance_admin_transfer_limit_id_8df1f30b3a"
+    t.index ["granted_by_id"], name: "index_governance_admin_transfer_limit_boosts_on_granted_by_id"
   end
 
   create_table "governance_admin_transfer_limits", force: :cascade do |t|
@@ -3217,6 +3230,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
   add_foreign_key "governance_admin_transfer_approval_attempts", "governance_admin_transfer_limits"
   add_foreign_key "governance_admin_transfer_approval_attempts", "governance_request_contexts"
   add_foreign_key "governance_admin_transfer_approval_attempts", "users"
+  add_foreign_key "governance_admin_transfer_limit_boosts", "governance_admin_transfer_limits"
+  add_foreign_key "governance_admin_transfer_limit_boosts", "users", column: "granted_by_id"
   add_foreign_key "governance_admin_transfer_limits", "users"
   add_foreign_key "governance_request_contexts", "users"
   add_foreign_key "governance_request_contexts", "users", column: "impersonator_id"

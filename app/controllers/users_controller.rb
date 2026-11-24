@@ -271,6 +271,7 @@ class UsersController < ApplicationController
     authorize @user
 
     @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
+    @limit_boosts = @limit&.boosts&.includes(:granted_by)&.order(created_at: :desc)&.limit(10) || []
   end
 
   def admin_details

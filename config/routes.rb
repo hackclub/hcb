@@ -190,6 +190,8 @@ Rails.application.routes.draw do
       post "reset_billing_address", to: "users#reset_billing_address"
       post "update_admin_transfer_limit", to: "governance/admin/transfer/limits#update"
       get "admin_transfer_limit_history", to: "governance/admin/transfer/limits#history"
+      post "admin_transfer_limit_boosts", to: "governance/admin/transfer/limit/boosts#create", as: :create_admin_transfer_limit_boost
+      post "admin_transfer_limit_boosts/:boost_id/revoke", to: "governance/admin/transfer/limit/boosts#revoke", as: :revoke_admin_transfer_limit_boost
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"

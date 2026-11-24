@@ -9,8 +9,11 @@ module Governance
 
           included do
             monetize :current_limit_amount_cents
+            monetize :current_limit_boost_amount_cents
             monetize :current_limit_used_amount_cents
             monetize :current_limit_remaining_amount_cents
+
+            monetize def current_limit_effective_amount_cents = current_limit_amount_cents + current_limit_boost_amount_cents
 
             private
 
@@ -22,6 +25,7 @@ module Governance
               self.current_limit_window_ended_at = limit.class.current_window_ended_at
 
               self.current_limit_amount_cents = limit.amount_cents
+              self.current_limit_boost_amount_cents = limit.boost_amount_cents
               self.current_limit_used_amount_cents = limit.used_amount_cents
               self.current_limit_remaining_amount_cents = limit.remaining_amount_cents
             end

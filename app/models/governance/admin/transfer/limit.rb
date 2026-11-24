@@ -35,6 +35,11 @@ module Governance
                  foreign_key: "governance_admin_transfer_limit_id",
                  inverse_of: :limit
 
+        has_many :boosts,
+                 class_name: "Governance::Admin::Transfer::Limit::Boost",
+                 foreign_key: "governance_admin_transfer_limit_id",
+                 inverse_of: :limit
+
         monetize :amount_cents
         validates :amount_cents, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
@@ -45,7 +50,11 @@ module Governance
           approval_attempts.approved.where(created_at: self.class.current_window).sum(:attempted_amount_cents)
         end
 
-        monetize def remaining_amount_cents = amount_cents - used_amount_cents
+        monetize def boost_amount_cents = boosts.active.sum(:amount_cents)
+
+        monetize def effective_amount_cents = amount_cents + boost_amount_cents
+
+        monetize def remaining_amount_cents = effective_amount_cents - used_amount_cents
 
         def self.current_window
           current_window_started_at..current_window_ended_at
