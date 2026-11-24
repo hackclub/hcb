@@ -168,6 +168,10 @@ ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Admin::LedgerAudit::GenerateJob"
 
+admin_incoming_funds_report_job:
+  cron: "0 14 * * mon" # run at 14:00 UTC every Monday
+  class: "Admin::IncomingFundsReportJob"
+
 send_admin_reminders_job:
   cron: "0 7 * * *" # run at 7am UTC each morning
   class: "SendAdminRemindersJob"

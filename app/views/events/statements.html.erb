@@ -41,7 +41,7 @@
           <%= pop_icon_to "download",
                           "#",
                           class: "align-middle", "aria-label": "Download",
-                          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+                          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
 
           <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
             <%= link_to transactions_exports_path(event: @event, start_date: day, format: :pdf), target: "_blank" do %>

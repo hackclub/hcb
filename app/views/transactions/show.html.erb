@@ -135,7 +135,7 @@
         <span>
           <%= render_money @transaction.fee.amount_cents_as_decimal %> (<%= render_percentage @transaction.fee.event_sponsorship_fee %>)
           <% admin_tool("py0 ml1", "span") do %>
-            <%= link_to "[waive fee]", waive_fee_canonical_transaction_url(@transaction), data: { turbo_method: :post } if @transaction.fee.amount_cents_as_decimal > 0 %>
+            <%= link_to "[waive fee]", waive_fee_canonical_transaction_path(@transaction), data: { turbo_method: :post } if @transaction.fee.amount_cents_as_decimal > 0 %>
           <% end %>
         </span>
       </p>
@@ -147,7 +147,7 @@
     <% else %>
       <% admin_tool("py0", "p") do %>
         <strong>Fee</strong>
-        <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transaction), data: { turbo_method: :post } if @transaction.fee&.revenue_waived? %>
+        <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_path(@transaction), data: { turbo_method: :post } if @transaction.fee&.revenue_waived? %>
       <% end %>
     <% end %>
   </section>
@@ -166,7 +166,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+  <%= render "receipts/list_v2", receipts: @hcb_code.receipts %>
   <% if @hcb_code.ledger_item %>
     <%= render partial: "receipts/form_v3", locals: {
           receiptable: @hcb_code.ledger_item,

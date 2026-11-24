@@ -39,7 +39,7 @@
   <%# The grant ended before (or instead of) the card being used, so the
       spending rules and card details don't apply: just the money trail. %>
   <%= render "card_grants/section_heading", title: "Transactions" %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
+  <%= render partial: "card_grants/transactions", locals: { ledger: @ledger, items: @items, heading: false } %>
 <% elsif organizer_signed_in? || own %>
   <% unless own && ended %>
     <%= render "card_grants/section_heading", icon: steps ? "1" : "", title: own ? "What you can spend it on" : "Spending controls", own: own %>
@@ -52,7 +52,7 @@
   <% end %>
 
   <%= render "card_grants/section_heading", icon: steps ? "3" : "", title: own ? "Upload a receipt for every purchase" : "Transactions", own: own, badge: ("Required" if own) %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
+  <%= render partial: "card_grants/transactions", locals: { ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
 <%= render "card_grants/support_modal", card_grant: @card_grant if own || organizer_signed_in?(as: :member) %>

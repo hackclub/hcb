@@ -16,7 +16,7 @@
     <%= render "layouts/seasonal" %>
 
     <% if content_for?(:nav) %>
-      <main class="app flex flex-col lg:flex-row gap-0 w-full">
+      <main class="app flex flex-col lg:flex-row gap-0 w-full" <%= tag.attributes(data: remembered_organizations_data) %>>
         <% if @event && @first_time %>
           <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
             <div class="welcome__image mb3">
@@ -79,6 +79,7 @@
             <%= render "application/footer" unless @no_app_shell || @hide_footer %>
           </div>
         </article>
+        <%= render "application/signed_out_organizer_modal" if @event&.is_public && !signed_in?(allow_unverified: true) %>
       </main>
     <% else %>
       <%= render "application/banner_container" %>

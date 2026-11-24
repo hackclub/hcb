@@ -308,9 +308,8 @@ RSpec.describe MyController do
 
       def ivar(name) = controller.instance_variable_get(:"@#{name}")
 
-      # The shared context's charges are force captures (HCB-601), which
-      # HcbCode.receipt_required excludes from the inbox. Build a regular
-      # authorized card charge (HCB-600) instead.
+      # A regular authorized card charge (HCB-600) with a merchant, so the row
+      # renders; returns its ledger item, which is what the inbox lists.
       def create_inbox_charge(receipt_due_at:, settled_at: 2.days.ago, amount_cents: -10_00)
         cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
         card = (@inbox_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, event:))
@@ -336,7 +335,17 @@ RSpec.describe MyController do
         )
         create(:canonical_event_mapping, canonical_transaction:, event:)
 
-        canonical_transaction.local_hcb_code.reload.tap { |hcb_code| hcb_code.update!(receipt_due_at:) }
+        canonical_transaction.reload.ledger_item.tap { |item| item.update!(receipt_due_at:) }
+      end
+
+      it "lists the cardholder's charges missing a receipt, the same pile card locking counts" do
+        charge = create_inbox_charge(receipt_due_at: nil)
+
+        get :inbox
+
+        expect(ivar(:count)).to eq(1)
+        expect(ivar(:items).map(&:id)).to eq([charge.id])
+        expect(user.card_locking_outstanding_charges.map(&:id)).to eq([charge.id])
       end
 
       it "falls back to card grouping when nothing outstanding has a deadline" do
@@ -364,7 +373,7 @@ RSpec.describe MyController do
 
         expect(ivar(:groupable_by_due_date)).to eq(false)
         expect(ivar(:grouping)).to eq("card")
-        expect(ivar(:hcb_codes).size).to eq(1)
+        expect(ivar(:items).size).to eq(1)
       end
 
       # The enforcement stage flags that materialize receipt_due_at are a
@@ -423,7 +432,7 @@ RSpec.describe MyController do
 
         get :inbox
 
-        expect(ivar(:hcb_codes).map(&:id)).to eq([soon.id, later.id, undated.id])
+        expect(ivar(:items).map(&:id)).to eq([soon.id, later.id, undated.id])
         expect(ivar(:due_date_groups).keys.last).to eq(:none)
       end
 
@@ -462,6 +471,49 @@ RSpec.describe MyController do
 
           expect(response.body).to include("1 of 2 transactions")
         end
+
+        # The "Create tag" link needs the create_tag modal of an org page, and
+        # the inbox lists charges across orgs, so a row's menu offers only the
+        # org's tags: no link, and no divider dangling where it would go.
+        describe "add-tag menu" do
+          before { create(:organizer_position, user:, event:, role: :member) }
+
+          it "offers the org's tags without a Create tag link or its divider" do
+            event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted")
+            charge = create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).to include("+ Add tag")
+            expect(response.body).to include(ledger_item_toggle_tag_path(charge))
+            expect(response.body).not_to include("Create tag")
+            expect(response.body).not_to include("tags__divider")
+          end
+
+          it "omits the menu when the org has no tags to offer" do
+            create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).not_to include("+ Add tag")
+          end
+        end
+
+        # Each group goes through the shared ledger partial, but without its
+        # turbo frame (several share the page) and without its paginator (the
+        # page is paginated once, below every group).
+        it "renders each group as a frameless ledger table, paginated once" do
+          create_inbox_charge(receipt_due_at: 1.day.ago)
+          create_inbox_charge(receipt_due_at: 1.day.from_now)
+
+          get :inbox, params: { per: 1 }
+
+          page = response.parsed_body
+          expect(page.css("table thead th").map(&:text).map(&:strip)).to include("Memo")
+          expect(page.css("tr.transaction").size).to eq(1)
+          expect(page.css("turbo-frame#ledger")).to be_empty
+          expect(page.css("nav[aria-label='Pagination']").size).to eq(1)
+        end
       end
 
       it "counts a group across every page, not just the page being shown" do
@@ -472,6 +524,49 @@ RSpec.describe MyController do
         expect(ivar(:due_date_groups)[:overdue].size).to eq(1)
         expect(ivar(:due_date_group_counts)[:overdue]).to eq(2)
       end
+    end
+  end
+
+  describe "GET #missing_receipts_list" do
+    render_views
+    include_context "card locking charges"
+
+    before { sign_in_verified(user) }
+
+    it "renders the cardholder's charges missing a receipt as ledger rows, with an upload button" do
+      # The upload affordance is gated on ReceiptablePolicy#upload?; the shared
+      # context's Stripe payload names the cardholder by database id rather than
+      # Stripe id, so authorize through membership instead.
+      create(:organizer_position, user:, event:)
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+      get :missing_receipts_list
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Charges missing receipts", "Upload receipt")
+      expect(response.parsed_body.at_css("[id='#{ActionView::RecordIdentifier.dom_id(charge, :receipt_action)}']")).to be_present
+    end
+
+    # The list goes through the shared ledger partial, inside the frame the
+    # cards page loads it into rather than a second one of its own.
+    it "renders the shared ledger table inside the my_missing_receipts_list frame" do
+      create(:organizer_position, user:, event:)
+      create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+      get :missing_receipts_list
+
+      page = response.parsed_body
+      expect(page.css("turbo-frame#ledger")).to be_empty
+      expect(page.css("turbo-frame#my_missing_receipts_list table thead th").map(&:text).map(&:strip)).to include("Memo")
+      expect(page.css("tr.transaction").size).to eq(1)
+      expect(page.css("nav[aria-label='Pagination']")).to be_empty
+    end
+
+    it "renders nothing when no charge is missing a receipt" do
+      get :missing_receipts_list
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to be_blank
     end
   end
 

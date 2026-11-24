@@ -63,13 +63,8 @@ module Api
       require_oauth2_scope "ledgers:read", :show # maybe this should be transactions:read
 
       def missing_receipt
-        user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
-        user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
-        hcb_codes_missing_ids = user_hcb_codes.select do |hcb_code|
-          hcb_code.events.any? { |event| hcb_code.missing_receipt?(event) }
-        end.map(&:id)
-
-        @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
+        # The Receipt Bin's pile, as the HCB codes the cursor and the engines key on
+        @hcb_codes = HcbCode.where(ledger_item_id: current_user.card_charges_missing_receipt.select(:id)).order(created_at: :desc)
 
         @transactions = resolve_engines(paginate_cursor(@hcb_codes, &:public_id))
       end
