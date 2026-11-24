@@ -141,10 +141,6 @@ class Donation < ApplicationRecord
     end
   end
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   def set_fields_from_stripe_payment_intent(payment_intent)
     self.amount = payment_intent.amount
     self.amount_received = payment_intent.amount_received
@@ -281,10 +277,6 @@ class Donation < ApplicationRecord
 
   def canonical_pending_transaction
     canonical_pending_transactions.first
-  end
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
   def canonical_pending_transactions

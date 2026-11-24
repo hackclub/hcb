@@ -21,7 +21,7 @@ module FeeRevenueService
                            currency_code: "USD",
                            sender_bank_account_id:,
                            receiver_bank_account_id:,
-                           description: memo
+                           description: fee_revenue.short_code_memo
       end
 
       true
@@ -31,14 +31,6 @@ module FeeRevenueService
 
     def amount_cents
       fee_revenue.amount_cents
-    end
-
-    def memo
-      "HCB-#{local_hcb_code.short_code}"
-    end
-
-    def local_hcb_code
-      @local_hcb_code ||= fee_revenue.local_hcb_code
     end
 
     def fee_revenue
