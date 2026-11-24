@@ -140,9 +140,6 @@ class AchTransfer < ApplicationRecord
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
   has_one :payment, through: :payment_attempt
 
-  has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
-  has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
-
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
 
   scope :realtime, -> { where("column_id ILIKE 'rttr%'") }
