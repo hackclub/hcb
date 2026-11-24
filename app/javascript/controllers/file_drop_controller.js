@@ -111,8 +111,12 @@ export default class extends Controller {
     // A row that already has its receipt has no upload form left
     if (!this.hasFileInputTarget) return
 
+    // Text pastes and file-less drops must not touch the form (empty submit pops a validation bubble)
+    if (!e.dataTransfer.files.length) return
+
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
+    // checkSize (#15836) clears an oversized selection; don't submit the empty input
     if (!this.fileInputTarget.files.length) return
 
     if (
