@@ -19,6 +19,8 @@ module CloudflareBrowserRun
   end
 
   def self.render(html, scale: 1)
+    # emails with no declared charset arrive as raw bytes, which the JSON encoder rejects
+    html = html.dup.force_encoding(Encoding::UTF_8).scrub if html.encoding == Encoding::BINARY
     connection.post("/client/v4/accounts/#{Credentials.fetch(:CLOUDFLARE, :ACCOUNT_ID)}/browser-rendering/pdf", {
                       html:,
                       # emailed receipts are untrusted HTML, and none of our templates need scripts
