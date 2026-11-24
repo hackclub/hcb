@@ -17,7 +17,7 @@
   <div class="card p0 overflow-hidden">
     <div class="payout-methods__header flex items-center justify-between" style="padding: 14px 20px;">
       <strong>Payout methods</strong>
-      <button type="button" class="btn btn-small bg-success" data-behavior="modal_trigger" data-modal="add_payout_method_modal">
+      <button type="button" class="btn btn-small bg-success" data-modal="add_payout_method_modal">
         <%= inline_icon "plus", size: 16 %>
         Add method
       </button>
@@ -38,16 +38,9 @@
 
   </div>
 
-  <section
-    id="add_payout_method_modal"
-    class="modal modal--scroll bg-snow py"
-    data-behavior="modal"
-    role="dialog"
-    data-controller="turbo-frame-modal"
-    data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
-    <%= modal_header "Add method" %>
+  <%= modal "Add method", id: "add_payout_method_modal", class: "py", data: { controller: "turbo-frame-modal", action: "turbo:submit-end->turbo-frame-modal#submitEnd" } do %>
     <div style="padding: 0 20px 20px;">
       <%= render "users/payout_form/form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
     </div>
-  </section>
+  <% end %>
 </div>

@@ -9,14 +9,13 @@
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", donation.stripe_dashboard_url, class: "btn bg-accent" %>
   <% unless donation.refunded? %>
-    <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
+    <button class="btn bg-error" data-modal="refund">Issue refund</button>
   <% end %>
   <%= link_to "View recurring donation", recurring_donation_path(donation.recurring_donation.url_hash), class: "btn bg-success" if donation.recurring? %>
 <% end %>
 
 <% if admin_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
-    <%= modal_header "Issue refund" %>
+  <%= modal "Issue refund", id: "refund" do %>
     <%= form_with url: refund_donation_path(donation) do |form| %>
       <div class="field">
         <%= form.label :amount, "Amount to refund" %>
@@ -31,11 +30,10 @@
       </div>
       <%= form.submit "Refund donation", class: "bg-error" %>
     <% end %>
-  </section>
+  <% end %>
 <% end %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="update">
-  <%= modal_header "Edit donor's details" %>
+<%= modal "Edit donor's details", id: "update" do %>
   <%= form_with model: donation do |form| %>
     <div class="field mb2">
       <%= form.label :name, "Donor's name" %>
@@ -51,7 +49,7 @@
     <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
-</section>
+<% end %>
 
 <article class="ledger-item">
   <%= render "ledger/items/heading", ledger_item: ledger_item, render_status: false do %>
@@ -78,7 +76,7 @@
 
   <section class="ledger-item--details">
     <% if donation.payment_method_type == 'card' %>
-      <div data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
+      <div data-modal="payment_details" class="pointer" tabindex="0">
         <strong>
           <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
           <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -151,7 +149,7 @@
       <p>
         <strong>Referrer</strong>
 
-        <action data-behavior="modal_trigger" data-modal="referrer_details_<%= instance %>" class="pointer" tabindex="0">
+        <action data-modal="referrer_details_<%= instance %>" class="pointer" tabindex="0">
           <span class="inline-flex">
               <% if donation.referrer_favicon_url.present? %>
                 <img src="<%= donation.referrer_favicon_url %>" height="24" width="24" class="mr-2 rounded-lg" alt="Icon indicating referrer">
@@ -169,8 +167,7 @@
 </article>
 
 <% if donation.payment_method_type == 'card' %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
-    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + donation_payment_method_mention(donation, class: "h3 font-sans regular") %>
+  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + donation_payment_method_mention(donation, class: "h3 font-sans regular"), id: "payment_details" do %>
 
     <article class="details-horiz">
       <div class="details">
@@ -206,10 +203,10 @@
         </p>
       </div>
     </article>
-  </section>
+  <% end %>
 <% end %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="referrer_details_<%= instance %>">
+<%= modal id: "referrer_details_#{instance}" do %>
   <% header = capture do %>
     <% if donation.referrer_favicon_url.present? %>
       <img src="<%= donation.referrer_favicon_url %>" height="36" width="36" class="mr-2 rounded-lg align-bottom" alt="Icon indicating referrer">
@@ -256,4 +253,4 @@
       Referrer and UTM information are used to understand the source of donations. This data is provided by the donor's browser and may not be accurate.
     </p>
   </article>
-</section>
+<% end %>

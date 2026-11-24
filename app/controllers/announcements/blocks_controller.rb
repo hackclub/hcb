@@ -25,7 +25,7 @@ module Announcements
     def edit
       authorize @block, policy_class: Announcement::BlockPolicy
 
-      render @block.modal, layout: false, locals: { block: @block }
+      render turbo_stream: turbo_stream.append_all("body", template: @block.modal, locals: { block: @block })
     end
 
     def update

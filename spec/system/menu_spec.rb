@@ -79,6 +79,19 @@ RSpec.describe "Menus", type: :system do
     expect(evaluate_script("document.getElementById('search').value")).to eq("")
   end
 
+  it "closes when a modal opens" do
+    toggle.click
+    expect(page).to have_link("Sign out")
+
+    html = ApplicationController.render(inline: %(<%= modal "Opened", id: "opened" do %><p>Opened body</p><% end %>))
+    stream = ApplicationController.render(inline: %(<%= turbo_stream.open_modal("opened") %>))
+    execute_script("document.body.insertAdjacentHTML('beforeend', arguments[0]); Turbo.renderStreamMessage(arguments[1])", html, stream)
+
+    expect(page).to have_no_link("Sign out")
+    expect(page).to have_css("#opened[open]")
+    expect(toggle["aria-expanded"]).to eq("false")
+  end
+
   it "signs out through its Turbo DELETE link" do
     toggle.click
     click_on "Sign out"

@@ -33,16 +33,15 @@
         </p>
       </div>
       <% if policy(@event).can_invite_user? %>
-        <%= link_to "Invite", event_team_path(@event), class: "btn", data: { "tour-step" => "invite", behavior: "modal_trigger", "modal": "invite_member" } %>
+        <%= link_to "Invite", event_team_path(@event), class: "btn", data: { "tour-step" => "invite", "modal": "invite_member" } %>
       <% end %>
     </div>
   </div>
   <% if policy(@event).can_invite_user? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
-      <%= modal_header "Invite a team member" %>
+    <%= modal "Invite a team member", id: "invite_member" do %>
       <div>
         <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
       </div>
-    </section>
+    <% end %>
   <% end %>
 <% end %>

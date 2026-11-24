@@ -59,12 +59,18 @@ export default class extends Controller {
     this.content = source.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
-    ;(
-      (this.appendToValue && document.querySelector(this.appendToValue)) ||
-      document.body
+    // Outside the modal it opens from, a menu would be under it; fixed, the modal can't clip it
+    const modal = this.toggleTarget.closest('dialog')
+    const container = this.appendToValue
+      ? document.querySelector(this.appendToValue)
+      : null
+    ;(modal && !modal.contains(container)
+      ? modal
+      : container || document.body
     ).appendChild(this.content)
+    this.strategy = modal ? 'fixed' : 'absolute'
     Object.assign(this.content.style, {
-      position: 'absolute',
+      position: this.strategy,
       display: 'block',
       left: 0,
       top: 0,
@@ -153,6 +159,7 @@ export default class extends Controller {
 
     computePosition(this.toggleTarget, content, {
       placement: this.placementValue,
+      strategy: this.strategy,
       middleware: [
         offset(this.placementValue.includes('top') ? 0 : 10),
         flip({ padding: 4 }),

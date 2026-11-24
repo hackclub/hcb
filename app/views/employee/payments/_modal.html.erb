@@ -75,10 +75,7 @@
   <% end %>
 <% end %>
 
-<section style="overflow: initial;" class="modal modal--scroll bg-snow modal--huge p0" data-behavior="modal" role="dialog" id="<%= "employee_payment_#{payment.id}" %>" style="z-index: 300;">
-  <a href="#close_modal" tabindex="0" class="pop modal__close muted absolute invisible md:visible" rel="modal:close" style="top: 0px; right: -24px; transform: translateY(50%);">
-    <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
-  </a>
+<%= modal id: "employee_payment_#{payment.id}", size: :huge, class: "p0 h-100", style: "overflow: initial;" do %>
 
   <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
     <% if payment.paid? %>
@@ -92,6 +89,7 @@
     <% end %>
 
     <div style="padding: 1.5rem; border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column; overflow-y: auto;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+      <div><%= modal_close %></div>
       <%= actions %>
     </div>
   </div>
@@ -104,9 +102,7 @@
         <a data-receipt-tabs-target="detailsLabel" data-action="click->receipt-tabs#selectDetails">Actions</a>
       </li>
       <div class="flex-grow">
-        <a href="#close_modal" tabindex="0" class="pop modal__close muted" rel="modal:close" style="background: #11111199; margin: 0px; margin-right: 6px;">
-          <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
-        </a>
+        <%= modal_close %>
       </div>
     </ul>
     <% if payment.paid? %>
@@ -120,7 +116,8 @@
     <% end %>
 
     <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
+      <div><%= modal_close %></div>
       <%= actions %>
     </div>
   </div>
-</section>
+<% end %>

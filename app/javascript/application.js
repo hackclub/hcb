@@ -1,3 +1,5 @@
+// First, so its popstate listener runs before Turbo's
+import './popover_history'
 import $ from 'jquery'
 import ReactRailsUJS from 'react_ujs'
 
@@ -20,30 +22,13 @@ ReactRailsUJS.handleEvent('turbo:before-render', ReactRailsUJS.handleUnmount)
 ReactRailsUJS.handleEvent('turbo:frame-load', ReactRailsUJS.handleMount)
 ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 
-// Remove modals triggered by <turbo-frames> when the frame is unloaded.
-// Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
-// Modals containing the rendered frame (e.g. a lazy-loaded form) are kept.
-document.addEventListener('turbo:frame-render', ({ target }) => {
-  // prettier-ignore
-  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').not($(target).parents()).remove()
-})
-
 document.addEventListener('turbo:before-cache', () => {
-  const currentModal = $.modal.getCurrent()
-
-  if (currentModal) {
-    currentModal.options.doFade = false
-    // Turbo owns the URL from here (it is leaving the page, or snapshotting it on
-    // popstate), so closing must not push a history entry (see BEFORE_CLOSE in ui.js)
-    currentModal.options.keepHistory = true
-    currentModal.close()
-  }
-
   $('.field_with_errors').removeClass('field_with_errors')
 })
 
 import './controllers'
 import './confirm'
+import './modal'
 
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo

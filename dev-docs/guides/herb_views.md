@@ -55,7 +55,7 @@ A partial's states are its own unless the caller binds one to its own: `render "
 - **Writing a value that varies per element.** `$value` is the value of the element the event fired on, so a button can carry it: `<button value="<%= id %>" data-herb-set="selected_row=$value">`. Give icons inside it `pointer-events-none`, or a click on the icon reads the icon's value.
 - **Listening elsewhere.** Actions take targets such as `@document`, `@window` and `@outside`: `data-herb-reset="turbo:before-cache@document->selected_row"` closes the open payout method before Turbo caches the page (`users/_payout_methods_list`).
 - **Content loaded into a turbo frame** writes the states of the view around the frame, like any other element inside it (`payees/index` inside `payments/_payee_picker`).
-- **Modals.** jquery-modal moves its `<section>` to the end of `<body>`. Herb state still works when the whole reactive region is inside the section, so render a reactive partial inside it rather than making the page around it reactive.
+- **Modals.** A modal moves to the end of `<body>` while it's open (see [Modals](./modals.md)). Herb state still works when the whole reactive region is inside the modal, so render a reactive partial inside it rather than making the page around it reactive.
 
 If a conversion needs a workaround like several partials per item, or styling picked by CSS to stand in for a class, a small Stimulus controller is usually clearer.
 

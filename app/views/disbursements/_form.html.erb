@@ -94,7 +94,7 @@
             </div>
           </div>
           <strong class="shrink-0" data-transfer-type-target="repaidAmount" <% if repaid_ledger_items.empty? %> hidden<% end %>><%= render_money(repaid_ledger_items.sum { |item| -item.amount_cents }) %></strong>
-          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <% unless disbursement.destination_event %> disabled<% end %>>
+          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-modal="repayment_picker" data-transfer-type-target="pickButton" <% unless disbursement.destination_event %> disabled<% end %>>
             <span data-transfer-type-target="chooseLabel" <% if repaid_ledger_items.any? %> hidden<% end %>>Choose</span>
             <span data-transfer-type-target="changeLabel" <% if repaid_ledger_items.empty? %> hidden<% end %>>Change</span>
           </button>

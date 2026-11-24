@@ -145,9 +145,8 @@
       } %>
 <% end %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reimbursement_settings">
-  <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "reimbursements")) %>
+<%= modal "Settings", id: "reimbursement_settings", external_link: edit_event_path(@event, tab: "reimbursements") do %>
   <%= turbo_frame_tag :reimbursements_settings, src: edit_event_path(@event, tab: "reimbursements", params: { frame: true }), loading: "lazy" do %>
     <strong>Loading...</strong>
   <% end %>
-</section>
+<% end %>

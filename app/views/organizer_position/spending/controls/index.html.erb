@@ -13,7 +13,7 @@
   </span>
 
   <% if @active_control %>
-    <% new_allowance_button = link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "new" }, disabled: !policy(@provisional_allowance).new? do %>
+    <% new_allowance_button = link_to "#", class: "btn bg-success", data: { modal: "new" }, disabled: !policy(@provisional_allowance).new? do %>
       <%= inline_icon "plus" %>
       New
     <% end %>
@@ -29,10 +29,9 @@
 </h1>
 
 <% if @active_control %>
-  <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new">
-    <%= modal_header "New allowance" %>
+  <%= modal "New allowance", id: "new" do %>
     <%= render "organizer_position/spending/controls/allowances/form" %>
-  </div>
+  <% end %>
 <% end %>
 
 <% if @active_control %>
@@ -117,7 +116,7 @@
 <% end %>
 
 <div class="mixed-grid grid--spacious mt-20">
-  <%= link_to "#", data: { behavior: "modal_trigger", modal: "past-controls" }, class: "card flex justify-between #{"opacity-50 pointer-events-none" if @inactive_control_count.zero?}" do %>
+  <%= link_to "#", data: { modal: "past-controls" }, class: "card flex justify-between #{"opacity-50 pointer-events-none" if @inactive_control_count.zero?}" do %>
     <div class="flex flex-col">
       <p class="bold black">Past spending controls</p>
       <p class="muted">
@@ -141,8 +140,7 @@
 </div>
 
 <% unless @inactive_control_count.zero? %>
-  <div data-behavior="modal" role="dialog" id="past-controls" class="modal modal--scroll modal--huge bg-snow">
-    <%= modal_header "Past spending controls" %>
+  <%= modal "Past spending controls", id: "past-controls", size: :huge do %>
     <% @organizer_position.spending_controls.filter { |c| !c.active }.sort_by(&:created_at).reverse.each_with_index do |c, i| %>
       <div class="card <%= "mt-8" unless i.zero? %>">
         <h4 class="m0 mb1">
@@ -157,5 +155,5 @@
         <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(c) %>
       </div>
     <% end %>
-  </div>
+  <% end %>
 <% end %>
