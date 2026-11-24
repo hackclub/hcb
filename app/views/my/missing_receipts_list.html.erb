@@ -9,22 +9,8 @@
         <% end %>
       </h2>
 
-      <div class="table-container">
-        <table class="table-container">
-          <thead>
-            <tr>
-              <th></th>
-              <th class="hidden sm:table-cell">Date</th>
-              <th>Description</th>
-              <th class="text-right">Amount</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody data-behavior="transactions">
-            <%= render partial: "ledger/item", collection: @missing, as: :item, locals: { show_author: false, receipt_upload_button: true } %>
-          </tbody>
-        </table>
-      </div>
+      <%# Already inside the my_missing_receipts_list frame, and @missing isn't paginated. %>
+      <%= render "ledgers/ledger", items: @missing, frame_id: nil, show_pagination: false, show_author: false, receipt_upload_button: true %>
     </section>
   <% end %>
 <% end %>
