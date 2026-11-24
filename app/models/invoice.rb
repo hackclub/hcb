@@ -16,7 +16,6 @@
 #  due_date                                                     :datetime
 #  ending_balance                                               :bigint
 #  finalized_at                                                 :datetime
-#  hcb_code                                                     :text
 #  hosted_invoice_url                                           :text
 #  invoice_pdf                                                  :text
 #  item_amount                                                  :bigint

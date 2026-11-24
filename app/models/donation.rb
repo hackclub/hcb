@@ -11,7 +11,6 @@
 #  anonymous                            :boolean          default(FALSE), not null
 #  email                                :text
 #  fee_covered                          :boolean          default(FALSE), not null
-#  hcb_code                             :text
 #  in_person                            :boolean          default(FALSE)
 #  in_transit_at                        :datetime
 #  ip_address                           :inet
