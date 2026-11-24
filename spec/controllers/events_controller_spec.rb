@@ -389,6 +389,81 @@ RSpec.describe EventsController do
   describe "#edit" do
     render_views
 
+    describe "the two-factor authentication requirement preview" do
+      let(:event) { create(:event, name: "Hack Club HQ") }
+      let(:flag) { Event::TwoFactorAuthenticationRequirement::FLAG }
+
+      def require_two_factor!(event, at:)
+        Flipper.enable_actor(flag, event)
+        Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+      end
+
+      it "lets a contract signee with two-factor authentication turn it on" do
+        signee = create(:user, :with_two_factor_authentication)
+        create(:organizer_position, user: signee, event:, role: :manager, is_signee: true)
+        create_session(signee, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        button = page.at_css("#require-two-factor-authentication form[action='#{enable_feature_path(feature: flag, event_id: event.id)}'] button")
+        expect(button).to be_present
+        expect(button["disabled"]).to be_nil
+        expect(page.css("#require-two-factor-authentication .tooltipped")).to be_empty
+      end
+
+      it "disables the toggle for a manager who isn't a signee, and says why" do
+        manager = create(:user, :with_two_factor_authentication)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        create_session(manager, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        expect(page.at_css("#require-two-factor-authentication form button")["disabled"]).to be_present
+        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Only a contract signee can change this setting.")
+      end
+
+      it "disables the toggle for a signee without two-factor authentication, and says why" do
+        signee = create(:user)
+        create(:organizer_position, user: signee, event:, role: :manager, is_signee: true)
+        create_session(signee, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        expect(page.at_css("#require-two-factor-authentication form button")["disabled"]).to be_present
+        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Enable two-factor authentication on your own account first.")
+      end
+
+      it "shows the deadline and warns members without two-factor authentication during the grace period" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        require_two_factor!(event, at: Time.zone.parse("2026-11-24 12:00:00"))
+        travel_to Time.zone.parse("2026-11-26 12:00:00")
+        create_session(member, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Required since November 24, 2026.")
+        expect(response.body).to include("have until December 1, 2026 to")
+        expect(response.body).to include("Hack Club HQ requires two-factor authentication.")
+      end
+
+      it "shuts out members without two-factor authentication once the grace period is over" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        require_two_factor!(event, at: 8.days.ago)
+        create_session(member, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+
+        expect(response).to redirect_to(root_path)
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      end
+    end
+
     # Creating, editing and deleting tags are member-level server side, so the
     # settings tab shouldn't present them as manager-only.
     it "lets a member manage tags from the settings tab" do

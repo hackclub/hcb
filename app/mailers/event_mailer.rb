@@ -2,8 +2,8 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
-  before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
+  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created, :two_factor_authentication_required]
+  before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled, :two_factor_authentication_required]
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -94,6 +94,18 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_disabled
     mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+  end
+
+  # Sent to each member when the organization starts requiring two-factor
+  # authentication. Members who already use it just get a heads up; the rest
+  # are told the deadline to enable it.
+  def two_factor_authentication_required
+    @user = params[:user]
+    @deadline = @event.two_factor_authentication_deadline
+    @already_enabled = @user.use_two_factor_authentication?
+
+    mail to: @user.email_address_with_name,
+         subject: @already_enabled ? "#{@event.name} now requires two-factor authentication" : "[Action Needed] Enable two-factor authentication for #{@event.name}"
   end
 
   def subevent_created

@@ -1,5 +1,33 @@
 <%# locals: (event:) %>
 
+<% can_toggle_two_factor = policy(event).toggle_two_factor_authentication_requirement? %>
+<% two_factor_disabled_reason =
+     if !OrganizerPosition.find_by(event:, user: current_user)&.is_signee?
+       "Only a contract signee can change this setting."
+     elsif !current_user.use_two_factor_authentication?
+       "Enable two-factor authentication on your own account first."
+     end %>
+<%= render partial: "features/preview", locals: {
+      id: "require-two-factor-authentication",
+      classes: ["feature-two-factor-authentication"],
+      feature_flag: Event::TwoFactorAuthenticationRequirement::FLAG,
+      name: "Require Two-Factor Authentication",
+      description: "Require every member of #{event.name} to use two-factor authentication. " \
+                   "We'll email your team when this is turned on; members who don't have it yet get " \
+                   "#{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.inspect} to set it up before they lose access to the organization.",
+      footer: if event.two_factor_authentication_deadline.present?
+                "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
+                "Members without two-factor authentication #{event.two_factor_authentication_deadline.past? ? "lost access on" : "have until"} #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y")} to " \
+                "#{link_to "enable it", settings_security_path, data: { turbo_action: "advance" }}."
+              elsif !event.two_factor_authentication_required?
+                "Only a contract signee with two-factor authentication enabled on their own account can turn this on or off."
+              end,
+      disabled: !can_toggle_two_factor,
+      disabled_reason: two_factor_disabled_reason,
+      disable_warning: "Members will no longer be required to use two-factor authentication. Are you sure?",
+      event:
+    } %>
+
 <details>
   <summary class="mb2">Past feature previews</summary>
 

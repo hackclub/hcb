@@ -1,5 +1,7 @@
 <%# leaving current_user just so we don't get a NilClassPolicy error ever %>
-<% disabled = !policy(local_assigns[:event] || local_assigns[:user] || current_user).update? %>
+<% disabled = local_assigns.fetch(:disabled, !policy(local_assigns[:event] || local_assigns[:user] || current_user).update?) %>
+<%# `disabled_reason` is shown as a tooltip on the disabled toggle. %>
+<% toggle_wrapper = disabled && local_assigns[:disabled_reason].present? ? { class: "tooltipped tooltipped--w inline-block", "aria-label": local_assigns[:disabled_reason] } : {} %>
 
 <% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
   <div class="card pb0 mb3" id="<%= local_assigns[:id] %>">
@@ -11,29 +13,33 @@
           <span class="btn bg-success btn-small disabled">Shipped!</span>
         </div>
       <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
-        <%= button_to(
-              "Disable",
-              disable_feature_path(
-                feature: local_assigns[:feature_flag],
-                event_id: local_assigns[:event]&.id,
-                user_id: local_assigns[:user]&.id
-              ),
-              data: { turbo_confirm: local_assigns[:disable_warning], turbo_frame: "_top" },
-              class: "btn bg-accent",
-              disabled:
-            ) %>
+        <%= content_tag(:div, **toggle_wrapper) do %>
+          <%= button_to(
+                "Disable",
+                disable_feature_path(
+                  feature: local_assigns[:feature_flag],
+                  event_id: local_assigns[:event]&.id,
+                  user_id: local_assigns[:user]&.id
+                ),
+                data: { turbo_confirm: local_assigns[:disable_warning], turbo_frame: "_top" },
+                class: "btn bg-accent",
+                disabled:
+              ) %>
+        <% end %>
       <% else %>
-        <%= button_to(
-              "Enable",
-              enable_feature_path(
-                feature: local_assigns[:feature_flag],
-                event_id: local_assigns[:event]&.id,
-                user_id: local_assigns[:user]&.id
-              ),
-              data: { turbo_frame: "_top" },
-              class: "btn bg-info",
-              disabled:
-            ) %>
+        <%= content_tag(:div, **toggle_wrapper) do %>
+          <%= button_to(
+                "Enable",
+                enable_feature_path(
+                  feature: local_assigns[:feature_flag],
+                  event_id: local_assigns[:event]&.id,
+                  user_id: local_assigns[:user]&.id
+                ),
+                data: { turbo_frame: "_top" },
+                class: "btn bg-info",
+                disabled:
+              ) %>
+        <% end %>
       <% end %>
     </div>
     <p class="m-0 mb-4">

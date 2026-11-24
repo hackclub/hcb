@@ -9,6 +9,25 @@
       </p>
     </div>
   <% end %>
+  <% if current_user && !current_user.use_two_factor_authentication? %>
+    <% current_user.events.requiring_two_factor_authentication.each do |event| %>
+      <% deadline = event.two_factor_authentication_deadline %>
+      <div class="w-100 px4 <%= deadline&.past? ? "!bg-red text-white" : "bg-white" %> transparency-banner px-4">
+        <p class="h5 medium center py-2 my-0 <%= "text-white" if deadline&.past? %>">
+          <% if deadline&.past? %>
+            ⚠️ You've lost access to <%= event.name %> until you
+            <%= link_to "enable two-factor authentication", settings_security_path, class: "text-inherit" %>.
+          <% elsif deadline.present? %>
+            <%= event.name %> requires two-factor authentication.
+            <%= link_to "Enable it", settings_security_path %> by <%= format_date deadline %> to keep your access.
+          <% else %>
+            <%= event.name %> requires two-factor authentication.
+            <%= link_to "Enable it", settings_security_path %> to keep your access.
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+  <% end %>
   <%= render "application/impersonation_banner", klass: "px-4" %>
   <% if current_user&.pretend_is_not_admin? %>
     <div class="w-100 px4 bg-white transparency-banner px-4">

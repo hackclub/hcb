@@ -79,6 +79,14 @@ class EventPolicy < ApplicationPolicy
 
   alias disable_feature? update?
 
+  # Only a contract signee who uses two-factor authentication themselves can
+  # require it of the organization (or lift the requirement).
+  def toggle_two_factor_authentication_requirement?
+    return false unless signee?
+
+    user.use_two_factor_authentication?
+  end
+
   alias toggle_fee_waiver_eligible? update?
 
   def validate_slug?
@@ -337,7 +345,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def signee?
-    OrganizerPosition.find_by(event: record, user:)&.is_signee?
+    OrganizerPosition.where(event: record, user:, is_signee: true).exists?
   end
 
   def admin_or_manager?
