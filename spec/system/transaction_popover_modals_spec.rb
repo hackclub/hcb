@@ -14,10 +14,9 @@ RSpec.describe "Modals in transaction popovers", type: :system do
 
     create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: raw).tap(&:decline!)
   end
-  let(:popover_url) { hcb_code_path(charge.local_hcb_code) }
-  let(:decline_id) { "declined_information_#{charge.local_hcb_code.hashid}" }
+  let(:popover_url) { ledger_item_path(charge.local_hcb_code.ledger_item) }
+  let(:decline_id) { "declined_information_#{charge.local_hcb_code.ledger_item.hashid}" }
   let(:decline_modal) { "##{decline_id}" }
-  let(:new_ledger) { false }
 
   # Sends Escape to the focused element without clicking anything first
   def press_escape = page.driver.browser.keyboard.type(:escape)
@@ -56,7 +55,6 @@ RSpec.describe "Modals in transaction popovers", type: :system do
   end
 
   before do
-    Flipper.enable(:new_ledger_everywhere_2026_07_13) if new_ledger
     create(:organizer_position, event:, user:)
     sign_in(user)
     visit stripe_card_path(card)
@@ -150,7 +148,7 @@ RSpec.describe "Modals in transaction popovers", type: :system do
     expect_closed(decline_modal)
 
     within(popover) { find("[aria-label=Rename]").click }
-    expect(page).to have_field("hcb_code[memo]")
+    expect(page).to have_field("ledger_item[memo]")
 
     open_decline_details
   end
@@ -170,11 +168,8 @@ RSpec.describe "Modals in transaction popovers", type: :system do
     expect(page).to have_css(decline_modal, count: 1, visible: :all)
   end
 
-  context "with the new ledger" do
+  context "as an auditor" do
     let(:user) { create(:user, :make_auditor, phone_number: "+18556254225") }
-    let(:popover_url) { ledger_item_path(charge.local_hcb_code.ledger_item) }
-    let(:decline_id) { "declined_information_#{charge.local_hcb_code.ledger_item.hashid}" }
-    let(:new_ledger) { true }
 
     it "opens a ledger item's decline details on top of its popover" do
       open_decline_details
