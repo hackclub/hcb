@@ -32,8 +32,8 @@ module HasHcbCode
   end
 
   # The methods below only need `hcb_code` and `local_hcb_code`, so a model that
-  # stores its code in an `hcb_code` column (BankFee, Reimbursement::ExpensePayout)
-  # includes the concern without calling `has_hcb_code`.
+  # stores its code in an `hcb_code` column (BankFee, Disbursement::Base, the
+  # reimbursement payouts) includes the concern without calling `has_hcb_code`.
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)

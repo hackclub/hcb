@@ -93,10 +93,10 @@ class FeeReimbursement < ApplicationRecord
 
   def default_values
     if invoice
-      self.transaction_memo ||= "HCB-#{invoice.local_hcb_code.short_code}"
+      self.transaction_memo ||= invoice.short_code_memo
       self.amount ||= invoice.payout_creation_balance_stripe_fee
     elsif donation
-      self.transaction_memo ||= "HCB-#{donation.local_hcb_code.short_code}"
+      self.transaction_memo ||= donation.short_code_memo
       self.amount ||= donation.payout_creation_balance_stripe_fee
     end
   end
