@@ -1042,12 +1042,12 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false, &block)
+  def organizer_contact_emails(only_managers: false, include_contact_email: true, &block)
     included_users = only_managers ? managers : users
     included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
-    emails << config.contact_email if config.contact_email.present?
+    emails << config.contact_email if include_contact_email && config.contact_email.present?
 
     emails
   end
