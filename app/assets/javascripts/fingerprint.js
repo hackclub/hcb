@@ -1,11 +1,4 @@
 ; (async () => {
-  const csrfTokenSelector = document.querySelector('[name=csrf-token]')
-  let token = ''
-  if (csrfTokenSelector && csrfTokenSelector.content) {
-    // eslint-disable-next-line no-unused-vars
-    token = csrfTokenSelector.content
-  }
-
   const fp = await import('https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3.X/+esm').then(
     FingerprintJS => FingerprintJS.load()
   )

@@ -1,11 +1,5 @@
 /* global BK, $, Turbo */
 
-// eslint-disable-next-line no-unused-vars
-const whenViewed = (element, callback) =>
-  new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
-    threshold: 1,
-  }).observe(element)
-
 const clearElement = id => {
   const element = document.getElementById(id)
   if (element) element.innerHTML = ''
