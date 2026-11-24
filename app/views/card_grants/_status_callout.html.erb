@@ -44,7 +44,7 @@
   <% end %>
 
 <% elsif card_grant.expired? %>
-  <%= render "application/callout", type: "info", color: "muted", icon: "clock", title: "This grant expired on #{format_date card_grant.expiration_at}" do %>
+  <%= render "application/callout", type: "info", color: "muted", icon: "clock", title: safe_join(["This grant expired on ", format_date(card_grant.expiration_at)]) do %>
     <p class="m-0">
       <% if stripe_card.nil? %>
         It expired before the card was activated, so nothing was ever charged to it.
