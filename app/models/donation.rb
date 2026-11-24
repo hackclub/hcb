@@ -11,7 +11,6 @@
 #  anonymous                            :boolean          default(FALSE), not null
 #  email                                :text
 #  fee_covered                          :boolean          default(FALSE), not null
-#  hcb_code                             :text
 #  in_person                            :boolean          default(FALSE)
 #  in_transit_at                        :datetime
 #  ip_address                           :inet
@@ -279,6 +278,12 @@ class Donation < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
+
+  # The hcb_code column was added in March 2021 to be backfilled with a
+  # stored code, but has_hcb_code derived the code from the id two weeks
+  # later and the column was never written. It's dropped once no running
+  # code expects it.
+  self.ignored_columns += ["hcb_code"]
 
   def canonical_pending_transaction
     canonical_pending_transactions.first

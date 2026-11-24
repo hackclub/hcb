@@ -16,7 +16,6 @@
 #  due_date                                                     :datetime
 #  ending_balance                                               :bigint
 #  finalized_at                                                 :datetime
-#  hcb_code                                                     :text
 #  hosted_invoice_url                                           :text
 #  invoice_pdf                                                  :text
 #  item_amount                                                  :bigint
@@ -386,6 +385,12 @@ class Invoice < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
+
+  # The hcb_code column was added in March 2021 to be backfilled with a
+  # stored code, but has_hcb_code derived the code from the id two weeks
+  # later and the column was never written. It's dropped once no running
+  # code expects it.
+  self.ignored_columns += ["hcb_code"]
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
