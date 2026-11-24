@@ -50,6 +50,9 @@ const populateSharedPopover = trigger => {
       const frame = document.createElement('turbo-frame')
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
+      // jquery-modal moves the popover into its overlay as it opens. Moving an eager frame
+      // cancels its request, which can leave it stuck on the spinner; lazy loads once shown
+      frame.loading = 'lazy'
       frame.src = src
       frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
