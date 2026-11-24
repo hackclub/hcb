@@ -84,7 +84,6 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
