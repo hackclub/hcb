@@ -113,6 +113,15 @@
           <td>Amount (local currency):</td>
           <td><%= Money.from_cents(@wire.amount_cents, @wire.currency).format %></td>
         </tr>
+        <% if @wire.below_minimum? %>
+          <tr>
+            <td>Amount (USD):</td>
+            <td>
+              <%= render_money @wire.usd_amount_cents %>
+              <span class="ml1 badge bg-warning">Below <%= render_money Wire::MINIMUM_AMOUNT_CENTS %> minimum</span>
+            </td>
+          </tr>
+        <% end %>
         <tr>
           <td>Balance available:</td>
           <td>
@@ -159,8 +168,13 @@
 
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>
           <div class="field mb-2">
-            <%= form.check_box :charge_fee %>
+            <%= form.check_box :charge_fee, checked: @wire.fee_chargeable? %>
             <%= form.label :charge_fee, "Charge #{@wire.event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} to cover transfer fee?", class: "bold ml-2" %>
+            <% if @wire.fee_chargeable? %>
+              <p class="muted mt-1 mb-0">This wire is under <%= render_money Wire::MINIMUM_AMOUNT_CENTS %> and <%= @wire.event.name %> isn't exempt from the fee.</p>
+            <% elsif @wire.below_minimum? %>
+              <p class="muted mt-1 mb-0">Fee waived: <%= @wire.event.name %> has raised over $50,000 in the past year.</p>
+            <% end %>
           </div>
           <% if @wire.payment.present? %>
             <%= render partial: "payments/classification_input", locals: { form:, classification: @wire.payment.classification } %>

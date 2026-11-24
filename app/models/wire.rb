@@ -200,6 +200,14 @@ class Wire < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
+  def below_minimum?
+    usd_amount_cents < 500_00
+  end
+
+  def fee_chargeable?
+    below_minimum? && !event.wire_fee_waived?
+  end
+
   def send_wire!
     return unless may_mark_approved?
 

@@ -979,7 +979,7 @@ class Event < ApplicationRecord
     return 100 if plan.exempt_from_wire_minimum?
     return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 
-    return 500_00
+    Wire::MINIMUM_AMOUNT_CENTS
   end
 
   def omit_stats?
