@@ -21,7 +21,7 @@ RSpec.describe DonationMailer do
     end
 
     it "attaches a PDF receipt rendered from the donation" do
-      mail = described_class.with(donation:).donor_receipt
+      mail = described_class.with(donation:).donor_receipt.message
 
       expect(CloudflareBrowserRun).to have_received(:pdf).with(a_string_including("Receipt ID: #{donation.public_id}"))
       expect(mail.attachments.size).to eq(1)
@@ -34,7 +34,7 @@ RSpec.describe DonationMailer do
       allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::ServerError)
       allow(Rails.error).to receive(:report)
 
-      mail = described_class.with(donation:).donor_receipt
+      mail = described_class.with(donation:).donor_receipt.message
 
       expect(Rails.error).to have_received(:report).with(an_instance_of(Faraday::ServerError), context: { donation_id: donation.id })
       expect(mail.attachments).to be_empty
