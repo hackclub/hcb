@@ -120,14 +120,16 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response).to redirect_to(hcb_code_path(item.hcb_code, reverse: receipt.id))
       end
 
-      it "asks an auditor to confirm the reversal" do
+      it "renders the reversal confirmation outside the transaction frame for an auditor" do
         create_session(create(:user, :make_auditor), verified: true)
 
         get :show, params: { id: item.hashid, reverse: receipt.id }
 
         expect(response).to be_successful
-        expect(response.body).to include("Reverse receipt pairing")
-        expect(response.body).to include(reverse_receipt_path(receipt.id, format: :html))
+        modal = Nokogiri::HTML5(response.body).at_css("#reverse_receipt_modal")
+        expect(modal.text).to include("Reverse receipt pairing")
+        expect(modal.at_css("form")["action"]).to eq(reverse_receipt_path(receipt.id, format: :html))
+        expect(modal.ancestors("turbo-frame")).to be_empty
       end
     end
 
