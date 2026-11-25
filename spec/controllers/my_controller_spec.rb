@@ -498,6 +498,49 @@ RSpec.describe MyController do
 
           expect(response.body).to include("1 of 2 transactions")
         end
+
+        # The "Create tag" link needs the create_tag modal of an org page, and
+        # the inbox lists charges across orgs, so a row's menu offers only the
+        # org's tags: no link, and no divider dangling where it would go.
+        describe "add-tag menu" do
+          before { create(:organizer_position, user:, event:, role: :member) }
+
+          it "offers the org's tags without a Create tag link or its divider" do
+            event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted")
+            charge = create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).to include("+ Add tag")
+            expect(response.body).to include(ledger_item_toggle_tag_path(charge))
+            expect(response.body).not_to include("Create tag")
+            expect(response.body).not_to include("tags__divider")
+          end
+
+          it "omits the menu when the org has no tags to offer" do
+            create_inbox_charge(receipt_due_at: nil)
+
+            get :inbox
+
+            expect(response.body).not_to include("+ Add tag")
+          end
+        end
+
+        # Each group goes through the shared ledger partial, but without its
+        # turbo frame (several share the page) and without its paginator (the
+        # page is paginated once, below every group).
+        it "renders each group as a frameless ledger table, paginated once" do
+          create_inbox_charge(receipt_due_at: 1.day.ago)
+          create_inbox_charge(receipt_due_at: 1.day.from_now)
+
+          get :inbox, params: { per: 1 }
+
+          page = response.parsed_body
+          expect(page.css("table thead th").map(&:text).map(&:strip)).to include("Memo")
+          expect(page.css("tr.transaction").size).to eq(1)
+          expect(page.css("turbo-frame#ledger")).to be_empty
+          expect(page.css("nav[aria-label='Pagination']").size).to eq(1)
+        end
       end
 
       it "counts a group across every page, not just the page being shown" do
@@ -529,6 +572,21 @@ RSpec.describe MyController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Charges missing receipts", "Upload receipt")
       expect(response.parsed_body.at_css("[id='#{ActionView::RecordIdentifier.dom_id(charge, :receipt_action)}']")).to be_present
+    end
+
+    # The list goes through the shared ledger partial, inside the frame the
+    # cards page loads it into rather than a second one of its own.
+    it "renders the shared ledger table inside the my_missing_receipts_list frame" do
+      create(:organizer_position, user:, event:)
+      create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+      get :missing_receipts_list
+
+      page = response.parsed_body
+      expect(page.css("turbo-frame#ledger")).to be_empty
+      expect(page.css("turbo-frame#my_missing_receipts_list table thead th").map(&:text).map(&:strip)).to include("Memo")
+      expect(page.css("tr.transaction").size).to eq(1)
+      expect(page.css("nav[aria-label='Pagination']")).to be_empty
     end
 
     it "renders nothing when no charge is missing a receipt" do

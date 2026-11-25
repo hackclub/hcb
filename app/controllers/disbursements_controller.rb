@@ -26,7 +26,7 @@ class DisbursementsController < ApplicationController
       end
 
       format.pdf do
-        render_pdf "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})"
+        render_pdf "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})", fit_to_one_page: true
       end
 
       # not being used at the moment

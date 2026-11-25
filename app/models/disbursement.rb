@@ -49,6 +49,7 @@
 #
 class Disbursement < ApplicationRecord
   include Disbursement::Shared
+  include HasHcbCode
 
   include Freezable
   include Commentable
@@ -213,10 +214,6 @@ class Disbursement < ApplicationRecord
     end
   end
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   # Eagerly create HcbCode object
   after_create :local_hcb_code
 
@@ -250,17 +247,6 @@ class Disbursement < ApplicationRecord
     @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
   end
 
-  def filter_data
-    {
-      exists: true,
-      reviewing: reviewing?,
-      pending: pending?,
-      processing: processed? && !fulfilled?,
-      fulfilled: fulfilled?,
-      rejected: rejected?,
-    }
-  end
-
   def v3_api_state
     state_text.underscore
   end
@@ -279,10 +265,6 @@ class Disbursement < ApplicationRecord
 
   def admin_dropdown_description
     "#{ApplicationController.helpers.render_money amount} for #{name} to #{event.name}"
-  end
-
-  def transaction_memo
-    "HCB-#{local_hcb_code.short_code}"
   end
 
   private

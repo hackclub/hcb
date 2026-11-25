@@ -30,4 +30,22 @@ module HasHcbCode
       after_create :local_hcb_code if eager_create
     end
   end
+
+  # The methods below only need `hcb_code` and `local_hcb_code`, so a model that
+  # stores its code in an `hcb_code` column (BankFee, Disbursement::Base, the
+  # reimbursement payouts) includes the concern without calling `has_hcb_code`.
+
+  def canonical_transactions
+    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
+  end
+
+  def pending_expired?
+    local_hcb_code.has_pending_expired?
+  end
+
+  # Memo / statement descriptor sent to the bank or Stripe so the resulting
+  # transaction can be matched back to this record's HCB code.
+  def short_code_memo
+    "HCB-#{local_hcb_code.short_code}"
+  end
 end

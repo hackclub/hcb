@@ -56,6 +56,29 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
 
       expect(described_class.new(other_grantee, item).show?).to be(false)
     end
+
+    context "for a charge on a regular card" do
+      let(:cardholder) { create(:user) }
+      let(:card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder)) }
+      let(:item) do
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card))
+
+        charge.local_hcb_code.ledger_item.tap do |item|
+          Ledger::Mapping.map_primary!(ledger: event.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
+        end
+      end
+
+      it "permits the cardholder without a position in the event" do
+        expect(described_class.new(cardholder, item).show?).to be(true)
+      end
+
+      it "refuses another cardholder in the event" do
+        other_cardholder = create(:user)
+        create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: other_cardholder))
+
+        expect(described_class.new(other_cardholder, item).show?).to be(false)
+      end
+    end
   end
 
   describe "#toggle_tag?" do

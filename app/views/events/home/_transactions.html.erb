@@ -24,7 +24,7 @@
             <%= subtitle %>
           </div>
         </div>
-        <span class="text-xs font-bold p-1 <%= transaction.amount_cents > 0 ? "success" : "error" %>"><%= render_transaction_amount transaction.amount_cents %></span>
+        <span class="text-xs font-bold p-1 <%= transaction.amount_cents > 0 ? "success" : "error" %>"><%= render_money transaction.amount_cents %></span>
       <% end %>
 
       <% if organizer_signed_in? %>

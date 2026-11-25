@@ -145,6 +145,7 @@ class Ledger
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    scope :unmapped, -> { where.missing(:primary_mapping) }
 
     def status_text
       status.humanize
