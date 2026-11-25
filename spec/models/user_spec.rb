@@ -605,7 +605,7 @@ RSpec.describe User, type: :model do
 
     describe "use_two_factor_authentication changes" do
       it "sends an email when two-factor authentication is enabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user = create(:user, phone_number: "+18556254225")
         user.update!(phone_number_verified: true)
 
         expect {
@@ -614,7 +614,7 @@ RSpec.describe User, type: :model do
       end
 
       it "sends an email when two-factor authentication is disabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user = create(:user, phone_number: "+18556254225")
         user.update!(phone_number_verified: true)
         user.update!(use_two_factor_authentication: true)
 
@@ -624,7 +624,7 @@ RSpec.describe User, type: :model do
       end
 
       it "does not send an email when use_two_factor_authentication is not changed" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user = create(:user, phone_number: "+18556254225")
         user.update!(phone_number_verified: true)
         user.update!(use_two_factor_authentication: true)
 
