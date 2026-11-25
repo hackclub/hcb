@@ -2,6 +2,7 @@
 
 class IncreaseChecksController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
   include Admin::TransferApprovable
   include Admin::PaymentApprovable
 
@@ -33,7 +34,7 @@ class IncreaseChecksController < ApplicationController
           uploader: current_user,
           attachments: check_params[:file],
           upload_method: :transfer_create_page,
-          receiptable: @check.local_hcb_code
+          receiptable: @check.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
         ).run!
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
@@ -80,7 +81,7 @@ class IncreaseChecksController < ApplicationController
   private
 
   def check_params
-    params.require(:increase_check).permit(
+    permitted = params.require(:increase_check).permit(
       :memo,
       :amount,
       :payment_for,
@@ -95,6 +96,7 @@ class IncreaseChecksController < ApplicationController
       :payment_recipient_id,
       file: []
     )
+    @check_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_check

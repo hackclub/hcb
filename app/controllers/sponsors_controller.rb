@@ -52,7 +52,7 @@ class SponsorsController < ApplicationController
 
     @sponsor.destroy
     flash[:success] = "Sponsor was successfully destroyed."
-    redirect_to sponsors_url
+    redirect_to sponsors_path
   end
 
   private

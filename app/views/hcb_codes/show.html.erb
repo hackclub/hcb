@@ -25,31 +25,34 @@
         <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), data: { turbo_method: :post } %>
       <% end %>
     <% end %>
-    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
-    <%= begin receipt_upload_form_config = {
-          receiptable: @hcb_code,
-          enable_linking: true,
-          upload_method: "transaction_page",
-          include_spacing: true,
-          turbo: true
-        }
-              receipt_upload_form_config[:restricted_dropzone] = true if @frame
-              receipt_upload_form_config[:inline_linking] = true if @frame
-              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
-              receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
-              receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
-              receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
-              render partial: "receipts/form_v3", locals: receipt_upload_form_config
-        end %>
+    <%= render "receipts/list_v2", receipts: @hcb_code.receipts, popover: (@frame ? "HcbCode:#{@hcb_code.hashid}" : nil), transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
+    <%# Receipts are attached to the transaction's ledger item, which a scheduled transfer doesn't have until it's sent %>
+    <% if @hcb_code.ledger_item %>
+      <%= begin receipt_upload_form_config = {
+            receiptable: @hcb_code.ledger_item,
+            enable_linking: true,
+            upload_method: "transaction_page",
+            include_spacing: true,
+            turbo: true
+          }
+                receipt_upload_form_config[:restricted_dropzone] = true if @frame
+                receipt_upload_form_config[:inline_linking] = true if @frame
+                receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+                receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+                receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
+                receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
+                render partial: "receipts/form_v3", locals: receipt_upload_form_config
+          end %>
+    <% end %>
   <% end %>
 
-  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
+  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code, receipt_upload: (true unless @frame)) if @hcb_code.stripe_card? %>
 
   <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>
   <% if @hcb_code.shared_commentable? %>
     <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.any? %>
       <p class="muted">
         <%= link_to counterparty_hcb_code do %>
           View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
@@ -58,6 +61,11 @@
     <% end %>
   <% end %>
   <%= render "comments/form", commentable: @hcb_code %>
+
+  <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges) %>
+  <% if @frame && @hcb_code.ledger_item.present? %>
+    <%= turbo_stream.replace [@hcb_code.ledger_item, :badges], partial: "ledger/items/badges", locals: { item: @hcb_code.ledger_item } %>
+  <% end %>
 
   <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>
@@ -73,17 +81,11 @@
       <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
     <% @hcb_code.canonical_pending_transactions.each do |tx| %>
-      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+      <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
 <% end %>
 
 <% if @reverse_receipt_id.present? %>
-  <section id="reverse_receipt_modal" class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" data-modal-auto-open="true" data-modal="reverse_receipt_modal">
-    <%= modal_header("Reverse receipt pairing") %>
-    <p>Are you sure you would like to reverse the receipt pairing for this transaction?</p>
-
-    <%= button_to "Yes", reverse_receipt_path(@reverse_receipt_id, format: :html), class: "left bg-success btn", method: :post %>
-    <a href="#" class="right bg-error btn" rel="modal:close">No</a>
-  </section>
+  <%= render "receipts/reverse_pairing_modal", receipt_id: @reverse_receipt_id %>
 <% end %>

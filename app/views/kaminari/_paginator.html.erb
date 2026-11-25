@@ -1,9 +1,11 @@
+<%# locals: (paginator:, current_page:, per_page:, per_page_menu: true, **) %>
+
 <%= paginator.render do -%>
   <nav
     role="navigation"
     aria-label="Pagination"
     class="flex items-center justify-center list-reset my-4 gap-2">
-    <% if local_assigns.fetch(:per_page_menu, true) %>
+    <% if per_page_menu %>
       <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
       <div data-controller="menu" data-menu-placement-value="bottom-start" class="mr-auto">
         <button
@@ -11,7 +13,7 @@
           class="btn menu__toggle menu__toggle--arrowless overflow-visible !w-[150px] gap-1 !pl-2 !pr-2"
           aria-label="Items per page"
           data-menu-target="toggle"
-          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+          data-action="menu#toggle">
           <span>
             <span class="font-[700]"><%= per_page %></span>
             <span class="font-[400]">per page</span>

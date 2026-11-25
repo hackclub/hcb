@@ -69,4 +69,32 @@ RSpec.describe CanonicalTransaction, type: :model do
       expect(canonical_transaction.local_hcb_code).to be_present
     end
   end
+
+  describe "#likely_card_transaction_refund?" do
+    let(:card_charge_hcb_code) { instance_double(HcbCode, card_charge?: true) }
+    let(:other_hcb_code) { instance_double(HcbCode, card_charge?: false) }
+
+    def build_ct(source_type:, amount_cents:, hcb_code:)
+      ct = build(:canonical_transaction, amount_cents:)
+      ct.transaction_source_type = source_type
+      allow(ct).to receive(:local_hcb_code).and_return(hcb_code)
+      ct
+    end
+
+    it "is true for a positive Stripe transaction" do
+      expect(build_ct(source_type: RawStripeTransaction.name, amount_cents: 100, hcb_code: card_charge_hcb_code)).to be_likely_card_transaction_refund
+    end
+
+    it "is true for a dispute payout from Column mapped to a card charge" do
+      expect(build_ct(source_type: RawColumnTransaction.name, amount_cents: 100, hcb_code: card_charge_hcb_code)).to be_likely_card_transaction_refund
+    end
+
+    it "is false for a Column transaction not mapped to a card charge" do
+      expect(build_ct(source_type: RawColumnTransaction.name, amount_cents: 100, hcb_code: other_hcb_code)).not_to be_likely_card_transaction_refund
+    end
+
+    it "is false for a negative Column transaction mapped to a card charge" do
+      expect(build_ct(source_type: RawColumnTransaction.name, amount_cents: -100, hcb_code: card_charge_hcb_code)).not_to be_likely_card_transaction_refund
+    end
+  end
 end

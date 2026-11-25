@@ -9,11 +9,11 @@
           class="nav-item menu__toggle menu__toggle--arrowless flex-1 h-12 rounded-none bg-transparent <%= "cursor-wait" if skeleton %>"
           style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>"
           data-menu-target="toggle"
-          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+          data-action="menu#toggle">
           <%= section.name %>
           <% unless skeleton %>
             <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
-              <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
+              <%= section.task_sum %>
             </span>
           <% end %>
         </button>
@@ -22,9 +22,11 @@
             <% section.items.each do |item| %>
               <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
                 <%= item.name %>
-                <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
-                  <%= item.count %>
-                </span>
+                <% unless item.count.nil? %>
+                  <span class="badge <%= item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
+                    <%= item.count %>
+                  </span>
+                <% end %>
               <% end %>
               <div class="menu__divider last:hidden"></div>
             <% end %>

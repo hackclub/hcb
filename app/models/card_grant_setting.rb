@@ -50,11 +50,15 @@ class CardGrantSetting < ApplicationRecord
     "2 years": 365 * 2
   }, prefix: :expires_after
 
+  def support?
+    support_message.present? || support_url.present?
+  end
+
   def slack_support?
     return false unless support_url.present?
 
     URI.parse(support_url)&.host&.end_with?(".slack.com") || false
-  rescue URI::InvalidURIError, ArgumentError
+  rescue URI::Error, ArgumentError
     false
   end
 

@@ -16,7 +16,7 @@ module InvoiceService
 
         b_tnx = invoice.remote_invoice.charge.balance_transaction
 
-        funds_available_at = Util.unixtime(b_tnx.available_on)
+        funds_available_at = Time.at(b_tnx.available_on)
         create_payout_at = funds_available_at + 1.day
 
         invoice.payout_creation_queued_at = Time.current

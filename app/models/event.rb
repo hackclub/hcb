@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -83,7 +84,6 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
@@ -117,16 +117,34 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
-  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
-  scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
-  scope :flag_enabled, ->(flag) {
-    joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
-      .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
+
+  CATEGORY_TAGS = {
+    "hack_club"     => EventTag::Tags::HACK_CLUB,
+    "climate"       => EventTag::Tags::CLIMATE,
+    "hackathon"     => EventTag::Tags::HACKATHON,
+    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM,
+    "nonprofit"     => nil # default category
+  }.freeze
+
+  # filter organizations by category
+  scope :by_category, ->(category) {
+    return all if category.nil?
+
+    # check if tag is in hash
+    if (tag = CATEGORY_TAGS[category])
+      includes(:event_tags).where(event_tags: { name: tag })
+    elsif category == "hack_club_hq"
+      # hack_club_hq is stored as a plan not a tag
+      includes(:plan).where(event_plans: { type: [Event::Plan::HackClubAffiliate.sti_name, Event::Plan::HackClubHQ.sti_name] })
+    else
+      # unrecognized category, return nothing, though this should never make it this far since values: constraint
+      none
+    end
   }
 
   # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
@@ -149,7 +167,7 @@ class Event < ApplicationRecord
   end
 
   def descendant_ids
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT id, parent_id
         FROM events
@@ -175,6 +193,19 @@ class Event < ApplicationRecord
 
   def descendants
     Event.where(id: descendant_ids)
+  end
+
+  # A subquery of the ids of `roots` plus every event nested under them.
+  # Like #descendant_ids, these ids skip the paranoid scope, so read them back
+  # through ActiveRecord to drop any that are soft deleted.
+  def self.self_and_descendant_ids(roots)
+    unscoped
+      .with_recursive(tree: [
+                        unscoped.where(id: roots).select(:id),
+                        unscoped.joins("INNER JOIN tree ON events.parent_id = tree.id").select(:id)
+                      ])
+      .from("tree")
+      .select(:id)
   end
 
   # The direct sub-organizations `user` may see. #visible_descendant_ids walks
@@ -236,7 +267,7 @@ class Event < ApplicationRecord
       end
     transparent = "(e.is_public AND e.hidden_at IS NULL)"
 
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT e.id, e.parent_id, #{organized} AS unlocked
         FROM events e
@@ -302,6 +333,9 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
+  # Organizations anyone can send an HCB transfer to, listed in the public
+  # directory or not. Keep in sync with `#accepts_public_transfers?`.
+  scope :accepting_public_transfers, -> { transparent.not_hidden.not_demo_mode.where(financially_frozen: false) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -461,8 +495,6 @@ class Event < ApplicationRecord
                          .distinct)
   }
 
-  scope :dormant, -> { where.not(id: Event.engaged) }
-
   has_many :fees
   has_many :bank_fees
 
@@ -516,6 +548,8 @@ class Event < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+
+  include Event::HasReimbursementReviewers
 
   validate :point_of_contact_is_admin
 
@@ -586,6 +620,8 @@ class Event < ApplicationRecord
     country
     slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
     is_public "Transparent"
+    raised_ytd_cents "Raised (YTD)" do |cents| Money.from_cents(cents).to_s end
+    raised_last_year_cents "Raised (Last Year)" do |cents| Money.from_cents(cents).to_s end
     users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
@@ -630,10 +666,6 @@ class Event < ApplicationRecord
     # desc
   end
 
-  def disbursement_dropdown_description
-    "#{name} (#{ApplicationController.helpers.render_money balance_available})"
-  end
-
   # displayed on /negative_events
   def self.negatives
     select { |event| event.balance_v2_cents < 0 }
@@ -658,12 +690,23 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
+  # Repayments pay an expense back, so they come off both totals instead of
+  # counting as revenue, matching Ledger#revenue_cents and #expenses_cents.
   def total_raised
-    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents - ledger.repayments_received_cents
+  end
+
+  def raised_ytd_cents
+    ledger.revenue_cents(start_date: Time.current.beginning_of_year)
+  end
+
+  def raised_last_year_cents
+    last_year = 1.year.ago
+    ledger.revenue_cents(start_date: last_year.beginning_of_year, end_date: last_year.end_of_year)
   end
 
   def total_spent_cents
-    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1 - ledger.repayments_received_cents
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
@@ -712,10 +755,6 @@ class Event < ApplicationRecord
     pts = pts.where("date <= ?", end_date) if end_date
 
     sum_fronted_amount(pts)
-  end
-
-  def pending_balance_v2_cents(start_date: nil, end_date: nil)
-    pending_incoming_balance_v2_cents(start_date:, end_date:) + pending_outgoing_balance_v2_cents(start_date:, end_date:)
   end
 
   def pending_incoming_balance_v2_cents(start_date: nil, end_date: nil)
@@ -786,21 +825,19 @@ class Event < ApplicationRecord
     hidden_at.present?
   end
 
-  def filter_data
-    {
-      exists: true,
-      transparent: is_public?,
-      omitted: omit_stats?,
-      hidden: hidden?
-    }
+  # Keep in sync with the `accepting_public_transfers` scope.
+  def accepts_public_transfers?
+    is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
   def ready_for_fee?
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
+
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   def increase_account_number_id
@@ -863,14 +900,6 @@ class Event < ApplicationRecord
     2
   end
 
-  def engaged?
-    canonical_transactions.where("date >= ?", 6.months.ago).any?
-  end
-
-  def dormant?
-    !engaged?
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -901,10 +930,6 @@ class Event < ApplicationRecord
     ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
   end
 
-  def default_stripe_card_personalization_design
-    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
-  end
-
   def config
     super || create_config
   end
@@ -923,10 +948,25 @@ class Event < ApplicationRecord
     self[:short_name] || name[0...length]
   end
 
+  # How donations and invoice payments show up on bank and card statements,
+  # e.g. "HCB* Hack Club".
+  def statement_descriptor
+    StripeService::StatementDescriptor.format(short_name, as: :full)
+  end
+
   monetize :minimum_wire_amount_cents
 
+  # Organizations that have raised over $50,000 in the past year don't get
+  # charged for the $25 per wire our partner bank charges us. Hack Club's own
+  # projects are always charged, however much they've raised.
+  def wire_fee_waived?
+    return false if plan.is_a?(Event::Plan::HackClubAffiliate)
+
+    canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+  end
+
   def minimum_wire_amount_cents
-    return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+    return 100 if wire_fee_waived?
     return 100 if plan.exempt_from_wire_minimum?
     return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 
@@ -993,12 +1033,12 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false, &block)
+  def organizer_contact_emails(only_managers: false, include_contact_email: true, &block)
     included_users = only_managers ? managers : users
     included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
-    emails << config.contact_email if config.contact_email.present?
+    emails << config.contact_email if include_contact_email && config.contact_email.present?
 
     emails
   end

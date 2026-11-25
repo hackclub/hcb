@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% @donation = @hcb_code.donation %>
 
 <% instance = @hcb_code.hashid %>
@@ -41,9 +43,13 @@
       <%= form.text_field :name, value: @donation.name(show_anonymous: true), placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
     </div>
     <div class="field field--checkbox mb2">
-      <%= form.check_box :anonymous, style: "margin-left: 0;" %>
+      <%= form.check_box :anonymous, checked: @donation.anonymous? || @donation.recurring_donation&.anonymous?, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
+    <%= render "donations/admin_donor_fields", form:, donation: @donation %>
+    <% if @donation.recurring? %>
+      <p class="muted">This donation is part of a recurring donation. Updating the donor's details will update them for all past and future donations.</p>
+    <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
 </section>
@@ -114,7 +120,7 @@
         <% if organizer_signed_in? %>
           <%= mail_to @donation.email, @donation.email.downcase %>
         <% else %>
-          <strong>Sign in to view</strong>
+          <strong><%= restricted_detail_label %></strong>
         <% end %>
       </p>
     <% end %>
@@ -158,6 +164,7 @@
         </action>
       </p>
     <% end %>
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
@@ -200,7 +207,7 @@
           <% if organizer_signed_in? %>
             <%= @donation.payment_method_card_exp_month.to_s.rjust(2, "0") %> / <%= @donation.payment_method_card_exp_year %>
           <% else %>
-            MM / YYYY (Sign in to view)
+            MM / YYYY (<%= restricted_detail_label %>)
           <% end %>
         </p>
       </div>

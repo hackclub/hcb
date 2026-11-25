@@ -6,6 +6,8 @@
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>
   <body class="overflow-x-hidden min-h-screen flex flex-col max-w-[100vw]">
+    <%# ui.js renders every .tooltipped element's tooltip into this. %>
+    <div id="tooltip-container"></div>
     <a class="skip-to-main" href="#main">Skip to main content</a>
     <% title = yield(:title) if content_for?(:title) %>
     <% nav = Admin::Nav.new(page_title: title) %>
@@ -36,9 +38,10 @@
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
           <div data-controller="menu">
             <a
-              href="javascript:void(0)"
-              class="-mr-1 block"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              role="button"
+              tabindex="0"
+              class="-mr-1 block pointer"
+              data-action="menu#toggle keydown.enter->menu#toggle"
               data-menu-target="toggle">
               <%= inline_icon "moon", size: 28 %>
             </a>

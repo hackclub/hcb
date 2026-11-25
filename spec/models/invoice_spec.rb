@@ -11,4 +11,54 @@ RSpec.describe Invoice, type: :model do
     invoice = create(:invoice)
     expect(invoice).to be_valid
   end
+
+  describe "ledger item" do
+    it "eagerly creates an intended ledger item on create" do
+      invoice = create(:invoice)
+
+      item = invoice.ledger_item
+      expect(item).to be_present
+      expect(item.linked_object).to eq(invoice)
+      expect(item.status).to eq("intended")
+      expect(item.amount_cents).to eq(0)
+      # intended_at captures the creation time and is preserved through refresh!.
+      expect(item.intended_at).to be_within(1.second).of(invoice.created_at)
+      expect(item.datetime).to be_within(1.second).of(invoice.created_at)
+      # Mapped to the event's ledger via the linked object, even without a CPT.
+      expect(item.primary_ledger).to eq(invoice.event.ledger)
+    end
+
+    it "reuses the eager ledger item when the invoice's pending transaction is created" do
+      invoice = create(:invoice)
+      eager_item = invoice.ledger_item
+
+      raw_pending_invoice_transaction = create(:raw_pending_invoice_transaction, invoice_transaction_id: invoice.id)
+      cpt = create(:canonical_pending_transaction, raw_pending_invoice_transaction:)
+
+      # The CPT resolves its ledger item via the linked object (the invoice),
+      # so it reuses the eager item rather than creating a duplicate.
+      expect(cpt.reload.ledger_item).to eq(eager_item)
+      expect(Ledger::Item.where(linked_object: invoice).count).to eq(1)
+    end
+
+    it "exists before the organizer notification email is enqueued" do
+      # The email links to the ledger item, so the item has to be created before
+      # the mail job is enqueued (after_commit callbacks run in definition order).
+      allow(InvoiceMailer).to receive(:with).and_wrap_original do |original, **params|
+        expect(params[:invoice].ledger_item).to be_present
+        original.call(**params)
+      end
+
+      expect { create(:invoice) }.to have_enqueued_mail(InvoiceMailer, :notify_organizers_sent).once
+    end
+
+    it "shows the intended item as canceled when the invoice is voided before payment" do
+      invoice = create(:invoice)
+      item = invoice.ledger_item
+
+      invoice.mark_void!
+
+      expect(item.reload.status).to eq("canceled")
+    end
+  end
 end

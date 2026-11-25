@@ -50,17 +50,18 @@ module Api
           }, status: :bad_request
         end
 
-        ActiveRecord::Base.transaction do
-          @check.save!
+        @check.save!
 
-          if check_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: check_params[:file],
-              upload_method: :api,
-              receiptable: @check.local_hcb_code
-            ).run!
-          end
+        # The receipt belongs on the transfer's ledger item, which only exists
+        # once the pending transaction created with the transfer commits, so
+        # attach it after the save rather than in a transaction around both.
+        if check_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: Array(check_params[:file]),
+            upload_method: :api,
+            receiptable: @check.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
+          ).run!
         end
 
         render :show, status: :created

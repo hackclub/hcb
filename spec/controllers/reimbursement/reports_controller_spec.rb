@@ -23,6 +23,17 @@ RSpec.describe Reimbursement::ReportsController do
       expect(email_field_value(response.body)).to eq("fiona@example.com")
     end
 
+    it "does not prefill the email field when signed in as an organizer" do
+      user = create(:user, email: "fiona@example.com")
+      event = create(:event, public_reimbursement_page_enabled: true, organizers: [user])
+      create_session(user, verified: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to be_blank
+    end
+
     it "does not prefill the email field when signed out" do
       event = create(:event, public_reimbursement_page_enabled: true)
 
@@ -30,6 +41,87 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(response).to have_http_status(:ok)
       expect(email_field_value(response.body)).to be_blank
+    end
+  end
+
+  describe "#show" do
+    render_views
+
+    def header_badges(body)
+      Nokogiri::HTML5(body).css("h3 .badge").map { |badge| badge.text.squish }
+    end
+
+    it "shows a single review requested badge naming the assigned reviewer" do
+      creator = create(:user)
+      event = create(:event)
+      reviewer = create(:user, full_name: "Fiona Hackworth")
+      create(:organizer_position, user: reviewer, event:)
+      report = create(:reimbursement_report, user: creator, event:, reviewer:, aasm_state: :submitted)
+
+      create_session(creator, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(header_badges(response.body)).to eq(["Review requested from Fiona H"])
+    end
+
+    it "asks submitters for a reviewer based on the organization's setting" do
+      event = create(:event)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      reviewer_selects = lambda do
+        get(:show, params: { id: report.id })
+        Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')
+      end
+
+      expect(reviewer_selects.call).to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(be_nil)
+      expect(selects.map { |select| select.at_css("option").text }).to all(eq("No preference"))
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(eq("required"))
+    end
+
+    it "never asks card grant submitters for a reviewer" do
+      event = create(:event, :card_grant_event, :with_positive_balance)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:, user: member)
+      report = create(:reimbursement_report, user: member, event:, card_grant:)
+      create_session(member, verified: true)
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      get(:show, params: { id: report.id })
+      body = Nokogiri::HTML5(response.body)
+      expect(body.css('select[name="reviewer_id"]')).to be_empty
+      expect(body.css('select[name="reimbursement_report[reviewer_id]"]')).not_to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      get(:show, params: { id: report.id })
+      expect(Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')).to be_empty
+    end
+
+    it "shows the status badge when no reviewer is assigned" do
+      creator = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted)
+
+      create_session(creator, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(header_badges(response.body)).to eq(["Review Requested"])
     end
   end
 
@@ -202,6 +294,112 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
 
+    context "when the report has no event yet" do
+      # Reports created by email, SMS or Discord start without an event.
+      # ReportPolicy#change_event? lets the creator place such a report on
+      # an event, under the same rules as ReportPolicy#create?.
+
+      it "lets the creator place it on an event they are a member of" do
+        creator = create(:user)
+        own_event = create(:event)
+        create(:organizer_position, user: creator, event: own_event, role: :member)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: own_event.id }
+              })
+
+        expect(flash[:success]).to be_present
+        expect(report.reload.event).to eq(own_event)
+      end
+
+      it "lets the creator place it on an event whose public reimbursement page is enabled" do
+        creator = create(:user)
+        open_event = create(:event, public_reimbursement_page_enabled: true)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: open_event.id }
+              })
+
+        expect(flash[:success]).to be_present
+        expect(report.reload.event).to eq(open_event)
+      end
+
+      it "blocks placing it on an event the creator is not part of" do
+        creator = create(:user)
+        victim_event = create(:event, public_reimbursement_page_enabled: false)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: victim_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "blocks placing it on a demo-mode event" do
+        creator = create(:user)
+        demo_event = create(:event, :demo_mode)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: demo_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "blocks a nonexistent event id without raising" do
+        creator = create(:user)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: 999_999_999 }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "keeps a second event change manager-only" do
+        creator = create(:user)
+        own_event = create(:event)
+        create(:organizer_position, user: creator, event: own_event, role: :member)
+        other_event = create(:event)
+        create(:organizer_position, user: creator, event: other_event, role: :member)
+        report = create(:reimbursement_report, user: creator, event: nil)
+        report.update!(event: own_event)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: other_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(own_event)
+      end
+    end
+
     context "reviewer_id assignment" do
       it "does not assign the reviewer when set by a non-manager creator" do
         creator = create(:user)
@@ -217,6 +415,44 @@ RSpec.describe Reimbursement::ReportsController do
                 reimbursement_report: { reviewer_id: manager.id }
               })
 
+        expect(report.reload.reviewer_id).to be_nil
+      end
+
+      it "lets a card grant recipient assign a reviewer from the settings menu" do
+        event = create(:event, :card_grant_event, :with_positive_balance)
+        recipient = create(:user)
+        reviewer = create(:user)
+        create(:organizer_position, user: reviewer, event:)
+        card_grant = create(:card_grant, event:, user: recipient)
+        report = create(:reimbursement_report, user: recipient, event:, card_grant:)
+
+        event.update!(reimbursement_reviewer_selection: :optional)
+        create_session(recipient, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { report_name: report.name, reviewer_id: reviewer.id }
+              })
+
+        expect(report.reload.reviewer_id).to eq(reviewer.id)
+      end
+
+      it "rejects an ineligible reviewer from a card grant recipient" do
+        event = create(:event, :card_grant_event, :with_positive_balance)
+        recipient = create(:user)
+        outsider = create(:user)
+        card_grant = create(:card_grant, event:, user: recipient)
+        report = create(:reimbursement_report, user: recipient, event:, card_grant:)
+
+        event.update!(reimbursement_reviewer_selection: :optional)
+        create_session(recipient, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { report_name: report.name, reviewer_id: outsider.id }
+              })
+
+        expect(response).to have_http_status(:unprocessable_content)
         expect(report.reload.reviewer_id).to be_nil
       end
 
@@ -363,6 +599,43 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#submit" do
+    it "lets submitters pick any manager, including ones who opted out of reviewing" do
+      event = create(:event, reimbursement_reviewer_selection: :required)
+      member = create(:user)
+      other_member = create(:user)
+      opted_out = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: other_member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: other_member.public_id })
+
+      expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
+      expect(report.reload.reviewer).to be_nil
+
+      post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
+
+      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
+    end
+
+    it "lets submitters skip picking a reviewer when it's optional" do
+      event = create(:event, reimbursement_reviewer_selection: :optional)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: "" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+    end
+  end
+
   describe "#approve" do
     it "approves all pending expenses and requests reimbursement" do
       creator = create(:user)
@@ -505,6 +778,254 @@ RSpec.describe Reimbursement::ReportsController do
         expect(response.body).not_to include("Mission statement")
         expect(response.body).not_to include("Non-auditor mission statement")
       end
+    end
+
+    context "when the viewer is the creator of a report with no event" do
+      it "renders the edit icon and leaves the organization select enabled" do
+        creator = create(:user)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        get(:show, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Edit this report&#39;s properties.")
+        expect(select_tag).to be_present
+        expect(select_tag).not_to include("disabled")
+      end
+    end
+
+  end
+
+  describe "#update maximum amount and reviewer" do
+    let(:event) { create(:event, :card_grant_event, :with_positive_balance) }
+    let(:reviewer) { create(:user).tap { |user| create(:organizer_position, user:, event:, role: :manager) } }
+
+    def submit_maximum_amount_and_reviewer(actor, report)
+      create_session(actor, verified: true)
+
+      patch(:update, params: {
+              id: report.id,
+              reimbursement_report: { report_name: "Renamed", maximum_amount: "250.00", reviewer_id: reviewer.id }
+            })
+
+      report.reload
+    end
+
+    def card_grant_report(recipient, aasm_state: :draft)
+      event.update!(reimbursement_reviewer_selection: :optional)
+      card_grant = create(:card_grant, event:, user: recipient)
+      create(:reimbursement_report, user: recipient, event:, card_grant:, aasm_state:)
+    end
+
+    it "saves both for an admin" do
+      report = create(:reimbursement_report, user: create(:user), event:)
+
+      report = submit_maximum_amount_and_reviewer(create(:user, :make_admin), report)
+
+      expect(report.maximum_amount_cents).to eq(250_00)
+      expect(report.reviewer_id).to eq(reviewer.id)
+    end
+
+    it "saves both for a manager" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :submitted)
+
+      report = submit_maximum_amount_and_reviewer(manager, report)
+
+      expect(report.maximum_amount_cents).to eq(250_00)
+      expect(report.reviewer_id).to eq(reviewer.id)
+    end
+
+    it "saves both for a manager of the parent organization" do
+      parent_manager = create(:user)
+      event.update!(parent: create(:event))
+      create(:organizer_position, user: parent_manager, event: event.parent, role: :manager)
+      report = create(:reimbursement_report, user: create(:user), event:)
+
+      report = submit_maximum_amount_and_reviewer(parent_manager, report)
+
+      expect(report.maximum_amount_cents).to eq(250_00)
+      expect(report.reviewer_id).to eq(reviewer.id)
+    end
+
+    it "saves only the reviewer for a manager once reimbursement is requested" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :reimbursement_requested)
+
+      report = submit_maximum_amount_and_reviewer(manager, report)
+
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to eq(reviewer.id)
+    end
+
+    it "saves neither for a member editing their own draft" do
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+
+      report = submit_maximum_amount_and_reviewer(member, report)
+
+      expect(report.name).to eq("Renamed")
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to be_nil
+    end
+
+    it "saves neither for a reader editing their own draft" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      report = create(:reimbursement_report, user: reader, event:)
+
+      report = submit_maximum_amount_and_reviewer(reader, report)
+
+      expect(report.name).to eq("Renamed")
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to be_nil
+    end
+
+    it "saves neither for an outside contributor editing their own draft" do
+      contributor = create(:user)
+      report = create(:reimbursement_report, user: contributor, event:)
+
+      report = submit_maximum_amount_and_reviewer(contributor, report)
+
+      expect(report.name).to eq("Renamed")
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to be_nil
+    end
+
+    it "saves only the reviewer for a card grant recipient editing their own draft" do
+      recipient = create(:user)
+      create(:organizer_position, user: recipient, event:, role: :member)
+      report = card_grant_report(recipient)
+
+      report = submit_maximum_amount_and_reviewer(recipient, report)
+
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to eq(reviewer.id)
+    end
+
+    it "saves neither for a card grant recipient once reimbursement is requested" do
+      recipient = create(:user)
+      report = card_grant_report(recipient, aasm_state: :reimbursement_requested)
+
+      report = submit_maximum_amount_and_reviewer(recipient, report)
+
+      expect(report.name).to eq("Renamed")
+      expect(report.maximum_amount_cents).to be_nil
+      expect(report.reviewer_id).to be_nil
+    end
+
+    {
+      "an auditor"  => ->(_event) { create(:user, :make_auditor) },
+      "a member"    => ->(event) { create(:user).tap { |user| create(:organizer_position, user:, event:, role: :member) } },
+      "an outsider" => ->(_event) { create(:user) },
+    }.each do |actor_description, build_actor|
+      it "does not let #{actor_description} update someone else's report" do
+        report = create(:reimbursement_report, user: create(:user), event:)
+
+        report = submit_maximum_amount_and_reviewer(instance_exec(event, &build_actor), report)
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.name).not_to eq("Renamed")
+        expect(report.maximum_amount_cents).to be_nil
+        expect(report.reviewer_id).to be_nil
+      end
+    end
+  end
+
+  describe "maximum amount and reviewer fields on the edit form" do
+    render_views
+
+    let(:event) { create(:event, :card_grant_event, :with_positive_balance) }
+
+    def maximum_amount_field?
+      Nokogiri::HTML5(response.body).at_css("input[name='reimbursement_report[maximum_amount]']").present?
+    end
+
+    def reviewer_options
+      Nokogiri::HTML5(response.body).css("select[name='reimbursement_report[reviewer_id]'] option").map { |option| [option.text, option["value"]] }
+    end
+
+    def reviewer_option_ids
+      reviewer_options.map(&:last).compact_blank.map(&:to_i)
+    end
+
+    it "hides both from a member editing their own draft" do
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(maximum_amount_field?).to eq(false)
+      expect(reviewer_options).to be_empty
+    end
+
+    it "hides both from an auditor viewing the report" do
+      report = create(:reimbursement_report, user: create(:user), event:)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(maximum_amount_field?).to eq(false)
+      expect(reviewer_options).to be_empty
+    end
+
+    it "shows both to a manager, offering every eligible reviewer" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      event.update!(parent: create(:event))
+      parent_manager = create(:user)
+      create(:organizer_position, user: parent_manager, event: event.parent, role: :manager)
+      create(:organizer_position, user: create(:user), event:, role: :member)
+      report = create(:reimbursement_report, user: create(:user), event:)
+      create_session(manager, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(maximum_amount_field?).to eq(true)
+      expect(reviewer_options.first).to eq(["Anyone", ""])
+      expect(reviewer_option_ids).to contain_exactly(manager.id, parent_manager.id)
+    end
+
+    it "shows both to an admin" do
+      reviewer = create(:user)
+      create(:organizer_position, user: reviewer, event:, role: :manager)
+      report = create(:reimbursement_report, user: create(:user), event:)
+      create_session(create(:user, :make_admin), verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(maximum_amount_field?).to eq(true)
+      expect(reviewer_option_ids).to contain_exactly(reviewer.id)
+    end
+
+    it "shows a card grant recipient who is also a member only the reviewer field, with the eligible reviewers" do
+      recipient = create(:user)
+      create(:organizer_position, user: recipient, event:, role: :member)
+      reviewer = create(:user)
+      create(:organizer_position, user: reviewer, event:, role: :manager)
+      event.update!(reimbursement_reviewer_selection: :optional)
+      card_grant = create(:card_grant, event:, user: recipient)
+      report = create(:reimbursement_report, user: recipient, event:, card_grant:)
+      create_session(recipient, verified: true)
+
+      get(:edit, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(maximum_amount_field?).to eq(false)
+      expect(reviewer_options.first).to eq(["No preference", ""])
+      expect(reviewer_option_ids).to contain_exactly(reviewer.id)
     end
   end
 end

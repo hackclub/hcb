@@ -1,0 +1,7 @@
+<%= turbo_frame_tag :"my_reimbursements_#{@section}" do %>
+  <% if @reports.present? %>
+    <%= render "my/reimbursement_reports_table", reports: @reports %>
+  <% else %>
+    <%= blankslate "No reports found!" %>
+  <% end %>
+<% end %>

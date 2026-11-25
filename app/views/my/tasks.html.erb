@@ -15,9 +15,7 @@
         <div class="bold"><%= task.text %></div>
         <div>
           Created
-          <span data-controller="timestamp" data-timestamp-time-value="<%= task.created_at.to_i * 1000 %>">
-            <%= time_ago_in_words task.created_at %> ago
-          </span>
+          <%= time_tag task.created_at, "#{time_ago_in_words(task.created_at)} ago", data: { local: "time-ago" } %>
         </div>
       </div>
     </div>
@@ -35,9 +33,7 @@
           <div class="bold"><%= task.text %></div>
           <div>
             Completed
-            <span data-controller="timestamp" data-timestamp-time-value="<%= task.completed_at.to_i * 1000 %>">
-              <%= time_ago_in_words task.completed_at %> ago
-            </span>
+            <%= time_tag task.completed_at, "#{time_ago_in_words(task.completed_at)} ago", data: { local: "time-ago" } %>
           </div>
         </div>
       </div>

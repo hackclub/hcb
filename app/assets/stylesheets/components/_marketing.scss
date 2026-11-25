@@ -296,7 +296,7 @@ $mk-bg: $snow; // #f9fafc
     color: $muted;
   }
 
-  // Fuller "send a note" variant (final CTA): stacked name + email + message + submit.
+  // Stacked name + email + message + submit (the final CTA's inquiry form).
   &--detailed {
     display: flex;
     flex-direction: column;
@@ -306,6 +306,57 @@ $mk-bg: $snow; // #f9fafc
       flex: none;
       width: 100%;
     }
+  }
+
+  // Labelled message field: the label + prompt tell funders what to put in the (required)
+  // note, so the team has something to research before replying.
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+
+  &__label {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__prompt {
+    margin: 0 0 6px;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: $muted;
+  }
+
+  // Inline field error (server-side validation). Sits directly under the field it's
+  // about, so the fix is obvious; the field itself gets a red ring via --invalid.
+  &__error {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 4px 2px 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: darken($red, 12%);
+
+    svg {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      margin-top: 0.5px;
+      color: $red;
+    }
+  }
+
+  & &__input--invalid,
+  & &__input--invalid:focus {
+    box-shadow:
+      inset 0 0 0 1.5px $red,
+      0 0 0 4px rgba($red, 0.12);
   }
 
   & &__textarea {
@@ -3528,20 +3579,24 @@ $mk-term-green: #62d196;
     color: $green-dark;
   }
 
-  // The error alert is a compact red-tinted card (vs. the neutral white success card).
-  &--error {
-    margin-bottom: 20px;
+  // Hero "fast track" card: sits under the primary CTA, left-aligned to the copy column
+  // rather than centered, with a warm tint so it reads as an aside and not a second hero.
+  &--fasttrack {
+    margin: 22px 0 0;
+    max-width: 520px;
     padding: 16px 20px;
-    background: rgba($red, 0.05);
-    box-shadow: inset 0 0 0 1px rgba($red, 0.2);
-    color: darken($red, 18%);
+    background: rgba($orange, 0.06);
+    box-shadow: inset 0 0 0 1px rgba($orange, 0.25);
 
     .mk-notice__icon {
-      color: $red;
+      color: $orange;
     }
 
-    strong {
-      color: darken($red, 18%);
+    a {
+      color: $mk-ink;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
   }
 }

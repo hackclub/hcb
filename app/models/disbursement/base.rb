@@ -15,6 +15,7 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
 #  destination_subledger_id            :bigint
@@ -50,26 +51,16 @@ class Disbursement
   class Base < ApplicationRecord
     self.table_name = "disbursements"
 
+    include HasHcbCode
+
     # The underlying Disbursement is the same row, so reinterpret it with `becomes`
     # rather than re-SELECTing by id. See Disbursement::Shared.
     def disbursement
       @disbursement ||= becomes(::Disbursement)
     end
 
-    def canonical_transactions
-      @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-    end
-
     def canonical_pending_transactions
       @canonical_pending_transactions ||= CanonicalPendingTransaction.where(hcb_code:)
-    end
-
-    def pending_expired?
-      local_hcb_code.has_pending_expired?
-    end
-
-    def transaction_memo
-      "HCB-#{local_hcb_code.short_code}"
     end
 
     def local_hcb_code

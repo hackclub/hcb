@@ -2,16 +2,14 @@
   "name": "@hackclub/bank",
   "private": true,
   "engines": {
-    "node": "24"
+    "node": ">=24.22.1"
   },
   "dependencies": {
-    "@alpinejs/persist": "^3.15.0",
     "@appsignal/javascript": "^1.5.0",
     "@appsignal/plugin-breadcrumbs-console": "^1.1.37",
     "@appsignal/plugin-path-decorator": "^1.0.18",
     "@appsignal/stimulus": "^1.0.20",
     "@babel/core": "^7.29.6",
-    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.5",
     "@csstools/postcss-sass": "^5.1.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
@@ -26,8 +24,6 @@
     "@hotwired/stimulus-webpack-helpers": "^1.0.1",
     "@hotwired/turbo-rails": "^8.0.16",
     "@hugocxl/react-to-image": "^0.0.9",
-    "@josefarias/hotwire_combobox": "^0.4.1",
-    "@oddbird/popover-polyfill": "^0.6.1",
     "@shopify/draggable": "^1.1.4",
     "@stripe/stripe-js": "^8.2.0",
     "@tiptap/core": "^2.26.1",
@@ -38,7 +34,6 @@
     "@tiptap/pm": "^2.26.1",
     "@tiptap/starter-kit": "^2.24.0",
     "ahoy.js": "^0.4.4",
-    "alpinejs": "^3.15.0",
     "autoprefixer": "^10.4.23",
     "babel-loader": "^10.0.0",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
@@ -61,6 +56,7 @@
     "react-dom": "^18.3.1",
     "react-snowfall": "^1.2.1",
     "react_ujs": "^3.2.1",
+    "reactionview": "0.6.1",
     "recharts": "^2.15.4",
     "rich-textarea": "^0.26.5",
     "stimulus-use": "^0.52.3",
@@ -72,6 +68,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
+    "@herb-tools/linter": "^0.11.2",
     "concurrently": "^9.2.1",
     "eslint": "9.x",
     "eslint-plugin-react": "^7.37.5",
@@ -82,6 +79,7 @@
   "scripts": {
     "build": "webpack --config webpack.config.js",
     "lint": "eslint app/javascript/",
+    "lint:herb": "herb-lint",
     "format:check": "prettier --check app/javascript/ app/assets/stylesheets/",
     "format": "prettier --write app/javascript/ app/assets/stylesheets/",
     "build:css": "postcss app/assets/stylesheets/{application,admin,mailer}.scss --base app/assets/stylesheets --dir app/assets/builds --ext css"

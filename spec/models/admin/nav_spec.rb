@@ -27,36 +27,42 @@ RSpec.describe Admin::Nav do
 
       expect(instance.active_section.items.find(&:active?).name).to eq("Donations")
     end
+
+    it "counts unmapped ledger items on the Ledger Items item" do
+      create(:ledger_item)
+      create(:ledger_item, :with_primary_ledger)
+
+      instance = described_class.new(page_title: "")
+      item = instance.sections.flat_map(&:items).find { |i| i.name == "Ledger Items" }
+
+      expect(item.count).to eq(1)
+    end
   end
 
   describe described_class::Section do
     describe "#task_sum" do
-      it "returns the sum of all counts marked as tasks" do
+      it "returns the sum of task counts, ignoring items without a count" do
         instance = described_class.new(
           name: "Dinosaurs",
           items: [
-            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: ->{ 11 }, count_type: :tasks),
-            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: ->{ 22 }, count_type: :tasks),
-            Admin::Nav::Item.new(name: "Barney", path: "/", count: ->{ 44 }, count_type: :records)
+            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: ->{ 11 }),
+            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: ->{ 22 }),
+            Admin::Nav::Item.new(name: "Barney", path: "/")
           ]
         )
 
         expect(instance.task_sum).to eq(33)
       end
-    end
 
-    describe "#counter_sum" do
-      it "returns the sum of all counts marked as records" do
+      it "returns zero when no items have task counts" do
         instance = described_class.new(
           name: "Dinosaurs",
           items: [
-            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: -> { 11 }, count_type: :records),
-            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: -> { 22 }, count_type: :records),
-            Admin::Nav::Item.new(name: "Barney", path: "/", count: -> { 44 }, count_type: :tasks)
+            Admin::Nav::Item.new(name: "Barney", path: "/")
           ]
         )
 
-        expect(instance.counter_sum).to eq(33)
+        expect(instance.task_sum).to eq(0)
       end
     end
   end

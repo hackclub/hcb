@@ -12,9 +12,7 @@
       This agreement formalizes the relationship between your project and HCB<% if @application.teen_led? %>, but it is not finalized until we review and approve your application<% end %>
     </p>
 
-    <div class="h-[40vh] flex">
-      <%= render partial: "contract/parties/fs_contract_faq", locals: { no_questions: true } %>
-    </div>
+    <%= render partial: "contract/parties/fs_contract_faq", locals: { contract: @application.contract, no_questions: true, klass: "h-[40vh]" } %>
   </div>
 <% end %>
 

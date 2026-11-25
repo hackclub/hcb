@@ -1,8 +1,10 @@
+<%# locals: () %>
+
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
 <div class="flex flex-row justify-between items-center width-100 gap-2 mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
-      <%= render "ledgers/filters/search", form: %>
+      <%= render "events/filters/search", form:, klass: "" %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
@@ -10,12 +12,28 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
+  <% unless @subledger %>
+    <% admin_tool "line-height-0" do %>
+      <% if @event.canonical_transactions.any? %>
+        <%= link_to transactions_exports_path(event: @event, format: :csv), target: :_blank, class: "pop tooltipped tooltipped--s", aria: { label: "Export CSV (old transaction engine)" }, data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "download", size: 28 %>
+        <% end %>
+      <% else %>
+        <span class="tooltipped tooltipped--s" aria-label="No transactions">
+          <button type="button" class="pop" disabled aria-label="No transactions">
+            <%= inline_icon "download", size: 28 %>
+          </button>
+        </span>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <% admin_tool "overflow-hidden" do %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger" class="-mb-1">
       <button
         type="button"
         class="pop menu__toggle menu__toggle--arrowless overflow-visible"
-        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-action="menu#toggle"
         data-menu-target="toggle">
         <%= inline_icon "list", size: 28 %>
       </button>
@@ -42,7 +60,7 @@
         type="button"
         class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible z-10"
         aria-label="Toggle tags"
-        data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        data-menu-target="toggle" data-action="menu#toggle">
         <%= inline_icon "sticker", size: 28 %>
       </button>
       <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
@@ -62,7 +80,7 @@
       <button
         type="button"
         class="btn btn-small menu__toggle menu__toggle--arrowless overflow-visible"
-        data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        data-menu-target="toggle" data-action="menu#toggle">
         <%= inline_icon "list", size: 16, style: "margin: 0" %>
         <span class="xs-hide sm-hide md-hide nowrap">Count</span>
       </button>
