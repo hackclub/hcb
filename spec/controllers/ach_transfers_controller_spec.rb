@@ -218,6 +218,31 @@ describe AchTransfersController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Update ACH transfer")
     end
+
+    it "does not render the edit form for non-admins" do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :edit, params: { id: ach_transfer.id }
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
+    it "does not render the edit form for a transfer that is no longer pending" do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      ach_transfer.mark_in_transit!
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :edit, params: { id: ach_transfer.id }
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
   end
 
   describe "update" do
@@ -238,11 +263,32 @@ describe AchTransfersController do
       expect(ach_transfer.account_number).to eq("5555555555")
     end
 
+    it "syncs the edited details to the saved payment recipient" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: params
+
+      recipient = ach_transfer.reload.payment_recipient
+      expect(recipient.name).to eq("New Name")
+      expect(recipient.account_number).to eq("5555555555")
+    end
+
+    it "re-renders the form when the update is invalid" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: { id: ach_transfer.id, ach_transfer: { routing_number: "123" } }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(ach_transfer.reload.routing_number).not_to eq("123")
+    end
+
     it "does not let non-admins edit" do
       create_session(create(:user, :make_auditor), verified: true)
 
       patch :update, params: params
 
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(ach_transfer.reload.recipient_name).not_to eq("New Name")
     end
 
@@ -252,6 +298,17 @@ describe AchTransfersController do
 
       patch :update, params: params
 
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(ach_transfer.reload.recipient_name).not_to eq("New Name")
+    end
+
+    it "does not let admins edit a scheduled transfer" do
+      ach_transfer.mark_scheduled!
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: params
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(ach_transfer.reload.recipient_name).not_to eq("New Name")
     end
   end

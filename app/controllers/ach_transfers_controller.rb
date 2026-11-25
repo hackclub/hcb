@@ -79,10 +79,16 @@ class AchTransfersController < ApplicationController
   def update
     authorize @ach_transfer
 
-    if @ach_transfer.update(ach_transfer_update_params)
+    updated = AchTransfer.transaction do
+      @ach_transfer.update(ach_transfer_update_params).tap do |success|
+        @ach_transfer.update_payment_recipient if success && @ach_transfer.payment_recipient.present?
+      end
+    end
+
+    if updated
       redirect_to ach_start_approval_admin_path(@ach_transfer), flash: { success: "Edited the ACH transfer." }
     else
-      redirect_to ach_start_approval_admin_path(@ach_transfer), flash: { error: @ach_transfer.errors.full_messages.to_sentence }
+      render :edit, status: :unprocessable_entity
     end
   end
 
