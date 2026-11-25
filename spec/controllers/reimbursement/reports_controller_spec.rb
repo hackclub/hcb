@@ -738,6 +738,49 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "paying out a report whose payout method is missing a date of birth" do
+    let(:creator) { create(:user, full_name: "Fiona Hackworth") }
+    let(:report) do
+      payout_method = creator.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+      payout_method.details.update!(recipient_birthday: nil)
+      create(:reimbursement_report, user: creator, event: create(:event), aasm_state: :reimbursement_requested, legal_entity_payout_method: payout_method, currency: "GBP").tap do |report|
+        report.expenses.create!(value: 12.34, memo: "Stickers")
+      end
+    end
+    let(:message) { "Fiona Hackworth needs to add the recipient's date of birth to their payout method before this report can be paid." }
+
+    before do
+      allow_any_instance_of(GovernanceService::Admin::Transfer::Approval).to receive(:ensure_may_approve!)
+      create_session(create(:user, :make_admin), verified: true)
+    end
+
+    it "won't convert it to a Wise transfer" do
+      expect {
+        post(:convert_to_wise_transfer, params: { report_id: report.id })
+      }.not_to change(WiseTransfer, :count)
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
+    end
+
+    it "won't approve it" do
+      post(:admin_approve, params: { report_id: report.id, wise_total_without_fees: "15", wise_total_including_fees: "16" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
+      expect(report.reload).to be_reimbursement_requested
+    end
+
+    it "won't send the Wise transfer" do
+      expect(Reimbursement::PayoutHoldingService::ProcessSingle).not_to receive(:new)
+
+      post(:admin_send_wise_transfer, params: { report_id: report.id })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
+    end
+  end
+
   describe "#destroy" do
     it "lets an external contributor delete their own draft report" do
       user = create(:user)
