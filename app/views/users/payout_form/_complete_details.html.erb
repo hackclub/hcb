@@ -6,7 +6,8 @@
     <div class="field">
       <%= form.label field[:key], field[:label] %>
       <% if field[:type] == :segmented_date %>
-        <%= render "wise_transfers/segmented_date_field", form:, field:, input_options: { required: true } %>
+        <%# The id names the date picker, so it's unique per method when several need completing %>
+        <%= render "wise_transfers/segmented_date_field", form:, field:, input_options: { required: true, id: form.field_id(field[:key], payout_method.id) } %>
       <% else %>
         <%= form.public_send(field[:type], field[:key], placeholder: field[:placeholder], pattern: field[:pattern], required: true) %>
       <% end %>
