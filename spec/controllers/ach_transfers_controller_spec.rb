@@ -278,7 +278,7 @@ describe AchTransfersController do
 
       patch :update, params: { id: ach_transfer.id, ach_transfer: { routing_number: "123" } }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(ach_transfer.reload.routing_number).not_to eq("123")
     end
 

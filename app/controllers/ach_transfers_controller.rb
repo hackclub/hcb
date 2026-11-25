@@ -88,7 +88,7 @@ class AchTransfersController < ApplicationController
     if updated
       redirect_to ach_start_approval_admin_path(@ach_transfer), flash: { success: "Edited the ACH transfer." }
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
