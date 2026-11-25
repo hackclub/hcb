@@ -109,6 +109,11 @@ module SessionsHelper
     !current_user(allow_unverified:).nil?
   end
 
+  # Shown in place of details only members can see
+  def restricted_detail_label
+    signed_in? ? "Members only" : "Sign in to view"
+  end
+
   def auditor_signed_in?
     signed_in? && current_user&.auditor?
   end

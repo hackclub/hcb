@@ -105,7 +105,7 @@
       <% if organizer_signed_in? %>
         <span><%= mail_to @sponsor.contact_email.downcase %></span>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </p>
     <p>
@@ -133,7 +133,7 @@
         <%= ISO3166::Country[@sponsor.address_country]&.common_name %>
         </span>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </p>
     <p>
@@ -268,7 +268,7 @@
           <% if organizer_signed_in? %>
             <%= mail_to @sponsor.contact_email, @sponsor.contact_email.downcase %>
           <% else %>
-            <strong>Sign in to view</strong>
+            <strong><%= restricted_detail_label %></strong>
           <% end %>
         </p>
         <p>
@@ -334,7 +334,7 @@
           <% if organizer_signed_in? %>
             <%= @invoice.payment_method_card_exp_month.to_s.rjust(2, "0") %> / <%= @invoice.payment_method_card_exp_year %>
           <% else %>
-            MM / YYYY (Sign in to view)
+            MM / YYYY (<%= restricted_detail_label %>)
           <% end %>
         </p>
       </div>

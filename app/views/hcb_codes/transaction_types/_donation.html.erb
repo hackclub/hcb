@@ -118,7 +118,7 @@
         <% if organizer_signed_in? %>
           <%= mail_to @donation.email, @donation.email.downcase %>
         <% else %>
-          <strong>Sign in to view</strong>
+          <strong><%= restricted_detail_label %></strong>
         <% end %>
       </p>
     <% end %>
@@ -204,7 +204,7 @@
           <% if organizer_signed_in? %>
             <%= @donation.payment_method_card_exp_month.to_s.rjust(2, "0") %> / <%= @donation.payment_method_card_exp_year %>
           <% else %>
-            MM / YYYY (Sign in to view)
+            MM / YYYY (<%= restricted_detail_label %>)
           <% end %>
         </p>
       </div>

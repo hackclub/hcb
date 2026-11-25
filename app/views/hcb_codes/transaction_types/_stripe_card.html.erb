@@ -197,7 +197,7 @@
           </action>
         <% end %>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </div>
     <% if @hcb_code.pt.present? %>
@@ -255,7 +255,7 @@
             </action>
           <% end %>
         <% else %>
-          <span><strong>Sign in to view</strong></span>
+          <span><strong><%= restricted_detail_label %></strong></span>
         <% end %>
       </div>
       <% if @hcb_code.ledger_item&.personal_transaction.present? %>

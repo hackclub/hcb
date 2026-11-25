@@ -1,6 +1,7 @@
 <%# locals: (ledger_item:) %>
 
 <% card_charge = ledger_item.linked_object %>
+<% event = card_charge.stripe_card.event %>
 
 <% instance = ledger_item.hashid %>
 
@@ -99,7 +100,7 @@
       <span style="height: 100%;">
         <strong>Merchant</strong>
       </span>
-      <% if ledger_item.author == current_user || organizer_signed_in? %>
+      <% if ledger_item.author == current_user || organizer_signed_in?(event) %>
         <% if defined?(@frame) && @frame %>
           <details>
             <summary class="inline-flex no-select">
@@ -161,11 +162,7 @@
                 <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
-            <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
-            <% if merchant_event.present? %>
-              <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
-            <% end %>
+            <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
@@ -180,7 +177,7 @@
           </action>
         <% end %>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </div>
     <% if ledger_item.cpt_count > 0 %>
@@ -188,7 +185,7 @@
         <span style="height: 100%;">
           <strong>Charge method</strong>
         </span>
-      <% if ledger_item.author == current_user || organizer_signed_in? %>
+      <% if ledger_item.author == current_user || organizer_signed_in?(event) %>
         <% if defined?(@frame) && @frame %>
             <details>
               <summary class="inline-flex select-none">
@@ -238,7 +235,7 @@
             </action>
           <% end %>
         <% else %>
-          <span><strong>Sign in to view</strong></span>
+          <span><strong><%= restricted_detail_label %></strong></span>
         <% end %>
       </div>
       <% repayment = ledger_item.personal_transaction&.invoice %>
@@ -269,7 +266,7 @@
 </article>
 
 <% unless defined?(@frame) && @frame %>
-  <% if ledger_item.author == current_user || organizer_signed_in? %>
+  <% if ledger_item.author == current_user || organizer_signed_in?(event) %>
     <%= modal "Merchant details", id: "merchant_details_#{instance}" do %>
 
       <div class="details mb2">
@@ -319,11 +316,7 @@
           <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
-      <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
-      <% if merchant_event.present? %>
-        <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
-      <% end %>
+      <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_ledger_path(event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.
@@ -332,7 +325,7 @@
     <% end %>
   <% end %>
 
-  <% if organizer_signed_in? && ledger_item.cpt_count > 0 %>
+  <% if organizer_signed_in?(event) && ledger_item.cpt_count > 0 %>
     <%= modal "Charge details", id: "verification_details_#{instance}" do %>
       <% verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
 
@@ -387,7 +380,7 @@
   <% end %>
 <% end %>
 
-<% if ledger_item.declined? && (ledger_item.author == current_user || organizer_signed_in?) %>
+<% if ledger_item.declined? && (ledger_item.author == current_user || organizer_signed_in?(event)) %>
   <%= modal "Transaction declined", id: "declined_information_#{instance}" do %>
     <%= render partial: "ledger/items/decline_reason", locals: {
           ledger_item: ledger_item,

@@ -149,7 +149,7 @@
 
         <div class="field">
           <%= form.label :phone_number, "Mobile phone number" %>
-          <% if @user.use_sms_auth %>
+          <% if @user.phone_number_verified? %>
             <p class="h5 muted mt0 mb1">
               Changing your number will turn off SMS login codes.
             </p>

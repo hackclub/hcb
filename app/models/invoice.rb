@@ -16,7 +16,6 @@
 #  due_date                                                     :datetime
 #  ending_balance                                               :bigint
 #  finalized_at                                                 :datetime
-#  hcb_code                                                     :text
 #  hosted_invoice_url                                           :text
 #  invoice_pdf                                                  :text
 #  item_amount                                                  :bigint
@@ -216,10 +215,6 @@ class Invoice < ApplicationRecord
   # Stripe syncing…
   before_destroy :close_stripe_invoice
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   def manually_marked_as_paid?
     manually_marked_as_paid_at.present?
   end
@@ -266,17 +261,6 @@ class Invoice < ApplicationRecord
 
   def state_icon
     return "checkmark" if deposited? || paid_v2?
-  end
-
-  def filter_data
-    {
-      exists: true,
-      paid: paid?,
-      unpaid: !paid?,
-      upcoming: due_date > 3.days.from_now,
-      overdue: due_date < 3.days.from_now && !paid?,
-      archived: archived?
-    }
   end
 
   def set_fields_from_stripe_invoice(inv = remote_invoice)
@@ -386,10 +370,6 @@ class Invoice < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
 
   def canonical_pending_transactions
     return [] unless raw_pending_invoice_transaction

@@ -84,7 +84,6 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
@@ -831,15 +830,6 @@ class Event < ApplicationRecord
     is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
-  def filter_data
-    {
-      exists: true,
-      transparent: is_public?,
-      omitted: omit_stats?,
-      hidden: hidden?
-    }
-  end
-
   def ready_for_fee?
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
@@ -1043,12 +1033,12 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false, &block)
+  def organizer_contact_emails(only_managers: false, include_contact_email: true, &block)
     included_users = only_managers ? managers : users
     included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
-    emails << config.contact_email if config.contact_email.present?
+    emails << config.contact_email if include_contact_email && config.contact_email.present?
 
     emails
   end

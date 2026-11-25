@@ -8,9 +8,7 @@
 <% tagged_with = (ledger_item&.tags || []).filter { |tag| !@event || tag.event == @event } %>
 
 <tr
-  class="transaction muted <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
-                                 pt.amount.negative? ? "transaction--negative" : pt.amount.positive? ? "transaction--positive" : "transaction--zero"
-                               end %>"
+  class="transaction muted <%= pt.amount.negative? ? "transaction--negative" : pt.amount.positive? ? "transaction--positive" : "transaction--zero" %>"
   id="<%= pt.local_hcb_code.hashid %>"
   <% if defined?(selectable) && selectable %>
     data-ledger-item-id="<%= ledger_item&.hashid %>"
@@ -136,7 +134,7 @@
     </div>
   </td>
   <td class="nowrap text-right transaction__amount">
-    <%= render_transaction_amount pt.amount %>
+    <%= render_money pt.amount %>
   </td>
   <% if @show_running_balance %>
     <td></td>
