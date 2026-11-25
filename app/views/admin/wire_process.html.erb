@@ -167,15 +167,24 @@
         </div>
 
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>
-          <div class="field mb-2">
-            <%= form.check_box :charge_fee, checked: @wire.fee_chargeable? %>
-            <%= form.label :charge_fee, "Charge #{@wire.event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} to cover transfer fee?", class: "bold ml-2" %>
-            <% if @wire.fee_chargeable? %>
-              <p class="muted mt-1 mb-0">This wire is under <%= render_money Wire::MINIMUM_AMOUNT_CENTS %> and <%= @wire.event.name %> isn't exempt from the fee.</p>
-            <% elsif @wire.below_minimum? %>
-              <p class="muted mt-1 mb-0">Fee waived: <%= @wire.event.name %> has raised over $50,000 in the past year.</p>
-            <% end %>
-          </div>
+          <% if @wire.fee_chargeable? %>
+            <div class="field mb-2">
+              <p class="mt-0 mb-1">
+                <span class="bold warning">⚠️ This wire is under <%= render_money Wire::MINIMUM_AMOUNT_CENTS %></span>,
+                so <%= @wire.event.name %> should be charged the <%= render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS %> our partner bank charges us to send it.
+              </p>
+              <div>
+                <%= form.radio_button :fee_decision, "charge", required: true %>
+                <%= form.label :fee_decision_charge, "Charge #{@wire.event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS}", class: "ml-1" %>
+              </div>
+              <div>
+                <%= form.radio_button :fee_decision, "waive", required: true %>
+                <%= form.label :fee_decision_waive, "Make an exception and don't charge the fee", class: "ml-1" %>
+              </div>
+            </div>
+          <% elsif @wire.below_minimum? %>
+            <p class="muted mt-0 mb-2">This wire is under <%= render_money Wire::MINIMUM_AMOUNT_CENTS %>, but the fee is waived: <%= @wire.event.name %> has raised over $50,000 in the past year.</p>
+          <% end %>
           <% if @wire.payment.present? %>
             <%= render partial: "payments/classification_input", locals: { form:, classification: @wire.payment.classification } %>
           <% end %>
