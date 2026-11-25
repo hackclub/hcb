@@ -30,6 +30,7 @@ module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
+    include HasHcbCode
 
     include Hashid::Rails
     hashid_config salt: ""
@@ -52,7 +53,6 @@ module Reimbursement
 
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
-    has_many :canonical_transactions, through: :local_hcb_code
     has_one :canonical_pending_transaction, foreign_key: "reimbursement_payout_holding_id", inverse_of: :reimbursement_payout_holding
 
     after_create do
@@ -154,7 +154,7 @@ module Reimbursement
                            currency_code: "USD",
                            sender_bank_account_id:,
                            receiver_bank_account_id:,
-                           description: "HCB-#{local_hcb_code.short_code}"
+                           description: short_code_memo
       end
 
       expense_payouts.each do |expense_payout|

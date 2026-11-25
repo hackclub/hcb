@@ -4,6 +4,8 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  SETTINGS_TABS = %w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].freeze
+
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
   include SetEvent
@@ -21,6 +23,8 @@ class EventsController < ApplicationController
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
+
+  helper_method :settings_tab_available?
 
   # GET /events
   def index
@@ -286,11 +290,11 @@ class EventsController < ApplicationController
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
-      @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+      @all_positions = @all_positions.where(user: User.active_teenager)
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
+    @positions = @all_positions.includes(:user).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
 
     if @event.parent
       # `ancestor_organizer_positions` covers this organization as well as its
@@ -323,17 +327,9 @@ class EventsController < ApplicationController
   # GET /events/1/edit
   def edit
     authorize @event
-    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
-      return redirect_to edit_event_path(@event.slug, tab: "details")
-    end
+    return redirect_to edit_event_path(@event.slug, tab: "details") unless settings_tab_available?(params[:tab])
 
-    @settings_tab = params[:tab]
-    @frame = params[:frame]
-    @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
-    @affiliations = @event.affiliations if @settings_tab == "affiliations"
-
-    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
+    prepare_settings_tab(params[:tab])
 
     render :edit, layout: !@frame
   end
@@ -406,7 +402,11 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        @settings_tab = params[:event][:tab]
+        # Only the donation settings forms submit a `tab`. Anything else,
+        # including a tab this user or organization can't use (see
+        # `settings_tab_available?`), falls back to the details tab.
+        tab = params.dig(:event, :tab)
+        prepare_settings_tab(settings_tab_available?(tab) ? tab : "details")
         render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
@@ -695,8 +695,6 @@ class EventsController < ApplicationController
       deposited: relation.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.succeeded_and_not_refunded
-
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
@@ -723,7 +721,7 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+    @donations = @all_donations.page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
 
@@ -1384,6 +1382,31 @@ class EventsController < ApplicationController
 
   private
 
+  # The admin tab is only for auditors, and the donations, reimbursements and
+  # card grants tabs only exist once the organization is approved and its plan
+  # allows them (the settings nav applies the same rules). `edit.html.erb` also
+  # calls this, so it falls back to the details form if it's ever handed an
+  # unavailable tab.
+  def settings_tab_available?(tab)
+    case tab
+    when "donations" then @event.approved? && @event.plan.donations_enabled?
+    when "reimbursements" then @event.approved? && @event.plan.reimbursements_enabled?
+    when "card_grants" then @event.approved? && @event.plan.card_grants_enabled?
+    when "admin" then auditor_signed_in?
+    else SETTINGS_TABS.include?(tab)
+    end
+  end
+
+  def prepare_settings_tab(tab)
+    @settings_tab = tab
+    @frame = params[:frame]
+    @activities_before = params[:activities_before] || Time.now
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).preloaded_for_feed.page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
+
+    CardGrantSetting.find_or_create_by!(event: @event) if @settings_tab == "card_grants"
+  end
+
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
       params_hash[:hidden_at] = Time.current
@@ -1535,6 +1558,10 @@ class EventsController < ApplicationController
       }
     ]
 
+    # Reparenting is deliberately gated on a per-user flag on top of the admin
+    # check: moving an organization under a different parent is rarely needed
+    # and easy to get wrong, so it is kept out of reach of most admins. The
+    # flag is not a rollout; don't remove it just because it has been around.
     if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user)
       permitted_params << :parent_id
     end

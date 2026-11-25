@@ -292,7 +292,7 @@ module Discord
 
       respond embeds: [
         {
-          title: "You have #{@user.transactions_missing_receipt_count} transactions missing receipts",
+          title: "You have #{@user.card_charges_missing_receipt.count} transactions missing receipts",
           color:,
         }
       ], components: button_to("View on HCB", url_helpers.my_inbox_url)

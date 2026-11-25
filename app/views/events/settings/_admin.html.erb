@@ -115,6 +115,9 @@
     <% end %>
   <% end %>
 
+  <%# Intentionally gated on a per-user flag in addition to admin_tool: reparenting
+      is rarely needed and easy to get wrong, so it stays out of reach of most
+      admins. Not a rollout flag; see EventsController#user_event_params. %>
   <% if Flipper.enabled?(:parent_event_assignment_2025_09_18, current_user) %>
     <% admin_tool "p-3" do %>
       <%= form_with(model: event, local: true) do |form| %>
