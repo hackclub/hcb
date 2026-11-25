@@ -199,11 +199,6 @@ class User < ApplicationRecord
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
-  # "Prefer login codes via SMS" stopped steering the login flow when logins
-  # started replaying the factors from the previous login. Nothing reads it any
-  # more, so the column is dropped once no running code expects it.
-  self.ignored_columns += ["use_sms_auth"]
-
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
   after_create :create_legal_entity
 
