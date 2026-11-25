@@ -103,7 +103,7 @@ class CardGrantsController < ApplicationController
       return
     end
 
-    flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
+    flash[:success] = "Grant sent to #{@card_grant.email}!"
     redirect_back_or_to event_transfers_path(@event)
   end
 
@@ -127,7 +127,7 @@ class CardGrantsController < ApplicationController
     ).run
 
     if result.success?
-      flash[:success] = "Successfully sent #{result.card_grants.count} grants!"
+      flash[:success] = "#{result.card_grants.count} grants sent!"
       redirect_to event_card_grant_overview_path(@event)
     else
       flash.now[:error] = result.errors.join(". ")
@@ -192,7 +192,7 @@ class CardGrantsController < ApplicationController
     merchant_lock << params[:merchant]
     @card_grant.save!
 
-    flash[:success] = "Merchant successfully permitted."
+    flash[:success] = "Merchant permitted."
     redirect_back fallback_location: card_grant_path(@card_grant)
   end
 
@@ -201,7 +201,7 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
 
     if @card_grant.update(params.require(:card_grant).permit(:purpose, :instructions, :merchant_lock, :category_lock, :keyword_lock, :expiration_at))
-      flash[:success] = "Card grant has been successfully updated!"
+      flash[:success] = "Card grant updated."
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
@@ -212,7 +212,7 @@ class CardGrantsController < ApplicationController
   def clear_purpose
     authorize @card_grant, :update?
     @card_grant.update!(purpose: nil)
-    flash[:success] = "Purpose has been successfully cleared!"
+    flash[:success] = "Purpose cleared."
     redirect_to card_grant_path(@card_grant)
   end
 
@@ -240,7 +240,6 @@ class CardGrantsController < ApplicationController
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     render :show, layout: !@frame
 
@@ -260,7 +259,6 @@ class CardGrantsController < ApplicationController
     @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
-    @force_no_popover = @frame
 
     if organizer_signed_in? && !@frame
       # If trying to view spending page outside a frame, redirect to the show page
@@ -292,7 +290,7 @@ class CardGrantsController < ApplicationController
 
     @card_grant.cancel!(current_user)
 
-    redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
+    redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Grant canceled." }
   end
 
   def topup
@@ -300,7 +298,7 @@ class CardGrantsController < ApplicationController
 
     @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
 
-    redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+    redirect_to @card_grant, flash: { success: "Grant topped up." }
   rescue DisbursementService::Create::UserError => e
     redirect_to @card_grant, flash: { error: e.message }
   end
@@ -310,7 +308,7 @@ class CardGrantsController < ApplicationController
 
     @card_grant.withdraw!(amount_cents: Monetize.parse(params[:amount]).cents, withdrawn_by: current_user)
 
-    redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
+    redirect_to @card_grant, flash: { success: "Funds withdrawn from grant." }
 
   rescue => e
     Rails.error.report(e) unless e.is_a?(ArgumentError)
@@ -323,7 +321,7 @@ class CardGrantsController < ApplicationController
 
     report = @card_grant.convert_to_reimbursement_report!
 
-    redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
+    redirect_to report, flash: { success: "Grant converted into a reimbursement report." }
   end
 
   def toggle_one_time_use
@@ -340,7 +338,7 @@ class CardGrantsController < ApplicationController
     @card_grant.pre_authorization&.destroy!
     @card_grant.update(pre_authorization_required: false)
 
-    redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
+    redirect_to @card_grant, flash: { success: "Pre-authorization disabled for this card grant." }
   end
 
   private

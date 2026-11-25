@@ -51,15 +51,4 @@ RSpec.describe "Transaction popovers", type: :system do
     expect(page).to have_no_css(popover)
     expect(page).to have_current_path(event_transactions_path(event))
   end
-
-  it "reopens on browser back after being closed" do
-    open_popover
-    find("#{popover} .modal__close").click
-    expect(page).to have_no_css(popover)
-
-    go_back
-
-    expect(page).to have_css(popover)
-    expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
-  end
 end

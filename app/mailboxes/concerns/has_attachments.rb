@@ -19,7 +19,7 @@ module HasAttachments
         emls = mail.parts.select { |a| a.content_type.start_with?("message/rfc822" ) || a.filename&.end_with?(".eml") }
         emls.each do |eml|
           decoded = Mail.read_from_string(eml.decoded)
-          content = decoded.html_part&.body&.decoded || decoded.text_part&.body&.decoded || decoded.body&.decoded
+          content = decoded.html_part&.decoded || decoded.text_part&.decoded || (decoded.decoded unless decoded.multipart?)
 
           next unless content
 

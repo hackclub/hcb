@@ -52,4 +52,16 @@ RSpec.describe SessionsHelper, type: :helper do
       end
     end
   end
+
+  describe "#restricted_detail_label" do
+    it "asks logged-out visitors to sign in" do
+      allow(helper).to receive(:signed_in?).and_return(false)
+      expect(helper.restricted_detail_label).to eq("Sign in to view")
+    end
+
+    it "tells signed-in non-members the detail is for members" do
+      allow(helper).to receive(:signed_in?).and_return(true)
+      expect(helper.restricted_detail_label).to eq("Members only")
+    end
+  end
 end

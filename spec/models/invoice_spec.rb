@@ -40,5 +40,25 @@ RSpec.describe Invoice, type: :model do
       expect(cpt.reload.ledger_item).to eq(eager_item)
       expect(Ledger::Item.where(linked_object: invoice).count).to eq(1)
     end
+
+    it "exists before the organizer notification email is enqueued" do
+      # The email links to the ledger item, so the item has to be created before
+      # the mail job is enqueued (after_commit callbacks run in definition order).
+      allow(InvoiceMailer).to receive(:with).and_wrap_original do |original, **params|
+        expect(params[:invoice].ledger_item).to be_present
+        original.call(**params)
+      end
+
+      expect { create(:invoice) }.to have_enqueued_mail(InvoiceMailer, :notify_organizers_sent).once
+    end
+
+    it "shows the intended item as canceled when the invoice is voided before payment" do
+      invoice = create(:invoice)
+      item = invoice.ledger_item
+
+      invoice.mark_void!
+
+      expect(item.reload.status).to eq("canceled")
+    end
   end
 end

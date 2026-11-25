@@ -1,8 +1,0 @@
-<%# locals: (items:, show_event_name: false) -%>
-<div class="table-container">
-  <table>
-    <tbody data-behavior="transactions">
-      <%= render partial: "ledger/item", collection: items, as: :item, locals: { show_author: false, receipt_upload_button: true, show_event_name: } %>
-    </tbody>
-  </table>
-</div>
