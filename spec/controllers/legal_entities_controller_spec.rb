@@ -119,4 +119,31 @@ RSpec.describe LegalEntitiesController do
       expect(response).to redirect_to(legal_entity_path(legal_entity))
     end
   end
+
+  describe "GET #show" do
+    render_views
+
+    let!(:payout_method) do
+      legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+    end
+
+    # The payout method is only discussed once the tax requirements are met
+    before { allow_any_instance_of(LegalEntity).to receive(:payable?).and_return(true) }
+
+    it "says payments are held while the default payout method is missing a date of birth" do
+      payout_method.details.update!(recipient_birthday: nil)
+
+      get :show, params: { id: legal_entity.hashid }
+
+      expect(response.body).to include("Action needed:", "missing the recipient&#39;s date of birth", "Payments will be held")
+      expect(response.body).not_to include("You're all set!")
+    end
+
+    it "says you're all set once the default payout method is ready" do
+      get :show, params: { id: legal_entity.hashid }
+
+      expect(response.body).to include("You're all set!")
+      expect(response.body).not_to include("Action needed:")
+    end
+  end
 end
