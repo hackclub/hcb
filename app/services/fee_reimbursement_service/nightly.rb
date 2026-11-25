@@ -28,7 +28,7 @@ module FeeReimbursementService
 
           topup = StripeTopup.create(
             amount_cents:,
-            statement_descriptor: "HCB-#{fee_reimbursement.fee_reimbursement_group.local_hcb_code.short_code}",
+            statement_descriptor: fee_reimbursement.fee_reimbursement_group.short_code_memo,
             description: "Fee reimbursement ##{fee_reimbursement.id}",
             metadata: {
               fee_reimbursement_id: fee_reimbursement.id,

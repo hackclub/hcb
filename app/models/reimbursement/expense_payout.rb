@@ -30,6 +30,7 @@ module Reimbursement
 
     include AASM
     include HasBookTransfer
+    include HasHcbCode
 
     include Hashid::Rails
     hashid_config salt: ""
@@ -50,7 +51,6 @@ module Reimbursement
     validate :expense_report_approved, on: :create
 
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_expense_payout, optional: true
-    has_many :canonical_transactions, through: :local_hcb_code
     has_one :canonical_pending_transaction, foreign_key: "reimbursement_expense_payout_id", inverse_of: :reimbursement_expense_payout
 
     scope :in_transit_or_pending, -> { where("aasm_state in (?)", ["pending", "in_transit"]) }
@@ -119,7 +119,7 @@ module Reimbursement
                            currency_code: "USD",
                            sender_bank_account_id:,
                            receiver_bank_account_id:,
-                           description: "HCB-#{local_hcb_code.short_code}"
+                           description: short_code_memo
       end
 
       true

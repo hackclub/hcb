@@ -43,8 +43,6 @@ class CanonicalTransaction < ApplicationRecord
 
   scope :unmapped, -> { includes(:canonical_event_mapping).where(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_event_mapping).where.not(canonical_event_mappings: { canonical_transaction_id: nil }) }
-  scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
-  scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
@@ -74,7 +72,6 @@ class CanonicalTransaction < ApplicationRecord
                       .or(where(memo: "COLUMN*COLUMN NA INTEREST"))
   }
   scope :likely_column_account_number, -> { column_transaction.joins("INNER JOIN column_account_numbers ON column_transaction->>'account_number_id' = column_account_numbers.column_id") }
-  scope :likely_hack_club_fee, -> { where("memo ilike '%Hack Club Bank Fee TO ACCOUNT%'") }
   scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'") }
   scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%' and memo not ilike '%STRIPE Stripe Top%') or memo is null") }
   scope :hcb_sweep, -> { where("memo ilike '%COLUMN*THE HACK HCB-SWEEP%'") }
@@ -298,10 +295,6 @@ class CanonicalTransaction < ApplicationRecord
 
   def name # in deprecated system this is the imported name
     memo
-  end
-
-  def filter_data
-    {} # TODO
   end
 
   def fee_payment?
