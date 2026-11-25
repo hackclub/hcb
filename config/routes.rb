@@ -142,7 +142,6 @@ Rails.application.routes.draw do
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
       post "complete_sms_auth_verification", to: "users#complete_sms_auth_verification"
-      post "toggle_sms_auth", to: "users#toggle_sms_auth"
 
       # Logout
       delete "logout", to: "users#logout"

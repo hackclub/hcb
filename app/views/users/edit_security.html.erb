@@ -16,17 +16,6 @@
           <% if @user.phone_number_verified %>
             <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
               <div class="field field--checkbox mt1">
-                <span style="font-weight: 700">Prefer login codes via SMS</span>
-                <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-                  <%= form.label :use_sms_auth do %>
-                    <%= form.check_box :use_sms_auth,
-                      switch: true,
-                      disabled: %>
-                    <span class="slider"></span>
-                  <% end %>
-                </div>
-              </div>
-              <div class="field field--checkbox">
                 <span style="font-weight: 700">Enable two factor authentication</span>
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
                   <%= form.label :use_two_factor_authentication do %>
@@ -210,7 +199,6 @@
       <%= modal_header "Verify phone number" %>
       <%= react_component "settings/SmsVerification",
               phone_number: @user.phone_number,
-              enroll_sms_auth: true,
               turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
     </section>
   <% end %>
