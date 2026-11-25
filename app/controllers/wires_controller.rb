@@ -76,7 +76,6 @@ class WiresController < ApplicationController
 
     @wire.send_wire!
 
-    if params[:charge_fee] == "1"
     if fee_chargeable && params[:fee_decision] == "charge"
       Wire::ChargeFeeJob.perform_later(@wire, requested_by: current_user)
     elsif fee_chargeable
