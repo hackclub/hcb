@@ -35,7 +35,6 @@ class LegalEntity
       # class with the value being a hash with status_badge(string)
       # and reason(string)
     }.freeze
-    SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
     # Lock payout method when in these states
     LOCKING_REPORT_STATES = %w[submitted reimbursement_requested reimbursement_approved].freeze

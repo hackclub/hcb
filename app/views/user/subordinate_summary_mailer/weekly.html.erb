@@ -59,32 +59,34 @@
 <% end %>
 
 <h1>Missing receipts</h1>
+<% missing_items = (@subordinates + [@manager]).index_with { |user| user.card_charges_missing_receipt.preload(primary_ledger: [:event, { card_grant: :event }]).to_a } %>
 <p>Your reports have a total
-  of <%= @subordinates.sum(&:transactions_missing_receipt_count) %> missing
+  of <%= @subordinates.sum { |user| missing_items[user].size } %> missing
   receipts.</p>
 
 <% (@subordinates + [@manager]).each do |user| %>
-  <% if (missing_count = user.transactions_missing_receipt_count) > 0 %>
-    <h2><%= user.name %> (<%= missing_count %>)</h2>
+  <% if missing_items[user].any? %>
+    <h2><%= user.name %> (<%= missing_items[user].size %>)</h2>
     <table class="formatted">
       <tr>
         <th>Memo</th>
         <th>Amount</th>
         <th>Event</th>
       </tr>
-      <% user.transactions_missing_receipt.each do |hcb_code| %>
+      <% missing_items[user].each do |item| %>
+        <% item_event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
         <tr>
           <td>
-            <a href="<%= url_for(hcb_code) %>">
-              <%= hcb_code.memo %>
+            <a href="<%= url_for(item) %>">
+              <%= item.memo %>
             </a>
           </td>
           <td>
-            <%= render_money hcb_code.amount_cents * -1 %>
+            <%= render_money item.amount_cents * -1 %>
           </td>
           <td>
-            <a href="<%= url_for hcb_code.event %>">
-              <%= hcb_code.event.name %>
+            <a href="<%= url_for item_event %>">
+              <%= item_event.name %>
             </a>
           </td>
         </tr>

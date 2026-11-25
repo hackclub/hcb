@@ -16,7 +16,7 @@ class FunderInquiryMailer < ApplicationMailer
   def inquiry
     @name = params[:name].presence
     @email = params[:email]
-    @message = params[:message].presence
+    @message = params[:message] # required by MarketingController#funder_inquiry
 
     team_cc = CC_USER_IDS.filter_map do |id|
       User.find_by_public_id(id)&.email_address_with_name(full_name: true)

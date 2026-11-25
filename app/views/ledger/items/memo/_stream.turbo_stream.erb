@@ -3,3 +3,8 @@
 <%= turbo_stream.update_all "span[data-memo-for='#{dom_id(item)}']" do %>
   <%= render "ledger/items/memo/memo_text", item: %>
 <% end %>
+
+<%# The AI suggestion is only offered while the item has no custom memo, so a rename hides it and clearing the memo brings it back. %>
+<%= turbo_stream.replace dom_id(item, :ai_memo) do %>
+  <%= render "ledger/items/memo/ai", item: %>
+<% end %>

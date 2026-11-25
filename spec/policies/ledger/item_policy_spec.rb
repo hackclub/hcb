@@ -56,6 +56,29 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
 
       expect(described_class.new(other_grantee, item).show?).to be(false)
     end
+
+    context "for a charge on a regular card" do
+      let(:cardholder) { create(:user) }
+      let(:card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: cardholder)) }
+      let(:item) do
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card))
+
+        charge.local_hcb_code.ledger_item.tap do |item|
+          Ledger::Mapping.map_primary!(ledger: event.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
+        end
+      end
+
+      it "permits the cardholder without a position in the event" do
+        expect(described_class.new(cardholder, item).show?).to be(true)
+      end
+
+      it "refuses another cardholder in the event" do
+        other_cardholder = create(:user)
+        create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: other_cardholder))
+
+        expect(described_class.new(other_cardholder, item).show?).to be(false)
+      end
+    end
   end
 
   describe "#toggle_tag?" do
@@ -87,6 +110,26 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
 
     it "refuses a signed-out visitor" do
       expect(described_class.new(nil, item).toggle_tag?(tag)).to be(false)
+    end
+  end
+
+  describe "#dispute?" do
+    before { create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item) }
+
+    it "permits a member of the item's event" do
+      member = create(:user).tap { |u| create(:organizer_position, user: u, event:, role: :member) }
+
+      expect(described_class.new(member, item).dispute?).to be(true)
+    end
+
+    it "refuses a reader" do
+      reader = create(:user).tap { |u| create(:organizer_position, user: u, event:, role: :reader) }
+
+      expect(described_class.new(reader, item).dispute?).to be(false)
+    end
+
+    it "refuses a signed-out visitor" do
+      expect(described_class.new(nil, item).dispute?).to be(false)
     end
   end
 end

@@ -327,24 +327,22 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @hcb_code && (on_page_of_receipt_hcb_code? || on_ledger_item_page?) && !@hcb_code.stripe_refund?
-      if on_page_of_receipt_hcb_code?
-        # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
-        # the ledger item show page has replaced the HCB code transaction page.
-        # The ledger equivalent is streamed below.
-        streams.append(
-          turbo_stream.replace(
-            "#{@ledger_instance}_stripe_card_receipts",
-            partial: "hcb_codes/stripe_card_receipts",
-          )
+    if @hcb_code && on_page_of_receipt_hcb_code? && !@hcb_code.stripe_refund?
+      # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
+      # the ledger item show page has replaced the HCB code transaction page.
+      # The ledger equivalent is streamed below.
+      streams.append(
+        turbo_stream.replace(
+          "#{@ledger_instance}_stripe_card_receipts",
+          partial: "hcb_codes/stripe_card_receipts",
         )
-      end
+      )
 
       streams.append(
         turbo_stream.replace(
           "#{@ledger_instance}_receipts_list",
           partial: "receipts/list_v2",
-          locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
+          locals: { receipts: @hcb_code.receipts, popover: (@frame ? "HcbCode:#{@hcb_code.hashid}" : nil), transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
         )
       )
     end
@@ -366,12 +364,22 @@ class ReceiptsController < ApplicationController
       )
     end
 
+    # The ledger item show page lists the item's own receipts (see
+    # ledger/items/show), so refresh the list from the item, code or no code.
     if ledger_item.present? && on_ledger_item_page?
       streams.append(
         turbo_stream.replace(
           "#{ledger_item.hashid}_stripe_card_receipts",
           partial: "ledger/items/stripe_card_receipts",
           locals: { ledger_item: }
+        )
+      )
+
+      streams.append(
+        turbo_stream.replace(
+          "#{@ledger_instance}_receipts_list",
+          partial: "receipts/list_v2",
+          locals: { receipts: ledger_item.receipts, popover: (@frame && ledger_item.hcb_code.present? ? "HcbCode:#{ledger_item.hcb_code.hashid}" : nil), transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
         )
       )
     end
