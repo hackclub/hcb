@@ -149,7 +149,7 @@
 
       <div style="border-radius: 0rem 0.75rem 0.75rem 0rem; display: flex; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
         <div style="padding: 1.5rem; display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0;">
-          <%= render partial: "receipts/details", locals: { receipt: } %>
+          <%= local_assigns[:details] || render(partial: "receipts/details", locals: { receipt: }) %>
         </div>
         <%= local_assigns[:details_footer] %>
       </div>
@@ -182,7 +182,7 @@
         <% end %>
 
         <div data-receipt-tabs-target="details" style="padding: 1.5rem; border-radius: 0rem 0rem 0.75rem 0.75rem; display: none; height: 100vh; flex-direction: column;" class="bg-white dark:bg-dark md:w-[20rem] w-100">
-          <%= render partial: "receipts/details", locals: { receipt: } %>
+          <%= local_assigns[:details] || render(partial: "receipts/details", locals: { receipt: }) %>
         </div>
 
     </div>

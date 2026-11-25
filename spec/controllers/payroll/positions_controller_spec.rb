@@ -229,6 +229,24 @@ RSpec.describe Payroll::PositionsController do
     end
   end
 
+  describe "GET #show" do
+    render_views
+
+    let(:position) { create(:payroll_position, payee:) }
+
+    it "previews an invoice with the amount being paid, not the amount extracted from its upload" do
+      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 5_000_00, start_date: position.start_date, end_date: position.start_date)
+      receipt = invoice.receipts.create!(user:, file: fixture_file_upload("receipt.png", "image/png"), upload_method: :contractor_invoice,
+                                         data_extracted: true, extracted_total_amount_cents: 13_37)
+
+      get :show, params: { id: position.hashid }
+
+      expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(receipt, :preview)}"))
+      expect(response.body).not_to include("$13.37")
+      expect(response.body).not_to include("Data extracted by HCB")
+    end
+  end
+
   # These routes aren't nested under an event, so the position's own event must gate access.
   context "when the position belongs to an organization the user isn't part of" do
     let(:position) { create(:payroll_position, rate_cents: 2500) }

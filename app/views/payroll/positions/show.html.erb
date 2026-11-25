@@ -161,6 +161,29 @@
                 <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
               </div>
             <% end if @can_review && invoice.submitted? %>
+            <%# Show what will be paid, not amounts extracted from the contractor's own upload %>
+            <% invoice_details = capture do %>
+              <h2 class="mt-0" style="overflow-wrap: anywhere;"><%= invoice.name %></h2>
+              <section class="details break-words">
+                <div style="grid-template-columns: 7rem auto;">
+                  <strong style="font-weight: 600;">Amount</strong>
+                  <%= render_money invoice.amount_cents %>
+                </div>
+                <% if invoice.period_label %>
+                  <div style="grid-template-columns: 7rem auto;">
+                    <strong style="font-weight: 600;">Period</strong>
+                    <%= invoice.period_label %>
+                  </div>
+                <% end %>
+                <div style="grid-template-columns: 7rem auto;">
+                  <strong style="font-weight: 600;">Submitted</strong>
+                  <%= relative_timestamp invoice.created_at %>
+                </div>
+              </section>
+              <% if invoice.description.present? %>
+                <p class="mb-0" style="white-space: pre-line;"><%= invoice.description %></p>
+              <% end %>
+            <% end %>
             <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
@@ -180,7 +203,7 @@
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">
                     <% receipts.each do |receipt| %>
-                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details: invoice_details, details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
                     <% end %>
                   </div>
                 <% else %>
