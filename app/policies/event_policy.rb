@@ -24,7 +24,6 @@ class EventPolicy < ApplicationPolicy
   alias_method :balance_transactions?, :show?
   alias_method :merchants_chart?, :show?
   alias_method :categories_chart?, :show?
-  alias_method :top_categories?, :show?
   alias_method :tags_chart?, :show?
   alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
@@ -302,12 +301,6 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    is_public || auditor_or_reader?
-  end
-
-  alias_method :ledger_stats?, :ledger?
-
-  def toggle_new_ledger?
     is_public || auditor_or_reader?
   end
 

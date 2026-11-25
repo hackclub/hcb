@@ -4,6 +4,8 @@ class Wire
   module UETR
     # Presents Column's international wire transfer object.
     class Transfer
+      include PayloadParsing
+
       STATUSES = {
         "pre_review"         => { label: "Pre-review", style: "muted" },
         "hold"               => { label: "On hold", style: "warning" },
@@ -34,7 +36,6 @@ class Wire
       def beneficiary_name = @payload["beneficiary_name"].presence
       def fx_rate = @payload["fx_rate"].presence
       def return_reason = @payload["return_reason"].presence
-      def incoming? = @payload["is_incoming"].present?
 
       def presentation = STATUSES.fetch(status, { label: status.to_s.humanize.presence || "Unknown", style: "muted" })
       def label = presentation[:label]
@@ -74,23 +75,7 @@ class Wire
 
       private
 
-      def time(key)
-        Time.zone.parse(@payload[key].to_s)
-      rescue ArgumentError, TypeError
-        nil
-      end
-
-      def bank(bic)
-        return nil if bic.blank?
-
-        Tracking::Bank.new(bic)
-      end
-
-      def money(amount, currency)
-        return nil if amount.blank? || currency.blank?
-
-        Money.from_cents(amount, currency)
-      end
+      def time(key) = parse_time(@payload[key])
 
     end
   end

@@ -2,7 +2,7 @@
 # rules that erb_lint and RuboCop don't have, so every rule starts disabled and
 # is opted back in below.
 
-version: 0.11.0
+version: 0.11.2
 framework: actionview
 
 linter:
@@ -26,6 +26,53 @@ linter:
 
     # Stray, missing or mismatched closing tags, which browsers repair silently.
     parser-no-errors:
+      enabled: true
+      severity: error
+
+    # Reactive views (`herb:slots`, `herb:state`, `data-herb-*` actions).
+    # These catch what would otherwise only fail in the browser: an action
+    # naming an undeclared state, a read the client can't evaluate, a state
+    # nothing reads, a `state:` binding the partial doesn't declare.
+    herb-slots-single-directive:
+      enabled: true
+      severity: error
+    herb-slots-valid-mode:
+      enabled: true
+      severity: error
+    herb-valid-slot-names:
+      enabled: true
+      severity: error
+    herb-state-requires-slots:
+      enabled: true
+      severity: error
+    herb-state-directive-syntax:
+      enabled: true
+      severity: error
+    herb-state-single-declaration:
+      enabled: true
+      severity: error
+    herb-state-valid-declaration:
+      enabled: true
+      severity: error
+    herb-state-valid-reads:
+      enabled: true
+      severity: error
+    herb-state-valid-bindings:
+      enabled: true
+      severity: error
+    herb-state-valid-actions:
+      enabled: true
+      severity: error
+    herb-state-no-server-writes:
+      enabled: true
+      severity: error
+    herb-state-no-silent-reads:
+      enabled: true
+      severity: error
+    herb-state-no-shadowed-states:
+      enabled: true
+      severity: error
+    herb-state-no-unused-states:
       enabled: true
       severity: error
 

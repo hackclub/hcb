@@ -13,6 +13,39 @@ RSpec.describe Event, type: :model do
     expect(event).to be_approved
   end
 
+  describe "#organizer_contact_emails" do
+    let(:manager) { create(:user) }
+    let(:member) { create(:user) }
+
+    before do
+      create(:organizer_position, event:, user: manager, role: :manager)
+      create(:organizer_position, event:, user: member, role: :member)
+      event.config.update!(contact_email: "team@example.invalid")
+    end
+
+    it "lists every organizer plus the contact email" do
+      expect(event.organizer_contact_emails).to contain_exactly(manager.email_address_with_name, member.email_address_with_name, "team@example.invalid")
+    end
+
+    it "limits to managers" do
+      expect(event.organizer_contact_emails(only_managers: true)).to contain_exactly(manager.email_address_with_name, "team@example.invalid")
+    end
+
+    it "filters organizers through the block" do
+      expect(event.organizer_contact_emails { |users| users.excluding(manager) }).to contain_exactly(member.email_address_with_name, "team@example.invalid")
+    end
+
+    it "leaves out the contact email when asked" do
+      expect(event.organizer_contact_emails(include_contact_email: false)).to contain_exactly(manager.email_address_with_name, member.email_address_with_name)
+    end
+
+    it "leaves out a blank contact email" do
+      event.config.update!(contact_email: "")
+
+      expect(event.organizer_contact_emails).to contain_exactly(manager.email_address_with_name, member.email_address_with_name)
+    end
+  end
+
   describe "#balance_v2_cents" do
     before do
       tx1 = create(:canonical_transaction, amount_cents: 100)
@@ -469,6 +502,32 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:description]).to be_present
     end
   end
+  describe "#statement_descriptor" do
+    it "uses the name when it's short enough" do
+      event = build(:event, name: "Hack Club")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club")
+    end
+
+    it "uses the nickname for a long name" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+
+      expect(event.statement_descriptor).to eq("HCB* Assemble")
+    end
+
+    it "truncates a long name without a nickname" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club Assemb")
+    end
+
+    it "drops characters Stripe doesn't allow" do
+      event = build(:event, name: "Café's Club!")
+
+      expect(event.statement_descriptor).to eq("HCB* Cafes Club")
+    end
+  end
+
   describe "#wire_fee_waived?" do
     let(:plan_type) { Event::Plan::Standard }
     let(:event) { create(:event, plan_type:) }

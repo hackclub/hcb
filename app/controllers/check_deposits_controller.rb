@@ -10,7 +10,7 @@ class CheckDepositsController < ApplicationController
 
     authorize @check_deposit
 
-    @check_deposits = CheckDeposit.where(event: @event).order(created_at: :desc)
+    @check_deposits = CheckDeposit.where(event: @event).includes(:ledger_item).order(created_at: :desc)
   end
 
   def create

@@ -107,10 +107,6 @@ class Check < ApplicationRecord
     end
   end
 
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
-
   def state_text
     status.to_s.humanize
   end
@@ -152,17 +148,6 @@ class Check < ApplicationRecord
     end
   end
 
-
-  # Can be ready to refund
-  def pending_void?
-    approved? && voided_at.present? && !deposited? && !voided?
-  end
-
-  # Ready to be refunded
-  def unfinished_void?
-    !refunded_at.present? && voided_at && voided_at + 1.day < DateTime.now && !deposited?
-  end
-
   def admin_dropdown_description
     "#{check_number.presence || 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
   end
@@ -181,10 +166,6 @@ class Check < ApplicationRecord
 
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
 
   def canonical_pending_transactions
     @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)

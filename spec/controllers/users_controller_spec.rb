@@ -588,4 +588,21 @@ RSpec.describe UsersController do
       end
     end
   end
+  describe "#admin_details_missing_receipts" do
+    render_views
+    include_context "card locking charges"
+
+    it "lists the user's card charges missing a receipt as ledger rows" do
+      create_session(create(:user, :make_admin), verified: true)
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      create_settled_card_charge(user:, settled_at: 2.days.ago, uploaded_at: 1.day.ago)
+
+      get :admin_details_missing_receipts, params: { id: user.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Missing receipts")
+      expect(response.parsed_body.css("tr.transaction").size).to eq(1)
+      expect(response.parsed_body.at_css("[id='#{ActionView::RecordIdentifier.dom_id(charge, :badges)}']")).to be_present
+    end
+  end
 end

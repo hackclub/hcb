@@ -553,7 +553,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
-    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback") }
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", owner: create(:user)) }
 
     it "locks" do
       user = create(:user, locked_at: nil)
@@ -920,6 +920,15 @@ RSpec.describe User, type: :model do
         expect(user.reload.personal_legal_entity).to be_person
         expect(user.personal_legal_entity).not_to eq(business)
       end
+
+      it "ignores archived person entities" do
+        original = user.personal_legal_entity
+        original.archive!
+        replacement = create(:legal_entity, :person, name: user.full_name)
+        user.legal_entity_users.create!(legal_entity: replacement)
+
+        expect(user.reload.personal_legal_entity).to eq(replacement)
+      end
     end
 
     describe "#person_legal_entity_user" do
@@ -949,6 +958,36 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#unassociated_payments_received" do
+    let(:user) { create(:user) }
+
+    it "includes pending payments to a payee with the user's email and no legal entity" do
+      payment = create(:payment, payee: create(:payee, legal_entity: nil, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "includes pending payments to a payee with the user's email and a managed legal entity" do
+      event = create(:event)
+      managed = create(:legal_entity, managing_event: event)
+      payment = create(:payment, payee: create(:payee, event:, legal_entity: managed, email: user.email))
+
+      expect(user.unassociated_payments_received).to contain_exactly(payment)
+    end
+
+    it "excludes payments to a payee with an unmanaged legal entity" do
+      create(:payment, payee: create(:payee, email: user.email))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+
+    it "excludes payments to a payee with a different email" do
+      create(:payment, payee: create(:payee, legal_entity: nil))
+
+      expect(user.unassociated_payments_received).to be_empty
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
@@ -964,6 +1003,26 @@ RSpec.describe User, type: :model do
       results = User.search_name("999999999")
 
       expect(results).to be_empty
+    end
+  end
+
+  describe "activity" do
+    let(:user) { create(:user) }
+
+    it "counts usage of trusted OAuth apps (e.g. the mobile app) as activity" do
+      trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true, owner: create(:user))
+      create(:api_token, user:, application: trusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).to include(user)
+      expect(user.last_seen_at).to be_within(1.second).of(1.day.ago)
+    end
+
+    it "does not count usage of untrusted OAuth apps as activity" do
+      untrusted_app = Doorkeeper::Application.create!(name: "Untrusted App", redirect_uri: "https://hcb.hackclub.com", owner: create(:user))
+      create(:api_token, user:, application: untrusted_app, last_used_at: 1.day.ago)
+
+      expect(User.active).not_to include(user)
+      expect(user.last_seen_at).to be_nil
     end
   end
 end

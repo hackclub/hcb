@@ -7,7 +7,7 @@
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
     <% admin_tool("p0 badge", "span") do %>
-      <%= badge_for "#{@all_positions.count { |op| op.user.is_teenager? && op.user.active? }} active teenagers (30d)", class: "bg-muted ml0" %>
+      <%= badge_for "#{@all_positions.where(user: User.active_teenager).count} active teenagers (30d)", class: "bg-muted ml0" %>
     <% end %>
   </span>
 
@@ -21,11 +21,11 @@
       <% end %>
     <% end %>
   <% elsif organizer_signed_in? %>
-    <%= pop_icon_to "email", "mailto:#{@all_positions.map { |op| op.user.email_address_with_name }.join(",")}" %>
+    <%= pop_icon_to "email", "mailto:#{@all_positions.includes(:user).map { |op| op.user.email_address_with_name }.join(",")}" %>
   <% end %>
 
   <% if policy(@event).can_invite_user? %>
-    <%= link_to new_event_organizer_position_invite_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite_member" }, disabled: !organizer_signed_in?(as: :manager) do %>
+    <%= link_to new_event_organizer_position_invite_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite_member" }, disabled: !policy(@event).can_invite_user? do %>
       <%= inline_icon "member-add" %>
       Invite
     <% end %>

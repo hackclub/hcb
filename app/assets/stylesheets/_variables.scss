@@ -1,6 +1,8 @@
 $black: #1f2d3d;
 $slate: #3c4858;
 $muted: #8492a6;
+// Text color for `.muted` on light backgrounds; $muted is under 4.5:1 there.
+$muted-text: #5f6d82;
 $smoke-dark: #c0ccda;
 $smoke: #e0e6ed;
 $snow-dark: #eff2f7;

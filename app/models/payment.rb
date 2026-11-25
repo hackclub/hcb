@@ -115,6 +115,24 @@ class Payment < ApplicationRecord
     schedule_acceptance_reminders if awaiting_recipient_onboarding?
   end
 
+  def self.estimated_fee_cents(amount, event, payout_method)
+    case payout_method.details
+    when LegalEntity::PayoutMethod::Wire
+      if MoneyService.convert_to_usd(amount.cents, amount.currency.to_s) < event.minimum_wire_amount_cents
+        Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
+      else
+        0
+      end
+    when LegalEntity::PayoutMethod::WiseTransfer
+      Rails.cache.fetch("payment_estimated_wise_fee_cents/#{amount.currency}/#{amount.cents}", expires_in: 1.hour) do
+        quote = WiseTransfer.generate_detailed_quote(amount)
+        (quote[:with_fees_usd_amount] - quote[:without_fees_usd_amount]).cents
+      end
+    else
+      0
+    end
+  end
+
   def send_initial_email
     if legal_entity&.payable?
       PaymentMailer.with(payment: self).missing_payout_method.deliver_later

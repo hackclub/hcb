@@ -1,13 +1,15 @@
 <%= turbo_frame_tag :admin_details_missing_receipts do %>
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">Missing receipts</h3>
-    <% if @hcb_codes_missing_receipts.any? %>
-      <table>
-        <% @hcb_codes_missing_receipts.each do |tx| %>
-          <%= render "canonical_transactions/canonical_transaction", ct: tx %>
-        <% end %>
-      </table>
-      <%= paginate @hcb_codes_missing_receipts %>
+    <% if @items.any? %>
+      <div class="table-container">
+        <table>
+          <tbody data-behavior="transactions">
+            <%= render partial: "ledger/item", collection: @items, as: :item, locals: { show_author: false, show_event_name: true } %>
+          </tbody>
+        </table>
+      </div>
+      <%= paginate @items %>
     <% else %>
       <%= blankslate "No missing receipts" %>
     <% end %>

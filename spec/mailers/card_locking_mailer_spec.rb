@@ -15,8 +15,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   describe "#cards_locked" do
     it "names the overdue count and avoids countdown/violation language" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_locked(user:)
 
@@ -29,8 +29,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   describe "#cards_unlocked" do
     it "does not promise a lasting unlock when it came from a suppression" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
       suppressed_until = Time.zone.parse("2026-10-12 15:00:00")
 
       mail = described_class.cards_unlocked(user:, suppressed_until:)
@@ -44,8 +44,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
     # rather than UTC. Getting this wrong shows someone a time hours off the one
     # their cards actually lock at.
     it "renders the deadline in the cardholder's assumed timezone" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_unlocked(user:, suppressed_until: Time.zone.parse("2026-10-12 15:00:00"))
 
@@ -54,9 +54,9 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
     it "lists the oldest outstanding charge first" do
       older = create_settled_card_charge(user:, settled_at: 12.days.ago, amount_cents: -11_00)
-      older.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 3.days.ago)
+      older.update!(receipt_due_at: 3.days.ago)
       newer = create_settled_card_charge(user:, settled_at: 10.days.ago, amount_cents: -22_00)
-      newer.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      newer.update!(receipt_due_at: 1.day.ago)
 
       body = described_class.cards_unlocked(user:, suppressed_until: 1.day.from_now).body.encoded
 
@@ -66,12 +66,12 @@ RSpec.describe CardLockingMailer, type: :mailer do
     # Without signed links the cardholder has to sign in, which is the friction
     # the exception exists to remove.
     it "links each overdue charge to a signed upload URL" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      charge = create_settled_card_charge(user:, settled_at: 10.days.ago)
+      charge.update!(receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_unlocked(user:, suppressed_until: 1.day.from_now)
 
-      expect(mail.body.encoded).to include(hcb_code.hashid)
+      expect(mail.body.encoded).to include(charge.hcb_code.hashid)
       expect(mail.body.encoded).to match(/[?&]s=/)
     end
 
@@ -85,13 +85,15 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   describe "#warning" do
     it "reports a calm pile count and avoids violation/urgent language" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
-      hcb_code.update!(receipt_due_at: 5.days.from_now)
+      charge = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      charge.update!(receipt_due_at: 5.days.from_now)
 
       mail = described_class.warning(user:)
 
       expect(mail.subject).to eq("You have 1 receipt to upload in the next 5 days")
       expect(mail.subject).not_to match(/urgent/i)
+      expect(html_body(mail)).to include("<strong>1 missing receipt</strong>")
+      expect(CGI.unescapeHTML(html_body(mail))).to include("It is due in <strong>5 days</strong>")
       expect(mail.body.encoded).not_to include("violation")
       expect(mail.body.encoded).not_to include("72 hours")
     end
@@ -115,19 +117,19 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       mail = described_class.warning(user:)
 
-      expect(html_body(mail)).to include("Your next receipt is due in")
-      expect(html_body(mail)).to include("11 hours")
+      expect(html_body(mail)).to include("<strong>2 missing receipts</strong>")
+      expect(html_body(mail)).to include("The first is due in <strong>11 hours</strong>")
       expect(mail.subject).to eq("You have 2 receipts to upload, the next due in 11 hours")
     end
 
     it "states the rule instead of a countdown when the pile carries no deadline" do
-      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
-      hcb_code.update!(receipt_due_at: nil)
+      charge = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      charge.update!(receipt_due_at: nil)
 
       mail = described_class.warning(user:)
 
-      expect(html_body(mail)).not_to include("is due in")
-      expect(html_body(mail)).to include("more than 7 days without a receipt")
+      expect(html_body(mail)).not_to include("due in")
+      expect(html_body(mail)).to include("Charges without a receipt after 7 days lock your cards until you upload one.")
       expect(mail.subject).to eq("You have 1 receipt to upload")
     end
   end

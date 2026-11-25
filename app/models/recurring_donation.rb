@@ -139,7 +139,7 @@ class RecurringDonation < ApplicationRecord
   end
 
   def sync_stripe_customer!
-    StripeService::Customer.update(stripe_customer_id, name:)
+    StripeService::Customer.update(stripe_customer_id, name:, email:)
   end
 
   private
@@ -163,7 +163,7 @@ class RecurringDonation < ApplicationRecord
       currency: "usd",
       unit_amount: amount,
       recurring: { interval: "month" },
-      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: StripeService::StatementDescriptor.format(event.short_name) }
+      product_data: { name: "Recurring donation to #{event.name}", statement_descriptor: event.statement_descriptor }
     )
 
     subscription = StripeService::Subscription.create(

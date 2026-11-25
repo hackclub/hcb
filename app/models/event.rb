@@ -84,7 +84,6 @@ class Event < ApplicationRecord
   validates_email_format_of :donation_reply_to_email, allow_nil: true, allow_blank: true
   normalizes :donation_reply_to_email, with: ->(donation_reply_to_email) { donation_reply_to_email.strip.downcase }
   validates :donation_thank_you_message, length: { maximum: 500 }
-  validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
 
@@ -118,7 +117,6 @@ class Event < ApplicationRecord
       .references(:canonical_transaction)
   }
   scope :not_funded, -> { where.not(id: funded) }
-  scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
@@ -169,7 +167,7 @@ class Event < ApplicationRecord
   end
 
   def descendant_ids
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT id, parent_id
         FROM events
@@ -195,6 +193,19 @@ class Event < ApplicationRecord
 
   def descendants
     Event.where(id: descendant_ids)
+  end
+
+  # A subquery of the ids of `roots` plus every event nested under them.
+  # Like #descendant_ids, these ids skip the paranoid scope, so read them back
+  # through ActiveRecord to drop any that are soft deleted.
+  def self.self_and_descendant_ids(roots)
+    unscoped
+      .with_recursive(tree: [
+                        unscoped.where(id: roots).select(:id),
+                        unscoped.joins("INNER JOIN tree ON events.parent_id = tree.id").select(:id)
+                      ])
+      .from("tree")
+      .select(:id)
   end
 
   # The direct sub-organizations `user` may see. #visible_descendant_ids walks
@@ -256,7 +267,7 @@ class Event < ApplicationRecord
       end
     transparent = "(e.is_public AND e.hidden_at IS NULL)"
 
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT e.id, e.parent_id, #{organized} AS unlocked
         FROM events e
@@ -483,8 +494,6 @@ class Event < ApplicationRecord
                          .where("canonical_transactions.date >= ?", 6.months.ago)
                          .distinct)
   }
-
-  scope :dormant, -> { where.not(id: Event.engaged) }
 
   has_many :fees
   has_many :bank_fees
@@ -821,15 +830,6 @@ class Event < ApplicationRecord
     is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
-  def filter_data
-    {
-      exists: true,
-      transparent: is_public?,
-      omitted: omit_stats?,
-      hidden: hidden?
-    }
-  end
-
   def ready_for_fee?
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
@@ -900,14 +900,6 @@ class Event < ApplicationRecord
     2
   end
 
-  def engaged?
-    canonical_transactions.where("date >= ?", 6.months.ago).any?
-  end
-
-  def dormant?
-    !engaged?
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -954,6 +946,12 @@ class Event < ApplicationRecord
     return name if length >= name.length
 
     self[:short_name] || name[0...length]
+  end
+
+  # How donations and invoice payments show up on bank and card statements,
+  # e.g. "HCB* Hack Club".
+  def statement_descriptor
+    StripeService::StatementDescriptor.format(short_name, as: :full)
   end
 
   monetize :minimum_wire_amount_cents
@@ -1035,12 +1033,12 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false, &block)
+  def organizer_contact_emails(only_managers: false, include_contact_email: true, &block)
     included_users = only_managers ? managers : users
     included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
-    emails << config.contact_email if config.contact_email.present?
+    emails << config.contact_email if include_contact_email && config.contact_email.present?
 
     emails
   end

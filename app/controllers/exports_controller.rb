@@ -65,10 +65,7 @@ class ExportsController < ApplicationController
           redirect_back fallback_location: @event and return
         else
           @export.save!
-          headers["Content-Type"] = @export.mime_type
-          headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-          response.status = 200
-          self.response_body = @export.content
+          stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
         end
       end
 
@@ -104,7 +101,7 @@ class ExportsController < ApplicationController
           end
         end
 
-        render pdf: "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement", page_height: "11in", page_width: "8.5in"
+        render_pdf "#{helpers.possessive(@event.name)} #{@start.strftime("%B %Y")} Statement"
       end
     end
   end
@@ -118,10 +115,7 @@ class ExportsController < ApplicationController
           requested_by: current_user,
           event_id: @event.id
         )
-        headers["Content-Type"] = @export.mime_type
-        headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-        response.status = 200
-        self.response_body = @export.content
+        stream_file(@export.content, filename: @export.filename, type: @export.mime_type)
       end
     end
   end
@@ -148,7 +142,7 @@ class ExportsController < ApplicationController
 
     @start = start_date.beginning_of_month
     if @start >= Date.today.beginning_of_month
-      return render plain: "Can not create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
+      return render plain: "Cannot create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
     end
 
     @end = end_date.end_of_month

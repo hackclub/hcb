@@ -75,10 +75,6 @@ class CanonicalTransactionGrouped
     @canonical_transactions ||= CanonicalTransaction.where(id: canonical_transaction_ids).order("date desc, id desc")
   end
 
-  def fee_reimbursed?
-    ct&.fee_reimbursement&.completed?
-  end
-
   def local_hcb_code
     @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end

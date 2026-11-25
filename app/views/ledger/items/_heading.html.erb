@@ -20,8 +20,6 @@
       </span>
     </div>
 
-    <%= render "ledger/items/memo/ai", item: ledger_item %>
-
     <%= form_with model: ledger_item, url: ledger_item_rename_path(ledger_item), method: :patch, class: "renaming flex items-center gap-1", html: { hidden: true, style: "flex-grow: 1; min-width: 0;" }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
       <%= form.text_field :memo,
                           value: ledger_item.memo,
@@ -53,6 +51,8 @@
   <% end %>
 
   <% if can_rename %>
+    <%= render "ledger/items/memo/ai", item: ledger_item %>
+
     <%= link_to "#",
         class: "pop align-middle tooltipped tooltipped--s",
         "aria-label": "Rename",
@@ -61,5 +61,5 @@
     <% end %>
   <% end %>
 
-  <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: ledger_item.hcb_code } if ledger_item.hcb_code.present? %>
+  <%= render "ledger/items/meatballs", ledger_item: %>
 </h2>

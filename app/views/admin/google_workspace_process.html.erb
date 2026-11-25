@@ -86,7 +86,7 @@
   <p>HCB is now trying to automatically verify if the user has configured their domain correctly with the TXT record. This happens once every hour.</p>
   <p>If you would like to manually attempt to verify this domain:</p>
   <%= form_with(model: false, local: true, url: google_workspace_verify_admin_path(@g_suite), method: :post) do |form| %>
-    <%= form.submit "Click Here" %>
+    <%= form.submit "Verify domain" %>
   <% end %>
   <p>You can additionally verify that the TXT record they have matches the verification key we have on file:</p>
   <p><code>google-site-verification=<%= @g_suite.verification_key %></code></p>

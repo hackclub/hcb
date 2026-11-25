@@ -154,7 +154,8 @@ module Admin
           ),
           make_item(
             name: "Ledger Items",
-            path: ledger_items_admin_index_path
+            path: ledger_items_admin_index_path,
+            count: ->{ Ledger::Item.unmapped.count }
           ),
           make_item(
             name: "Raw Transactions",
@@ -260,6 +261,10 @@ module Admin
           make_item(
             name: "Tax Forms",
             path: admin_tax_forms_path
+          ),
+          make_item(
+            name: "Tax1099 Import",
+            path: new_admin_tax1099_import_path
           )
         ]
       )

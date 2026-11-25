@@ -112,7 +112,7 @@
         <div class="card flex items-center w-full">
           <p class="my-0">
             <% if attempt.payout.present? %>
-              <%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %>
+              <%= link_to "Attempt ##{index + 1}", ledger_item_path(attempt.payout.ledger_item) %>
             <% else %>
               Attempt #<%= index + 1 %>
             <% end %>
