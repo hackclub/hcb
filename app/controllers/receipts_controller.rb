@@ -112,6 +112,7 @@ class ReceiptsController < ApplicationController
     return unless params[file_param].present?
 
     streams = []
+    @frame ||= %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
 
     params[file_param].map do |file|
       (receipt, ) = ::ReceiptService::Create.new(
@@ -120,6 +121,7 @@ class ReceiptsController < ApplicationController
         attachments: [file],
         upload_method: params[:upload_method]
       ).run!
+      next if @hcb_code && @frame # The popover's whole list is replaced below.
       next if @receiptable && !on_page_of_receipt_hcb_code? && !on_ledger_item_page?
 
       streams.append(turbo_stream.prepend(
@@ -127,10 +129,6 @@ class ReceiptsController < ApplicationController
                        partial: "receipts/receipt",
                        locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true, turbo_for_deletion: true }
                      ))
-    end
-
-    if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
-      @frame = true
     end
 
     streams += generate_streams
@@ -148,7 +146,7 @@ class ReceiptsController < ApplicationController
         receipt_upload_form_config[:enable_linking] = true
         receipt_upload_form_config[:receiptable] = @receiptable
       end
-      if @hcb_code && @frame && on_hcb_code_page?
+      if @hcb_code && @frame
         receipt_upload_form_config[:restricted_dropzone] = true
         receipt_upload_form_config[:inline_linking] = true
         receipt_upload_form_config[:upload_method] = "transaction_popover"
@@ -327,14 +325,14 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if @hcb_code && (on_page_of_receipt_hcb_code? || on_ledger_item_page?) && !@hcb_code.stripe_refund?
-      if on_page_of_receipt_hcb_code?
+    if @hcb_code && (@frame || on_page_of_receipt_hcb_code? || on_ledger_item_page?) && !@hcb_code.stripe_refund?
+      if @frame || on_page_of_receipt_hcb_code?
         # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once
         # the ledger item show page has replaced the HCB code transaction page.
         # The ledger equivalent is streamed below.
         streams.append(
           turbo_stream.replace(
-            "#{@ledger_instance}_stripe_card_receipts",
+            @frame ? [@hcb_code, :popover_stripe_card_receipts] : "#{@ledger_instance}_stripe_card_receipts",
             partial: "hcb_codes/stripe_card_receipts",
           )
         )
@@ -342,7 +340,7 @@ class ReceiptsController < ApplicationController
 
       streams.append(
         turbo_stream.replace(
-          "#{@ledger_instance}_receipts_list",
+          @frame ? [@hcb_code, :popover_receipts_list] : "#{@ledger_instance}_receipts_list",
           partial: "receipts/list_v2",
           locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
         )
@@ -366,7 +364,7 @@ class ReceiptsController < ApplicationController
       )
     end
 
-    if ledger_item.present? && on_ledger_item_page?
+    if ledger_item.present? && (@frame || on_ledger_item_page?)
       streams.append(
         turbo_stream.replace(
           "#{ledger_item.hashid}_stripe_card_receipts",

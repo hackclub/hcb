@@ -57,6 +57,32 @@ RSpec.describe ReceiptsController do
       expect(stream["action"]).to eq("replace")
       expect(stream.inner_html).to include('aria-label="1 receipt"')
     end
+
+    it "renders a dropped receipt in the popover opened from an organization ledger" do
+      create_session(create(:user, :make_admin), verified: true)
+      event = create(:event)
+      charge = create(:raw_pending_stripe_transaction, amount_cents: -1000)
+      hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: charge).local_hcb_code
+      ledger_item = hcb_code.ledger_item
+      request.headers["Referer"] = event_transactions_url(event, popover: hcb_code_path(hcb_code))
+
+      post(:create, params: {
+             receiptable_type: "Ledger::Item",
+             receiptable_id: ledger_item.id,
+             upload_method: "transaction_popover_drag_and_drop",
+             popover: "HcbCode:#{hcb_code.hashid}",
+             file: [fixture_file_upload("receipt.png", "image/png")]
+           }, format: :turbo_stream)
+
+      fragment = Nokogiri::HTML5.fragment(response.body)
+      list_id = ActionView::RecordIdentifier.dom_id(hcb_code, :popover_receipts_list)
+      list_stream = fragment.at_css("turbo-stream[action='replace'][target='#{list_id}']")
+      expect(list_stream&.at_css("ul##{list_id} [data-receipt-id='#{ledger_item.reload.receipts.sole.id}']")&.text).to include("receipt.png")
+      banner_id = ActionView::RecordIdentifier.dom_id(hcb_code, :popover_stripe_card_receipts)
+      expect(fragment.at_css("turbo-stream[action='replace'][target='#{banner_id}'] p##{banner_id}")&.text&.squish).to eq("1 receipt added")
+      expect(fragment.at_css("turbo-stream[target='_receipts_list']")).to be_nil
+      expect(fragment.at_css("turbo-stream[target='#{ledger_item.id}_receipt_upload_form'] input[name='popover']")["value"]).to eq("HcbCode:#{hcb_code.hashid}")
+    end
   end
 
   # Receipts are moving onto ledger items (#14106); the controller has to drive
