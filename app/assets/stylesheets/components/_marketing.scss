@@ -296,7 +296,7 @@ $mk-bg: $snow; // #f9fafc
     color: $muted;
   }
 
-  // Fuller "send a note" variant (final CTA): stacked name + email + message + submit.
+  // Stacked name + email + message + submit (the final CTA's inquiry form).
   &--detailed {
     display: flex;
     flex-direction: column;
@@ -306,6 +306,30 @@ $mk-bg: $snow; // #f9fafc
       flex: none;
       width: 100%;
     }
+  }
+
+  // Labelled message field: the label + prompt tell funders what to put in the (required)
+  // note, so the team has something to research before replying.
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+    text-align: left;
+  }
+
+  &__label {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__prompt {
+    margin: 0 0 6px;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: $muted;
   }
 
   & &__textarea {

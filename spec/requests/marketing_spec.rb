@@ -21,14 +21,18 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Deploy your capital as grants")
     end
 
-    # The final CTA renders the *detailed* inquiry form (name + message), not the compact
-    # email-only one — guards `detailed: true` on the render, which has been dropped twice by
-    # copy-edit PRs touching that section.
-    it "renders the detailed inquiry form with name and message fields" do
+    # The final CTA's inquiry form has name, email and a *required* message. Funders who
+    # skipped the (formerly optional) note left the team with nothing to research before
+    # replying, so the field is required and prompts them on what to write.
+    it "renders the inquiry form with a required, prompted message field" do
       get funders_path
 
       expect(response.body).to include('name="name"')
-      expect(response.body).to include('name="message"')
+      textarea = Nokogiri::HTML(response.body).at_css('textarea[name="message"]')
+      expect(textarea).to be_present
+      expect(textarea["required"]).not_to be_nil
+      expect(response.body).to include("What are you looking to fund?")
+      expect(response.body).to include("budget, and your timeline")
     end
 
     # Signed-out funders are funnelled to "Talk to our team" (which scrolls to the inquiry
@@ -168,6 +172,23 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
       expect(flash[:error]).to be_present
       expect(flash[:funder_form]).to include("email" => "not-an-email", "name" => "Ada", "message" => "Hi")
+    end
+
+    # The note is required server-side too (the textarea's `required` is only a client hint).
+    # Whitespace-only counts as blank. Values are carried back so the funder doesn't retype.
+    it "rejects a missing or blank message without sending mail, and carries the values back" do
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com", name: "Ada", message: "   " }
+      end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
+
+      expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
+      expect(flash[:error]).to eq("Please tell us a bit about what you're looking to fund.")
+      expect(flash[:funder_form]).to include("email" => "funder@example.com", "name" => "Ada")
+
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com" }
+      end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
+      expect(flash[:error]).to be_present
     end
 
     # Anti-bot via the invisible_captcha honeypot: :subtitle is hidden from humans, so any

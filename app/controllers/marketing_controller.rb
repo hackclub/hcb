@@ -54,8 +54,15 @@ class MarketingController < ApplicationController
     name = params[:name].to_s.strip
     message = params[:message].to_s.strip
 
-    unless email.match?(URI::MailTo::EMAIL_REGEXP)
-      flash[:error] = "Please enter a valid email address."
+    error = if !email.match?(URI::MailTo::EMAIL_REGEXP)
+              "Please enter a valid email address."
+            elsif message.blank?
+              # Without a note the team has nothing to research before replying.
+              "Please tell us a bit about what you're looking to fund."
+            end
+
+    if error
+      flash[:error] = error
       # Carry the submitted values back so the form isn't cleared on the error redirect.
       flash[:funder_form] = { "name" => name, "email" => email, "message" => message }
       return redirect_to funders_path(anchor: "talk-to-us")
