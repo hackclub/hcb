@@ -32,6 +32,35 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("New memo")
         expect(response.body).to include("turbo-stream")
       end
+
+      context "with an AI memo suggestion from a receipt" do
+        let(:ai_memo_stream) { "turbo-stream[action='replace'][target='#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}']" }
+
+        before do
+          Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                          file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+        end
+
+        it "marks the memo custom and withdraws the suggestion" do
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
+
+          expect(response.body).to include(%(data-custom-memo="true">New memo</span>))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo).to be_present
+          expect(ai_memo.to_html).not_to include("data-memo-suggestion-param")
+        end
+
+        it "offers the suggestion again when the memo is cleared" do
+          item.update_custom_memo!("Old memo")
+
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "" } }
+
+          expect(item.reload.custom_memo).to be_nil
+          expect(response.body).to include(%(data-custom-memo="false"))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo.to_html).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+        end
+      end
     end
 
     describe "POST #toggle_tag" do
@@ -127,10 +156,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.parsed_body.at_css("#receipt_#{receipt.id}")).to be_present
       end
 
-      it "responds with not found for a non-auditor" do
+      it "renders for a member" do
+        create(:organizer_position, event:, user: (user = create(:user)), role: :member)
+        create_session(user, verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item.memo)
+      end
+
+      it "is not authorized for a user outside the event" do
         create_session(create(:user), verified: true)
 
-        expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+        get :show, params: { id: item.hashid }
+
+        expect(response).to redirect_to(root_path)
+        expect(flash[:error]).to include("not authorized")
       end
     end
 
@@ -150,6 +192,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
         expect(response.body).not_to include(dispute_hcb_code_path(charge.local_hcb_code))
       end
+
+      it "shows a grant card charge's merchant and card to a manager of the grant's organization" do
+        grant_event = create(:event, :with_positive_balance)
+        create(:organizer_position, event: grant_event, user: (manager = create(:user)), role: :manager)
+        create_session(manager, verified: true)
+        card_grant = create(:card_grant, event: grant_event)
+        card_grant.stripe_card.update_columns(last4: "4242", event_id: grant_event.id) # production issues grant cards on the grant's organization
+        charge_item = create(:ledger_item, linked_object: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card, stripe_merchant_category_code: "5462").card_charge)
+        create(:ledger_mapping, :on_primary, ledger: card_grant.ledger, ledger_item: charge_item)
+
+        get :show, params: { id: charge_item.hashid, frame: true }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("Sign in to view")
+        expect(response.body).to include("4242")
+        expect(response.body).not_to include("XXXX")
+      end
     end
 
     context "when asked to reverse a receipt pairing" do
@@ -160,17 +219,9 @@ RSpec.describe Ledger::ItemsController, type: :controller do
 
       before { create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE, ledger_item: item) }
 
-      it "carries the receipt through the redirect to the HCB code page for a non-auditor" do
+      it "asks a member to confirm the reversal" do
         create(:organizer_position, event:, user: (user = create(:user)))
         create_session(user, verified: true)
-
-        get :show, params: { id: item.hashid, reverse: receipt.id }
-
-        expect(response).to redirect_to(hcb_code_path(item.hcb_code, reverse: receipt.id))
-      end
-
-      it "asks an auditor to confirm the reversal" do
-        create_session(create(:user, :make_auditor), verified: true)
 
         get :show, params: { id: item.hashid, reverse: receipt.id }
 
@@ -229,6 +280,38 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response).to be_successful
         expect(response.body).to include(%(id="ledger_item_#{group.ledger_item.hashid}_tag_#{hcb_tag.id}"))
       end
+    end
+
+    describe "the donor edit modal on a donation" do
+      let(:recurring_donation) do
+        RecurringDonation.create!(event:, name: "Jane Smith", email: "jane@example.com", amount: 10_00, anonymous: true,
+                                  stripe_subscription_id: "sub_test", stripe_customer_id: "cus_test", stripe_status: "active")
+      end
+      let(:donation) { create(:donation, event:, recurring_donation:, anonymous: false, aasm_state: :deposited) }
+      let(:item) { create(:ledger_item, linked_object: donation) }
+
+      it "pre-checks anonymous from the recurring donation and warns that edits apply to the whole series" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        modal = Nokogiri::HTML5(response.body).at_css("#update")
+        expect(modal.at_css("input[name='donation[anonymous]'][type='checkbox']")["checked"]).to be_present
+        expect(modal.text).to include("Updating the donor's details will update them for all past and future donations.")
+      end
+    end
+
+    it "offers a receipt's AI memo suggestion on an item with no HCB code" do
+      Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                      file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :show, params: { id: item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+      expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}"))
     end
 
     it "updates the counts on the item's ledger row when shown in a popover" do

@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { addLayer, removeLayer } from '../layers'
 
 export default class extends Controller {
   static targets = [
@@ -12,9 +13,7 @@ export default class extends Controller {
 
   connect() {
     this.restoreState()
-    this.handleKeydown = this.handleKeydown.bind(this)
     this.handleResize = this.handleResize.bind(this)
-    document.addEventListener('keydown', this.handleKeydown)
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
     this.sidebarTarget
@@ -28,8 +27,8 @@ export default class extends Controller {
 
   disconnect() {
     cancelAnimationFrame(this.restoreScrollFrame)
-    document.removeEventListener('keydown', this.handleKeydown)
     window.removeEventListener('resize', this.handleResize)
+    removeLayer(this)
   }
 
   saveState() {
@@ -59,11 +58,6 @@ export default class extends Controller {
     })
   }
 
-  handleKeydown(event) {
-    if (event.key === 'Escape' && !this.sidebarTarget.hasAttribute('inert'))
-      this.close()
-  }
-
   handleResize() {
     const isDesktop = window.innerWidth >= 1024
     this.sidebarTarget.toggleAttribute('inert', !isDesktop)
@@ -74,7 +68,11 @@ export default class extends Controller {
     }
     this.overlayTarget.classList.add('overlay--hidden')
     this.sidebarTarget.style.left = isDesktop ? '0' : ''
-    if (isDesktop) this.toggleTarget.setAttribute('aria-expanded', 'false')
+    if (isDesktop) {
+      this.toggleTarget.setAttribute('aria-expanded', 'false')
+      // Always shown on desktop, so there's nothing for Escape to close
+      removeLayer(this)
+    }
   }
 
   open() {
@@ -83,6 +81,7 @@ export default class extends Controller {
     this.sidebarTarget.removeAttribute('aria-hidden')
     this.overlayTarget.classList.remove('overlay--hidden')
     this.toggleTarget.setAttribute('aria-expanded', 'true')
+    addLayer(this, () => this.close())
   }
 
   close() {
@@ -92,6 +91,7 @@ export default class extends Controller {
       this.sidebarTarget.setAttribute('aria-hidden', 'true')
       this.overlayTarget.classList.add('overlay--hidden')
       this.toggleTarget.setAttribute('aria-expanded', 'false')
+      removeLayer(this)
     }
   }
 }
