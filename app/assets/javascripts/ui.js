@@ -720,7 +720,8 @@ $(document).on('turbo:load', function () {
   })
 
   $('.input-group').on('click', e => {
-    // focus on the input when clicking on the input-group
+    // focus on the input when clicking on the input-group, but not over one the click already focused (a group can hold several)
+    if (e.target.closest('input')) return
     e.currentTarget.querySelector('input').focus()
   })
 
