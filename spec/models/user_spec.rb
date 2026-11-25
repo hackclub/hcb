@@ -409,30 +409,29 @@ RSpec.describe User, type: :model do
 
   describe "#use_two_factor_authentication" do
     it "cannot be disabled by admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "cannot be disabled by admins pretending not to be admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true, phone_number: "+18556254225", phone_number_verified: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "can be disabled by regular users" do
-      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
 
-    it "can be enabled with SMS auth" do
-      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-      user.update!(use_sms_auth: true)
+    it "can be enabled with a verified phone number" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(phone_number_verified: true)
 
-      expect(user.use_sms_auth).to eq(true)
       expect(user.update(use_two_factor_authentication: true)).to eq(true)
     end
 
@@ -604,38 +603,10 @@ RSpec.describe User, type: :model do
       end
     end
 
-    describe "use_sms_auth changes" do
-      it "sends an email when SMS authentication is enabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-
-        expect {
-          user.update!(use_sms_auth: true)
-        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
-      end
-
-      it "sends an email when SMS authentication is disabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-        user.update!(use_sms_auth: true)
-
-        expect {
-          user.update!(use_sms_auth: false)
-        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
-      end
-
-      it "does not send an email when use_sms_auth is not changed" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-        user.update!(use_sms_auth: true)
-
-        expect {
-          user.update!(full_name: "New Name")
-        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
-      end
-    end
-
     describe "use_two_factor_authentication changes" do
       it "sends an email when two-factor authentication is enabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-        user.update!(use_sms_auth: true)
+        user = create(:user, phone_number: "+18556254225")
+        user.update!(phone_number_verified: true)
 
         expect {
           user.update!(use_two_factor_authentication: true)
@@ -643,8 +614,8 @@ RSpec.describe User, type: :model do
       end
 
       it "sends an email when two-factor authentication is disabled" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-        user.update!(use_sms_auth: true)
+        user = create(:user, phone_number: "+18556254225")
+        user.update!(phone_number_verified: true)
         user.update!(use_two_factor_authentication: true)
 
         expect {
@@ -653,8 +624,8 @@ RSpec.describe User, type: :model do
       end
 
       it "does not send an email when use_two_factor_authentication is not changed" do
-        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
-        user.update!(use_sms_auth: true)
+        user = create(:user, phone_number: "+18556254225")
+        user.update!(phone_number_verified: true)
         user.update!(use_two_factor_authentication: true)
 
         expect {
