@@ -47,7 +47,7 @@
       <div data-controller="menu" data-menu-placement-value="bottom-end" class="flex-shrink-0">
         <%= pop_icon_to "more", "#", icon_size: 22,
             class: "align-middle muted", "aria-label": "More options",
-            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
         <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
           <% unless payout_method.default? %>
             <%= link_to set_default_payout_method_path(payout_method), class: "flex items-center", data: { turbo_method: :patch, turbo_frame: "_top" } do %>

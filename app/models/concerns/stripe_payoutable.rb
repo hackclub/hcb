@@ -48,7 +48,7 @@ module StripePayoutable
   def default_values
     return unless payout_subject
 
-    self.statement_descriptor ||= "HCB-#{local_hcb_code.short_code}"
+    self.statement_descriptor ||= payout_subject.short_code_memo
   end
 
   def create_stripe_payout

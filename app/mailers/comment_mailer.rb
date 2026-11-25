@@ -25,7 +25,7 @@ class CommentMailer < ApplicationMailer
       reply_to: "comments+#{@comment.public_id}@hcb.hackclub.com",
       subject: @commentable.comment_mailer_subject,
       template_path: "comment_mailer/#{@commentable.class.name.underscore}",
-      from: email_address_with_name("hcb@hackclub.com", "#{@comment.user.name} via HCB")
+      from: hcb_email_with_name_of(@comment.user)
     }.merge(headers)
 
     mail(mail_settings)

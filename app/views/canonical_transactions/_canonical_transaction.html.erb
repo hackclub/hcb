@@ -19,9 +19,7 @@
 <% special_appearance = JSON.parse(special_appearance) if special_appearance %>
 
 <tr
-  class="transaction <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
-                           ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero"
-                         end %> <%= special_appearance["css_class"] if special_appearance.present? %>"
+  class="transaction <%= ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero" %> <%= special_appearance["css_class"] if special_appearance.present? %>"
   id="<%= ct.local_hcb_code.hashid %>"
   <% if defined?(selectable) && selectable %>
     data-ledger-item-id="<%= ledger_item&.hashid %>"
@@ -108,7 +106,7 @@
       <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, ct).update? && !ct.instance_of?(OpenStruct) %>
         <% if event.present? && can_tag %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
-            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.tags.each do |tag| %>
                 <div class="flex items-center" data-tag="<%= tag.id %>">
@@ -147,7 +145,7 @@
       <% if ct.likely_account_verification_related? && !organizer_signed_in? %>
         <%= redacted_amount %>
       <% else %>
-        <span><%= render_transaction_amount ct.amount %></span>
+        <span><%= render_money ct.amount %></span>
       <% end %>
     </span>
   </td>
