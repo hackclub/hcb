@@ -202,4 +202,43 @@ RSpec.describe WiseTransfer do
       end
     end
   end
+
+  describe "public activity" do
+    def create_wise_transfer(aasm_state:)
+      WiseTransfer.create!(
+        event: create(:event),
+        user: create(:user),
+        amount_cents: 100_00,
+        currency: "GBP",
+        recipient_country: "GB",
+        recipient_name: "Fiona Hackworth",
+        recipient_email: "fiona@example.com",
+        payment_for: "Reimbursement for Test Report.",
+        # Set so the after_create hook skips generate_quote!, which would
+        # otherwise reach for a live exchange rate.
+        quoted_usd_amount_cents: 130_00,
+        usd_amount_cents: 130_00,
+        wise_id: "1234567890",
+        wise_recipient_id: "3e219880-5f3e-4230-8a5a-9c8c25af26bb",
+        aasm_state:
+      )
+    end
+
+    it "records an activity when the transfer is rejected" do
+      wise_transfer = create_wise_transfer(aasm_state: :pending)
+
+      PublicActivity.with_tracking { wise_transfer.mark_rejected! }
+
+      expect(PublicActivity::Activity.where(trackable: wise_transfer, key: "wise_transfer.rejected")).to exist
+    end
+
+    it "records an activity without an owner when the transfer fails" do
+      wise_transfer = create_wise_transfer(aasm_state: :sent)
+
+      PublicActivity.with_tracking { wise_transfer.mark_failed!("Beneficiary account is closed") }
+
+      activity = PublicActivity::Activity.find_by!(trackable: wise_transfer, key: "wise_transfer.failed")
+      expect(activity.owner).to be_nil
+    end
+  end
 end

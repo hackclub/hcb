@@ -7,7 +7,8 @@ module Reimbursement
 
       def perform
         approvals = PaperTrail::Version.where_object_changes_to(aasm_state: "approved")
-                                       .select { |version| version.item_type == "Reimbursement::Expense" && version.created_at > 20.minutes.ago }
+                                       .where(item_type: "Reimbursement::Expense")
+                                       .where("versions.created_at > ?", 20.minutes.ago)
 
         approved_expenses_without_report = approvals.filter_map do |approval|
           expense = Reimbursement::Expense.find(approval.item_id)

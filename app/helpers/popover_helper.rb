@@ -33,11 +33,12 @@ module PopoverHelper
   end
 
   def ledger_item_popover_data(item, title: nil, state_title: nil)
-    # Only serve the ledger item popover to users who can actually view the ledger
-    # item show page. Everyone else gets the HCB code popover instead — otherwise
-    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
-    # the popover would render empty.
-    if auditor_signed_in? && policy(item).show?
+    # Serve the ledger item popover to anyone the ledger item show page itself
+    # is served to, so a row's popover and its link open the same rendering.
+    # Everyone else gets the HCB code popover instead — otherwise the injected
+    # frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and the
+    # popover would render empty.
+    if policy(item).show?
       popover_data(
         title: title || item.pretty_title,
         src: item.popover_path,
@@ -68,6 +69,12 @@ module PopoverHelper
   end
 
   def stripe_card_popover_data(stripe_card)
+    # StripeCardsController#show sends everyone but auditors to the card grant
+    # page for a grant card, and that page has no turbo frame to fill the
+    # popover with (Turbo shows "Content missing"), so those links open the
+    # grant as a full page instead.
+    return { turbo_frame: "_top" } if stripe_card.card_grant.present? && !auditor_signed_in?
+
     popover_data(
       title: stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card",
       src: stripe_card.popover_path,

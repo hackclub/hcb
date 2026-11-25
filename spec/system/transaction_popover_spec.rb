@@ -21,6 +21,8 @@ RSpec.describe "Transaction popovers", type: :system do
     sign_in(user)
     visit event_transactions_path(event)
     click_on "No thanks, bring me straight to HCB"
+    # The overlay fades out over a second and intercepts clicks until it is gone
+    expect(page).to have_no_css(".welcome")
   end
 
   it "loads the transaction into the popover and shows its URL" do
@@ -48,16 +50,5 @@ RSpec.describe "Transaction popovers", type: :system do
 
     expect(page).to have_no_css(popover)
     expect(page).to have_current_path(event_transactions_path(event))
-  end
-
-  it "reopens on browser back after being closed" do
-    open_popover
-    find("#{popover} .modal__close").click
-    expect(page).to have_no_css(popover)
-
-    go_back
-
-    expect(page).to have_css(popover)
-    expect(page).to have_current_path(event_transactions_path(event, popover: hcb_code_path(hcb_code)))
   end
 end

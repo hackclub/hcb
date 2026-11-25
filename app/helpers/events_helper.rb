@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { event_ledger_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -306,6 +306,12 @@ module EventsHelper
       ]
     }
   ].freeze
+
+  # Dots in place of an account detail: either it's hidden until someone clicks
+  # the eye, or it hasn't been generated yet and `length` is how long it will be.
+  def masked_account_detail(value, length)
+    "•" * (value.present? ? value.length : length)
+  end
 
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
