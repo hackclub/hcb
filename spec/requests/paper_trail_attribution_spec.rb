@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "PaperTrail attribution tracking", type: :request, versioning: true do
-  let(:user) { create(:user, full_name: "Original Name") }
+  let(:user) { create(:user, legal_first_name: "Original", legal_last_name: "Name") }
 
   describe "cookie sessions" do
     def sign_in_with(session)
@@ -16,7 +16,7 @@ RSpec.describe "PaperTrail attribution tracking", type: :request, versioning: tr
       session = create(:user_session, user:, expiration_at: 1.hour.from_now)
       sign_in_with(session)
 
-      patch "/users/#{user.id}", params: { user: { full_name: "Changed Name" } }
+      patch "/users/#{user.id}", params: { user: { legal_first_name: "Changed", legal_last_name: "Name" } }
 
       version = user.versions.last
       expect(version.whodunnit).to eq(user.id.to_s)
@@ -27,7 +27,7 @@ RSpec.describe "PaperTrail attribution tracking", type: :request, versioning: tr
     it "leaves the session blank on versions created without one" do
       sign_in_with(nil)
 
-      patch "/users/#{user.id}", params: { user: { full_name: "Changed Name" } }
+      patch "/users/#{user.id}", params: { user: { legal_first_name: "Changed", legal_last_name: "Name" } }
 
       expect(user.versions.last.user_session_id).to be_nil
     end
