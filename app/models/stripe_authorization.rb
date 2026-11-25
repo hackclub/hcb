@@ -31,7 +31,6 @@ class StripeAuthorization < ApplicationRecord
   before_validation :sync_from_stripe! # pull details from stripe if we're creating it for the first time. expensive in the webhook. TODO: adjust - ideally async after authorization approved or not
 
   default_scope { order(created_at: :desc) }
-  scope :awaiting_receipt, -> { missing_receipt.where.not(amount: 0).where(approved: true) }
   scope :approved, -> { where(approved: true) }
   scope :declined, -> { where(approved: false) }
   scope :successful, -> { approved.closed }

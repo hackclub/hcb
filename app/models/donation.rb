@@ -205,10 +205,6 @@ class Donation < ApplicationRecord
     arrival + 1.day
   end
 
-  def arriving_late?
-    DateTime.now > self.arrival_date
-  end
-
   def payment_method
     stripe_obj[:payment_method] || stripe_obj.dig(:invoice, :subscription, :default_payment_method)
   end

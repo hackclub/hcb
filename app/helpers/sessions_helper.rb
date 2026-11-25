@@ -29,42 +29,6 @@ module SessionsHelper
     create_session(user: curses.impersonated_by, verified: true)
   end
 
-  # DEPRECATED - begin to start deprecating and ultimately replace with sign_in_and_set_cookie
-  def sign_in(user:, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
-    session_token = SecureRandom.urlsafe_base64
-    session_duration =
-      if impersonate
-        IMPERSONATED_SESSION_DURATION
-      else
-        user.session_validity_preference
-      end
-    expiration_at = session_duration.seconds.from_now
-    cookies.encrypted[:session_token] = { value: session_token, expires: User::Session::MAX_SESSION_DURATION.from_now, httponly: true }
-    cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
-    user_session = user.user_sessions.build(
-      session_token:,
-      fingerprint: fingerprint_info[:fingerprint],
-      device_info: fingerprint_info[:device_info],
-      os_info: fingerprint_info[:os_info],
-      timezone: fingerprint_info[:timezone],
-      ip: fingerprint_info[:ip],
-      webauthn_credential:,
-      expiration_at:,
-      verified: true
-    )
-
-    if impersonate
-      user_session.impersonated_by = current_user
-    else
-      raise(AccountLockedError, "Your HCB account has been locked.") if user.locked?
-    end
-
-    user_session.save!
-    Current.session = user_session
-
-    user_session
-  end
-
   def create_session(user: nil, verified: false, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
     session_token = SecureRandom.urlsafe_base64
     session_duration =
