@@ -1,18 +1,23 @@
 <%# locals: (ledger_item:) %>
 
 <section class="my-5 flex flex-col gap-3">
-  <% cts = 0 %>
-  <% pts = 0 %>
+  <% ct_count = 0 %>
+  <% pt_count = 0 %>
 
-  <% [ledger_item.canonical_transactions, ledger_item.canonical_pending_transactions].flatten.sort_by { |t| [t.date, t.created_at] }.each do |transaction| %>
-    <% index = cts + pts %>
+  <% transactions = [ledger_item.canonical_transactions, ledger_item.canonical_pending_transactions].flatten.sort_by { |t| [t.date, t.created_at] } %>
+  <% transactions.each do |transaction| %>
+    <% index = ct_count + pt_count %>
+
+    <% canonical_transactions = transactions.first(index + 1).select { |t| t.is_a?(CanonicalTransaction) } %>
+    <% canonical_pending_transactions = transactions.first(index + 1).select { |t| t.is_a?(CanonicalPendingTransaction) } %>
+    <% amount = ledger_item.amount_for(canonical_transactions:, canonical_pending_transactions:).format %>
 
     <% if transaction.is_a?(CanonicalTransaction) %>
       <div class="flex flex-col md:flex-row justify-start items-center gap-5">
         <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
           <% if index.zero? %>
             Created
-          <% elsif cts.zero? %>
+          <% elsif ct_count.zero? %>
             Settled
           <% else %>
             Updated
@@ -29,7 +34,7 @@
               <%= badge_for transaction.id, class: "bg-muted m-0" %>
             <% end %>
             <span>
-              <%= transaction.amount.format %>
+              <%= amount %>
             </span>
             <span>
               <%= transaction.memo %>
@@ -46,7 +51,7 @@
         </div>
       </div>
 
-      <% cts += 1 %>
+      <% ct_count += 1 %>
     <% else %>
       <div class="flex flex-col md:flex-row justify-start items-center gap-5">
         <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
@@ -67,7 +72,7 @@
               <%= badge_for transaction.id, class: "bg-muted m-0" %>
             <% end %>
             <span>
-              <%= transaction.amount.format %>
+              <%= amount %>
             </span>
             <span>
               <%= transaction.memo %>
@@ -84,7 +89,7 @@
         </div>
       </div>
 
-      <% pts += 1 %>
+      <% pt_count += 1 %>
     <% end %>
   <% end %>
 </section>
