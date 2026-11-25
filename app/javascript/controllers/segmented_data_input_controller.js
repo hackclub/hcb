@@ -11,11 +11,16 @@ export default class extends Controller {
     }
     document.addEventListener('daterange:change', this._onPick)
 
-    const match = String(this.initialValue || '').match(
-      /^(\d{2})\/(\d{2})\/(\d{4})$/
-    )
-    if (match) {
-      const [, month, day, year] = match
+    const initial = String(this.initialValue || '')
+    const usMatch = initial.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+    const isoMatch = initial.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (usMatch) {
+      const [, month, day, year] = usMatch
+      this.monthTarget.value = month
+      this.dayTarget.value = day
+      this.yearTarget.value = year
+    } else if (isoMatch) {
+      const [, year, month, day] = isoMatch
       this.monthTarget.value = month
       this.dayTarget.value = day
       this.yearTarget.value = year

@@ -17,9 +17,14 @@ RSpec.describe LegalEntity::PayoutMethod::WiseTransfer, type: :model do
     end
 
     it "rejects a malformed date of birth" do
-      details = build(:wise_transfer_payout_method_details, recipient_birthday: "1990-01-15")
+      details = build(:wise_transfer_payout_method_details, recipient_birthday: "13/45/1990")
       expect(details).not_to be_valid
       expect(details.errors[:recipient_birthday].join).to include("MM/DD/YYYY")
+    end
+
+    it "accepts the ISO dates older KRW and ZAR records were saved with" do
+      details = build(:wise_transfer_payout_method_details, recipient_birthday: "1990-01-15")
+      expect(details).to be_valid
     end
 
     it "rejects a date of birth in the future" do

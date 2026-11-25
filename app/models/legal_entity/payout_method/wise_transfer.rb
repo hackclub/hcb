@@ -123,7 +123,9 @@ class LegalEntity
       end
 
       def recipient_birthday_is_valid_date
-        date = Date.strptime(recipient_birthday, "%m/%d/%Y")
+        # KRW and ZAR collected this with a native date field before it was universal, so older records hold ISO dates.
+        format = recipient_birthday.include?("-") ? "%Y-%m-%d" : "%m/%d/%Y"
+        date = Date.strptime(recipient_birthday, format)
         errors.add(:recipient_birthday, "can't be in the future") if date > Date.current
       rescue Date::Error
         errors.add(:recipient_birthday, "must be a valid date in MM/DD/YYYY format")
