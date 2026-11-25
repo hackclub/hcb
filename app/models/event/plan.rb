@@ -51,10 +51,6 @@ class Event
       end
     end
 
-    def standard?
-      type == Event::Plan::Standard.name
-    end
-
     def default_values
       {}
     end
@@ -71,10 +67,6 @@ class Event
 
     def revenue_fee_label
       ActionController::Base.helpers.number_to_percentage(revenue_fee * 100, precision: 1)
-    end
-
-    def assigned_reimbursement_reviewer_required?
-      false
     end
 
     def self.available_features

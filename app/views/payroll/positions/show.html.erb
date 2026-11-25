@@ -15,17 +15,25 @@
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
 
-      <% if @position.may_mark_terminated? %>
+      <% if @position.draft? || @position.may_mark_terminated? %>
         <div data-controller="menu" data-menu-placement-value="bottom-end">
           <%= pop_icon_to "more",
               "#",
               class: "align-middle", "aria-label": "More Options",
-              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
-              <%= inline_icon "profile-forbidden", size: 24 %>
-              Terminate
+            <% if @position.draft? %>
+              <%= link_to edit_payroll_position_path(@position), class: "flex items-center" do %>
+                <%= inline_icon "edit", size: 24 %>
+                Edit and sign
+              <% end %>
+            <% end %>
+            <% if @position.may_mark_terminated? %>
+              <%= link_to terminate_payroll_position_path(@position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
+                <%= inline_icon "profile-forbidden", size: 24 %>
+                <%= @position.draft? || @position.under_review? ? "Discard" : "Terminate" %>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -100,13 +108,19 @@
     <% end %>
   <% end %>
 
-  <% if @position.status == :onboarding %>
+  <% if @position.draft? || @position.status == :onboarding %>
     <h3 class="mt-4 mb-2">Onboarding</h3>
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
 
   <div class="mt-4 mb-2 flex items-center justify-between gap-2">
-    <h3 class="my-0">Invoices</h3>
+    <h3 class="my-0 flex items-center gap-2">
+      Invoices
+      <% pending = @can_review ? @invoices.count(&:submitted?) : 0 %>
+      <% if pending.positive? %>
+        <span class="contractor-review-badge tooltipped tooltipped--e" aria-label="<%= pluralize(pending, "invoice") %> pending review"><%= pending %></span>
+      <% end %>
+    </h3>
     <% if @can_upload_invoice %>
       <%= link_to "#", class: "btn btn-small bg-success", data: { behavior: "modal_trigger", modal: dom_id(@position, :upload_invoice) } do %>
         <%= inline_icon "cloud-upload", size: 20 %>
@@ -132,14 +146,22 @@
             <th>Status</th>
             <th>Reviewed by</th>
             <th>Description</th>
+            <th>Period</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
-            <% if @can_review %><th></th><% end %>
           </tr>
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <tr>
+            <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
+            <% preview_receipt = receipts.find(&:preview) %>
+            <% review_actions = capture do %>
+              <div class="flex gap-2">
+                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
+                <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+              </div>
+            <% end if @can_review && invoice.submitted? %>
+            <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
               </td>
@@ -153,26 +175,39 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <td class="nowrap"><%= invoice.period_label || tag.span("—", class: "muted") %></td>
               <td>
-                <% if invoice.receipts.any? %>
-                  <div class="receipts_list flex gap-2">
-                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                <% if preview_receipt %>
+                  <div class="receipts_list flex gap-2 pointer-events-auto">
+                    <% receipts.each do |receipt| %>
+                      <%= render "receipts/receipt", receipt:, size: 48, hide_info: true, link_to_file: true, modal_id: dom_id(receipt, :preview), details_footer: review_actions && tag.div(review_actions, class: "px-6 py-4") %>
+                    <% end %>
                   </div>
                 <% else %>
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-right"><%= render_money invoice.amount_cents %></td>
-              <% if @can_review %>
-                <td class="text-right">
-                  <% if invoice.submitted? %>
-                    <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
-                      <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
-                    </div>
+              <td class="text-right">
+                <% if (ledger_item = invoice.payment&.current_attempt&.payout&.ledger_item).present? %>
+                  <%= render_money ledger_item.amount_cents.abs %>
+                <% else %>
+                  <%= render_money invoice.amount_cents %>
+
+                  <% if (fee_details = invoice.estimated_fee_details).present? %>
+                    <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details[:reason] %>">
+                      + <%= render_money fee_details[:amount_cents] %> fee
+                    </span>
                   <% end %>
-                </td>
-              <% end %>
+                <% end %>
+                <%= link_to "", "#", class: "stretched-link", aria: { label: "View invoice" }, data: { behavior: "modal_trigger", modal: dom_id(preview_receipt || invoice, :preview) } %>
+                <% unless preview_receipt %>
+                  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">
+                    <%= modal_header invoice.name %>
+                    <p class="muted mt0">This <%= render_money invoice.amount_cents %> invoice has no attachment to preview.</p>
+                    <%= review_actions %>
+                  </section>
+                <% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>
@@ -209,7 +244,7 @@
                 <% if organizer_signed_in? %>
                   <%= link_to "", payment_path(payment),
                         class: "stretched-link",
-                        data: popovers_enabled? ? payment_popover_data(payment) : { turbo_frame: "_top" } %>
+                        data: payment_popover_data(payment) %>
                 <% end %>
               </td>
             </tr>

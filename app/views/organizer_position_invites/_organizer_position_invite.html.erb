@@ -21,7 +21,7 @@
             <div class="line-height-0 tooltipped tooltipped--w" aria-label="Pending signature, click to manage this contract.">
               <div class="warning">
                 <div data-controller="menu" data-menu-placement-value="bottom-start">
-                  <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                  <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle">
                     <%= inline_icon("clock", size: 24) %>
                   </div>
                   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
@@ -86,7 +86,7 @@
   <div class="inline muted h6 m0">
     Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
     as a
-    <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
+    <div class="inline" data-controller="menu" data-action="click->menu#toggle" data-menu-target="toggle">
       <% can_change_role = policy(organizer_position_invite).change_position_role? %>
 
       <span class="h6 bold info <%= "pointer" if can_change_role %>"><%= organizer_position_invite.role %></span>

@@ -53,9 +53,15 @@ class RecurringDonationsController < ApplicationController
     if params[:setup_intent] && params[:redirect_status] == "succeeded"
       setup_intent = StripeService::SetupIntent.retrieve(id: params[:setup_intent], expand: ["payment_method"])
       if setup_intent
-        # This is just a UI change— the actual update is handled asynchronously in `StripeController#handle_setup_intent_succeeded`
-        @recurring_donation.update(last4: setup_intent.payment_method.card.last4)
-        redirect_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "Your payment details have been updated." }
+        if @recurring_donation.canceled?
+          # A card form loaded before the donation was canceled can still be
+          # submitted, but there's no subscription left to put the card on.
+          redirect_to recurring_donation_path(@recurring_donation.url_hash), flash: { error: "This donation has been canceled, so your payment details weren't updated." }
+        else
+          # This is just a UI change— the actual update is handled asynchronously in `StripeController#handle_setup_intent_succeeded`
+          @recurring_donation.update(last4: setup_intent.payment_method.card.last4)
+          redirect_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "Your payment details have been updated." }
+        end
       end
     end
 

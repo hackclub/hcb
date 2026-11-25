@@ -1,7 +1,11 @@
 import { Controller } from '@hotwired/stimulus'
-import swal from 'sweetalert'
+import swal from '../common/swal'
 
 export default class extends Controller {
+  // `label`: the part of the button to swap for the confirm text, where
+  // replacing the whole button would drop its icon.
+  static targets = ['label']
+
   static values = {
     text: String,
     confirmText: String,
@@ -37,11 +41,12 @@ export default class extends Controller {
     }
 
     if (this.hasConfirmTextValue) {
-      const previousText = button.innerText
-      button.innerText = this.confirmTextValue
+      const label = this.hasLabelTarget ? this.labelTarget : button
+      const previousText = label.innerText
+      label.innerText = this.confirmTextValue
 
       setTimeout(() => {
-        button.innerText = previousText
+        label.innerText = previousText
       }, 1500)
     }
   }
