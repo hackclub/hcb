@@ -80,11 +80,6 @@ Turbo.config.forms.confirm = (message, formElement, submitter) => {
     return showTypeToConfirm(message, phrase, { afterMessage })
   }
 
-  const confirmed = await showConfirm(message, { dangerMode })
-
-  if (!confirmed) reenableFormElements(formElement)
-
-  return confirmed
   return showConfirm(message, { dangerMode }).then(confirmed => {
     if (!confirmed) reenableFormElements(formElement)
     return confirmed

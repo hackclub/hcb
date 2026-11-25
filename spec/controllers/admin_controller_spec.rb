@@ -208,6 +208,9 @@ RSpec.describe AdminController do
       get :transaction, params: { id: canonical_transaction.id }
 
       expect(response.body).not_to include("REMAP #{canonical_transaction.id}")
+    end
+  end
+
   describe "#wire_process" do
     render_views
 
