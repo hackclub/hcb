@@ -6,14 +6,13 @@ RSpec.describe EventMailer, type: :mailer do
   describe "#two_factor_authentication_required" do
     let(:event) { create(:event, name: "Hack Club HQ") }
     let(:whodunnit) { create(:user, full_name: "Signee McSignface") }
-    let(:flag) { Event::TwoFactorAuthenticationRequirement::FLAG }
 
     before do
       allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
       create(:organizer_position, event:, user: whodunnit, role: :manager, is_signee: true)
-      Flipper.enable_actor(flag, event)
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
       enabled_at = Time.zone.parse("2026-11-24 12:00:00")
-      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "actors", value: event.flipper_id, created_at: enabled_at, updated_at: enabled_at)
+      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: enabled_at, updated_at: enabled_at)
     end
 
     context "for a member without two-factor authentication" do

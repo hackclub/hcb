@@ -9,17 +9,16 @@ class Event
   module TwoFactorAuthenticationRequirement
     extend ActiveSupport::Concern
 
-    FLAG = :require_two_factor_authentication_2026_11_24
     GRACE_PERIOD = 7.days
 
     included do
       scope :requiring_two_factor_authentication, -> {
-        where(id: Flipper[FLAG].actors_value.filter_map { |value| value.delete_prefix("Event;") if value.start_with?("Event;") })
+        where(id: Flipper[:require_two_factor_authentication_2026_11_24].actors_value.filter_map { |value| value.delete_prefix("Event;") if value.start_with?("Event;") })
       }
     end
 
     def two_factor_authentication_required?
-      Flipper.enabled?(FLAG, self)
+      Flipper.enabled?(:require_two_factor_authentication_2026_11_24, self)
     end
 
     # When the requirement was turned on, read off the Flipper gate. `nil`
@@ -29,7 +28,7 @@ class Event
       return nil unless two_factor_authentication_required?
 
       @two_factor_authentication_required_at ||= begin
-        gates = Flipper::Adapters::ActiveRecord::Gate.where(feature_key: FLAG.to_s)
+        gates = Flipper::Adapters::ActiveRecord::Gate.where(feature_key: "require_two_factor_authentication_2026_11_24")
         gates.find_by(key: "actors", value: flipper_id)&.created_at || gates.find_by(key: "boolean")&.created_at
       end
     end

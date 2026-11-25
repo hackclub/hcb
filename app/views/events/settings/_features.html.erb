@@ -10,7 +10,7 @@
 <%= render partial: "features/preview", locals: {
       id: "require-two-factor-authentication",
       classes: ["feature-two-factor-authentication"],
-      feature_flag: Event::TwoFactorAuthenticationRequirement::FLAG,
+      feature_flag: :require_two_factor_authentication_2026_11_24,
       name: "Require Two-Factor Authentication",
       description: "Require every member of #{event.name} to use two-factor authentication. " \
                    "We'll email your team when this is turned on; members who don't have it yet get " \

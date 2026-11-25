@@ -4,19 +4,18 @@ require "rails_helper"
 
 RSpec.describe Event::TwoFactorAuthenticationRequirement, type: :model do
   let(:event) { create(:event) }
-  let(:flag) { described_class::FLAG }
 
   # Specs run Flipper on the in-memory adapter, which keeps no timestamps, so
   # the persisted gate row the app reads the enable time from is created here.
   def require_two_factor!(event, at: Time.current)
-    Flipper.enable_actor(flag, event)
-    Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+    Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+    Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
   end
 
   describe ".requiring_two_factor_authentication" do
-    it "lists only the organizations with the flag enabled" do
+    it "lists only the organizations with the :require_two_factor_authentication_2026_11_24 enabled" do
       other = create(:event)
-      Flipper.enable_actor(flag, event)
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
 
       expect(Event.requiring_two_factor_authentication).to contain_exactly(event)
       expect(Event.requiring_two_factor_authentication).not_to include(other)
@@ -29,7 +28,7 @@ RSpec.describe Event::TwoFactorAuthenticationRequirement, type: :model do
       expect(event.two_factor_authentication_deadline).to be_nil
     end
 
-    it "is the grace period after the flag was enabled" do
+    it "is the grace period after the :require_two_factor_authentication_2026_11_24 was enabled" do
       enabled_at = Time.zone.parse("2026-11-24 12:00:00")
       require_two_factor!(event, at: enabled_at)
 
@@ -37,10 +36,10 @@ RSpec.describe Event::TwoFactorAuthenticationRequirement, type: :model do
       expect(event.two_factor_authentication_deadline).to eq(enabled_at + 7.days)
     end
 
-    it "falls back to the boolean gate when the flag is on for everyone" do
+    it "falls back to the boolean gate when the :require_two_factor_authentication_2026_11_24 is on for everyone" do
       enabled_at = Time.zone.parse("2026-11-24 12:00:00")
-      Flipper.enable(flag)
-      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "boolean", value: "true", created_at: enabled_at, updated_at: enabled_at)
+      Flipper.enable(:require_two_factor_authentication_2026_11_24)
+      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "boolean", value: "true", created_at: enabled_at, updated_at: enabled_at)
 
       expect(event.two_factor_authentication_deadline).to eq(enabled_at + 7.days)
     end

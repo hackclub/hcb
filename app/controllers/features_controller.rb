@@ -3,7 +3,7 @@
 class FeaturesController < ApplicationController
   FEATURES = { # the keys are current feature flags, the values are emojis that show when-enabled.
     sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓],
-    Event::TwoFactorAuthenticationRequirement::FLAG => %w[🔐 🔑 🛡️]
+    require_two_factor_authentication_2026_11_24: %w[🔐 🔑 🛡️]
   }.freeze
 
   before_action :set_actor_and_feature
@@ -68,7 +68,7 @@ class FeaturesController < ApplicationController
   end
 
   def two_factor_authentication_requirement?
-    @actor.is_a?(Event) && @feature == Event::TwoFactorAuthenticationRequirement::FLAG.to_s
+    @actor.is_a?(Event) && @feature == "require_two_factor_authentication_2026_11_24"
   end
 
   # Requiring two-factor authentication of a whole organization is held to a

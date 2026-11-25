@@ -32,11 +32,10 @@ RSpec.describe OrganizerPosition, type: :model do
   describe ".role_at_least?" do
     let(:event) { create(:event) }
     let(:member) { create(:organizer_position, event:, role: :member).user }
-    let(:flag) { Event::TwoFactorAuthenticationRequirement::FLAG }
 
     def require_two_factor!(event, at:)
-      Flipper.enable_actor(flag, event)
-      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
     end
 
     it "keeps access during the two-factor grace period" do

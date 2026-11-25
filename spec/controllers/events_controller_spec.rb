@@ -391,11 +391,10 @@ RSpec.describe EventsController do
 
     describe "the two-factor authentication requirement preview" do
       let(:event) { create(:event, name: "Hack Club HQ") }
-      let(:flag) { Event::TwoFactorAuthenticationRequirement::FLAG }
 
       def require_two_factor!(event, at:)
-        Flipper.enable_actor(flag, event)
-        Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: flag.to_s, key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+        Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+        Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
       end
 
       it "lets a contract signee with two-factor authentication turn it on" do
@@ -406,7 +405,7 @@ RSpec.describe EventsController do
         get(:edit, params: { id: event.slug, tab: "features" })
         page = Nokogiri::HTML5(response.body)
 
-        button = page.at_css("#require-two-factor-authentication form[action='#{enable_feature_path(feature: flag, event_id: event.id)}'] button")
+        button = page.at_css("#require-two-factor-authentication form[action='#{enable_feature_path(feature: :require_two_factor_authentication_2026_11_24, event_id: event.id)}'] button")
         expect(button).to be_present
         expect(button["disabled"]).to be_nil
         expect(page.css("#require-two-factor-authentication .tooltipped")).to be_empty
@@ -1258,7 +1257,7 @@ RSpec.describe EventsController do
         sheet = xlsx_entry(response.body, "xl/worksheets/sheet1.xml")
         expect(sheet).to include('outlineLevel="1"')
         # Descendants start hidden, and every row with children carries the
-        # collapsed flag, so the tree opens fully collapsed.
+        # collapsed :require_two_factor_authentication_2026_11_24, so the tree opens fully collapsed.
         expect(sheet).to include('hidden="1"')
         expect(sheet).to include('collapsed="1"')
         # Excel hides the grouping gutter entirely when this attribute is set,
@@ -2051,7 +2050,7 @@ RSpec.describe EventsController do
       end
     end
 
-    context "without the google_workspace flag" do
+    context "without the google_workspace :require_two_factor_authentication_2026_11_24" do
       before do
         Flipper.disable(:google_workspace, event)
         allow(GWaitlistTable).to receive(:all).and_return([])
