@@ -232,5 +232,22 @@ RSpec.describe LegalEntity::PayoutMethodsController do
 
       expect(payout_method.reload).to be_incomplete
     end
+
+    it "lets an admin complete someone else's method" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "01/15/1990" } })
+
+      expect(flash[:success]).to eq("Payout method updated.")
+      expect(payout_method.reload).to be_ready_for_payout
+    end
+
+    it "can't change a date of birth that's already there" do
+      payout_method.details.update!(recipient_birthday: "01/15/1990")
+
+      patch(:complete_details, params: { id: payout_method.id, payout_method_details: { recipient_birthday: "02/02/2000" } })
+
+      expect(payout_method.details.reload.recipient_birthday).to eq("01/15/1990")
+    end
   end
 end
