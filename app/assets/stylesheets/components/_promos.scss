@@ -105,30 +105,6 @@
   background-size: 500px auto;
 }
 
-.promo-hackathon-grant {
-  border: 2px solid $red;
-
-  .card__banner--top {
-    background-image:
-      linear-gradient(to right, $dark 10%, transparent),
-      url('https://cdn.hackclub.com/019c256a-b1e6-703a-83cc-9000a63fa5c9/image.png');
-    background-size: cover;
-    background-position: left center;
-  }
-}
-
-.promo-bin {
-  .card__banner--top {
-    h3 {
-      color: #363a44 !important;
-    }
-
-    background-image: url('https://cdn.hackclub.com/019c256a-b375-7c4b-b66e-ea4355bdebb2/image.png');
-    background-size: cover;
-    background-position: left center;
-  }
-}
-
 .promo-onboard {
   .card__banner--top {
     background-image: url('https://cdn.hackclub.com/019c256a-c4ce-7bb5-ab0e-00397b0260b8/image.png');
@@ -210,20 +186,6 @@
 }
 
 html[data-dark='true'] {
-  .promo-premium-banner {
-    background-color: $dark;
-  }
-
-  .promo-bin {
-    .card__banner--top {
-      h3 {
-        color: #fff !important;
-      }
-
-      background-image: url('https://cdn.hackclub.com/019c256a-af09-781c-84a4-dbeff5a87b12/image.png');
-    }
-  }
-
   .promo-pvsa {
     background: repeating-linear-gradient(
       135deg,
@@ -275,8 +237,4 @@ html[data-dark='true'] {
   .promo-wallets {
     background-color: #768c5d;
   }
-}
-
-.list-plus::marker {
-  content: '+ ';
 }
