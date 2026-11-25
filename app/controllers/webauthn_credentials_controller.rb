@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class WebauthnCredentialsController < ApplicationController
-  skip_before_action :signed_in_user, only: [:auth_options]
-  skip_after_action :verify_authorized, only: [:auth_options]
-
   def register_options
     user = User.friendly.find(params[:user_id])
 

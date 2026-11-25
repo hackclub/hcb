@@ -132,8 +132,4 @@ class GSuiteAccountsController < ApplicationController
     params.require(:g_suite_account).permit(:backup_email, :address, :accepted_at, :initial_password, :g_suite_id, :first_name, :last_name)
   end
 
-  def full_email_address(address, g_suite)
-    "#{address}@#{g_suite.domain}"
-  end
-
 end

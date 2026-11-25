@@ -16,10 +16,6 @@ module Reimbursement
       mail subject: @inbound_mail&.mail&.subject || "Unknown Receipt Bin inbox"
     end
 
-    def bounce_missing_attachment
-      mail subject: @inbound_mail&.mail&.subject || "Missing attachment(s)"
-    end
-
     def bounce_success
       @report = params[:report]
       @receipts_count = params[:receipts_count]
