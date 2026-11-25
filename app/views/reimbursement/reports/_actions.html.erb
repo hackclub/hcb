@@ -140,6 +140,7 @@
                 <% end %>
               </div>
             </div>
+          <%# Organizers land here when the submitter's payout method is unsupported or incomplete %>
           <% elsif !report.payout_method.ready_for_payout? %>
             <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> needs to update their payout information.">
               <div class="btn bg-info disabled whitespace-nowrap">
