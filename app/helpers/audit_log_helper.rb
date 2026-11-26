@@ -3,7 +3,7 @@
 module AuditLogHelper
   def humanize_audit_log_value(field, value)
     if field == "point_of_contact_id"
-      return User.find(value).email
+      return User.find_by(id: value)&.email || value
     end
 
     if field == "maximum_amount_cents"
@@ -11,11 +11,11 @@ module AuditLogHelper
     end
 
     if field == "event_id"
-      return Event.find(value).name
+      return Event.find_by(id: value)&.name || value
     end
 
     if field == "reviewer_id"
-      return User.find(value).name
+      return User.find_by(id: value)&.name || value
     end
 
     return "Yes" if value == true
