@@ -121,10 +121,6 @@
               receipt_upload_form_config[:popover] = "HcbCode:#{@item.hcb_code.hashid}" if @frame && @item.hcb_code.present?
               render partial: "receipts/form_v3", locals: receipt_upload_form_config
         end %>
-
-    <% if @reverse_receipt_id.present? %>
-      <%= render "receipts/reverse_pairing_modal", receipt_id: @reverse_receipt_id %>
-    <% end %>
   <% end %>
 
   <% if @item.hcb_code.present? %>
@@ -160,4 +156,8 @@
       <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
+<% end %>
+
+<% if @reverse_receipt_id.present? && @item.accepts_receipts? && @item.hcb_code.present? %>
+  <%= render "receipts/reverse_pairing_modal", receipt_id: @reverse_receipt_id %>
 <% end %>

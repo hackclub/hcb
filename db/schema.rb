@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -3003,7 +3003,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_120000) do
     t.datetime "subscribed_to_loops_at"
     t.boolean "teenager"
     t.datetime "updated_at", precision: nil, null: false
-    t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
     t.boolean "verified", default: false, null: false
     t.string "webauthn_id"

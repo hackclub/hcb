@@ -142,11 +142,11 @@ RSpec.describe LoginsController do
       }.to send_email(to: user.email)
     end
 
-    it "sends an SMS code if the user has opted-in and verified their phone number" do
+    it "sends an SMS code if the user has verified their phone number" do
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
       # that clears out `phone_number_verified` when the phone number changes.
-      user.update!(use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number_verified: true)
       login = create(:login, user:)
 
       # Stub out the SMS service
@@ -163,7 +163,7 @@ RSpec.describe LoginsController do
 
     it "resends the SMS code when the user requests it" do
       user = create(:user, phone_number: "+18556254225")
-      user.update!(use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number_verified: true)
       login = create(:login, user:)
 
       verification_service = instance_double(TwilioVerificationService)
@@ -545,7 +545,6 @@ RSpec.describe LoginsController do
         user = create(:user,
                       phone_number: "+18556254225",
                       phone_number_verified: true,
-                      use_sms_auth: true,
                       use_two_factor_authentication: true)
         totp = user.create_totp!
         login = create(:login, user:)
