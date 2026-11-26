@@ -6,8 +6,8 @@ module Payroll
       Payroll::InvoiceMailer.with(invoice: Payroll::Invoice.last).submitted
     end
 
-    def rejected
-      Payroll::InvoiceMailer.with(invoice: Payroll::Invoice.rejected.last).rejected
+    def reviewed
+      Payroll::InvoiceMailer.with(invoice: Payroll::Invoice.where.not(review_note: nil).last).reviewed
     end
 
   end

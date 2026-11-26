@@ -2099,7 +2099,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
     t.bigint "payment_id"
     t.bigint "payroll_position_id", null: false
     t.datetime "rejected_at"
-    t.text "rejection_reason"
+    t.text "review_note"
     t.bigint "reviewed_by_id"
     t.date "start_date"
     t.datetime "updated_at", null: false

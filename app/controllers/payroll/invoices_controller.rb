@@ -63,7 +63,7 @@ module Payroll
     def approve
       authorize @invoice
 
-      if @invoice.approve(reviewed_by: current_user)
+      if @invoice.approve(reviewed_by: current_user, review_note:)
         flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
       elsif !@invoice.submitted?
         flash[:error] = "This invoice has already been reviewed."
@@ -76,15 +76,14 @@ module Payroll
 
     def reject
       authorize @invoice
-      reason = params[:rejection_reason].to_s.strip
 
       if !@invoice.submitted?
         flash[:error] = "This invoice has already been reviewed."
-      elsif reason.empty?
-        flash[:error] = "Please give a reason for rejecting this invoice."
+      elsif review_note.nil?
+        flash[:error] = "Please add a note explaining why you're rejecting this invoice."
       else
-        @invoice.mark_rejected!(current_user, reason)
-        flash[:success] = "Invoice rejected. #{@invoice.payroll_position.payee.display_name} has been emailed your reason."
+        @invoice.mark_rejected!(current_user, review_note)
+        flash[:success] = "Invoice rejected. #{@invoice.payroll_position.payee.display_name} has been emailed your note."
       end
 
       redirect_to contractor_page
@@ -115,6 +114,10 @@ module Payroll
 
     def contractor_page
       payroll_position_path(@invoice.payroll_position)
+    end
+
+    def review_note
+      params[:review_note].to_s.strip.presence
     end
 
     def invoice_params

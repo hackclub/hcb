@@ -13,7 +13,7 @@
 #  end_date            :date
 #  name                :text             not null
 #  rejected_at         :datetime
-#  rejection_reason    :text
+#  review_note         :text
 #  start_date          :date
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
@@ -64,17 +64,18 @@ module Payroll
       state :rejected
 
       event :mark_approved do
-        after do |reviewed_by|
-          update!(reviewed_by:)
+        after do |reviewed_by, review_note|
+          update!(reviewed_by:, review_note:)
           copy_receipts_to_payment!
+          notify_contractor
         end
         transitions from: :submitted, to: :approved
       end
 
       event :mark_rejected do
-        after do |reviewed_by, rejection_reason|
-          update!(reviewed_by:, rejection_reason:)
-          Payroll::InvoiceMailer.with(invoice: self).rejected.deliver_later
+        after do |reviewed_by, review_note|
+          update!(reviewed_by:, review_note:)
+          notify_contractor
         end
         transitions from: :submitted, to: :rejected
       end
@@ -89,7 +90,7 @@ module Payroll
     end
 
     # Returns false if the invoice was already reviewed or the event can't cover it.
-    def approve(reviewed_by:)
+    def approve(reviewed_by:, review_note: nil)
       with_lock do
         next false unless submitted?
         next false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
@@ -102,7 +103,7 @@ module Payroll
           purpose: name,
           classification: :general_services
         ))
-        mark_approved!(reviewed_by)
+        mark_approved!(reviewed_by, review_note)
         true
       end
     end
@@ -145,6 +146,10 @@ module Payroll
       return if approved?
 
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
+    end
+
+    def notify_contractor
+      Payroll::InvoiceMailer.with(invoice: self).reviewed.deliver_later if review_note.present?
     end
 
     def currency_matches_position

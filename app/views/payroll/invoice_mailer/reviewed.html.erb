@@ -1,0 +1,28 @@
+<p>Hello,</p>
+
+<p>
+  Your <%= @invoice.amount.format(with_currency: true) %> invoice to <%= @event.name %> was <%= @invoice.aasm_state %>.
+  <% if @invoice.approved? %>
+    Payment will be sent after HCB review.
+  <% end %>
+</p>
+
+<ul>
+  <li><strong>Position:</strong> <%= @position.title %></li>
+  <li><strong>Description:</strong> <%= @invoice.name %></li>
+  <li><strong>Period:</strong> <%= @invoice.period_label %></li>
+  <li><strong>Note from <%= @invoice.reviewed_by.name %>:</strong> <%= @invoice.review_note %></li>
+</ul>
+
+<p>
+  If you have questions, reply to this email.
+  <% if @invoice.rejected? %>
+    You can submit a corrected invoice from <%= link_to "your HCB pay page", my_pay_url %>.
+  <% end %>
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

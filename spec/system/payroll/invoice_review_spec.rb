@@ -83,7 +83,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(Payment.sole.amount_cents).to eq(50_00)
     end
 
-    it "rejects only with a reason and after the confirmation, which shows above the modal" do
+    it "rejects only with a note and after the confirmation, which shows above the modal" do
       invoice = create_invoice("Week 1 hours")
       visit_without_animations position_page
       open_invoice(invoice)
@@ -92,7 +92,7 @@ RSpec.describe "Contractor invoice review", type: :system do
       expect(page).to have_no_css(".swal-modal")
 
       within_invoice_modal(invoice) do
-        fill_in "Reason for rejecting", with: "Missing hours breakdown"
+        fill_in "Note to the contractor (required to reject)", with: "Missing hours breakdown"
         click_button "Reject"
       end
       within(".swal-modal") { click_button "Cancel" }
@@ -104,7 +104,7 @@ RSpec.describe "Contractor invoice review", type: :system do
 
       expect(page).to have_invoice_status("Rejected")
       expect(invoice.reload).to be_rejected
-      expect(invoice.rejection_reason).to eq("Missing hours breakdown")
+      expect(invoice.review_note).to eq("Missing hours breakdown")
       expect(Payment.count).to eq(0)
     end
 
