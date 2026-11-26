@@ -29,7 +29,7 @@
       <th class="w-32">Date</th>
       <th>Project Name</th>
       <th>User</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -40,7 +40,7 @@
         <td><%= application.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= application.name %></td>
         <td><%= user_mention(application.user) %></td>
-        <td><%= application.aasm.human_state %></td>
+        <td class="text-right"><%= application.aasm.human_state %></td>
         <td class="text-nowrap">
           <%= link_to "View", submission_application_path(application) %>
           <%= link_to "Airtable", airtable_application_path(application), target: "_blank" %>
