@@ -4,7 +4,7 @@
 
 <p>
   <%= @check.event.name %> has just stopped a
-  <%= render_money(@check.amount) %> check sent to you for
+  <%= render_money(@check.amount_cents) %> check sent to you for
   <i>"<%= @check.payment_for %>"</i>.
 </p>
 
