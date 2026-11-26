@@ -473,6 +473,15 @@ RSpec.describe User, type: :model do
       it "allows other profile changes" do
         expect(user.update(full_name: "New Name")).to eq(true)
       end
+
+      it "reports the missing second factor when the phone number was never verified" do
+        user.update_column(:phone_number_verified, false)
+        user.reload
+
+        expect(user.update(phone_number: "+12025551234")).to eq(false)
+        expect(user.errors[:phone_number]).to be_empty
+        expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
+      end
     end
   end
 

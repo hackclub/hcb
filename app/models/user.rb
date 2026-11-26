@@ -832,7 +832,7 @@ class User < ApplicationRecord
 
     # on_phone_number_update marks a changed phone number as unverified after
     # validation, so a changed number can't count as the second factor.
-    if persisted? && phone_number_changed?
+    if persisted? && phone_number_changed? && phone_number_verified_was
       errors.add(:phone_number, "can't be changed while it's your only second authentication factor. Add another factor or disable two-factor authentication first.")
     elsif !phone_number_verified?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
