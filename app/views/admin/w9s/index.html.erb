@@ -21,7 +21,7 @@
       <th>Name</th>
       <th>URL</th>
       <th>Uploaded by</th>
-      <th>Signed at</th>
+      <th class="text-right">Signed at</th>
     </tr>
   </thead>
   <tbody>
@@ -30,7 +30,7 @@
         <td><%= link_to w9.user.name, edit_user_path(w9.user) %> (<%= w9.user.email %>)</td>
         <td><%= ugc_link_to w9.url, w9.url %></td>
         <td><%= w9.uploaded_by.name %></td>
-        <td><%= format_date w9.signed_at %></td>
+        <td class="text-right"><%= format_date w9.signed_at %></td>
       </tr>
     <% end %>
   </tbody>

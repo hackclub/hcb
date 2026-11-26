@@ -28,7 +28,7 @@
       <th>Date</th>
       <th>Date Imported</th>
       <th>Memo</th>
-      <th>Amount</th>
+      <th class="text-right">Amount</th>
     </tr>
   </thead>
   <tbody>
@@ -38,7 +38,7 @@
         <td><%= rt.date_posted %></td>
         <td><%= rt.created_at.to_date %></td>
         <td><%= rt.memo %></td>
-        <td><%= render_money rt.amount_cents %></td>
+        <td class="text-right"><%= render_money rt.amount_cents %></td>
       </tr>
     <% end %>
   </tbody>

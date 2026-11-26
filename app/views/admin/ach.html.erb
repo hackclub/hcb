@@ -33,7 +33,7 @@
       <th>Payment</th>
       <th>Amount</th>
       <th>Status</th>
-      <th>Confirmation No.</th>
+      <th class="text-right">Confirmation No.</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -61,7 +61,7 @@
             <span>⚠️ (Overdue)</span>
           <% end %>
         </td>
-        <td><%= ach.confirmation_number %></td>
+        <td class="text-right"><%= ach.confirmation_number %></td>
         <td>
           <%= link_to "Process", ach_start_approval_admin_path(ach) if ach.pending? %>
           <%= link_to "View", ach_start_approval_admin_path(ach) unless ach.pending? %>

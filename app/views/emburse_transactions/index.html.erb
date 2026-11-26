@@ -10,8 +10,8 @@
       <th>Emburse ID</th>
       <th>Amount</th>
       <th>State</th>
-      <th>Associated project</th>
-      <th colspan="3"></th>
+      <th class="text-right">Associated project</th>
+      <th><%# process or edit button %></th>
     </tr>
   </thead>
 
@@ -26,9 +26,9 @@
           <%= emburse_transaction.state.to_s.humanize %>
         </td>
         <% if emburse_transaction.event.nil? %>
-          <td>Unset</td>
+          <td class="text-right">Unset</td>
         <% else %>
-          <td><%= link_to emburse_transaction.event.name, emburse_transaction.event %></td>
+          <td class="text-right"><%= link_to emburse_transaction.event.name, emburse_transaction.event %></td>
         <% end %>
         <td><%= link_to emburse_transaction.under_review? ? "Process" : "Edit", edit_emburse_transaction_path(emburse_transaction), class: "h5 btn bg-info" %></td>
       </tr>

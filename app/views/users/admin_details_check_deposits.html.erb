@@ -6,14 +6,14 @@
         <th>Status</th>
         <th>Rejection reason</th>
         <th>Amount</th>
-        <th>Date</th>
+        <th class="text-right">Date</th>
       </tr>
       <% @check_deposits.each do |check| %>
         <tr>
           <td><%= check.increase_status %></td>
           <td><%= check.rejection_reason %></td>
           <td><%= render_money check.amount_cents %></td>
-          <td><%= check.created_at %></td>
+          <td class="text-right"><%= check.created_at %></td>
         </tr>
       <% end %>
     </table>

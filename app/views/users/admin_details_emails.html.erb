@@ -10,7 +10,7 @@
           <th>Sent at</th>
           <th>Subject</th>
           <th>Mailer</th>
-          <th>To</th>
+          <th class="text-right">To</th>
         </tr>
         <% @messages.each do |msg| %>
           <tr>
@@ -19,7 +19,7 @@
               <%= link_to msg.subject.presence || "(no subject)", "#", data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } %>
             </td>
             <td class="muted"><%= msg.mailer %></td>
-            <td><%= msg.to %></td>
+            <td class="text-right"><%= msg.to %></td>
           </tr>
         <% end %>
       </table>

@@ -5,13 +5,13 @@
       <tr>
         <th>Name</th>
         <th>Amount</th>
-        <th>Status</th>
+        <th class="text-right">Status</th>
       </tr>
       <% @disbursements.each do |disbursement| %>
         <tr>
           <td><%= link_to disbursement.name, hcb_code_path(disbursement.outgoing_hcb_code), data: { turbo_frame: "_top" } %></td>
           <td><%= render_money disbursement.amount %></td>
-          <td><%= disbursement.state_text %></td>
+          <td class="text-right"><%= disbursement.state_text %></td>
         </tr>
       <% end %>
     </table>
