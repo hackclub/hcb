@@ -13,6 +13,7 @@
 #  end_date            :date
 #  name                :text             not null
 #  rejected_at         :datetime
+#  rejection_reason    :text
 #  start_date          :date
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
@@ -71,8 +72,9 @@ module Payroll
       end
 
       event :mark_rejected do
-        after do |reviewed_by|
-          update!(reviewed_by:)
+        after do |reviewed_by, rejection_reason|
+          update!(reviewed_by:, rejection_reason:)
+          Payroll::InvoiceMailer.with(invoice: self).rejected.deliver_later
         end
         transitions from: :submitted, to: :rejected
       end

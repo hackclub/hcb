@@ -76,12 +76,15 @@ module Payroll
 
     def reject
       authorize @invoice
+      reason = params[:rejection_reason].to_s.strip
 
-      if @invoice.submitted?
-        @invoice.mark_rejected!(current_user)
-        flash[:success] = "Invoice rejected."
-      else
+      if !@invoice.submitted?
         flash[:error] = "This invoice has already been reviewed."
+      elsif reason.empty?
+        flash[:error] = "Please give a reason for rejecting this invoice."
+      else
+        @invoice.mark_rejected!(current_user, reason)
+        flash[:success] = "Invoice rejected. #{@invoice.payroll_position.payee.display_name} has been emailed your reason."
       end
 
       redirect_to contractor_page

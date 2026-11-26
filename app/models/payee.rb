@@ -89,6 +89,14 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
+  def notification_emails
+    if legal_entity&.users&.any?
+      legal_entity.users.map(&:email_address_with_name)
+    else
+      [email]
+    end
+  end
+
   # If another active payee on this event with the same email already has the
   # legal entity, this payee is a duplicate: its payments and payroll positions
   # move onto the existing payee and this one is archived. Returns the payee

@@ -49,13 +49,7 @@ module Payroll
     private
 
     def recipients
-      legal_entity = @payee.legal_entity
-
-      if legal_entity&.users&.any?
-        legal_entity.users.map(&:email_address_with_name)
-      else
-        [@payee.email]
-      end
+      @payee.notification_emails
     end
 
     def reply_to_addresses

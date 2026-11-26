@@ -156,14 +156,20 @@
             <% receipts = invoice.receipts.with_attached_file.includes(:user) %>
             <% preview_receipt = receipts.find(&:preview) %>
             <% review_actions = capture do %>
-              <div class="flex gap-2">
-                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", form_class: "flex-1", data: { turbo_frame: "_top" } %>
-                <%= button_to "Reject", reject_payroll_invoice_path(invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+              <div class="flex flex-col gap-2">
+                <%= button_to "Approve", approve_payroll_invoice_path(invoice), class: "btn bg-success w-full", data: { turbo_frame: "_top" } %>
+                <%= form_with url: reject_payroll_invoice_path(invoice), class: "flex gap-2", data: { turbo_frame: "_top" } do |form| %>
+                  <%= form.text_field :rejection_reason, id: nil, required: true, placeholder: "Reason for rejecting", aria: { label: "Reason for rejecting" }, class: "flex-1 m-0" %>
+                  <%= form.submit "Reject", class: "btn bg-muted", data: { turbo_confirm: "Reject this invoice? Your reason will be emailed to the contractor." } %>
+                <% end %>
               </div>
             <% end if @can_review && invoice.submitted? %>
             <tr class="clickable">
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <% if invoice.rejection_reason.present? %>
+                  <span class="tooltipped tooltipped--e relative z-10 pointer-events-auto" aria-label="<%= invoice.rejection_reason %>"><%= inline_icon "info", size: 20, class: "muted align-middle" %></span>
+                <% end %>
               </td>
               <td>
                 <% if invoice.reviewed_by.present? %>

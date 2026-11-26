@@ -207,7 +207,8 @@ RSpec.describe Payroll::InvoicesController do
       end
 
       it "can't reject the invoice" do
-        post :reject, params: { id: invoice.hashid }
+        expect { post :reject, params: { id: invoice.hashid, rejection_reason: "Nope" } }
+          .not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
 
         expect(invoice.reload).to be_submitted
       end
@@ -215,17 +216,53 @@ RSpec.describe Payroll::InvoicesController do
   end
 
   describe "POST #reject" do
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency, start_date: position.start_date, end_date: position.start_date) }
+
     before { create_session(organizer, verified: true) }
 
     # Invoices created before amounts had to be positive must still be reviewable.
     it "rejects a legacy invoice with a non-positive amount" do
-      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency, start_date: position.start_date, end_date: position.start_date)
       invoice.update_column(:amount_cents, 0)
 
-      post :reject, params: { id: invoice.hashid }
+      post :reject, params: { id: invoice.hashid, rejection_reason: "Wrong amount" }
 
       expect(invoice.reload).to be_rejected
       expect(invoice.reviewed_by).to eq(organizer)
+    end
+
+    it "stores the trimmed reason and emails it to the contractor" do
+      expect { post :reject, params: { id: invoice.hashid, rejection_reason: "  Missing hours breakdown \n" } }
+        .to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+      expect(invoice.reload.rejection_reason).to eq("Missing hours breakdown")
+    end
+
+    it "refuses a missing or blank reason, which the required field alone can't enforce" do
+      [{}, { rejection_reason: "" }, { rejection_reason: " \n\t" }].each do |extra|
+        expect { post :reject, params: { id: invoice.hashid, **extra } }
+          .not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+        expect(invoice.reload).to be_submitted
+      end
+    end
+
+    it "doesn't overwrite the reason or re-email when rejecting an already reviewed invoice" do
+      post :reject, params: { id: invoice.hashid, rejection_reason: "First" }
+
+      expect { post :reject, params: { id: invoice.hashid, rejection_reason: "Second" } }
+        .not_to have_enqueued_mail(Payroll::InvoiceMailer, :rejected)
+
+      expect(invoice.reload.rejection_reason).to eq("First")
+      expect(flash[:error]).to eq("This invoice has already been reviewed.")
+    end
+
+    it "lets a contractor who is also an organizer neither reject nor annotate their own invoice" do
+      create(:legal_entity_user, legal_entity:, user: organizer)
+
+      post :reject, params: { id: invoice.hashid, rejection_reason: "Oops" }
+
+      expect(invoice.reload).to be_submitted
+      expect(invoice.rejection_reason).to be_nil
     end
   end
 end

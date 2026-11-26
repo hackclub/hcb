@@ -16,5 +16,18 @@ module Payroll
       )
     end
 
+    def rejected
+      @invoice = params[:invoice]
+      @position = @invoice.payroll_position
+      @event = @position.event
+
+      mail(
+        to: @position.payee.notification_emails,
+        reply_to: @invoice.reviewed_by&.email_address_with_name,
+        subject: "Your invoice to #{@event.name} for #{@invoice.amount.format} was rejected",
+        from: hcb_email_with_name_of(@event)
+      )
+    end
+
   end
 end
