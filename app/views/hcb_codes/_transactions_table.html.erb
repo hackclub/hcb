@@ -7,8 +7,8 @@
       <th>TYPE</th>
       <th>DATE</th>
       <th>MEMO</th>
-      <th>AMOUNT</th>
-      <th class="text-right">CATEGORY</th>
+      <th class="text-right">AMOUNT</th>
+      <th>CATEGORY</th>
       <th></th>
     </tr>
   </thead>
@@ -36,10 +36,10 @@
         <td>
           <%= transaction.memo %>
         </td>
-        <td>
+        <td class="text-right">
           <%= transaction.amount %>
         </td>
-        <td class="text-right">
+        <td>
           <%= render(
                 partial: "hcb_codes/transaction_category_form",
                 locals: { model: transaction }
@@ -61,7 +61,7 @@
         <td>OLD</td>
         <td><%= t_transaction.date %></td>
         <td><%= t_transaction.memo %></td>
-        <td><%= render_money_amount(t_transaction.amount) %></td>
+        <td class="text-right"><%= render_money_amount(t_transaction.amount) %></td>
         <td></td>
         <td></td>
       </tr>

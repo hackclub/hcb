@@ -26,7 +26,7 @@
           <%= emburse_transaction.state.to_s.humanize %>
         </td>
         <% if emburse_transaction.event.nil? %>
-          <td>Unset</td>
+          <td class="text-right">Unset</td>
         <% else %>
           <td class="text-right"><%= link_to emburse_transaction.event.name, emburse_transaction.event %></td>
         <% end %>

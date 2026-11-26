@@ -28,8 +28,8 @@
       <th>Memo</th>
       <th>Amount</th>
       <th>HCB Code</th>
-      <th>Event</th>
-      <th class="text-right">Category</th>
+      <th class="text-right">Event</th>
+      <th>Category</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -52,8 +52,8 @@
         </td>
         <td><%= cpt.amount %></td>
         <td><%= cpt.hcb_code %></td>
-        <td><%= cpt.event.try(:id) %></td>
-        <td class="text-right">
+        <td class="text-right"><%= cpt.event.try(:id) %></td>
+        <td>
           <%= render(
                 partial: "hcb_codes/transaction_category_form",
                 locals: { model: cpt, admin_context: true }
