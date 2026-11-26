@@ -33,9 +33,8 @@
 #
 # Indexes
 #
-#  index_tax_forms_on_legal_entity_id            (legal_entity_id)
-#  index_tax_forms_on_tin_hash                   (tin_hash)
-#  index_tax_forms_unique_live_tax1099_tin_hash  (tin_hash) UNIQUE WHERE (((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))
+#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
+#  index_tax_forms_on_tin_hash         (tin_hash)
 #
 
 module Tax
@@ -95,9 +94,7 @@ module Tax
 
     # tin_verified is what payability reads (LegalEntity#pending_payable_requirements).
     # For a form collected through TaxBandits it follows TaxBandits' TIN match.
-    # Tax1099 imports are never TIN-matched, so their status never changes:
-    # Tax1099ImportService sets tin_verified from the admin's answer when it
-    # creates them, without going through the match-status emails below.
+    # Legacy Tax1099-sourced forms were never TIN-matched, so theirs is fixed.
     before_save if: :will_save_change_to_taxbandits_tin_matching_status? do
       self.tin_verified = taxbandits_tin_match_success?
     end
@@ -162,9 +159,7 @@ module Tax
     end
 
     # Gives the legal entity this form's TIN identity, if it has none yet. Runs
-    # when a form's tin_hash is first set; Tax1099ImportService, which creates
-    # its forms with a tin_hash already set, calls it once TaxBandits has
-    # accepted the form, so a TIN TaxBandits rejects never reaches the entity.
+    # when a form's tin_hash is first set.
     def adopt_tin_hash_on_legal_entity!
       return if tin_hash.nil?
 
