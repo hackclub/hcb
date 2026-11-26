@@ -151,7 +151,7 @@
   </td>
 
   <% if @show_running_balance %>
-    <td><%= number_to_currency ct.running_balance %></td>
+    <td class="text-right"><%= number_to_currency ct.running_balance %></td>
   <% end %>
 
   <% if local_assigns[:show_author_column] %>

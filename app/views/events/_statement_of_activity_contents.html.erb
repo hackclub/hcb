@@ -97,7 +97,7 @@
             <% if show_organization_column %>
               <th>Organization</th>
             <% end %>
-            <th>ID</th>
+            <th class="text-right">ID</th>
           </tr>
         </thead>
         <tbody>
@@ -132,7 +132,7 @@
                 <% if show_organization_column %>
                   <th>Organization</th>
                 <% end %>
-                <th>ID</th>
+                <th class="text-right">ID</th>
               </tr>
             </thead>
             <tbody>
@@ -145,7 +145,7 @@
                   <% if show_organization_column %>
                     <td><%= link_to(transaction.event.name, event_path(transaction.event)) %></td>
                   <% end %>
-                  <td>
+                  <td class="text-right">
                     <%= link_to transaction.local_hcb_code.hashid, transaction_url %>
                   </td>
                 </tr>
