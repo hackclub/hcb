@@ -1,0 +1,7 @@
+<p>
+  Your charge at <strong><%= @merchant_name %></strong> was updated from <%= @previous_amount %> to <%= @amount %>. This usually means the merchant refunded part of the charge or charged you more. Your balance has been updated to reflect this.
+</p>
+
+<p>
+  <%= link_to "View this transaction", ledger_item_url(@ledger_item) %> on HCB.
+</p>
