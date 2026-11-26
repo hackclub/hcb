@@ -13,8 +13,8 @@
     <% end %>
 
     <%= render "hcb_codes/memo/stream", hcb_code: %>
-    <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } if policy(hcb_code).edit? %>
     <div class="flex-1"></div>
+    <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } if policy(hcb_code).edit? %>
     <%= pop_icon_to "edit",
         edit_hcb_code_path(hcb_code),
         class: "align-middle tooltipped tooltipped--s", "aria-label": "Rename",

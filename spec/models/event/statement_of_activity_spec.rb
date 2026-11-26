@@ -341,6 +341,72 @@ RSpec.describe Event::StatementOfActivity do
       expect(instance.category_totals["intra-organization-transfer"]).to eq(0)
     end
 
+    it "leaves intra-org transfers out of revenue and expense for a group, but keeps inter-org ones" do
+      # #15898: the summary sentence would otherwise count money moved inside the group as both raised and spent.
+      group = create(:event_group)
+      event_a, event_b, outside = create_list(:event, 3)
+      group.memberships.create!(event: event_a)
+      group.memberships.create!(event: event_b)
+
+      donation = create(:canonical_transaction, amount_cents: 1_000_00)
+      create(:canonical_event_mapping, event: event_a, canonical_transaction: donation)
+
+      internal = create(:disbursement, source_event: event_a, event: event_b)
+      create_disbursement_transaction(disbursement: internal, event: event_a, hcb_code: internal.outgoing_hcb_code, amount_cents: -100_00)
+      create_disbursement_transaction(disbursement: internal, event: event_b, hcb_code: internal.incoming_hcb_code, amount_cents: 100_00)
+
+      external = create(:disbursement, source_event: event_b, event: outside)
+      create_disbursement_transaction(disbursement: external, event: event_b, hcb_code: external.outgoing_hcb_code, amount_cents: -30_00)
+
+      # #15898 only drops intra-org transfers, so money coming in from outside the group is still revenue.
+      incoming = create(:disbursement, source_event: outside, event: event_a)
+      create_disbursement_transaction(disbursement: incoming, event: event_a, hcb_code: incoming.incoming_hcb_code, amount_cents: 50_00)
+
+      instance = described_class.new(group, start_date_param: "1970-01-01")
+
+      expect(instance.total_revenue).to eq(1_050_00)
+      expect(instance.total_expense).to eq(-30_00)
+      expect(instance.net_asset_change).to eq(1_020_00)
+    end
+
+    it "leaves intra-org transfers out of revenue and expense for parent/child with include_descendants" do
+      # #15898: same as the group case, for an organization's statement that includes its sub-organizations (e.g. /hq).
+      parent = create(:event)
+      child = create(:event, parent:)
+
+      donation = create(:canonical_transaction, amount_cents: 1_000_00)
+      create(:canonical_event_mapping, event: parent, canonical_transaction: donation)
+
+      disbursement = create(:disbursement, source_event: parent, event: child)
+      create_disbursement_transaction(disbursement:, event: parent, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -100_00)
+      create_disbursement_transaction(disbursement:, event: child, hcb_code: disbursement.incoming_hcb_code, amount_cents: 100_00)
+
+      instance = described_class.new(parent, start_date_param: "1970-01-01", include_descendants: true)
+
+      expect(instance.total_revenue).to eq(1_000_00)
+      expect(instance.total_expense).to eq(0)
+    end
+
+    it "still counts an intra-org transfer leg whose other leg falls outside the date range" do
+      # #15898: dropping a lone leg would leave raised + spent no longer adding up to the net change.
+      group = create(:event_group)
+      event_a, event_b = create_list(:event, 2)
+      group.memberships.create!(event: event_a)
+      group.memberships.create!(event: event_b)
+
+      disbursement = create(:disbursement, source_event: event_a, event: event_b)
+      outgoing = create_disbursement_transaction(disbursement:, event: event_a, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -100_00)
+      incoming = create_disbursement_transaction(disbursement:, event: event_b, hcb_code: disbursement.incoming_hcb_code, amount_cents: 100_00)
+      outgoing.update!(date: Date.new(2025, 12, 31))
+      incoming.update!(date: Date.new(2026, 1, 1))
+
+      instance = described_class.new(group, start_date_param: "2026-01-01", end_date_param: "2026-01-31")
+
+      expect(instance.net_asset_change).to eq(100_00)
+      expect(instance.total_revenue).to eq(100_00)
+      expect(instance.total_expense).to eq(0)
+    end
+
     describe "payments (#15894)" do
       let(:event_a) { create(:event) }
       let(:supplies) { TransactionCategory.find_or_create_by!(slug: "project-supplies") }

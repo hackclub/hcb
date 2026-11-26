@@ -115,6 +115,23 @@ RSpec.describe LedgersController, type: :controller do
         expect(response.body).to include("+ Add tag")
         expect(response.body).to include(delete_button)
       end
+
+      it "ends the list with a divider and the Create tag link on the org's own page" do
+        get :show, params: { id: ledger.to_param }
+
+        expect(response.body).to include("tags__divider")
+        expect(response.body).to include("Create tag")
+      end
+
+      it "offers the Create tag link alone, with no divider, when the org has no tags yet" do
+        tag.destroy!
+
+        get :show, params: { id: ledger.to_param }
+
+        expect(response.body).to include("+ Add tag")
+        expect(response.body).to include("Create tag")
+        expect(response.body).not_to include("tags__divider")
+      end
     end
   end
 

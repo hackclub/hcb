@@ -142,11 +142,11 @@ RSpec.describe LoginsController do
       }.to send_email(to: user.email)
     end
 
-    it "sends an SMS code if the user has opted-in and verified their phone number" do
+    it "sends an SMS code if the user has verified their phone number" do
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
       # that clears out `phone_number_verified` when the phone number changes.
-      user.update!(use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number_verified: true)
       login = create(:login, user:)
 
       # Stub out the SMS service
@@ -163,7 +163,7 @@ RSpec.describe LoginsController do
 
     it "resends the SMS code when the user requests it" do
       user = create(:user, phone_number: "+18556254225")
-      user.update!(use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number_verified: true)
       login = create(:login, user:)
 
       verification_service = instance_double(TwilioVerificationService)
@@ -269,6 +269,32 @@ RSpec.describe LoginsController do
         # `NoMethodError: undefined method 'generate_key' for nil` instead of
         # completing the login.
         expect(response).to redirect_to(root_path)
+        expect(login.reload).to be_complete
+      end
+    end
+
+    context "when return_to is a full URL on this host" do
+      it "signs the user in and redirects back to it" do
+        user = create(:user, phone_number: "+18556254225")
+        event = create(:event, is_public: true)
+        login = create(:login, user:, state: { return_to: event_url(event) })
+        create_webauthn_credential(user:)
+
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
+
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "webauthn",
+            credential: JSON.dump(credential)
+          }
+        )
+
+        expect(response).to redirect_to(event_url(event))
         expect(login.reload).to be_complete
       end
     end
@@ -519,7 +545,6 @@ RSpec.describe LoginsController do
         user = create(:user,
                       phone_number: "+18556254225",
                       phone_number_verified: true,
-                      use_sms_auth: true,
                       use_two_factor_authentication: true)
         totp = user.create_totp!
         login = create(:login, user:)

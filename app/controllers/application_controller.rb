@@ -115,9 +115,9 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def render_pdf(filename, template: "#{controller_path}/#{action_name}")
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}", fit_to_one_page: false)
     html = render_to_string(template:, formats: :pdf, layout: false)
-    send_data CloudflareBrowserRun.pdf(html), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+    send_data CloudflareBrowserRun.pdf(html, fit_to_one_page:), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
   end
 
   # Called by the audits1984 engine (mounted at /console) to authenticate auditors.

@@ -42,12 +42,13 @@ RSpec.describe "CheckDepositsController#index", type: :request do
 
     get event_check_deposits_path(event)
 
-    link = Nokogiri::HTML(response.body).at_css("a.stretched-link[href='#{ledger_item_path(check_deposit.reload.ledger_item)}']")
+    item = check_deposit.reload.ledger_item
+    link = Nokogiri::HTML(response.body).at_css("a.stretched-link[href='#{ledger_item_path(item)}']")
 
     expect(link["data-behavior"]).to eq("modal_trigger")
     expect(link["data-modal"]).to eq("shared_popover")
     expect(link["data-popover-title"]).to eq("Check deposit of $25.00")
-    expect(link["data-popover-src"]).to eq(check_deposit.local_hcb_code.popover_path)
-    expect(link["data-popover-state-url"]).to eq(hcb_code_path(check_deposit.local_hcb_code))
+    expect(link["data-popover-src"]).to eq(item.popover_path)
+    expect(link["data-popover-state-url"]).to eq(ledger_item_path(item))
   end
 end
