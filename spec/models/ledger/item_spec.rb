@@ -568,49 +568,81 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "CardCharge reversed/released mailer" do
-    # Pins linked_object past the refresh! callbacks (which would otherwise
-    # recompute status from this item's nonexistent canonical transactions),
-    # mirroring the account-verification specs above.
-    def card_charge_item
+  describe "CardCharge amount change mailers" do
+    # Pins linked_object, amount, and status past the refresh! callbacks (which
+    # would otherwise recompute them from this item's nonexistent canonical
+    # transactions), mirroring the account-verification specs above.
+    def card_charge_item(amount_cents:, status:)
       item = create(:ledger_item)
-      item.update_columns(linked_object_type: "CardCharge", linked_object_id: create(:raw_stripe_transaction).card_charge.id)
+      item.update_columns(linked_object_type: "CardCharge", linked_object_id: create(:raw_stripe_transaction).card_charge.id, amount_cents:, status:)
       item.reload
     end
 
-    it "emails the cardholder when a card charge is reversed" do
-      item = card_charge_item
+    it "does not email when the first authorization lands on a new item" do
+      item = card_charge_item(amount_cents: 0, status: "pending")
 
       expect {
-        item.update!(status: "reversed")
-      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+        item.update!(amount_cents: -50_00)
+      }.not_to have_enqueued_mail
     end
 
-    it "emails the cardholder when a card charge authorization is released" do
-      item = card_charge_item
+    it "does not email when a pending hold's amount changes" do
+      item = card_charge_item(amount_cents: -50_00, status: "pending")
 
       expect {
-        item.update!(status: "released")
-      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+        item.update!(amount_cents: -60_00)
+      }.not_to have_enqueued_mail
     end
 
-    it "does not email for other linked object types that reverse" do
+    it "sends the reversed email when a card charge authorization is released" do
+      item = card_charge_item(amount_cents: -50_00, status: "pending")
+
+      expect {
+        item.update!(amount_cents: 0, status: "released")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed).with(params: { ledger_item: item, previous_amount_cents: -50_00, amount_cents: 0 }, args: [])
+    end
+
+    it "sends the amount updated email when a settled card charge is partially refunded" do
+      item = card_charge_item(amount_cents: -50_00, status: "settled")
+
+      expect {
+        item.update!(amount_cents: -30_00)
+      }.to have_enqueued_mail(CardChargeMailer, :amount_updated).with(params: { ledger_item: item, previous_amount_cents: -50_00, amount_cents: -30_00 }, args: [])
+    end
+
+    it "sends the reversed email when the rest of a card charge is refunded" do
+      item = card_charge_item(amount_cents: -30_00, status: "settled")
+
+      expect {
+        item.update!(amount_cents: 0, status: "reversed")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed).once
+    end
+
+    it "does not email when a card charge settles at a different amount, which notify_settled covers" do
+      item = card_charge_item(amount_cents: -50_00, status: "pending")
+
+      expect {
+        item.update!(amount_cents: -55_00, status: "settled")
+      }.not_to have_enqueued_mail
+    end
+
+    it "does not email for other linked object types whose amount changes" do
       item = create(:ledger_item)
-      item.update_columns(linked_object_type: "AchTransfer")
+      item.update_columns(linked_object_type: "AchTransfer", amount_cents: -50_00, status: "settled")
       item.reload
 
       expect {
-        item.update!(status: "reversed")
-      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+        item.update!(amount_cents: 0, status: "reversed")
+      }.not_to have_enqueued_mail
     end
 
-    it "does not re-email when the item is saved again without a status change" do
-      item = card_charge_item
-      item.update!(status: "reversed")
+    it "does not re-email when the item is saved again without an amount change" do
+      item = card_charge_item(amount_cents: -50_00, status: "settled")
+      item.update!(amount_cents: 0, status: "reversed")
 
       expect {
         item.update!(custom_memo: "Refunded")
-      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+      }.not_to have_enqueued_mail
     end
 
     # An approved Stripe authorization as the webhook imports it: the raw
