@@ -249,4 +249,23 @@ RSpec.describe User::Session, type: :model do
       expect(session.expiration_at).to be <= expected_max
     end
   end
+
+  describe "#clear_ip_metadata!" do
+    it "clears the IP, location, and user agent" do
+      session = create(:user_session, ip: "127.0.0.1", latitude: 1, longitude: 2, user_agent: "fake firefox")
+
+      session.clear_ip_metadata!
+
+      expect(session.reload).to have_attributes(ip: nil, latitude: nil, longitude: nil, user_agent: nil)
+    end
+
+    it "leaves no copy of the user agent in the session's versions", versioning: true do
+      session = create(:user_session, user_agent: "fake firefox")
+
+      session.clear_ip_metadata!
+
+      versions = PaperTrail::Version.where(item_type: "User::Session", item_id: session.id)
+      expect(versions.map(&:object).compact.join).not_to include("fake firefox")
+    end
+  end
 end

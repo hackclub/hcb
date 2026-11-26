@@ -48,6 +48,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified: true
@@ -83,6 +84,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified:,
