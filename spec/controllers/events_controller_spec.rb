@@ -466,6 +466,21 @@ RSpec.describe EventsController do
       )
     end
 
+    it "lets an admin inspect the organization's associated records from the admin tab" do
+      event = create(:event, plan_type: Event::Plan::Standard)
+      create(:card_grant_setting, event:)
+      # Unrelated to the inspectors, and would otherwise reach out to Airtable.
+      allow_any_instance_of(Event).to receive(:airtable_record).and_return(nil)
+      create_session(create(:user, :make_admin), verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "admin" })
+
+      inspected = Nokogiri::HTML5(response.body).css("details > summary").filter_map { |summary| summary.text[/Inspect "(.+)" record/, 1] }
+      expect(inspected.first).to eq("event")
+      expect(inspected).to include("event/configuration", "event/plan/standard", "ledger", "card_grant_setting")
+      expect(inspected).not_to include("nil_class")
+    end
+
     it "sends a non-auditor who asks for the admin tab to the details tab" do
       event = create(:event)
       sign_in_organizer_of(event)
