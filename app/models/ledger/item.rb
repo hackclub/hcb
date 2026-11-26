@@ -140,9 +140,8 @@ class Ledger
     after_create :map!
     after_touch :map!
 
-    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
-      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
-    end
+    # The first transaction landing on a new item isn't a change worth an email.
+    after_update :notify_card_charge_amount_changed, if: -> { linked_object_type == "CardCharge" && saved_change_to_amount_cents? && !amount_cents_before_last_save.zero? }
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
     scope :unmapped, -> { where.missing(:primary_mapping) }
@@ -418,6 +417,21 @@ class Ledger
     end
 
     private
+
+    def notify_card_charge_amount_changed
+      mailer = CardChargeMailer.with(ledger_item: self, previous_amount_cents: amount_cents_before_last_save, amount_cents:)
+
+      if saved_change_to_status? && (reversed? || released?)
+        # Refunded in full, or the hold was released before it was captured.
+        mailer.reversed.deliver_later
+      elsif status_before_last_save == "settled" && settled?
+        # Partially refunded, or the merchant captured more after it settled.
+        mailer.amount_updated.deliver_later
+      end
+      # A pending hold's amount moving isn't worth an email, and a charge that
+      # settles at a different amount already gets
+      # CanonicalPendingTransactionMailer#notify_settled.
+    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.
