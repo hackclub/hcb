@@ -151,6 +151,16 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
+    <details>
+      <summary>Audit log</summary>
+
+      <%= turbo_frame_tag :audit_log, src: audit_log_user_path(@user), loading: :lazy do %>
+        <p class="center muted mt3 h3">One moment...</p>
+      <% end %>
+    </details>
+  <% end %>
+
+  <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">Comments</h3>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user, admin_only: true %>

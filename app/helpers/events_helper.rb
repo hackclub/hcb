@@ -406,7 +406,7 @@ module EventsHelper
   end
 
   def render_audit_log_field(field)
-    field.delete_suffix("_cents").humanize
+    field.delete_suffix("_cents").delete_suffix("_ciphertext").humanize
   end
 
   def render_audit_log_value(field, value, color:)

@@ -69,6 +69,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || (record == user && user.admin_override_pretend?)
   end
 
+  def audit_log?
+    user.auditor?
+  end
+
   def admin_details?
     user.auditor?
   end
