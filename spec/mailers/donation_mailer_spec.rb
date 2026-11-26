@@ -31,7 +31,7 @@ RSpec.describe DonationMailer do
     end
 
     it "still sends the email, without an attachment, when the PDF fails to render" do
-      allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::ServerError)
+      allow(CloudflareBrowserRun).to receive(:pdf).and_raise(Faraday::ServerError.new("Cloudflare is down"))
       allow(Rails.error).to receive(:report)
 
       mail = described_class.with(donation:).donor_receipt.message
