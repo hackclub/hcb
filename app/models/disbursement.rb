@@ -150,6 +150,10 @@ class Disbursement < ApplicationRecord
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
 
+  # Written alongside the events and subledgers they come from. Reads still go
+  # through those until existing rows are backfilled.
+  before_validation :assign_ledgers, if: :ledger_sources_changed?
+
   scope :processing, -> { in_transit }
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
   scope :not_scheduled, -> { where(scheduled_on: nil) }
@@ -294,6 +298,23 @@ class Disbursement < ApplicationRecord
     if scheduled_on.present? && scheduled_on.before?(Time.now.end_of_day)
       self.errors.add(:scheduled_on, "must be in the future")
     end
+  end
+
+  def ledger_sources_changed?
+    new_record? || will_save_change_to_source_event_id? || will_save_change_to_event_id? ||
+      will_save_change_to_source_subledger_id? || will_save_change_to_destination_subledger_id?
+  end
+
+  def assign_ledgers
+    self.source_ledger = ledger_for(source_event, source_subledger)
+    self.destination_ledger = ledger_for(destination_event, destination_subledger)
+  end
+
+  # A subledger's money lives on its card grant's ledger, not the event's.
+  def ledger_for(event, subledger)
+    return subledger.card_grant&.ledger if subledger.present?
+
+    event&.ledger
   end
 
 end
