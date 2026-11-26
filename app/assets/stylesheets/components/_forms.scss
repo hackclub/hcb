@@ -328,6 +328,11 @@ input[type='checkbox'] {
       0 0 0 3px rgba(map-get($palette, info), 0.25);
   }
 
+  & input:disabled + .slider {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   & input:checked + .slider {
     background-color: $red;
   }
