@@ -12,7 +12,7 @@
   <th>Amount</th>
   <th>Account</th>
   <th class="text-right">Event</th>
-  <th></th>
+  <th><%# view link %></th>
 </tr>
 <% @needs_action.each do |t| %>
   <tr class="shade-yellow">
@@ -49,7 +49,7 @@
   <th>Amount</th>
   <th>Account</th>
   <th class="text-right">Event</th>
-  <th></th>
+  <th><%# view link %></th>
 </tr>
 <% @transactions.each do |t| %>
   <tr class="<%= "shade-yellow" if !t.event && t.is_event_related %>">
