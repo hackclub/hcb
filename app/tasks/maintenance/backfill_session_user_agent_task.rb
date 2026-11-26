@@ -38,7 +38,7 @@ module Maintenance
       before, after = completion&.object_changes&.dig("authentication_factors")
       return unless after.to_h.key?("email") && !before.to_h.key?("email")
 
-      session.update!(user_agent: attempt.user_agent)
+      session.update_columns(user_agent: attempt.user_agent)
     end
 
   end
