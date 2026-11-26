@@ -131,8 +131,11 @@ RSpec.describe User::Session, type: :model do
         expect(user_rendered).to eq("")
 
         activity = PublicActivity::Activity.sole
-        admin_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: admin))
-        expect(admin_rendered).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
+        admin_html = activity.render(ApplicationController.renderer, current_user: admin)
+        expect(rendered_text(admin_html)).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
+
+        link = Nokogiri::HTML5.fragment(admin_html).at_css("a[href='#{Rails.application.routes.url_helpers.admin_user_path(user)}']")
+        expect(link.text).to eq("Hack Clubber")
       end
     end
 

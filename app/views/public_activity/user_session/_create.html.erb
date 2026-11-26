@@ -5,7 +5,7 @@
 <% if activity&.trackable&.impersonated? %>
   <% if current_user.auditor? %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
-      impersonated <%= activity.trackable.user&.name %> on HCB
+      impersonated <%= link_to activity.trackable.user.name, admin_user_path(activity.trackable.user) if activity.trackable.user %> on HCB
     <% end %>
   <% end %>
 <% else %>
