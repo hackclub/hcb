@@ -29,7 +29,7 @@
       <th>Amount</th>
       <th>HCB Code</th>
       <th>Event</th>
-      <th>Category</th>
+      <th class="text-right">Category</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -53,7 +53,7 @@
         <td><%= cpt.amount %></td>
         <td><%= cpt.hcb_code %></td>
         <td><%= cpt.event.try(:id) %></td>
-        <td>
+        <td class="text-right">
           <%= render(
                 partial: "hcb_codes/transaction_category_form",
                 locals: { model: cpt, admin_context: true }

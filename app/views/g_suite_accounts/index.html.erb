@@ -10,8 +10,8 @@
       <tr>
         <th>Workspace email</th>
         <th>Backup email</th>
-        <th>G suite</th>
-        <th colspan="3"></th>
+        <th class="text-right">G suite</th>
+        <th></th>
       </tr>
     </thead>
 
@@ -22,7 +22,7 @@
           <td><%= g_suite_account.backup_email %></td>
           <td><%= link_to "Workspace", g_suite_account.g_suite %></td>
           <% if g_suite_account.under_review? %>
-            <td><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
+            <td class="text-right"><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
           <% else %>
             <td><%= link_to "Edit", edit_g_suite_account_path(g_suite_account), class: "h5 btn bg-info" %></td>
           <% end %>
@@ -41,8 +41,8 @@
       <th>Workspace email</th>
       <th>Backup email</th>
       <th>Status</th>
-      <th>Workspace</th>
-      <th colspan="3"></th>
+      <th class="text-right">Workspace</th>
+      <th></th>
     </tr>
   </thead>
 
@@ -54,7 +54,7 @@
         <td><%= g_suite_account.status.capitalize %></td>
         <td><%= link_to "Workspace", g_suite_account.g_suite %></td>
         <% if g_suite_account.under_review? %>
-          <td><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
+          <td class="text-right"><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
         <% else %>
           <td><%= link_to "Edit", edit_g_suite_account_path(g_suite_account), class: "h5 btn bg-info" %></td>
         <% end %>

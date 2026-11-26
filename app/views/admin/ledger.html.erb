@@ -54,7 +54,7 @@
         <th>Bank account</th>
         <th class="w-24">Amount</th>
         <th class="w-64">HCB Code</th>
-        <th class="w-24">Event</th>
+        <th class="w-24 text-right">Event</th>
         <th class="w-24">Actions</th>
       </tr>
     </thead>
@@ -70,7 +70,7 @@
           <td><%= ct.bank_account_name %></td>
           <td class="nowrap"><%= ct.amount.format %></td>
           <td><%= ct.hcb_code %></td>
-          <td><%= link_to ct.canonical_event_mapping.event.id, ct.canonical_event_mapping.event if ct.canonical_event_mapping.try(:event) %></td>
+          <td class="text-right"><%= link_to ct.canonical_event_mapping.event.id, ct.canonical_event_mapping.event if ct.canonical_event_mapping.try(:event) %></td>
           <td>
             <%= link_to "Process", transaction_admin_path(ct) unless ct.event.present? %>
             <%= link_to "View", transaction_admin_path(ct) if ct.event.present? %>

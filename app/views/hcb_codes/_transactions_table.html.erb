@@ -1,17 +1,17 @@
 <%# locals: (canonical_transactions: [], canonical_pending_transactions: [], t_transaction: nil) %>
 
 <table>
-  <thread>
+  <thead>
     <tr>
       <th>ID</th>
       <th>TYPE</th>
       <th>DATE</th>
       <th>MEMO</th>
       <th>AMOUNT</th>
-      <th>CATEGORY</th>
+      <th class="text-right">CATEGORY</th>
       <th></th>
     </tr>
-  </thread>
+  </thead>
   <tbody>
     <% canonical_transactions.to_a.concat(canonical_pending_transactions.to_a).each do |transaction| %>
       <tr>
@@ -39,7 +39,7 @@
         <td>
           <%= transaction.amount %>
         </td>
-        <td>
+        <td class="text-right">
           <%= render(
                 partial: "hcb_codes/transaction_category_form",
                 locals: { model: transaction }

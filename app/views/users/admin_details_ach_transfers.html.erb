@@ -6,7 +6,7 @@
         <th>Recipient name</th>
         <th>Amount</th>
         <th>Payment for</th>
-        <th>Scheduled on</th>
+        <th class="text-right">Scheduled on</th>
         <th></th>
       </tr>
       <% @ach_transfers.each do |ach| %>
@@ -14,7 +14,7 @@
           <td><%= ach.recipient_name %></td>
           <td><%= render_money ach.amount %></td>
           <td><%= ach.payment_for %></td>
-          <td><%= ach.scheduled_on %></td>
+          <td class="text-right"><%= ach.scheduled_on %></td>
           <td><%= link_to "View", ledger_item_path(ach.ledger_item), data: { turbo_frame: "_top" } %></td>
         </tr>
       <% end %>

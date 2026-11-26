@@ -20,7 +20,7 @@
       <th>Created</th>
       <th>Card name</th>
       <th>Status</th>
-      <th>Type</th>
+      <th class="text-right">Type</th>
       <th></th>
     </tr>
   </thead>
@@ -33,7 +33,7 @@
         <td><%= card.created_at %></td>
         <td><%= card.name %></td>
         <td><%= card.status_text %></td>
-        <td><%= card.physical? ? "💳 Physical" : "🔢 Virtual" %></td>
+        <td class="text-right"><%= card.physical? ? "💳 Physical" : "🔢 Virtual" %></td>
         <td><%= link_to "View", card %></td>
       </tr>
     <% end %>

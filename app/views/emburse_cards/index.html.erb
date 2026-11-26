@@ -10,7 +10,7 @@
   <thead>
     <tr>
       <th>User</th>
-      <th>Project</th>
+      <th class="text-right">Project</th>
       <th></th>
     </tr>
   </thead>
@@ -19,7 +19,7 @@
     <% @emburse_cards.each do |card| %>
       <tr>
         <td><%= user_mention card.user %></td>
-        <td><%= card.event.name %></td>
+        <td class="text-right"><%= card.event.name %></td>
         <td><%= link_to "Show", card %></td>
       </tr>
     <% end %>

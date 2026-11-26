@@ -10,7 +10,7 @@
       <th>Project</th>
       <th>Domain</th>
       <th>Verification key</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th colspan="3"></th>
     </tr>
   </thead>
@@ -23,7 +23,7 @@
         <td><%= g_suite.verification_key %></td>
         <td><%= g_suite.aasm_state %></td>
         <td><%= link_to "Verify", g_suite.verification_url, target: :blank %></td>
-        <td><%= link_to "Show", g_suite_path(g_suite, event_id: g_suite.event.slug) %></td>
+        <td class="text-right"><%= link_to "Show", g_suite_path(g_suite, event_id: g_suite.event.slug) %></td>
         <td><%= link_to "Edit", edit_event_g_suite_path(g_suite, event_id: g_suite.event.slug) %></td>
       </tr>
     <% end %>

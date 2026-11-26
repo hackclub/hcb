@@ -5,14 +5,14 @@
       <tr>
         <th>ID</th>
         <th>Amount</th>
-        <th>Status</th>
+        <th class="text-right">Status</th>
         <th></th>
       </tr>
       <% @invoices.each do |invoice| %>
         <tr>
           <td><%= invoice.id %></td>
           <td><%= render_money invoice.total %></td>
-          <td><%= invoice.state_text %></td>
+          <td class="text-right"><%= invoice.state_text %></td>
           <td><%= link_to "View", ledger_item_path(invoice.ledger_item), data: { turbo_frame: "_top" } %></td>
         </tr>
       <% end %>
