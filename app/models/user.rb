@@ -827,7 +827,14 @@ class User < ApplicationRecord
   end
 
   def second_factor_present_for_2fa
-    if use_two_factor_authentication? && !phone_number_verified? && !totp.present? && webauthn_credentials.none?
+    return unless use_two_factor_authentication?
+    return if totp.present? || webauthn_credentials.any?
+
+    # on_phone_number_update marks a changed phone number as unverified after
+    # validation, so a changed number can't count as the second factor.
+    if persisted? && phone_number_changed?
+      errors.add(:phone_number, "can't be changed while it's your only second authentication factor. Add another factor or disable two-factor authentication first.")
+    elsif !phone_number_verified?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end

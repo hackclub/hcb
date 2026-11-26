@@ -441,6 +441,39 @@ RSpec.describe User, type: :model do
       expect(user.update(use_two_factor_authentication: true)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
     end
+
+    context "when a verified phone number is the only second factor" do
+      let(:user) do
+        user = create(:user, phone_number: "+18556254225")
+        user.update_column(:phone_number_verified, true)
+        user.update!(use_two_factor_authentication: true)
+        user
+      end
+
+      it "blocks changing the phone number" do
+        expect(user.update(phone_number: "+12025551234")).to eq(false)
+        expect(user.errors[:phone_number]).to contain_exactly("can't be changed while it's your only second authentication factor. Add another factor or disable two-factor authentication first.")
+        expect(user.reload.phone_number).to eq("18556254225")
+        expect(user.phone_number_verified).to eq(true)
+      end
+
+      it "allows changing the phone number while disabling two-factor authentication" do
+        expect(user.update(phone_number: "+12025551234", use_two_factor_authentication: false)).to eq(true)
+        expect(user.reload.phone_number_verified).to eq(false)
+      end
+
+      it "allows changing the phone number once another factor exists" do
+        User::Totp.create!(user:, aasm_state: "verified")
+        user.reload
+
+        expect(user.update(phone_number: "+12025551234")).to eq(true)
+        expect(user.reload.phone_number_verified).to eq(false)
+      end
+
+      it "allows other profile changes" do
+        expect(user.update(full_name: "New Name")).to eq(true)
+      end
+    end
   end
 
   describe "#update_stripe_cardholder" do
