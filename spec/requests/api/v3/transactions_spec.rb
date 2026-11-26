@@ -20,8 +20,7 @@ RSpec.describe "Api::V3 transactions", type: :request do
   # callback ordering, so use map_primary! — it find_or_initialize_by's the
   # primary mapping and is idempotent either way.
   #
-  # `date` is today so the CT's date and the ledger item's datetime agree —
-  # in production `backfill_ledger_item_datetime_task` aligns them.
+  # `date` is today so the CT's date and the ledger item's datetime agree.
   def create_transaction(amount_cents: -1234, memo: "Test transaction")
     ct = create(:canonical_transaction, amount_cents:, memo:, date: Date.current)
     create(:canonical_event_mapping, event:, canonical_transaction: ct)

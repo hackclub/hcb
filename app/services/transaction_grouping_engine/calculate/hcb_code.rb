@@ -15,7 +15,6 @@ module TransactionGroupingEngine
       # transactions together during an incident.
       INVOICE_CODE = "100"
       DONATION_CODE = "200"
-      PARTNER_DONATION_CODE = "201" # deprecated
       ACH_TRANSFER_CODE = "300"
       WIRE_CODE = "310"
       PAYPAL_TRANSFER_CODE = "350"
