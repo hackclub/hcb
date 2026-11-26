@@ -176,6 +176,35 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#audit_log", versioning: true do
+    render_views
+
+    it "lists the user's PaperTrail changes with who made them, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user, full_name: "Old Name")
+      PaperTrail.request(whodunnit: auditor.id) { user.update!(full_name: "New Name", birthday: Date.new(2008, 1, 1)) }
+      create_session(auditor, verified: true)
+
+      get(:audit_log, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Full name", "Old Name", "New Name")
+      # Encrypted columns are tracked but their ciphertext is never shown.
+      expect(response.body).to include("Birthday", "changed (encrypted)")
+      expect(response.body).not_to include("birthday_ciphertext", user.birthday_ciphertext)
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:audit_log, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
   describe "#edit_address reset to default address button" do
     render_views
 

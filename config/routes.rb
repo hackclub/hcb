@@ -165,6 +165,7 @@ Rails.application.routes.draw do
       get "notifications", to: "users#edit_notifications"
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
+      get "audit_log", to: "users#audit_log"
       get "admin_details", to: "users#admin_details"
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
