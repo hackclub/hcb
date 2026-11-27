@@ -194,6 +194,16 @@ RSpec.describe Payment::Attempt, type: :model do
       it "accepts an optional reason" do
         expect { attempt.mark_failed!(reason: "Receipt is insufficient for this payment") }.not_to raise_error
       end
+
+      it "fails a successful attempt that was returned, moving the payment back to sent for a retry" do
+        attempt.update_columns(aasm_state: "successful")
+        attempt.payment.update_columns(aasm_state: "successful")
+
+        attempt.mark_failed!(reason: "Account closed")
+
+        expect(attempt).to be_failed
+        expect(attempt.payment.reload).to be_sent
+      end
     end
   end
 

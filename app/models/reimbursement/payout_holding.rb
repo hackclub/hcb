@@ -118,6 +118,20 @@ module Reimbursement
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
 
+    def awaiting_wise_transfer?
+      wise_transfer.nil? && !failed? && !reversed?
+    end
+
+    def cancel_failed_payout
+      return false unless failed? && expense_payouts.all?(&:settled?)
+
+      reverse!
+      true
+    rescue => e
+      Rails.error.report(e, context: { reimbursement_payout_holding_id: id })
+      false
+    end
+
     # Version id of the latest transition into `failed`, used to tie reminder jobs to a single failure.
     def current_failure_id
       versions.where_object_changes_to(aasm_state: "failed").last&.id

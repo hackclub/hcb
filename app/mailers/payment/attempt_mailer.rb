@@ -9,7 +9,6 @@ class Payment
     end
 
     def failed_payee
-      @reason = params[:reason]
       mail to: @recipients, subject: "We couldn't send your payment for #{@payment.purpose} from #{@payment.event.name}"
     end
 
@@ -23,6 +22,7 @@ class Payment
 
     def set_attempt
       @attempt = params[:attempt]
+      @reason = params[:reason]
       @payment = @attempt.payment
       @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
       @creator = @payment.creator.email_address_with_name

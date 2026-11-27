@@ -82,6 +82,12 @@ class RawColumnTransaction < ApplicationRecord
     column_transaction["transaction_id"]
   end
 
+  def ach_company_id
+    return unless transaction_id&.start_with?("acht")
+
+    Rails.cache.fetch([self, "ach_company_id"], skip_nil: true) { remote_object&.dig("company_id") }
+  end
+
   def remote_object
     transaction_id = column_transaction["transaction_id"]
     if transaction_id.start_with? "acht"
