@@ -4,27 +4,6 @@
   <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% end %>
 
-<% if @event&.is_public %>
-  <% auto_discover_feed(@event) %>
-  <% @skip_layout_og_tags = true # replaced by the organization-specific meta below %>
-  <% content_for :head do %>
-    <%# Slack's link expander crops previews into a square thumbnail, so give it the square image %>
-    <% img = "https://hcb-og.hackclub.com/api/#{request.user_agent.to_s.include?("Slackbot-LinkExpanding") ? "square-embed" : "embeds"}/#{@event.slug}" %>
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:image" content="<%= img %>">
-    <meta name="twitter:image" content="<%= img %>">
-    <meta property="og:site_name" content="HCB">
-    <meta property="og:url" content="<%= event_url(@event) %>">
-    <meta property="og:title" content="<%= @event.name %>">
-    <meta name="twitter:title" content="<%= @event.name %>">
-    <% description = "#{@event.name}'s finances have been made public on HCB so you can see how their money is spent." %>
-    <meta property="og:description" content="<%= description %>">
-    <meta name="twitter:description" content="<%= description %>">
-    <meta name="description" content="<%= description %>">
-  <% end %>
-<% end %>
-
 <% title "Transactions for #{@event.name}" %>
 
 <%= render "events/nav", selected: :transactions %>
