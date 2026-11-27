@@ -121,7 +121,7 @@ describe LoginCodeService::Request do
 
     it "blocks sms codes once more than 20 are sent in the window" do
       user = create(:user)
-      user.update!(phone_number: "+18556254225", use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number: "+18556254225", phone_number_verified: true)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
 
       20.times do
@@ -152,7 +152,7 @@ describe LoginCodeService::Request do
 
     it "allows sms codes again after the rate limit window expires" do
       user = create(:user)
-      user.update!(phone_number: "+18556254225", use_sms_auth: true, phone_number_verified: true)
+      user.update!(phone_number: "+18556254225", phone_number_verified: true)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
 
       20.times do

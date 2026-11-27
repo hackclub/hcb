@@ -98,6 +98,12 @@ class CardCharge < ApplicationRecord
     requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
   end
 
+  # What the cardholder got back: the sum of the charge's refunds. The ledger
+  # item's amount can't say, since it nets the refunds against the capture.
+  def refunded_amount_cents
+    raw_stripe_transactions.select(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
+  end
+
   def icon
     merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
     categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run

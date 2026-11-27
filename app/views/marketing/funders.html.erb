@@ -952,14 +952,8 @@
       <p class="mk-lead">HCB pairs modern financial software with a hands-on team. You get a
         partner who helps map your giving and runs the operations behind it, not just a login.
         Tell us what you want to fund.</p>
-      <% if flash[:error].present? %>
-        <div class="mk-notice mk-notice--error" role="alert">
-          <span class="mk-notice__icon"><%= inline_icon "important-fill", size: 24 %></span>
-          <div><%= flash[:error] %></div>
-        </div>
-      <% end %>
       <div class="mk-cta__form">
-        <%= render "marketing/funder_inquiry_form", detailed: true %>
+        <%= render "marketing/funder_inquiry_form" %>
       </div>
 
       <div class="mk-next">

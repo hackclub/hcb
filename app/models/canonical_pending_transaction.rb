@@ -387,10 +387,6 @@ class CanonicalPendingTransaction < ApplicationRecord
     smart_memo
   end
 
-  def filter_data
-    {} # TODO
-  end
-
   def comments
     [] # TODO
   end

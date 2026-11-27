@@ -48,6 +48,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified: true
@@ -83,6 +84,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified:,
@@ -107,6 +109,11 @@ module SessionsHelper
 
   def signed_in?(allow_unverified: false)
     !current_user(allow_unverified:).nil?
+  end
+
+  # Shown in place of details only members can see
+  def restricted_detail_label
+    signed_in? ? "Members only" : "Sign in to view"
   end
 
   def auditor_signed_in?
