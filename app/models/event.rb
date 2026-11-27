@@ -420,6 +420,8 @@ class Event < ApplicationRecord
 
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
+  has_many :termination_requests, class_name: "Event::TerminationRequest", inverse_of: :event, dependent: :destroy
+  has_one :pending_termination_request, -> { pending }, class_name: "Event::TerminationRequest", inverse_of: :event
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user

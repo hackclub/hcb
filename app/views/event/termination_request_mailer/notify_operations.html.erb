@@ -1,0 +1,17 @@
+<p>Hi there! 👋</p>
+
+<p>
+  <%= link_to @requested_by.name.to_s, admin_user_url(@requested_by) %> (<%= @requested_by.email %>),
+  a contract signee, has requested that <%= link_to @event.name, @event %> be terminated.
+</p>
+
+<p>
+  <strong>Reason:</strong>
+  <%= @termination_request.reason %>
+</p>
+
+<p><%= link_to "View the request", admin_termination_request_url(@termination_request) %> to process it.</p>
+
+<p>
+  Thanks!
+</p>

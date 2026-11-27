@@ -1,0 +1,41 @@
+<% title "Termination Requests" %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @termination_requests, entry_name: "termination request" %>
+  </div>
+  <%= paginate @termination_requests %>
+</div>
+
+<% if @termination_requests.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Organization</th>
+        <th>Requested by</th>
+        <th>Requested at</th>
+        <th class="text-right">Status</th>
+        <th><%# process or view button %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @termination_requests.each do |termination_request| %>
+        <tr class="<%= "admin-bg-pending" if termination_request.pending? %>">
+          <td><%= link_to termination_request.event.name, event_path(termination_request.event) %></td>
+          <td><%= user_mention termination_request.requested_by %></td>
+          <td><%= format_datetime termination_request.created_at %></td>
+          <td class="text-right">
+            <%= status_badge termination_request.status_badge_type %>
+            <%= termination_request.status.to_s.humanize %>
+          </td>
+          <td><%= link_to (termination_request.pending? ? "Process" : "View"), admin_termination_request_path(termination_request), class: "btn btn-small" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= paginate @termination_requests %>
+<% else %>
+  <h3>Everything is well in the land of HCB</h3>
+  <p>There are no termination requests.</p>
+<% end %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_27_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1155,6 +1155,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
     t.index ["event_id"], name: "index_event_tags_events_on_event_id"
     t.index ["event_tag_id", "event_id"], name: "index_event_tags_events_on_event_tag_id_and_event_id", unique: true
     t.index ["event_tag_id"], name: "index_event_tags_events_on_event_tag_id"
+  end
+
+  create_table "event_termination_requests", force: :cascade do |t|
+    t.datetime "closed_at"
+    t.bigint "closed_by_id"
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.text "reason", null: false
+    t.bigint "requested_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "withdrawn_at"
+    t.index ["closed_by_id"], name: "index_event_termination_requests_on_closed_by_id"
+    t.index ["event_id"], name: "index_event_termination_requests_on_event_id"
+    t.index ["event_id"], name: "index_event_termination_requests_on_pending_event_id", unique: true, where: "((withdrawn_at IS NULL) AND (closed_at IS NULL))"
+    t.index ["requested_by_id"], name: "index_event_termination_requests_on_requested_by_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -2703,6 +2718,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
     t.string "emoji", null: false
     t.bigint "event_id", null: false
     t.text "label"
+    t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_tags_on_event_id"
   end
@@ -3209,6 +3225,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
   add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
   add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
   add_foreign_key "event_scoped_tags_events", "events"
+  add_foreign_key "event_termination_requests", "events"
+  add_foreign_key "event_termination_requests", "users", column: "closed_by_id"
+  add_foreign_key "event_termination_requests", "users", column: "requested_by_id"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
   add_foreign_key "fee_reimbursements", "fee_reimbursement_groups"
