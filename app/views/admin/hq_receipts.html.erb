@@ -26,7 +26,7 @@
         </td>
         <td><%= user.email %></td>
         <td style="width: 50rem;">
-          <% missing_receipts = user.transactions_missing_receipt.load %>
+          <% missing_receipts = user.card_charges_missing_receipt.preload(linked_object: :stripe_card).load %>
           <% if missing_receipts.any? %>
             <details class="mb0" style="background: #ff8c3830;">
               <summary>
@@ -34,10 +34,10 @@
                 <%= "Transaction".pluralize(missing_receipts.size) %> missing receipts
               </summary>
               <ul>
-                <% missing_receipts.each do | txn | %>
+                <% missing_receipts.each do |item| %>
                   <li>
-                    <%= link_to txn.memo, txn %>
-                    (<%= link_to "x#{txn.stripe_card.last4}", txn.stripe_card %>)
+                    <%= link_to item.memo, item %>
+                    (<%= link_to "x#{item.linked_object.stripe_card.last4}", item.linked_object.stripe_card %>)
                   </li>
                 <% end %>
               </ul>

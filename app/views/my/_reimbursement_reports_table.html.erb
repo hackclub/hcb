@@ -5,12 +5,12 @@
   <table class="table-fixed min-w-[52rem]">
     <thead>
     <tr>
-      <th class="w-12"></th>
+      <th class="w-12"><%# user avatar %></th>
       <th class="w-40">Status</th>
       <th>Report</th>
       <th class="w-52">Organization</th>
       <th class="w-32">Amount</th>
-      <th class="w-36">Created</th>
+      <th class="w-36 text-right">Created</th>
     </tr>
     </thead>
     <tbody>
@@ -38,7 +38,7 @@
           <td>
             <%= report.amount.format %>
           </td>
-          <td>
+          <td class="text-right">
             <%= format_date report.created_at %>
           </td>
         </tr>

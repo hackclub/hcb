@@ -1,5 +1,5 @@
 <% if stripe_cards.blank? %>
-  <%= blankslate "You don't have any #{status} cards yet." %>
+  <%= blankslate "You don't have any #{status} cards yet" %>
 <% else %>
   <article class="table-container">
     <table class="stripe-cards-table">
@@ -9,7 +9,7 @@
         <th>Number</th>
         <th>Type</th>
         <th>Status</th>
-        <th>Issued on</th>
+        <th class="text-right">Issued on</th>
       </tr>
       </thead>
       <tbody>
@@ -38,9 +38,9 @@
           </td>
 
           <%# Date issued %>
-          <td>
+          <td class="text-right">
             <%= format_date c.created_at %>
-          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: stripe_card_popover_data(c) if linkable %>
+            <%= link_to "", stripe_card_path(c), class: "stretched-link", data: stripe_card_popover_data(c) if linkable %>
           </td>
         </tr>
 

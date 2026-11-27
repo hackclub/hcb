@@ -141,7 +141,8 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("This grant expired on")
+      expect(response.body).to include("This grant expired on <time")
+      expect(response.body).not_to include("&lt;time")
       expect(response.body).to include("Expired on")
       expect(response.body).to include("Spending controls")
       expect(response.body).to include("status bg-muted")
@@ -292,6 +293,68 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response.body).not_to include("All articles")
+    end
+
+    it "lets a member copy the email the grant was sent to" do
+      member = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.user.update_columns(email: "changed@example.com")
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_present
+      expect(response.body).not_to include("changed@example.com")
+    end
+
+    it "keeps the copyable email off a reader's view" do
+      reader = create(:user)
+      card_grant = create(:card_grant, event:)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
+    end
+
+    it "still lets a member copy the email once the grant is canceled" do
+      member = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :canceled)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_present
+    end
+
+    it "keeps the copyable email off a reader's view once the grant is canceled" do
+      reader = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :canceled)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
+    end
+
+    it "keeps the copyable email off the grantee's view" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[data-clipboard-text-value='#{card_grant.email}']")).to be_nil
     end
   end
 
@@ -596,8 +659,6 @@ RSpec.describe CardGrantsController do
       item
     end
 
-    before { Flipper.enable(:new_ledger_everywhere_2026_07_13) }
-
     def page
       Nokogiri::HTML5(response.body)
     end
@@ -656,8 +717,8 @@ RSpec.describe CardGrantsController do
 
       link = page.at_css("tbody tr.transaction td.transaction__memo a[href='#{ledger_item_path(item)}']")
       expect(link).to be_present
-      expect(link["data-popover-src"]).to eq(item.hcb_code.popover_path)
-      expect(link["data-popover-frame-id"]).to eq(item.hcb_code.public_id)
+      expect(link["data-popover-src"]).to eq(item.popover_path)
+      expect(link["data-popover-frame-id"]).to eq(item.public_id)
     end
   end
 
@@ -684,7 +745,7 @@ RSpec.describe CardGrantsController do
         }
       )
 
-      expect(flash[:success]).to eq("Successfully topped up grant.")
+      expect(flash[:success]).to eq("Grant topped up.")
       expect(response).to redirect_to(card_grant_path(card_grant))
 
       expect(card_grant.reload.balance).to eq(Money.new(69_12, :usd))

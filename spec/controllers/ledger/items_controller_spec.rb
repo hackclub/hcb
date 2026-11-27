@@ -32,6 +32,35 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("New memo")
         expect(response.body).to include("turbo-stream")
       end
+
+      context "with an AI memo suggestion from a receipt" do
+        let(:ai_memo_stream) { "turbo-stream[action='replace'][target='#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}']" }
+
+        before do
+          Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                          file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+        end
+
+        it "marks the memo custom and withdraws the suggestion" do
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
+
+          expect(response.body).to include(%(data-custom-memo="true">New memo</span>))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo).to be_present
+          expect(ai_memo.to_html).not_to include("data-memo-suggestion-param")
+        end
+
+        it "offers the suggestion again when the memo is cleared" do
+          item.update_custom_memo!("Old memo")
+
+          patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "" } }
+
+          expect(item.reload.custom_memo).to be_nil
+          expect(response.body).to include(%(data-custom-memo="false"))
+          ai_memo = Nokogiri::HTML5(response.body).at_css(ai_memo_stream)
+          expect(ai_memo.to_html).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+        end
+      end
     end
 
     describe "POST #toggle_tag" do
@@ -53,6 +82,25 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         post :toggle_tag, params: { item_id: item.hashid, tag_id: other_tag.id }
 
         expect(item.reload.tags).to be_empty
+      end
+    end
+
+    describe "GET #dispute" do
+      it "sends a disputable transaction to the dispute form with a link to the item" do
+        create(:canonical_transaction, amount_cents: -500, date: 10.days.ago, ledger_item_id: item.id)
+
+        get :dispute, params: { item_id: item.hashid }
+
+        expect(response).to redirect_to(a_string_starting_with("https://forms.hackclub.com/"))
+        expect(response.location).to include(CGI.escape(ledger_item_url(item)))
+        expect(response.location).not_to include("HcbCode")
+      end
+
+      it "explains why a transaction can't be disputed" do
+        get :dispute, params: { item_id: item.hashid }
+
+        expect(response).to redirect_to(ledger_item_path(item))
+        expect(flash[:error]).to eq("This is not a valid transaction")
       end
     end
 
@@ -96,11 +144,176 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(item.memo)
       end
 
-      it "responds with not found for a non-auditor" do
+      it "lists the item's receipts for an auditor" do
+        create_session(create(:user, :make_auditor), verified: true)
+        receipt = Receipt.new(receiptable: item, user: create(:user), upload_method: :api)
+        receipt.file.attach(io: File.open(file_fixture("receipt.png")), filename: "receipt.png", content_type: "image/png")
+        receipt.save!
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.parsed_body.at_css("#receipt_#{receipt.id}")).to be_present
+      end
+
+      it "renders for a member" do
+        create(:organizer_position, event:, user: (user = create(:user)), role: :member)
+        create_session(user, verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item.memo)
+      end
+
+      it "is not authorized for a user outside the event" do
         create_session(create(:user), verified: true)
 
-        expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+        get :show, params: { id: item.hashid }
+
+        expect(response).to redirect_to(root_path)
+        expect(flash[:error]).to include("not authorized")
       end
+    end
+
+    context "for a card charge" do
+      it "offers the transaction's actions through ledger item routes" do
+        create_session(create(:user, :make_admin), verified: true)
+        stripe_card = create(:stripe_card, :with_stripe_id, event:)
+        charge = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card:, stripe_merchant_category_code: "5462"))
+        charge_item = charge.local_hcb_code.ledger_item
+
+        get :show, params: { id: charge_item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Dispute this transaction")
+        expect(response.body).to include(ledger_item_dispute_path(charge_item))
+        expect(response.body).to include("Flag as personal transaction")
+        expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
+        expect(response.body).not_to include(dispute_hcb_code_path(charge.local_hcb_code))
+      end
+
+      it "shows a grant card charge's merchant and card to a manager of the grant's organization" do
+        grant_event = create(:event, :with_positive_balance)
+        create(:organizer_position, event: grant_event, user: (manager = create(:user)), role: :manager)
+        create_session(manager, verified: true)
+        card_grant = create(:card_grant, event: grant_event)
+        card_grant.stripe_card.update_columns(last4: "4242", event_id: grant_event.id) # production issues grant cards on the grant's organization
+        charge_item = create(:ledger_item, linked_object: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card, stripe_merchant_category_code: "5462").card_charge)
+        create(:ledger_mapping, :on_primary, ledger: card_grant.ledger, ledger_item: charge_item)
+
+        get :show, params: { id: charge_item.hashid, frame: true }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("Sign in to view")
+        expect(response.body).to include("4242")
+        expect(response.body).not_to include("XXXX")
+      end
+    end
+
+    context "when asked to reverse a receipt pairing" do
+      let(:receipt) do
+        Receipt.create!(receiptable: item, user: create(:user), upload_method: :email_receipt_bin,
+                        file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      end
+
+      before { create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE, ledger_item: item) }
+
+      it "asks a member to confirm the reversal" do
+        create(:organizer_position, event:, user: (user = create(:user)))
+        create_session(user, verified: true)
+
+        get :show, params: { id: item.hashid, reverse: receipt.id }
+
+        expect(response).to be_successful
+        modal = Nokogiri::HTML5(response.body).at_css("#reverse_receipt_modal")
+        expect(modal.text).to include("Reverse receipt pairing")
+        expect(modal.at_css("form")["action"]).to eq(reverse_receipt_path(receipt.id, format: :html))
+        expect(modal.ancestors("turbo-frame")).to be_empty
+      end
+    end
+
+    describe "tags" do
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+
+      before { item.tags << tag }
+
+      it "shows the item's tags to an auditor who can't change them" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Snacks")
+        expect(response.body).to include(%(id="ledger_item_#{item.hashid}_tag_#{tag.id}"))
+        expect(response.body).not_to include("+ Add tag")
+      end
+
+      it "offers the add-tag menu to an admin" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("+ Add tag")
+        expect(response.body).to include(ledger_item_toggle_tag_path(item))
+      end
+
+      it "offers tag deletion to a member who may delete the tag" do
+        create(:organizer_position, event:, user: (member = create(:user, :make_auditor)), role: :member)
+        create_session(member, verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(action="#{event_tag_path(event, tag)}"))
+      end
+
+      it "renders the row on a linked object with no details list of its own" do
+        hcb_event = create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+        allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+        group = create(:fee_reimbursement_group, key: "2026_42")
+        hcb_tag = hcb_event.tags.create!(label: "Fees", emoji: "🏦", color: "muted")
+        group.ledger_item.tags << hcb_tag
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: group.ledger_item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(id="ledger_item_#{group.ledger_item.hashid}_tag_#{hcb_tag.id}"))
+      end
+    end
+
+    describe "the donor edit modal on a donation" do
+      let(:recurring_donation) do
+        RecurringDonation.create!(event:, name: "Jane Smith", email: "jane@example.com", amount: 10_00, anonymous: true,
+                                  stripe_subscription_id: "sub_test", stripe_customer_id: "cus_test", stripe_status: "active")
+      end
+      let(:donation) { create(:donation, event:, recurring_donation:, anonymous: false, aasm_state: :deposited) }
+      let(:item) { create(:ledger_item, linked_object: donation) }
+
+      it "pre-checks anonymous from the recurring donation and warns that edits apply to the whole series" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        modal = Nokogiri::HTML5(response.body).at_css("#update")
+        expect(modal.at_css("input[name='donation[anonymous]'][type='checkbox']")["checked"]).to be_present
+        expect(modal.text).to include("Updating the donor's details will update them for all past and future donations.")
+      end
+    end
+
+    it "offers a receipt's AI memo suggestion on an item with no HCB code" do
+      Receipt.create!(receiptable: item, user: create(:user), upload_method: :api, suggested_memo: "☕ Coffee from Cafe",
+                      file: { io: file_fixture("receipt.png").open, filename: "receipt.png" })
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :show, params: { id: item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(data-memo-suggestion-param="☕ Coffee from Cafe"))
+      expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(item, :ai_memo)}"))
     end
 
     it "updates the counts on the item's ledger row when shown in a popover" do
@@ -182,6 +395,56 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response.body).to include(ERB::Util.html_escape(invoice.event.name))
       expect(response.body).to include("$1.23")
     end
+
+    context "for a transfer staff process by hand" do
+      let(:event) { create(:event, :with_positive_balance) }
+
+      let(:wire) do
+        stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+          .to_return_json(status: 200, body: { country_code: "DE" })
+        create(:wire, :pending, event:)
+      end
+
+      let(:paypal_transfer) do
+        # New PayPal transfers are refused at validation, so save past it to
+        # stand in for one created before that.
+        PaypalTransfer.new(
+          event:,
+          user: create(:user),
+          amount_cents: 25_00,
+          memo: "Stickers",
+          payment_for: "Stickers",
+          recipient_name: "Orpheus",
+          recipient_email: "orpheus@example.com"
+        ).tap { |transfer| transfer.save!(validate: false) }
+      end
+
+      def ledger_item_for(transfer)
+        create(:ledger_item, linked_object: transfer).tap do |ledger_item|
+          create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item:)
+        end
+      end
+
+      [:make_auditor, :make_admin].each do |role|
+        it "shows the Process button on a wire to a user with #{role.to_s.delete_prefix("make_")} access" do
+          create_session(create(:user, role), verified: true)
+
+          get :show, params: { id: ledger_item_for(wire).hashid }
+
+          expect(response).to be_successful
+          expect(response.body).to include(%(action="#{wire_process_admin_path(wire)}"))
+        end
+
+        it "shows the Process button on a PayPal transfer to a user with #{role.to_s.delete_prefix("make_")} access" do
+          create_session(create(:user, role), verified: true)
+
+          get :show, params: { id: ledger_item_for(paypal_transfer).hashid }
+
+          expect(response).to be_successful
+          expect(response.body).to include(%(action="#{paypal_transfer_process_admin_path(paypal_transfer)}"))
+        end
+      end
+    end
   end
 
   context "as a reader (not a member)" do
@@ -197,6 +460,15 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(item.reload.memo).not_to eq("Nope")
+    end
+
+    it "denies disputing" do
+      create(:canonical_transaction, amount_cents: -500, date: 10.days.ago, ledger_item_id: item.id)
+
+      get :dispute, params: { item_id: item.hashid }
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
   end
 end

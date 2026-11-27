@@ -1,4 +1,4 @@
-import swal from 'sweetalert'
+import swal from './common/swal'
 import { Turbo } from '@hotwired/turbo-rails'
 
 function showConfirm(

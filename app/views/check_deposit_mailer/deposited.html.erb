@@ -1,1 +1,1 @@
-Great news: <%= link_to "your #{render_money @check_deposit.amount_cents} check", hcb_code_url(@check_deposit.local_hcb_code) %> has been deposited to <strong><%= link_to @check_deposit.event.name, @check_deposit.event %></strong> and is now available to spend in your account!
+Great news: <%= link_to "your #{render_money @check_deposit.amount_cents} check", ledger_item_url(@check_deposit.ledger_item) %> has been deposited to <strong><%= link_to @check_deposit.event.name, @check_deposit.event %></strong> and is now available to spend in your account!

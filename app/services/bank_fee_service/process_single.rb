@@ -21,7 +21,7 @@ module BankFeeService
                            currency_code: "USD",
                            sender_bank_account_id:,
                            receiver_bank_account_id:,
-                           description: memo
+                           description: bank_fee.short_code_memo
       end
 
       true
@@ -31,14 +31,6 @@ module BankFeeService
 
     def amount_cents
       bank_fee.amount_cents
-    end
-
-    def memo
-      "HCB-#{local_hcb_code.short_code}"
-    end
-
-    def local_hcb_code
-      @local_hcb_code ||= bank_fee.local_hcb_code
     end
 
     def bank_fee

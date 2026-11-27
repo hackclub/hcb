@@ -139,7 +139,7 @@ class RecurringDonation < ApplicationRecord
   end
 
   def sync_stripe_customer!
-    StripeService::Customer.update(stripe_customer_id, name:)
+    StripeService::Customer.update(stripe_customer_id, name:, email:)
   end
 
   private

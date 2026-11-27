@@ -13,7 +13,7 @@ module StripeCardsHelper
     icon = inline_icon "card",
                        size:,
                        class: "muted #{size <= 24 ? 'pr1' : ''}"
-    if organizer_signed_in? || stripe_card.user == current_user
+    if organizer_signed_in?(stripe_card.event) || stripe_card.user == current_user
       text = content_tag :span, stripe_card.last_four
       return link_to(stripe_card, class: "mention", data: { turbo_frame: "_top" }) { icon + text }
     else

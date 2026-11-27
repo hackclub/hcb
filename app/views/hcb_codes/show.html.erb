@@ -25,7 +25,7 @@
         <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), data: { turbo_method: :post } %>
       <% end %>
     <% end %>
-    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
+    <%= render "receipts/list_v2", receipts: @hcb_code.receipts, popover: (@frame ? "HcbCode:#{@hcb_code.hashid}" : nil), transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
     <%# Receipts are attached to the transaction's ledger item, which a scheduled transfer doesn't have until it's sent %>
     <% if @hcb_code.ledger_item %>
       <%= begin receipt_upload_form_config = {
@@ -45,8 +45,6 @@
           end %>
     <% end %>
   <% end %>
-
-  <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
   <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>
   <% if @hcb_code.shared_commentable? %>
@@ -87,11 +85,5 @@
 <% end %>
 
 <% if @reverse_receipt_id.present? %>
-  <section id="reverse_receipt_modal" class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" data-modal-auto-open="true" data-modal="reverse_receipt_modal">
-    <%= modal_header("Reverse receipt pairing") %>
-    <p>Are you sure you would like to reverse the receipt pairing for this transaction?</p>
-
-    <%= button_to "Yes", reverse_receipt_path(@reverse_receipt_id, format: :html), class: "left bg-success btn", method: :post %>
-    <a href="#" class="right bg-error btn" rel="modal:close">No</a>
-  </section>
+  <%= render "receipts/reverse_pairing_modal", receipt_id: @reverse_receipt_id %>
 <% end %>

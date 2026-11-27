@@ -6,8 +6,8 @@
         <tr>
           <th>Last 4</th>
           <th>Status</th>
-          <th>Expires on</th>
-          <th></th>
+          <th class="text-right">Expires on</th>
+          <th><%# view link %></th>
         </tr>
         <% @emburse_cards.each do |card| %>
           <tr>
@@ -23,7 +23,7 @@
                 <%= inline_icon "forbidden", size: 25 %> Terminated
               <% end %>
             </td>
-            <td><%= Date.parse("#{card.expiration_month}/#{card.expiration_year}").strftime("%m/%y") %></td>
+            <td class="text-right"><%= Date.parse("#{card.expiration_month}/#{card.expiration_year}").strftime("%m/%y") %></td>
             <td><%= link_to "View", emburse_card_path(card), data: { turbo_frame: "_top" } %></td>
           </tr>
         <% end %>

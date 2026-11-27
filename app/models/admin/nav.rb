@@ -159,7 +159,8 @@ module Admin
           ),
           make_item(
             name: "Ledger Items",
-            path: ledger_items_admin_index_path
+            path: ledger_items_admin_index_path,
+            count: ->{ Ledger::Item.unmapped.count }
           ),
           make_item(
             name: "Raw Transactions",

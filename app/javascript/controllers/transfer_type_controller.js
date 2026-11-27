@@ -50,7 +50,7 @@ export default class extends Controller {
 
   select() {
     // Disabling the inactive panels keeps their fields out of validation and
-    // out of the submitted params, since both panels have a name and amount.
+    // out of the submitted params, since the panels share field names.
     for (const panel of this.panelTargets) {
       const active = panel.dataset.type === (this.type || '')
       panel.hidden = !active

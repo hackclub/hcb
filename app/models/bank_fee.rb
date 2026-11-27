@@ -27,6 +27,7 @@ class BankFee < ApplicationRecord
 
   include AASM
   include HasBookTransfer
+  include HasHcbCode
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -87,10 +88,6 @@ class BankFee < ApplicationRecord
 
   def canonical_pending_transaction
     canonical_pending_transactions.first
-  end
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
   def canonical_pending_transactions

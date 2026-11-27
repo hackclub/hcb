@@ -65,9 +65,9 @@ West Hollywood, CA 90069</pre>
     </details>
   <% end %>
 <% elsif @emburse_card_requests.any? %>
-  <%= blankslate "No cards have been issued yet." %>
+  <%= blankslate "No cards have been issued yet" %>
 <% elsif @cards.blank? %>
-  <%= blankslate "You haven’t requested any cards yet." %>
+  <%= blankslate "You haven’t requested any cards yet" %>
 <% end %>
 
 <% if @emburse_card_requests.outstanding.any? %>
@@ -122,7 +122,7 @@ West Hollywood, CA 90069</pre>
           <th>Requested at</th>
           <th>Requested by</th>
           <th>Status</th>
-          <th>Amount</th>
+          <th class="text-right">Amount</th>
         </tr>
       </thead>
       <tbody>
@@ -131,7 +131,7 @@ West Hollywood, CA 90069</pre>
             <td><%= format_datetime(lcr.created_at) %></td>
             <td><%= user_mention lcr.creator %></td>
             <td><%= status_badge lcr.status_badge_type %>  <%= lcr.status %></td>
-            <td><%= render_money lcr.load_amount %></td>
+            <td class="text-right"><%= render_money lcr.load_amount %></td>
           </tr>
         <% end %>
       </tbody>
@@ -149,10 +149,10 @@ West Hollywood, CA 90069</pre>
       <tr>
         <th>Date</th>
         <th>Name</th>
-        <th>Amount</th>
-        <th>Running total</th>
-        <th>On</th>
-        <th></th>
+        <th class="text-right">Amount</th>
+        <th class="text-right">Running total</th>
+        <th class="text-right">On</th>
+        <th><%# more link %></th>
       </tr>
     </thead>
     <tbody>

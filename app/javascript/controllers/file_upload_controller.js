@@ -18,13 +18,27 @@ export default class extends Controller {
     this.previewTarget.append(` ${this.placeholderValue}`)
   }
 
+  initialize() {
+    this.setUp = this.setUp.bind(this)
+  }
+
   connect() {
+    this.setUp()
+    window.addEventListener('turbo:morph', this.setUp)
+  }
+
+  // Removed, or the window would keep every disconnected upload field (and
+  // the popover or modal around it) alive
+  disconnect() {
+    window.removeEventListener('turbo:morph', this.setUp)
+  }
+
+  setUp() {
     this.resetPreview()
     this.previewTarget.classList.add('tooltipped')
     this.previewTarget.onclick = () => this.inputTarget.click()
     this.inputTarget.onchange = () => this.render()
     this.inputTarget.oninvalid = e => this.showInvalid(e)
-    window.addEventListener('turbo:morph', this.connect.bind(this))
   }
 
   showInvalid(event) {
@@ -78,7 +92,8 @@ export default class extends Controller {
     this.previewTarget.classList.add('active')
     this.clearTarget.innerHTML = this.constructor.xIcon
     this.clearTarget.type = 'button'
-    this.clearTarget.addEventListener('click', () => {
+    // A property, so picking another file doesn't stack another listener
+    this.clearTarget.onclick = () => {
       this._savedFile = null
       input.value = ''
       this.clearTarget.innerHTML = ''
@@ -86,6 +101,6 @@ export default class extends Controller {
       this.previewTarget.classList.remove('active')
       this.previewTarget.classList.remove('tooltipped')
       this.resetPreview()
-    })
+    }
   }
 }

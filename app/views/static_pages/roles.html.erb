@@ -35,7 +35,7 @@
   <div class="overflow-x-auto p2">
     <table>
       <tr style="border-bottom-width: 3px">
-        <th></th>
+        <th><%# permission %></th>
         <% OrganizerPosition.roles.keys.each do |role| %>
           <th><%= role.pluralize.titleize %></th>
         <% end %>

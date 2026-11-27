@@ -26,7 +26,7 @@ class DisbursementsController < ApplicationController
       end
 
       format.pdf do
-        render_pdf "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})"
+        render_pdf "HCB Transfer ##{@disbursement.id} Confirmation Letter (#{@disbursement.source_event.name} to #{@disbursement.destination_event.name} on #{@disbursement.created_at})", fit_to_one_page: true
       end
 
       # not being used at the moment
@@ -204,32 +204,58 @@ class DisbursementsController < ApplicationController
     # admin overrode, is manual.
     category_assignment_strategy = transfer_type == "transfer" && source_transaction_category_slug.nil? && destination_transaction_category_slug.nil? ? "automatic" : "manual"
 
-    disbursement = DisbursementService::Create.new(
-      name: disbursement_params[:name],
-      destination_event_id: @destination_event.id,
-      source_event_id: @source_event.id,
-      amount: disbursement_params[:amount],
-      scheduled_on:,
-      requested_by_id: current_user.id,
-      should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
-      source_transaction_category_slug:,
-      destination_transaction_category_slug:,
-      category_assignment_strategy:,
-      transfer_type:,
-      repaid_ledger_item_ids: @repaid_ledger_items.to_a.map(&:id)
-    ).run
-
-    if disbursement_params[:file]
-      ::ReceiptService::Create.new(
-        uploader: current_user,
-        attachments: disbursement_params[:file],
-        upload_method: :transfer_create_page,
-        receiptable: disbursement.outgoing_disbursement.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
-      ).run!
+    # A transfer has one category, so each expense is repaid by a transfer of
+    # its own, which takes that expense's category.
+    repaid_groups = @repaid_ledger_items.to_a.map { |item| [item] }
+    repaid_groups = [[]] if repaid_groups.empty? # not a repayment
+    separated = repaid_groups.size > 1
+    if separated
+      total_cents = -@repaid_ledger_items.sum(&:amount_cents)
+      if Monetize.parse(disbursement_params[:amount]).cents != total_cents
+        raise DisbursementService::Create::UserError, "Amount must match the selected transaction total. Review your selection and try again."
+      end
+      # Each transfer checks the balance for itself, but the balance doesn't
+      # go down until they're all committed, so the total is checked here.
+      unless Shared::AmpleBalance.ample_balance?(total_cents, @source_event) || admin_signed_in?
+        raise DisbursementService::Create::UserError, "You don't have enough money to make this disbursement."
+      end
     end
 
-    flash[:success] = "Transfer successfully requested."
+    # All or nothing: one of them failing (e.g. not enough money) undoes the rest.
+    disbursements = ActiveRecord::Base.transaction do
+      repaid_groups.map do |items|
+        DisbursementService::Create.new(
+          name: separated ? "Repaying #{items.first.memo}".truncate(60) : disbursement_params[:name], # the name field's limit
+          destination_event_id: @destination_event.id,
+          source_event_id: @source_event.id,
+          amount: separated ? format("%.2f", -items.sum(&:amount_cents) / 100.0) : disbursement_params[:amount],
+          scheduled_on:,
+          requested_by_id: current_user.id,
+          should_charge_fee: disbursement_params[:should_charge_fee] == "1",
+          fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
+          source_transaction_category_slug:,
+          destination_transaction_category_slug:,
+          payment_category_slug: disbursement_params[:payment_category_slug].presence,
+          category_assignment_strategy:,
+          transfer_type:,
+          repaid_ledger_item_ids: items.map(&:id)
+        ).run
+      end
+    end
+
+    if disbursement_params[:file]
+      disbursements.each do |disbursement|
+        Array(disbursement_params[:file]).each(&:rewind) # each transfer reads the upload again
+        ::ReceiptService::Create.new(
+          uploader: current_user,
+          attachments: disbursement_params[:file],
+          upload_method: :transfer_create_page,
+          receiptable: disbursement.outgoing_disbursement.reload_ledger_item # the association was cached as nil while the transfer's pending transaction was being created
+        ).run!
+      end
+    end
+
+    flash[:success] = separated ? "#{disbursements.size} transfers requested, one for each transaction." : "Transfer successfully requested."
 
     if admin_signed_in?
       redirect_to disbursements_admin_index_path
@@ -377,6 +403,7 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
+      :payment_category_slug, # only used by payments
       { repaid_ledger_item_ids: [] },
       { file: [] }
     ]

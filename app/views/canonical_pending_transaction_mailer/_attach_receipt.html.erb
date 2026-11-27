@@ -1,4 +1,4 @@
-<% if hcb_code.receipt_required? %>
+<% if hcb_code.ledger_item&.receipt_required? %>
 
   <%= link_to upload_url do %>
     <img height="43" style="display: block; margin-top: 10px; height: 43px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: @cpt.local_hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Click to upload your receipt">
