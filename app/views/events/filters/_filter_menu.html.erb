@@ -34,7 +34,7 @@
             <% tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
                 <%= link_to(event_transactions_list_path(@event, upsert_query_params(tag: tag.label, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
-                  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+                  <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
                   <%= tag.label %>
                 <% end %>
               </div>
