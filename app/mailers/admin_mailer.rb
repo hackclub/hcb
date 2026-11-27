@@ -2,6 +2,8 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
+
+  internal!
   default to: -> { operations_team }
 
   def cash_withdrawal_notification

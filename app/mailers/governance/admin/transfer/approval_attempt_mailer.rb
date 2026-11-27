@@ -4,6 +4,8 @@ module Governance
   module Admin
     module Transfer
       class ApprovalAttemptMailer < ApplicationMailer
+        internal!
+
         REPORT_RECIPIENTS = [
           "usr_8YEt6d", # Gary
           "usr_wVtRav", # Mel

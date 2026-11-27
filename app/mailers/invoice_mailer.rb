@@ -4,6 +4,7 @@ class InvoiceMailer < ApplicationMailer
   def notify_organizers_sent
     @invoice = params[:invoice]
     @emails = @invoice.sponsor.event.organizer_contact_emails(only_managers: true)
+    @delivery_reason = "you are a manager of #{@invoice.sponsor.event.name} on HCB."
 
     mail to: @emails, subject: "#{@invoice.event.name}: #{@invoice.creator.name} sent an invoice to #{@invoice.sponsor.name}"
   end
@@ -12,12 +13,14 @@ class InvoiceMailer < ApplicationMailer
     @invoice = params[:invoice]
     @emails = @invoice.sponsor.event.organizer_contact_emails
     @emails = @emails.length > 10 ? [@invoice.creator.email_address_with_name] : @emails
+    @delivery_reason = "you are on the team of #{@invoice.sponsor.event.name} on HCB."
 
     mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
   end
 
   def refunded
     @invoice = params[:invoice]
+    @delivery_reason = "you requested a refund for an invoice payment to #{@invoice.sponsor.name}."
     mail to: params[:requested_by].email, subject: "Your request to refund an invoice to #{@invoice.sponsor.name} from #{@invoice.event.name} was processed."
   end
 

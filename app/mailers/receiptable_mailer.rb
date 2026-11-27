@@ -18,6 +18,8 @@ class ReceiptableMailer < ApplicationMailer
 
     @show_org = @user.events.size > 1
 
+    @delivery_reason = receipts_delivery_reason
+
     mail
   end
 

@@ -2,6 +2,7 @@
 
 class GSuiteMailer < ApplicationMailer
   before_action :set_g_suite
+  before_action :set_delivery_reason
 
   default to: -> { @g_suite.event.organizer_contact_emails(only_managers: true) }
 
@@ -23,6 +24,7 @@ class GSuiteMailer < ApplicationMailer
 
   def notify_operations_of_entering_created_state
     @g_suite = GSuite.find(params[:g_suite_id])
+    @delivery_reason = "you are on the HCB operations team."
     attrs = {
       to: ::ApplicationMailer::OPERATIONS_EMAIL,
       subject: "[OPS] [ACTION] [Google Workspace] Process #{@g_suite.domain}"
@@ -34,6 +36,10 @@ class GSuiteMailer < ApplicationMailer
 
   def set_g_suite
     @g_suite = GSuite.find(params[:g_suite_id])
+  end
+
+  def set_delivery_reason
+    @delivery_reason = "you are a manager of #{@g_suite.event.name}, which uses Google Workspace through HCB."
   end
 
 end

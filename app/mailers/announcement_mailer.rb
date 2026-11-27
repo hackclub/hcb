@@ -6,6 +6,8 @@ class AnnouncementMailer < ApplicationMailer
   def announcement_published
     @announcement = params[:announcement]
     @event = @announcement.event
+    @delivery_reason = "you are following #{@event.name} on HCB."
+    @unsubscribe_link = event_url(@event)
 
     mail to: params[:email], subject: "#{@announcement.title} | #{@event.name}", from: hcb_email_with_name_of(@event)
   end
@@ -22,9 +24,12 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been skipped"
   end
 
+  private
+
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
+    @delivery_reason = "you are a contact for #{@event.name} on HCB."
 
     @emails = @event.organizer_contact_emails(only_managers: true)
 

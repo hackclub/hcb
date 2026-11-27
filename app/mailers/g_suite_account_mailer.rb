@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class GSuiteAccountMailer < ApplicationMailer
+  before_action { @delivery_reason = "a Google Workspace account was created for you through HCB." }
+
   def notify_user_of_activation(params)
     @recipient = params[:recipient]
     @address = params[:address]

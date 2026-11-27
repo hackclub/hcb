@@ -4,6 +4,7 @@ class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
   before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
+  before_action :set_delivery_reason
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -17,6 +18,9 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @percentage = (@goal.progress_amount_cents.to_f / @goal.amount_cents) if @goal.present?
 
+    @delivery_reason = "you are on the team of #{@event.name} on HCB and have the donation summary notification option enabled."
+    @unsubscribe_link = settings_notifications_url
+
     mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
   end
 
@@ -28,6 +32,9 @@ class EventMailer < ApplicationMailer
     return if @emails.none?
 
     @total = @follows.length
+
+    @delivery_reason = "you are on the team of #{@event.name} on HCB and have the follower summary notification option enabled."
+    @unsubscribe_link = settings_notifications_url
 
     mail to: @emails, subject: "#{@event.name} got #{@total} #{"follower".pluralize(@total)} this past month"
   end
@@ -52,6 +59,7 @@ class EventMailer < ApplicationMailer
 
   def user_call_requested
     @user = params[:user]
+    @delivery_reason = "you requested an onboarding call for #{@event.name}."
 
     mail to: @user.email_address_with_name,
          subject: "We've received your request for an onboarding call for #{@event.name}"
@@ -59,6 +67,7 @@ class EventMailer < ApplicationMailer
 
   def ops_call_requested
     @requesting_user = params[:requesting_user]
+    @delivery_reason = "you are on the HCB operations team."
 
     mail to: OPERATIONS_EMAIL,
          subject: "#{@requesting_user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
@@ -102,10 +111,16 @@ class EventMailer < ApplicationMailer
     @emails = @event.organizer_contact_emails(only_managers: true)
     return if @emails.none?
 
+    @delivery_reason = "you are a manager of #{@event.name} on HCB."
+
     mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private
+
+  def set_delivery_reason
+    @delivery_reason = "you are a member of #{@event.name} on HCB."
+  end
 
   def set_emails
     @emails = @event.organizer_contact_emails

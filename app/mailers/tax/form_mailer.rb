@@ -21,6 +21,7 @@ module Tax
     def set_form
       @form = params[:form]
       @legal_entity = @form.legal_entity
+      @delivery_reason = "you submitted tax information to HCB."
 
       if @legal_entity.managed?
         @recipients = @legal_entity.emails

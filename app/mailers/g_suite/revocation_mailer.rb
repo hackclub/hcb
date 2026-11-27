@@ -4,6 +4,7 @@ class GSuite
   class RevocationMailer < ApplicationMailer
     before_action :set_g_suite_and_revocation, :set_reason, only: %i[notify_of_revocation revocation_warning revocation_one_week_warning]
     before_action :set_g_suite, only: %i[revocation_canceled]
+    before_action :set_delivery_reason
 
     default to: -> { @g_suite.event.organizer_contact_emails(only_managers: true) }
 
@@ -22,6 +23,8 @@ class GSuite
     def revocation_canceled
       mail subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
     end
+
+    private
 
     def set_g_suite_and_revocation
       @g_suite_revocation = GSuite::Revocation.find(params[:g_suite_revocation_id])
@@ -43,6 +46,10 @@ class GSuite
         Rails.error.unexpected("GSuite::Revocation: Unknown reason for revocation")
         @reason = "of an unknown reason"
       end
+    end
+
+    def set_delivery_reason
+      @delivery_reason = "you are a manager of #{@g_suite.event.name}, which uses Google Workspace through HCB."
     end
 
   end

@@ -3,6 +3,7 @@
 class Contract
   class PartyMailer < ApplicationMailer
     before_action :set_party
+    before_action :set_delivery_reason
 
     def notify
       mail to: @party.email,
@@ -29,6 +30,10 @@ class Contract
     def set_party
       @party = params[:party]
       @contract = @party.contract
+    end
+
+    def set_delivery_reason
+      @delivery_reason = "you are a party to an HCB contract."
     end
 
   end

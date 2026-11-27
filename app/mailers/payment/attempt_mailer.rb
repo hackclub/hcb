@@ -5,16 +5,21 @@ class Payment
     before_action :set_attempt
 
     def failed_creator
+      @delivery_reason = "you sent a payment to #{@payment.payee.display_name} from #{@payment.event.name}."
+
       mail to: @creator, subject: "[Action Required] Your payment to #{@payment.payee.display_name} failed to send"
     end
 
     def failed_payee
       @reason = params[:reason]
+      @delivery_reason = "you are being paid for \"#{@payment.purpose}\" by #{@payment.event.name}."
+
       mail to: @recipients, subject: "We couldn't send your payment for #{@payment.purpose} from #{@payment.event.name}"
     end
 
     def sent_with_fee
       @fee = params[:fee]
+      @delivery_reason = "you sent a payment to #{@payment.payee.display_name} from #{@payment.event.name}."
 
       mail to: @creator, subject: "Your payment to #{@payment.payee.display_name} has been sent"
     end

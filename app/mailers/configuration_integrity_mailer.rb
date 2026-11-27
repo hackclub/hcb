@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ConfigurationIntegrityMailer < ApplicationMailer
+  internal!
   default to: ENGINEERING_EMAIL
 
   def taxbandits_leaking_tins
