@@ -2016,7 +2016,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "imported_at"
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_payees_on_archived_at"
@@ -2985,8 +2984,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
     t.text "email", null: false
     t.string "full_name"
     t.boolean "joined_as_teenager"
-    t.string "legal_first_name"
-    t.string "legal_last_name"
     t.datetime "locked_at", precision: nil
     t.boolean "monthly_donation_summary", default: true
     t.boolean "monthly_follower_summary", default: true
