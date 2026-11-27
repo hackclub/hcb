@@ -399,7 +399,7 @@ module Tax
       when "FormW9"
         if form_data["FederalTaxClassification"]&.downcase&.include?("corporation")
           :corporation
-        elsif form_data["TINType"] == "SSN"
+        elsif ["SSN", "ITIN"].include? form_data["TINType"].to_s.strip.upcase
           :person
         else
           :business
