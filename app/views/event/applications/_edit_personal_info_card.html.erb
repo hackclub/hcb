@@ -54,7 +54,7 @@
 
   <hr class="col-span-2 mt-5 invisible mb-4">
 
-  <div>
+  <div data-controller="address-autocomplete">
     <h4 class="text-lg my-0 mb-4">Address</h4>
 
     <%= form.label :address_line1 do %>
@@ -62,7 +62,7 @@
     <% end %>
     <div class="grid grid-cols-2 gap-3 mb-2">
       <div class="field mb-0">
-        <%= form.text_field :address_line1, placeholder: "8605 Santa Monica Blvd", required: true %>
+        <%= form.text_field :address_line1, placeholder: "8605 Santa Monica Blvd", required: true, data: { address_autocomplete_target: "line1" } %>
       </div>
       <div class="field mb-0">
         <%= form.text_field :address_line2, placeholder: "Suite 86294" %>
@@ -71,25 +71,25 @@
         <%= form.label :address_city do %>
           City <span class="text-primary">*</span>
         <% end %>
-        <%= form.text_field :address_city, placeholder: "West Hollywood", required: true %>
+        <%= form.text_field :address_city, placeholder: "West Hollywood", required: true, data: { address_autocomplete_target: "city" } %>
       </div>
       <div class="field mb-0">
         <%= form.label :address_state do %>
           State <span class="text-primary">*</span>
         <% end %>
-        <%= form.text_field :address_state, placeholder: "CA", required: true %>
+        <%= form.text_field :address_state, placeholder: "CA", required: true, data: { address_autocomplete_target: "state" } %>
       </div>
       <div class="field mb-0">
         <%= form.label :address_postal_code do %>
           Zip code <span class="text-primary">*</span>
         <% end %>
-        <%= form.text_field :address_postal_code, placeholder: "90069", required: true %>
+        <%= form.text_field :address_postal_code, placeholder: "90069", required: true, data: { address_autocomplete_target: "postalCode" } %>
       </div>
       <div class="field mb-0">
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]" } %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", data: { address_autocomplete_target: "country" } } %>
       </div>
     </div>
   </div>

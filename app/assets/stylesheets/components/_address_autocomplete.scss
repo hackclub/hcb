@@ -1,0 +1,18 @@
+// Dropdown rendered by the `address-autocomplete` Stimulus controller. It
+// borrows the combobox's listbox and option styles.
+
+.address-autocomplete__anchor {
+  position: relative;
+}
+
+.address-autocomplete__listbox {
+  // The controller sets `left`, `top` and `width` to line it up under the
+  // street address input, which can be narrower than a readable address.
+  min-width: min(20rem, 100%);
+}
+
+.address-autocomplete__detail {
+  @apply text-sm;
+  color: $muted;
+  display: block;
+}
