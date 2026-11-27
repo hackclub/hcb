@@ -89,4 +89,12 @@
       <td></td>
     <% end %>
   <% end %>
+  <%#
+    A caller that needs one more column renders the row as a layout and puts
+    the cell in its block (the repayment picker's Choose button). Collection
+    rendering passes no block at all, hence the guard; a single render without
+    one yields the view flow's :layout slot, which is empty for a row rendered
+    in a page body.
+  %>
+  <%= yield if block_given? %>
 </tr>
