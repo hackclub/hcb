@@ -40,7 +40,7 @@ RSpec.describe Disbursement::Incoming, type: :model do
     context "when destination subledger is set" do
       let(:destination_event) { create(:event) }
       let(:destination_subledger) { create(:subledger, event: destination_event) }
-      let(:disbursement_with_subledger) { create(:disbursement, event: destination_event, destination_subledger:) }
+      let(:disbursement_with_subledger) { build(:disbursement, event: destination_event, destination_subledger:) }
       let(:incoming_with_subledger) { disbursement_with_subledger.incoming_disbursement }
 
       it "returns the destination subledger" do

@@ -68,7 +68,7 @@
       <th>Raised (Last Year)</th>
       <th>Country</th>
       <th>Status</th>
-      <th>Active teenagers</th>
+      <th class="text-right">Active teenagers</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -120,7 +120,7 @@
             <% end %>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <%= event.users.active_teenager.count %>
         </td>
         <td>

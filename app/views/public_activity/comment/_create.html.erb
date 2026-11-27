@@ -2,10 +2,13 @@
 
 <% current_user ||= p[:current_user] %>
 
-<% if activity.trackable.present? && activity.trackable.commentable.present? %>
- <% if Pundit.policy(current_user, activity.trackable).show? %>
-    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: polymorphic_path(activity.trackable.commentable, anchor: "comment-#{activity.trackable.hashid}") } do %>
-      <%= activity.trackable.action_text %> on <%= link_to activity.trackable.commentable.try(:name) || activity.trackable.commentable.try(:memo) || "an item", activity.trackable.commentable %>
+<% commentable = activity.trackable&.commentable %>
+<% commentable = commentable.ledger_item if commentable.is_a?(HcbCode) && commentable.ledger_item.present? %>
+
+<% if commentable.present? %>
+  <% if Pundit.policy(current_user, activity.trackable).show? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: polymorphic_path(commentable, anchor: "comment-#{activity.trackable.hashid}") } do %>
+      <%= activity.trackable.action_text %> on <%= link_to commentable.try(:name) || commentable.try(:memo) || "an item", commentable %>
     <% end %>
   <% end %>
 <% else %>

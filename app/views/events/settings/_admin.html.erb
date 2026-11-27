@@ -15,7 +15,15 @@
     <% end %>
   <% end %>
 
-  <%= render partial: "application/admin_viewer", locals: { record: event } %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event } %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.config } %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.plan } if event.plan.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.ledger } if event.ledger.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.card_grant_setting } if event.card_grant_setting.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.donation_goal } if event.donation_goal.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.application } if event.application.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.column_account_number } if event.column_account_number.present? %>
+  <%= render partial: "application/admin_viewer", locals: { class_name: "", record: event.increase_account_number } if event.increase_account_number.present? %>
 
   <% admin_tool "p-3" do %>
     <details>

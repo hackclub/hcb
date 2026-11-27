@@ -226,8 +226,10 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         get :show, params: { id: item.hashid, reverse: receipt.id }
 
         expect(response).to be_successful
-        expect(response.body).to include("Reverse receipt pairing")
-        expect(response.body).to include(reverse_receipt_path(receipt.id, format: :html))
+        modal = Nokogiri::HTML5(response.body).at_css("#reverse_receipt_modal")
+        expect(modal.text).to include("Reverse receipt pairing")
+        expect(modal.at_css("form")["action"]).to eq(reverse_receipt_path(receipt.id, format: :html))
+        expect(modal.ancestors("turbo-frame")).to be_empty
       end
     end
 

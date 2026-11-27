@@ -469,6 +469,13 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     expect(categories(disbursement)).to eq(["internal-transfer", "internal-transfer"])
   end
 
+  it "records the ledgers the transfer moves money between" do
+    disbursement = create_disbursement(transfer_type: "transfer").reload
+
+    expect(disbursement.source_ledger).to eq(source_event.ledger)
+    expect(disbursement.destination_ledger).to eq(destination_event.ledger)
+  end
+
   # Transfer-type, HQ-only, and income-only categories would misreport what the money was for (#15894).
   it "rejects a payment without an allowed category" do
     [nil, "internal-transfer", "repayment", "hcb-revenue", "fiscal-sponsorship-fees", "donations", "made-up"].each do |slug|
