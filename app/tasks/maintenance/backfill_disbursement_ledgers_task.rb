@@ -8,34 +8,25 @@ module Maintenance
   # rule Disbursement#ledger_for follows. A subledger without a card grant
   # leaves its side nil.
   #
-  # Processed in batches so each iteration is two UPDATEs rather than a query
-  # per row. Only empty sides are written, so it's safe to re-run.
+  # Only empty sides are written, so it's safe to re-run.
   class BackfillDisbursementLedgersTask < MaintenanceTasks::Task
     def collection
-      Disbursement
-        .where(source_ledger_id: nil)
-        .or(Disbursement.where(destination_ledger_id: nil))
-        .in_batches(of: 10_000)
+      Disbursement.where(source_ledger_id: nil).or(Disbursement.where(destination_ledger_id: nil))
     end
 
-    def process(batch)
-      batch.where(source_ledger_id: nil).update_all("source_ledger_id = #{ledger_sql(subledger: "source_subledger_id", event: "source_event_id")}")
-      batch.where(destination_ledger_id: nil).update_all("destination_ledger_id = #{ledger_sql(subledger: "destination_subledger_id", event: "event_id")}")
+    def process(disbursement)
+      disbursement.update_columns(
+        source_ledger_id: disbursement.source_ledger_id || ledger_for(disbursement.source_event, disbursement.source_subledger)&.id,
+        destination_ledger_id: disbursement.destination_ledger_id || ledger_for(disbursement.destination_event, disbursement.destination_subledger)&.id
+      )
     end
 
     private
 
-    def ledger_sql(subledger:, event:)
-      <<~SQL.squish
-        CASE WHEN disbursements.#{subledger} IS NOT NULL THEN
-          (SELECT ledgers.id FROM ledgers
-           INNER JOIN card_grants ON card_grants.id = ledgers.card_grant_id
-           WHERE card_grants.subledger_id = disbursements.#{subledger} AND ledgers."primary")
-        ELSE
-          (SELECT ledgers.id FROM ledgers
-           WHERE ledgers.event_id = disbursements.#{event} AND ledgers."primary")
-        END
-      SQL
+    def ledger_for(event, subledger)
+      return subledger.card_grant&.ledger if subledger.present?
+
+      event&.ledger
     end
 
   end

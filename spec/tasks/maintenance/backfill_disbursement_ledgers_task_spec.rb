@@ -17,7 +17,7 @@ RSpec.describe Maintenance::BackfillDisbursementLedgersTask do
   end
 
   def backfill
-    described_class.new.collection.each { |batch| described_class.new.process(batch) }
+    described_class.new.collection.find_each { |disbursement| described_class.new.process(disbursement) }
   end
 
   it "collects disbursements missing either ledger" do
@@ -25,7 +25,7 @@ RSpec.describe Maintenance::BackfillDisbursementLedgersTask do
     missing_source = create(:disbursement).tap { |d| d.update_columns(source_ledger_id: nil) }
     filled = create(:disbursement)
 
-    ids = described_class.new.collection.flat_map(&:ids)
+    ids = described_class.new.collection.ids
 
     expect(ids).to include(missing_both.id, missing_source.id)
     expect(ids).not_to include(filled.id)
