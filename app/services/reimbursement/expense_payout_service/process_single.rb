@@ -22,7 +22,7 @@ module Reimbursement
                              currency_code: "USD",
                              sender_bank_account_id:,
                              receiver_bank_account_id:,
-                             description: memo
+                             description: expense_payout.short_code_memo
         end
 
         true
@@ -32,14 +32,6 @@ module Reimbursement
 
       def amount_cents
         expense_payout.amount_cents
-      end
-
-      def memo
-        "HCB-#{local_hcb_code.short_code}"
-      end
-
-      def local_hcb_code
-        @local_hcb_code ||= expense_payout.local_hcb_code
       end
 
       def expense_payout

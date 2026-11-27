@@ -51,7 +51,6 @@ class Comment < ApplicationRecord
   scope :not_admin_only, -> { where(admin_only: false) }
   scope :by_admin, -> { joins(:user).merge(User.admin.where(pretend_is_not_admin: false)) }
   scope :edited, -> { joins(:versions).where("has_untracked_edit IS TRUE OR versions.event = 'update' OR versions.event = 'destroy'") }
-  scope :has_attached_file, -> { joins(:file_attachment) }
 
   enum :action, {
     commented: 0,

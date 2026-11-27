@@ -50,19 +50,59 @@ RSpec.describe ReceiptService::Extract do
     expect(receipt.suggested_memo).to eq("☕ Coffee from Cafe")
   end
 
-  # Broadcasting through the HcbCode model made Turbo add an `hcb_code` local,
-  # which the ledger item partial's strict `(item:)` locals rejected, so the
-  # broadcast job raised ActionView::Template::Error.
-  it "broadcasts the AI memo suggestion to a linked ledger item without error" do
-    ledger_item = create(:ledger_item)
-    hcb_code = create(:hcb_code, ledger_item:)
-    receipt = build_receipt(receiptable: hcb_code)
+  describe "the AI memo suggestion" do
+    let(:item_target) { ActionView::RecordIdentifier.dom_id(ledger_item, :ai_memo) }
 
-    expect {
-      perform_enqueued_jobs(only: Turbo::Streams::ActionBroadcastJob) do
+    context "on a receipt attached to a ledger item with an HCB code" do
+      let(:ledger_item) { create(:ledger_item) }
+
+      before { create(:hcb_code, ledger_item:) }
+
+      it "broadcasts to both headings over the item's stream" do
+        receipt = build_receipt(receiptable: ledger_item)
+
+        expect(Turbo::StreamsChannel).to receive(:broadcast_action_later_to)
+          .with([ledger_item, "ai_memo"], hash_including(target: item_target, partial: "ledger/items/memo/ai"))
+        expect(Turbo::StreamsChannel).to receive(:broadcast_action_later_to)
+          .with([ledger_item, "ai_memo"], hash_including(target: "ai_memo", partial: "hcb_codes/memo/ai"))
+
         described_class.new(receipt:).run!
       end
-    }.not_to raise_error
+
+      # Broadcasting through the HcbCode model made Turbo add an `hcb_code`
+      # local, which the ledger item partial's strict `(item:)` locals
+      # rejected, so the broadcast job raised ActionView::Template::Error.
+      it "renders both partials without error" do
+        receipt = build_receipt(receiptable: ledger_item)
+
+        expect {
+          perform_enqueued_jobs(only: Turbo::Streams::ActionBroadcastJob) do
+            described_class.new(receipt:).run!
+          end
+        }.not_to raise_error
+      end
+    end
+
+    context "on a receipt attached to a ledger item with no HCB code" do
+      let(:ledger_item) { create(:ledger_item) }
+
+      it "broadcasts to the item's heading only" do
+        receipt = build_receipt(receiptable: ledger_item)
+
+        expect(Turbo::StreamsChannel).to receive(:broadcast_action_later_to)
+          .with([ledger_item, "ai_memo"], hash_including(target: item_target)).once
+
+        described_class.new(receipt:).run!
+      end
+    end
+
+    it "is not broadcast for a receipt that isn't on a ledger item" do
+      receipt = build_receipt
+
+      expect(Turbo::StreamsChannel).not_to receive(:broadcast_action_later_to)
+
+      described_class.new(receipt:).run!
+    end
   end
 
   # The OpenAI request above is slow enough that a user can delete the

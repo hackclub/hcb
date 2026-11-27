@@ -969,4 +969,52 @@ RSpec.describe Disbursement, type: :model do
       end
     end
   end
+
+  describe "ledgers" do
+    let(:event) { create(:event) }
+    let(:card_grant) do
+      add_balance_to_event(event)
+      create(:card_grant, event:)
+    end
+
+    it "writes both organizations' ledgers on a transfer between them" do
+      disbursement.reload
+
+      expect(disbursement.source_ledger).to eq(disbursement.source_event.ledger)
+      expect(disbursement.destination_ledger).to eq(disbursement.destination_event.ledger)
+    end
+
+    it "writes the card grant's ledger as the destination of a top-up" do
+      topup = create(:disbursement, source_event: event, event:, destination_subledger: card_grant.subledger).reload
+
+      expect(topup.source_ledger).to eq(event.ledger)
+      expect(topup.destination_ledger).to eq(card_grant.ledger)
+    end
+
+    it "writes the card grant's ledger as the source of a withdrawal" do
+      withdrawal = create(:disbursement, source_event: event, event:, source_subledger: card_grant.subledger).reload
+
+      expect(withdrawal.source_ledger).to eq(card_grant.ledger)
+      expect(withdrawal.destination_ledger).to eq(event.ledger)
+    end
+
+    it "leaves the ledger empty for a subledger without a card grant" do
+      subledger = event.subledgers.create!
+      transfer = create(:disbursement, source_event: event, event:, destination_subledger: subledger).reload
+
+      expect(transfer.source_ledger).to eq(event.ledger)
+      expect(transfer.destination_ledger).to be_nil
+    end
+
+    it "rewrites the destination ledger when the destination event changes" do
+      source_ledger = disbursement.source_ledger
+      new_destination = create(:event)
+
+      disbursement.update!(event: new_destination)
+      disbursement.reload
+
+      expect(disbursement.destination_ledger).to eq(new_destination.ledger)
+      expect(disbursement.source_ledger).to eq(source_ledger)
+    end
+  end
 end
