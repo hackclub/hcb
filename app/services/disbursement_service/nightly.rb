@@ -9,8 +9,8 @@ module DisbursementService
         raise ArgumentError, "must be a pending disbursement only" unless disbursement.pending?
 
         amount_cents = disbursement.amount
-        outgoing_memo = disbursement.outgoing_disbursement.transaction_memo
-        incoming_memo = disbursement.incoming_disbursement.transaction_memo
+        outgoing_memo = disbursement.outgoing_disbursement.short_code_memo
+        incoming_memo = disbursement.incoming_disbursement.short_code_memo
 
         # FS Main -> FS Operating
         ColumnService.post "/transfers/book",

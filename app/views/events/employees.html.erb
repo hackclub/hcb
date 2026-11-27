@@ -55,8 +55,8 @@
           <th>From</th>
           <th>Title</th>
           <th>Amount</th>
-          <th>Submitted</th>
-          <th></th>
+          <th class="text-right">Submitted</th>
+          <th><%# process button %></th>
         </tr>
       </thead>
       <tbody>
@@ -71,7 +71,7 @@
             <td>
               <%= render_money payment.amount_cents %>
             </td>
-            <td>
+            <td class="text-right">
               <%= format_date payment.created_at %>
             </td>
             <td>

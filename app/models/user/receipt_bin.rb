@@ -18,7 +18,8 @@ class User
         # Only get the closest pairing for each receipt
         .order(:receipt_id, distance: :asc)
         .select("DISTINCT ON (receipt_id) suggested_pairings.*")
-        .preload(:ledger_item)
+        # What the pairing card reads per item: the ledger row (see Ledger::Query#execute) plus the card's stripe_card through linked_object
+        .preload(ledger_item: [:linked_object, :tags, :hcb_code, { primary_ledger: [:event, { card_grant: :event }] }])
         .select { |pairing| pairing.ledger_item.missing_receipt? }
     end
 

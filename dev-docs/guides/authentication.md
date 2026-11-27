@@ -14,9 +14,9 @@ Logging in starts in the [`LoginsController`](https://github.com/hackclub/hcb/bl
 
 From there, it’ll set a cookie that’ll act as the “browser token”. It will be used to make sure that this [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb) record is only used in this browser.
 
-If the computer has a `login_preference` set (using [Rails’ sessions](https://guides.rubyonrails.org/v4.1/action_controller_overview.html#session)), it will redirect you to either `totp_login_path` or `login_code_login_path`. Otherwise, it will redirect you to `choose_login_preference_login_path` or `login_code_login_path` if you don’t have TOTP / WebAuthn set up. 
+`continue_login` then picks a method by replaying the factors from the user's previous completed login (`User#preferred_login_methods`), skipping any already used on this [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb) and any not currently available. It redirects to `email_login_path`, `sms_login_path`, `totp_login_path`, or `security_key_login_path` accordingly, or to `choose_login_preference_login_path` when nothing from the previous login applies (including the first login). There is no stored preference: SMS is offered whenever the user's `phone_number_verified` is true (see `Login#sms_available?`).
 
-`login_code_login_path` will send the user a login code via email or SMS based on their preference (stored in the `use_sms_auth` column). They can manually override this by setting `resp[:method] = :sms`. It then renders a form for them to enter this code.
+`email_login_path` and `sms_login_path` send the user a login code by that channel and render a form for them to enter it.
 
 `totp_login_path` renders a form for users to input their one time password.
 

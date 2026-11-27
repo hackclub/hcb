@@ -6,7 +6,7 @@ class WireMailer < ApplicationMailer
 
     mail to: @wire.recipient_email,
          subject: "Your wire transfer from #{@wire.event.name} has been sent",
-         from: email_address_with_name("hcb@hackclub.com", "#{@wire.event.name} via HCB")
+         from: hcb_email_with_name_of(@wire.event)
   end
 
   def notify_failed

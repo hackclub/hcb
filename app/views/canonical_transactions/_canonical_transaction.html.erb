@@ -19,9 +19,7 @@
 <% special_appearance = JSON.parse(special_appearance) if special_appearance %>
 
 <tr
-  class="transaction <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
-                           ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero"
-                         end %> <%= special_appearance["css_class"] if special_appearance.present? %>"
+  class="transaction <%= ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero" %> <%= special_appearance["css_class"] if special_appearance.present? %>"
   id="<%= ct.local_hcb_code.hashid %>"
   <% if defined?(selectable) && selectable %>
     data-ledger-item-id="<%= ledger_item&.hashid %>"
@@ -100,7 +98,7 @@
 
         <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
           <div class="flex flex-wrap tags ledger_item_<%= ledger_item&.hashid %>_tags" style="gap: 0.25rem">
-            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { item: ledger_item } %>
+            <%= render partial: "ledger/items/tag", collection: tagged_with, locals: { item: ledger_item } %>
           </div>
         <% end %>
       </div>
@@ -108,12 +106,12 @@
       <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, ct).update? && !ct.instance_of?(OpenStruct) %>
         <% if event.present? && can_tag %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
-            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+            <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.tags.each do |tag| %>
                 <div class="flex items-center" data-tag="<%= tag.id %>">
                   <%= button_to ledger_item_toggle_tag_path(ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(ledger_item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-                    <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+                    <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
                     <%= tag.label %>
                     <%= "✓" if tagged_with.include?(tag) %>
                   <% end %>
@@ -147,13 +145,13 @@
       <% if ct.likely_account_verification_related? && !organizer_signed_in? %>
         <%= redacted_amount %>
       <% else %>
-        <span><%= render_transaction_amount ct.amount %></span>
+        <span><%= render_money ct.amount %></span>
       <% end %>
     </span>
   </td>
 
   <% if @show_running_balance %>
-    <td><%= number_to_currency ct.running_balance %></td>
+    <td class="text-right"><%= number_to_currency ct.running_balance %></td>
   <% end %>
 
   <% if local_assigns[:show_author_column] %>
@@ -198,7 +196,7 @@
               <span>Select</span>
             <% end %>
 
-            <% if Flipper.enabled?(:copy_receipt_email_2026_01_21) %>
+            <% if Flipper.enabled?(:copy_receipt_email_2026_01_21, current_user) %>
               <button type="button" class="btn <%= "disabled" if local_assigns[:receipt_upload_button_disabled] %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= ct.local_hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this transaction">
                 <%= inline_icon "email", style: "margin: 0px" %>
               </button>

@@ -50,7 +50,7 @@
             <div data-controller="menu" data-menu-placement-value="bottom-end" class="shrink-0 relative" style="z-index: 1">
               <%= pop_icon_to "more", "#",
                     class: "align-middle muted", "aria-label": "Recipient options",
-                    data: { turbo: false, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+                    data: { turbo: false, "menu-target": "toggle", action: "menu#toggle" } %>
               <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
                 <% if policy(payee).update? %>
                   <%= link_to new_recipient_transfer_path(destination, @event, payee_id: payee.hashid, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>

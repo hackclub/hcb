@@ -69,6 +69,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || (record == user && user.admin_override_pretend?)
   end
 
+  def audit_log?
+    user.auditor?
+  end
+
   def admin_details?
     user.auditor?
   end
@@ -130,10 +134,6 @@ class UserPolicy < ApplicationPolicy
   end
 
   def reset_billing_address?
-    user.admin? || record == user
-  end
-
-  def toggle_sms_auth?
     user.admin? || record == user
   end
 

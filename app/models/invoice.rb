@@ -16,7 +16,6 @@
 #  due_date                                                     :datetime
 #  ending_balance                                               :bigint
 #  finalized_at                                                 :datetime
-#  hcb_code                                                     :text
 #  hosted_invoice_url                                           :text
 #  invoice_pdf                                                  :text
 #  item_amount                                                  :bigint
@@ -167,6 +166,7 @@ class Invoice < ApplicationRecord
     end
 
     event :mark_void do
+      after_commit :refresh_ledger_item
       transitions from: :open_v2, to: :void_v2
     end
 
@@ -190,12 +190,6 @@ class Invoice < ApplicationRecord
 
   before_create :set_defaults
 
-  after_create_commit -> {
-    unless OrganizerPosition.role_at_least?(creator, event, :manager)
-      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
-    end
-  }
-
   # An invoice doesn't create a canonical (pending) transaction until it's paid,
   # so eagerly create its ledger item on creation. It starts "intended" (no CTs or
   # CPTs) and is filled in when the invoice is paid and its CPT maps back to it.
@@ -209,12 +203,17 @@ class Invoice < ApplicationRecord
     end
   end
 
+  # Declared after the ledger item callback: after_commit callbacks run in
+  # definition order, and the notification email links to the ledger item, so
+  # it has to exist before the mail job is enqueued.
+  after_create_commit -> {
+    unless OrganizerPosition.role_at_least?(creator, event, :manager)
+      InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
+    end
+  }
+
   # Stripe syncing…
   before_destroy :close_stripe_invoice
-
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
-  end
 
   def manually_marked_as_paid?
     manually_marked_as_paid_at.present?
@@ -262,17 +261,6 @@ class Invoice < ApplicationRecord
 
   def state_icon
     return "checkmark" if deposited? || paid_v2?
-  end
-
-  def filter_data
-    {
-      exists: true,
-      paid: paid?,
-      unpaid: !paid?,
-      upcoming: due_date > 3.days.from_now,
-      overdue: due_date < 3.days.from_now && !paid?,
-      archived: archived?
-    }
   end
 
   def set_fields_from_stripe_invoice(inv = remote_invoice)
@@ -383,10 +371,6 @@ class Invoice < ApplicationRecord
   include HasHcbCode
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
 
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
-
   def canonical_pending_transactions
     return [] unless raw_pending_invoice_transaction
 
@@ -410,6 +394,12 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  # An unpaid invoice's ledger item has no transactions, so it takes its status
+  # from the invoice and nothing else refreshes it when the invoice is voided.
+  def refresh_ledger_item
+    safely { reload_ledger_item&.refresh! }
+  end
 
   def raw_pending_invoice_transaction
     raw_pending_invoice_transactions.first

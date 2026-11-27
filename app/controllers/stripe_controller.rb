@@ -206,7 +206,7 @@ class StripeController < ActionController::Base
         amount: charge[:amount_refunded],
         currency: "usd",
         description: "Refund for donation #{donation.id}",
-        statement_descriptor: "HCB-#{donation.local_hcb_code.short_code}"
+        statement_descriptor: donation.short_code_memo
       )
     elsif invoice
       invoice.mark_refunded! unless invoice.refunded_v2?
@@ -215,7 +215,7 @@ class StripeController < ActionController::Base
         amount: charge[:amount_refunded],
         currency: "usd",
         description: "Refund for invoice #{invoice.id}",
-        statement_descriptor: "HCB-#{invoice.local_hcb_code.short_code}"
+        statement_descriptor: invoice.short_code_memo
       )
     end
   end

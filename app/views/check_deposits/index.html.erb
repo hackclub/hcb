@@ -34,13 +34,14 @@
   <div class="table-container">
     <table>
       <thead>
-        <% if (can_view_any_check_images = @check_deposits.any? { |cd| policy(cd).view_image? }) %>
-          <th><%# image %></th>
-        <% end %>
-        <th>Status</th>
-        <th>Date</th>
-        <th>Amount</th>
-        <th><%# details button %></th>
+        <tr>
+          <% if (can_view_any_check_images = @check_deposits.any? { |cd| policy(cd).view_image? }) %>
+            <th><%# image %></th>
+          <% end %>
+          <th>Status</th>
+          <th>Date</th>
+          <th class="text-right">Amount</th>
+        </tr>
       </thead>
 
       <tbody>
@@ -53,7 +54,7 @@
             <% end %>
             <td><span class="badge bg-<%= check_deposit.state %> m0"><%= check_deposit.state_text %></span></td>
             <td><%= format_date check_deposit.created_at %></td>
-            <td>
+            <td class="text-right">
               <%= render_money check_deposit.amount_cents %>
               <%= link_to "", ledger_item_path(check_deposit.ledger_item), class: "stretched-link", data: ledger_item_popover_data(check_deposit.ledger_item, title: "Check deposit of #{render_money(check_deposit.amount_cents)}") %>
             </td>
