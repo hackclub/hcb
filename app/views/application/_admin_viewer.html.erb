@@ -1,4 +1,6 @@
-<% admin_tool("mt1 p-3") do %>
+<%# locals: (record:, class_name: "mt1") %>
+
+<% admin_tool("#{class_name} p-3") do %>
   <details>
     <summary>
       Inspect "<%= record.class.name.underscore %>" record

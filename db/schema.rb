@@ -2955,6 +2955,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_220950) do
     t.datetime "signed_out_at"
     t.string "timezone"
     t.datetime "updated_at", null: false
+    t.text "user_agent"
     t.bigint "user_id"
     t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
