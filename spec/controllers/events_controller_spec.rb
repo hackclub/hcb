@@ -1552,6 +1552,56 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "the two-factor authentication indicator on #team" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+    # Signed out visitors only see members who have a preferred name.
+    let!(:protected_member) { create(:user, :with_two_factor_authentication, preferred_name: "Protected") }
+    let!(:exposed_member) { create(:user, preferred_name: "Exposed") }
+
+    before do
+      create(:organizer_position, user: protected_member, event:, role: :member)
+      create(:organizer_position, user: exposed_member, event:, role: :member)
+    end
+
+    # { user => "true"/"false" } for every card or row that carries an indicator.
+    def indicators(view:)
+      get(:team, params: { event_id: event.slug, view: })
+
+      entries = Nokogiri::HTML5(response.body).css(view == "list" ? "tbody tr" : ".organizer-position")
+      [protected_member, exposed_member].filter_map do |user|
+        entry = entries.find { |e| e.text.include?(user.preferred_name) }
+        expect(entry).to be_present
+        indicator = entry.at_css("[data-two-factor-authentication]")
+        [user, indicator["data-two-factor-authentication"]] if indicator
+      end.to_h
+    end
+
+    %w[grid list].each do |view|
+      it "shows a reader who uses two-factor authentication in the #{view} view" do
+        reader = create(:user)
+        create(:organizer_position, user: reader, event:, role: :reader)
+        create_session(reader, verified: true)
+
+        expect(indicators(view:)).to eq(protected_member => "true", exposed_member => "false")
+      end
+
+      it "hides it from a signed out visitor in the #{view} view" do
+        expect(indicators(view:)).to eq({})
+      end
+    end
+
+    it "labels the list column only for readers" do
+      get(:team, params: { event_id: event.slug, view: "list" })
+      expect(Nokogiri::HTML5(response.body).css("thead th").map(&:text)).not_to include("Two-factor")
+
+      create_session(create(:user, :make_admin), verified: true)
+      get(:team, params: { event_id: event.slug, view: "list" })
+      expect(Nokogiri::HTML5(response.body).css("thead th").map(&:text)).to include("Two-factor")
+    end
+  end
+
   describe "#async_sub_organization_balance" do
     render_views
 
