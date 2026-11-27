@@ -1,2 +1,3 @@
 <%# locals: (item:) -%>
-<span><%= item.memo %></span>
+<%# data-custom-memo lets memo_controller.js tell a rename from a cleared memo when this span is streamed in. %>
+<span data-custom-memo="<%= item.custom_memo.present? %>"><%= item.memo %></span>

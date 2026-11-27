@@ -4,6 +4,7 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include AuditLogHelper
   include ComboboxHelper
   include DisputesHelper
   include DonationsHelper
@@ -88,14 +89,6 @@ module ApplicationHelper
   def render_money_amount(amount, opts = {})
     opts[:unit] = ""
     render_money(amount, opts)
-  end
-
-  def render_transaction_amount(amount)
-    if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
-      content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
-    else
-      render_money amount
-    end
   end
 
   def render_percentage(decimal, params = {})

@@ -42,7 +42,7 @@
       <th>Pending TXs</th>
       <th>Canonical TXs</th>
       <th>Comments</th>
-      <th>Receipts</th>
+      <th class="text-right">Receipts</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -86,7 +86,7 @@
             <%= c.id %>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <% hcb_code.receipts.each do |r| %>
             <%= r.id %>
           <% end %>

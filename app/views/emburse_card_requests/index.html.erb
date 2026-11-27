@@ -11,8 +11,8 @@
       <th>Creator</th>
       <th>Name on card</th>
       <th>Event</th>
-      <th>Status</th>
-      <th></th>
+      <th class="text-right">Status</th>
+      <th><%# show link %></th>
     </tr>
   </thead>
 
@@ -22,10 +22,8 @@
         <td><%= emburse_card_request.creator.email %> (#<%= emburse_card_request.creator.id %>)</td>
         <td><%= emburse_card_request.full_name %></td>
         <td><%= link_to emburse_card_request.event&.name, emburse_card_request.event %></td>
-        <td><%= emburse_card_request.status %></td>
-        <% if emburse_card_request.under_review? %>
-          <td><%= link_to "Show", emburse_card_request %></td>
-        <% end %>
+        <td class="text-right"><%= emburse_card_request.status %></td>
+        <td><%= link_to "Show", emburse_card_request if emburse_card_request.under_review? %></td>
       </tr>
     <% end %>
   </tbody>

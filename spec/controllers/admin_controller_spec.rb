@@ -66,6 +66,48 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#ledger_items" do
+    render_views
+
+    it "keeps the unmapped filter when searching" do
+      admin = create(:user, :make_admin)
+      create(:ledger_item, :with_primary_ledger, custom_memo: "Searchable mapped memo")
+      create(:ledger_item, custom_memo: "Searchable unmapped memo")
+
+      create_session(admin, verified: true)
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "1" }
+
+      expect(response.body).to include("Searchable unmapped memo")
+      expect(response.body).not_to include("Searchable mapped memo")
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0" }
+
+      expect(response.body).to include("Searchable unmapped memo")
+      expect(response.body).to include("Searchable mapped memo")
+    end
+
+    it "keeps the non-zero filter when searching" do
+      admin = create(:user, :make_admin)
+      # An item's amount is recomputed from its transactions on save, so set it
+      # directly.
+      create(:ledger_item, custom_memo: "Searchable zero memo").update_column(:amount_cents, 0)
+      create(:ledger_item, custom_memo: "Searchable nonzero memo").update_column(:amount_cents, 500)
+
+      create_session(admin, verified: true)
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0", nonzero: "1" }
+
+      expect(response.body).to include("Searchable nonzero memo")
+      expect(response.body).not_to include("Searchable zero memo")
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0" }
+
+      expect(response.body).to include("Searchable nonzero memo")
+      expect(response.body).to include("Searchable zero memo")
+    end
+  end
+
   describe "#fee_revenues" do
     render_views
 

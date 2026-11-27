@@ -12,7 +12,7 @@
       <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
         <div class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
                 data-menu-target="toggle"
-                data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                data-action="click->menu#toggle">
           <%= @legal_entity.display_name %>
           <%= inline_icon "down-caret", size: 20 %>
                 </div>
@@ -216,7 +216,7 @@
           <th>Date</th>
           <th>Organization</th>
           <th>For</th>
-          <th>Amount</th>
+          <th class="text-right">Amount</th>
         </tr>
       </thead>
       <tbody>
@@ -237,7 +237,7 @@
                 <%= link_to "View invoice", url_for(invoice_receipt.file), class: "muted text-xs relative z-10", data: { turbo_frame: "_top" } %>
               <% end %>
             </td>
-            <td>
+            <td class="text-right">
               <%= render_money payment.amount_cents %>
 
               <% if payout.present? && policy(payout.ledger_item).show? %>

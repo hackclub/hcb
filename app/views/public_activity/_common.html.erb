@@ -21,8 +21,9 @@
         <%= yield %>
       </span>
       <div class="flex items-center">
-        <% url = hcb_code_path(activity.trackable.hcb_code) if activity.trackable.try(:hcb_code) %>
-        <% if defined?(url) && url %>
+        <% url = local_assigns[:url] %>
+        <% url ||= ledger_item_path(activity.trackable.ledger_item) if activity.trackable.try(:ledger_item).present? %>
+        <% if url %>
           <%= link_to url, class: "flex items-center", target: "_blank" do %>
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>

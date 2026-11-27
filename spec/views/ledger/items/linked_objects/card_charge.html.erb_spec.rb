@@ -51,4 +51,49 @@ RSpec.describe "ledger/items/linked_objects/_card_charge" do
       expect(rendered).not_to include("Charged in")
     end
   end
+
+  # The charge's own cardholder sees the row links without being a member of
+  # the organization, so the modals they open have to be rendered for them too
+  context "for a charge with a pending transaction" do
+    let(:cpt) { create(:canonical_pending_transaction, event: stripe_card.event, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card:, stripe_merchant_category_code: "5462")) }
+    let(:ledger_item) { cpt.local_hcb_code.ledger_item }
+    let(:cardholder) { ledger_item.author }
+    let(:page) { Nokogiri::HTML5.fragment(rendered) }
+
+    before do
+      expect(cardholder).to eq(stripe_card.user)
+      without_partial_double_verification do
+        allow(view).to receive_messages(current_user: cardholder)
+      end
+    end
+
+    it "offers the cardholder the charge details modal" do
+      render partial: "ledger/items/linked_objects/card_charge", locals: { ledger_item: }
+
+      expect(page.at_css(%([data-modal="verification_details_#{ledger_item.hashid}"]))).to be_present
+      expect(page.at_css("#verification_details_#{ledger_item.hashid}").text).to include("Charge details")
+    end
+
+    it "opens the merchant and charge method details as modals in a popover too" do
+      assign(:frame, true)
+
+      render partial: "ledger/items/linked_objects/card_charge", locals: { ledger_item: }
+
+      expect(page.css("details")).to be_empty
+      expect(page.at_css(%([data-modal="merchant_details_#{ledger_item.hashid}"]))).to be_present
+      expect(page.at_css("#merchant_details_#{ledger_item.hashid}").text).to include("Merchant details")
+      expect(page.at_css(%([data-modal="verification_details_#{ledger_item.hashid}"]))).to be_present
+      expect(page.at_css("#verification_details_#{ledger_item.hashid}")).to be_present
+    end
+
+    it "explains a decline in a popover" do
+      cpt.decline!
+      assign(:frame, true)
+
+      render partial: "ledger/items/linked_objects/card_charge", locals: { ledger_item: ledger_item.reload }
+
+      expect(page.at_css(%([data-modal="declined_information_#{ledger_item.hashid}"]))).to be_present
+      expect(page.at_css("#declined_information_#{ledger_item.hashid}").text).to include("Transaction declined")
+    end
+  end
 end

@@ -28,7 +28,7 @@ class StripeServiceFee < ApplicationRecord
   after_create_commit do
     topup = StripeTopup.create(
       amount_cents:,
-      statement_descriptor: "HCB-#{local_hcb_code.short_code}",
+      statement_descriptor: short_code_memo,
       description: "Paying for: #{stripe_description}",
       metadata: {
         hcb_stripe_service_fee_id: id,
