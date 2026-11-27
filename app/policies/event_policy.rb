@@ -345,7 +345,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def signee?
-    OrganizerPosition.where(event: record, user:, is_signee: true).exists?
+    OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 
   def admin_or_manager?
