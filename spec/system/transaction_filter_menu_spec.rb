@@ -40,4 +40,24 @@ RSpec.describe "Transaction filter menu", type: :system do
     expect(page).to have_text("TEST DONATION")
     expect(page).to have_no_text("SMALL COFFEE")
   end
+
+  it "shows the unfiltered ledger again on Back after a popover was opened and closed" do
+    page.driver.browser.keyboard.type(:escape) # closes the menu the setup opened
+    click_on "TEST DONATION"
+    expect(page).to have_css("#shared_popover", style: { translate: "none", opacity: "1" })
+    find("#shared_popover .modal__close").click
+    expect(page).to have_no_css("#shared_popover[open]", visible: :all)
+    expect(page).to have_current_path(event_transactions_path(event))
+
+    find("button[aria-label='Add filter']").click
+    click_on "Amount"
+    fill_in "minimum_amount", with: "500"
+    click_on "Filter transactions"
+    expect(page).to have_no_text("SMALL COFFEE")
+
+    go_back
+
+    expect(page).to have_current_path(event_transactions_path(event))
+    expect(page).to have_text("SMALL COFFEE")
+  end
 end

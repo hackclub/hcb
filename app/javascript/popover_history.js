@@ -8,7 +8,10 @@ addEventListener('popstate', event => {
     !popover ||
     typeof event.state?.popover !== 'boolean' ||
     event.state.turbo?.restorationIdentifier !==
-      popover.dataset.popoverPageValue
+      popover.dataset.popoverPageValue ||
+    // Between two entries without it open (a filtered ledger's, say), the page
+    // itself changed, so Turbo has to render it
+    ((!popover.open || 'closing' in popover.dataset) && !event.state.popover)
   )
     return
 
