@@ -91,6 +91,22 @@ class WiseTransfer < ApplicationRecord
 
   validates(:wise_recipient_id, presence: true, if: :processed?)
 
+  ACH_COMPANY_ID = "453233521"
+  # A refund's memo has the transfer's full Wise ID, or its last 4 digits,
+  # e.g. "THE HACK FOUNDAT 2456663805" or "WISE INC 1679REFUND".
+  REFUND_MEMO_WISE_ID_REGEX = /\d{4,}/
+
+  def self.wise_ach?(canonical_transaction)
+    source = canonical_transaction.transaction_source
+    source.is_a?(RawColumnTransaction) && source.ach_company_id == ACH_COMPANY_ID
+  end
+
+  def self.refunded_wise_id_suffix(canonical_transaction)
+    return unless wise_ach?(canonical_transaction)
+
+    canonical_transaction.memo[REFUND_MEMO_WISE_ID_REGEX]
+  end
+
   after_create do
     generate_quote!
 

@@ -5,8 +5,6 @@ class AdminController < Admin::BaseController
   include Admin::TransferApprovable
   include ComboboxSearchable
 
-  WISE_REFUND_MEMO_REGEX = /(\d{4})\s*REFUND\b/i
-
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -47,9 +45,7 @@ class AdminController < Admin::BaseController
     @canonical_pending_transactions = CanonicalPendingTransaction.unmapped.where(amount_cents: @canonical_transaction.amount_cents)
     @ahoy_events = Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int = ?", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], @canonical_transaction.id).order("time desc")
 
-    likely_wise = @canonical_transaction.memo.include?("WISE INC") || @canonical_transaction.memo.include?("WISE LTD") || @canonical_transaction.memo.include?("WISE US")
-
-    if likely_wise && @canonical_transaction.amount_cents.negative?
+    if @canonical_transaction.amount_cents.negative? && WiseTransfer.wise_ach?(@canonical_transaction)
       potential_wise_transfers = WiseTransfer.sent.where(usd_amount_cents: -@canonical_transaction.amount_cents)
 
       if potential_wise_transfers.one?
@@ -57,16 +53,13 @@ class AdminController < Admin::BaseController
       end
     end
 
-    # Wise refunds end with the last 4 digits of the transfer's Wise ID, e.g.
-    # "WISE INC 1679REFUND" or "THE HACK FOUNDAT 7568REFUND". Only suggest a
-    # transfer when the memo names one; otherwise ops search for it below.
-    wise_id_last4 = @canonical_transaction.memo[WISE_REFUND_MEMO_REGEX, 1]
-
     already_mapped_to_wise = @canonical_transaction.local_hcb_code&.wise_transfer?
 
-    if @canonical_transaction.amount_cents.positive? && wise_id_last4 && !already_mapped_to_wise
+    wise_id_suffix = WiseTransfer.refunded_wise_id_suffix(@canonical_transaction) if @canonical_transaction.amount_cents.positive? && !already_mapped_to_wise
+
+    if wise_id_suffix
       amount = @canonical_transaction.amount_cents
-      by_wise_id = returnable_wise_transfers(amount_cents: amount).where("wise_transfers.wise_id LIKE ?", "%#{wise_id_last4}")
+      by_wise_id = returnable_wise_transfers(amount_cents: amount).where("wise_transfers.wise_id LIKE ?", "%#{wise_id_suffix}")
       narrowed = by_wise_id.one? ? by_wise_id : by_wise_id.where(usd_amount_cents: wise_return_amount_range(amount))
 
       @suggested_wise_return = narrowed.first if narrowed.one?
@@ -1788,14 +1781,14 @@ class AdminController < Admin::BaseController
 
   def recommended_wise_returns(canonical_transaction)
     amount = canonical_transaction.amount_cents
-    wise_id_last4 = canonical_transaction.memo[WISE_REFUND_MEMO_REGEX, 1]
+    wise_id_suffix = WiseTransfer.refunded_wise_id_suffix(canonical_transaction)
     by_amount = WiseTransfer.where(sent_at: 6.months.ago..).where(usd_amount_cents: wise_return_amount_range(amount))
 
     recommended = returnable_wise_transfers(amount_cents: amount)
-    if wise_id_last4
-      by_wise_id = WiseTransfer.where("wise_transfers.wise_id LIKE ?", "%#{wise_id_last4}")
+    if wise_id_suffix
+      by_wise_id = WiseTransfer.where("wise_transfers.wise_id LIKE ?", "%#{wise_id_suffix}")
       recommended.merge(by_wise_id.or(by_amount))
-                 .reorder(Arel.sql(WiseTransfer.sanitize_sql_array(["CASE WHEN wise_transfers.wise_id LIKE ? THEN 0 ELSE 1 END", "%#{wise_id_last4}"])))
+                 .reorder(Arel.sql(WiseTransfer.sanitize_sql_array(["CASE WHEN wise_transfers.wise_id LIKE ? THEN 0 ELSE 1 END", "%#{wise_id_suffix}"])))
                  .order(Arel.sql("ABS(wise_transfers.usd_amount_cents - #{amount.to_i})"), sent_at: :desc, id: :desc)
     else
       recommended.merge(by_amount)

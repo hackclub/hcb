@@ -151,7 +151,14 @@ RSpec.describe AdminController do
     )
   end
 
-  # A transfer whose outgoing transaction has settled, as after #set_wise_transfer.
+  def wise_refund(amount_cents:, memo:, company_id: WiseTransfer::ACH_COMPANY_ID)
+    transaction_id = "acht_#{SecureRandom.hex(8)}"
+    company_name, _, company_entry_description = memo.rpartition(" ")
+    allow(ColumnService).to receive(:ach_transfer).with(transaction_id).and_return("company_id" => company_id, "company_name" => company_name, "company_entry_description" => company_entry_description)
+
+    RawColumnTransaction.create!(amount_cents:, date_posted: Date.current, column_transaction: { "transaction_id" => transaction_id }).canonical_transaction
+  end
+
   def deposited_wise_transfer(**attrs)
     wise_transfer = create_sent_wise_transfer(event: create(:event), user: create(:user), **attrs)
     outgoing = create(:canonical_transaction, amount_cents: -wise_transfer.usd_amount_cents)
@@ -197,7 +204,7 @@ RSpec.describe AdminController do
     it "suggests the Wise transfer a refund names and offers the return search" do
       admin = create(:user, :make_admin)
       wise_transfer = deposited_wise_transfer
-      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4567REFUND", transaction_source: create(:raw_plaid_transaction))
+      returned = wise_refund(amount_cents: 127_50, memo: "WISE INC 4567REFUND")
 
       create_session(admin, verified: true)
 
@@ -214,7 +221,7 @@ RSpec.describe AdminController do
       admin = create(:user, :make_admin)
       wise_transfer = deposited_wise_transfer(wise_id: "987567568")
       wise_transfer.mark_failed!("Account closed")
-      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+      returned = wise_refund(amount_cents: 127_50, memo: "WISE INC 7568REFUND")
 
       create_session(admin, verified: true)
 
@@ -227,16 +234,38 @@ RSpec.describe AdminController do
     it "warns in the confirmation when the suggested transfer already has a refund mapped" do
       admin = create(:user, :make_admin)
       wise_transfer = deposited_wise_transfer(wise_id: "987567568")
-      first_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+      first_refund = wise_refund(amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND")
       create_session(admin, verified: true)
       post :set_wise_transfer_return, params: { id: first_refund.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
-      second_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+      second_refund = wise_refund(amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND")
 
       get :transaction, params: { id: second_refund.id }
 
       expect(response.body).to include("Map as return of Wise transfer ##{wise_transfer.id}")
       expect(response.body).to include("already has a refund mapped")
       expect(response.body).to include("transaction ##{first_refund.id}")
+    end
+
+    it "suggests the sent transfer for an outgoing ACH from Wise of the same amount" do
+      admin = create(:user, :make_admin)
+      wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+      outgoing = wise_refund(amount_cents: -wise_transfer.usd_amount_cents, memo: "WISE US INC TRANSFER")
+      create_session(admin, verified: true)
+
+      get :transaction, params: { id: outgoing.id }
+
+      expect(controller.instance_variable_get(:@suggested_wise_mapping)).to eq(wise_transfer)
+    end
+
+    it "doesn't suggest a sent transfer for an outgoing ACH that isn't from Wise" do
+      admin = create(:user, :make_admin)
+      wise_transfer = create_sent_wise_transfer(event: create(:event), user: admin)
+      outgoing = wise_refund(amount_cents: -wise_transfer.usd_amount_cents, memo: "WISE US INC TRANSFER", company_id: "123456789")
+      create_session(admin, verified: true)
+
+      get :transaction, params: { id: outgoing.id }
+
+      expect(controller.instance_variable_get(:@suggested_wise_mapping)).to be_nil
     end
 
     it "offers outgoing Wise transfers, not returns, for an outgoing transaction" do
@@ -251,9 +280,9 @@ RSpec.describe AdminController do
       expect(response.body).not_to include("Map to a Wise transfer return")
     end
 
-    def suggested_return_for(memo:, amount_cents:)
+    def suggested_return_for(memo:, amount_cents:, company_id: WiseTransfer::ACH_COMPANY_ID)
       admin = create(:user, :make_admin)
-      returned = create(:canonical_transaction, amount_cents:, memo:, transaction_source: create(:raw_plaid_transaction))
+      returned = wise_refund(amount_cents:, memo:, company_id:)
       create_session(admin, verified: true)
 
       get :transaction, params: { id: returned.id }
@@ -266,6 +295,25 @@ RSpec.describe AdminController do
       deposited_wise_transfer(wise_id: "1111111") # same amount, different Wise ID
 
       expect(suggested_return_for(memo: "THE HACK FOUNDAT 7568REFUND", amount_cents: 120_00)).to eq(expected)
+    end
+
+    it "matches a refund to the transfer whose full Wise ID the memo names" do
+      expected = deposited_wise_transfer(wise_id: "2456663805")
+      deposited_wise_transfer(wise_id: "1111113805") # same last 4 digits
+
+      expect(suggested_return_for(memo: "THE HACK FOUNDAT 2456663805", amount_cents: 120_00)).to eq(expected)
+    end
+
+    it "matches a Wise ID anywhere in the memo" do
+      expected = deposited_wise_transfer(wise_id: "987567568")
+
+      expect(suggested_return_for(memo: "WISE 7568 REFUND US", amount_cents: 120_00)).to eq(expected)
+    end
+
+    it "doesn't suggest a transfer for an ACH that isn't from Wise, even if its memo names one" do
+      deposited_wise_transfer(wise_id: "987567568")
+
+      expect(suggested_return_for(memo: "THE HACK FOUNDAT 7568REFUND", amount_cents: 120_00, company_id: "123456789")).to be_nil
     end
 
     it "narrows Wise ID matches by amount" do
@@ -290,7 +338,7 @@ RSpec.describe AdminController do
     it "doesn't suggest a transfer once the refund is mapped to one" do
       admin = create(:user, :make_admin)
       wise_transfer = deposited_wise_transfer(wise_id: "987567568")
-      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND", transaction_source: create(:raw_plaid_transaction))
+      returned = wise_refund(amount_cents: 127_50, memo: "THE HACK FOUNDAT 7568REFUND")
       create_session(admin, verified: true)
 
       post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
@@ -304,7 +352,7 @@ RSpec.describe AdminController do
 
   describe "#wise_transfer_return_search" do
     def search(memo:, amount_cents: 127_50, q: nil)
-      returned = create(:canonical_transaction, amount_cents:, memo:)
+      returned = wise_refund(amount_cents:, memo:)
       create_session(create(:user, :make_admin), verified: true)
       get :wise_transfer_return_search, params: { canonical_transaction_id: returned.id, q: }.compact, format: :json
       JSON.parse(response.body).map { |option| option["value"].to_i }
@@ -325,7 +373,7 @@ RSpec.describe AdminController do
     it "includes the failure reason of transfers ops already marked failed, so the form can prefill it" do
       failed = deposited_wise_transfer(wise_id: "33334101", usd_amount_cents: 130_00)
       failed.mark_failed!("Account closed")
-      returned = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+      returned = wise_refund(amount_cents: 127_50, memo: "WISE INC 4101REFUND")
       create_session(create(:user, :make_admin), verified: true)
 
       get :wise_transfer_return_search, params: { canonical_transaction_id: returned.id }, format: :json
@@ -337,10 +385,10 @@ RSpec.describe AdminController do
 
     it "flags transfers that already have a refund mapped" do
       wise_transfer = deposited_wise_transfer(wise_id: "44444101", usd_amount_cents: 130_00)
-      first_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+      first_refund = wise_refund(amount_cents: 127_50, memo: "WISE INC 4101REFUND")
       create_session(create(:user, :make_admin), verified: true)
       post :set_wise_transfer_return, params: { id: first_refund.id, wise_transfer_id: wise_transfer.id, reason: "Account closed" }
-      second_refund = create(:canonical_transaction, amount_cents: 127_50, memo: "WISE INC 4101REFUND")
+      second_refund = wise_refund(amount_cents: 127_50, memo: "WISE INC 4101REFUND")
 
       get :wise_transfer_return_search, params: { canonical_transaction_id: second_refund.id }, format: :json
 
