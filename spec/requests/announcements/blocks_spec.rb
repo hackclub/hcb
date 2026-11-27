@@ -29,6 +29,15 @@ RSpec.describe "Announcements::BlocksController", type: :request do
       expect(dialog["data-announcement-modal-block-id-value"]).to eq(block.id.to_s)
     end
 
+    it "removes the editor a previous edit appended before appending a fresh one" do
+      sign_in_as(author)
+
+      get_edit
+
+      streams = Nokogiri::HTML5.fragment(response.body).css("turbo-stream").map { |stream| [stream["action"], stream["target"] || stream["targets"]] }
+      expect(streams).to eq([["remove", "edit_announcement_block_donation_summary_#{block.id}"], ["append", "body"]])
+    end
+
     it "streams nothing to a manager who didn't write the announcement" do
       other_manager = create(:user)
       create(:organizer_position, user: other_manager, event:, role: :manager)
