@@ -40,7 +40,6 @@ class Disbursement
       belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
       belongs_to :source_subledger, class_name: "Subledger", optional: true
-      # The ledgers the money moves between.
       belongs_to :destination_ledger, class_name: "Ledger"
       belongs_to :source_ledger, class_name: "Ledger"
 
