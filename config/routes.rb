@@ -241,8 +241,10 @@ Rails.application.routes.draw do
       get "/", to: "logins#choose_login_preference", as: :choose_login_preference
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
-      # Request a login code
+      # POST sends a login code, then redirects to the GET to enter it
+      get "email"
       post "email"
+      get "sms"
       post "sms"
 
       # TOTP

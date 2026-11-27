@@ -11,9 +11,14 @@ Capybara.server = :puma, { Silent: true, config_files: ["-"] }
 LOCAL_URL = /\Ahttp:\/\/127\.0\.0\.1:\d+\//
 # <emoji-picker> downloads its emoji list from jsdelivr; ASCII since Ferrum sends character count as content-length
 EMOJI_DATA = [{ annotation: "smile", emoji: ":)", group: 0, order: 1, version: 1 }].to_json
+# The login code pages read device details for the session through these two (see fingerprint.js)
+UA_PARSER_JS = "window.UAParser = function () { return { getResult: () => ({ browser: { name: 'Chrome', version: '1' }, os: { name: 'Linux', version: '' } }) } }"
+FINGERPRINTJS_JS = "export const load = async () => ({ get: async () => ({ visitorId: 'test', components: { timezone: { value: 'UTC' } } }) })"
 EXTERNAL_STUBS = {
-  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/emoji-picker-element-data@/ => EMOJI_DATA,
-  /\Ahttps:\/\/blog\.hcb\.hackclub\.com\/api\/unreads/              => { count: 0 }.to_json, # sidebar changelog badge
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/emoji-picker-element-data@/     => [EMOJI_DATA, "application/json"],
+  /\Ahttps:\/\/blog\.hcb\.hackclub\.com\/api\/unreads/                  => [{ count: 0 }.to_json, "application/json"], # sidebar changelog badge
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/ua-parser-js\//                 => [UA_PARSER_JS, "text/javascript"],
+  /\Ahttps:\/\/cdn\.jsdelivr\.net\/npm\/@fingerprintjs\/fingerprintjs@/ => [FINGERPRINTJS_JS, "text/javascript"],
 }.freeze
 
 RSpec.configure do |config|
@@ -37,12 +42,12 @@ RSpec.configure do |config|
     cors_headers = { "Access-Control-Allow-Origin" => page.server.base_url, "Access-Control-Allow-Credentials" => "true" }
     browser.network.intercept
     browser.on(:request) do |request|
-      stub = EXTERNAL_STUBS.find { |pattern, _| request.match?(pattern) }&.last
+      body, content_type = EXTERNAL_STUBS.find { |pattern, _| request.match?(pattern) }&.last
 
       if request.match?(LOCAL_URL)
         request.continue
-      elsif stub
-        request.respond(body: stub, responseHeaders: { "Content-Type" => "application/json", **cors_headers })
+      elsif body
+        request.respond(body:, responseHeaders: { "Content-Type" => content_type, **cors_headers })
       else
         request.abort
       end

@@ -76,8 +76,17 @@ class LoginsController < ApplicationController
     continue_login(preference: params[:login_preference]&.to_sym)
   end
 
-  # post to request email login code
+  # POST sends an email login code, then redirects (Post/Redirect/Get) to the
+  # GET, which only renders the form to enter it.
+  #
+  # The redirect gives the code form its own URL. Rendering it straight from
+  # the POST left the browser on /users/auth, so any full page load after the
+  # code went out (a refresh, or Turbo falling back to a reload because a deploy
+  # changed the tracked assets) showed the email form again, with no way to
+  # enter the code that had just been sent.
   def email
+    return unless request.post?
+
     resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?
@@ -85,10 +94,11 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_content
+    redirect_to email_login_path(@login), status: :see_other
   end
 
-  # post to request sms login code
+  # POST sends an SMS login code, then redirects to the GET, which only renders
+  # the form to enter it. See `#email`.
   def sms
     # The UI only offers SMS for verified numbers; `continue_login` never
     # routes here otherwise. A request for an unverified number is a script
@@ -99,6 +109,8 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
+    return unless request.post?
+
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?
@@ -106,12 +118,11 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_content
+    redirect_to sms_login_path(@login), status: :see_other
   end
 
   # get to see totp page
   def totp
-    render status: :unprocessable_content
   end
 
   def complete
@@ -235,14 +246,17 @@ class LoginsController < ApplicationController
   private
 
   def continue_login(preference: login_preference)
+    # Email and SMS keep the method (307) so the POST that sends the code runs;
+    # it then redirects to the page for entering the code. TOTP and security
+    # keys send nothing, so they go straight to their page.
     if @login.sms_available? && preference == :sms
       redirect_to sms_login_path(@login), status: :temporary_redirect
     elsif @login.email_available? && preference == :email
       redirect_to email_login_path(@login), status: :temporary_redirect
     elsif @login.totp_available? && preference == :totp
-      redirect_to totp_login_path(@login), status: :temporary_redirect
+      redirect_to totp_login_path(@login), status: :see_other
     elsif @login.webauthn_available? && preference == :webauthn
-      redirect_to security_key_login_path(@login), status: :temporary_redirect
+      redirect_to security_key_login_path(@login), status: :see_other
     else
       redirect_to choose_login_preference_login_path(@login)
     end

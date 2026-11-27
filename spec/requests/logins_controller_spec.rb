@@ -30,5 +30,45 @@ RSpec.describe "LoginsController", type: :request do
 
       expect(response).not_to redirect_to(auth_users_path)
     end
+
+    # The code form must live at its own URL. Rendered straight from the POST,
+    # the browser stayed on /users/auth, so a reload after the code was sent
+    # showed the email form again.
+    it "sends the email code and lands on the code form at its own URL" do
+      user = create(:user)
+
+      expect {
+        post "/logins", params: { email: user.email, login: { return_to: "/" } }
+      }.not_to send_email
+
+      login = Login.last
+      expect(response).to redirect_to(email_login_path(login))
+      expect(response).to have_http_status(:temporary_redirect)
+
+      expect {
+        post response.location, params: { email: user.email, login: { return_to: "/" } }
+      }.to send_email(to: user.email)
+      expect(response).to redirect_to(email_login_path(login))
+      expect(response).to have_http_status(:see_other)
+
+      expect {
+        get response.location
+      }.not_to send_email
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Enter your login code")
+    end
+
+    # HEAD is routed like GET, so it must render, never send a code (only POSTs
+    # count towards the rack-attack throttle on sending codes)
+    it "sends no code for a HEAD request to the code form" do
+      user = create(:user)
+      post "/logins", params: { email: user.email, login: { return_to: "/" } }
+      login = Login.last
+
+      expect {
+        head email_login_path(login)
+      }.not_to send_email
+      expect(response).to have_http_status(:ok)
+    end
   end
 end
