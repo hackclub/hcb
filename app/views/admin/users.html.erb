@@ -40,7 +40,7 @@
       <th>Phone</th>
       <th>Org Positions</th>
       <th class="w-48">Card Grants</th>
-      <th># Receipts Missing</th>
+      <th class="text-right"># Receipts Missing</th>
       <th class="w-32">Actions</th>
     </tr>
   </thead>
@@ -98,7 +98,7 @@
             None
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <%= user.card_charges_missing_receipt.count %>
         </td>
         <td>

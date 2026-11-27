@@ -15,7 +15,6 @@ class User
         reason: "Due to integration issues, transfers via PayPal are currently unavailable."
       }
     }.freeze
-    SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
     def kind
       "unknown"

@@ -5,7 +5,7 @@
     <tr>
       <th>Name</th>
       <th># of organizations</th>
-      <th># of active teenagers</th>
+      <th class="text-right"># of active teenagers</th>
     </tr>
   </thead>
   <tbody>
@@ -13,7 +13,7 @@
       <tr>
         <td><%= user_mention user %></td>
         <td><%= user.managed_events.count %></td>
-        <td><%= user.managed_active_teenagers_count %></td>
+        <td class="text-right"><%= user.managed_active_teenagers_count %></td>
       </tr>
     <% end %>
   </tbody>

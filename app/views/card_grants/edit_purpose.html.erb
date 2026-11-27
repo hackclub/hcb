@@ -3,7 +3,7 @@
 
   <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
     <div class="flex items-center justify-between w-full">
-      <strong><%= form.label :purpose %></strong>
+      <%= form.label :purpose, class: "bold" %>
       <div class="flex gap-3 items-stretch">
         <%= form.text_field :purpose, placeholder: "OpenAI Credits", disabled: !policy(@card_grant).update? %>
         <% if @card_grant.purpose.present? %>

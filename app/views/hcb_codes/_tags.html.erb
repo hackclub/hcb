@@ -6,7 +6,7 @@
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">
       <div class="flex items-center flex-wrap ledger_item_<%= ledger_item.hashid %>_tags" style="gap: 0.25rem">
-        <%= render partial: "canonical_transactions/tag", collection: tags, locals: { item: ledger_item } %>
+        <%= render partial: "ledger/items/tag", collection: tags, locals: { item: ledger_item } %>
       </div>
 
       <% if TagPolicy.new(current_user, @event).create? %>

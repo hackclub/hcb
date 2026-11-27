@@ -41,19 +41,6 @@ module UserService
       @user.save!
     end
 
-    def enroll_sms_auth
-      raise SMSEnrollmentError, "user has no phone number" if @user.phone_number.blank?
-      raise SMSEnrollmentError, "user has not verified phone number" unless @user.phone_number_verified
-
-      @user.use_sms_auth = true
-      @user.save!
-    end
-
-    def disable_sms_auth
-      @user.use_sms_auth = false
-      @user.save!
-    end
-
     private
 
     def disallow_excessive_sms_verifications

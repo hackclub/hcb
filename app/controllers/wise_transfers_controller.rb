@@ -27,7 +27,7 @@ class WiseTransfersController < ApplicationController
 
     authorize @wise_transfer
 
-    if @wise_transfer.amount_cents > 500_00
+    if @wise_transfer.amount_cents > SudoModeHandler::THRESHOLD_CENTS
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 

@@ -192,14 +192,6 @@ class Donation < ApplicationRecord
     self.message.present?
   end
 
-  def filter_data
-    {
-      in_transit: in_transit?,
-      deposited: deposited?,
-      exists: true
-    }
-  end
-
   def send_receipt!
     return unless email.present?
 

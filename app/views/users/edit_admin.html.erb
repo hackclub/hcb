@@ -4,6 +4,18 @@
 
 <%= render "users/settings_header", active: "admin" %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
+  <%= render partial: "application/admin_viewer", locals: { record: @user } %>
+
+  <% admin_tool "p-3" do %>
+    <details>
+      <summary>Audit log</summary>
+
+      <%= turbo_frame_tag :audit_log, src: audit_log_user_path(@user), loading: :lazy do %>
+        <p class="center muted mt3 h3">One moment...</p>
+      <% end %>
+    </details>
+  <% end %>
+
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
