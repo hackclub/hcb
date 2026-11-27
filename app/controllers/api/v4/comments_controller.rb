@@ -32,6 +32,22 @@ module Api
 
       require_oauth2_scope "comments:write", :create
 
+      def update
+        @comment = Comment.find_by_public_id!(params[:id])
+        authorize @comment
+
+        @comment.assign_attributes(params.permit(:content, :admin_only))
+
+        authorize @comment, :set_admin_only? if @comment.admin_only_changed?
+        raise Pundit::NotAuthorizedError if @comment.admin_only_changed? && !can_admin?(:write)
+
+        @comment.save!
+
+        render "show"
+      end
+
+      require_oauth2_scope "comments:write", :update
+
       private
 
       def admin_scope_resource

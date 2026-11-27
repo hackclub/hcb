@@ -37,8 +37,11 @@ class CommentsController < ApplicationController
   end
 
   def update
-    @comment.assign_attributes(comment_params)
     authorize @comment
+
+    @comment.assign_attributes(comment_update_params)
+
+    authorize @comment, :set_admin_only? if @comment.admin_only_changed?
 
     if @comment.save
       flash[:success] = "Comment successfully updated"
@@ -90,6 +93,11 @@ class CommentsController < ApplicationController
 
   def comment_params
     params.require(:comment).permit(:content, :file, :admin_only)
+  end
+
+  # Attachments can't be changed once a comment is posted (same as the v4 API)
+  def comment_update_params
+    params.require(:comment).permit(:content, :admin_only)
   end
 
   COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,

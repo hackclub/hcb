@@ -49,7 +49,7 @@ RSpec.describe Discord::ProcessNotificationJob do
 
       described_class.perform_now(activity.id)
 
-      expect(embed[:description]).to eq("#{stripe_card.user.name}'s [#{event.name}](#{event_url(event)}) card was declined for $10.00 at #{item.memo}")
+      expect(embed[:description]).to eq("#{stripe_card.user.possessive_name} [#{event.name}](#{event_url(event)}) card was declined for $10.00 at #{item.memo}")
     end
 
     context "for a cash withdrawal" do

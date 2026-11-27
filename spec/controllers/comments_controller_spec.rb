@@ -86,4 +86,46 @@ RSpec.describe CommentsController do
       end
     end
   end
+
+  describe "#update", versioning: true do
+    let(:event) { create(:event) }
+    let(:user) { create(:user) }
+    let(:hcb_code) { create(:disbursement, source_event: event).outgoing_disbursement.local_hcb_code }
+    let(:comment) { create(:comment, commentable: hcb_code, user:, content: "Original content") }
+
+    before do
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+    end
+
+    def update_comment(params)
+      patch :update, params: { id: comment.to_param, comment: params }
+    end
+
+    it "edits the content of its own comment" do
+      update_comment(content: "Edited content")
+
+      expect(response).to have_http_status(:found)
+      expect(comment.reload.content).to eq("Edited content")
+    end
+
+    it "ignores the file" do
+      update_comment(content: "Edited content", file: fixture_file_upload("attachment1.txt", "text/plain"))
+
+      expect(response).to have_http_status(:found)
+      expect(comment.reload.file).not_to be_attached
+    end
+
+    it "cannot make its own comment admin-only" do
+      expect { update_comment(admin_only: true) }.not_to(change { comment.reload.admin_only }.from(false))
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
+    it "cannot edit a comment that is already admin-only" do
+      comment.update!(admin_only: true)
+
+      expect { update_comment(content: "Edited content") }.not_to(change { comment.reload.content })
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
 end
