@@ -23,7 +23,7 @@ FactoryBot.define do
       phone_number { "+18556254225" }
 
       after(:create) do |user|
-        user.update!(phone_number_verified: true, use_sms_auth: true, use_two_factor_authentication: true)
+        user.update!(phone_number_verified: true, use_two_factor_authentication: true)
       end
     end
   end
