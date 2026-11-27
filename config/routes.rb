@@ -53,6 +53,7 @@ Rails.application.routes.draw do
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
   get "money-printer", to: "money_printer#index", as: :money_printer
+  get "address_suggestions", to: "address_suggestions#index"
 
   resources :raffles, only: [:new, :create]
 

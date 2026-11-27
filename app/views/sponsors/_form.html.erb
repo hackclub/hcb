@@ -1,4 +1,4 @@
-<%= form_with(model: sponsor, local: true) do |form| %>
+<%= form_with(model: sponsor, local: true, data: { controller: "address-autocomplete", address_autocomplete_country_value: "US" }) do |form| %>
   <%= form_errors sponsor %>
 
   <% admin_tool do %>
@@ -23,7 +23,7 @@
 
   <div class="field">
     <%= form.label :address_line1, "Street address" %>
-    <%= form.text_field :address_line1, placeholder: "1 Letterman Drive" %>
+    <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", data: { address_autocomplete_target: "line1" } %>
   </div>
 
   <div class="field">
@@ -32,17 +32,17 @@
 
   <div class="field">
     <%= form.label :address_city, "City" %>
-    <%= form.text_field :address_city, placeholder: "San Francisco" %>
+    <%= form.text_field :address_city, placeholder: "San Francisco", data: { address_autocomplete_target: "city" } %>
   </div>
 
   <div class="field">
     <%= form.label :address_state, "State" %>
-    <%= form.text_field :address_state, placeholder: "CA" %>
+    <%= form.text_field :address_state, placeholder: "CA", data: { address_autocomplete_target: "state" } %>
   </div>
 
   <div class="field">
     <%= form.label :address_postal_code, "ZIP" %>
-    <%= form.text_field :address_postal_code, placeholder: "94129" %>
+    <%= form.text_field :address_postal_code, placeholder: "94129", data: { address_autocomplete_target: "postalCode" } %>
   </div>
 
   <div class="actions">

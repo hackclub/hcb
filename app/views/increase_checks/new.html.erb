@@ -133,7 +133,7 @@
 
       <%# Not submitted while a saved recipient is picked, so the server fills them in from it. %>
       <fieldset class="contents" data-payment-recipient-target="editable" hidden="<%= selected_payment_recipient_id.present? && !selected_editing %>" disabled="<%= selected_payment_recipient_id.present? && !selected_editing %>">
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3" data-controller="address-autocomplete" data-address-autocomplete-country-value="US">
           <div>
             <%= form.label :address_line1,
               "Street address (where we're mailing it to)" %>
@@ -141,7 +141,8 @@
               <%= form.text_field :address_line1,
                 placeholder: "1 Letterman Drive",
                 required: true,
-                disabled: disabled %>
+                disabled: disabled,
+                data: { address_autocomplete_target: "line1" } %>
               <%= form.text_field :address_line2,
                 placeholder: "Suite 500",
                 disabled: disabled %>
@@ -154,14 +155,16 @@
               <%= form.text_field :address_city,
                 placeholder: "San Francisco",
                 required: true,
-                disabled: disabled %>
+                disabled: disabled,
+                data: { address_autocomplete_target: "city" } %>
             </div>
             <div class="flex-auto">
               <%= form.label :address_state, "State" %>
               <%= form.select :address_state, IncreaseCheck::US_STATES,
               { prompt: "Select a state" },
               class: "min-h-0 h-9",
-              disabled: disabled %>
+              disabled: disabled,
+              data: { address_autocomplete_target: "state" } %>
               <% @check.errors.messages_for(:address_state).each do |message| %>
                 <div class="primary"><%= message %></div>
               <% end %>
@@ -174,7 +177,8 @@
               class: "!max-w-[150px]",
               placeholder: "94129",
               required: true,
-              disabled: disabled %>
+              disabled: disabled,
+              data: { address_autocomplete_target: "postalCode" } %>
             <% @check.errors.messages_for(:address_zip).each do |message| %>
               <div class="primary"><%= message %></div>
             <% end %>

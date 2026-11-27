@@ -30,35 +30,37 @@
       Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
     </p>
 
-    <div class="field">
-      <%= form.label :address_line1, "Street address" %>
-      <%= form.text_field :address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1], required: %>
-    </div>
-
-    <div class="field">
-      <%= form.text_field :address_line2, placeholder: "(Building / Apartment / Room)" %>
-    </div>
-
-    <div class="grid grid--split">
-      <div class="field flex-auto">
-        <%= form.label :address_city, "City" %>
-        <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city], required: %>
-      </div>
-      <div class="field flex-auto">
-        <%= form.label :address_state, "State / Province" %>
-        <%= form.select :address_state, ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }, { prompt: "Select a state" }, { required: } %>
-      </div>
-    </div>
-
-    <div class="grid grid--split">
-      <div class="field flex-auto">
-        <%= form.label :postal_code %>
-        <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code], required: %>
+    <div data-controller="address-autocomplete" data-address-autocomplete-country-value="US">
+      <div class="field">
+        <%= form.label :address_line1, "Street address" %>
+        <%= form.text_field :address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1], required:, data: { address_autocomplete_target: "line1" } %>
       </div>
 
-      <div class="field flex-auto">
-        <%= form.label :address_country, "Country" %>
-        <%= form.text_field :address_country, value: "United States", disabled: true %>
+      <div class="field">
+        <%= form.text_field :address_line2, placeholder: "(Building / Apartment / Room)" %>
+      </div>
+
+      <div class="grid grid--split">
+        <div class="field flex-auto">
+          <%= form.label :address_city, "City" %>
+          <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city], required:, data: { address_autocomplete_target: "city" } %>
+        </div>
+        <div class="field flex-auto">
+          <%= form.label :address_state, "State / Province" %>
+          <%= form.select :address_state, ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }, { prompt: "Select a state" }, { required:, data: { address_autocomplete_target: "state" } } %>
+        </div>
+      </div>
+
+      <div class="grid grid--split">
+        <div class="field flex-auto">
+          <%= form.label :postal_code %>
+          <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code], required:, data: { address_autocomplete_target: "postalCode" } %>
+        </div>
+
+        <div class="field flex-auto">
+          <%= form.label :address_country, "Country" %>
+          <%= form.text_field :address_country, value: "United States", disabled: true %>
+        </div>
       </div>
     </div>
 
