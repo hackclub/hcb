@@ -17,7 +17,7 @@
   <% event.tags.each do |tag| %>
     <div class="flex items-center" data-tag="<%= tag.id %>">
       <%= button_to ledger_item_toggle_tag_path(item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+        <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
         <%= tag.label %>
         <%= "✓" if item.tags.include?(tag) %>
       <% end %>

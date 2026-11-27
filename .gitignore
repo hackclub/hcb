@@ -68,3 +68,4 @@ yarn-debug.log*
 !.claude/skills/rwx/
 !.claude/skills/loops-api/
 !.claude/skills/loops-email-sending-best-practices/
+!.claude/skills/tiptap/

@@ -7,8 +7,8 @@
         <th>Memo</th>
         <th>Amount</th>
         <th>Status</th>
-        <th>Approved at</th>
-        <th></th>
+        <th class="text-right">Approved at</th>
+        <th><%# view link %></th>
       </tr>
       <% @increase_checks.each do |check| %>
         <tr>
@@ -16,7 +16,7 @@
           <td><%= check.memo %></td>
           <td><%= render_money check.amount %></td>
           <td><%= check.aasm_state %></td>
-          <td><%= check.approved_at %></td>
+          <td class="text-right"><%= check.approved_at %></td>
           <td><%= link_to "View", ledger_item_path(check.ledger_item), data: { turbo_frame: "_top" } %></td>
         </tr>
       <% end %>

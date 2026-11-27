@@ -192,6 +192,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include(ledger_item_invoice_as_personal_transaction_path(charge_item))
         expect(response.body).not_to include(dispute_hcb_code_path(charge.local_hcb_code))
       end
+
+      it "shows a grant card charge's merchant and card to a manager of the grant's organization" do
+        grant_event = create(:event, :with_positive_balance)
+        create(:organizer_position, event: grant_event, user: (manager = create(:user)), role: :manager)
+        create_session(manager, verified: true)
+        card_grant = create(:card_grant, event: grant_event)
+        card_grant.stripe_card.update_columns(last4: "4242", event_id: grant_event.id) # production issues grant cards on the grant's organization
+        charge_item = create(:ledger_item, linked_object: create(:raw_pending_stripe_transaction, stripe_card: card_grant.stripe_card, stripe_merchant_category_code: "5462").card_charge)
+        create(:ledger_mapping, :on_primary, ledger: card_grant.ledger, ledger_item: charge_item)
+
+        get :show, params: { id: charge_item.hashid, frame: true }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("Sign in to view")
+        expect(response.body).to include("4242")
+        expect(response.body).not_to include("XXXX")
+      end
     end
 
     context "when asked to reverse a receipt pairing" do
@@ -209,8 +226,10 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         get :show, params: { id: item.hashid, reverse: receipt.id }
 
         expect(response).to be_successful
-        expect(response.body).to include("Reverse receipt pairing")
-        expect(response.body).to include(reverse_receipt_path(receipt.id, format: :html))
+        modal = Nokogiri::HTML5(response.body).at_css("#reverse_receipt_modal")
+        expect(modal.text).to include("Reverse receipt pairing")
+        expect(modal.at_css("form")["action"]).to eq(reverse_receipt_path(receipt.id, format: :html))
+        expect(modal.ancestors("turbo-frame")).to be_empty
       end
     end
 

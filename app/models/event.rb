@@ -830,15 +830,6 @@ class Event < ApplicationRecord
     is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
-  def filter_data
-    {
-      exists: true,
-      transparent: is_public?,
-      omitted: omit_stats?,
-      hidden: hidden?
-    }
-  end
-
   def ready_for_fee?
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
