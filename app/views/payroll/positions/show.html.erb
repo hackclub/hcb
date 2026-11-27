@@ -233,7 +233,7 @@
           <% @payments.each do |payment| %>
             <tr class="<%= "clickable" if organizer_signed_in? %>">
               <td>
-                <span class="badge bg-<%= payment.state_color %>"><%= payment.state_text %></span>
+                <span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span>
               </td>
               <td><%= format_date payment.created_at %></td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
