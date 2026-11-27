@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_26_220950) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -713,7 +713,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_220950) do
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
-    t.bigint "destination_ledger_id"
+    t.bigint "destination_ledger_id", null: false
     t.bigint "destination_subledger_id"
     t.bigint "destination_transaction_category_id"
     t.datetime "errored_at", precision: nil
@@ -727,7 +727,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_220950) do
     t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
     t.bigint "source_event_id"
-    t.bigint "source_ledger_id"
+    t.bigint "source_ledger_id", null: false
     t.bigint "source_subledger_id"
     t.bigint "source_transaction_category_id"
     t.string "transfer_type"

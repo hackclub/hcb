@@ -40,10 +40,9 @@ class Disbursement
       belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
       belongs_to :source_subledger, class_name: "Subledger", optional: true
-      # The ledgers the money moves between. Nil on rows from before these
-      # columns existed until they're backfilled.
-      belongs_to :destination_ledger, class_name: "Ledger", optional: true
-      belongs_to :source_ledger, class_name: "Ledger", optional: true
+      # The ledgers the money moves between.
+      belongs_to :destination_ledger, class_name: "Ledger"
+      belongs_to :source_ledger, class_name: "Ledger"
 
       belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
       belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
