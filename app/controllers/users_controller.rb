@@ -27,7 +27,6 @@ class UsersController < ApplicationController
                                                :edit_security,
                                                :edit_notifications,
                                                :edit_admin,
-                                               :toggle_sms_auth,
                                                :complete_sms_auth_verification,
                                                :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
@@ -36,7 +35,7 @@ class UsersController < ApplicationController
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
+    :edit_admin, :audit_log, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
     :admin_details_disbursements, :admin_details_emails, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
@@ -271,6 +270,10 @@ class UsersController < ApplicationController
     authorize @user
 
     @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
+  end
+
+  def audit_log
+    authorize @user
   end
 
   def admin_details
@@ -529,7 +532,6 @@ class UsersController < ApplicationController
     params.require(:code)
     svc = UserService::EnrollSmsAuth.new(current_user)
     svc.complete_verification(params[:code])
-    svc.enroll_sms_auth if params[:enroll_sms_auth]
     # flash[:success] = "Completed verification"
     # redirect_to edit_user_path(current_user)
     render json: { message: "completed verification successfully" }, status: :ok
@@ -539,20 +541,6 @@ class UsersController < ApplicationController
     render json: { error: "invalid login code" }, status: :forbidden
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
     render json: { error: e.message }, status: :unprocessable_content
-  end
-
-  def toggle_sms_auth
-    authorize current_user
-    svc = UserService::EnrollSmsAuth.new(current_user)
-    if current_user.use_sms_auth
-      svc.disable_sms_auth
-    else
-      svc.enroll_sms_auth
-    end
-    redirect_back_or_to security_user_path(current_user)
-  rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    flash[:error] = e.message
-    redirect_back_or_to security_user_path(current_user)
   end
 
   private
@@ -588,7 +576,6 @@ class UsersController < ApplicationController
       # security
       :sessions_reported,
       :session_validity_preference,
-      :use_sms_auth,
       :use_two_factor_authentication,
       # notifications
       :comment_notifications,

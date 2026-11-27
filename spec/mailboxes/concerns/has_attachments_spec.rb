@@ -10,9 +10,9 @@ RSpec.describe HasAttachments do
 
       def initialize(mail) = @mail = mail
       def run = set_attachments
-      def html = mail.html_part&.body&.decoded
-      def text = mail.text_part&.body&.decoded
-      def body = mail.body&.decoded&.presence
+      def html = mail.html_part&.decoded
+      def text = mail.text_part&.decoded
+      def body = (mail.decoded.presence unless mail.multipart?)
     end
   end
 
@@ -30,5 +30,15 @@ RSpec.describe HasAttachments do
     attachments = mailbox.new(Mail.read_from_string(mail.to_s)).run
 
     expect(attachments.map { |a| a[:content_type] }).to eq(["application/pdf"])
+  end
+
+  it "converts a non-UTF-8 email body to UTF-8 before rendering" do
+    raw = "Subject: Receipt\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=XX\r\n\r\n" \
+          "--XX\r\nContent-Type: text/html; charset=iso-8859-1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n" \
+          "<p>=A9 Shop</p>\r\n--XX--\r\n"
+
+    expect(CloudflareBrowserRun).to receive(:pdf).with("<p>© Shop</p>").and_return("%PDF-1.4")
+
+    mailbox.new(Mail.new(raw)).run
   end
 end

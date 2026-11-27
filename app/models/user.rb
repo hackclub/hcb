@@ -31,7 +31,6 @@
 #  slug                               :string
 #  subscribed_to_loops_at             :datetime
 #  teenager                           :boolean
-#  use_sms_auth                       :boolean          default(FALSE)
 #  use_two_factor_authentication      :boolean          default(FALSE)
 #  verified                           :boolean          default(FALSE), not null
 #  created_at                         :datetime         not null
@@ -104,8 +103,6 @@ class User < ApplicationRecord
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
-  has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
-  has_many :organizer_position_deletion_requests, inverse_of: :closed_by
   has_many :webauthn_credentials
   has_many :mailbox_addresses
   has_many :api_tokens
@@ -281,16 +278,6 @@ class User < ApplicationRecord
   end
 
   after_save do
-    if use_sms_auth_previously_changed?
-      if use_sms_auth
-        create_activity(key: "user.enabled_sms_auth")
-        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
-      else
-        create_activity(key: "user.disabled_sms_auth")
-        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
-      end
-    end
-
     if use_two_factor_authentication_previously_changed?
       change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
@@ -834,14 +821,20 @@ class User < ApplicationRecord
   def on_phone_number_update
     # if we previously have a phone number and the phone number is not null
     if phone_number_changed?
-      # turn all this stuff off until they reverify
+      # turn this off until they reverify
       self.phone_number_verified = false
-      self.use_sms_auth = false
     end
   end
 
   def second_factor_present_for_2fa
-    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+    return unless use_two_factor_authentication?
+    return if totp.present? || webauthn_credentials.any?
+
+    # on_phone_number_update marks a changed phone number as unverified after
+    # validation, so a changed number can't count as the second factor.
+    if persisted? && phone_number_changed? && phone_number_verified_was
+      errors.add(:phone_number, "can't be changed while it's your only second authentication factor. Add another factor or disable two-factor authentication first.")
+    elsif !phone_number_verified?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end

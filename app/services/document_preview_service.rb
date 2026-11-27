@@ -16,7 +16,7 @@ class DocumentPreviewService
   private
 
   def pdf_string
-    @pdf_string ||= CloudflareBrowserRun.pdf(html)
+    @pdf_string ||= CloudflareBrowserRun.pdf(html, fit_to_one_page: true)
   end
 
   def html

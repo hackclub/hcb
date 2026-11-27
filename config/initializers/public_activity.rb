@@ -18,7 +18,7 @@ class PublicActivity::Activity
     preload(
       :recipient,
       owner: { profile_picture_attachment: :blob },
-      trackable: [:event, :commentable, { canonical_pending_transaction: :local_hcb_code }]
+      trackable: [:event, :ledger_item, { commentable: :ledger_item }, { canonical_pending_transaction: { ledger_item: [:linked_object, { primary_ledger: :event }] } }]
     )
   }
 

@@ -167,15 +167,6 @@ class Transaction < ApplicationRecord
     is_event_related && fee_relationship_id
   end
 
-  def filter_data
-    {
-      exists: true,
-      fee_applies: fee_applies?,
-      fee_payment: fee_payment?,
-      card: false
-    }
-  end
-
   def ensure_paired_correctly
     # NOTE: here, we have to compare to fee_relationship&.event and not just event,
     # because fee_relationship is the attribute directly set by a request to update

@@ -9,8 +9,8 @@
         <tr>
           <th>DATE</th>
           <th>MEMO</th>
-          <th style="text-align: right;">AMOUNT</th>
-          <th></th>
+          <th class="text-right">AMOUNT</th>
+          <th><%# view button %></th>
         </tr>
       </thead>
       <tbody>
@@ -18,7 +18,7 @@
           <tr>
             <td><%= format_date ct.date %></td>
             <td><%= ct.smart_memo %></td>
-            <td style="text-align: right;"><%= number_to_currency(ct.amount) %></td>
+            <td class="text-right"><%= number_to_currency(ct.amount) %></td>
             <td>
               <%= pop_icon_to "view",
                   canonical_transaction_path(ct),

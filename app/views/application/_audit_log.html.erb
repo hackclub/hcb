@@ -1,0 +1,24 @@
+<%# locals: (versions:) %>
+<% versions = versions.reverse.select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
+<% users_by_id = User.where(id: versions.filter_map(&:whodunnit).uniq).index_by { |user| user.id.to_s } %>
+<ul class="list-reset">
+  <% versions.each do |version| %>
+    <li>
+      <div><%= user_mention users_by_id[version.whodunnit.to_s], default_name: "Unknown User" %> <%= version.event %>d <span class="muted tooltipped tooltipped--n" style="cursor: default" aria-label="<%= version.created_at.strftime("%b %e, %Y") %>"><%= time_ago_in_words version.created_at %> ago</span></div>
+      <% if version.event == "update" %>
+        <ul class="list-reset">
+          <% version.changeset.excluding("updated_at").select { |field, changes| changes.any?(&:present?) }.each do |field, changes| %>
+            <li>
+              <% if field.end_with?("_ciphertext") %>
+                <%= render_audit_log_field(field) %>: <span class="muted">changed (encrypted)</span>
+              <% else %>
+                <%= render_audit_log_field(field) %>: <%= render_audit_log_value(field, changes[0], color: "primary") %> → <%= render_audit_log_value(field, changes[1], color: "success") %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </li>
+    <hr class="mt1 mb1">
+  <% end %>
+</ul>
