@@ -32,7 +32,7 @@
       <th>Title</th>
       <th>User</th>
       <th>Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -62,7 +62,7 @@
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
         <td class="w-24"><%= report.amount.format %></td>
-        <td>
+        <td class="text-right">
           <%= report.admin_status_text %>
           <% if report.reimbursement_requested? %>
             <br>

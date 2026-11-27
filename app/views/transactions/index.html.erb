@@ -11,8 +11,8 @@
   <th>Name</th>
   <th>Amount</th>
   <th>Account</th>
-  <th colspan="4">Event</th>
-  <th colspan="2"></th>
+  <th class="text-right">Event</th>
+  <th><%# view link %></th>
 </tr>
 <% @needs_action.each do |t| %>
   <tr class="shade-yellow">
@@ -28,7 +28,7 @@
     <td>
       <%= link_to t.bank_account.name, t.bank_account %>
     </td>
-    <td>
+    <td class="text-right">
       <%= link_to "Set", edit_transaction_path(t), class: "btn bg-info" %>
     </td>
     <td>
@@ -48,8 +48,8 @@
   <th>Name</th>
   <th>Amount</th>
   <th>Account</th>
-  <th>Event</th>
-  <th colspan="2"></th>
+  <th class="text-right">Event</th>
+  <th><%# view link %></th>
 </tr>
 <% @transactions.each do |t| %>
   <tr class="<%= "shade-yellow" if !t.event && t.is_event_related %>">
@@ -65,7 +65,7 @@
     <td>
       <%= link_to t.bank_account.name, t.bank_account %>
     </td>
-    <td>
+    <td class="text-right">
       <% if t.event %>
         <%= link_to t.event.name, t.event %>
       <% elsif t.is_event_related %>

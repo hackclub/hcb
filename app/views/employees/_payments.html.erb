@@ -38,7 +38,7 @@
           <% end %>
           <th>Title</th>
           <th>Amount</th>
-          <th>Created</th>
+          <th class="text-right">Created</th>
         </tr>
       </thead>
       <tbody>
@@ -59,7 +59,7 @@
             <td>
               <%= render_money payment.amount_cents %>
             </td>
-            <td>
+            <td class="text-right">
               <%= format_date payment.created_at %>
             </td>
           </tr>

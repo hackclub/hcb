@@ -19,9 +19,9 @@
     <table>
       <thead>
         <tr>
-          <td class="bold">Expense</td>
-          <td class="bold">Amount (<%= @report.currency %>)</td>
-          <td class="bold">Converted amount (USD)</td>
+          <th>Expense</th>
+          <th>Amount (<%= @report.currency %>)</th>
+          <th class="text-right">Converted amount (USD)</th>
         </tr>
       </thead>
       <tbody>
@@ -31,7 +31,7 @@
           <tr>
             <td style="white-space: normal"><%= expense.memo %></td>
             <td><%= expense.amount.format %></td>
-            <td><%= render_money(expense.amount_cents * conversion_rate) %></td>
+            <td class="text-right"><%= render_money(expense.amount_cents * conversion_rate) %></td>
           </tr>
         <% end %>
 
@@ -40,13 +40,13 @@
             Wise transfer fee
           </td>
           <td class="muted">-</td>
-          <td><%= @fees_amount.format %></td>
+          <td class="text-right"><%= @fees_amount.format %></td>
         </tr>
 
         <tr class="border-none">
           <td class="pr1"><strong>Total</strong></td>
           <td class="muted">-</td>
-          <td><%= @with_fees_quote_amount.format %></td>
+          <td class="text-right"><%= @with_fees_quote_amount.format %></td>
         </tr>
       </tbody>
     </table>

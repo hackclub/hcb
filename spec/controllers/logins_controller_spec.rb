@@ -216,6 +216,7 @@ RSpec.describe LoginsController do
         session[:webauthn_challenge] = webauthn_challenge
 
         credential = get_webauthn_credential(challenge: webauthn_challenge)
+        request.user_agent = "fake firefox"
 
         expect {
           post(
@@ -235,6 +236,7 @@ RSpec.describe LoginsController do
         expect(login.authenticated_with_webauthn).to eq(true)
         expect(login.user_session).to be_present
         expect(current_session!).to eq(login.user_session)
+        expect(login.user_session.user_agent).to eq("fake firefox")
       end
     end
 

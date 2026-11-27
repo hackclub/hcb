@@ -39,7 +39,8 @@
             <tr>
               <th>Organization</th>
               <th>For</th>
-              <th>Amount</th>
+              <th class="text-right">Amount</th>
+              <th><%# details link %></th>
             </tr>
           </thead>
           <tbody>
@@ -48,7 +49,7 @@
               <tr>
                 <td><%= link_to fee_reimbursement.event.name, fee_reimbursement.event if fee_reimbursement.event.present? %></td>
                 <td><%= reimbursed&.model_name&.human %></td>
-                <td><%= render_money fee_reimbursement.amount %></td>
+                <td class="text-right"><%= render_money fee_reimbursement.amount %></td>
                 <td><%= link_to "Details", url_for(reimbursed.ledger_item) if reimbursed&.ledger_item.present? %></td>
               </tr>
             <% end %>

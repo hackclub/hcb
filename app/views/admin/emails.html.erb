@@ -24,7 +24,7 @@
       <th class="w-16">ID</th>
       <th class="w-32">Sent at</th>
       <th>Content</th>
-      <th>Recipient</th>
+      <th class="text-right">Recipient</th>
     </tr>
   </thead>
   <tbody>
@@ -38,7 +38,7 @@
             <%= msg.subject %>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <% if user = msg.user %>
             <%= link_to admin_user_path(user) do %>
               <%= user.full_name ? "#{user.full_name} (#{user.email})" : user.email %>

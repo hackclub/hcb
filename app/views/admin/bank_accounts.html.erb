@@ -16,7 +16,7 @@
       <th>Balance</th>
       <th>Syncing On</th>
       <th>Failed At</th>
-      <th>Failure Count</th>
+      <th class="text-right">Failure Count</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -28,7 +28,7 @@
         <td><%= render_money ba.balance %></td>
         <td><%= ba.should_sync_v2 ? "✅" : "🚫" %></td>
         <td><%= ba.failed_at %></td>
-        <td><%= ba.failure_count %></td>
+        <td class="text-right"><%= ba.failure_count %></td>
         <td>
           <%= button_to ba.should_sync_v2? ? "Disable" : "Enable", ba, method: :patch, class: ("admin-bg-red" if ba.should_sync_v2?), params: { bank_account: { should_sync_v2: !ba.should_sync_v2? } } %>
           <%= link_to "Reauthenticate", bank_account_reauthenticate_path(ba) %>
