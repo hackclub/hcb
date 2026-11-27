@@ -1,22 +1,6 @@
 # frozen_string_literal: true
 
-require "cgi"
-
 module HcbCodeHelper
-  def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "7dq8JWC4Fsus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Your+Name=#{CGI.escape(user.name)}" if user
-    prefill << "prefill_Login+Email=#{CGI.escape(user.email)}" if user
-    prefill << "prefill_Transaction+Code=#{CGI.escape(hcb_code.hashid)}" if hcb_code
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
-  end
-
   def attach_receipt_url(hcb_code)
     Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
       id: hcb_code.hashid,
@@ -39,26 +23,26 @@ module HcbCodeHelper
   end
 
   def stripe_verification_check_badge(check, verification_data = @verification_data)
-    case verification_data["#{check}_check"]
-    when "match"
-      background = "success"
-      icon_name = "checkmark"
-      text = "Passed"
-    when "mismatch"
-      background = "warning"
-      icon_name = "view-close"
-      text = "Failed"
-    when "not_provided"
-      background = "info"
-      icon_name = "checkbox"
-      text = "Not checked"
-    else
-      background = "smoke"
-      icon_name = "checkbox"
-      text = "Unavailable"
-    end
+    card_check_badge verification_data["#{check}_check"]
+  end
 
-    tag = inline_icon icon_name, size: 24
-    content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
+  # Renders a badge for the result of a card verification check (CVC, postal
+  # code, etc.). Accepts both Stripe Payments statuses (pass / failed /
+  # unchecked) and Stripe Issuing statuses (match / mismatch / not_provided).
+  CARD_CHECK_BADGES = {
+    "pass"         => { background: "success", icon_name: "checkmark", text: "Passed" },
+    "match"        => { background: "success", icon_name: "checkmark", text: "Passed" },
+    "failed"       => { background: "warning", icon_name: "view-close", text: "Failed" },
+    "mismatch"     => { background: "warning", icon_name: "view-close", text: "Failed" },
+    "unchecked"    => { background: "info", icon_name: "checkbox", text: "Unchecked" },
+    "not_provided" => { background: "info", icon_name: "checkbox", text: "Not checked" },
+  }.freeze
+  CARD_CHECK_BADGE_UNAVAILABLE = { background: "smoke", icon_name: "checkbox", text: "Unavailable" }.freeze
+
+  def card_check_badge(status)
+    badge = CARD_CHECK_BADGES.fetch(status, CARD_CHECK_BADGE_UNAVAILABLE)
+
+    tag = inline_icon badge[:icon_name], size: 24
+    content_tag(:span, class: "pr1 #{badge[:background]} line-height-0 tooltipped tooltipped--w", 'aria-label': badge[:text]) { tag }
   end
 end

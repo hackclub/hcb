@@ -5,6 +5,7 @@
       <table>
         <thead>
           <tr>
+            <th><span class="sr-only">Select</span></th>
             <th><%# icon %></th>
             <th>Date</th>
             <th>Memo</th>
@@ -19,7 +20,7 @@
 
     <%= paginate @items, per_page_menu: false %>
   <% elsif @destination_event.nil? %>
-    <%= blankslate "Choose who you're sending to first." %>
+    <%= blankslate "Choose who you're sending to first" %>
   <% else %>
     <%= blankslate "No transactions to repay" %>
   <% end %>

@@ -32,15 +32,10 @@ class StripeAuthorization < ApplicationRecord
 
   default_scope { order(created_at: :desc) }
   scope :awaiting_receipt, -> { missing_receipt.where.not(amount: 0).where(approved: true) }
-  scope :unified_list, -> { approved.where.not(stripe_status: :reversed) }
   scope :approved, -> { where(approved: true) }
   scope :declined, -> { where(approved: false) }
   scope :successful, -> { approved.closed }
   scope :renamed, -> { where("display_name != name") }
-
-  def awaiting_receipt?
-    !amount.zero? && approved && missing_receipt?
-  end
 
   def declined?
     !approved
@@ -62,21 +57,6 @@ class StripeAuthorization < ApplicationRecord
 
   validates_presence_of :stripe_id, :stripe_status, :authorization_method, :amount, :name
 
-  def filter_data
-    {
-      exists: true,
-      fee_applies: false,
-      fee_payment: false,
-      card: true
-    }
-  end
-
-  def status_emoji
-    return "✔️" if approved?
-
-    "✖️"
-  end
-
   def status_text
     return "Declined" unless approved?
     return "Pending" if pending?
@@ -93,10 +73,6 @@ class StripeAuthorization < ApplicationRecord
     return :success if approved?
 
     :accent
-  end
-
-  def authorization_method_text
-    (stripe_obj[:wallet] || authorization_method).humanize
   end
 
   def merchant_name
@@ -140,10 +116,6 @@ class StripeAuthorization < ApplicationRecord
         name: "XXX"
       }
     }
-  end
-
-  def remote_stripe_transaction_amount_cents
-    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.sum(&:amount)
   end
 
   def date

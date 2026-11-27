@@ -16,7 +16,7 @@ class Employee
     def review_requested
       @delivery_reason = "you are on the team of #{@employee.event.name} on HCB."
 
-      mail to: @employee.event.users.excluding(@employee.user).map(&:email_address_with_name),
+      mail to: @employee.event.organizer_contact_emails(include_contact_email: false) { |users| users.excluding(@employee.user) },
            subject: "[Payroll / #{@employee.event.name}] Review Requested: #{@payment.title}"
     end
 

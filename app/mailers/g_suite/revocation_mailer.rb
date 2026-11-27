@@ -6,11 +6,7 @@ class GSuite
     before_action :set_g_suite, only: %i[revocation_canceled]
     before_action :set_delivery_reason
 
-    default to: -> {
-      emails = organization_managers
-      emails << @g_suite.event.config.contact_email if @g_suite.event.config.contact_email.present?
-      emails
-    }
+    default to: -> { @g_suite.event.organizer_contact_emails(only_managers: true) }
 
     def revocation_warning
       mail subject: "[Action Required] Issue detected with your Google Workspace for #{@g_suite.domain}"
@@ -50,10 +46,6 @@ class GSuite
         Rails.error.unexpected("GSuite::Revocation: Unknown reason for revocation")
         @reason = "of an unknown reason"
       end
-    end
-
-    def organization_managers
-      @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
     end
 
     def set_delivery_reason

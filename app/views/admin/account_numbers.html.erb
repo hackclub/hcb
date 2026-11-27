@@ -25,7 +25,7 @@
       <th>Event</th>
       <th>Account Number</th>
       <th>Routing Number</th>
-      <th>Deposit Only</th>
+      <th class="text-right">Deposit Only</th>
     </tr>
   </thead>
   <tbody>
@@ -45,7 +45,7 @@
         </td>
         <td><%= an.account_number %></td>
         <td><%= an.routing_number %></td>
-        <td><%= an.deposit_only ? "✅" : "🚫" %></td>
+        <td class="text-right"><%= an.deposit_only ? "✅" : "🚫" %></td>
       </tr>
     <% end %>
   </tbody>

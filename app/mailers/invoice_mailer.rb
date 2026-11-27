@@ -3,8 +3,7 @@
 class InvoiceMailer < ApplicationMailer
   def notify_organizers_sent
     @invoice = params[:invoice]
-    @emails = @invoice.sponsor.event.users.where(organizer_positions: { role: :manager }).map(&:email_address_with_name)
-    @emails << @invoice.sponsor.event.config.contact_email if @invoice.sponsor.event.config.contact_email.present?
+    @emails = @invoice.sponsor.event.organizer_contact_emails(only_managers: true)
     @delivery_reason = "you are a manager of #{@invoice.sponsor.event.name} on HCB."
 
     mail to: @emails, subject: "#{@invoice.event.name}: #{@invoice.creator.name} sent an invoice to #{@invoice.sponsor.name}"

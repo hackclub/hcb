@@ -18,6 +18,6 @@
     <p>You are receiving this email because <%= @delivery_reason %></p>
   <% end %>
   <% if @unsubscribe_link.present? %>
-    <p><i><%= link_to "If you would like to unsubscribe, please click here.", @unsubscribe_link %></i></p>
+    <p><i><%= link_to "Unsubscribe from these emails", @unsubscribe_link %></i></p>
   <% end %>
 </div>

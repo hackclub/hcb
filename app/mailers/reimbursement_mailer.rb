@@ -24,7 +24,9 @@ class ReimbursementMailer < ApplicationMailer
     if @report.reviewer.present?
       mail to: @report.reviewer.email_address_with_name, subject: "[Reimbursements / #{@report.event.name}] Your Review Was Requested: #{@report.name}"
     else
-      to = User.find(@report.event.organizer_positions.manager.pluck(:user_id)).excluding(@report.user).map(&:email_address_with_name)
+      reviewers = @report.event.reimbursement_reviewers.where.not(id: @report.user)
+      reviewers = User.where(id: @report.event.organizer_positions.manager.select(:user_id)).where.not(id: @report.user) unless reviewers.exists?
+      to = reviewers.map(&:email_address_with_name)
       to << @report.event.config.contact_email if @report.event.config.contact_email.present?
       mail to:, subject: "[Reimbursements / #{@report.event.name}] Review Requested: #{@report.name}"
     end
@@ -56,6 +58,14 @@ class ReimbursementMailer < ApplicationMailer
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] Mailed check for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
+  def failed_payout_reminder
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+    @days = params[:days]
+
+    mail subject: "[Reimbursements] Reminder: your payout for #{@report.name} still needs attention", to: @report.user.email_address_with_name, from: hcb_email_with_name_of(@report.event)
   end
 
   def expenses_approved

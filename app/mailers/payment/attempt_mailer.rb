@@ -17,6 +17,13 @@ class Payment
       mail to: @recipients, subject: "We couldn't send your payment for #{@payment.purpose} from #{@payment.event.name}"
     end
 
+    def sent_with_fee
+      @fee = params[:fee]
+      @delivery_reason = "you sent a payment to #{@payment.payee.display_name} from #{@payment.event.name}."
+
+      mail to: @creator, subject: "Your payment to #{@payment.payee.display_name} has been sent"
+    end
+
     private
 
     def set_attempt

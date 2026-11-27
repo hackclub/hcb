@@ -29,7 +29,7 @@
       <th>Anonymous</th>
       <th>Tax-Deductible</th>
       <th>Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th>Cancel</th>
     </tr>
   </thead>
@@ -46,7 +46,7 @@
         <td><%= donation.anonymous? %></td>
         <td><%= donation.tax_deductible? %></td>
         <td><strong><%= render_money(donation.amount) %></strong>/month</td>
-        <td><%= donation.stripe_status.humanize %></td>
+        <td class="text-right"><%= donation.stripe_status.humanize %></td>
         <td><%= link_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to cancel this donation to #{donation.event.name}?", turbo_confirm_danger: true } if !donation.canceled? %></td>
       </tr>
     <% end %>

@@ -99,25 +99,27 @@ module ReceiptService
       )
 
 
-      if @receipt.receiptable_type == "HcbCode"
-        hcb_code = @receipt.receiptable
-        hcb_code.broadcast_action_later_to(
-          [hcb_code, "ai_memo"],
+      # Offer the suggested memo on whichever transaction page is open. The
+      # stream is keyed on the ledger item, which owns the receipts; the HCB
+      # code page's heading listens on the same stream for its own target.
+      # Through Turbo::StreamsChannel rather than the model so Turbo doesn't
+      # inject a model-named local that the partials' strict locals would reject.
+      if (ledger_item = @receipt.receiptable).is_a?(::Ledger::Item)
+        Turbo::StreamsChannel.broadcast_action_later_to(
+          [ledger_item, "ai_memo"],
           action: :replace,
-          target: "ai_memo",
-          partial: "hcb_codes/memo/ai",
-          locals: { hcb_code: }
+          target: ActionView::RecordIdentifier.dom_id(ledger_item, :ai_memo),
+          partial: "ledger/items/memo/ai",
+          locals: { item: ledger_item }
         )
 
-        # The ledger item's heading shows the same icon under its own target, so
-        # whichever page is open picks the suggestion up.
-        if (ledger_item = hcb_code.ledger_item).present?
-          hcb_code.broadcast_action_later_to(
-            [hcb_code, "ai_memo"],
+        if (hcb_code = ledger_item.hcb_code).present?
+          Turbo::StreamsChannel.broadcast_action_later_to(
+            [ledger_item, "ai_memo"],
             action: :replace,
-            target: ActionView::RecordIdentifier.dom_id(ledger_item, :ai_memo),
-            partial: "ledger/items/memo/ai",
-            locals: { item: ledger_item }
+            target: "ai_memo",
+            partial: "hcb_codes/memo/ai",
+            locals: { hcb_code: }
           )
         end
       end

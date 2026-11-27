@@ -102,8 +102,7 @@ class AdminController < Admin::BaseController
       is_public: params[:is_public].to_i == 1,
       plan: params[:plan],
       tags: params[:tags],
-      risk_level: params[:risk_level],
-      demo_mode: params[:demo_mode].to_i == 1
+      risk_level: params[:risk_level]
     ).run
 
     redirect_to events_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
@@ -128,8 +127,7 @@ class AdminController < Admin::BaseController
       country: country&.alpha2,
       point_of_contact_id: current_user.id,
       approved: true,
-      tags:,
-      demo_mode: true
+      tags:
     ).run
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
@@ -416,15 +414,24 @@ class AdminController < Admin::BaseController
                  Ledger::Item.all
                end
 
-    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+    relation = relation.unmapped if @unmapped
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
-    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
+    relation = relation.where.not(amount_cents: 0) if @nonzero
 
     @count = relation.count
 
     @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
+  end
+
+  # Ledger items are addressed by hashid everywhere user-facing, but admin
+  # tooling (Blazer, logs, the console) hands around raw database ids. This
+  # resolves an id and sends the admin to the ledger item page.
+  def ledger_item
+    item = Ledger::Item.find_by!(id: params[:id])
+
+    redirect_to ledger_item_path(item)
   end
 
   def event_search
@@ -433,7 +440,7 @@ class AdminController < Admin::BaseController
     events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
 
     render json: events.map { |event|
-      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug, badge: helpers.combobox_badge(event) }
     }
   end
 
@@ -442,10 +449,9 @@ class AdminController < Admin::BaseController
     users = @q.present? ? User.search_name(@q) : User.order(:full_name, :id)
     users = combobox_page(users.select(:id, :full_name, :email))
 
-    # The admin display already spells out the email and ID, hence the sublabel
-    # only being worth rendering for everyone else.
+    # A nameless user is already labelled by their email.
     render json: users.map { |user|
-      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email if user.full_name.present?), badge: helpers.combobox_badge(user) }
     }
   end
 
@@ -920,6 +926,29 @@ class AdminController < Admin::BaseController
     end
   end
 
+  def wire_lookup
+    @uetr = params[:uetr].presence
+    return if @uetr.blank?
+
+    unless Wire::UETR.valid?(@uetr)
+      flash.now[:error] = "That isn't a valid UETR or Column transfer ID."
+      @uetr = nil
+      return
+    end
+
+    @wire = Wire.find_by(uetr: @uetr)
+    @tracking = Wire::UETR::Tracking.new(Wire::UETR.lookup(@uetr))
+
+    begin
+      @transfer = Wire::UETR::Transfer.fetch(@tracking.id || @wire&.column_id)
+    rescue Faraday::Error => e
+      Rails.error.report(e)
+    end
+  rescue Faraday::Error => e
+    Rails.error.report(e)
+    flash.now[:error] = "Something went wrong: #{ColumnService.error_to_admin_message(e)}"
+  end
+
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
   end
@@ -1009,13 +1038,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = safe_per(20)
 
-    # Pending fees that haven't been converted to FeeRevenue yet
-    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
-    events_with_balances = Event.pending_fees_v2.map do |event|
-      { event: event, balance: event.fee_balance_v2_cents }
-    end
-
-    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @uncharged_fees_events = FeeRevenueService::UnchargedFeeBalances.new.run
     @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
 
     relation = FeeRevenue.all
@@ -1095,7 +1118,7 @@ class AdminController < Admin::BaseController
     relation = HcbCode
 
     relation = relation.where("hcb_codes.hcb_code ILIKE ?", "%#{@q}%") if @q
-    relation = relation.receipt_required.missing_receipt if @has_receipt == "no"
+    relation = relation.joins(:ledger_item).merge(Ledger::Item.missing_receipt) if @has_receipt == "no"
     relation = relation.has_receipt_or_marked_no_or_lost if @has_receipt == "yes"
     relation = relation.lost_receipt if @has_receipt == "lost"
 
@@ -1338,70 +1361,6 @@ class AdminController < Admin::BaseController
     redirect_back fallback_location: ledger_admin_index_path
   end
 
-  def set_paypal_transfer
-    ActiveRecord::Base.transaction do
-      paypal_transfer = PaypalTransfer.find(params[:paypal_transfer_id])
-
-      canonical_transaction = CanonicalTransactionService::SetEvent.new(
-        canonical_transaction_id: params[:id],
-        event_id: paypal_transfer.event.id,
-        user: current_user
-      ).run
-
-      safely do
-        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
-      end
-
-      CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
-
-      CanonicalPendingTransactionService::Settle.new(
-        canonical_transaction:,
-        canonical_pending_transaction: paypal_transfer.canonical_pending_transaction
-      ).run!
-
-      canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
-
-      paypal_transfer.mark_deposited!
-
-      redirect_to transaction_admin_path(canonical_transaction)
-    end
-  rescue => e
-    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
-  end
-
-  def set_wire
-    ActiveRecord::Base.transaction do
-      wire = Wire.find(params[:wire_id])
-
-      canonical_transaction = CanonicalTransactionService::SetEvent.new(
-        canonical_transaction_id: params[:id],
-        event_id: wire.event.id,
-        user: current_user
-      ).run
-
-      safely do
-        ledger = Ledger.find_or_create_by!(primary: true, event_id: wire.event.id)
-
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
-      end
-
-      CanonicalPendingTransactionService::Settle.new(
-        canonical_transaction:,
-        canonical_pending_transaction: wire.canonical_pending_transaction
-      ).run!
-
-      canonical_transaction.update!(hcb_code: wire.hcb_code, transaction_source_type: "Wire", transaction_source_id: wire.id)
-
-      wire.mark_deposited!
-
-      redirect_to transaction_admin_path(canonical_transaction)
-    end
-  rescue => e
-    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
-  end
-
   def set_wise_transfer
     ActiveRecord::Base.transaction do
       wise_transfer = WiseTransfer.find(params[:wise_transfer_id])
@@ -1552,11 +1511,11 @@ class AdminController < Admin::BaseController
           end
         end
 
-        stream_data("text/csv", "#{filename}.csv", csv)
+        stream_file(csv, filename: "#{filename}.csv", type: "text/csv")
       end
 
       format.json do
-        stream_data("application/json", "#{filename}.json", @data.to_json, false)
+        stream_file(@data.to_json, filename: "#{filename}.json", type: "application/json", disposition: "inline")
       end
 
     end
@@ -1726,16 +1685,6 @@ class AdminController < Admin::BaseController
     Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
       block.call
     end
-  end
-
-  def stream_data(content_type, filename, data, download = true)
-    headers["Content-Type"] = content_type
-    headers["Content-disposition"] = "#{download ? 'attachment; ' : ''}filename=#{filename}"
-    headers["X-Accel-Buffering"] = "no"
-    headers.delete("Content-Length")
-
-    response.status = 200
-    self.response_body = data
   end
 
   def filtered_events(events: Event.all)

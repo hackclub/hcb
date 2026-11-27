@@ -50,6 +50,10 @@ class CardGrantSetting < ApplicationRecord
     "2 years": 365 * 2
   }, prefix: :expires_after
 
+  def support?
+    support_message.present? || support_url.present?
+  end
+
   def slack_support?
     return false unless support_url.present?
 

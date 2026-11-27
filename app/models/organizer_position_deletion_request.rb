@@ -93,10 +93,12 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
     self.save
   end
 
+  # The organizer's card charges missing a receipt in this event: the charges
+  # on the event's own ledger and on its card grants' (see
+  # CardLocking::ChargeBehavior::ACTIVE_EVENT_PLAN_JOIN, which joins the plan of
+  # whichever event owns the charge).
   def organizer_missing_receipts
-    organizer_position.user.transactions_missing_receipt.select do |hcb_code|
-      hcb_code.event == organizer_position.event
-    end
+    organizer_position.user.card_charges_missing_receipt.where(event_plans: { event_id: organizer_position.event_id })
   end
 
   def organizer_active_cards

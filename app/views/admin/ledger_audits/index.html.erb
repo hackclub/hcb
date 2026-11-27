@@ -15,7 +15,7 @@
       <th class="w-16">ID</th>
       <th class="w-40">Date</th>
       <th>Actions</th>
-      <th>To Review</th>
+      <th class="text-right">To Review</th>
     </tr>
   </thead>
   <tbody>
@@ -26,9 +26,10 @@
         <td>
           <%= link_to "Review", admin_ledger_audit_path(ledger_audit) %>
         </td>
-        <td><%= ledger_audit.tasks.pending.count %></td>
+        <td class="text-right"><%= ledger_audit.tasks.pending.count %></td>
       </tr>
     <% end %>
+  </tbody>
 </table>
 
 <%= paginate @ledger_audits %>

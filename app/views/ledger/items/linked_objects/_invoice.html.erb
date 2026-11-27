@@ -108,7 +108,7 @@
       <% if organizer_signed_in? %>
         <span><%= mail_to sponsor.contact_email.downcase %></span>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </p>
     <p>
@@ -136,7 +136,7 @@
         <%= ISO3166::Country[sponsor.address_country]&.common_name %>
         </span>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </p>
     <p>
@@ -144,6 +144,7 @@
       <span><%= invoice.memo %></span>
     </p>
     <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
   <% width_css_class = invoice.deposited? ? invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 : invoice.event.revenue_fee != 0 ? "w-64" : "w-8" %>
   <section class="card__banner card__darker details details--wide border-top p-0 -mx-[16px]">
@@ -183,7 +184,7 @@
       <%= link_to "Void",
         invoice_void_path(invoice.id),
         disabled: !organizer_signed_in?,
-        data: { turbo_method: :post, turbo_confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone.", turbo_confirm_danger: true },
+        data: { turbo_method: :post, turbo_confirm: "Are you sure you want to void this invoice? Voided invoices cannot be paid and this action cannot be undone.", turbo_confirm_danger: true },
         class: "btn bg-error mr1 right" %>
     <% end %>
     <% if !invoice.void_v2? && policy(invoice).archive? %>
@@ -270,7 +271,7 @@
           <% if organizer_signed_in? %>
             <%= mail_to sponsor.contact_email, sponsor.contact_email.downcase %>
           <% else %>
-            <strong>Sign in to view</strong>
+            <strong><%= restricted_detail_label %></strong>
           <% end %>
         </p>
         <p>
@@ -315,7 +316,7 @@
           <% if organizer_signed_in? %>
             <%= invoice.payment_method_card_exp_month.to_s.rjust(2, "0") %> / <%= invoice.payment_method_card_exp_year %>
           <% else %>
-            MM / YYYY (Sign in to view)
+            MM / YYYY (<%= restricted_detail_label %>)
           <% end %>
         </p>
       </div>

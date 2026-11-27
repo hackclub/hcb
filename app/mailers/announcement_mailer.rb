@@ -24,18 +24,6 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been skipped"
   end
 
-  def notice
-    @event = params[:event]
-    @emails = @event.organizer_contact_emails(only_managers: true)
-    @delivery_reason = "you are a contact for #{@event.name} on HCB."
-
-    @monthly_announcement = params[:monthly_announcement]
-    @scheduled_for = Date.today.next_month.beginning_of_month
-    @warning_date = @scheduled_for - 7.days
-
-    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
-  end
-
   private
 
   def set_warning_variables

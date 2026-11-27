@@ -327,6 +327,31 @@ RSpec.describe Ledger::Mapping, type: :model do
         Ledger::Mapping.map_primary!(ledger: create(:ledger), ledger_item:, mapped_by: user)
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
+
+    it "drops tags outside the new event when remapped to another org" do
+      original_event = primary_ledger.event
+      other_event = create(:event)
+      Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+
+      stale = original_event.tags.create!(label: "Stale", emoji: "🍕", color: "red")
+      valid = other_event.tags.create!(label: "Valid", emoji: "🎉", color: "green")
+      Ledger::Item::Tag.create!(ledger_item:, tag: stale)
+      Ledger::Item::Tag.create!(ledger_item:, tag: valid)
+
+      Ledger::Mapping.map_primary!(ledger: other_event.ledger, ledger_item:, mapped_by: user)
+
+      expect(ledger_item.reload.tags).to contain_exactly(valid)
+    end
+
+    it "keeps tags when re-mapped to the same ledger" do
+      Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+      tag = primary_ledger.event.tags.create!(label: "Keep", emoji: "🍕", color: "blue")
+      Ledger::Item::Tag.create!(ledger_item:, tag:)
+
+      Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+
+      expect(ledger_item.reload.tags).to contain_exactly(tag)
+    end
   end
 
   describe ".map_non_primary!" do

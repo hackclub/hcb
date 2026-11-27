@@ -16,7 +16,7 @@ class FunderInquiryMailer < ApplicationMailer
   def inquiry
     @name = params[:name].presence
     @email = params[:email]
-    @message = params[:message].presence
+    @message = params[:message] # required by MarketingController#funder_inquiry
     @delivery_reason = "you submitted an inquiry through HCB's page for funders."
 
     team_cc = CC_USER_IDS.filter_map do |id|

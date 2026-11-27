@@ -90,10 +90,6 @@ class ApplicationMailer < ActionMailer::Base
     email_address_with_name("hcb@hackclub.com", name)
   end
 
-  def no_recipients?
-    mail.recipients.compact.empty?
-  end
-
   private
 
   # Mailer actions interpolate this into @delivery_reason, where view helpers

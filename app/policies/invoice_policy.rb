@@ -44,10 +44,6 @@ class InvoicePolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
-  def pdf?
-    auditor_or_reader?
-  end
-
   def refund?
     user&.admin?
   end

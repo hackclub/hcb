@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { addLayer, removeLayer } from '../layers'
 
 export default class extends Controller {
   static targets = [
@@ -26,13 +27,6 @@ export default class extends Controller {
         field.addEventListener('dblclick', () => this.edit())
         this.#addTooltip(field, 'Double-click to edit...')
       }
-
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && this.enabledValue) {
-          this.formTarget.reset()
-          this.close()
-        }
-      })
     }
 
     // we don't render the button if the report is reimbursed
@@ -54,6 +48,20 @@ export default class extends Controller {
     this.#card()
     this.#move()
     this.#lightbox()
+  }
+
+  disconnect() {
+    removeLayer(this)
+  }
+
+  // Escape cancels the edit, once nothing opened over it is left
+  enabledValueChanged(enabled) {
+    if (enabled)
+      addLayer(this, () => {
+        this.formTarget.reset()
+        this.close()
+      })
+    else removeLayer(this)
   }
 
   close(e) {

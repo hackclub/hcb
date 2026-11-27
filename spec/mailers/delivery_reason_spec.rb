@@ -48,7 +48,7 @@ RSpec.describe "mailer delivery reasons", type: :mailer do
 
     expect(body).to include("You are receiving this email because you asked for it.")
     expect(body).to include('href="https://example.com/unsubscribe"')
-    expect(body).to include("If you would like to unsubscribe, please click here.")
+    expect(body).to include("Unsubscribe from these emails")
   end
 
   # Rails.error.unexpected raises outside production, so a forgotten reason
@@ -72,6 +72,7 @@ RSpec.describe "mailer delivery reasons", type: :mailer do
 
     expect(internal).to contain_exactly(
       "AdminMailer",
+      "ConfigurationIntegrityMailer",
       "Governance::Admin::Transfer::ApprovalAttemptMailer",
       "MailboxMailer",
       "OrganizerPositionDeletionRequestMailer"

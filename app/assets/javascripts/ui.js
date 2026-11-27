@@ -1,10 +1,16 @@
-/* global BK, $ */
+/* global BK, $, Turbo */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+const clearElement = id => {
+  const element = document.getElementById(id)
+  if (element) element.innerHTML = ''
+}
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -35,6 +41,8 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
+  clearElement('shared_popover_flash')
+
   const body = document.getElementById('shared_popover_body')
   if (body) {
     body.innerHTML = ''
@@ -42,12 +50,144 @@ const populateSharedPopover = trigger => {
       const frame = document.createElement('turbo-frame')
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
-      frame.src = src
+      // src is set by loadSharedPopoverFrame once the frame is in its final place
+      frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
   }
 }
+
+// Starts the popover frame's fetch. On a fresh open this waits for modal:open:
+// jquery-modal appends the popover to <body> and then to its blocker, each move
+// disconnects the frame, and Turbo aborts the in-flight fetch on disconnect. An
+// abort that lands while the response body is streaming is an uncaught
+// AbortError (Turbo never awaits that read), which fails system specs.
+const loadSharedPopoverFrame = () => {
+  const frame = document.querySelector('#shared_popover_body turbo-frame')
+  if (frame && !frame.src) frame.src = frame.dataset.popoverSrc
+}
+
+const sharedPopoverIsOpen = () =>
+  $.modal.getCurrent()?.$elm?.[0]?.id === 'shared_popover'
+
+// Pushes the popover's URL and swaps in its title; the page's own title is kept for closing
+const recordSharedPopoverState = popover => {
+  if (!document.documentElement.dataset.returnToStateTitle) {
+    document.documentElement.dataset.returnToStateTitle = document.title
+  }
+  document.title = popover.dataset.stateTitle
+
+  const url = new URL(location.href)
+  if (url.searchParams.get('popover') !== popover.dataset.stateUrl) {
+    url.searchParams.set('popover', popover.dataset.stateUrl)
+    // Pushed through Turbo so the entry is one of its own: going back or forward to
+    // it is then a restoration visit, and turbo:load reopens the popover in the URL
+    Turbo.session.history.push(url)
+  }
+}
+
+const openSharedPopover = (trigger, modalClass) => {
+  if (sharedPopoverIsOpen()) {
+    // Opened from inside the popover (e.g. a transaction on a card popover) or by
+    // going back to it: swap the content in place. Reopening it would close it
+    // first, and the close handler empties the body we just filled.
+    window.unexpandReceipt()
+    populateSharedPopover(trigger)
+    loadSharedPopoverFrame()
+    const popover = document.getElementById('shared_popover')
+    popover.scrollTop = 0
+    recordSharedPopoverState(popover)
+    return
+  }
+
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+    modalClass,
+  })
+}
+
+// Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
+const openPopoverFromUrl = () => {
+  const link = new URL(location.href).searchParams.get('popover')
+  if (!link) return true
+
+  const trigger = document.querySelector(
+    `[data-popover-state-url="${CSS.escape(link)}"]`
+  )
+  if (!trigger) return false
+
+  openSharedPopover(trigger)
+  return true
+}
+
+const openPopoverWhenFrameLoads = () => {
+  if (openPopoverFromUrl()) {
+    document.removeEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+}
+
+document.addEventListener('turbo:load', () => {
+  // A popover left open across a Turbo visit never closes, so its saved title is stale
+  delete document.documentElement.dataset.returnToStateTitle
+
+  if (!openPopoverFromUrl()) {
+    document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+})
+
+// Pages loaded with ?popover= echo it into links built from the query string
+document.addEventListener('turbo:before-visit', event => {
+  const url = new URL(event.detail.url)
+  if ($.modal.isActive() || !url.searchParams.has('popover')) return
+
+  event.preventDefault()
+  url.searchParams.delete('popover')
+  Turbo.visit(url.href)
+})
+
+document.addEventListener('turbo:before-fetch-response', async event => {
+  // Turbo submits data-turbo-method links from a form appended to <body>
+  const { target } = event
+  const frame =
+    target.closest?.('turbo-frame') ??
+    document.getElementById(target.dataset?.turboFrame ?? '')
+  if (!frame) return
+
+  // Set by the flash partial, so frame responses without one skip the parse
+  const response = event.detail.fetchResponse.response
+  if (!response.headers.get('X-Flash')) return
+
+  const flash = new DOMParser()
+    .parseFromString(await response.clone().text(), 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+  if (!flash) return
+
+  const container = document.getElementById(
+    frame.closest('#shared_popover')
+      ? 'shared_popover_flash'
+      : 'flash-container'
+  )
+  if (container) container.innerHTML = flash
+})
+
+// Redirects out of a popover lose its frame, so reload it in place once (so errors can't loop)
+document.addEventListener('turbo:frame-missing', event => {
+  const frame = event.target
+  if (!frame.dataset.popoverSrc || frame.dataset.retried) return
+
+  event.preventDefault()
+  frame.dataset.retried = 'true'
+  frame.src = frame.dataset.popoverSrc
+  frame.reload()
+})
+
+document.addEventListener('turbo:frame-load', event => {
+  delete event.target.dataset.retried
+})
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -58,15 +198,17 @@ const loadModals = element => {
       e.stopPropagation()
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
+    const modalClass = $(this).parents('turbo-frame').length
+      ? 'turbo-frame-modal'
+      : undefined
     if ($(this).data('modal') === 'shared_popover') {
-      populateSharedPopover(this)
+      openSharedPopover(this, modalClass)
+      return this.blur()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
       fadeDelay: 0.75,
-      modalClass: $(this).parents('turbo-frame').length
-        ? 'turbo-frame-modal'
-        : undefined,
+      modalClass,
     })
     BK.s('modal', '#' + $(this).data('modal'))
       .find('iframe[data-src]')
@@ -171,20 +313,26 @@ $(document).keydown(function (e) {
   }
 })
 
-window.attachTooltipListener = () => {
-  const tooltip = document.getElementById('tooltip-container')
+// Tooltips for anything `.tooltipped`, delegated from the document so they're
+// attached once and work for whatever renders later (frames, streams, menus).
+// Binding to each element on every frame load stacked another copy of every
+// handler each time, so each hover and click got slower the longer a page was
+// open.
+{
   let mutationObserver = null
+  const tooltip = () => document.getElementById('tooltip-container')
 
   const removeTooltips = () => {
-    tooltip.className = ''
+    const container = tooltip()
+    if (!container || !container.className) return
+    container.className = ''
     // Stop observing when tooltip is closed
-    if (mutationObserver) {
-      mutationObserver.disconnect()
-      mutationObserver = null
-    }
+    mutationObserver?.disconnect()
+    mutationObserver = null
   }
 
   const updateTooltipPosition = trigger => {
+    const container = tooltip()
     const triggerRect = trigger.getBoundingClientRect()
     const placement =
       [...trigger.classList]
@@ -194,50 +342,51 @@ window.attachTooltipListener = () => {
     const centerX =
       triggerRect.left +
       window.scrollX +
-      (triggerRect.width - tooltip.offsetWidth) / 2
+      (triggerRect.width - container.offsetWidth) / 2
     const centerY =
       triggerRect.top +
       window.scrollY +
-      (triggerRect.height - tooltip.offsetHeight) / 2
+      (triggerRect.height - container.offsetHeight) / 2
 
     const positions = {
       s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
       n: () => [
         centerX,
-        triggerRect.top + window.scrollY - tooltip.offsetHeight - offset,
+        triggerRect.top + window.scrollY - container.offsetHeight - offset,
       ],
       e: () => [triggerRect.right + window.scrollX + offset, centerY],
       w: () => [
-        triggerRect.left + window.scrollX - tooltip.offsetWidth - offset,
+        triggerRect.left + window.scrollX - container.offsetWidth - offset,
         centerY,
       ],
     }
 
     const [left, top] = (positions[placement] || positions.n)()
-    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` })
+    Object.assign(container.style, { left: `${left}px`, top: `${top}px` })
   }
 
   const showTooltip = trigger => {
-    if (!trigger.classList.contains('tooltipped')) return
+    const container = tooltip()
+    if (!container) return
     const label = trigger.getAttribute('aria-label')?.trim()
     if (!label) return
 
-    tooltip.className = 'active'
-    tooltip.textContent = label
+    container.className = 'active'
+    container.textContent = label
 
     // Sync size classes
     ;['tooltipped--lg', 'tooltipped--xl'].forEach(cls => {
-      if (trigger.classList.contains(cls)) tooltip.classList.add(cls)
+      if (trigger.classList.contains(cls)) container.classList.add(cls)
     })
 
     updateTooltipPosition(trigger)
 
     // Observe trigger for aria-label changes
-    if (mutationObserver) mutationObserver.disconnect()
+    mutationObserver?.disconnect()
     mutationObserver = new MutationObserver(() => {
-      const updatedLabel = trigger.getAttribute('aria-label').trim()
+      const updatedLabel = trigger.getAttribute('aria-label')?.trim()
       if (updatedLabel) {
-        tooltip.textContent = updatedLabel
+        container.textContent = updatedLabel
         updateTooltipPosition(trigger)
       }
     })
@@ -247,41 +396,68 @@ window.attachTooltipListener = () => {
     })
   }
 
-  $('.tooltipped').on({
-    mouseenter(event) {
-      if (window.innerWidth < 768) return
-      const trigger = event.currentTarget
-      showTooltip(trigger)
-    },
-    touchstart(event) {
-      const trigger = event.currentTarget
-      if (!trigger.classList.contains('tooltipped--tappable')) return
-      showTooltip(trigger)
-    },
-    mouseleave: removeTooltips,
-  })
+  // The innermost `.tooltipped` the pointer moved into or out of, as
+  // mouseenter and mouseleave would have fired on it
+  const crossed = ({ target, relatedTarget }) => {
+    const trigger = target.closest?.('.tooltipped')
+    return trigger && !trigger.contains(relatedTarget) ? trigger : null
+  }
 
-  $(document).on('click', function (event) {
-    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
-    if (
-      !$(event.target).closest('.tooltipped--tappable').length &&
-      !$(event.target).closest('#tooltip-container').length
-    ) {
-      removeTooltips()
-    }
+  document.addEventListener('mouseover', event => {
+    if (window.innerWidth < 768) return
+    const trigger = crossed(event)
+    if (trigger) showTooltip(trigger)
   })
-  // on unload turbo
-  $(document).on('turbo:before-visit', removeTooltips)
-  $(document).on('beforeunload', removeTooltips)
-  $(document).on('turbo:frame-load', removeTooltips)
+  document.addEventListener('mouseout', event => {
+    if (crossed(event)) removeTooltips()
+  })
+  document.addEventListener(
+    'touchstart',
+    ({ target }) => {
+      const trigger = target.closest?.('.tooltipped')
+      if (trigger?.classList.contains('tooltipped--tappable'))
+        showTooltip(trigger)
+    },
+    { passive: true }
+  )
+  document.addEventListener('click', ({ target }) => {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
+    if (!target.closest?.('.tooltipped--tappable, #tooltip-container'))
+      removeTooltips()
+  })
+  document.addEventListener('turbo:before-visit', removeTooltips)
+  window.addEventListener('beforeunload', removeTooltips)
+  document.addEventListener('turbo:frame-load', removeTooltips)
+
+  // Delegated, so there's nothing to attach; kept for callers that still ask
+  window.attachTooltipListener = () => {}
 }
 
-$(document).on('turbo:frame-load', window.attachTooltipListener)
-$(document).on('turbo:after-stream-render', window.attachTooltipListener)
+// If you add the money behavior to an input, it'll add commas, only allow two
+// numbers for cents, and only permit numbers to be entered. Delegated, so it
+// covers inputs in menus, frames and popovers without watching the whole page
+// for changes. While it captures, so everything else sees the formatted value.
+document.addEventListener(
+  'input',
+  ({ target }) => {
+    if (!target.matches?.('input[data-behavior~="money"]')) return
+
+    let value = target.value
+      .replace(/,/g, '') // remove all commas
+      .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // add commas for thousands
+
+    if (value.includes('.')) {
+      let parts = value.split('.')
+      value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '')
+    }
+
+    if (target.value !== value) target.value = value
+  },
+  true
+)
 
 $(document).on('turbo:load', function () {
-  window.attachTooltipListener()
-
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
@@ -339,35 +515,6 @@ $(document).on('turbo:load', function () {
 
     $(this).val(newVal)
   })
-
-  // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
-  // and only permit numbers to be entered
-
-  function attachMoneyInputListener() {
-    $('input[data-behavior~="money"]')
-      .off('input')
-      .on('input', function () {
-        let value = $(this)
-          .val()
-          .replace(/,/g, '') // remove all commas
-          .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
-          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // add commas for thousands
-
-        if (value.includes('.')) {
-          let parts = value.split('.')
-          value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '')
-        }
-
-        $(this).val(value)
-      })
-  }
-
-  attachMoneyInputListener()
-
-  // Used to attach the money input listener to inputs inside of menus / popups.
-
-  const observer = new MutationObserver(() => attachMoneyInputListener())
-  observer.observe(document.body, { childList: true, subtree: true })
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
@@ -474,6 +621,7 @@ $(document).on('turbo:load', function () {
     const emailInput = $('#reimbursement_report_email')
     const emailInputLabel = $('label[for="reimbursement_report_email"]')
     const maxInput = $('#reimbursement_report_maximum_amount_wrapper')
+    const reviewerInput = $('#reimbursement_report_reviewer_id')
     const inviteInput = $('#reimbursement_report_invite_message_wrapper')
 
     const forMyselfInput = $('#reimbursement_report_for_myself')
@@ -496,6 +644,18 @@ $(document).on('turbo:load', function () {
 
     externalInputWrapper.slideUp()
 
+    // Invitations default to the inviter as reviewer, but you shouldn't review your own report
+    const setReviewerDefault = forSomeoneElse => {
+      const inviteDefault = reviewerInput.data('invite-default')
+      if (!inviteDefault) return
+
+      if (forSomeoneElse && !reviewerInput.val()) {
+        reviewerInput.val(inviteDefault)
+      } else if (!forSomeoneElse && reviewerInput.val() === inviteDefault) {
+        reviewerInput.val('')
+      }
+    }
+
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
         externalInputWrapper.slideUp({
@@ -503,12 +663,14 @@ $(document).on('turbo:load', function () {
         })
         currencyWrapper.slideDown()
         emailInput.val(emailInput[0].attributes['value'].value)
+        setReviewerDefault(false)
       }
     })
 
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val())
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             dropdownInputLabel.show()
@@ -526,6 +688,7 @@ $(document).on('turbo:load', function () {
 
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             emailInput.val('')
@@ -604,74 +767,6 @@ $(document).on('turbo:load', function () {
     .matchMedia('(prefers-reduced-motion: reduce)')
     .addListener(() => setTilt())
 })
-
-const initPayoutMethodToggles = function () {
-  if (
-    BK.thereIs('check_payout_method_inputs') &&
-    BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('wire_payout_method_inputs') &&
-    BK.thereIs('wise_transfer_payout_method_inputs')
-  ) {
-    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s(
-      'ach_transfer_payout_method_inputs'
-    )
-    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
-    const wiseTransferPayoutMethodInputs = BK.s(
-      'wise_transfer_payout_method_inputs'
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodcheck',
-      e => {
-        if (e.target.checked)
-          checkPayoutMethodInputs.slideDown() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodachtransfer',
-      e => {
-        if (e.target.checked)
-          achTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodwire',
-      e => {
-        if (e.target.checked)
-          checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_legalentitypayoutmethodwisetransfer',
-      e => {
-        if (e.target.checked)
-          wiseTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on('change', '[name="user[payout_method_type]"]', e => {
-      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
-    })
-  }
-}
-
-$(document).on('turbo:load', initPayoutMethodToggles)
-$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',
@@ -785,53 +880,50 @@ $(document).on('wheel', 'input[type=number]', e => {
   e.target.blur()
 })
 
-// this allows for popovers to change the URL in the browser when opened.
-// it also handles using the back button, to reopen or close a popover.
+// Opening a popover puts its URL in the address bar as a Turbo history entry, so the
+// back and forward buttons are restoration visits: the popover closes with the page
+// (turbo:before-cache, see application.js) and turbo:load reopens the one in the URL.
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateUrl) {
-      document.documentElement.dataset.returnToStateUrl = window.location.href
-      document.documentElement.dataset.returnToStateTitle = document.title
-    }
-    document.title = modal.elm[0].dataset.stateTitle
-    window.history.pushState(
-      { modal: modal.elm[0].id },
-      '',
-      modal.elm[0].dataset.stateUrl
-    )
+    recordSharedPopoverState(modal.elm[0])
+  }
+})
+
+$(document).on($.modal.OPEN, function (event, modal) {
+  if (modal?.elm?.[0]?.id === 'shared_popover') {
+    loadSharedPopoverFrame()
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (document.documentElement.dataset.returnToStateUrl) {
-    window.history.pushState(
-      null,
-      '',
-      document.documentElement.dataset.returnToStateUrl
-    )
-    document.title = document.documentElement.dataset.returnToStateTitle
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    // Closing via the back button has already removed the param, and a close for
+    // Turbo's snapshot cache (see application.js) leaves the URL to Turbo
+    const url = new URL(location.href)
+    if (!modal.options?.keepHistory && url.searchParams.has('popover')) {
+      url.searchParams.delete('popover')
+      Turbo.session.history.push(url)
+    }
+
+    if (document.documentElement.dataset.returnToStateTitle) {
+      document.title = document.documentElement.dataset.returnToStateTitle
+    }
   }
 })
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
-    const body = document.getElementById('shared_popover_body')
-    if (body) body.innerHTML = ''
+    delete document.documentElement.dataset.returnToStateTitle
+
+    clearElement('shared_popover_body')
+    clearElement('shared_popover_flash')
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {
       popoverEl.classList.remove('modal--popover--receipt-expanded')
       popoverEl.classList.remove('modal--popover--sm')
     }
-  }
-})
-
-window.addEventListener('popstate', e => {
-  if (e.state?.modal) {
-    $(`#${e.state.modal}`).modal()
-  } else {
-    $.modal.close()
   }
 })
 

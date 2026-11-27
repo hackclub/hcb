@@ -4,19 +4,23 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include AuditLogHelper
   include ComboboxHelper
+  include DisputesHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper
   include GSuitesHelper
   include HcbCodeHelper
   include InvoicesHelper
+  include LegalEntitiesHelper
   include LoginsHelper
   include LogoHelper
   include OrganizerPosition::Spending::AllowancesHelper
   include PayeesHelper
   include PopoverHelper
   include ReceiptsHelper
+  include Reimbursement::ExpensesHelper
   include SeasonalHelper
   include SessionsHelper
   include StaticPagesHelper
@@ -26,6 +30,16 @@ module ApplicationHelper
   include ToursHelper
   include TurboStreamActionsHelper
   include UsersHelper
+
+  # Flash keys that aren't messages, and so are never rendered as one.
+  def renderable_flash
+    flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
+
+  # Inline image for PDF templates; the renderer can't reach our asset host from dev.
+  def pdf_asset_base64(path)
+    "data:#{Marcel::MimeType.for(name: path)};base64,#{Base64.strict_encode64(Rails.root.join("app/assets/images", path).binread)}"
+  end
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
@@ -75,14 +89,6 @@ module ApplicationHelper
   def render_money_amount(amount, opts = {})
     opts[:unit] = ""
     render_money(amount, opts)
-  end
-
-  def render_transaction_amount(amount)
-    if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
-      content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
-    else
-      render_money amount
-    end
   end
 
   def render_percentage(decimal, params = {})
@@ -292,13 +298,9 @@ module ApplicationHelper
     content_for(:container_class) { "container--sm" }
   end
 
-  alias_method :page_narrow, :page_sm
-
   def page_xs
     content_for(:container_class) { "container--xs" }
   end
-
-  alias_method :page_extranarrow, :page_xs
 
   def title(text)
     content_for :title, text

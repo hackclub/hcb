@@ -3,13 +3,6 @@
 class GSuiteAccountMailer < ApplicationMailer
   before_action { @delivery_reason = "a Google Workspace account was created for you through HCB." }
 
-  def verify
-    @recipient = params[:recipient]
-
-    mail to: @recipient,
-         subject: "[Action Requested] Verify your HCB Google Workspace account"
-  end
-
   def notify_user_of_activation(params)
     @recipient = params[:recipient]
     @address = params[:address]

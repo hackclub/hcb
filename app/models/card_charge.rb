@@ -29,6 +29,10 @@
 # RawStripeTransaction's `stripe_authorization_id` both hold the Stripe
 # authorization ID (iauth_...).
 class CardCharge < ApplicationRecord
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
+
   belongs_to :raw_pending_stripe_transaction, optional: true
   belongs_to :stripe_card, optional: true
   has_many :card_charge_raw_stripe_transactions, dependent: :destroy
@@ -49,6 +53,21 @@ class CardCharge < ApplicationRecord
 
   def merchant_currency
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
+  end
+
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where the ledger item's amount comes from too.
+  def merchant_amount
+    transaction = (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction
+    amount, currency = transaction&.values_at("merchant_amount", "merchant_currency")
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
+
+    Money.from_cents(amount.abs, currency.upcase)
+  end
+
+  def foreign_currency?
+    amount = merchant_amount
+    amount.present? && amount.currency != Money.default_currency
   end
 
   # Only Stripe authorizations carry verification data; settled transactions
@@ -118,22 +137,10 @@ class CardCharge < ApplicationRecord
     raw_stripe_transactions.first.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_pending_stripe_transaction
 
     raw_pending_stripe_transaction.stripe_transaction_id
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was

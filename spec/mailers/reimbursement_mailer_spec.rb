@@ -3,6 +3,23 @@
 require "rails_helper"
 
 RSpec.describe ReimbursementMailer do
+  describe "#review_requested" do
+    it "doesn't notify managers who opted out of reviewing" do
+      event = create(:event)
+      reviewer = create(:user, email: "reviewer@example.com")
+      opted_out = create(:user, email: "opted-out@example.com")
+      create(:organizer_position, user: reviewer, event:, role: :manager)
+      opted_out_position = create(:organizer_position, user: opted_out, event:, role: :manager)
+      report = create(:reimbursement_report, event:)
+
+      expect(described_class.with(report:).review_requested.to).to include("opted-out@example.com", "reviewer@example.com")
+
+      opted_out_position.reimbursement_reviewer_opt_ins.destroy_all
+
+      expect(described_class.with(report:).review_requested.to).to eq(["reviewer@example.com"])
+    end
+  end
+
   describe "#expenses_approved" do
     it "renders the list of expenses in their original currency" do
       user = create(
@@ -80,6 +97,26 @@ RSpec.describe ReimbursementMailer do
 
       body = Nokogiri::HTML5.parse(mail.html_part.body.to_s)
       expect(body.css("pre").map(&:text)).to eq(["Account number is invalid"])
+      expect(body.css("a").map { |a| a["href"] }).to include(Rails.application.routes.url_helpers.settings_payouts_url)
+    end
+  end
+
+  describe "#failed_payout_reminder" do
+    it "reminds the reimbursee their payout failed and where to fix their details" do
+      create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      user = create(:user, email: "user@example.com")
+      report = create(:reimbursement_report, user:, name: "Food & drinks for event")
+      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 130_00, aasm_state: :failed)
+
+      mail = described_class.with(reimbursement_payout_holding: payout_holding, days: 7).failed_payout_reminder
+
+      expect { mail.deliver_now }.to send_email(
+        to: "user@example.com",
+        subject: "[Reimbursements] Reminder: your payout for Food & drinks for event still needs attention"
+      )
+
+      body = Nokogiri::HTML5.parse(mail.html_part.body.to_s)
+      expect(body.text.squish).to include("failed to send 7 days ago")
       expect(body.css("a").map { |a| a["href"] }).to include(Rails.application.routes.url_helpers.settings_payouts_url)
     end
   end
