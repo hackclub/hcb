@@ -1,0 +1,72 @@
+<% title "Termination request for #{@termination_request.event.name}" %>
+
+<%= link_to admin_termination_requests_path, class: "btn btn-small bg-muted" do %>
+  <%= inline_icon "view-back" %>
+  Back to termination requests
+<% end %>
+
+<h1>Termination request for <%= link_to @termination_request.event.name, event_path(@termination_request.event) %></h1>
+
+<article class="card">
+  <div class="details">
+    <p>
+      <strong>Status</strong>
+      <%= status_badge @termination_request.status_badge_type %>
+      <%= @termination_request.status.to_s.humanize %>
+    </p>
+
+    <p>
+      <strong>Requested by</strong>
+      <%= user_mention @termination_request.requested_by %>
+      (<%= mail_to @termination_request.requested_by.email %>)
+    </p>
+
+    <p>
+      <strong>Requested at</strong>
+      <%= format_datetime @termination_request.created_at %>
+    </p>
+
+    <% if @termination_request.withdrawn? %>
+      <p>
+        <strong>Withdrawn at</strong>
+        <%= format_datetime @termination_request.withdrawn_at %>
+      </p>
+    <% elsif @termination_request.closed? %>
+      <p>
+        <strong>Closed by</strong>
+        <%= user_mention @termination_request.closed_by %>
+        on <%= format_datetime @termination_request.closed_at %>
+      </p>
+    <% end %>
+
+    <p>
+      <strong>Reason</strong>
+      <span style="white-space: pre-wrap;"><%= @termination_request.reason %></span>
+    </p>
+
+    <p>
+      <strong>Balance</strong>
+      <%= render_money @termination_request.event.balance_available_v2_cents %>
+    </p>
+
+    <p>
+      <strong>Signees</strong>
+      <% signees = @termination_request.event.signees %>
+      <%= signees.any? ? safe_join(signees.map { |signee| user_mention(signee) }, ", ") : "None" %>
+    </p>
+  </div>
+
+  <div class="flex gap-3 mt2">
+    <%= link_to "Termination letter", termination_event_path(@termination_request.event, format: :pdf), class: "btn bg-info" %>
+    <%= link_to "Organization settings", edit_event_path(@termination_request.event, tab: "admin"), class: "btn" %>
+
+    <% if @termination_request.pending? %>
+      <%= button_to "Close request",
+                    close_admin_termination_request_path(@termination_request),
+                    class: "btn bg-success",
+                    data: { turbo_confirm: "This marks the request as processed. Only continue once the organization has been terminated or the request no longer needs follow-up." } %>
+    <% elsif @termination_request.closed? %>
+      <%= button_to "Reopen request", reopen_admin_termination_request_path(@termination_request), class: "btn bg-muted" %>
+    <% end %>
+  </div>
+</article>

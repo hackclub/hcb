@@ -1,0 +1,58 @@
+<%# locals: (event:) %>
+<%# Lives outside the settings form above: it submits its own form. %>
+<% return if event.demo_mode? %>
+<% pending = event.pending_termination_request %>
+
+<div class="card border b--warning mb3" id="request_termination_card">
+  <div class="flex items-center warning">
+    <%= inline_icon "important", size: 32, class: "mr1" %>
+    <p class="bold mt0 mb0">Terminate this organization</p>
+  </div>
+
+  <% if pending %>
+    <p class="mt1 mb2">
+      <%= user_mention pending.requested_by %> requested termination on <%= format_datetime pending.created_at %>.
+      Our team will reach out to confirm the details and the next steps.
+    </p>
+    <blockquote class="mt0 mb2 muted" style="white-space: pre-wrap;"><%= pending.reason %></blockquote>
+    <% if policy(pending).withdraw? %>
+      <%= button_to "Withdraw request",
+                    withdraw_event_termination_request_path(event, pending),
+                    method: :post,
+                    class: "btn bg-muted",
+                    data: { turbo_confirm: "Withdraw the request to terminate #{event.name}?" } %>
+    <% end %>
+  <% else %>
+    <p class="mt1 mb2">
+      Terminating ends <%= event.name %>’s fiscal sponsorship with HCB.
+      Its cards are canceled, its donation page is taken down, and remaining funds have to be spent or transferred out first.
+      Once we process the request, this cannot be undone.
+    </p>
+    <% if policy(Event::TerminationRequest.new(event:)).create? %>
+      <%= link_to "Request termination",
+                  "#",
+                  class: "btn bg-error",
+                  data: { behavior: "modal_trigger", modal: "request_termination" } %>
+      <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="request_termination">
+        <%= modal_header("Request termination") %>
+        <%= form_with(model: Event::TerminationRequest.new, url: event_termination_requests_path(event), local: true) do |form| %>
+          <p class="mt0">
+            A member of the HCB team will review your request and be in touch before anything changes.
+          </p>
+          <div class="field">
+            <%= form.label :reason, "Why are you closing #{event.name}?" %>
+            <%= form.text_area :reason, rows: 4, required: true, placeholder: "Our project has wrapped up and we no longer need an account." %>
+            <span class="muted h5">So we have context when we contact you.</span>
+          </div>
+          <div class="actions">
+            <%= form.submit "Request termination", class: "btn bg-error" %>
+          </div>
+        <% end %>
+      </section>
+    <% else %>
+      <p class="h5 muted mt0 mb0">
+        Only a contract signee can request termination. Ask one of your organization’s signees to submit the request.
+      </p>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,18 @@
+<p>Hi <%= @requested_by.name %>,</p>
+
+<p>We’ve received your request to terminate <%= link_to @event.name, event_url(@event) %>.</p>
+
+<p>
+  A member of the HCB team will reach out to confirm the details and walk you through the next steps,
+  including what happens to any remaining funds. Until then, your organization keeps working as usual.
+</p>
+
+<p>
+  Changed your mind? You can withdraw the request from your
+  <%= link_to "organization’s settings", edit_event_url(@event, tab: "details") %> at any time before we process it.
+</p>
+
+<p>
+  Warmly,<br>
+  The HCB team
+</p>

@@ -361,6 +361,10 @@ Rails.application.routes.draw do
       end
     end
     resources :ledger_audits, only: [:index, :show]
+    resources :termination_requests, only: [:index, :show] do
+      post "close", on: :member
+      post "reopen", on: :member
+    end
     resources :w9s, only: [:index, :new, :create]
     resources :check_deposits, only: [:index, :show] do
       post "submit", on: :member
@@ -1174,6 +1178,10 @@ Rails.application.routes.draw do
       member do
         post "toggle_tag"
       end
+    end
+
+    resources :termination_requests, module: :event, only: [:create] do
+      post "withdraw", on: :member
     end
 
     member do

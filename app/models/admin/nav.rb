@@ -233,6 +233,11 @@ module Admin
             path: organizer_position_deletion_requests_path
           ),
           make_item(
+            name: "Termination Requests",
+            path: admin_termination_requests_path,
+            count: ->{ Event::TerminationRequest.pending.count }
+          ),
+          make_item(
             name: "Google Workspaces",
             path: google_workspaces_admin_index_path,
             count: ->{ GSuite.needs_ops_review.count }
