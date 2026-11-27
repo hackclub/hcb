@@ -565,10 +565,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "dispute"
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
-
-      scope module: "hcb_code" do
-        get "subscriptions/transactions", to: "subscriptions#transactions"
-      end
     end
 
     collection do
