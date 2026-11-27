@@ -8,6 +8,7 @@
 #  color      :text
 #  emoji      :string           not null
 #  label      :text
+#  sort_index :integer
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  event_id   :bigint           not null
