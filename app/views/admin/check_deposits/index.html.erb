@@ -14,7 +14,7 @@
       <th class="w-32">Date</th>
       <th>Organization</th>
       <th class="w-32">Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -25,7 +25,7 @@
         <td><%= check_deposit.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to check_deposit.event.name, check_deposit.event %></td>
         <td><%= check_deposit.amount.format %></td>
-        <td>
+        <td class="text-right">
           <% if check_deposit.manual_submission_required? %>
             Manual Submission Required
           <% else %>

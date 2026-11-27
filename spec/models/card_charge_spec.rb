@@ -119,6 +119,81 @@ RSpec.describe CardCharge, type: :model do
     end
   end
 
+  describe "#refunded_amount_cents" do
+    it "sums the charge's refunds, leaving the captures out" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_refunded")
+      create(:raw_stripe_transaction, stripe_authorization_id: "iauth_refunded", amount_cents: -1500)
+      create(:raw_stripe_transaction, :refund, stripe_authorization_id: "iauth_refunded", amount_cents: 1500)
+      create(:raw_stripe_transaction, :refund, stripe_authorization_id: "iauth_refunded", amount_cents: 500)
+
+      expect(rpst.card_charge.reload.refunded_amount_cents).to eq(2000)
+    end
+
+    it "is zero for a charge that hasn't been refunded" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_unrefunded")
+      create(:raw_stripe_transaction, stripe_authorization_id: "iauth_unrefunded", amount_cents: -1500)
+
+      expect(rpst.card_charge.reload.refunded_amount_cents).to eq(0)
+    end
+  end
+
+  describe "#merchant_amount" do
+    it "is what the merchant charged, in the merchant's currency" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction: {
+                      "card"              => { "id" => "ic_eur" },
+                      "merchant_amount"   => -1234,
+                      "merchant_currency" => "eur"
+                    })
+
+      expect(rpst.card_charge.merchant_amount).to eq(Money.from_cents(1234, "EUR"))
+      expect(rpst.card_charge).to be_foreign_currency
+    end
+
+    it "prefers the settled transaction's amount over the authorization's" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_eur_settled", stripe_transaction: {
+                      "card"              => { "id" => "ic_eur_settled" },
+                      "merchant_amount"   => -1000,
+                      "merchant_currency" => "eur"
+                    })
+      create(:raw_stripe_transaction, stripe_authorization_id: "iauth_eur_settled", stripe_transaction: {
+               "card"              => "ic_eur_settled",
+               "authorization"     => "iauth_eur_settled",
+               "merchant_amount"   => -1050,
+               "merchant_currency" => "eur"
+             })
+
+      expect(rpst.card_charge.reload.merchant_amount).to eq(Money.from_cents(1050, "EUR"))
+    end
+
+    it "is not foreign when the merchant charged in USD" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction: {
+                      "card"              => { "id" => "ic_usd" },
+                      "merchant_amount"   => -1234,
+                      "merchant_currency" => "usd"
+                    })
+
+      expect(rpst.card_charge.merchant_amount).to eq(Money.from_cents(1234, "USD"))
+      expect(rpst.card_charge).not_to be_foreign_currency
+    end
+
+    it "is nil when Stripe reported no merchant amount" do
+      rpst = create(:raw_pending_stripe_transaction)
+
+      expect(rpst.card_charge.merchant_amount).to be_nil
+      expect(rpst.card_charge).not_to be_foreign_currency
+    end
+
+    it "is nil when the merchant currency is unknown" do
+      rpst = create(:raw_pending_stripe_transaction, stripe_transaction: {
+                      "card"              => { "id" => "ic_unknown" },
+                      "merchant_amount"   => -1234,
+                      "merchant_currency" => "xyz"
+                    })
+
+      expect(rpst.card_charge.merchant_amount).to be_nil
+    end
+  end
+
   describe "#stripe_card" do
     it "is set automatically when the charge is created" do
       rst = create(:raw_stripe_transaction)

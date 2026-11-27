@@ -225,7 +225,7 @@ module UsersHelper
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click->menu#toggle"
         },
       )
 
@@ -263,7 +263,7 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_path(user) },
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])

@@ -31,7 +31,6 @@
 #  slug                               :string
 #  subscribed_to_loops_at             :datetime
 #  teenager                           :boolean
-#  use_sms_auth                       :boolean          default(FALSE)
 #  use_two_factor_authentication      :boolean          default(FALSE)
 #  verified                           :boolean          default(FALSE), not null
 #  created_at                         :datetime         not null
@@ -104,8 +103,6 @@ class User < ApplicationRecord
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
-  has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
-  has_many :organizer_position_deletion_requests, inverse_of: :closed_by
   has_many :webauthn_credentials
   has_many :mailbox_addresses
   has_many :api_tokens
@@ -270,7 +267,7 @@ class User < ApplicationRecord
     name
     slug "url" do |slug| "https://hcb.hackclub.com/users/#{slug}/admin" end
     email
-    transactions_missing_receipt_count "Missing Receipts"
+    card_charges_missing_receipt "Missing Receipts" do |items| items.count end
   end
 
   SYSTEM_USER_EMAIL = "bank@hackclub.com"
@@ -281,16 +278,6 @@ class User < ApplicationRecord
   end
 
   after_save do
-    if use_sms_auth_previously_changed?
-      if use_sms_auth
-        create_activity(key: "user.enabled_sms_auth")
-        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
-      else
-        create_activity(key: "user.disabled_sms_auth")
-        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
-      end
-    end
-
     if use_two_factor_authentication_previously_changed?
       change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
@@ -341,8 +328,15 @@ class User < ApplicationRecord
     ["auditor", "admin", "superadmin"].include?(self.access_level)
   end
 
+  # make_admin! and remove_admin! are used from the Rails console to grant
+  # and revoke admin access. Nothing in the codebase calls remove_admin!,
+  # so please don't remove it as dead code.
   def make_admin!
     admin!
+  end
+
+  def remove_admin!
+    user!
   end
 
   def first_name(legal: false)
@@ -517,24 +511,12 @@ class User < ApplicationRecord
     User::ReceiptBin.new(self)
   end
 
-  def hcb_code_ids_missing_receipt
-    @hcb_code_ids_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
-      user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
-    end
-  end
-
-  memo_wise def transactions_missing_receipt(from: nil, to: nil)
-    return HcbCode.none unless hcb_code_ids_missing_receipt.any?
-
-    user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
-    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
-    user_hcb_codes.order(created_at: :desc)
-  end
-
-  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
-    transactions_missing_receipt(from:, to:).size
+  # This cardholder's Stripe card charges that still need a receipt, pending
+  # and settled alike: what the Receipt Bin lists, and what card locking counts
+  # (its outstanding pile is the settled, enforcement-era part of this; see
+  # CardLocking::CardholderBehavior). The item's own missing receipt logic.
+  def card_charges_missing_receipt
+    Ledger::Item.card_charges_for_cardholder(id).missing_receipt
   end
 
   def email_address_with_name(full_name: false)
@@ -839,14 +821,20 @@ class User < ApplicationRecord
   def on_phone_number_update
     # if we previously have a phone number and the phone number is not null
     if phone_number_changed?
-      # turn all this stuff off until they reverify
+      # turn this off until they reverify
       self.phone_number_verified = false
-      self.use_sms_auth = false
     end
   end
 
   def second_factor_present_for_2fa
-    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+    return unless use_two_factor_authentication?
+    return if totp.present? || webauthn_credentials.any?
+
+    # on_phone_number_update marks a changed phone number as unverified after
+    # validation, so a changed number can't count as the second factor.
+    if persisted? && phone_number_changed? && phone_number_verified_was
+      errors.add(:phone_number, "can't be changed while it's your only second authentication factor. Add another factor or disable two-factor authentication first.")
+    elsif !phone_number_verified?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end

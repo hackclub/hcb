@@ -11,7 +11,7 @@ RSpec.describe "Wise payout method in an unsupported currency", type: :system do
     allow_any_instance_of(ApplicationController).to receive(:find_current_session).and_return(session)
 
     # Payout methods created before CNY was disabled.
-    details = create(:wise_transfer_payout_method_details, currency: "CNY", account_type: "alipay", alipay_id: "fiona@example.com", allow_unsupported_recipient: true)
+    details = create(:wise_transfer_payout_method_details, currency: "CNY", account_type: "unionpay", account_number: "6212345678901234", allow_unsupported_recipient: true)
     user.personal_legal_entity.payout_methods.create!(default: true, details:)
   end
 
@@ -24,6 +24,7 @@ RSpec.describe "Wise payout method in an unsupported currency", type: :system do
     row.click_on "Edit"
 
     expect(row).to have_select("user[payout_method_wise_transfer][currency]", selected: "CNY")
+    expect(row).to have_select("user[payout_method_wise_transfer][account_type]", selected: "UnionPay")
     expect(row).to have_text(reason)
   end
 end

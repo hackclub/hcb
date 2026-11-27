@@ -8,7 +8,7 @@
         <th>Report</th>
         <th>Event</th>
         <th>Amount</th>
-        <th>Created</th>
+        <th class="text-right">Created</th>
       </tr>
       </thead>
       <tbody>
@@ -26,7 +26,7 @@
             <td>
               <%= render_money report.amount_cents %>
             </td>
-            <td>
+            <td class="text-right">
               <%= format_date report.created_at %>
             </td>
           </tr>

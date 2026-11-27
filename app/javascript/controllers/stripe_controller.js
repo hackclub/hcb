@@ -2,7 +2,7 @@
 
 import { Controller } from '@hotwired/stimulus'
 import { loadStripe } from '@stripe/stripe-js'
-import swal from 'sweetalert'
+import swal from '../common/swal'
 
 import themes from '../common/stripeThemes'
 

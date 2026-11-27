@@ -138,7 +138,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+  <%= render "receipts/list_v2", receipts: @hcb_code.receipts %>
   <% if @hcb_code.ledger_item %>
     <%= render partial: "receipts/form_v3", locals: {
           receiptable: @hcb_code.ledger_item,

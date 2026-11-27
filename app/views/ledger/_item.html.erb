@@ -1,4 +1,4 @@
-<%# locals: (item:, show_author: true, receipt_upload_button: false) %>
+<%# locals: (item:, show_author: true, receipt_upload_button: false, show_event_name: false, receipt_drop: true) %>
 
 <% date = time_tag(item.datetime, item.datetime.strftime("%b %e, %Y")) %>
 
@@ -7,13 +7,15 @@
   dragged out of the receipt bin links it, like the canonical transaction row.
   With `receipt_upload_button`, the row also ends in upload and select buttons
   (see ledger/items/_receipt_action). The gate for both is the same check
-  ReceiptsController#create authorizes the upload with.
+  ReceiptsController#create authorizes the upload with. A picker whose rows are
+  there to be chosen, not worked on, passes `receipt_drop: false`.
 %>
 <% can_upload_receipt = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item).upload? %>
+<% drop_target = receipt_drop && can_upload_receipt %>
 
 <tr
   class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>"
-  <% if can_upload_receipt %>
+  <% if drop_target %>
     data-controller="file-drop"
     data-file-drop-target="dropzone"
     data-file-drop-linking-value="true"
@@ -38,6 +40,11 @@
           </div>
         </div>
 
+        <%# The org that owns the item's primary ledger, or whose card grant does. %>
+        <% if show_event_name %>
+          <%= render "ledger/items/event_name", event: item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
+        <% end %>
+
         <%= render layout: "ledger/items/mobile_subtitle", locals: { datetime: item.datetime, author: (item.author if show_author) } do %>
           <%= render "ledger/items/status", ledger_item: item %>
         <% end %>
@@ -50,7 +57,7 @@
       <%= render "ledger/items/badges", item: %>
     </div>
 
-    <% if can_upload_receipt %>
+    <% if drop_target %>
       <%= form_with url: receipts_path, html: { hidden: true }, data: { "file-drop-target" => "form", turbo: true } do |form| %>
         <%= form.file_field :file, id: nil, multiple: true, include_hidden: false, data: { "file-drop-target" => "fileInput" } %>
         <%= form.hidden_field :receiptable_type, id: nil, value: "Ledger::Item" %>
@@ -84,4 +91,12 @@
       <td></td>
     <% end %>
   <% end %>
+  <%#
+    A caller that needs one more column renders the row as a layout and puts
+    the cell in its block (the repayment picker's Choose button). Collection
+    rendering passes no block at all, hence the guard; a single render without
+    one yields the view flow's :layout slot, which is empty for a row rendered
+    in a page body.
+  %>
+  <%= yield if block_given? %>
 </tr>

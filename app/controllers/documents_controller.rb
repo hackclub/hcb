@@ -108,7 +108,7 @@ class DocumentsController < ApplicationController
 
     respond_to do |format|
       format.pdf do
-        render_pdf "fiscal_sponsorship_letter"
+        render_pdf "fiscal_sponsorship_letter", fit_to_one_page: true
       end
 
       format.png do
@@ -124,7 +124,7 @@ class DocumentsController < ApplicationController
 
     respond_to do |format|
       format.pdf do
-        render_pdf "Verification Letter for #{ActiveStorage::Filename.new(@event.name).sanitized}", template: "documents/verification_letter"
+        render_pdf "Verification Letter for #{ActiveStorage::Filename.new(@event.name).sanitized}", template: "documents/verification_letter", fit_to_one_page: true
       end
 
       format.png do

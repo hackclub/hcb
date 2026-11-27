@@ -141,7 +141,8 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("This grant expired on")
+      expect(response.body).to include("This grant expired on <time")
+      expect(response.body).not_to include("&lt;time")
       expect(response.body).to include("Expired on")
       expect(response.body).to include("Spending controls")
       expect(response.body).to include("status bg-muted")
@@ -658,8 +659,6 @@ RSpec.describe CardGrantsController do
       item
     end
 
-    before { Flipper.enable(:new_ledger_everywhere_2026_07_13) }
-
     def page
       Nokogiri::HTML5(response.body)
     end
@@ -718,8 +717,8 @@ RSpec.describe CardGrantsController do
 
       link = page.at_css("tbody tr.transaction td.transaction__memo a[href='#{ledger_item_path(item)}']")
       expect(link).to be_present
-      expect(link["data-popover-src"]).to eq(item.hcb_code.popover_path)
-      expect(link["data-popover-frame-id"]).to eq(item.hcb_code.public_id)
+      expect(link["data-popover-src"]).to eq(item.popover_path)
+      expect(link["data-popover-frame-id"]).to eq(item.public_id)
     end
   end
 
@@ -746,7 +745,7 @@ RSpec.describe CardGrantsController do
         }
       )
 
-      expect(flash[:success]).to eq("Successfully topped up grant.")
+      expect(flash[:success]).to eq("Grant topped up.")
       expect(response).to redirect_to(card_grant_path(card_grant))
 
       expect(card_grant.reload.balance).to eq(Money.new(69_12, :usd))

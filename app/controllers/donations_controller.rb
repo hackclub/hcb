@@ -109,7 +109,7 @@ class DonationsController < ApplicationController
 
     if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
       skip_authorization
-      redirect_to root_url and return
+      redirect_to root_path and return
     end
 
     d_params[:ip_address] = request.remote_ip
@@ -173,16 +173,15 @@ class DonationsController < ApplicationController
 
   def refund
     @donation = Donation.find(params[:id])
-    @hcb_code = @donation.local_hcb_code
 
     authorize @donation
 
     if @donation.canonical_transactions.any?
       ::DonationService::Refund.new(donation_id: @donation.id, amount: Monetize.parse(params[:amount]).cents).run
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this donation." }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "The refund process has been queued for this donation." }
     else
       Donation::RefundJob.set(wait: 1.day).perform_later(@donation, Monetize.parse(params[:amount]).cents, current_user)
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
+      redirect_to ledger_item_path(@donation.ledger_item), flash: { success: "This donation hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
@@ -190,8 +189,12 @@ class DonationsController < ApplicationController
     authorize @event.donations.build
 
     respond_to do |format|
-      format.csv { stream_donations_csv }
-      format.json { stream_donations_json }
+      format.csv do
+        stream_file(DonationService::Export::Csv.new(event_id: @event.id).run, filename: "donations.csv", type: "text/csv")
+      end
+      format.json do
+        stream_file(DonationService::Export::Json.new(event_id: @event.id).run, filename: "donations.json", type: "application/json")
+      end
     end
   end
 
@@ -199,7 +202,9 @@ class DonationsController < ApplicationController
     authorize @event.donations.build
 
     respond_to do |format|
-      format.csv { stream_donors_csv }
+      format.csv do
+        stream_file(DonationService::Export::Donors::Csv.new(event_id: @event.id).run, filename: "donors.csv", type: "text/csv")
+      end
     end
   end
 
@@ -260,56 +265,6 @@ class DonationsController < ApplicationController
 
     attributes = submitted.permit(:name, :email, :message, :anonymous, :amount).to_h
     attributes.merge("amount" => (Monetize.parse(attributes["amount"]).cents if attributes["amount"].present?))
-  end
-
-  def stream_donations_csv
-    set_file_headers_csv
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = donations_csv
-  end
-
-  def stream_donations_json
-    set_file_headers_json
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = donations_json
-  end
-
-  def stream_donors_csv
-    set_file_headers_csv
-    headers["Content-disposition"] = "attachment; filename=donors.csv"
-    set_streaming_headers
-
-    response.status = 200
-
-    self.response_body = donors_csv
-  end
-
-  def set_file_headers_csv
-    headers["Content-Type"] = "text/csv"
-    headers["Content-disposition"] = "attachment; filename=donations.csv"
-  end
-
-  def set_file_headers_json
-    headers["Content-Type"] = "application/json"
-    headers["Content-disposition"] = "attachment; filename=donations.json"
-  end
-
-  def donations_csv
-    ::DonationService::Export::Csv.new(event_id: @event.id).run
-  end
-
-  def donations_json
-    ::DonationService::Export::Json.new(event_id: @event.id).run
-  end
-
-  def donors_csv
-    ::DonationService::Export::Donors::Csv.new(event_id: @event.id).run
   end
 
   def set_donation
