@@ -412,7 +412,11 @@ module HasWireRecipient
   def bank_country
     return recipient_country unless valid_bic_code?
 
-    ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
+    # Several validations ask, so remember Column's answer per BIC. A failed
+    # lookup isn't remembered, so the next call can still get the real country.
+    @bank_countries ||= {}
+    @bank_countries[bic_code] ||= ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue nil
+    @bank_countries[bic_code] || recipient_country
   end
 
   AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX", "HNL"]).uniq
