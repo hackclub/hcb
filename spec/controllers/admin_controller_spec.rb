@@ -457,6 +457,21 @@ RSpec.describe AdminController do
       expect(wise_transfer.reload).to be_deposited
     end
 
+    it "requires a failure reason for a transfer ops already marked failed without one" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      wise_transfer = create_sent_wise_transfer(event:, user: admin)
+      create_session(admin, verified: true)
+      map_outgoing!(wise_transfer)
+      wise_transfer.mark_failed!
+      returned = create(:canonical_transaction, amount_cents: 127_50)
+
+      post :set_wise_transfer_return, params: { id: returned.id, wise_transfer_id: wise_transfer.id }
+
+      expect(flash[:error]).to match(/failure reason/)
+      expect(returned.reload.hcb_code).not_to eq(wise_transfer.hcb_code)
+    end
+
     it "maps a return onto a transfer ops already marked as failed, keeping its reason" do
       admin = create(:user, :make_admin)
       event = create(:event)

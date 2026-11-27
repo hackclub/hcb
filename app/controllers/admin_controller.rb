@@ -1452,7 +1452,7 @@ class AdminController < Admin::BaseController
       raise ArgumentError, "Only incoming transactions can be mapped as a Wise return." unless canonical_transaction.amount_cents.positive?
       raise ArgumentError, "Map the outgoing transaction to Wise transfer ##{wise_transfer.id} first." unless wise_transfer.deposited? || wise_transfer.failed?
       raise ArgumentError, "Wise transfer ##{wise_transfer.id} has no ledger item." if ledger_item.nil?
-      raise ArgumentError, "Enter a failure reason." if wise_transfer.may_mark_failed? && params[:reason].blank?
+      raise ArgumentError, "Enter a failure reason." if params[:reason].blank? && wise_transfer.return_reason.blank?
 
       canonical_transaction.update!(
         hcb_code: wise_transfer.hcb_code,

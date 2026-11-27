@@ -34,6 +34,13 @@ RSpec.describe Reimbursement::FailedPayoutReminderJob, versioning: true do
       .not_to have_enqueued_mail(ReimbursementMailer, :failed_payout_reminder)
   end
 
+  it "skips failed Wise payouts, which are cancelled rather than reattempted" do
+    allow(payout_holding).to receive(:wise_transfer).and_return(instance_double(WiseTransfer))
+
+    expect { described_class.perform_now(payout_holding, 3, payout_holding.current_failure_id) }
+      .not_to have_enqueued_mail(ReimbursementMailer, :failed_payout_reminder)
+  end
+
   it "skips reminders from an earlier failure" do
     first_failure_id = payout_holding.current_failure_id
     payout_holding.mark_settled!

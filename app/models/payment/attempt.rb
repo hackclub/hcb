@@ -98,8 +98,10 @@ class Payment
       end
 
       event :mark_failed do
-        transitions from: [:pending, :sent], to: :failed
+        # Also allowed after success, for a Wise, ACH or wire return.
+        transitions from: [:pending, :sent, :successful], to: :failed
         after do |reason: nil|
+          payment.mark_returned! if payment.may_mark_returned?
           Payment::AttemptMailer.with(attempt: self, reason:).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
         end

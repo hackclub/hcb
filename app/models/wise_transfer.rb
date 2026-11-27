@@ -175,10 +175,10 @@ class WiseTransfer < ApplicationRecord
         if reimbursement_payout_holding.present?
           reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.may_mark_failed?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:, cancelled: false).wise_transfer_failed.deliver_later unless options[:refunded]
-        elsif payment_attempt&.may_mark_failed?
+        elsif payment_attempt.present?
           payment_attempt.mark_failed!(reason:)
         else
-          WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+          WiseTransferMailer.with(wise_transfer: self, reason:, returned: options[:refunded].present?).notify_failed.deliver_later
         end
         create_activity(key: "wise_transfer.failed", owner: nil)
 
@@ -339,7 +339,9 @@ class WiseTransfer < ApplicationRecord
     return if payout_holding.nil?
 
     ActiveRecord.after_all_transactions_commit do
-      cancelled = payout_holding.reload.cancel_failed_payout
+      next if payout_holding.reload.reversed?
+
+      cancelled = payout_holding.cancel_failed_payout
 
       if cancelled
         report = payout_holding.report

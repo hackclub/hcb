@@ -149,6 +149,19 @@ RSpec.describe WiseTransfer do
         expect(comment.content).to include("returned to #{report.event.name} within 1 business day")
       end
 
+      it "doesn't email again when a second refund is mapped onto an already-cancelled report" do
+        transfer = create_deposited_transfer
+        payout_holding = attach_payout_holding(transfer)
+        transfer.mark_failed!("Account closed", refunded: true)
+        payout_holding.update_columns(aasm_state: "reversed")
+
+        expect {
+          transfer.cancel_reimbursement_for_refund("Account closed")
+        }.not_to have_enqueued_mail(ReimbursementMailer, :wise_transfer_failed)
+
+        expect(payout_holding.report.comments).to be_empty
+      end
+
       it "does nothing for a transfer that isn't a reimbursement" do
         transfer = create_deposited_transfer
 
@@ -195,6 +208,15 @@ RSpec.describe WiseTransfer do
       }.to have_enqueued_mail(WiseTransferMailer, :notify_failed)
 
       expect(transfer.reload).to be_failed
+    end
+
+    it "tells the sender the transfer was returned when a refund is being mapped" do
+      transfer = create_deposited_transfer
+
+      expect {
+        transfer.mark_failed!("Account closed", refunded: true)
+      }.to have_enqueued_mail(WiseTransferMailer, :notify_failed)
+        .with(params: a_hash_including(returned: true), args: [])
     end
   end
 
@@ -332,7 +354,7 @@ RSpec.describe WiseTransfer do
 
         expect { wise_transfer.mark_failed!("Beneficiary account is closed") }
           .to have_enqueued_mail(WiseTransferMailer, :notify_failed)
-          .with(params: { wise_transfer:, reason: "Beneficiary account is closed" }, args: [])
+          .with(params: { wise_transfer:, reason: "Beneficiary account is closed", returned: false }, args: [])
           .once
 
         expect(wise_transfer).to be_failed

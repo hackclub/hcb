@@ -91,6 +91,10 @@ class Payment < ApplicationRecord
       transitions from: :sent, to: :successful
     end
 
+    event :mark_returned do
+      transitions from: :successful, to: :sent
+    end
+
     event :mark_canceled do
       transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled, if: -> { current_attempt.nil? || current_attempt.may_mark_canceled? }
       after do
