@@ -214,7 +214,7 @@
     </h2>
     <section class="ledger-item--details">
       <% if invoice.payment_method_type == 'card' %>
-        <div data-modal="payment_details" class="flex flex-col pointer" tabindex="0">
+        <div data-modal="payment_details_<%= ledger_item.hashid %>" class="flex flex-col pointer" tabindex="0">
           <strong>
             <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
             <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -297,7 +297,7 @@
 <% end %>
 
 <% if invoice.payment_method_type == 'card' %>
-  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(invoice, class: "h3 font-sans slate dark:text-white regular"), id: "payment_details" do %>
+  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(invoice, class: "h3 font-sans slate dark:text-white regular"), id: "payment_details_#{ledger_item.hashid}" do %>
 
     <article class="details-horiz">
       <div class="details">

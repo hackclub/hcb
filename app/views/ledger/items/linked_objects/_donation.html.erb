@@ -76,7 +76,7 @@
 
   <section class="ledger-item--details">
     <% if donation.payment_method_type == 'card' %>
-      <div data-modal="payment_details" class="pointer" tabindex="0">
+      <div data-modal="payment_details_<%= instance %>" class="pointer" tabindex="0">
         <strong>
           <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
           <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -167,7 +167,7 @@
 </article>
 
 <% if donation.payment_method_type == 'card' %>
-  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + donation_payment_method_mention(donation, class: "h3 font-sans regular"), id: "payment_details" do %>
+  <%= modal "Payment details" + content_tag(:span, "", class: "pl2") + donation_payment_method_mention(donation, class: "h3 font-sans regular"), id: "payment_details_#{instance}" do %>
 
     <article class="details-horiz">
       <div class="details">
