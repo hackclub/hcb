@@ -8,7 +8,7 @@
     color: map-get($palette, black);
     background-color: rgba(map-get($palette, white), 0.67);
   }
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   box-shadow:
     0 0 2px 0 rgba(0, 0, 0, 0.0625),
     0 4px 8px 0 rgba(0, 0, 0, 0.125);
