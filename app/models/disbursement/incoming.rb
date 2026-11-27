@@ -18,33 +18,39 @@
 #  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
+#  destination_ledger_id               :bigint
 #  destination_subledger_id            :bigint
 #  destination_transaction_category_id :bigint
 #  event_id                            :bigint
 #  fulfilled_by_id                     :bigint
 #  requested_by_id                     :bigint
 #  source_event_id                     :bigint
+#  source_ledger_id                    :bigint
 #  source_subledger_id                 :bigint
 #  source_transaction_category_id      :bigint
 #
 # Indexes
 #
+#  index_disbursements_on_destination_ledger_id                (destination_ledger_id)
 #  index_disbursements_on_destination_subledger_id             (destination_subledger_id)
 #  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
 #  index_disbursements_on_event_id                             (event_id)
 #  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
 #  index_disbursements_on_requested_by_id                      (requested_by_id)
 #  index_disbursements_on_source_event_id                      (source_event_id)
+#  index_disbursements_on_source_ledger_id                     (source_ledger_id)
 #  index_disbursements_on_source_subledger_id                  (source_subledger_id)
 #  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (destination_ledger_id => ledgers.id)
 #  fk_rails_...  (destination_transaction_category_id => transaction_categories.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (fulfilled_by_id => users.id)
 #  fk_rails_...  (requested_by_id => users.id)
 #  fk_rails_...  (source_event_id => events.id)
+#  fk_rails_...  (source_ledger_id => ledgers.id)
 #  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement
