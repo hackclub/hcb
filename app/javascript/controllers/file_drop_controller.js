@@ -148,6 +148,38 @@ export default class extends Controller {
     this.submitting = false
   }
 
+  checkType(e) {
+    const accept = this.fileInputTarget.accept
+    if (!accept) return
+
+    const rules = accept
+      .split(',')
+      .map(rule => rule.trim().toLowerCase())
+      .filter(Boolean)
+    const allowed = file => {
+      const name = file.name.toLowerCase()
+      const type = (file.type || '').toLowerCase()
+      return rules.some(rule => {
+        if (rule.startsWith('.')) return name.endsWith(rule)
+        if (rule.endsWith('/*')) return type.startsWith(rule.slice(0, -1))
+        return type === rule
+      })
+    }
+
+    const files = [...this.fileInputTarget.files]
+    const rejected = files.filter(file => !allowed(file))
+    if (!rejected.length) return
+
+    if (this.hasSizeErrorTarget) {
+      const names = rejected.map(file => file.name).join(', ')
+      const several = files.length > 1 ? ', so nothing was uploaded' : ''
+      this.sizeErrorTarget.textContent = `${names} ${rejected.length > 1 ? "aren't" : "isn't"} a supported file type${several}.`
+      this.sizeErrorTarget.hidden = false
+    }
+    this.fileInputTarget.value = ''
+    e.stopImmediatePropagation()
+  }
+
   // Runs before form#submit so an oversized file is never direct-uploaded.
   checkSize(e) {
     if (!this.hasSizeErrorTarget) return

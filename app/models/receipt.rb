@@ -81,7 +81,8 @@ class Receipt < ApplicationRecord
     end
   end
 
-  validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
+  validates :file, attached: true, content_type: { with: /(\Aimage\/.*\z|application\/pdf|text\/csv)/, spoofing_protection: true }
+  validate :csv_uploaded_by_auditor, on: :create
   MAX_FILE_SIZE = 50.megabytes
   validates :file, size: { less_than_or_equal_to: MAX_FILE_SIZE }, if: -> { attachment_changes["file"].present? }
 
@@ -260,6 +261,13 @@ class Receipt < ApplicationRecord
   end
 
   private
+
+  def csv_uploaded_by_auditor
+    return unless file.attached? && file.content_type == "text/csv"
+    return if duplicate? || user&.auditor?
+
+    errors.add(:file, "cannot be a CSV.")
+  end
 
   def pdf_text
     doc = if self.attachment_changes["file"]&.attachable
