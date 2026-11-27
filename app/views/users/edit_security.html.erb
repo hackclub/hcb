@@ -107,9 +107,9 @@
           <% if @user.totp.present? %>
             <p>
               <% if disabled %>
-                <%= @user.name %> set up time-based one time passwords on <%= format_date @user.totp.created_at %>
+                <%= @user.name %> set up time-based one time passwords on <span class="font-bold"><%= @user.totp.created_at.strftime("%B %e, %Y") %></span>.
               <% else %>
-                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>.
+                You set up time-based one time passwords on <span class="font-bold"><%= @user.totp.created_at.strftime("%B %e, %Y") %></span>.
               <% end %>
             </p>
           <% else %>
