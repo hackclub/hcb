@@ -133,6 +133,41 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_security" do
+    render_views
+
+    it "renders each two-factor method with its current state" do
+      user = create(:user)
+      create_session(user, verified: true)
+      User::Totp.create!(user:, aasm_state: "verified")
+      WebauthnCredential.create!(user:, name: "YubiKey 5C", authenticator_type: :cross_platform, public_key: "pk", sign_count: 0, webauthn_id: "abc")
+      user.generate_backup_codes!
+      user.activate_backup_codes!
+
+      get(:edit_security, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Two-factor authentication")
+      expect(response.body).to include(user_disable_totp_path(user))
+      expect(response.body).to include("YubiKey 5C")
+      expect(response.body).to include(user_disable_backup_codes_path(user))
+      expect(response.body).to include("Sign me out after")
+    end
+
+    it "renders the empty states before anything is set up" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:edit_security, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(user_generate_totp_path(user))
+      expect(response.body).to include("Sign in with your fingerprint, face or a hardware security key.")
+      expect(response.body).to include(user_generate_backup_codes_path(user))
+      expect(response.body).not_to include(user_disable_backup_codes_path(user))
+    end
+  end
+
   describe "#admin_details_emails" do
     render_views
 

@@ -1,6 +1,7 @@
 <%= turbo_frame_tag :totp_auth_card do %>
-  <div class="card border b--info mt1 mb3">
-    <p>
+  <div class="card border mb3" id="totp">
+    <%= render "users/security_card_header", title: "Time-based one time passwords", icon: "clock" %>
+    <p class="mt0">
       Scan the QR code below with your authenticator app or enter the secret.
     </p>
     <div style="height: 130px;">
@@ -39,7 +40,7 @@
         <%= submit_tag "Submit" %>
       <% end %>
     </div>
-    <p>
+    <p class="mb0">
       FYI: you can only see this secret once! It'll only be saved after you verify your configuration.
     </p>
   </div>
