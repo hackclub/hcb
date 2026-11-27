@@ -40,4 +40,37 @@ RSpec.describe Api::V4::AchTransfersController do
       expect(Receipt.where(receiptable: hcb_code)).to be_empty
     end
   end
+
+  describe "#show" do
+    let(:event) do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      event
+    end
+    let(:ach_transfer) { create(:ach_transfer, event:) }
+
+    def authenticate(user, scopes: nil)
+      token = create(:api_token, user:, scopes:)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+    end
+
+    it "returns the transfer by public ID" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      authenticate(user)
+
+      get :show, params: { id: ach_transfer.public_id }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include("id" => ach_transfer.public_id, "object" => "ach_transfer")
+    end
+
+    it "doesn't return the transfer to an unrelated user" do
+      authenticate(create(:user))
+
+      get :show, params: { id: ach_transfer.public_id }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end

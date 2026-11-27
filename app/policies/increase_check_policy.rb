@@ -9,6 +9,10 @@ class IncreaseCheckPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  def show_in_v4?
+    auditor_or_user?
+  end
+
   def approve?
     user&.admin?
   end
