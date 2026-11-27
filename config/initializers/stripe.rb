@@ -5,6 +5,9 @@ stripe_environment = Rails.env.production? ? :live : :test
 # update as needed, we specify explicitly in code to avoid inter-branch API version conflicts
 Stripe.api_version = "2024-06-20"
 
+# Use the OS-managed CA bundle so system trust updates also protect Stripe requests.
+Stripe.ca_bundle_path = OpenSSL::X509::DEFAULT_CERT_FILE
+
 api_key = Credentials.fetch(:STRIPE, stripe_environment, :SECRET_KEY)
 
 if api_key.blank? && Rails.env.test?

@@ -5,6 +5,11 @@ class ProcessColumnCheckDepositJob < ApplicationJob
   class ApiError < StandardError; end
 
   def perform(check_deposit:, validate: true)
+    # A failed attempt flags the check deposit for manual submission and then
+    # re-raises, so Sidekiq retries it. By the time a retry runs an admin may
+    # have rejected or manually submitted the check, and this job must not
+    # overwrite that.
+    return unless check_deposit.pending?
     return if check_deposit.column_id.present? || check_deposit.increase_id.present?
 
     conn = Faraday.new url: "https://api.column.com" do |f|
@@ -16,7 +21,7 @@ class ProcessColumnCheckDepositJob < ApplicationJob
 
     # Upload front
     front = check_deposit.front.open do |file|
-      conn.post("/transfers/checks/image/front", { file: Faraday::Multipart::FilePart.new(file.path, check_deposit.front.content_type) }).body
+      conn.post("/transfers/checks/image/front", { file: Faraday::Multipart::FilePart.new(file.path, check_deposit.front.content_type), bypass_doc_cropping: true }).body
     end
 
     raise UnconfidentError, "could not confidently parse payment details from check. confidence was #{front["micr_line_confidence"]}" if validate && front["micr_line_confidence"] < 0.8

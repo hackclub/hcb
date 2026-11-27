@@ -11,15 +11,13 @@ class StripeController < ActionController::Base
       event = StripeService.construct_webhook_event(payload, sig_header)
       method = "handle_#{event["type"].tr(".", "_")}"
 
+      # Success so that Stripe doesn't retry event types HCB doesn't handle
+      return head :ok unless respond_to?(method, true)
+
       self.send method, event
     rescue JSON::ParserError => e
       head :bad_request
       Rails.error.report(e)
-      return
-    rescue NoMethodError => e
-      puts e
-      Rails.error.report(e)
-      head :ok # success so that stripe doesn't retry (method is unsupported by HCB)
       return
     rescue Stripe::SignatureVerificationError
       head :bad_request
@@ -41,7 +39,8 @@ class StripeController < ActionController::Base
     response.set_header "Stripe-Version", "2022-08-01"
 
     render json: {
-      approved:
+      approved:,
+      metadata: service.metadata
     }
   end
 
@@ -73,6 +72,8 @@ class StripeController < ActionController::Base
 
   def handle_issuing_card_updated(event)
     card = StripeCard.find_by(stripe_id: event[:data][:object][:id])
+    return unless card
+
     card.sync_from_stripe!
     card.save
 
@@ -140,6 +141,18 @@ class StripeController < ActionController::Base
 
     suppress(ActiveRecord::RecordNotFound) do
       recurring_donation = RecurringDonation.find(setup_intent.metadata[:recurring_donation_id])
+
+      # The subscription can have ended even though the edit page is blocked for
+      # canceled donations. The card form is confirmed directly with Stripe, so a
+      # form loaded while the donation was active (e.g. in another tab) can still
+      # be submitted after the donor cancels, and our local status can lag
+      # behind Stripe's. An ended subscription won't bill again, and Stripe
+      # rejects updates to canceled ones, so there's nothing to update.
+      #
+      # This isn't `recurring_donation.stripe_subscription`, which is memoized and
+      # needs to be fetched after the update for the sync below.
+      return if StripeService::Subscription.retrieve(recurring_donation.stripe_subscription_id).status.in?(%w[canceled incomplete_expired])
+
       StripeService::Subscription.update(recurring_donation.stripe_subscription_id, default_payment_method: setup_intent.payment_method)
       recurring_donation.sync_with_stripe_subscription!
       recurring_donation.save!
@@ -193,7 +206,7 @@ class StripeController < ActionController::Base
         amount: charge[:amount_refunded],
         currency: "usd",
         description: "Refund for donation #{donation.id}",
-        statement_descriptor: "HCB-#{donation.local_hcb_code.short_code}"
+        statement_descriptor: donation.short_code_memo
       )
     elsif invoice
       invoice.mark_refunded! unless invoice.refunded_v2?
@@ -202,7 +215,7 @@ class StripeController < ActionController::Base
         amount: charge[:amount_refunded],
         currency: "usd",
         description: "Refund for invoice #{invoice.id}",
-        statement_descriptor: "HCB-#{invoice.local_hcb_code.short_code}"
+        statement_descriptor: invoice.short_code_memo
       )
     end
   end
@@ -273,8 +286,12 @@ class StripeController < ActionController::Base
 
     design.sync_from_stripe!
 
+    # Stripe can reject a design for its carrier text only, with nothing wrong with the logo.
+    logo_rejection_reason = event.data.object["rejection_reasons"]["card_logo"]&.first
+    return unless logo_rejection_reason
+
     if design.event&.stripe_card_logo&.attached? # if the logo is no longer attached it's already been rejected.
-      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: event.data.object["rejection_reasons"]["card_logo"].first).design_rejected.deliver_later
+      StripeCard::PersonalizationDesignMailer.with(event: design.event, reason: logo_rejection_reason).design_rejected.deliver_later
       design.event.stripe_card_personalization_designs.update(stale: true)
       design.event.stripe_card_logo.delete
     end

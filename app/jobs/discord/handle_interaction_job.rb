@@ -83,19 +83,26 @@ module Discord
     end
 
     def attach_receipt_component
+      return require_linked_user unless @user
+
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
-      hcb_code = activity&.trackable&.canonical_pending_transaction&.local_hcb_code
+      item = activity&.trackable&.canonical_pending_transaction&.ledger_item
 
-      return respond(content: "Could not find the transaction to attach a receipt to.") unless activity&.key == "raw_pending_stripe_transaction.create"
+      return respond(content: "Could not find the transaction to attach a receipt to.", flags: EPHEMERAL_MESSAGE_FLAG) unless activity&.key == "raw_pending_stripe_transaction.create" && item
 
-      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless activity.event_id == @current_event&.id && activity.event_id == hcb_code.event.id
+      # A charge on a card grant sits on the grant's ledger, which belongs to
+      # the grant rather than to its event.
+      item_event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event
+
+      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless @current_event.present? && activity.event_id == @current_event.id && item_event == @current_event
+      return respond(content: "You don't have permission to upload receipts for this transaction.", flags: EPHEMERAL_MESSAGE_FLAG) unless can_upload_receipt?(item)
 
       {
         "type": Discordrb::Interaction::CALLBACK_TYPES[:modal],
         "data": {
-          "custom_id": "attach_receipt:#{hcb_code.hashid}",
-          "title": "#{Money.from_cents(hcb_code.amount_cents.abs).format} for #{hcb_code.memo}",
+          "custom_id": "attach_receipt:#{item.hashid}",
+          "title": "#{Money.from_cents(item.amount_cents.abs).format} for #{item.memo}",
           "components": [
             {
               "type": 18, # Label
@@ -103,7 +110,7 @@ module Discord
               "component":
                 {
                   "type": 19, # File upload
-                  "custom_id": "receipt:#{hcb_code.hashid}",
+                  "custom_id": "receipt:#{item.hashid}",
                 }
             },
           ]
@@ -112,9 +119,13 @@ module Discord
     end
 
     def attach_receipt_modal
-      hcb_code = HcbCode.find(@params)
+      return require_linked_user unless @user
 
-      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
+      item = Ledger::Item.find_by_hashid!(@params)
+      item_event = item.primary_ledger&.event || item.primary_ledger&.card_grant&.event
+
+      return respond(content: "This Discord server is not currently linked to the same HCB organization") unless @current_event.present? && item_event == @current_event
+      return respond(content: "You don't have permission to upload receipts for this transaction.", flags: EPHEMERAL_MESSAGE_FLAG) unless can_upload_receipt?(item)
 
       attachments = @interaction.dig(:data, :resolved, :attachments)
       file = attachments&.values&.first
@@ -138,14 +149,18 @@ module Discord
           content_type:
         )
 
-        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: hcb_code).run!
+        ::ReceiptService::Create.new(attachments: [blob], uploader: @user, upload_method: :discord_bot_modal, receiptable: item).run!
 
         respond(embeds: [{
                   title: "Your receipt has been uploaded!",
-                  description: "<@#{@user_id}>, your receipt for #{link_to("#{Money.from_cents(hcb_code.amount_cents.abs).format} at #{hcb_code.memo}", url_helpers.hcb_code_url(hcb_code))} has been uploaded successfully.",
+                  description: "<@#{@user_id}>, your receipt for #{link_to("#{Money.from_cents(item.amount_cents.abs).format} at #{item.memo}", url_helpers.ledger_item_url(item))} has been uploaded successfully.",
                   color:
-                }], components: button_to("View receipt", url_helpers.hcb_code_url(hcb_code)))
+                }], components: button_to("View receipt", url_helpers.ledger_item_url(item)))
       end
+    end
+
+    def can_upload_receipt?(item)
+      ReceiptablePolicy.new(@user, item).upload?
     end
 
     def reimburse_component
@@ -212,17 +227,10 @@ module Discord
     def transactions_command
       return require_linked_event unless @current_event
 
-      pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @current_event.id).run
-      PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @current_event).run!
+      # Pending items sort first, the way the ledger page lists them.
+      items = Ledger::Query.new({}).execute(ledgers: [@current_event.ledger]).limit(TRANSACTION_LIMIT).to_a
 
-      remaining_limit = [TRANSACTION_LIMIT - pending_transactions.size, 0].max
-
-      settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @current_event.id).run.first(remaining_limit)
-      TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: settled_transactions, event: @current_event).run!
-
-      transactions = pending_transactions + settled_transactions
-
-      if transactions.empty?
+      if items.empty?
         respond embeds: [
           {
             title: "Recent transactions for #{@current_event.name}",
@@ -233,12 +241,12 @@ module Discord
         return
       end
 
-      transaction_fields = transactions.map do |transaction|
-        name = "\"#{transaction.local_hcb_code.memo}\" for #{ApplicationController.helpers.render_money(transaction.amount_cents)}"
-        name.prepend "[PENDING] " if transaction.is_a?(CanonicalPendingTransaction)
+      transaction_fields = items.map do |item|
+        name = "\"#{item.memo}\" for #{ApplicationController.helpers.render_money(item.amount_cents)}"
+        name.prepend "[PENDING] " if item.pending?
         {
           name:,
-          value: "On #{transaction.date.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.hcb_code_url(transaction.local_hcb_code.hashid))}"
+          value: "On #{item.datetime.strftime('%B %d, %Y')} - #{link_to("Details", url_helpers.ledger_item_url(item))}"
         }
       end
 
@@ -282,7 +290,7 @@ module Discord
 
       respond embeds: [
         {
-          title: "You have #{@user.transactions_missing_receipt_count} transactions missing receipts",
+          title: "You have #{@user.card_charges_missing_receipt.count} transactions missing receipts",
           color:,
         }
       ], components: button_to("View on HCB", url_helpers.my_inbox_url)

@@ -55,8 +55,8 @@
           <th>From</th>
           <th>Title</th>
           <th>Amount</th>
-          <th>Submitted</th>
-          <th></th>
+          <th class="text-right">Submitted</th>
+          <th><%# process button %></th>
         </tr>
       </thead>
       <tbody>
@@ -71,7 +71,7 @@
             <td>
               <%= render_money payment.amount_cents %>
             </td>
-            <td>
+            <td class="text-right">
               <%= format_date payment.created_at %>
             </td>
             <td>
@@ -100,7 +100,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2">
   <% @employees.each do |employee| %>
-    <%= link_to employee_path(employee), class: "card card--hover", data: popovers_enabled? && employee_popover_data(employee) do %>
+    <%= link_to employee_path(employee), class: "card card--hover", data: employee_popover_data(employee) do %>
       <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
         <strong class="h4 flex-grow"><%= employee.user.name %></strong>
         <span class="block"><%= employee.aasm_state.humanize %></span>

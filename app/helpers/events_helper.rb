@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { event_ledger_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -307,6 +307,12 @@ module EventsHelper
     }
   ].freeze
 
+  # Dots in place of an account detail: either it's hidden until someone clicks
+  # the eye, or it hasn't been generated yet and `length` is how long it will be.
+  def masked_account_detail(value, length)
+    "•" * (value.present? ? value.length : length)
+  end
+
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
       item.dup.tap do |h|
@@ -350,7 +356,7 @@ module EventsHelper
       return ""
     end
 
-    link_to children, (disabled ? "javascript:" : url), options.merge(
+    link_to children, (disabled ? nil : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
@@ -367,65 +373,38 @@ module EventsHelper
     end
   end
 
-  def humanize_audit_log_value(field, value)
-
-    if field == "point_of_contact_id"
-      return User.find(value).email
-    end
-
-    if field == "maximum_amount_cents"
-      return render_money(value.to_s)
-    end
-
-    if field == "event_id"
-      return Event.find(value).name
-    end
-
-    if field == "reviewer_id"
-      return User.find(value).name
-    end
-
-    return "Yes" if value == true
-    return "No" if value == false
-
-    if field.ends_with?("_at")
-      begin
-        return local_time(value)
-      rescue
-        return value
-      end
-    end
-
-    return value
-  end
-
-  def render_audit_log_field(field)
-    field.delete_suffix("_cents").humanize
-  end
-
-  def render_audit_log_value(field, value, color:)
-    return tag.span "unset", class: "muted" if value.nil? || value.try(:empty?)
-
-    return tag.span humanize_audit_log_value(field, value), class: color
-  end
-
   def show_org_switcher?
     signed_in? && current_user.events.not_hidden.count > 1
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? do |opt|
-      key = opt[:key].to_s
+    filter_options.any? { |opt| active_filter_params(opt, params).any? }
+  end
 
-      case opt[:type]
-      when "date_range"
-        params["#{opt[:key_base]}_before"].present? || params["#{opt[:key_base]}_after"].present?
-      when "amount_range"
-        params["#{opt[:key_base]}_less_than"].present? || params["#{opt[:key_base]}_greater_than"].present?
-      else
-        params[key].present?
-      end
+  # Param keys for this filter option that currently have a value. Range filters
+  # can have up to two (e.g. both "after" and "before" on a date range).
+  def active_filter_params(filter_option, params)
+    keys = case filter_option[:type]
+           when "date_range"
+             ["#{filter_option[:key_base]}_after", "#{filter_option[:key_base]}_before"]
+           when "amount_range"
+             ["#{filter_option[:key_base]}_greater_than", "#{filter_option[:key_base]}_less_than"]
+           else
+             [filter_option[:key].to_s]
+           end
+
+    keys.select { |key| params[key].present? }
+  end
+
+  # Resolves an applied filter value to the label shown for it in the filter
+  # dropdown. Both the dropdown and the chips use this so they can't disagree
+  # about how a value is spelled.
+  def filter_option_label(filter_option, value)
+    labels = Array(filter_option[:options]).to_h do |option|
+      option.is_a?(Array) ? [option.last.to_s, option.first] : [option.to_s, option.humanize]
     end
+
+    labels[value.to_s] || value.to_s.humanize
   end
 
   def validate_filter_options(filter_options, params)

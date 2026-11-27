@@ -5,6 +5,27 @@ require "rails_helper"
 RSpec.describe AdminController do
   include SessionSupport
 
+  describe "#event_create" do
+    it "creates a frozen non-demo organization even when demo mode is requested" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      post :event_create, params: {
+        name: "New organization",
+        organizer_email: "",
+        point_of_contact_id: admin.id,
+        country: "US",
+        plan: Event::Plan::Standard.name,
+        tags: [""],
+        demo_mode: "1"
+      }
+
+      expect(flash[:error]).to be_nil
+      expect(response).to redirect_to(events_admin_index_path)
+      expect(Event.find_by!(name: "New organization")).to have_attributes(demo_mode: false, financially_frozen: true)
+    end
+  end
+
   describe "#disbursement_process" do
     render_views
 
@@ -21,6 +42,90 @@ RSpec.describe AdminController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Source mission statement")
       expect(response.body).to include("Destination mission statement")
+    end
+  end
+
+  describe "#ledger_item" do
+    it "redirects a raw database id to the ledger item's hashid page" do
+      admin = create(:user, :make_admin)
+      item = create(:ledger_item)
+
+      create_session(admin, verified: true)
+
+      get :ledger_item, params: { id: item.id }
+
+      expect(response).to redirect_to("/transactions/#{item.hashid}")
+    end
+
+    it "404s for an unknown id" do
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      expect { get :ledger_item, params: { id: 0 } }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
+  describe "#ledger_items" do
+    render_views
+
+    it "keeps the unmapped filter when searching" do
+      admin = create(:user, :make_admin)
+      create(:ledger_item, :with_primary_ledger, custom_memo: "Searchable mapped memo")
+      create(:ledger_item, custom_memo: "Searchable unmapped memo")
+
+      create_session(admin, verified: true)
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "1" }
+
+      expect(response.body).to include("Searchable unmapped memo")
+      expect(response.body).not_to include("Searchable mapped memo")
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0" }
+
+      expect(response.body).to include("Searchable unmapped memo")
+      expect(response.body).to include("Searchable mapped memo")
+    end
+
+    it "keeps the non-zero filter when searching" do
+      admin = create(:user, :make_admin)
+      # An item's amount is recomputed from its transactions on save, so set it
+      # directly.
+      create(:ledger_item, custom_memo: "Searchable zero memo").update_column(:amount_cents, 0)
+      create(:ledger_item, custom_memo: "Searchable nonzero memo").update_column(:amount_cents, 500)
+
+      create_session(admin, verified: true)
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0", nonzero: "1" }
+
+      expect(response.body).to include("Searchable nonzero memo")
+      expect(response.body).not_to include("Searchable zero memo")
+
+      get :ledger_items, params: { q: "Searchable", unmapped: "0" }
+
+      expect(response.body).to include("Searchable nonzero memo")
+      expect(response.body).to include("Searchable zero memo")
+    end
+  end
+
+  describe "#fee_revenues" do
+    render_views
+
+    it "lists every organization with an uncharged fee balance and totals them" do
+      admin = create(:user, :make_admin)
+      fronted_org = create(:event, name: "Fronted Org", plan_type: Event::Plan::Standard)
+      donation = create(:canonical_pending_transaction, amount_cents: 100_00, fronted: true)
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: donation, event: fronted_org)
+      settled_org = create(:event, name: "Settled Org")
+      create(:fee, canonical_event_mapping: nil, memo: "Revenue fee", event: settled_org, reason: :revenue, amount_cents_as_decimal: 5_00)
+
+      create_session(admin, verified: true)
+
+      get :fee_revenues
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Uncharged Fee Balance: $12.00")
+      expect(response.body).to include("Fronted Org", "Settled Org")
     end
   end
 
@@ -76,6 +181,50 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#wire_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      # A fixed name: the factory's Faker name can carry an apostrophe, which
+      # the page HTML-escapes, so matching the raw name on the body is flaky.
+      wire = create(:wire, :pending, recipient_name: "Orpheus", event: create(:event, :with_positive_balance))
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :wire_process, params: { id: wire.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Orpheus")
+    end
+  end
+
+  describe "#paypal_transfer_process" do
+    render_views
+
+    it "renders for a non-admin auditor" do
+      # New PayPal transfers are refused at validation, so save past it to
+      # stand in for one created before that.
+      paypal_transfer = PaypalTransfer.new(
+        event: create(:event, :with_positive_balance),
+        user: create(:user),
+        amount_cents: 25_00,
+        memo: "Stickers",
+        payment_for: "Stickers",
+        recipient_name: "Orpheus",
+        recipient_email: "orpheus@example.com"
+      ).tap { |transfer| transfer.save!(validate: false) }
+
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :paypal_transfer_process, params: { id: paypal_transfer.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Orpheus")
+    end
+  end
+
   describe "#event_search" do
     it "returns JSON options the combobox can render" do
       admin = create(:user, :make_admin)
@@ -89,27 +238,26 @@ RSpec.describe AdminController do
       expect(option).to include("value" => event.id.to_s, "sublabel" => event.slug)
     end
 
-    # The dropdown labels have to match what `combobox_tag` renders for the
-    # preselected value, or re-picking the same org silently changes the text.
-    it "labels options with the admin display for an admin" do
+    it "badges options with the ID for an admin, leaving the label plain" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
       event = create(:event, name: "Hack Club HQ")
 
       get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
 
-      labels = JSON.parse(response.body).map { |o| o["label"] }
-      expect(labels).to include("Hack Club HQ (ID: #{event.id})")
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => "ID: #{event.id}")
     end
 
-    it "labels options with the plain name for a non-admin auditor" do
+    it "never shows a non-admin auditor the ID" do
       auditor = create(:user, :make_auditor)
       create_session(auditor, verified: true)
-      create(:event, name: "Hack Club HQ")
+      event = create(:event, name: "Hack Club HQ")
 
       get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
 
-      expect(JSON.parse(response.body).map { |o| o["label"] }).to include("Hack Club HQ")
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => nil)
     end
 
     it "paginates results without overlap across pages" do
@@ -143,9 +291,7 @@ RSpec.describe AdminController do
   end
 
   describe "#user_search" do
-    # The admin label spells out the email and ID, so repeating them in the
-    # sublabel wrapped every row to several lines.
-    it "gives an admin the detailed label and no redundant sublabel" do
+    it "gives an admin the name, the email beneath it and the ID as a badge" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
       user = create(:user, full_name: "Jane Doe")
@@ -154,11 +300,10 @@ RSpec.describe AdminController do
 
       expect(response).to have_http_status(:ok)
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
-      expect(option["label"]).to eq("Jane Doe (Email: #{user.email}, ID: #{user.id})")
-      expect(option["sublabel"]).to be_nil
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => "ID: #{user.id}")
     end
 
-    it "gives a non-admin auditor the plain name with the email as a sublabel" do
+    it "never shows a non-admin auditor the ID" do
       auditor = create(:user, :make_auditor)
       create_session(auditor, verified: true)
       user = create(:user, full_name: "Jane Doe")
@@ -166,8 +311,22 @@ RSpec.describe AdminController do
       get(:user_search, params: { q: "Jane Doe" }, format: :json)
 
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
-      expect(option["label"]).to eq("Jane Doe")
-      expect(option["sublabel"]).to eq(user.email)
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => nil)
+    end
+
+    # A label with leading or trailing space never equals the trimmed input, so
+    # picking that user was undone the moment the field lost focus.
+    it "labels nameless and space-padded users with trimmed text" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      nameless = create(:user, full_name: nil)
+      padded = create(:user, full_name: "Jane Doe ")
+
+      get(:user_search, format: :json)
+
+      options = JSON.parse(response.body).index_by { |o| o["value"] }
+      expect(options[nameless.id.to_s]).to include("label" => nameless.email, "sublabel" => nil)
+      expect(options[padded.id.to_s]).to include("label" => "Jane Doe", "sublabel" => padded.email)
     end
 
     it "paginates results without overlap across pages" do

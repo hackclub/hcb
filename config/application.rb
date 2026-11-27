@@ -4,8 +4,8 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
-require_relative "../lib/active_storage/previewer/document_previewer"
 require_relative "../app/middleware/set_current_request_ip"
+require_relative "../app/middleware/opt_out_csp_for_mounted_engines"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -16,7 +16,7 @@ Dotenv.load if Rails.env.development?
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 8.0
+    config.load_defaults 8.1
 
     Credentials.load if ENV["DOPPLER_TOKEN"]
 
@@ -64,6 +64,10 @@ module Bank
 
     # Track request IP for all requests
     config.middleware.insert_after ActionDispatch::RemoteIp, SetCurrentRequestIp
+
+    # Must sit inside SecureHeaders::Middleware (which is at position 0) so the
+    # opt-out is recorded before the CSP header is built on the way out.
+    config.middleware.insert_after ActionDispatch::RemoteIp, OptOutCspForMountedEngines
 
     config.active_storage.variant_processor = :mini_magick
 
@@ -119,8 +123,9 @@ module Bank
       config.active_record.encryption.key_derivation_salt = key_derivation_salt
     end
 
-    # CSV previews
-    config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
+    # CSV previews, drawn in-process by libvips. csv_preview treats every file as untrusted:
+    # it reads at most the first 2 MiB, never starts a process and never decodes images.
+    config.active_storage.previewers.unshift CsvPreview::ActiveStoragePreviewer
 
     config.active_support.deprecation = :notify
 

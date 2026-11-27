@@ -10,8 +10,8 @@
       <tr>
         <th>Workspace email</th>
         <th>Backup email</th>
-        <th>G suite</th>
-        <th colspan="3"></th>
+        <th class="text-right">G suite</th>
+        <th><%# process or edit button %></th>
       </tr>
     </thead>
 
@@ -20,7 +20,7 @@
         <tr class="shade-yellow">
           <td><%= g_suite_account.address %></td>
           <td><%= g_suite_account.backup_email %></td>
-          <td><%= link_to "Workspace", g_suite_account.g_suite %></td>
+          <td class="text-right"><%= link_to "Workspace", g_suite_account.g_suite %></td>
           <% if g_suite_account.under_review? %>
             <td><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
           <% else %>
@@ -41,18 +41,18 @@
       <th>Workspace email</th>
       <th>Backup email</th>
       <th>Status</th>
-      <th>Workspace</th>
-      <th colspan="3"></th>
+      <th class="text-right">Workspace</th>
+      <th><%# process or edit button %></th>
     </tr>
   </thead>
 
   <tbody>
     <% @g_suite_accounts.each do |g_suite_account| %>
-      <tr class="<%= "shade-yellow" if g_suite_account.under_review? %> <%= "shade-red" if g_suite_account.rejected? %>">
+      <tr class="<%= "shade-yellow" if g_suite_account.under_review? %>">
         <td><%= g_suite_account.address %></td>
         <td><%= g_suite_account.backup_email %></td>
         <td><%= g_suite_account.status.capitalize %></td>
-        <td><%= link_to "Workspace", g_suite_account.g_suite %></td>
+        <td class="text-right"><%= link_to "Workspace", g_suite_account.g_suite %></td>
         <% if g_suite_account.under_review? %>
           <td><%= link_to "Process", edit_g_suite_account_path(g_suite_account), class: "btn bg-info" %></td>
         <% else %>

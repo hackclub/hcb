@@ -55,11 +55,23 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = helpers.sorted_relation(
+    relation = helpers.sorted_relation(
       relation,
       INVOICE_COLUMNS,
       sort: [params[:sort], params[:direction]]
-    ).includes(:sponsor).page(params[:page]).per(safe_per(25))
+    )
+
+    if request.format.csv?
+      authorize @event, :export_invoices?
+      return stream_invoices_csv(relation)
+    end
+
+    if request.format.json?
+      authorize @event, :export_invoices?
+      return stream_invoices_json(relation)
+    end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -83,11 +95,9 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.parse(filtered_params["due_date"])
-
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
-      due_date:,
+      due_date: parsed_due_date,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
       current_user:,
@@ -108,6 +118,15 @@ class InvoicesController < ApplicationController
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
     raise
+  rescue ActiveRecord::RecordInvalid => e
+    # Bad sponsor or invoice details are a mistake in what was typed, not a bug,
+    # so re-render the form with the validation errors instead of reporting the
+    # exception and sending the organizer back to an empty form.
+    @sponsor = e.record.is_a?(Sponsor) ? e.record : sponsor_from_params
+    @invoice = e.record.is_a?(Invoice) ? e.record : invoice_from_params
+    @invoice.sponsor ||= @sponsor
+
+    render :new, status: :unprocessable_content
   rescue => e
     Rails.error.report(e)
 
@@ -178,35 +197,22 @@ class InvoicesController < ApplicationController
     redirect_to URI.parse(@invoice.hosted_invoice_url).to_s, allow_other_host: true
   end
 
-  def pdf
-    @invoice = Invoice.find(params[:invoice_id])
-
-    authorize @invoice
-
-    @invoice.sync_remote!
-    @invoice.reload
-
-    redirect_to URI.parse(@invoice.invoice_pdf).to_s, allow_other_host: true
-  end
-
   def refund
     @invoice = Invoice.find(params[:id])
-    @hcb_code = @invoice.local_hcb_code
 
     authorize @invoice
 
     if @invoice.canonical_transactions.any?
       ::InvoiceService::Refund.new(invoice_id: @invoice.id, amount: Monetize.parse(params[:amount]).cents).run
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "The refund process has been queued for this invoice." }
+      redirect_to ledger_item_path(@invoice.ledger_item), flash: { success: "The refund process has been queued for this invoice." }
     else
       Invoice::RefundJob.set(wait: 1.day).perform_later(@invoice, Monetize.parse(params[:amount]).cents, current_user)
-      redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
+      redirect_to ledger_item_path(@invoice.ledger_item), flash: { success: "This invoice hasn't settled, it's being queued to refund when it settles." }
     end
   end
 
   def manually_mark_as_paid
     @invoice = Invoice.friendly.find(params[:invoice_id])
-    @hcb_code = @invoice.local_hcb_code
 
     authorize @invoice
 
@@ -214,7 +220,7 @@ class InvoicesController < ApplicationController
 
     @invoice.update(manually_marked_as_paid_at: Time.now, manually_marked_as_paid_user: current_user, manually_marked_as_paid_reason: params[:manually_marked_as_paid_reason])
 
-    redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Manually marked this invoice as paid." }
+    redirect_to ledger_item_path(@invoice.ledger_item), flash: { success: "Manually marked this invoice as paid." }
   end
 
   private
@@ -227,6 +233,29 @@ class InvoicesController < ApplicationController
   ].freeze
   private_constant :INVOICE_COLUMNS
 
+  # A blank or malformed date would otherwise raise out of `Date.parse`; leaving
+  # it nil lets Invoice's presence validation report it on the form instead.
+  def parsed_due_date
+    Date.parse(filtered_params[:due_date].to_s)
+  rescue Date::Error
+    nil
+  end
+
+  # Rebuilds the submitted sponsor/invoice so a failed create can re-render the
+  # form with everything the organizer already filled in.
+  def sponsor_from_params
+    @event.sponsors.new(filtered_params[:sponsor_attributes])
+  end
+
+  def invoice_from_params
+    Invoice.new(
+      event: @event,
+      item_description: filtered_params[:item_description],
+      item_amount: Monetize.parse(filtered_params[:item_amount])&.cents,
+      due_date: parsed_due_date
+    )
+  end
+
   def filtered_params
     params.require(:invoice).permit(
       :due_date,
@@ -234,6 +263,25 @@ class InvoicesController < ApplicationController
       :item_amount,
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
+    )
+  end
+
+  def stream_invoices_csv(invoices)
+    by_sponsor = params[:report] == "sponsor_totals"
+    name = by_sponsor ? "invoices_sponsors" : "invoices"
+
+    stream_file(
+      ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run,
+      filename: "#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv",
+      type: "text/csv"
+    )
+  end
+
+  def stream_invoices_json(invoices)
+    stream_file(
+      ::InvoiceService::Export::Json.new(invoices:).run,
+      filename: "#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json",
+      type: "application/json"
     )
   end
 

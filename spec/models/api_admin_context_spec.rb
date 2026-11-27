@@ -3,9 +3,9 @@
 require "rails_helper"
 
 RSpec.describe ApiAdminContext do
-  def context_for(user, scopes:)
+  def context_for(user, scopes:, resource: nil)
     token = create(:api_token, user:, scopes:)
-    described_class.new(user, token)
+    described_class.new(user, token, resource:)
   end
 
   let(:admin)      { create(:user, access_level: :admin) }
@@ -64,6 +64,38 @@ RSpec.describe ApiAdminContext do
 
     it "is false for a user without an auditor-level role" do
       expect(context_for(regular, scopes: "admin:read").admin_override_pretend?).to be(false)
+    end
+  end
+
+  describe "limited admin scopes" do
+    it "accepts admin:<resource>:<level> when the context names that resource" do
+      expect(context_for(admin, scopes: "admin:comments:write", resource: :comments).admin?).to be(true)
+      expect(context_for(auditor, scopes: "admin:comments:read", resource: :comments).auditor?).to be(true)
+      expect(context_for(admin, scopes: "admin:comments:read", resource: :comments).admin_override_pretend?).to be(true)
+    end
+
+    it "is false without a resource, so the scope grants nothing API-wide" do
+      expect(context_for(admin, scopes: "admin:comments:write").admin?).to be(false)
+      expect(context_for(auditor, scopes: "admin:comments:read").auditor?).to be(false)
+    end
+
+    it "is false for a different resource" do
+      expect(context_for(admin, scopes: "admin:comments:write", resource: :receipts).admin?).to be(false)
+    end
+
+    it "keeps read and write independent" do
+      expect(context_for(admin, scopes: "admin:comments:read", resource: :comments).admin?).to be(false)
+      expect(context_for(admin, scopes: "admin:comments:write", resource: :comments).auditor?).to be(false)
+    end
+
+    it "is false for a user without the matching role" do
+      expect(context_for(regular, scopes: "admin:comments:read", resource: :comments).auditor?).to be(false)
+      expect(context_for(auditor, scopes: "admin:comments:write", resource: :comments).admin?).to be(false)
+    end
+
+    it "still honours the blanket admin scopes" do
+      expect(context_for(admin, scopes: "admin:write", resource: :comments).admin?).to be(true)
+      expect(context_for(admin, scopes: "admin:read", resource: :comments).auditor?).to be(true)
     end
   end
 

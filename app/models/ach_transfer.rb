@@ -52,6 +52,19 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class AchTransfer < ApplicationRecord
+  # Column caps the ACH transfer `description` field at 255 characters.
+  # https://docs.column.com/api/ach-transfer/create-an-ach-transfer/
+  PAYMENT_FOR_MAX_LENGTH = 255
+
+  # Transfers built by HCB itself describe themselves using text with no length
+  # limit of its own (a report's name, a payment's title). Those descriptions
+  # get shortened rather than failing validation, which would leave a payout
+  # stuck. Records predating the validation are exempt from it, so this is also
+  # applied when handing a description to Column.
+  def self.truncate_payment_for(payment_for)
+    payment_for&.truncate(PAYMENT_FOR_MAX_LENGTH)
+  end
+
   has_paper_trail skip: [:account_number, :routing_index] # ciphertext columns will still be tracked
   has_encrypted :account_number
   blind_index :account_number
@@ -105,6 +118,7 @@ class AchTransfer < ApplicationRecord
       errors.add(:base, "You don't have enough money to send this transfer! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}.")
     end
   end
+  validates :payment_for, length: { maximum: PAYMENT_FOR_MAX_LENGTH }, if: :payment_for_changed?
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
   # validates :invoiced_at, presence: true, on: :create
@@ -125,9 +139,6 @@ class AchTransfer < ApplicationRecord
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
   has_one :payment, through: :payment_attempt
-
-  has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
-  has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
 
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
 
@@ -157,6 +168,9 @@ class AchTransfer < ApplicationRecord
     event :mark_rejected do
       after do |processed_by = nil|
         canonical_pending_transaction&.decline!
+        # A scheduled transfer has no pending transaction to decline, so its
+        # intended ledger item learns of the rejection here instead.
+        ledger_item&.refresh! if canonical_pending_transaction.nil?
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
@@ -213,6 +227,22 @@ class AchTransfer < ApplicationRecord
     )
   end
 
+  # A scheduled transfer has no pending transaction until the day it's sent
+  # (AchTransfer::DailyJob, then the nightly import), so eagerly create its
+  # ledger item on creation, as Invoice does. It starts "intended" (no CTs or
+  # CPTs) and is filled in when the pending transaction maps back to it
+  # (CanonicalPendingTransaction#calculated_ledger_item). Until then it is what
+  # the transfer's receipts, comments and tags hang off.
+  after_create_commit if: -> { scheduled_on.present? && ledger_item.nil? } do
+    safely do
+      # amount_cents stays 0 — it's the balance-impacting amount, which is only
+      # realized once the pending transaction maps back to this item. memo and
+      # status are recomputed by Ledger::Item#refresh! on create; intended_at
+      # preserves the creation time through it (see #calculate_intended_at).
+      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: "ACH to #{smart_memo}", short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+    end
+  end
+
   def send_ach_transfer!
     return unless may_mark_in_transit?
 
@@ -231,7 +261,7 @@ class AchTransfer < ApplicationRecord
       },
       company_name:,
       company_entry_description:,
-      description: payment_for,
+      description: AchTransfer.truncate_payment_for(payment_for),
       account_number_id:,
       same_day:,
     }.compact_blank)
@@ -258,7 +288,7 @@ class AchTransfer < ApplicationRecord
       amount:,
       currency_code: "USD",
       counterparty_id: column_counterparty["id"],
-      description: payment_for,
+      description: AchTransfer.truncate_payment_for(payment_for),
       account_number_id:,
     }.compact_blank)
 
@@ -285,10 +315,6 @@ class AchTransfer < ApplicationRecord
     raise ArgumentError, "must have been sent" unless column_id
 
     ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: "reverse_#{self.id}"
-  end
-
-  def pending_expired?
-    local_hcb_code.has_pending_expired?
   end
 
   def approve!(processed_by = nil, send_realtime: false)
@@ -357,10 +383,6 @@ class AchTransfer < ApplicationRecord
 
   def smart_memo
     recipient_name.to_s
-  end
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
   def estimated_arrival

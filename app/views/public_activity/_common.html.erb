@@ -21,8 +21,9 @@
         <%= yield %>
       </span>
       <div class="flex items-center">
-        <% url = hcb_code_path(activity.trackable.hcb_code) if activity.trackable.try(:hcb_code) %>
-        <% if defined?(url) && url %>
+        <% url = local_assigns[:url] %>
+        <% url ||= ledger_item_path(activity.trackable.ledger_item) if activity.trackable.try(:ledger_item).present? %>
+        <% if url %>
           <%= link_to url, class: "flex items-center", target: "_blank" do %>
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>
@@ -32,9 +33,8 @@
             <%= inline_icon "card", width: 20, class: "muted", "aria-hidden": true %>
           <% end %>
         <% end %>
-        <span class="align-middle timestamp" style="cursor: default" data-controller="timestamp" data-timestamp-time-value="<%= activity.created_at.to_i * 1000 %>">
-          <%= time_ago_in_words activity.created_at %> ago
-        </span>
+        <%# local-time (started in application.js) keeps this relative time current in the browser. %>
+        <%= time_tag activity.created_at, "#{time_ago_in_words(activity.created_at)} ago", class: "align-middle timestamp", style: "cursor: default", data: { local: "time-ago" } %>
       </div>
     </div>
   </div>

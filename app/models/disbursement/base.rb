@@ -15,40 +15,49 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
+#  destination_ledger_id               :bigint           not null
 #  destination_subledger_id            :bigint
 #  destination_transaction_category_id :bigint
 #  event_id                            :bigint
 #  fulfilled_by_id                     :bigint
 #  requested_by_id                     :bigint
 #  source_event_id                     :bigint
+#  source_ledger_id                    :bigint           not null
 #  source_subledger_id                 :bigint
 #  source_transaction_category_id      :bigint
 #
 # Indexes
 #
+#  index_disbursements_on_destination_ledger_id                (destination_ledger_id)
 #  index_disbursements_on_destination_subledger_id             (destination_subledger_id)
 #  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
 #  index_disbursements_on_event_id                             (event_id)
 #  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
 #  index_disbursements_on_requested_by_id                      (requested_by_id)
 #  index_disbursements_on_source_event_id                      (source_event_id)
+#  index_disbursements_on_source_ledger_id                     (source_ledger_id)
 #  index_disbursements_on_source_subledger_id                  (source_subledger_id)
 #  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (destination_ledger_id => ledgers.id)
 #  fk_rails_...  (destination_transaction_category_id => transaction_categories.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (fulfilled_by_id => users.id)
 #  fk_rails_...  (requested_by_id => users.id)
 #  fk_rails_...  (source_event_id => events.id)
+#  fk_rails_...  (source_ledger_id => ledgers.id)
 #  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement
   class Base < ApplicationRecord
     self.table_name = "disbursements"
+
+    include HasHcbCode
 
     # The underlying Disbursement is the same row, so reinterpret it with `becomes`
     # rather than re-SELECTing by id. See Disbursement::Shared.
@@ -56,20 +65,8 @@ class Disbursement
       @disbursement ||= becomes(::Disbursement)
     end
 
-    def canonical_transactions
-      @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-    end
-
     def canonical_pending_transactions
       @canonical_pending_transactions ||= CanonicalPendingTransaction.where(hcb_code:)
-    end
-
-    def pending_expired?
-      local_hcb_code.has_pending_expired?
-    end
-
-    def transaction_memo
-      "HCB-#{local_hcb_code.short_code}"
     end
 
     def local_hcb_code

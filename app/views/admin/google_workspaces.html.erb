@@ -45,7 +45,7 @@
       <th class="w-32">OU ID</th>
       <th>OU Path</th>
       <th>VerificationKey</th>
-      <th class="w-32">Status</th>
+      <th class="w-32 text-right">Status</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -58,7 +58,7 @@
         <td><%= g_suite.remote_org_unit_id %></td>
         <td><%= g_suite.remote_org_unit_path %></td>
         <td><%= g_suite.verification_key %></td>
-        <td><%= g_suite.revocation.present? ? g_suite.revocation.pending? ? "Pending Revocation".upcase : "Ready for Deletion".upcase : g_suite.aasm_state.upcase %></td>
+        <td class="text-right"><%= g_suite.revocation.present? ? g_suite.revocation.pending? ? "Pending Revocation".upcase : "Ready for Deletion".upcase : g_suite.aasm_state.upcase %></td>
         <td>
           <% if g_suite.needs_ops_review? %>
             <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>

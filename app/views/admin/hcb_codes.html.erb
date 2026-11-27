@@ -18,7 +18,7 @@
   <div class="ml-auto">
     <%= form.submit "Search" %>
     <%= link_to @params.merge(format: :csv) do %>
-      <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
+      <button type="button" class="btn" <% if @hcb_codes.total_count == 0 %> disabled<% end %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
     <% end %>
   </div>
   </div>
@@ -42,7 +42,7 @@
       <th>Pending TXs</th>
       <th>Canonical TXs</th>
       <th>Comments</th>
-      <th>Receipts</th>
+      <th class="text-right">Receipts</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -86,7 +86,7 @@
             <%= c.id %>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <% hcb_code.receipts.each do |r| %>
             <%= r.id %>
           <% end %>

@@ -53,7 +53,7 @@
       <% if ach_transfer.recipient_tel.present? %>
         <p class="fs-mask">
           <strong>Recipient phone</strong>
-          <%= organizer_signed_in? ? ach_transfer.recipient_tel : "Sign in to view" %>
+          <%= organizer_signed_in? ? ach_transfer.recipient_tel : restricted_detail_label %>
         </p>
       <% end %>
 
@@ -62,9 +62,11 @@
         <%= ach_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: ach_transfer } %>
+
       <p>
         <strong>Bank name</strong>
-        <%= organizer_signed_in? ? ach_transfer.bank_name : "Sign in to view" %>
+        <%= organizer_signed_in? ? ach_transfer.bank_name : restricted_detail_label %>
       </p>
 
       <% if policy(ach_transfer).view_account_routing_numbers? %>
@@ -110,6 +112,8 @@
           <% end %>
         </span>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
+      <%= render "ledger/items/tags_detail", item: ledger_item %>
     </section>
   </turbo-frame>
 

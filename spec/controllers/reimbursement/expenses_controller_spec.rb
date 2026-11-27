@@ -115,6 +115,88 @@ RSpec.describe Reimbursement::ExpensesController do
       end
     end
 
+    context "when a manager moves an expense to another report" do
+      let(:manager) { create(:user) }
+      let(:event) { create(:event) }
+      let(:owner) { create(:user) }
+      let(:expense) { create(:reimbursement_expense, report: create(:reimbursement_report, user: owner, event:)) }
+
+      before do
+        create(:organizer_position, user: manager, event:)
+        create_session(manager, verified: true)
+      end
+
+      it "allows another of the owner's reports" do
+        destination = create(:reimbursement_report, user: owner, event:)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { reimbursement_report_id: destination.id } })
+
+        expect(flash[:error]).to be_blank
+        expect(expense.reload.report).to eq(destination)
+      end
+
+      it "refuses someone else's report, even in an event they manage" do
+        original_report = expense.report
+        destination = create(:reimbursement_report, event:)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { reimbursement_report_id: destination.id } })
+
+        expect(flash[:error]).to eq("Expenses can only be moved to another report belonging to the same person.")
+        expect(expense.reload.report).to eq(original_report)
+      end
+    end
+
+    context "when moving an expense by report reference" do
+      it "lets an admin move it into a draft report by URL or ID" do
+        admin = create(:user, :make_admin)
+        expense = create(:reimbursement_expense)
+        by_url = create(:reimbursement_report)
+        by_id = create(:reimbursement_report)
+
+        create_session(admin, verified: true)
+
+        patch(:update, params: {
+                id: expense.id,
+                reimbursement_expense: { report_reference: "https://hcb.hackclub.com/reimbursement/reports/#{by_url.hashid}?tab=1" }
+              })
+
+        expect(flash[:error]).to be_blank
+        expect(expense.reload.report).to eq(by_url)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { report_reference: by_id.id.to_s } })
+
+        expect(expense.reload.report).to eq(by_id)
+      end
+
+      it "refuses to move it into a report that isn't a draft" do
+        admin = create(:user, :make_admin)
+        expense = create(:reimbursement_expense)
+        submitted = create(:reimbursement_report, aasm_state: "submitted")
+
+        create_session(admin, verified: true)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { report_reference: submitted.hashid } })
+
+        expect(flash[:error]).to eq("Expenses can only be moved into draft reports.")
+        expect(expense.reload.report).not_to eq(submitted)
+      end
+
+      it "is admin-only" do
+        user = create(:user)
+        event = create(:event)
+        create(:organizer_position, user:, event:)
+        expense = create(:reimbursement_expense, report: create(:reimbursement_report, user:, event:))
+        destination = create(:reimbursement_report, user:, event:)
+
+        create_session(user, verified: true)
+
+        patch(:update, params: { id: expense.id, reimbursement_expense: { report_reference: destination.hashid } })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(expense.reload.report).not_to eq(destination)
+      end
+    end
+
   end
 
   describe "#approve" do

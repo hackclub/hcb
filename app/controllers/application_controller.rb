@@ -73,7 +73,13 @@ class ApplicationController < ActionController::Base
 
   rescue_from ActionView::MissingTemplate, with: :not_found
 
-  rescue_from Rack::Timeout::RequestTimeoutException do
+  rescue_from Rack::Timeout::RequestTimeoutException do |exception|
+    # Rack::Timeout raises wherever the request happens to be, which can be
+    # after a response has already been rendered or after another `respond_to`
+    # has negotiated a format. Calling `respond_to` again in that case raises
+    # `ActionController::RespondToMismatchError`, masking the actual timeout.
+    raise exception if performed? || response.media_type.present?
+
     respond_to do |format|
       format.html { render "errors/timeout" }
       format.all { render plain: "This request timed out, sorry." }
@@ -105,10 +111,16 @@ class ApplicationController < ActionController::Base
       raise
     else
       Rails.error.report(exception)
-      redirect_to root_url
+      redirect_to root_path
     end
   end
 
+  def render_pdf(filename, template: "#{controller_path}/#{action_name}", fit_to_one_page: false)
+    html = render_to_string(template:, formats: :pdf, layout: false)
+    send_data CloudflareBrowserRun.pdf(html, fit_to_one_page:), filename: "#{filename}.pdf", type: :pdf, disposition: :inline
+  end
+
+  # Called by the audits1984 engine (mounted at /console) to authenticate auditors.
   def find_current_auditor
     current_user if auditor_signed_in?
   end
@@ -136,7 +148,10 @@ class ApplicationController < ActionController::Base
   end
 
   def info_for_paper_trail
-    { impersonated_by_id: current_session&.impersonated_by_id }
+    {
+      impersonated_by_id: current_session&.impersonated_by_id,
+      user_session_id: current_session&.id
+    }
   end
 
   def not_found
@@ -147,10 +162,18 @@ class ApplicationController < ActionController::Base
     not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
-  def set_streaming_headers
+  # Streams `body` (a String or an Enumerator yielding chunks) to the client as
+  # a file. Unlike `send_data`, the body is not buffered, so large exports
+  # start downloading right away.
+  def stream_file(body, filename:, type:, disposition: "attachment")
+    headers["Content-Type"] = type
+    headers["Content-Disposition"] = ActionDispatch::Http::ContentDisposition.format(disposition:, filename:)
     headers["X-Accel-Buffering"] = "no"
     headers["Cache-Control"] ||= "no-cache"
     headers.delete("Content-Length")
+
+    response.status = 200
+    self.response_body = body
   end
 
   def confetti!(emojis: nil)

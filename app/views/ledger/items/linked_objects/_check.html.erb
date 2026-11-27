@@ -72,5 +72,7 @@
       <strong>Amount</strong>
       <%= render_money check.amount %>
     </p>
+    <%= render "ledger/items/repayments", ledger_item: %>
+    <%= render "ledger/items/tags_detail", item: ledger_item %>
   </section>
 </article>

@@ -11,7 +11,7 @@
             <th>Description</th>
             <th class="text-right">Amount</th>
             <% if @show_running_balance %>
-              <th>Running Balance</th>
+              <th class="text-right">Running Balance</th>
             <% end %>
             <th><%# user avatar %></th>
           </tr>
@@ -36,9 +36,7 @@
       manually doing it here.
     %>
     <% unless @subledger %>
-      <script>
-        window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
-      </script>
+      <div data-controller="history-replace" data-history-replace-url-value="<%= event_transactions_path(@event, **params.except(:action, :controller, :event_id).to_unsafe_h) %>"></div>
     <% end %>
   <% end %>
 <% end %>

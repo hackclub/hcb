@@ -49,7 +49,7 @@
   <% event.tags.each do |tag| %>
     <div class="card mb2 flex justify-between items-center">
       <div class="flex items-center">
-        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+        <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
         <p class="bold mb0 mt0"><%= tag.label %></p>
       </div>
       <div class="flex items-center justify-center">

@@ -67,6 +67,8 @@
         <%= wise_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: wise_transfer } %>
+
       <% if wise_transfer.return_reason.present? %>
         <p>
           <strong>Return reason</strong>
@@ -87,6 +89,8 @@
         <% end %>
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
+      <%= render "ledger/items/tags_detail", item: ledger_item %>
     </section>
 
     <% unless ledger_item.canonical_pending_transactions.first.settled? %>

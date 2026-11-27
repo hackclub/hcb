@@ -27,21 +27,21 @@ class UsersController < ApplicationController
                                                :edit_security,
                                                :edit_notifications,
                                                :edit_admin,
-                                               :toggle_sms_auth,
                                                :complete_sms_auth_verification,
                                                :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
   before_action :set_user, only: [
-    :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
+    :show, :edit, :edit_address, :edit_payout, :edit_tax, :edit_featurepreviews,
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
-    :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
+    :edit_admin, :audit_log, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
+    :admin_details_disbursements, :admin_details_emails, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
     :suppress_card_locking, :reset_billing_address
   ]
+  before_action :set_legal_entity, only: [:edit_payout, :edit_tax]
   wrap_parameters format: :url_encoded_form
 
   def show
@@ -99,6 +99,7 @@ class UsersController < ApplicationController
 
   def logout
     sign_out
+    forget_remembered_organizations!
     redirect_to root_path
   end
 
@@ -171,10 +172,12 @@ class UsersController < ApplicationController
 
   def edit_payout
     authorize @user
+  end
 
-    @legal_entities = @user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
-    session[:legal_entity_id] = @legal_entity.id
+  def edit_tax
+    authorize @user
+
+    @completed_tax_form = @legal_entity.latest_completed_tax_form
   end
 
   def edit_featurepreviews
@@ -207,6 +210,7 @@ class UsersController < ApplicationController
                         .recently_expired_within(1.week.ago)
                         .not_impersonated
                         .order(created_at: :desc)
+                        .load
 
     authorize @user
   end
@@ -268,6 +272,10 @@ class UsersController < ApplicationController
     @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
+  def audit_log
+    authorize @user
+  end
+
   def admin_details
     authorize @user
 
@@ -291,6 +299,12 @@ class UsersController < ApplicationController
     authorize @user
 
     @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(safe_per(10))
+  end
+
+  def admin_details_emails
+    authorize @user
+
+    @messages = @user.messages.order(sent_at: :desc, id: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_emburse_cards
@@ -320,11 +334,11 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
-    # TODO: add change here in receipt bin PR
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
-                                       .order(created_at: :desc)
-                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(safe_per(10))
+    # What the ledger row renders (see ledger/_item and MyController#inbox)
+    @items = @user.card_charges_missing_receipt
+                  .order(datetime: :desc)
+                  .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+                  .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_reimbursement_reports
@@ -345,21 +359,14 @@ class UsersController < ApplicationController
   def admin_details_stripe_transactions
     authorize @user
 
-    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      # A cardholder's charges span every organization they hold a card for, so
-      # this is one of the few queries that legitimately crosses ledgers. The
-      # page is auditor-gated (see UserPolicy#admin_details?), and the author
-      # filter — which for a CardCharge resolves to the cardholder — bounds the
-      # result to this user either way.
-      @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
-                                          .execute(all_ledgers: true)
-                                          .page(params[:page] || 1).per(safe_per(10))
-    else
-      @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
-                                    .order(created_at: :desc)
-                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                    .page(params[:page] || 1).per(safe_per(10))
-    end
+    # A cardholder's charges span every organization they hold a card for, so
+    # this is one of the few queries that legitimately crosses ledgers. The
+    # page is auditor-gated (see UserPolicy#admin_details?), and the author
+    # filter — which for a CardCharge resolves to the cardholder — bounds the
+    # result to this user either way.
+    @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
+                                        .execute(all_ledgers: true)
+                                        .page(params[:page] || 1).per(safe_per(10))
   end
 
   def suppress_card_locking
@@ -525,7 +532,6 @@ class UsersController < ApplicationController
     params.require(:code)
     svc = UserService::EnrollSmsAuth.new(current_user)
     svc.complete_verification(params[:code])
-    svc.enroll_sms_auth if params[:enroll_sms_auth]
     # flash[:success] = "Completed verification"
     # redirect_to edit_user_path(current_user)
     render json: { message: "completed verification successfully" }, status: :ok
@@ -537,24 +543,16 @@ class UsersController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_content
   end
 
-  def toggle_sms_auth
-    authorize current_user
-    svc = UserService::EnrollSmsAuth.new(current_user)
-    if current_user.use_sms_auth
-      svc.disable_sms_auth
-    else
-      svc.enroll_sms_auth
-    end
-    redirect_back_or_to security_user_path(current_user)
-  rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    flash[:error] = e.message
-    redirect_back_or_to security_user_path(current_user)
-  end
-
   private
 
   def set_user
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+  end
+
+  def set_legal_entity
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
   end
 
   def set_shown_private_feature_previews
@@ -578,7 +576,6 @@ class UsersController < ApplicationController
       # security
       :sessions_reported,
       :session_validity_preference,
-      :use_sms_auth,
       :use_two_factor_authentication,
       # notifications
       :comment_notifications,

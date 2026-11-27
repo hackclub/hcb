@@ -256,6 +256,39 @@ RSpec.describe Disbursement, type: :model do
       expect(disbursement.errors[:amount]).to include("must be greater than 0")
     end
 
+    it "requires a repayment's allocations to equal its amount on creation and update" do
+      disbursement = build(:disbursement, event: create(:event), source_event: create(:event), transfer_type: "repayment", amount: 123_45)
+      repayment = disbursement.build_repayment
+      [100_00, 23_45].each do |amount|
+        expense = create(:canonical_transaction, event: disbursement.event, amount_cents: -amount)
+        repayment.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: amount)
+      end
+
+      [123_44, 123_46].each do |amount|
+        disbursement.amount = amount
+        expect(disbursement).not_to be_valid
+        expect(disbursement.errors[:amount]).to include("must match the selected transaction total. Review your selection and try again.")
+      end
+
+      disbursement.amount = 123_45
+      disbursement.save!
+      expect(disbursement.reload.repayment.allocations.sum(:amount_cents)).to eq(123_45)
+      expect(disbursement.update(amount: 123_46)).to be(false)
+      expect(disbursement.reload.amount).to eq(123_45)
+
+      disbursement.repayment.allocations.detect { |allocation| allocation.amount_cents == 23_45 }.mark_for_destruction
+      expect(disbursement).not_to be_valid
+      disbursement.update!(amount: 100_00)
+      expect(disbursement.reload.repayment.allocations.sum(:amount_cents)).to eq(100_00)
+    end
+
+    it "rejects a repayment without allocations" do
+      disbursement = build(:disbursement, transfer_type: "repayment", amount: 123_45)
+
+      expect(disbursement).not_to be_valid
+      expect(disbursement.errors[:amount]).to include("must match the selected transaction total. Review your selection and try again.")
+    end
+
     describe "events_are_different" do
       it "does not allow same source and destination event" do
         event = create(:event)
@@ -934,6 +967,54 @@ RSpec.describe Disbursement, type: :model do
         expect(disbursement.state).to eq(:success)
         expect(disbursement.state_text).to eq("fulfilled")
       end
+    end
+  end
+
+  describe "ledgers" do
+    let(:event) { create(:event) }
+    let(:card_grant) do
+      add_balance_to_event(event)
+      create(:card_grant, event:)
+    end
+
+    it "writes both organizations' ledgers on a transfer between them" do
+      disbursement.reload
+
+      expect(disbursement.source_ledger).to eq(disbursement.source_event.ledger)
+      expect(disbursement.destination_ledger).to eq(disbursement.destination_event.ledger)
+    end
+
+    it "writes the card grant's ledger as the destination of a top-up" do
+      topup = create(:disbursement, source_event: event, event:, destination_subledger: card_grant.subledger).reload
+
+      expect(topup.source_ledger).to eq(event.ledger)
+      expect(topup.destination_ledger).to eq(card_grant.ledger)
+    end
+
+    it "writes the card grant's ledger as the source of a withdrawal" do
+      withdrawal = create(:disbursement, source_event: event, event:, source_subledger: card_grant.subledger).reload
+
+      expect(withdrawal.source_ledger).to eq(card_grant.ledger)
+      expect(withdrawal.destination_ledger).to eq(event.ledger)
+    end
+
+    it "is invalid for a subledger without a card grant" do
+      subledger = event.subledgers.create!
+      transfer = build(:disbursement, source_event: event, event:, destination_subledger: subledger)
+
+      expect(transfer).not_to be_valid
+      expect(transfer.errors[:destination_ledger]).to include("must exist")
+    end
+
+    it "rewrites the destination ledger when the destination event changes" do
+      source_ledger = disbursement.source_ledger
+      new_destination = create(:event)
+
+      disbursement.update!(event: new_destination)
+      disbursement.reload
+
+      expect(disbursement.destination_ledger).to eq(new_destination.ledger)
+      expect(disbursement.source_ledger).to eq(source_ledger)
     end
   end
 end

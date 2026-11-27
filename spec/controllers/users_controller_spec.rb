@@ -133,6 +133,78 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#admin_details_emails" do
+    render_views
+
+    it "lists the emails sent to the user, newest first, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      # Insertion order deliberately differs from `sent_at desc`.
+      older = Ahoy::Message.create!(user:, to: user.email, subject: "Older email", mailer: "ReceiptMailer#reminder", sent_at: 2.days.ago)
+      newer = Ahoy::Message.create!(user:, to: user.email, subject: "Newer email", mailer: "ReceiptMailer#reminder", sent_at: 1.hour.ago)
+      Ahoy::Message.create!(user: create(:user), subject: "Someone else's email", sent_at: 1.minute.ago)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Newer email", "Older email")
+      expect(response.body).not_to include("Someone else's email")
+      expect(response.body.scan(/data-modal="message_(\d+)"/).flatten.map(&:to_i)).to eq([newer.id, older.id])
+      expect(response.body).to include(emails_admin_index_path(user_id: user.id))
+    end
+
+    it "shows a blank slate when no emails have been sent" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No emails sent")
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:admin_details_emails, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
+  describe "#audit_log", versioning: true do
+    render_views
+
+    it "lists the user's PaperTrail changes with who made them, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user, full_name: "Old Name")
+      PaperTrail.request(whodunnit: auditor.id) { user.update!(full_name: "New Name", birthday: Date.new(2008, 1, 1)) }
+      create_session(auditor, verified: true)
+
+      get(:audit_log, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Full name", "Old Name", "New Name")
+      # Encrypted columns are tracked but their ciphertext is never shown.
+      expect(response.body).to include("Birthday", "changed (encrypted)")
+      expect(response.body).not_to include("birthday_ciphertext", user.birthday_ciphertext)
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:audit_log, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
   describe "#edit_address reset to default address button" do
     render_views
 
@@ -207,7 +279,6 @@ RSpec.describe UsersController do
     it "requires sudo mode in order to change 2fa settings" do
       user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
-      user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
@@ -247,7 +318,6 @@ RSpec.describe UsersController do
     it "does not require sudo mode unless the feature flag is enabled" do
       user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
-      user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
       create_session(user, verified: true)
@@ -415,6 +485,23 @@ RSpec.describe UsersController do
 
         expect(response).to redirect_to(/\/users\/auth/)
       end
+    end
+  end
+  describe "#admin_details_missing_receipts" do
+    render_views
+    include_context "card locking charges"
+
+    it "lists the user's card charges missing a receipt as ledger rows" do
+      create_session(create(:user, :make_admin), verified: true)
+      charge = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      create_settled_card_charge(user:, settled_at: 2.days.ago, uploaded_at: 1.day.ago)
+
+      get :admin_details_missing_receipts, params: { id: user.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Missing receipts")
+      expect(response.parsed_body.css("tr.transaction").size).to eq(1)
+      expect(response.parsed_body.at_css("[id='#{ActionView::RecordIdentifier.dom_id(charge, :badges)}']")).to be_present
     end
   end
 end

@@ -74,6 +74,12 @@
         <%= user_mention @hcb_code.stripe_card.user %>
       <% end %>
     </div>
+    <% if @hcb_code.stripe_foreign_currency? %>
+      <div>
+        <strong>Charged in <%= @hcb_code.stripe_merchant_amount.currency.iso_code %></strong>
+        <span><%= @hcb_code.stripe_merchant_amount.format(with_currency: true) %></span>
+      </div>
+    <% end %>
     <% if @hcb_code.stripe_atm_fee %>
       <div>
         <strong>ATM fee</strong>
@@ -176,7 +182,7 @@
                 <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+            <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_ledger_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
@@ -191,7 +197,7 @@
           </action>
         <% end %>
       <% else %>
-        <span><strong>Sign in to view</strong></span>
+        <span><strong><%= restricted_detail_label %></strong></span>
       <% end %>
     </div>
     <% if @hcb_code.pt.present? %>
@@ -249,7 +255,7 @@
             </action>
           <% end %>
         <% else %>
-          <span><strong>Sign in to view</strong></span>
+          <span><strong><%= restricted_detail_label %></strong></span>
         <% end %>
       </div>
       <% if @hcb_code.ledger_item&.personal_transaction.present? %>
@@ -271,6 +277,7 @@
         </p>
       <% end %>
     <% end %>
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
@@ -330,7 +337,7 @@
           <%= copy_to_clipboard(@hcb_code.stripe_merchant["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_transactions_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
+      <%= link_to "See all transactions at #{humanized_merchant_name @hcb_code.stripe_merchant}", event_ledger_path(@event, merchant: @hcb_code.stripe_merchant["network_id"]) %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.

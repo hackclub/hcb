@@ -12,7 +12,12 @@ export default class extends Controller {
   }
 
   disconnect() {
+    // The element can move while it's animating (jquery-modal re-parents a modal
+    // as it opens), which disconnects and reconnects this controller. Put the
+    // real value back so the next connect animates towards it, not towards
+    // whatever scrambled digits were showing.
     if (this.interval) clearInterval(this.interval)
+    this.element.innerText = this.value
   }
 
   generateText() {
