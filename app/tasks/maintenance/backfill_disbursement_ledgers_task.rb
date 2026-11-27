@@ -16,8 +16,8 @@ module Maintenance
 
     def process(disbursement)
       disbursement.update_columns(
-        source_ledger_id: disbursement.source_ledger_id || ledger_for(disbursement.source_event, disbursement.source_subledger)&.id,
-        destination_ledger_id: disbursement.destination_ledger_id || ledger_for(disbursement.destination_event, disbursement.destination_subledger)&.id
+        source_ledger_id: ledger_for(disbursement.source_event, disbursement.source_subledger)&.id,
+        destination_ledger_id: ledger_for(disbursement.destination_event, disbursement.destination_subledger)&.id
       )
     end
 
