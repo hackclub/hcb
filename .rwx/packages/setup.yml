@@ -15,7 +15,7 @@ tasks:
   - key: image-libraries
     run: |
       sudo apt-get update
-      sudo apt-get install -y --no-install-recommends imagemagick libvips
+      sudo apt-get install -y --no-install-recommends imagemagick libvips file
       sudo apt-get clean
 
   - key: docker-images
