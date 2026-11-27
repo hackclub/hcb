@@ -1,0 +1,15 @@
+<%# locals: (tooltip_direction: :n) %>
+
+<%# Stands in for the account number before one is generated. The eye posts to
+    Column::AccountNumberController#create, which renders the turbo frame this sits
+    in again with the new number in it. %>
+<span class="inline-flex items-center gap-2">
+  <span class="font-mono muted"><%= masked_account_detail nil, Column::AccountNumber::ACCOUNT_NUMBER_LENGTH %></span>
+  <%= button_to event_column_account_number_path(@event),
+                method: :post,
+                class: "inline-flex bg-transparent border-0 p-0 pointer text-muted hover:text-blue tooltipped tooltipped--#{tooltip_direction}",
+                "aria-label": "Show account number",
+                form_class: "inline-flex" do %>
+    <%= inline_icon "view", size: 24 %>
+  <% end %>
+</span>

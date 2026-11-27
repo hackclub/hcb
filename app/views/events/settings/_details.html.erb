@@ -19,7 +19,7 @@
         <div data-controller="menu" class="z-[1] event_settings__banner--edit rounded-md">
           <button
             type="button"
-            data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+            data-action="menu#toggle"
             data-menu-target="toggle"
             class="pop menu__toggle">
             <%= inline_icon "photo", size: 24 %>
@@ -52,7 +52,7 @@
           <div data-controller="menu" class="event_settings__logo--edit z-[1] rounded-md">
             <button
               type="button"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-action="menu#toggle"
               data-menu-target="toggle"
               class="pop menu__toggle">
               <%= inline_icon "photo", size: 24 %>
@@ -80,6 +80,7 @@
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+              Donations and invoice payments currently show up on bank statements as <strong><%= event.statement_descriptor %></strong>.
             </p>
             <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
           </div>
@@ -103,7 +104,7 @@
               target: event.donation_page_available? ? "_blank" : nil %>
             and your
             <%= link_to "public reimbursement page",
-              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_url(event) : { tab: "reimbursements" },
+              event.public_reimbursement_page_available? ? reimbursement_start_reimbursement_report_path(event) : { tab: "reimbursements" },
               target: event.public_reimbursement_page_available? ? "_blank" : nil %>. Organization banners are visible on the homepage only.
           </p>
         </div>
@@ -167,7 +168,7 @@
     <div class="field">
       <%= form.label :stripe_card_logo, "Card logo" %>
       <p class="h5 muted mt0 mb2">
-        Displayed in the top right of each of your organization's cards. A logo needs to be a single colour image with a transparent background.
+        Displayed in the top right of each of your organization's cards. A logo needs to be a single color image with a transparent background.
         The file must be a PNG, with dimensions of up to 1000px by 200px and a file size no greater than 512kb. Logos are reviewed by our card issuer, Stripe.
       </p>
       <% if event.stripe_card_logo.persisted? %>

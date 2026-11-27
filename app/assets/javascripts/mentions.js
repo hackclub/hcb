@@ -27,7 +27,7 @@ function loadTextExpander() {
     
     expander.addEventListener('text-expander-activate', function(event) {
       const popover = expander.querySelector('.mention-suggestions[popover]')
-      if (popover) popover.showPopover()
+      popover?.showPopover?.()
     })
   });
 }

@@ -180,6 +180,42 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  # Organizers pick a payment's category, but plain transfers stay categorized for them (#15894).
+  describe "#create with a category from an organizer" do
+    let(:sender) { create(:user) }
+    let(:source_event) { create(:event, :with_positive_balance, organizers: [sender]) }
+    let(:destination_event) { create(:event, organizers: [sender]) }
+
+    before { create_session(sender, verified: true) }
+
+    def send_transfer(**options)
+      post(:create, params: { disbursement: { name: "Boba Drops", source_event_id: source_event.public_id, event_id: destination_event.public_id, amount: "10", **options } })
+    end
+
+    it "categorizes both sides of a payment" do
+      send_transfer(transfer_type: "payment", payment_category_slug: "food-fun")
+
+      disbursement = Disbursement.last
+      expect(disbursement).to be_transfer_type_payment
+      expect(disbursement.source_transaction_category.slug).to eq("food-fun")
+      expect(disbursement.destination_transaction_category.slug).to eq("food-fun")
+
+      # Manual, so an automatic categorization can't overwrite the organizer's choice; settling copies it to the settled transactions.
+      [disbursement.raw_pending_outgoing_disbursement_transaction, disbursement.raw_pending_incoming_disbursement_transaction].each do |raw|
+        expect(raw.canonical_pending_transaction.category_mapping).to have_attributes(category: have_attributes(slug: "food-fun"), assignment_strategy: "manual")
+      end
+    end
+
+    # A payment's category must not leak onto a plain transfer, which is always an internal transfer (#15894).
+    it "ignores a payment category on a plain transfer" do
+      send_transfer(transfer_type: "transfer", payment_category_slug: "food-fun")
+
+      disbursement = Disbursement.last
+      expect(disbursement.source_transaction_category.slug).to eq("internal-transfer")
+      expect(disbursement.destination_transaction_category.slug).to eq("internal-transfer")
+    end
+  end
+
   describe "#set_transaction_categories" do
     it "allows categories to be set by admins" do
       admin = create(:user, :make_admin)
@@ -293,7 +329,8 @@ RSpec.describe DisbursementsController do
   describe "#event_search" do
     it "suggests an unlisted transparent organization the user is a member of, without a query" do
       member = create(:user)
-      source_event = create(:event, organizers: [member])
+      # Named so it can't match the "Claude" search below, as a random name could
+      source_event = create(:event, name: "Hackworth Robotics", organizers: [member])
       destination_event = create(:event, name: "Claude Unlisted", is_indexable: false)
       create(:organizer_position, user: member, event: destination_event, role: :member)
       create(:event, name: "Claude Private Member", is_public: false).tap do |e|
@@ -314,7 +351,8 @@ RSpec.describe DisbursementsController do
 
     it "lists public organizations as destinations but hides private, unlisted and demo ones" do
       user = create(:user)
-      create(:event, organizers: [user])
+      # Named so it can't match the "Claude" search below, as a random name could
+      create(:event, name: "Hackworth Robotics", organizers: [user])
       public_event = create(:event, name: "Claude Clearinghouse")
       create(:event, name: "Claude Private", is_public: false)
       create(:event, name: "Claude Unlisted", is_indexable: false)
@@ -500,22 +538,61 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
-    it "creates one repayment covering multiple picked transactions" do
-      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Stickers")
-      post(:create, params: {
-             disbursement: {
-               name: "Paying back pizza and stickers",
-               source_event_id: source_event.public_id,
-               event_id: destination_event.public_id,
-               amount: "123.45",
-               transfer_type: "repayment",
-               repaid_ledger_item_ids: [expense.ledger_item.hashid, second.ledger_item.hashid]
-             }
-           })
+    describe "of several transactions" do
+      let!(:snacks) { create(:canonical_transaction, event: destination_event, amount_cents: -10_00, memo: "Snacks", category_slug: "food-fun") }
+      let!(:venue) { create(:canonical_transaction, event: destination_event, amount_cents: -23_45, memo: "Hall", category_slug: "venue") }
+      let!(:uncategorized) { create(:canonical_transaction, event: destination_event, amount_cents: -5_00, memo: "Misc") }
 
-      expect(response).to redirect_to(event_transfers_path(source_event))
-      expect(Disbursement.last.amount).to eq(123_45)
-      expect(Disbursement.last.repaid_ledger_items).to contain_exactly(expense.ledger_item, second.ledger_item)
+      def repay(amount: "138.45", **options)
+        post(:create, params: {
+               disbursement: {
+                 name: "Repaying 4 transactions",
+                 source_event_id: source_event.public_id,
+                 event_id: destination_event.public_id,
+                 amount:,
+                 transfer_type: "repayment",
+                 repaid_ledger_item_ids: [expense, snacks, venue, uncategorized].map { |t| t.ledger_item.hashid },
+                 **options
+               }
+             })
+      end
+
+      it "creates a transfer per transaction, each with its category" do
+        expect { repay }.to change(Disbursement, :count).by(4)
+
+        expect(response).to redirect_to(event_transfers_path(source_event))
+        expect(flash[:success]).to eq("4 transfers requested, one for each transaction.")
+        expect(Disbursement.last(4).map { |d| [d.source_transaction_category&.slug, d.amount, d.name, d.repaid_ledger_items.map(&:id)] }).to contain_exactly(
+          *[[expense, "food-fun", 100_00], [snacks, "food-fun", 10_00], [venue, "venue", 23_45], [uncategorized, nil, 5_00]].map do |transaction, slug, cents|
+            [slug, cents, "Repaying #{transaction.ledger_item.memo}", [transaction.ledger_item.id]]
+          end
+        )
+      end
+
+      it "attaches an uploaded receipt to each transfer" do
+        repay(file: [fixture_file_upload("receipt.png", "image/png")])
+
+        receipts = Disbursement.last(4).map { |d| d.outgoing_disbursement.ledger_item.receipts.sole }
+        expect(receipts.map { |receipt| receipt.file.byte_size }).to all(eq(File.size(file_fixture("receipt.png"))))
+      end
+
+      it "creates none of them when the amount doesn't match the total" do
+        expect { repay(amount: "100.00") }.not_to change(Disbursement, :count)
+
+        expect(flash[:error]).to include("must match the selected transaction total")
+      end
+
+      context "when the sender can afford some but not all of them" do
+        let(:source_event) { create(:event).tap { |event| create(:canonical_transaction, event:, amount_cents: 120_00) } }
+
+        it "creates none of them" do
+          expect { repay }.not_to change(Disbursement, :count)
+
+          expect(flash[:error]).to include("enough money")
+          expect(Repayment.unrepaid_ledger_items(destination_event)).to include(expense.ledger_item, venue.ledger_item)
+          expect(expense.reload.category.slug).to eq("food-fun")
+        end
+      end
     end
 
     it "rejects an invalid selection without dropping it or revealing another organization's expense" do

@@ -4,6 +4,14 @@
 
 <%# Each currency's fields, and fields only some account types ask for, are shown and enabled by the state-switch controller. %>
 <div data-controller="state-switch">
+  <% HasWiseRecipient::UNSUPPORTED_CURRENCIES.keys.group_by { |currency| HasWiseRecipient::UNSUPPORTED_CURRENCIES[currency] }.each do |reason, currencies| %>
+    <%= tag.div class: "flex items-start gap-1 warning mb2", hidden: !initial_currency.in?(currencies),
+                data: { state_switch_target: "case", state_switch_name: "selected_currency", state_switch_when: currencies.join(" ") } do %>
+      <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
+      <span><%= reason %></span>
+    <% end %>
+  <% end %>
+
   <% WiseTransfer::AVAILABLE_CURRENCIES.each do |currency| %>
     <%= tag.fieldset class: "contents", hidden: currency != initial_currency, disabled: currency != initial_currency,
                      data: { state_switch_target: "case", state_switch_name: "selected_currency", state_switch_when: currency } do %>
@@ -24,7 +32,7 @@
             <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>">
               <%= form.label field[:key], field[:label], (field[:label_options] || {}).merge(for: id) %>
               <% if field[:type] == :select %>
-                <%= form.select field[:key], options_for_select(field[:options].to_a), { disabled:, prompt: "Select one..." },
+                <%= form.select field[:key], field[:options].to_a, { disabled:, prompt: "Select one..." },
                                 { id:, data: ({ herb_set: "selected_account_type=$value" } if field[:key] == "account_type") } %>
               <% else %>
                 <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, required: field[:required] != false, id:) %>

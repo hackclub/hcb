@@ -88,25 +88,28 @@
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
   </div>
 
-  <% if @item.accepts_receipts? && @item.hcb_code.present? %>
-    <% admin_tool("mt1 p-3") do %>
-      💌 Bonjour!
-      <%= mail_to @item.hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
-    <% end %>
-    <% admin_tool("mt1 p-3") do %>
-      🌸 Aloha!
-      <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@item.hcb_code) %>
-    <% end %>
-    <% if @item.linked_object_type == "CardCharge" && current_user.phone_number.present? %>
+  <% if @item.accepts_receipts? %>
+    <%# Emailing, the signed upload link and the SMS are all keyed to the HCB code, so an item nothing has mapped to yet has none of them %>
+    <% if @item.hcb_code.present? %>
       <% admin_tool("mt1 p-3") do %>
-        ☎️ moshi moshi?
-        <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), data: { turbo_method: :post } %>
+        💌 Bonjour!
+        <%= mail_to @item.hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
+      <% end %>
+      <% admin_tool("mt1 p-3") do %>
+        🌸 Aloha!
+        <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@item.hcb_code) %>
+      <% end %>
+      <% if @item.linked_object_type == "CardCharge" && current_user.phone_number.present? %>
+        <% admin_tool("mt1 p-3") do %>
+          ☎️ moshi moshi?
+          <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), data: { turbo_method: :post } %>
+        <% end %>
       <% end %>
     <% end %>
 
-    <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+    <%= render "receipts/list_v2", receipts: @item.receipts, popover: (@frame && @item.hcb_code.present? ? "HcbCode:#{@item.hcb_code.hashid}" : nil), transaction_show_receipt_button: true, transaction_show_author_img: true %>
     <%= begin receipt_upload_form_config = {
-          receiptable: @item.hcb_code,
+          receiptable: @item,
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,
@@ -115,7 +118,7 @@
               receipt_upload_form_config[:restricted_dropzone] = true if @frame
               receipt_upload_form_config[:inline_linking] = true if @frame
               receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
-              receipt_upload_form_config[:popover] = "HcbCode:#{@item.hcb_code.hashid}" if @frame
+              receipt_upload_form_config[:popover] = "HcbCode:#{@item.hcb_code.hashid}" if @frame && @item.hcb_code.present?
               render partial: "receipts/form_v3", locals: receipt_upload_form_config
         end %>
   <% end %>
@@ -153,4 +156,8 @@
       <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
+<% end %>
+
+<% if @reverse_receipt_id.present? && @item.accepts_receipts? && @item.hcb_code.present? %>
+  <%= render "receipts/reverse_pairing_modal", receipt_id: @reverse_receipt_id %>
 <% end %>

@@ -142,7 +142,6 @@ Rails.application.routes.draw do
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
       post "complete_sms_auth_verification", to: "users#complete_sms_auth_verification"
-      post "toggle_sms_auth", to: "users#toggle_sms_auth"
 
       # Logout
       delete "logout", to: "users#logout"
@@ -166,6 +165,7 @@ Rails.application.routes.draw do
       get "notifications", to: "users#edit_notifications"
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
+      get "audit_log", to: "users#audit_log"
       get "admin_details", to: "users#admin_details"
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
@@ -274,6 +274,7 @@ Rails.application.routes.draw do
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
       get "ledger_items", to: "admin#ledger_items"
+      get "ledger_items/:id", to: "admin#ledger_item", as: :ledger_item
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
@@ -371,6 +372,9 @@ Rails.application.routes.draw do
     end
     resources :legal_entities, only: [:index]
     resources :tax_forms, only: [:index]
+    resources :tax1099_imports, only: [:new, :create] do
+      get :legal_entities, on: :collection
+    end
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -561,10 +565,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "dispute"
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
-
-      scope module: "hcb_code" do
-        get "subscriptions/transactions", to: "subscriptions#transactions"
-      end
     end
 
     collection do
@@ -631,10 +631,14 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      get "dispute"
       post "pin"
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      resource :repayment, only: [:create] do
+        get :candidates
+      end
       post "toggle_tag", to: "items#toggle_tag"
     end
   end
@@ -847,6 +851,9 @@ Rails.application.routes.draw do
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
   post "taxbandits/webhook", to: "taxbandits#webhook"
+  # The one-time URL handed to TaxBandits as PdfUrl. The token lives in the query
+  # string so Rails' parameter filtering keeps it out of the request log.
+  get "taxbandits/w9_certificate", to: "taxbandits#w9_pdf", as: :taxbandits_w9_pdf, format: true
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -1012,7 +1019,6 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
-    post "toggle_new_ledger"
     get "stats"
     get "merchants_filter"
     put "toggle_hidden"
@@ -1138,7 +1144,6 @@ Rails.application.routes.draw do
         post "disable_pre_authorization"
         post "permit_merchant"
 
-        get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
         get "edit/expiration", to: "card_grants#edit_expiration"
         get "edit/purpose", to: "card_grants#edit_purpose"
@@ -1173,6 +1178,7 @@ Rails.application.routes.draw do
 
     member do
       get "account-number", to: "events#account_number"
+      get "account-number/reveal", to: "events#reveal_account_number", as: :reveal_account_number
       post "toggle_event_tag/:event_tag_id", to: "events#toggle_event_tag", as: :toggle_event_tag
       get "audit_log"
       post "validate_slug"

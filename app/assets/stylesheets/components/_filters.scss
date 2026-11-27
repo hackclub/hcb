@@ -49,3 +49,11 @@
     }
   }
 }
+
+// The filterbar clips overflow so it can scroll horizontally, which would cut
+// off the dotted outline that admin_tool draws just outside its element. Keep
+// the outline inside the bar and above the selected tab for admin-only tabs.
+.filterbar > .admin-tools::before {
+  inset: 2px;
+  z-index: 2;
+}

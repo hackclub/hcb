@@ -10,8 +10,7 @@ RSpec.describe "Application personal info page", type: :system do
       .to receive(:find_current_session)
       .and_return(create(:user_session, user:))
 
-    # intl-tel-input loads from a CDN that Cuprite blocks
-    page.driver.browser.evaluate_on_new_document("window.intlTelInput = () => ({ getNumber: () => '' })")
+    stub_intl_tel_input
 
     visit personal_info_application_path(create(:event_application, user:))
   end

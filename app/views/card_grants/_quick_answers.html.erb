@@ -1,0 +1,30 @@
+<%# locals: () %>
+
+<%# Help center articles as a list of rows, in the same style as the controls beside them. %>
+<div class="grant-assist__head">
+  <h3 class="grant-subheading">Common questions</h3>
+</div>
+
+<div class="grant-list">
+  <% [
+       ["I'm out of funds", "plus", "https://grants.help.hcb.hackclub.com/en/articles/15582009-can-i-add-more-money-to-my-grant-card"],
+       ["My card was declined", "forbidden", "https://grants.help.hcb.hackclub.com/en/articles/15414377-my-grant-card-was-declined-what-can-i-do"],
+       ["I made a personal purchase", "flag", "https://grants.help.hcb.hackclub.com/en/articles/15582008-i-used-my-grant-card-for-a-personal-purchase-by-mistake-what-do-i-do"],
+       ["I'm expecting a refund", "view-reload", "https://grants.help.hcb.hackclub.com/en/articles/15582011-i-got-a-refund-on-a-grant-purchase-where-does-the-money-go"],
+       ["I have multiple grants", "card-list", "https://grants.help.hcb.hackclub.com/en/articles/15582012-can-i-combine-multiple-grant-cards"],
+     ].each do |label, icon, url| %>
+    <%= link_to url, target: "_blank", rel: "noopener", class: "grant-action" do %>
+      <span class="grant-icon"><%= inline_icon icon, size: 20 %></span>
+      <span class="grant-action__text">
+        <span class="grant-action__title"><%= label %></span>
+      </span>
+      <%= inline_icon "view-forward", size: 24, class: "grant-action__arrow" %>
+    <% end %>
+  <% end %>
+</div>
+
+<%# The rest of the help center: a footer across the bottom of the card, set apart from the questions above it. %>
+<%= link_to "https://grants.help.hcb.hackclub.com/en/collections/19675936-card-grants", target: "_blank", rel: "noopener", class: "grant-assist__more" do %>
+  All articles
+  <%= inline_icon "view-forward", size: 20 %>
+<% end %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -397,7 +397,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.bigint "raw_pending_bank_fee_transaction_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "raw_pending_donation_transaction_id"
-    t.bigint "raw_pending_fee_reimbursement_transaction_id"
     t.bigint "raw_pending_fee_revenue_transaction_id"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_invoice_transaction_id"
@@ -420,7 +419,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
-    t.index ["raw_pending_fee_reimbursement_transaction_id"], name: "index_cpts_on_raw_pending_fee_reimbursement_tx_id"
     t.index ["raw_pending_fee_revenue_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
@@ -715,6 +713,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
+    t.bigint "destination_ledger_id", null: false
     t.bigint "destination_subledger_id"
     t.bigint "destination_transaction_category_id"
     t.datetime "errored_at", precision: nil
@@ -728,16 +727,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
     t.bigint "source_event_id"
+    t.bigint "source_ledger_id", null: false
     t.bigint "source_subledger_id"
     t.bigint "source_transaction_category_id"
     t.string "transfer_type"
     t.datetime "updated_at", precision: nil, null: false
+    t.index ["destination_ledger_id"], name: "index_disbursements_on_destination_ledger_id"
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
+    t.index ["source_ledger_id"], name: "index_disbursements_on_source_ledger_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
@@ -842,7 +844,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.bigint "event_id"
     t.boolean "fee_covered", default: false, null: false
     t.bigint "fee_reimbursement_id"
-    t.text "hcb_code"
     t.boolean "in_person", default: false
     t.datetime "in_transit_at"
     t.inet "ip_address"
@@ -1567,7 +1568,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.bigint "ending_balance"
     t.bigint "fee_reimbursement_id"
     t.datetime "finalized_at", precision: nil
-    t.text "hcb_code"
     t.text "hosted_invoice_url"
     t.text "invoice_pdf"
     t.bigint "item_amount"
@@ -1646,6 +1646,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.integer "not_admin_only_comment_count", default: 0, null: false
     t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
+    t.datetime "receipt_due_at"
     t.boolean "receipt_required"
     t.datetime "settled_at"
     t.text "short_code"
@@ -1658,6 +1659,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
+    t.index ["receipt_due_at"], name: "index_ledger_items_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND receipt_required AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
     t.index ["status"], name: "index_ledger_items_on_status"
   end
@@ -2005,10 +2007,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
 
   create_table "outgoing_twilio_messages", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "hcb_code_id"
+    t.bigint "ledger_item_id"
     t.bigint "twilio_message_id"
     t.datetime "updated_at", null: false
-    t.index ["hcb_code_id"], name: "index_outgoing_twilio_messages_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_outgoing_twilio_messages_on_ledger_item_id"
     t.index ["twilio_message_id"], name: "index_outgoing_twilio_messages_on_twilio_message_id"
   end
 
@@ -2096,11 +2098,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description"
+    t.date "end_date"
     t.text "name", null: false
     t.bigint "payment_id"
     t.bigint "payroll_position_id", null: false
     t.datetime "rejected_at"
     t.bigint "reviewed_by_id"
+    t.date "start_date"
     t.datetime "updated_at", null: false
     t.index ["payment_id"], name: "index_payroll_invoices_on_payment_id"
     t.index ["payroll_position_id"], name: "index_payroll_invoices_on_payroll_position_id"
@@ -2238,15 +2242,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.string "donation_transaction_id"
     t.string "state"
     t.datetime "updated_at", null: false
-  end
-
-  create_table "raw_pending_fee_reimbursement_transactions", force: :cascade do |t|
-    t.integer "amount_cents"
-    t.datetime "created_at", null: false
-    t.date "date_posted"
-    t.bigint "fee_reimbursement_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["fee_reimbursement_id"], name: "index_rp_fee_reimbursement_txs_on_fee_reimbursement_id"
   end
 
   create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
@@ -2541,9 +2536,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
 
   create_table "repayments", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
+    t.bigint "created_by_id"
+    t.bigint "disbursement_id"
+    t.bigint "repaying_ledger_item_id"
     t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_repayments_on_created_by_id"
     t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id", unique: true
+    t.index ["repaying_ledger_item_id"], name: "index_repayments_on_repaying_ledger_item_id", unique: true
+    t.check_constraint "num_nonnulls(disbursement_id, repaying_ledger_item_id) = 1", name: "repayments_disbursement_or_repaying_ledger_item"
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -2688,12 +2688,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "accepted_at"
     t.datetime "created_at", null: false
     t.float "distance"
-    t.bigint "hcb_code_id", null: false
     t.datetime "ignored_at"
+    t.bigint "ledger_item_id", null: false
     t.bigint "receipt_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["hcb_code_id"], name: "index_suggested_pairings_on_hcb_code_id"
-    t.index ["receipt_id", "hcb_code_id"], name: "index_suggested_pairings_on_receipt_id_and_hcb_code_id", unique: true
+    t.index ["ledger_item_id"], name: "index_suggested_pairings_on_ledger_item_id"
+    t.index ["receipt_id", "ledger_item_id"], name: "index_suggested_pairings_on_receipt_id_and_ledger_item_id", unique: true
     t.index ["receipt_id"], name: "index_suggested_pairings_on_receipt_id"
   end
 
@@ -2740,13 +2740,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "signing_url"
+    t.string "source", default: "taxbandits", null: false
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
     t.string "tin_type"
+    t.boolean "tin_verified", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
     t.index ["tin_hash"], name: "index_tax_forms_on_tin_hash"
+    t.index ["tin_hash"], name: "index_tax_forms_unique_live_tax1099_tin_hash", unique: true, where: "(((source)::text = 'tax1099'::text) AND ((aasm_state)::text <> 'discarded'::text) AND (deleted_at IS NULL))"
   end
 
   create_table "tours", force: :cascade do |t|
@@ -2776,12 +2779,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "updated_at", null: false
     t.index ["categorizable_type", "categorizable_id"], name: "idx_on_categorizable_type_categorizable_id_f3e1245d19", unique: true
     t.index ["transaction_category_id"], name: "index_transaction_category_mappings_on_transaction_category_id"
-  end
-
-  create_table "transaction_csvs", force: :cascade do |t|
-    t.string "aasm_state", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -2958,6 +2955,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "signed_out_at"
     t.string "timezone"
     t.datetime "updated_at", null: false
+    t.text "user_agent"
     t.bigint "user_id"
     t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
@@ -3010,7 +3008,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.datetime "subscribed_to_loops_at"
     t.boolean "teenager"
     t.datetime "updated_at", precision: nil, null: false
-    t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
     t.boolean "verified", default: false, null: false
     t.string "webauthn_id"
@@ -3020,6 +3017,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   end
 
   create_table "versions", force: :cascade do |t|
+    t.bigint "api_token_id"
     t.datetime "created_at", precision: nil
     t.string "event", null: false
     t.bigint "impersonated_by_id"
@@ -3027,6 +3025,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
     t.string "item_type", null: false
     t.jsonb "object"
     t.jsonb "object_changes"
+    t.bigint "user_session_id"
     t.string "whodunnit"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
@@ -3165,6 +3164,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
+  add_foreign_key "disbursements", "ledgers", column: "destination_ledger_id"
+  add_foreign_key "disbursements", "ledgers", column: "source_ledger_id"
   add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
   add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
@@ -3277,6 +3278,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "organizer_positions", "contracts", column: "fiscal_sponsorship_contract_id"
   add_foreign_key "organizer_positions", "events"
   add_foreign_key "organizer_positions", "users"
+  add_foreign_key "outgoing_twilio_messages", "ledger_items", on_delete: :nullify
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
@@ -3289,7 +3291,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
-  add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
@@ -3313,6 +3314,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "repayment_allocations", "ledger_items"
   add_foreign_key "repayment_allocations", "repayments"
   add_foreign_key "repayments", "disbursements"
+  add_foreign_key "repayments", "ledger_items", column: "repaying_ledger_item_id"
+  add_foreign_key "repayments", "users", column: "created_by_id"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"
@@ -3321,6 +3324,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_120000) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "suggested_pairings", "ledger_items", on_delete: :cascade
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"

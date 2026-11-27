@@ -50,7 +50,6 @@ class LegalEntity < ApplicationRecord
   has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
 
   scope :managed, -> { where.not(managing_event_id: nil) }
-  scope :unmanaged, -> { where(managing_event_id: nil) }
   scope :not_archived, -> { where(archived_at: nil) }
 
   validate :managing_event_cannot_change, on: :update
@@ -96,7 +95,7 @@ class LegalEntity < ApplicationRecord
       not_archived: !archived?,
       form_present: !requires_tax_form || form.present?,
       form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
-      form_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
+      form_verified: !requires_tax_form || form&.tin_verified? || !requires_tax_verification?,
     }.reject { |k, done| done }.keys
   end
 

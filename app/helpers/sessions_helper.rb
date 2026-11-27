@@ -48,6 +48,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified: true
@@ -83,6 +84,7 @@ module SessionsHelper
       os_info: fingerprint_info[:os_info],
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
+      user_agent: request.user_agent,
       webauthn_credential:,
       expiration_at:,
       verified:,
@@ -109,6 +111,11 @@ module SessionsHelper
     !current_user(allow_unverified:).nil?
   end
 
+  # Shown in place of details only members can see
+  def restricted_detail_label
+    signed_in? ? "Members only" : "Sign in to view"
+  end
+
   def auditor_signed_in?
     signed_in? && current_user&.auditor?
   end
@@ -125,8 +132,8 @@ module SessionsHelper
 
   def organizer_signed_in?(event = @event, as: :reader)
     run = ->(inner_event:, inner_as:) do
-      next true if auditor_signed_in? && as == :reader
-      next true if admin_signed_in? && as == :member
+      next true if auditor_signed_in? && inner_as == :reader
+      next true if admin_signed_in? && inner_as == :member
       next false unless signed_in? && inner_event.present?
 
       required_role_num = OrganizerPosition.roles[inner_as]
@@ -137,6 +144,10 @@ module SessionsHelper
 
         role_num = OrganizerPosition.roles[op.role]
         next false unless role_num.present?
+
+        if inner_as.to_s == "member" && op.event_id != inner_event.id
+          next op.manager?
+        end
 
         # Allows higher roles to succeed when checking for lower role
         # For example, `organizer_signed_in?(as: :member)` returns true if you're a manager
@@ -217,6 +228,59 @@ module SessionsHelper
       &.not_expired
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
+
+  # Called from explicit sign-out actions (not #sign_out itself, which also runs
+  # during login and impersonation) so the next page clears the remembered
+  # organizations. An expired session never sets this, so they're kept.
+  #
+  # This is its own cookie rather than part of `session`: a request that was
+  # already running when the user signed out would write its stale copy of the
+  # session back and drop the flag.
+  #
+  # If the page after sign-out has no nav (like the sign-in page), the cookie
+  # waits for the next page that does. That's fine: clearing runs before the new
+  # list is written, so signing straight back in still ends with the right list.
+  def forget_remembered_organizations!
+    cookies[:forget_remembered_organizations] = { value: "1", httponly: true }
+  end
+
+  # Public ids of the transparent organizations (including sub-organizations)
+  # the current user can manage. Private organizations are excluded so
+  # memberships don't leak via localStorage on shared devices, and impersonated
+  # sessions return nil so an admin's list isn't replaced with someone else's.
+  #
+  # Cached per session so it isn't recomputed on every page; each sign-in gets
+  # a fresh list, and membership changes are picked up within the TTL. Stale
+  # data only means a missing or extra sign-in prompt, and the list only holds
+  # public organizations.
+  def remembered_organizer_event_ids
+    return if !signed_in? || current_session.impersonated?
+
+    @remembered_organizer_event_ids ||= Rails.cache.fetch(["remembered-organizations", current_session.id], expires_in: 10.minutes) do
+      Event.transparent.not_hidden
+           .where(id: Event.self_and_descendant_ids(current_user.events.select(:id)))
+           .select(:id)
+           .map(&:public_id)
+    end
+  end
+
+  def remembered_organizations_data
+    data = { controller: "remembered-organizations" }
+    data[:remembered_organizations_clear_value] = true if cookies.delete(:forget_remembered_organizations)
+
+    if (event_ids = remembered_organizer_event_ids)
+      data[:remembered_organizations_event_ids_value] = event_ids.to_json
+    elsif !signed_in?(allow_unverified: true) && @event&.is_public
+      data[:remembered_organizations_current_event_value] = @event.public_id
+    end
+
+    data
+  end
+
+  # On organization pages, send the user back to where they were once they sign in.
+  def sign_in_path_returning_here
+    auth_users_path(return_to: (request.original_url if @event && request.get?))
   end
 
   def sudo_mode?

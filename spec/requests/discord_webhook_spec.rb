@@ -147,5 +147,70 @@ RSpec.describe "Discord Webhook", type: :request do
         expect(response).to have_http_status(:unauthorized)
       end
     end
+
+    describe "attach receipt modal submission" do
+      let(:discord_user_id) { "111111111111111111" }
+      let(:event) { create(:event, discord_guild_id: "222222222222222222", discord_channel_id: "333333333333333333") }
+      let(:item) { create(:canonical_pending_transaction, event:, amount_cents: -1000).ledger_item }
+      let(:receipt_url) { "https://cdn.discordapp.com/attachments/1/2/receipt.png" }
+      let(:payload) do
+        {
+          type: 5,
+          token: "interaction-token",
+          guild: { id: event.discord_guild_id },
+          channel: { id: event.discord_channel_id },
+          member: { user: { id: discord_user_id }, permissions: "0" },
+          data: {
+            custom_id: "attach_receipt:#{item.hashid}",
+            resolved: {
+              attachments: {
+                "444" => { filename: "receipt.png", content_type: "image/png", url: receipt_url }
+              }
+            }
+          }
+        }.to_json
+      end
+
+      before do
+        stub_request(:get, receipt_url).to_return(body: file_fixture("receipt.png").read)
+      end
+
+      def submit_modal
+        timestamp, signature = discord_signature(payload)
+
+        post "/discord/interaction_webhook",
+             params: payload,
+             headers: {
+               "X-Signature-Timestamp" => timestamp,
+               "X-Signature-Ed25519"   => signature,
+               "Content-Type"          => "application/json"
+             }
+      end
+
+      it "does not attach a receipt for a Discord user who has not linked HCB" do
+        allow(Discord::Bot).to receive(:bot).and_return(instance_double(Discordrb::Bot, server: nil, user: nil))
+
+        expect { submit_modal }.not_to change(Receipt, :count)
+        expect(response.parsed_body.dig("data", "content")).to include("link your Discord account")
+      end
+
+      it "does not attach a receipt for a linked user who is not in the organization" do
+        create(:user, discord_id: discord_user_id)
+
+        expect { submit_modal }.not_to change(Receipt, :count)
+        expect(response.parsed_body.dig("data", "content")).to include("don't have permission")
+      end
+
+      it "attaches the receipt as the linked organization member" do
+        user = create(:user, discord_id: discord_user_id)
+        create(:organizer_position, user:, event:)
+
+        expect { submit_modal }.to change(Receipt, :count).by(1)
+        expect(Receipt.last).to have_attributes(user:, receiptable: item, upload_method: "discord_bot_modal")
+        item_url = Rails.application.routes.url_helpers.ledger_item_url(item)
+        expect(response.parsed_body.dig("data", "embeds", 0, "description")).to include("[$10.00 at #{item.memo}](#{item_url})")
+        expect(response.parsed_body.dig("data", "components", 0, "components", 0)).to include("label" => "View receipt", "url" => item_url)
+      end
+    end
   end
 end

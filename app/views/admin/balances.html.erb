@@ -40,7 +40,7 @@
   <thead>
   <tr>
     <% @headers.each do |header| %>
-      <th><%= header %></th>
+      <%= tag.th header, class: ("text-right" if header == @headers.last) %>
     <% end %>
   </tr>
   </thead>
@@ -57,7 +57,7 @@
         <td colspan="2">All&nbsp;time</td>
       <% else %>
         <td><%= row[5] %></td>
-        <td><%= row[6] %></td>
+        <td class="text-right"><%= row[6] %></td>
       <% end %>
 
     </tr>
@@ -66,5 +66,5 @@
 </table>
 
 <% if @count.zero? %>
-  <%= blankslate "No events." %>
+  <%= blankslate "No events" %>
 <% end %>

@@ -55,6 +55,21 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where the ledger item's amount comes from too.
+  def merchant_amount
+    transaction = (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction
+    amount, currency = transaction&.values_at("merchant_amount", "merchant_currency")
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
+
+    Money.from_cents(amount.abs, currency.upcase)
+  end
+
+  def foreign_currency?
+    amount = merchant_amount
+    amount.present? && amount.currency != Money.default_currency
+  end
+
   # Only Stripe authorizations carry verification data; settled transactions
   # don't, so a charge that settled before it was reversed must still read it
   # from the authorization.
@@ -81,6 +96,12 @@ class CardCharge < ApplicationRecord
 
     requests = raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history") || []
     requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
+  end
+
+  # What the cardholder got back: the sum of the charge's refunds. The ledger
+  # item's amount can't say, since it nets the refunds against the capture.
+  def refunded_amount_cents
+    raw_stripe_transactions.select(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
   end
 
   def icon

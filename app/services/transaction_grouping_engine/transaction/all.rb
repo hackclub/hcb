@@ -80,18 +80,6 @@ module TransactionGroupingEngine
         @event ||= Event.find(@event_id)
       end
 
-      def canonical_event_mappings
-        @canonical_event_mappings ||= CanonicalEventMapping.where(event_id: event.id)
-      end
-
-      def canonical_transactions
-        @canonical_transactions ||= CanonicalTransaction.includes(:receipts).where(id: canonical_event_mappings.pluck(:canonical_transaction_id)).order("date desc, id desc")
-      end
-
-      def canonical_transaction_ids
-        @canonical_transaction_ids ||= canonical_event_mappings.pluck(:canonical_transaction_id)
-      end
-
       def search_modifier_for(type)
         return "" unless @search.present?
 
@@ -161,10 +149,7 @@ module TransactionGroupingEngine
         end
 
         if @missing_receipts
-          joins << <<~SQL
-            left join receipts on receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'
-          SQL
-          conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
+          conditions << "NOT #{HcbCode.receipts_exist_sql} AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
         end
 
         conditions << "q1.amount_cents < 0" if @expenses

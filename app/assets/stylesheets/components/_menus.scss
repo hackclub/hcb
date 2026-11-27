@@ -23,7 +23,7 @@
     }
 
     &:not(.menu__toggle--arrowless):after {
-      border-bottom-color: lighten(map-get($palette, smoke), 1%);
+      border-bottom-color: map-get($palette, white);
       border-width: 10px;
     }
   }
@@ -126,8 +126,8 @@
 
   @media screen and (max-width: 32em) {
     padding: 0.5rem;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     &:not(.menu__content--2) {
+      border-radius: $sheet-radius;
       padding: 1rem 0.5rem 3rem;
       position: fixed;
       top: auto;

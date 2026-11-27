@@ -17,6 +17,7 @@
 #  not_admin_only_comment_count :integer          default(0), not null
 #  pending_at                   :datetime
 #  receipt_count                :integer          default(0), not null
+#  receipt_due_at               :datetime
 #  receipt_required             :boolean
 #  settled_at                   :datetime
 #  short_code                   :text
@@ -31,13 +32,14 @@
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents     (amount_cents)
-#  index_ledger_items_on_author_id        (author_id)
-#  index_ledger_items_on_datetime         (datetime)
-#  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
-#  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
-#  index_ledger_items_on_short_code       (short_code) UNIQUE
-#  index_ledger_items_on_status           (status)
+#  index_ledger_items_on_amount_cents         (amount_cents)
+#  index_ledger_items_on_author_id            (author_id)
+#  index_ledger_items_on_datetime             (datetime)
+#  index_ledger_items_on_linked_object        (linked_object_type,linked_object_id)
+#  index_ledger_items_on_open_receipt_due_at  (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND receipt_required AND (receipt_count = 0) AND (marked_no_or_lost_receipt_at IS NULL))
+#  index_ledger_items_on_receipt_missing      (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
+#  index_ledger_items_on_short_code           (short_code) UNIQUE
+#  index_ledger_items_on_status               (status)
 #
 # Foreign Keys
 #
@@ -58,6 +60,8 @@ class Ledger
 
     include Commentable
     include Receiptable
+    # Card-locking scopes, columns, and the materializer. See the concern.
+    include CardLocking::ChargeBehavior
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
@@ -65,9 +69,31 @@ class Ledger
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
+    # Every model that declares `has_one :ledger_item, as: :linked_object`.
+    # Raw bank transactions have no linked object, so nil is allowed.
+    LINKED_OBJECT_TYPES = %w[
+      AchTransfer
+      BankFee
+      CardCharge
+      Check
+      CheckDeposit
+      Disbursement::Incoming
+      Disbursement::Outgoing
+      Donation
+      FeeReimbursementGroup
+      FeeRevenue
+      IncreaseCheck
+      Invoice
+      PaypalTransfer
+      Reimbursement::ExpensePayout
+      Reimbursement::PayoutHolding
+      StripeServiceFee
+      Wire
+      WiseTransfer
+    ].freeze
+
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
-    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
 
@@ -77,10 +103,13 @@ class Ledger
 
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    # Receipt bin suggestions for this item. The database drops them with it.
+    has_many :suggested_pairings, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
     has_many :repayment_allocations, class_name: "Repayment::Allocation", foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
     has_many :repayments, through: :repayment_allocations
     has_many :repayment_disbursements, through: :repayments, source: :disbursement
+    has_one :repaying_repayment, class_name: "Repayment", foreign_key: :repaying_ledger_item_id, inverse_of: :repaying_ledger_item
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -97,6 +126,7 @@ class Ledger
     attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
+    validates :linked_object_type, inclusion: { in: LINKED_OBJECT_TYPES }, allow_nil: true
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -115,6 +145,7 @@ class Ledger
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    scope :unmapped, -> { where.missing(:primary_mapping) }
 
     def status_text
       status.humanize
@@ -182,6 +213,13 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # A reimbursement payout's receipts are uploaded to the expense it pays out,
+    # not to the payout itself, so read them from there (as HcbCode#receipts
+    # does for the payout's HCB code). Every other item reads its own.
+    def receipts
+      expense_payout_receipts || super
     end
 
     # Tags are event-scoped. When this item is remapped to a different event, any
@@ -450,21 +488,47 @@ class Ledger
       end
     end
 
+    # The receipts on the expense this item pays out, when it is a reimbursement
+    # payout; nil for every other item.
+    def expense_payout_receipts
+      linked_object&.expense&.receipts if linked_object_type == "Reimbursement::ExpensePayout"
+    end
+
     def calculate_receipt_count
-      return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+      return expense_payout_receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
 
       receipts.size
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"]) && !gusto_debit?
+    end
+
+    # Gusto pulls payroll straight from an organization's account number, so
+    # there is no receipt to upload. The memo of a Column ACH transaction is
+    # "#{company_name} #{company_entry_description}" (see
+    # RawColumnTransaction#memo), so a memo whose first word is GUSTO is one
+    # whose ACH company name is GUSTO.
+    def gusto_debit?
+      return false unless linked_object_type.nil?
+
+      canonical_transactions.any? do |ct|
+        ct.transaction_source_type == "RawColumnTransaction" && ct.memo.to_s.split(" ", 2).first&.casecmp?("GUSTO")
+      end
     end
 
     def calculate_status
       # An item that has a linked object but no transactions yet (e.g. an invoice
       # that has been created but not paid). The linked object keeps it from being
-      # pruned once orphaned-item pruning exists.
-      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      # pruned once orphaned-item pruning exists. One that was rejected or
+      # canceled before any transaction existed (a scheduled ACH transfer that
+      # was canceled, a voided invoice) is no longer intended.
+      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+        return :rejected if linked_object.try(:rejected?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :intended
+      end
 
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"

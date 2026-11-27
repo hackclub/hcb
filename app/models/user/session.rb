@@ -17,6 +17,7 @@
 #  session_token_ciphertext :text
 #  signed_out_at            :datetime
 #  timezone                 :string
+#  user_agent               :text
 #  verified                 :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -38,7 +39,7 @@
 #
 class User
   class Session < ApplicationRecord
-    has_paper_trail skip: [:session_token, :ip, :longitude, :latitude] # session_token ciphertext columns will still be tracked
+    has_paper_trail skip: [:session_token, :ip, :longitude, :latitude, :user_agent] # session_token ciphertext columns will still be tracked
     has_encrypted :session_token
     blind_index :session_token
 
@@ -133,6 +134,7 @@ class User
         ip: nil,
         latitude: nil,
         longitude: nil,
+        user_agent: nil,
       )
     end
 
