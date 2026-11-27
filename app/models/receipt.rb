@@ -108,6 +108,12 @@ class Receipt < ApplicationRecord
 
   after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
   after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
+  # To the transaction it left, a receipt moved to the receipt bin or onto another transaction is as good as deleted.
+  after_update_commit do
+    if (previous = previous_receiptable)
+      CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
+    end
+  end
 
   validate :has_owner
 
@@ -260,6 +266,12 @@ class Receipt < ApplicationRecord
   end
 
   private
+
+  def previous_receiptable
+    return unless saved_change_to_receiptable_id? || saved_change_to_receiptable_type?
+
+    receiptable_type_before_last_save&.constantize&.find_by(id: receiptable_id_before_last_save)
+  end
 
   def pdf_text
     doc = if self.attachment_changes["file"]&.attachable
