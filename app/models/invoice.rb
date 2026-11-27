@@ -263,17 +263,6 @@ class Invoice < ApplicationRecord
     return "checkmark" if deposited? || paid_v2?
   end
 
-  def filter_data
-    {
-      exists: true,
-      paid: paid?,
-      unpaid: !paid?,
-      upcoming: due_date > 3.days.from_now,
-      overdue: due_date < 3.days.from_now && !paid?,
-      archived: archived?
-    }
-  end
-
   def set_fields_from_stripe_invoice(inv = remote_invoice)
     self.amount_due = inv.amount_due
     self.amount_paid = inv.amount_paid

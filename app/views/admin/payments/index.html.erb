@@ -25,7 +25,7 @@
       <th>Recipient</th>
       <th>Purpose</th>
       <th class="w-32">Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -40,7 +40,7 @@
         </td>
         <td><%= payment.purpose %></td>
         <td><%= payment.amount.format %></td>
-        <td><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
+        <td class="text-right"><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
         <td><%= link_to "View", payment_path(payment) %></td>
       </tr>
     <% end %>

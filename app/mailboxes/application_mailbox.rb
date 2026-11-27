@@ -23,16 +23,17 @@ class ApplicationMailbox < ActionMailbox::Base
   # Helper methods
   private
 
+  # Part#decoded converts the part's charset to UTF-8; body.decoded returns raw bytes.
   def html
-    mail.html_part&.body&.decoded
+    mail.html_part&.decoded
   end
 
   def text
-    mail.text_part&.body&.decoded
+    mail.text_part&.decoded
   end
 
   def body
-    mail.body&.decoded&.presence
+    mail.decoded.presence unless mail.multipart?
   end
 
 end

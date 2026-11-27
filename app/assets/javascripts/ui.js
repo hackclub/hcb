@@ -50,12 +50,22 @@ const populateSharedPopover = trigger => {
       const frame = document.createElement('turbo-frame')
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
-      frame.src = src
+      // src is set by loadSharedPopoverFrame once the frame is in its final place
       frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
   }
+}
+
+// Starts the popover frame's fetch. On a fresh open this waits for modal:open:
+// jquery-modal appends the popover to <body> and then to its blocker, each move
+// disconnects the frame, and Turbo aborts the in-flight fetch on disconnect. An
+// abort that lands while the response body is streaming is an uncaught
+// AbortError (Turbo never awaits that read), which fails system specs.
+const loadSharedPopoverFrame = () => {
+  const frame = document.querySelector('#shared_popover_body turbo-frame')
+  if (frame && !frame.src) frame.src = frame.dataset.popoverSrc
 }
 
 const sharedPopoverIsOpen = () =>
@@ -84,6 +94,7 @@ const openSharedPopover = (trigger, modalClass) => {
     // first, and the close handler empties the body we just filled.
     window.unexpandReceipt()
     populateSharedPopover(trigger)
+    loadSharedPopoverFrame()
     const popover = document.getElementById('shared_popover')
     popover.scrollTop = 0
     recordSharedPopoverState(popover)
@@ -876,6 +887,12 @@ $(document).on('wheel', 'input[type=number]', e => {
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
     recordSharedPopoverState(modal.elm[0])
+  }
+})
+
+$(document).on($.modal.OPEN, function (event, modal) {
+  if (modal?.elm?.[0]?.id === 'shared_popover') {
+    loadSharedPopoverFrame()
   }
 })
 

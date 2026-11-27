@@ -46,7 +46,7 @@
       <th>Date</th>
       <th>Organization</th>
       <th>Name</th>
-      <th>Stripe Status</th>
+      <th class="text-right">Stripe Status</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -70,7 +70,7 @@
         <td>
           <%= design.name_without_id %>
         </td>
-        <td><%= design.stripe_status&.titleize || "Unknown" %></td>
+        <td class="text-right"><%= design.stripe_status&.titleize || "Unknown" %></td>
         <td>
           <%= link_to "Preview", stripe_cards_personalization_design_path(design), target: :_blank %>
           |

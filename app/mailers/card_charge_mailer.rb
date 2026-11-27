@@ -8,6 +8,9 @@ class CardChargeMailer < ApplicationMailer
   def reversed
     @ledger_item = params[:ledger_item]
     @card_charge = @ledger_item.linked_object
+    # Every card charge is on a card HCB issued, so the item always resolves
+    # to the cardholder. There's deliberately no nil guard: a charge with no
+    # cardholder means something upstream broke, and that should fail loudly.
     @user = @ledger_item.author
 
     return unless @user.email_charge_notifications_enabled?
