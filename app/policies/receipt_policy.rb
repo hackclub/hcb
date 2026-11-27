@@ -16,8 +16,9 @@ class ReceiptPolicy < ApplicationPolicy
     end
 
     # any members of events should be able to modify receipts.
-    if record.receiptable.event
-      return OrganizerPosition.role_at_least?(user, record.receiptable.event, :member) && unlocked?
+    event = receiptable_event
+    if event
+      return OrganizerPosition.role_at_least?(user, event, :member) && unlocked?
     end
 
     return false
@@ -32,6 +33,19 @@ class ReceiptPolicy < ApplicationPolicy
   end
 
   private
+
+  # Ledger::Item deliberately has no generic `event` method (it can be mapped
+  # onto more than one ledger), so resolve its event the same way
+  # Ledger::ItemPolicy does instead of assuming a single association.
+  def receiptable_event
+    receiptable = record.receiptable
+
+    if receiptable.is_a?(::Ledger::Item)
+      receiptable.primary_ledger&.event || receiptable.primary_ledger&.card_grant&.event
+    else
+      receiptable.event
+    end
+  end
 
   def unlocked?
     !record&.receiptable.try(:locked)

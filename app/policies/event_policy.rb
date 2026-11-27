@@ -24,7 +24,6 @@ class EventPolicy < ApplicationPolicy
   alias_method :balance_transactions?, :show?
   alias_method :merchants_chart?, :show?
   alias_method :categories_chart?, :show?
-  alias_method :top_categories?, :show?
   alias_method :tags_chart?, :show?
   alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
@@ -50,8 +49,10 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  # Readers may view settings; every settings form is disabled unless
+  # `update?` passes, and mutations are gated on `update?` server-side.
   def edit?
-    auditor_or_member?
+    auditor_or_reader?
   end
 
   # pinning a transaction to an event
@@ -263,7 +264,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    (auditor? || member?) && record.plan.account_number_enabled?
+    (auditor? || manager?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -306,12 +307,6 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  alias_method :ledger_stats?, :ledger?
-
-  def toggle_new_ledger?
-    is_public || auditor_or_reader?
-  end
-
   alias hide_onboarding_message? request_call?
 
   private
@@ -322,10 +317,6 @@ class EventPolicy < ApplicationPolicy
 
   def auditor_or_reader?
     auditor? || reader?
-  end
-
-  def auditor_or_member?
-    auditor? || member?
   end
 
   def admin?

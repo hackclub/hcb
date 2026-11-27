@@ -12,9 +12,9 @@ RSpec.shared_context "card locking charges" do
 
   # Attach at the correct time so the resolution callback (added later) freezes
   # against the right timestamp. Do NOT attach-then-backdate.
-  def attach_receipt(hcb_code, uploaded_by:, at: nil)
+  def attach_receipt(charge, uploaded_by:, at: nil)
     build_and_save = lambda do
-      receipt = Receipt.new(receiptable: hcb_code, user: uploaded_by, upload_method: :api)
+      receipt = Receipt.new(receiptable: charge, user: uploaded_by, upload_method: :api)
       receipt.file.attach(
         io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
         filename: "receipt.png", content_type: "image/png"
@@ -25,6 +25,9 @@ RSpec.shared_context "card locking charges" do
     at ? travel_to(at) { build_and_save.call } : build_and_save.call
   end
 
+  # A settled Stripe card charge, returned as the Ledger::Item card locking keys
+  # on: linked to its CardCharge (so the cardholder resolves through the card),
+  # mapped to the event's primary ledger, with a negative settled transaction.
   def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil)
     charge_event ||= event
     stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
@@ -39,8 +42,8 @@ RSpec.shared_context "card locking charges" do
     )
     create(:canonical_event_mapping, canonical_transaction:, event: charge_event)
 
-    hcb_code = canonical_transaction.local_hcb_code.reload
-    attach_receipt(hcb_code, uploaded_by: user, at: uploaded_at) if uploaded_at.present?
-    hcb_code.reload
+    charge = canonical_transaction.reload.ledger_item
+    attach_receipt(charge, uploaded_by: user, at: uploaded_at) if uploaded_at.present?
+    charge.reload
   end
 end

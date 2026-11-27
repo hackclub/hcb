@@ -31,7 +31,7 @@
     <% end %>
     <% if @report.payout_holding&.failed? %>
       <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;padding:0", 'aria-label': "Cancel this reimbursement" do %>
-        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", data: { turbo_method: :post, turbo_confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them.", turbo_confirm_danger: true } do %>
+        <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", data: { turbo_method: :post, turbo_confirm: "After canceling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them.", turbo_confirm_danger: true } do %>
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
       <% end %>
@@ -55,7 +55,7 @@
                       style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
                       'aria-label': "View the associated card grant." %>
     <% end %>
-    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event?) %>
+    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event? || (@report.reviewer_assignable_by_creator? && policy(@report).edit?)) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
@@ -170,12 +170,12 @@
       </p>
       <p>
         Begin by adding an expense to this report below. Each purchase must be a separate expense with:
-        <ol>
+      </p>
+      <ol>
           <li>An itemized receipt.</li>
           <li>A memo describing the expense.</li>
           <li>The amount you are seeking reimbursement for.</li>
-        </ol>
-      </p>
+      </ol>
       <p>
         Once you've added all of your expenses to the report, click <i>Submit</i> to begin the review process.
       </p>
@@ -232,7 +232,12 @@
                 :wise_recipient_id,
                 style: "width: 400px;",
                 class: "mt-0 !max-w-full",
-                placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                data: {
+                  controller: "strip-prefix",
+                  action: "paste->strip-prefix#paste",
+                  strip_prefix_prefix_value: "https://wise.com/recipients/"
+                }
               ) %>
         </div>
         <%= form.submit "Mark transfer as sent" %>
@@ -242,7 +247,7 @@
         <h4 class="mt-0">⚠️ Transaction failed? Here's what to do!</h4>
         <p>Reach out to the user to request new information from them (for example an updated account number or address). Inform them that the USD amount of this report has been locked at <%= locked_usd_amount %> and that after we receive the updated information from them, we will send the <%= @report.currency %> equivalent of <%= locked_usd_amount %>.</p>
         <p><strong>Upon resending the new information, send a Wise transfer with the updated information with a USD value of <%= locked_usd_amount %>.</strong></p>
-        <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Cancelling a report is a destructive action and the report can not be resubmitted afterwards.</p>
+        <p>If you would prefer to abort this reimbursement report, please reach out to an engineer to cancel the report. Canceling a report is a destructive action and the report cannot be resubmitted afterwards.</p>
       </div>
     </div>
   <% end %>

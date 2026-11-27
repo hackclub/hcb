@@ -1,0 +1,37 @@
+<%# locals: (stripe_cards:) %>
+
+<% if @view == "list" %>
+  <article class="table-container">
+    <table class="stripe-cards-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Number</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th class="text-right">Issued on</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stripe_cards.each do |c| %>
+          <%# Cardholders keep their cards after leaving an organization, but can no longer open them %>
+          <% linkable = policy(c).show? %>
+          <tr class="<%= "clickable" if linkable %>">
+            <td><%= (c.card_grant.present? ? c.card_grant.purpose : c.name).presence || tag.span("—", class: "muted") %></td>
+            <td class="fs-mask"><%= c.hidden_card_number_with_last_four %></td>
+            <td><%= c.virtual? ? "Virtual" : "Physical" %></td>
+            <td><span class="ml0 badge bg-<%= c.state %>"><%= c.state_text %></span></td>
+            <td class="text-right">
+              <%= format_date c.created_at %>
+              <%= link_to "", stripe_card_path(c), class: "stretched-link", data: stripe_card_popover_data(c) if linkable %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% else %>
+  <article class="mixed-grid grid--spacious">
+    <%= render stripe_cards, headless: true, show_purpose: true, popover: true %>
+  </article>
+<% end %>

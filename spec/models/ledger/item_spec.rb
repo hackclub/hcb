@@ -119,6 +119,42 @@ RSpec.describe Ledger::Item, type: :model do
       expect(Ledger::Item.new.status).to eq("pending")
     end
 
+    describe "linked_object_type" do
+      let(:item) { Ledger::Item.new(amount_cents: 1000, memo: "Test", datetime: Time.current) }
+
+      it "allows no linked object" do
+        item.linked_object_type = nil
+        expect(item).to be_valid
+      end
+
+      it "allows every model that can be a linked object" do
+        Ledger::Item::LINKED_OBJECT_TYPES.each do |type|
+          item.linked_object_type = type
+          expect(item).to be_valid, "expected #{type} to be a valid linked_object_type"
+        end
+      end
+
+      it "rejects a model that cannot be a linked object" do
+        item.linked_object_type = "Event"
+        expect(item).not_to be_valid
+        expect(item.errors[:linked_object_type]).to include("is not included in the list")
+      end
+
+      it "lists exactly the models that declare has_one :ledger_item, as: :linked_object" do
+        Rails.application.eager_load!
+
+        declaring = ApplicationRecord.descendants.select do |model|
+          model.reflect_on_association(:ledger_item)&.options&.dig(:as) == :linked_object
+        end
+
+        # Disbursement picks the association up from Disbursement::Shared, but
+        # ledger items link to its Outgoing/Incoming lenses, never to it directly.
+        types = declaring.map(&:polymorphic_name) - ["Disbursement"]
+
+        expect(types.sort).to eq(Ledger::Item::LINKED_OBJECT_TYPES)
+      end
+    end
+
     describe "primary_ledger association" do
       it "can be created without a primary_ledger" do
         item = Ledger::Item.new(
@@ -308,6 +344,18 @@ RSpec.describe Ledger::Item, type: :model do
           mapping2.save(validate: false)
         }.to raise_error(ActiveRecord::RecordNotUnique)
       end
+    end
+  end
+
+  describe ".unmapped" do
+    it "returns items without a primary mapping" do
+      unmapped = create(:ledger_item)
+      mapped = create(:ledger_item, :with_primary_ledger)
+      secondary_only = create(:ledger_item)
+      create(:ledger_mapping, ledger: create(:ledger), ledger_item: secondary_only)
+
+      expect(described_class.unmapped).to contain_exactly(unmapped, secondary_only)
+      expect(described_class.unmapped).not_to include(mapped)
     end
   end
 
@@ -642,6 +690,15 @@ RSpec.describe Ledger::Item, type: :model do
     let(:event) { create(:event) }
     let(:report) { create(:reimbursement_report, event:) }
     let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
+
+    it "reads #receipts from the reimbursed expense, ignoring its own preloaded association" do
+      receipt = attach_receipt_to(expense)
+
+      item = Ledger::Item.preload(:receipts).find(payout_for(expense).reload.ledger_item.id)
+
+      expect(item.association(:receipts)).to be_loaded
+      expect(item.receipts).to contain_exactly(receipt)
+    end
 
     it "counts the receipts uploaded to the reimbursed expense" do
       attach_receipt_to(expense)

@@ -111,14 +111,10 @@
               </td>
               <% if show_details %>
                 <td class="text-right">
-                  <% if contractor.payee.total_paid_cents.positive? %>
-                    <%= render_money contractor.payee.total_paid_cents %>
-                  <% else %>
-                    <span class="muted">&mdash;</span>
-                  <% end %>
-                  <%= link_to "", event_payroll_position_path(event_id: @event.slug, id: contractor),
+                  <%= render_money contractor.payee.total_paid_cents %>
+                  <%= link_to "", payroll_position_path(contractor),
                         class: "stretched-link",
-                        data: popovers_enabled? ? contractor_popover_data(contractor) : { turbo_frame: "_top" } %>
+                        data: contractor_popover_data(contractor) %>
                 </td>
               <% end %>
             </tr>

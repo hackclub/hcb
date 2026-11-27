@@ -1,0 +1,89 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "Menus", type: :system do
+  let(:user) { create(:user, phone_number: "+18556254225") }
+  let(:toggle) { find(".user-menu-trigger") }
+
+  # Sends Escape to the focused element without clicking anything first
+  def press_escape = page.driver.browser.keyboard.type(:escape)
+
+  before do
+    sign_in(user)
+    visit my_reimbursements_path
+  end
+
+  it "toggles open and closed from its button" do
+    toggle.click
+    expect(page).to have_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("true")
+
+    toggle.click
+    expect(page).to have_no_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("false")
+  end
+
+  it "closes on Escape and on an outside click" do
+    toggle.click
+    press_escape
+    expect(page).to have_no_link("Sign out")
+
+    toggle.click
+    find("h1", text: "Reimbursements").click
+    expect(page).to have_no_link("Sign out")
+  end
+
+  it "closes again when clicked twice before it's positioned" do
+    # Both clicks land before floating-ui's position promise resolves
+    execute_script("const t = document.querySelector('.user-menu-trigger'); t.click(); t.click()")
+
+    expect(page).to have_no_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("false")
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+  end
+
+  it "hands focus back to its button when closed with Escape from inside" do
+    toggle.click
+    # Focus a link inside, as Tab would
+    execute_script("[...document.querySelectorAll('a')].find(a => a.textContent.includes('Sign out') && a.checkVisibility()).focus()")
+    expect(evaluate_script("document.activeElement.textContent")).to include("Sign out")
+    press_escape
+
+    expect(page).to have_no_link("Sign out")
+    expect(evaluate_script("document.activeElement === document.querySelector('.user-menu-trigger')")).to be(true)
+  end
+
+  it "leaves one copy open when toggled three times quickly, and none once closed" do
+    execute_script("const t = document.querySelector('.user-menu-trigger'); t.click(); t.click(); t.click()")
+    expect(page).to have_link("Sign out")
+    expect(toggle["aria-expanded"]).to eq("true")
+    # The one closed on the way animates out; once it's gone, just the open one is left
+    expect(page).to have_css("body > .menu__content", count: 1, visible: :all)
+
+    press_escape
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+  end
+
+  it "takes its open copy with it when its toggle is removed from the page" do
+    toggle.click
+    expect(page).to have_link("Sign out")
+
+    execute_script("document.querySelector('.user-menu-trigger').closest('[data-controller~=menu]').remove()")
+
+    expect(page).to have_no_link("Sign out")
+    expect(page).to have_no_css("body > .menu__content", visible: :all)
+    # And Escape has nothing left of it to close
+    execute_script("document.body.insertAdjacentHTML('beforeend', '<input type=search id=search value=lunch>'); document.getElementById('search').focus()")
+    press_escape
+    expect(evaluate_script("document.getElementById('search').value")).to eq("")
+  end
+
+  it "signs out through its Turbo DELETE link" do
+    toggle.click
+    click_on "Sign out"
+
+    expect(page).to have_current_path(auth_users_path, ignore_query: true)
+    expect(user.user_sessions.not_expired).to be_empty
+  end
+end

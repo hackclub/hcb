@@ -17,7 +17,7 @@
             <th>Token</th>
             <th>Authorized At</th>
             <th>Scopes</th>
-            <th>Expires</th>
+            <th class="text-right">Expires</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -28,7 +28,7 @@
               <td><code><%= token.abbreviated %></code></td>
               <td><%= local_time_ago token.created_at %></td>
               <td><%= token.scopes %></td>
-              <td>
+              <td class="text-right">
                 <% if token.expires_in %>
                   <%= time_ago_in_words(token.created_at + token.expires_in.seconds) %> from now
                 <% else %>

@@ -29,7 +29,7 @@
       <th>Status</th>
       <th>Service</th>
       <th>Parties</th>
-      <th class="w-24">Links</th>
+      <th class="w-24 text-right">Links</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -45,7 +45,7 @@
           <% elsif contract.contractable.is_a?(Event::Application) %>
             <%= link_to "Application for #{contract.contractable.name}", application_path(contract.contractable) %>
           <% elsif contract.contractable.is_a?(Payroll::Position) %>
-            <%= link_to "Contractor position for #{contract.contractable.event.name}", event_payroll_position_path(contract.contractable.event, contract.contractable) %>
+            <%= link_to "Contractor position for #{contract.contractable.event.name}", payroll_position_path(contract.contractable) %>
           <% end %>
         </td>
         <td><%= contract.aasm_state %></td>
@@ -54,7 +54,7 @@
           <% contract.parties.order(role: :desc).each do |party| %>
             <% if party.user.present? %>
               <%= link_to party.email, party.user %>
-            <% elsif %>
+            <% else %>
               <span class="error"><%= party.email %></span>
             <% end %>
             (<%= party.role %>):
@@ -66,7 +66,7 @@
             <br>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <%= link_to "DocuSeal", contract.docuseal_submission_url if contract.sent_with_docuseal? %>
           <%= link_to "Document", contract.document if contract.document.present? %>
         </td>

@@ -19,7 +19,9 @@
 require "simplecov"
 require "faker"
 require "webmock/rspec"
-require "sidekiq/testing"
+require "sidekiq"
+
+Sidekiq.testing!(:fake)
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate

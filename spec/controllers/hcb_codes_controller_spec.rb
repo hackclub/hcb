@@ -27,12 +27,47 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).not_to include("Cancel transfer")
     end
 
+    it "renders a charge on a card grant for its grantee" do
+      grantor = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      grantee = create(:user)
+      card = create(:stripe_card, :with_stripe_id, event: grantor, stripe_cardholder: create(:stripe_cardholder, user: grantee))
+      card_grant = create(:card_grant, event: grantor, user: grantee, stripe_card: card)
+      charge = create(:canonical_pending_transaction, event: grantor, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction, stripe_card: card, stripe_merchant_category_code: "5462"))
+      Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: charge.local_hcb_code.ledger_item, mapped_by: create(:user, :make_admin))
+      create_session(grantee, verified: true)
+
+      get :show, params: { id: charge.local_hcb_code.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(charge.local_hcb_code.public_id)
+      expect(response.body).to include("Bakeries (bakeries)")
+
+      # The grant page's ledger rows open the charge in a popover.
+      get :show, params: { id: charge.local_hcb_code.hashid, frame: true }
+
+      expect(response).to be_successful
+      expect(response.body).to include("Address check")
+    end
+
     it "links each CPT to its own page" do
       cpt = hcb_code.canonical_pending_transactions.sole
 
       get :show, params: { id: hcb_code.hashid }
 
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
+    end
+
+    # Posting a comment in the popover reloads it, which is when the ledger row
+    # behind it picks up the new comment count.
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      item_hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item_hcb_code.ledger_item.id}']"
+
+      get :show, params: { id: item_hcb_code.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item_hcb_code.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
     end
 
     context "for a Wise transfer whose pending transaction is not grouped under its HCB code" do
@@ -103,7 +138,9 @@ RSpec.describe HcbCodesController, type: :controller do
 
       it "is hidden once the expense has been repaid" do
         disbursement = create(:disbursement, event:)
-        Repayment.new(disbursement:, repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+        repayment = disbursement.build_repayment
+        repayment.allocations.build(repaid_ledger_item: expense.ledger_item, amount_cents: 100_00)
+        repayment.save!(validate: false)
 
         get :show, params: { id: expense.local_hcb_code.hashid }
 
@@ -119,6 +156,146 @@ RSpec.describe HcbCodesController, type: :controller do
         expect(response).to be_successful
         expect(response.body).not_to include("Repay this")
       end
+    end
+
+    context "marking a repayment" do
+      render_views
+
+      let(:event) { create(:event) }
+      let(:user) { create(:user) }
+      let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+      let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00, memo: "Venmo from Sam") }
+
+      before do
+        create(:organizer_position, event:, user:)
+        create_session(user, verified: true)
+      end
+
+      it "offers income a match with an expense of the same amount" do
+        expense
+
+        get :show, params: { id: income.local_hcb_code.hashid }
+
+        expect(response.body).to include("Mark as a repayment")
+        expect(response.body).to include(candidates_ledger_item_repayment_path(income.ledger_item))
+      end
+
+      it "offers an expense a match with income of the same amount" do
+        income
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).to include("Mark as repaid")
+      end
+
+      it "is hidden when nothing has the same amount" do
+        create(:canonical_transaction, event:, amount_cents: 50_00)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).not_to include("Mark as repaid")
+      end
+
+      it "is hidden once the expense has been repaid" do
+        RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+        create(:canonical_transaction, event:, amount_cents: 100_00)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).not_to include("Mark as repaid")
+      end
+    end
+  end
+
+  describe "Process button" do
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:member) { create(:user).tap { |user| create(:organizer_position, user:, event:, role: :manager) } }
+
+    shared_examples "a Process button for staff" do
+      it "is shown to an auditor" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: transfer.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(action="#{process_path}"))
+      end
+
+      it "is shown to an admin" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get :show, params: { id: transfer.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(action="#{process_path}"))
+      end
+
+      it "is hidden from an organization manager" do
+        create_session(member, verified: true)
+
+        get :show, params: { id: transfer.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include(process_path)
+      end
+    end
+
+    context "on a wire" do
+      let(:transfer) do
+        stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+          .to_return_json(status: 200, body: { country_code: "DE" })
+        create(:wire, :pending, event:, user: member)
+      end
+      let(:process_path) { wire_process_admin_path(transfer) }
+
+      it_behaves_like "a Process button for staff"
+    end
+
+    context "on a PayPal transfer" do
+      let(:transfer) do
+        # New PayPal transfers are refused at validation, so save past it to
+        # stand in for one created before that.
+        PaypalTransfer.new(
+          event:,
+          user: member,
+          amount_cents: 25_00,
+          memo: "Stickers",
+          payment_for: "Stickers",
+          recipient_name: "Orpheus",
+          recipient_email: "orpheus@example.com"
+        ).tap { |paypal_transfer| paypal_transfer.save!(validate: false) }
+      end
+      let(:process_path) { paypal_transfer_process_admin_path(transfer) }
+
+      it_behaves_like "a Process button for staff"
+    end
+  end
+
+  describe "GET #dispute" do
+    let(:event) { create(:event) }
+    let(:member) { create(:user) }
+
+    before do
+      create(:organizer_position, event:, user: member, role: :member)
+      create_session(member, verified: true)
+    end
+
+    it "sends a disputable transaction to the dispute form with its code" do
+      hcb_code = create(:canonical_transaction, event:, amount_cents: -500, date: 10.days.ago).local_hcb_code
+
+      get :dispute, params: { id: hcb_code.hashid }
+
+      expect(response).to redirect_to(a_string_starting_with("https://forms.hackclub.com/"))
+      expect(response.location).to include("prefill_Transaction+Code=#{CGI.escape(hcb_code.hashid)}")
+    end
+
+    it "explains why a transaction can't be disputed" do
+      hcb_code = create(:canonical_transaction, event:, amount_cents: -500, date: 91.days.ago).local_hcb_code
+
+      get :dispute, params: { id: hcb_code.hashid }
+
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
+      expect(flash[:error]).to eq("Bank account transactions older than 90 days can not be disputed.")
     end
   end
 end

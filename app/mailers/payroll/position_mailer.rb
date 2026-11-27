@@ -59,7 +59,7 @@ module Payroll
     end
 
     def reply_to_addresses
-      manager_emails = @event.managers.map(&:email_address_with_name)
+      manager_emails = @event.organizer_contact_emails(only_managers: true, include_contact_email: false)
       creator_email = @position.contracts.not_voided.first&.party(:organizer)&.user&.email_address_with_name
 
       [*manager_emails, creator_email].compact.uniq
