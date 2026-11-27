@@ -45,7 +45,7 @@
       <th>Stripe Invoice Number</th>
       <th class="w-32">Amount</th>
       <th class="w-24">Status</th>
-      <th class="w-32">FeeReimbursementId</th>
+      <th class="w-32 text-right">FeeReimbursementId</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -67,7 +67,7 @@
         <td><%= link_to invoice.number, invoice.stripe_dashboard_url %></td>
         <td><%= render_money_amount(invoice.amount_due) %></td>
         <td><%= invoice.status.upcase %></td>
-        <td><%= invoice.fee_reimbursement_id %></td>
+        <td class="text-right"><%= invoice.fee_reimbursement_id %></td>
         <td>
           <%= link_to "Process", invoice_process_admin_path(invoice.id) %>
         </td>
