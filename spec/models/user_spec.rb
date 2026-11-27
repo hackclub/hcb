@@ -153,6 +153,35 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "legal first and last name" do
+    {
+      "Md Rahman"          => ["Md", "Rahman"],
+      "MD. Rahman"         => ["MD.", "Rahman"],
+      "Md Abdul Karim"     => ["Abdul", "Karim"],
+      "Dr Who"             => ["Dr", "Who"],
+      "Miss Lee"           => ["Miss", "Lee"],
+      "John Elder"         => ["John", "Elder"],
+      "Jr Lee"             => ["Jr", "Lee"],
+      "VI NGUYEN"          => ["VI", "NGUYEN"],
+      "Prof. Donald Knuth" => ["Donald", "Knuth"],
+    }.each do |full_name, (first, last)|
+      it "parses #{full_name.inspect} into a name Stripe accepts" do
+        user = build(:user, full_name:)
+
+        expect([user.first_name(legal: true), user.last_name(legal: true)]).to eq([first, last])
+        expect(StripeCardholder.first_name(user)).to be_present
+        expect(StripeCardholder.last_name(user)).to be_present
+      end
+    end
+
+    it "does not reuse the preferred name for the legal name" do
+      user = build(:user, full_name: "Robert Smith", preferred_name: "Bob")
+
+      expect(user.first_name).to eq("Bob")
+      expect(user.first_name(legal: true)).to eq("Robert")
+    end
+  end
+
   describe "#last_name" do
     it "returns actual last name" do
       user = create(:user, full_name: "Ken Griffey Jr.")

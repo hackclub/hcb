@@ -340,11 +340,11 @@ class User < ApplicationRecord
   end
 
   def first_name(legal: false)
-    @first_name ||= (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
+    (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
   end
 
   def last_name(legal: false)
-    @last_name ||= namae(legal:)&.family&.split(" ")&.last
+    namae(legal:)&.family&.split(" ")&.last
   end
 
   def initial_name
@@ -785,10 +785,24 @@ class User < ApplicationRecord
 
   def namae(legal: false)
     if legal
-      @legal_namae ||= Namae.parse(full_name).first
+      @legal_namae ||= parse_name(full_name.to_s)
     else
       @namae ||= Namae.parse(name).first || Namae.parse(name_simplified).first || Namae::Name.new(given: name_simplified)
     end
+  end
+
+  # Namae reads some real names as titles or suffixes ("Md Rahman" is "Md." + family "Rahman"), leaving no first name.
+  NAMAE_WITHOUT_TITLES = { title: /(?!)/, appellation: /(?!)/ }.freeze
+  def parse_name(str)
+    complete = ->(n) { n&.family.present? && (n.given || n.particle).present? }
+    parsed = Namae.parse(str).first
+    return parsed if complete.call(parsed)
+
+    parsed = Namae::Parser.new(NAMAE_WITHOUT_TITLES).parse(str).first
+    return parsed if complete.call(parsed)
+
+    words = str.split
+    Namae::Name.new(given: words.first, family: (words.last if words.many?))
   end
 
   def name_simplified
