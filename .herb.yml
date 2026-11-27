@@ -29,6 +29,11 @@ linter:
       enabled: true
       severity: error
 
+    # Ours (.herb/rules): an unlabeled column still says what it holds, in an ERB comment.
+    table-header-has-content:
+      enabled: true
+      severity: error
+
     # Reactive views (`herb:slots`, `herb:state`, `data-herb-*` actions).
     # These catch what would otherwise only fail in the browser: an action
     # naming an undeclared state, a read the client can't evaluate, a state

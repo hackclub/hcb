@@ -216,7 +216,7 @@
           <th>Date</th>
           <th>Organization</th>
           <th>For</th>
-          <th>Amount</th>
+          <th class="text-right">Amount</th>
         </tr>
       </thead>
       <tbody>
@@ -237,7 +237,7 @@
                 <%= link_to "View invoice", url_for(invoice_receipt.file), class: "muted text-xs relative z-10", data: { turbo_frame: "_top" } %>
               <% end %>
             </td>
-            <td>
+            <td class="text-right">
               <%= render_money payment.amount_cents %>
 
               <% if payout.present? && policy(payout.ledger_item).show? %>

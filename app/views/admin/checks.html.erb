@@ -30,7 +30,7 @@
       <th>Recipient</th>
       <th>Check Number</th>
       <th class="w-32">Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -48,7 +48,7 @@
         <td><%= check.recipient_name %></td>
         <td><%= check.check_number || "-----" %></td>
         <td><%= render_money_amount(check.amount) %></td>
-        <td><%= check.aasm_state.upcase %></td>
+        <td class="text-right"><%= check.aasm_state.upcase %></td>
         <td>
           <%= link_to "View", check_path(check) %>
         </td>

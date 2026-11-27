@@ -1,8 +1,8 @@
 <%= turbo_stream.update_all ".ledger_item_#{item.hashid}_tags" do %>
-  <%= render partial: "canonical_transactions/tag", collection: item.tags, locals: { item:, streamed: local_assigns[:streamed] } %>
+  <%= render partial: "ledger/items/tag", collection: item.tags, locals: { item:, streamed: local_assigns[:streamed] } %>
 <% end %>
 
 <%= turbo_stream.update_all tag_dom_class(item, tag, "_toggle") do %>
-  <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+  <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
   <%= tag.label %>
 <% end %>
