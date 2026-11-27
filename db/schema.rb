@@ -1797,6 +1797,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
 
+  create_table "lost_receipt_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "description", null: false
+    t.integer "quantity", null: false
+    t.bigint "statement_id", null: false
+    t.integer "unit_amount_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["statement_id"], name: "index_lost_receipt_items_on_statement_id"
+  end
+
+  create_table "lost_receipt_statements", force: :cascade do |t|
+    t.datetime "confirmed_at", null: false
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.string "merchant", null: false
+    t.text "purpose", null: false
+    t.bigint "receipt_id"
+    t.string "signer_name", null: false
+    t.bigint "submitter_id"
+    t.bigint "total_amount_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["receipt_id"], name: "index_lost_receipt_statements_on_receipt_id", unique: true
+    t.index ["submitter_id"], name: "index_lost_receipt_statements_on_submitter_id"
+  end
+
   create_table "mailbox_addresses", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.string "address", null: false
@@ -3257,6 +3282,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_031355) do
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
+  add_foreign_key "lost_receipt_items", "lost_receipt_statements", column: "statement_id"
+  add_foreign_key "lost_receipt_statements", "receipts"
+  add_foreign_key "lost_receipt_statements", "users", column: "submitter_id"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"
   add_foreign_key "organizer_position_deletion_requests", "organizer_positions"
