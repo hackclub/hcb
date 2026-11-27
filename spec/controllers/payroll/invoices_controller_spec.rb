@@ -173,6 +173,28 @@ RSpec.describe Payroll::InvoicesController do
 
         expect(response.body).not_to include(approve_payroll_invoice_path(invoice))
       end
+
+      it "shows who approved it and its payment" do
+        stub_balance(100_000_00)
+        invoice.approve(reviewed_by: organizer)
+
+        get :show, params: { id: invoice.hashid }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Reviewed by")
+        expect(response.body).to include(payment_path(invoice.reload.payment))
+        expect(response.body).not_to include(approve_payroll_invoice_path(invoice))
+      end
+
+      it "shows an invoice that has no attachment" do
+        receipt.destroy!
+
+        get :show, params: { id: invoice.hashid }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("No attachment")
+        expect(response.body).to include(approve_payroll_invoice_path(invoice))
+      end
     end
 
     it "is not visible to users outside the organization" do
@@ -203,6 +225,7 @@ RSpec.describe Payroll::InvoicesController do
 
         expect { 2.times { approve! } }.to change(Payment, :count).by(1)
         expect(flash[:error]).to eq("This invoice has already been reviewed.")
+        expect(response).to redirect_to(payroll_invoice_path(invoice))
       end
 
       it "leaves the invoice reviewable when the balance won't cover it" do
@@ -267,6 +290,7 @@ RSpec.describe Payroll::InvoicesController do
 
       expect(invoice.reload).to be_rejected
       expect(invoice.reviewed_by).to eq(organizer)
+      expect(response).to redirect_to(payroll_invoice_path(invoice))
     end
   end
 end

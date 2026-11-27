@@ -18,7 +18,7 @@
             <strong class="truncate" title="<%= receipt.file.filename %>"><%= receipt.file.filename %></strong>
             <%= link_to "Open file", file_path, target: "_blank", class: "text-sm nowrap no-underline" %>
           </div>
-          <% if (preview = receipt.preview(resize: "2048x2048")) %>
+          <% if (preview = receipt.preview) %>
             <%= link_to file_path, target: "_blank" do %>
               <%= image_tag preview, alt: "Preview of #{receipt.file.filename}", class: "block w-full h-auto" %>
             <% end %>
