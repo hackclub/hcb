@@ -143,6 +143,47 @@ RSpec.describe Payroll::InvoicesController do
     end
   end
 
+  describe "GET #show" do
+    render_views
+
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 5_000_00, start_date: position.start_date, end_date: position.start_date) }
+    let!(:receipt) do
+      Receipt.create!(receiptable: invoice, user: organizer, file: fixture_file_upload("receipt.png", "image/png"), upload_method: :contractor_invoice,
+                      data_extracted: true, extracted_total_amount_cents: 13_37)
+    end
+
+    context "as an organizer" do
+      before { create_session(organizer, verified: true) }
+
+      it "shows the amount being paid, not the amount extracted from its upload" do
+        get :show, params: { id: invoice.hashid }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("$5,000.00")
+        expect(response.body).to include("receipt.png")
+        expect(response.body).not_to include("$13.37")
+        expect(response.body).not_to include("Data extracted by HCB")
+        expect(response.body).to include(approve_payroll_invoice_path(invoice))
+      end
+
+      it "hides review actions once the invoice is reviewed" do
+        invoice.mark_rejected!(organizer)
+
+        get :show, params: { id: invoice.hashid }
+
+        expect(response.body).not_to include(approve_payroll_invoice_path(invoice))
+      end
+    end
+
+    it "is not visible to users outside the organization" do
+      create_session(create(:user), verified: true)
+
+      get :show, params: { id: invoice.hashid }
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
   describe "POST #approve" do
     let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency, start_date: position.start_date, end_date: position.start_date) }
 

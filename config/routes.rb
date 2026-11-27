@@ -673,7 +673,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+  resources :payroll_invoices, only: [:show], controller: "payroll/invoices" do
     member do
       post "approve"
       post "reject"

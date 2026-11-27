@@ -3,7 +3,7 @@
 module Payroll
   class InvoicesController < ApplicationController
     before_action :set_position, only: [:new, :create]
-    before_action :set_invoice, only: [:approve, :reject]
+    before_action :set_invoice, only: [:show, :approve, :reject]
 
     def new
       @invoice = @position.invoices.build
@@ -60,6 +60,13 @@ module Payroll
       render_form_error
     end
 
+    def show
+      authorize @invoice
+      @position = @invoice.payroll_position
+      @receipts = @invoice.receipts.with_attached_file.order(created_at: :asc)
+      @can_review = policy(@invoice).approve?
+    end
+
     def approve
       authorize @invoice
 
@@ -71,7 +78,7 @@ module Payroll
         flash[:error] = insufficient_balance_message(@event)
       end
 
-      redirect_to contractor_page
+      redirect_to payroll_invoice_path(@invoice)
     end
 
     def reject
@@ -84,7 +91,7 @@ module Payroll
         flash[:error] = "This invoice has already been reviewed."
       end
 
-      redirect_to contractor_page
+      redirect_to payroll_invoice_path(@invoice)
     end
 
     private

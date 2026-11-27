@@ -1,0 +1,100 @@
+<% title "Invoice from #{@position.payee.display_name}" %>
+<%= render "events/nav", selected: :contractors %>
+
+<div class="mb-4">
+  <%= link_to payroll_position_path(@position), class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back", size: 20 %>
+    Back to <%= possessive(@position.payee.display_name) %> contract
+  <% end %>
+</div>
+
+<div class="flex flex-col-reverse md:flex-row gap-6 items-start">
+  <section class="flex-1 min-w-0 w-full flex flex-col gap-4">
+    <% if @receipts.any? %>
+      <% @receipts.each do |receipt| %>
+        <% file_path = rails_blob_path(receipt.file, disposition: "inline") %>
+        <div class="card p-0 overflow-hidden">
+          <div class="flex items-center justify-between gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+            <strong class="truncate" title="<%= receipt.file.filename %>"><%= receipt.file.filename %></strong>
+            <%= link_to "Open file", file_path, target: "_blank", class: "text-sm nowrap no-underline" %>
+          </div>
+          <% if (preview = receipt.preview(resize: "2048x2048")) %>
+            <%= link_to file_path, target: "_blank" do %>
+              <%= image_tag preview, alt: "Preview of #{receipt.file.filename}", class: "block w-full h-auto" %>
+            <% end %>
+          <% else %>
+            <p class="muted p-4 my-0">No preview available for this file.</p>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="flex flex-col items-center justify-center text-center gap-2 py-16 px-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
+        <%= inline_icon "attachment", size: 40, class: "muted" %>
+        <p class="font-medium my-0">No attachment</p>
+        <p class="muted text-sm my-0" style="max-width: 32ch;">This invoice was submitted without a file. Check the details before approving.</p>
+      </div>
+    <% end %>
+  </section>
+
+  <aside class="w-full md:w-[22rem] md:sticky md:top-4 flex-shrink-0">
+    <article class="card">
+      <div class="flex items-start justify-between gap-2">
+        <h2 class="h2 mt-0 mb-1" style="overflow-wrap: anywhere;"><%= @invoice.name %></h2>
+        <span class="badge ml-0 bg-<%= @invoice.state_color %> nowrap"><%= @invoice.aasm_state.humanize %></span>
+      </div>
+      <p class="muted mt-0">from <%= @position.payee.display_name %></p>
+
+      <%# Show what will be paid, never amounts extracted from the contractor's own upload %>
+      <section class="details break-words">
+        <div style="grid-template-columns: 7rem auto;">
+          <strong style="font-weight: 600;">Amount</strong>
+          <span>
+            <%= render_money @invoice.amount_cents %>
+            <% if @invoice.submitted? && (fee_details = @invoice.estimated_fee_details).present? %>
+              <span class="tooltipped text-sm muted" aria-label="<%= fee_details[:reason] %>">
+                + <%= render_money fee_details[:amount_cents] %> fee
+              </span>
+            <% end %>
+          </span>
+        </div>
+        <% if @invoice.period_label %>
+          <div style="grid-template-columns: 7rem auto;">
+            <strong style="font-weight: 600;">Period</strong>
+            <%= @invoice.period_label %>
+          </div>
+        <% end %>
+        <div style="grid-template-columns: 7rem auto;">
+          <strong style="font-weight: 600;">Rate</strong>
+          <%= "#{render_money @position.rate_cents}#{@position.rate_suffix}" %>
+        </div>
+        <div style="grid-template-columns: 7rem auto;">
+          <strong style="font-weight: 600;">Submitted</strong>
+          <%= relative_timestamp @invoice.created_at %>
+        </div>
+        <% if @invoice.reviewed_by.present? %>
+          <div style="grid-template-columns: 7rem auto;">
+            <strong style="font-weight: 600;">Reviewed by</strong>
+            <%= user_mention @invoice.reviewed_by %>
+          </div>
+        <% end %>
+        <% if @invoice.payment.present? %>
+          <div style="grid-template-columns: 7rem auto;">
+            <strong style="font-weight: 600;">Payment</strong>
+            <%= link_to @invoice.payment.state_text, payment_path(@invoice.payment) %>
+          </div>
+        <% end %>
+      </section>
+
+      <% if @invoice.description.present? %>
+        <p class="mb-0" style="white-space: pre-line;"><%= @invoice.description %></p>
+      <% end %>
+
+      <% if @can_review && @invoice.submitted? %>
+        <div class="flex gap-2 mt-4">
+          <%= button_to "Approve", approve_payroll_invoice_path(@invoice), class: "btn bg-success w-full", form_class: "flex-1" %>
+          <%= button_to "Reject", reject_payroll_invoice_path(@invoice), class: "btn bg-muted w-full", form_class: "flex-1", data: { turbo_confirm: "Reject this invoice?" } %>
+        </div>
+      <% end %>
+    </article>
+  </aside>
+</div>
