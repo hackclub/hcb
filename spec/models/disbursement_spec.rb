@@ -998,12 +998,12 @@ RSpec.describe Disbursement, type: :model do
       expect(withdrawal.destination_ledger).to eq(event.ledger)
     end
 
-    it "leaves the ledger empty for a subledger without a card grant" do
+    it "is invalid for a subledger without a card grant" do
       subledger = event.subledgers.create!
-      transfer = create(:disbursement, source_event: event, event:, destination_subledger: subledger).reload
+      transfer = build(:disbursement, source_event: event, event:, destination_subledger: subledger)
 
-      expect(transfer.source_ledger).to eq(event.ledger)
-      expect(transfer.destination_ledger).to be_nil
+      expect(transfer).not_to be_valid
+      expect(transfer.errors[:destination_ledger]).to include("must exist")
     end
 
     it "rewrites the destination ledger when the destination event changes" do
