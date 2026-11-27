@@ -4303,12 +4303,7 @@ $mk-term-green: #62d196;
     }
   }
 
-  // shortcut: phones show the newest rows and the grant only, so the balance won't add up from what's visible.
   @container (max-width: 520px) {
-    &__list > li:nth-child(n + 4):not(:last-child) {
-      display: none;
-    }
-
     &__details {
       grid-template-columns: 1fr 1fr;
       padding-left: 10px;

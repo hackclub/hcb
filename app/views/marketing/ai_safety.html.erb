@@ -67,8 +67,8 @@
     </div>
     <div class="mk-container mk-hero__inner">
       <header class="mk-hero__copy mk-ais__head">
-        <h1 class="mk-hero__title">Fiscal sponsorship for AI safety. Ready within days.</h1>
-        <p class="mk-hero__subtitle">Operate under Hack Club's <span class="whitespace-nowrap">501(c)(3)</span> through HCB instead of waiting months for IRS approval. Run US and UK payroll, pay researchers worldwide, issue cards for compute, and give funders a live ledger.</p>
+        <h1 class="mk-hero__title">Fiscal sponsorship for AI safety teams.</h1>
+        <p class="mk-hero__subtitle">Run your grant under Hack Club's <span class="whitespace-nowrap">501(c)(3)</span> within days. Payroll, cards, and live books included.</p>
         <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
           <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
             <%= inline_icon "copy", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
@@ -99,7 +99,7 @@
           <a href="#talk-to-us" class="marketing-btn marketing-btn--primary marketing-btn--lg plausible-event-name=AIS+Hero+CTA">Talk to our team</a>
           <a href="#grantmakers" class="marketing-btn marketing-btn--ghost marketing-btn--lg plausible-event-name=AIS+Grantmakers+CTA">For grantmakers</a>
         </div>
-        <p class="mk-ais__contact">Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>. A real person replies within one business day.</p>
+        <p class="mk-ais__contact">Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>. Replies within one business day.</p>
       </header>
 
       <%# The example ledger doubles as the product shot. Rows open like a transaction in HCB. %>
@@ -108,8 +108,8 @@
         <section id="example-month" class="mk-ais-ledger" aria-labelledby="example-month-title">
           <div class="mk-ais-ledger__head">
             <div>
-              <h2 id="example-month-title" class="mk-ais-ledger__title">Example first month on HCB</h2>
-              <p class="mk-ais-ledger__hint">Click any transaction to inspect its record</p>
+              <h2 id="example-month-title" class="mk-ais-ledger__title">Example first month</h2>
+              <p class="mk-ais-ledger__hint">Click a row for details</p>
             </div>
             <p class="mk-ais-ledger__balance"><span>Balance</span> <%= render_money(rows.sum { |row| row[:amount_cents] }) %></p>
           </div>
@@ -141,17 +141,17 @@
     <%# ============================ LOGO WALL ============================ %>
     <%# Same rule as /for/funders: these funders' grants reached organizations on HCB. They are not HCB customers. %>
     <div class="mk-container mk-ais-logos">
-      <h2 class="mk-ais-logos__title">Grants from these funders have reached organizations on HCB</h2>
+      <h2 class="mk-ais-logos__title">Grants from these funders have reached teams on HCB</h2>
       <ul class="mk-funders">
         <% funder_logos.each do |logo| %>
           <li><%= image_tag logo[:src], alt: logo[:name], class: logo[:class], loading: "lazy", decoding: "async" %></li>
         <% end %>
       </ul>
       <dl class="mk-stats">
-        <div class="mk-stats__item"><dt><%= @stats[:moved] %></dt><dd>moved through HCB</dd></div>
-        <div class="mk-stats__item"><dt><%= @stats[:organizations] %></dt><dd>organizations supported</dd></div>
-        <div class="mk-stats__item"><dt>501(c)(3)</dt><dd>operating HCB since <%= @stats[:founded] %></dd></div>
-        <div class="mk-stats__item"><dt>1 day</dt><dd>to hear back from our team</dd></div>
+        <div class="mk-stats__item"><dt><%= @stats[:moved] %></dt><dd>moved on HCB</dd></div>
+        <div class="mk-stats__item"><dt><%= @stats[:organizations] %></dt><dd>organizations</dd></div>
+        <div class="mk-stats__item"><dt>501(c)(3)</dt><dd>since <%= @stats[:founded] %></dd></div>
+        <div class="mk-stats__item"><dt>1 day</dt><dd>reply from our team</dd></div>
       </dl>
     </div>
   </section>
@@ -160,7 +160,7 @@
   <section id="pay-for" class="mk-section mk-section--alt" aria-labelledby="pay-for-title">
     <div class="mk-container">
       <div class="mk-section__head">
-        <h2 id="pay-for-title" class="mk-section__title">A full 501(c)(3) back office, without building one.</h2>
+        <h2 id="pay-for-title" class="mk-section__title">A 501(c)(3) back office, without building one.</h2>
       </div>
       <div class="mk-ais-features">
         <article id="nonprofit-status" class="mk-ais-feature">
@@ -173,16 +173,16 @@
               <span class="mk-ais-doc__sig">EIN 81-2908499</span>
             </div>
           </div>
-          <h3>501(c)(3) status from day one</h3>
-          <p>Your project runs as a program of The Hack Foundation (EIN 81-2908499), so foundations can grant immediately and US donors can deduct gifts. We send your funder our IRS letter, W-9, and Form 990, sign NDAs and vendor contracts, and file the annual 990.</p>
+          <h3>501(c)(3) from day one</h3>
+          <p>Operate under The Hack Foundation (EIN 81-2908499) for tax-deductible grants, signed contracts, and Form 990 filings.</p>
         </article>
 
         <article id="pay-your-team" class="mk-ais-feature">
           <div class="mk-ais-viz mk-ais-viz--coins" aria-hidden="true">
             <span>$</span><span>£</span><span>€</span><span>₹</span><span>¥</span>
           </div>
-          <h3>US payroll, UK staff, global payouts</h3>
-          <p>Put US employees on W-2 payroll with benefits while we handle payroll taxes. Hire UK staff through our employer-of-record partner, with local tax and pension. Pay international contractors and fellows by bank transfer in local currency.</p>
+          <h3>US payroll, UK staff, global pay</h3>
+          <p>US W-2 payroll with benefits, UK hiring via our EOR partner, and local-currency payouts worldwide.</p>
         </article>
 
         <article id="cards" class="mk-ais-feature">
@@ -193,8 +193,8 @@
               <span class="mk-ais-cardviz__name">Eval compute · $25,000 limit</span>
             </div>
           </div>
-          <h3>Cards for compute, APIs, and travel</h3>
-          <p>Issue dedicated cards with per-person spending limits for GPU clusters, model APIs, flights, and workshops. Reimburse out-of-pocket costs by direct deposit, check, or international bank transfer.</p>
+          <h3>Cards for compute and travel</h3>
+          <p>Per-person cards with custom limits for GPUs, model APIs, and workshops, plus fast reimbursements.</p>
         </article>
 
         <article id="books" class="mk-ais-feature">
@@ -205,8 +205,8 @@
               <li><span></span>Workshop venue deposit <%= inline_icon "receipt", size: 16 %></li>
             </ul>
           </div>
-          <h3>Live books, receipts, and API</h3>
-          <p>Every grant, card charge, and transfer lands on an open-source, real-time ledger with its receipt attached. Export clean CSV or JSON for funder reporting, or pull transaction data through the HCB API.</p>
+          <h3>Live books and API</h3>
+          <p>Every transaction lands in real time with its receipt. Export CSV or JSON, or pull via API.</p>
         </article>
       </div>
     </div>
@@ -222,8 +222,8 @@
         <li><span class="mk-ais-fee__zero">$0</span> monthly</li>
         <li><span class="mk-ais-fee__zero">$0</span> per card</li>
       </ul>
-      <p class="mk-ais-fee__lead">One flat 7% fee on grants and donations, taken as each payment arrives. On a $500,000 grant, $465,000 goes to your work.</p>
-      <p class="mk-ais-fee__note">International transfers pass through our payment provider's cost. Outgoing wires under $500 cost $25.</p>
+      <p class="mk-ais-fee__lead">7% of incoming grants and donations. On a $500,000 grant, $465,000 goes to your work.</p>
+      <p class="mk-ais-fee__note">International transfers at provider cost. Wires under $500 cost $25.</p>
     </div>
   </section>
 
@@ -231,13 +231,13 @@
   <section id="how-it-works" class="mk-section mk-section--alt" aria-labelledby="how-it-works-title">
     <div class="mk-container">
       <div class="mk-section__head">
-        <h2 id="how-it-works-title" class="mk-section__title">From grant letter to live account, in four steps.</h2>
+        <h2 id="how-it-works-title" class="mk-section__title">From grant letter to live account.</h2>
       </div>
       <ol class="mk-steps">
-        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">1</span><span class="mk-ais-step__when">Today</span><h3>Share your grant details</h3><p>Send your grant letter, or tell us who is funding your project and when. A real person replies within one business day.</p></li>
-        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">2</span><span class="mk-ais-step__when">Within days</span><h3>Review and sign</h3><p>We vet the project for charitable fit, sign a fiscal sponsorship agreement, and send your funder our IRS letter, W-9, and Form 990.</p></li>
-        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">3</span><span class="mk-ais-step__when">Funder's schedule</span><h3>Receive the grant</h3><p>Your funder wires the grant to The Hack Foundation, and the funds settle into your project's dedicated, restricted account.</p></li>
-        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">4</span><span class="mk-ais-step__when">Ongoing</span><h3>Hire and spend</h3><p>Onboard staff, pay international collaborators, and issue cards for compute and travel. We handle US payroll taxes and the annual Form 990.</p></li>
+        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">1</span><span class="mk-ais-step__when">Today</span><h3>Share your grant</h3><p>Send your grant letter or details. We reply within one business day.</p></li>
+        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">2</span><span class="mk-ais-step__when">Within days</span><h3>Sign the agreement</h3><p>We vet the project, sign sponsorship terms, and send your funder our paperwork.</p></li>
+        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">3</span><span class="mk-ais-step__when">Funder's schedule</span><h3>Receive the grant</h3><p>Your funder wires The Hack Foundation into your project's dedicated account.</p></li>
+        <li class="mk-step"><span class="mk-step__num" aria-hidden="true">4</span><span class="mk-ais-step__when">Ongoing</span><h3>Hire and spend</h3><p>Run payroll, pay contractors, and issue cards. We handle US payroll taxes and the 990.</p></li>
       </ol>
     </div>
   </section>
@@ -246,17 +246,17 @@
   <section id="grantmakers" class="mk-section mk-dark" aria-labelledby="grantmakers-title">
     <div class="mk-container">
       <div class="mk-section__head">
-        <h2 id="grantmakers-title" class="mk-section__title">Fund the team now. Keep full 501(c)(3) oversight.</h2>
-        <p class="mk-lead">Grant to The Hack Foundation, an audited 501(c)(3). Funds stay restricted, with live books.</p>
+        <h2 id="grantmakers-title" class="mk-section__title">Fund the team. Keep 501(c)(3) oversight.</h2>
+        <p class="mk-lead">Grant to The Hack Foundation, an audited 501(c)(3), with live books on every dollar.</p>
       </div>
       <div class="mk-uses">
-        <article class="mk-use"><h3>Vetting and sanctions screening</h3><p>We review every project for charitable fit before onboarding, screen international transfers against US OFAC sanctions lists, and can pause spending that breaks grant terms.</p></article>
-        <article class="mk-use"><h3>Restricted funds and annual audits</h3><p>The Hack Foundation signs your grant agreement, tracks restricted funds in dedicated project books, and undergoes an independent annual audit. Read-only ledger access can be a grant condition.</p></article>
-        <article class="mk-use"><h3>Fellowships, prizes, and cohorts</h3><p>Run a fellowship, research prize, or regranting program through one sponsor. The Argosy Foundation funds <span class="mk-ais__num">500+</span> teams a year on HCB this way.</p></article>
+        <article class="mk-use"><h3>Vetted and screened</h3><p>We review every project upfront, screen global payouts against OFAC lists, and pause off-mission spend.</p></article>
+        <article class="mk-use"><h3>Restricted and audited</h3><p>We sign your grant agreement, keep funds restricted on dedicated books, and run an annual independent audit.</p></article>
+        <article class="mk-use"><h3>Whole programs</h3><p>Run fellowships, prizes, or regranting under one sponsor. The Argosy Foundation funds <span class="mk-ais__num">500+</span> teams a year on HCB.</p></article>
       </div>
       <div class="mk-ais__cta">
         <a href="<%= ai_safety_path(audience: "funder", request: "diligence", anchor: "talk-to-us") %>" class="marketing-btn marketing-btn--primary plausible-event-name=AIS+Diligence+CTA">Request the due-diligence packet</a>
-        <span class="mk-ais__aside">Includes our IRS letter, W-9, Form 990s, audited financials, and a sample agreement. Giving as a donor? <a href="<%= funders_path %>" class="mk-ais-go">See HCB for funders</a></span>
+        <span class="mk-ais__aside">IRS letter, W-9, 990s, audited financials, and sample agreement. Giving as a donor? <a href="<%= funders_path %>" class="mk-ais-go">See HCB for funders</a></span>
       </div>
     </div>
   </section>
@@ -265,7 +265,7 @@
   <section id="questions" class="mk-section" aria-labelledby="questions-title">
     <div class="mk-container">
       <div class="mk-section__head">
-        <h2 id="questions-title" class="mk-section__title">Questions teams and grantmakers ask.</h2>
+        <h2 id="questions-title" class="mk-section__title">Questions teams and funders ask.</h2>
       </div>
       <div class="mk-ais-faq">
         <% ai_safety_faqs(stats: @stats).each do |faq| %>
@@ -283,12 +283,12 @@
     <div class="mk-container">
       <% if flash[:ai_safety_inquiry] == "received" %>
         <h2 id="talk-to-us-title" class="mk-section__title">Message received.</h2>
-        <p class="mk-ais-talk__status" role="status"><strong>Got it.</strong> Melanie, Paul, or Gary will reply within one business day. We just sent a confirmation email; if you have a grant letter or draft agreement to share, reply to it with the file attached.</p>
+        <p class="mk-ais-talk__status" role="status"><strong>Got it.</strong> Melanie, Paul, or Gary will reply within one business day. Reply to our confirmation email to attach a grant letter.</p>
       <% else %>
         <div class="mk-ais-talk__grid">
           <div>
             <h2 id="talk-to-us-title" class="mk-section__title">Talk to our team.</h2>
-            <p class="mk-lead">Send your grant details, ask about compliance, or request our due-diligence packet. Melanie, Paul, and Gary read every message and reply within one business day. You can also email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>.</p>
+            <p class="mk-lead">Melanie, Paul, and Gary read every note and reply within one business day. Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>.</p>
             <ul class="mk-ais-team">
               <% funder_team.each do |member| %>
                 <li>
