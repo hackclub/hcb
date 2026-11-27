@@ -65,6 +65,7 @@ class Announcement < ApplicationRecord
   scope :monthly_for, ->(date) { monthly.where("announcements.created_at BETWEEN ? AND ?", date.beginning_of_month, date.end_of_month) }
   scope :approved_monthly_for, ->(date) { monthly_for(date).draft }
   validate :content_is_json
+  validate :content_has_block_ids
 
   scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
@@ -145,6 +146,20 @@ class Announcement < ApplicationRecord
     unless content.is_a?(Hash)
       Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
       errors.add(:content, "is invalid")
+    end
+  end
+
+  def content_has_block_ids
+    return unless content.is_a?(Hash) && content["content"].is_a?(Array)
+
+    ProsemirrorService::Renderer.map_nodes(content) do |node|
+      next unless node["type"].to_s.start_with?("Announcement::Block::")
+
+      attrs = node["attrs"]
+      next if attrs.is_a?(Hash) && attrs["id"].present?
+
+      errors.add(:content, "contains an announcement block without an ID")
+      break
     end
   end
 
