@@ -7,6 +7,10 @@ class DonationMailer < ApplicationMailer
   def donor_receipt
     @initial_recurring_donation = @donation.initial_recurring_donation? && !@donation.recurring_donation&.migrated_from_legacy_stripe_account?
 
+    pdf = receipt_pdf
+    @receipt_attached = pdf.present?
+    attachments[receipt_filename] = { mime_type: "application/pdf", content: pdf } if @receipt_attached
+
     mail to: @donation.email, reply_to: @donation.event.donation_reply_to_email.presence, subject: if @donation.recurring?
                                                                                                      "Receipt for your #{@donation.tax_deductible ? "donation" : "payment"} to #{@donation.event.name} — #{@donation.created_at.strftime("%B %Y")}"
                                                                                                    else
@@ -34,6 +38,19 @@ class DonationMailer < ApplicationMailer
 
   def set_emails
     @emails = @donation.event.organizer_contact_emails
+  end
+
+  def receipt_pdf
+    html = ApplicationController.render(template: "donations/receipt", formats: :pdf, layout: false, assigns: { donation: @donation })
+    CloudflareBrowserRun.pdf(html)
+  rescue => e
+    Rails.error.report(e, context: { donation_id: @donation.id })
+    nil
+  end
+
+  def receipt_filename
+    receipt_kind = @donation.tax_deductible ? "donation" : "payment"
+    "hack-club-#{receipt_kind}-receipt-#{@donation.event.slug}-#{@donation.public_id}.pdf"
   end
 
 end
