@@ -563,4 +563,38 @@ RSpec.describe Event, type: :model do
       end
     end
   end
+
+  # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
+  # still be charged a fee by hand (Fee's `manual` reason), and that balance is
+  # real money it owes. Each fee commit keeps a single pending bank fee, and its
+  # pending transaction, in step with the balance.
+  describe "#update_pending_bank_fee" do
+    # The event factory's default plan is fee-waived — a zero revenue fee.
+    let(:event) { create(:event) }
+
+    it "opens a pending bank fee for a manually charged fee an organization still owes" do
+      expect(event.revenue_fee).to eq(0)
+      event.fees.create!(memo: "Manually charged fee", amount_cents_as_decimal: 500, event_sponsorship_fee: 0, reason: :manual)
+
+      bank_fee = event.reload.pending_bank_fee
+      # A regular bank fee is negative; see `HasBookTransfer`.
+      expect(bank_fee.amount_cents).to eq(-500)
+      expect(bank_fee.canonical_pending_transaction.amount_cents).to eq(-500)
+    end
+
+    it "keeps the one pending bank fee at the running balance" do
+      event.fees.create!(memo: "First", amount_cents_as_decimal: 200, event_sponsorship_fee: 0, reason: :manual)
+      event.fees.create!(memo: "Second", amount_cents_as_decimal: 300, event_sponsorship_fee: 0, reason: :manual)
+
+      expect(event.bank_fees.pending.count).to eq(1)
+      expect(event.reload.pending_bank_fee.amount_cents).to eq(-500)
+      expect(event.pending_bank_fee.canonical_pending_transaction.amount_cents).to eq(-500)
+    end
+
+    it "opens nothing when there's no fee outstanding" do
+      event.fees.create!(memo: "Waived fee", amount_cents_as_decimal: 0, event_sponsorship_fee: 0, reason: :manual)
+
+      expect(event.reload.pending_bank_fee).to be_nil
+    end
+  end
 end

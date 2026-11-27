@@ -101,6 +101,11 @@ module Admin
             count: ->{ AchTransfer.pending.count }
           ),
           make_item(
+            name: "HCB Fees",
+            path: bank_fees_admin_index_path,
+            count: ->{ BankFee.in_transit_or_confirmed.count }
+          ),
+          make_item(
             name: "Checks",
             path: increase_checks_admin_index_path,
             count: ->{ IncreaseCheck.pending.count }
@@ -289,10 +294,6 @@ module Admin
           make_item(
             name: "Bank Accounts",
             path: bank_accounts_admin_index_path
-          ),
-          make_item(
-            name: "HCB Fees",
-            path: bank_fees_admin_index_path
           ),
           make_item(
             name: "Fee Revenues",

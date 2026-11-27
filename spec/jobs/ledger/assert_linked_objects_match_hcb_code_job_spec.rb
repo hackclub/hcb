@@ -14,8 +14,9 @@ RSpec.describe Ledger::AssertLinkedObjectsMatchHcbCodeJob do
     reported
   end
 
+  # A bank fee writes its own HCB code when it opens its pending transaction.
   def hcb_code_for(item, code)
-    create(:hcb_code, hcb_code: code).tap { |hcb_code| hcb_code.update!(ledger_item: item) }
+    (HcbCode.find_by(hcb_code: code) || create(:hcb_code, hcb_code: code)).tap { |hcb_code| hcb_code.update!(ledger_item: item) }
   end
 
   it "reports nothing when the linked objects agree" do
