@@ -5,6 +5,11 @@ class ProcessColumnCheckDepositJob < ApplicationJob
   class ApiError < StandardError; end
 
   def perform(check_deposit:, validate: true)
+    # A failed attempt flags the check deposit for manual submission and then
+    # re-raises, so Sidekiq retries it. By the time a retry runs an admin may
+    # have rejected or manually submitted the check, and this job must not
+    # overwrite that.
+    return unless check_deposit.pending?
     return if check_deposit.column_id.present? || check_deposit.increase_id.present?
 
     conn = Faraday.new url: "https://api.column.com" do |f|
