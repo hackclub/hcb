@@ -146,8 +146,12 @@ class LegalEntity < ApplicationRecord
   # a business payee created manually), so a form of the wrong type — a W-8BEN-E
   # filed against a personal legal entity, say — is a filing mistake that can never
   # identify it, and it blocks payability until the payee discards it. Forms that
-  # predate entity-type import carry a nil entity_type and are ignored.
+  # predate entity-type import carry a nil entity_type and are ignored, as is an
+  # imported recipient, which has no type of its own to be contradicted until a
+  # completed form teaches it one.
   def entity_type_mismatched_tax_form
+    return nil if entity_type.nil?
+
     @entity_type_mismatched_tax_form ||= tax_forms.not_discarded
                                                   .completed
                                                   .where.not(entity_type: [nil, entity_type])

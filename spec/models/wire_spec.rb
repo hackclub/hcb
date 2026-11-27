@@ -22,6 +22,29 @@ RSpec.describe Wire, type: :model do
 
       expect(build(:wire, bic_code: "DEUTDEDB").bank_country).to eq("DE")
     end
+
+    it "asks Column once per BIC however many validations need the bank country" do
+      expect(ColumnService).to receive(:get).with("/institutions/DEUTDEDB").once.and_return("country_code" => "DE")
+
+      wire = build(:wire, bic_code: "DEUTDEDB")
+
+      2.times { expect(wire.bank_country).to eq("DE") }
+    end
+
+    it "asks Column again after a failed lookup instead of remembering the fallback" do
+      calls = 0
+      allow(ColumnService).to receive(:get).with("/institutions/DEUTDEDB") do
+        calls += 1
+        raise Faraday::ConnectionFailed, "timeout" if calls == 1
+
+        { "country_code" => "DE" }
+      end
+
+      wire = build(:wire, bic_code: "DEUTDEDB", recipient_country: :FR)
+
+      expect(wire.bank_country).to eq("FR")
+      expect(wire.bank_country).to eq("DE")
+    end
   end
 
   describe "#beneficiary_phone" do
