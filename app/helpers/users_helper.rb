@@ -2,12 +2,14 @@
 
 module UsersHelper
   def users_nav(selected: nil)
+    has_events = current_user&.events&.exists?
+
     items = [
       {
         name: "Home",
         path: root_path,
         icon: "home",
-        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
+        tooltip: has_events ? "See all your organizations" : "See your dashboard",
         selected: selected == :home
       }
     ]
@@ -41,7 +43,7 @@ module UsersHelper
     }
 
 
-    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
+    if has_events || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
       items << {
         name: "Receipts",
         path: my_inbox_path,
@@ -223,7 +225,7 @@ module UsersHelper
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click->menu#toggle"
         },
       )
 
@@ -261,7 +263,7 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_path(user) },
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])

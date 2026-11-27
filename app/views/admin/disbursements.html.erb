@@ -37,7 +37,7 @@
       <th>Date</th>
       <th>Sender</th>
       <th>Amount</th>
-      <th>Status</th>
+      <th class="text-right">Status</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -52,7 +52,7 @@
           <% end %>
         </td>
         <td><%= render_money_amount(disbursement.amount) %></td>
-        <td>
+        <td class="text-right">
           <%= disbursement.aasm.human_state %>
           <% if disbursement.pending_expired? %>
             <span>⚠️ (Overdue)</span>

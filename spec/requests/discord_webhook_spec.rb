@@ -151,7 +151,7 @@ RSpec.describe "Discord Webhook", type: :request do
     describe "attach receipt modal submission" do
       let(:discord_user_id) { "111111111111111111" }
       let(:event) { create(:event, discord_guild_id: "222222222222222222", discord_channel_id: "333333333333333333") }
-      let(:hcb_code) { create(:canonical_pending_transaction, event:).local_hcb_code }
+      let(:item) { create(:canonical_pending_transaction, event:, amount_cents: -1000).ledger_item }
       let(:receipt_url) { "https://cdn.discordapp.com/attachments/1/2/receipt.png" }
       let(:payload) do
         {
@@ -161,7 +161,7 @@ RSpec.describe "Discord Webhook", type: :request do
           channel: { id: event.discord_channel_id },
           member: { user: { id: discord_user_id }, permissions: "0" },
           data: {
-            custom_id: "attach_receipt:#{hcb_code.hashid}",
+            custom_id: "attach_receipt:#{item.hashid}",
             resolved: {
               attachments: {
                 "444" => { filename: "receipt.png", content_type: "image/png", url: receipt_url }
@@ -206,7 +206,10 @@ RSpec.describe "Discord Webhook", type: :request do
         create(:organizer_position, user:, event:)
 
         expect { submit_modal }.to change(Receipt, :count).by(1)
-        expect(Receipt.last).to have_attributes(user:, receiptable: hcb_code, upload_method: "discord_bot_modal")
+        expect(Receipt.last).to have_attributes(user:, receiptable: item, upload_method: "discord_bot_modal")
+        item_url = Rails.application.routes.url_helpers.ledger_item_url(item)
+        expect(response.parsed_body.dig("data", "embeds", 0, "description")).to include("[$10.00 at #{item.memo}](#{item_url})")
+        expect(response.parsed_body.dig("data", "components", 0, "components", 0)).to include("label" => "View receipt", "url" => item_url)
       end
     end
   end

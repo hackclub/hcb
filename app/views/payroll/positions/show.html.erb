@@ -20,7 +20,7 @@
           <%= pop_icon_to "more",
               "#",
               class: "align-middle", "aria-label": "More Options",
-              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
             <% if @position.draft? %>
@@ -146,6 +146,7 @@
             <th>Status</th>
             <th>Reviewed by</th>
             <th>Description</th>
+            <th>Period</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
           </tr>
@@ -174,6 +175,7 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <td class="nowrap"><%= invoice.period_label || tag.span("—", class: "muted") %></td>
               <td>
                 <% if preview_receipt %>
                   <div class="receipts_list flex gap-2 pointer-events-auto">
@@ -186,7 +188,17 @@
                 <% end %>
               </td>
               <td class="text-right">
-                <%= render_money invoice.amount_cents %>
+                <% if (ledger_item = invoice.payment&.current_attempt&.payout&.ledger_item).present? %>
+                  <%= render_money ledger_item.amount_cents.abs %>
+                <% else %>
+                  <%= render_money invoice.amount_cents %>
+
+                  <% if (fee_details = invoice.estimated_fee_details).present? %>
+                    <span class="tooltipped text-sm text-muted" aria-label="<%= fee_details[:reason] %>">
+                      + <%= render_money fee_details[:amount_cents] %> fee
+                    </span>
+                  <% end %>
+                <% end %>
                 <%= link_to "", "#", class: "stretched-link", aria: { label: "View invoice" }, data: { behavior: "modal_trigger", modal: dom_id(preview_receipt || invoice, :preview) } %>
                 <% unless preview_receipt %>
                   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dom_id(invoice, :preview) %>">

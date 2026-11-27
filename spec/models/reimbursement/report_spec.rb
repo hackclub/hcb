@@ -230,4 +230,41 @@ RSpec.describe Reimbursement::Report, type: :model do
       expect(report.missing_categories?).to be(false)
     end
   end
+  describe "#convert_to_wise_transfer!" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:report) do
+      user.personal_legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      create(:reimbursement_report, user:, event:, currency: "GBP", aasm_state: :reimbursement_requested)
+    end
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow(WiseTransfer).to receive(:generate_quote) { |money| Money.from_amount(money.amount * 2, "USD") }
+    end
+
+    it "copies the expenses' receipts onto the Wise transfer's ledger item" do
+      expense = report.expenses.create!(value: 12.34, memo: "Stickers", aasm_state: :approved)
+      ReceiptService::Create.new(
+        receiptable: expense,
+        uploader: user,
+        attachments: [file_fixture("receipt.png")],
+        upload_method: :receipts_page
+      ).run!
+
+      wise_transfer = report.convert_to_wise_transfer!(as: user)
+
+      expect(report.reload).to be_rejected
+      hcb_code = wise_transfer.local_hcb_code.reload
+      expect(hcb_code.ledger_item).to be_present
+      expect(hcb_code.ledger_item.receipts.count).to eq(1)
+      expect(Receipt.where(receiptable: hcb_code)).to be_empty
+    end
+  end
 end

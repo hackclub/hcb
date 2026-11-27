@@ -1,0 +1,34 @@
+<%# locals: (revealed: false, animated: false) %>
+
+<%# The account and routing numbers at the top of the account number page. Before the account
+    number is generated, the eye posts to create and this whole frame comes back with the new number. %>
+<% account_number = @event.column_account_number %>
+<%= turbo_frame_tag "account_number_details", class: "flex flex-wrap items-start justify-start h2 mb2", style: "gap: 2rem" do %>
+  <span class="flex flex-col">
+    <span class="h4 muted">
+      Account
+      <%# A new account number starts out deposit-only. %>
+      <% if account_number.nil? || account_number.deposit_only? %>
+        (deposit-only)
+      <% else %>
+        (receive + send)
+      <% end %>
+    </span>
+    <% if account_number.nil? %>
+      <%= render "events/account_number_generate" %>
+    <% else %>
+      <%# Right after the account number is generated, it's revealed straight away. %>
+      <%= render "events/account_number_reveal", frame_id: "account_number_reveal", revealed:, animated: %>
+    <% end %>
+  </span>
+  <span class="flex flex-col">
+    <span class="h4 muted">Routing</span>
+    <% if account_number.nil? %>
+      <span class="font-mono muted fs-mask"><%= masked_account_detail nil, Column::AccountNumber::ROUTING_NUMBER_LENGTH %></span>
+    <% else %>
+      <%= copy_to_clipboard @event.routing_number, class: "font-mono fs-mask" do %>
+        <%= tag.span @event.routing_number, data: { controller: ("reveal-animation" if animated) } %>
+      <% end %>
+    <% end %>
+  </span>
+<% end %>

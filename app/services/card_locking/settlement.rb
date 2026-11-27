@@ -7,7 +7,9 @@ module CardLocking
   module Settlement
     module_function
 
-    # Old engine: a canonical transaction was mapped to an event.
+    # Old engine: a canonical transaction was mapped to an event. Materializes
+    # the transaction's ledger item; one that has no item yet is picked up by
+    # the new-engine hook once it is mapped.
     #
     # Checks the in-memory amount before the stripe_card lookup so non-card and
     # positive mappings (fees, donations, incoming) skip the extra DB reads.
@@ -15,25 +17,17 @@ module CardLocking
       ct = canonical_transaction
       return unless ct&.amount_cents&.negative? && ct.stripe_card.present?
 
-      hcb_code = ct.local_hcb_code
-      MaterializeChargeJob.perform_later(hcb_code_id: hcb_code.id) if hcb_code
+      MaterializeChargeJob.perform_later(ledger_item_id: ct.ledger_item_id) if ct.ledger_item_id
     end
 
     # New engine: a ledger item was mapped. Fires on create/update/destroy (the
     # job is idempotent, so the extra fires are harmless); only primary-ledger,
     # negative card charges do any work.
-    #
-    # A ledger item groups the canonical transactions that share an HcbCode. Find
-    # the charge's Stripe-card canonical transaction and materialize its HcbCode
-    # (parity with the old-engine hook). This does not rely on the item -> hcb_code
-    # has_one, which depends on the ledger_item_id backfill.
     def on_ledger_item(ledger_item, on_primary:)
       item = ledger_item
-      return unless on_primary && item&.amount_cents&.negative?
+      return unless on_primary && item&.amount_cents&.negative? && item.linked_object_type == "CardCharge"
 
-      ct = item.canonical_transactions.detect { |t| t.stripe_card.present? }
-      hcb_code = ct&.local_hcb_code
-      MaterializeChargeJob.perform_later(hcb_code_id: hcb_code.id) if hcb_code
+      MaterializeChargeJob.perform_later(ledger_item_id: item.id)
     end
   end
 end

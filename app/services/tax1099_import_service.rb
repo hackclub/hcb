@@ -125,11 +125,14 @@ class Tax1099ImportService
     [code, ([subdivision.name, subdivision.translations["en"]] + Array(subdivision.unofficial_names)).compact.uniq.freeze]
   }.freeze
 
-  # A W-9 is only ever filed with a US TIN, and these W-8s are imported with the
-  # payee's foreign TIN.
+  # A W-9 is only ever filed with a US TIN. A W-8BEN is imported with the
+  # payee's foreign TIN or, when they have one, their SSN (line 5's US TIN),
+  # which is sent as the form's USTIN and fingerprinted as a US individual's, so
+  # it identifies the same taxpayer as a W-9 filed with that SSN. A W-8BEN-E is
+  # only imported with a foreign TIN.
   TIN_TYPES_BY_FORM_TYPE = {
     W9     => %w[SSN EIN],
-    W8BEN  => %w[FTIN],
+    W8BEN  => %w[FTIN SSN],
     W8BENE => %w[FTIN],
   }.freeze
 
@@ -533,11 +536,13 @@ class Tax1099ImportService
 
   # A W-8 either gives a foreign TIN or says, with the box on the form, that the
   # payee's country doesn't require one. Exactly one, so the admin is copying
-  # what the signed form says rather than HCB assuming it from a blank TIN.
+  # what the signed form says rather than HCB assuming it from a blank TIN. A
+  # W-8BEN with an SSN instead may have the box ticked or not: the box is about
+  # the foreign TIN, which the SSN doesn't stand in for on the form.
   def validate_w8_tin!
     if !tin? && !ftin_not_legally_required?
       raise ValidationError, "enter the foreign TIN, or tick \"FTIN not legally required\" if the form does"
-    elsif tin? && ftin_not_legally_required?
+    elsif foreign_tin? && ftin_not_legally_required?
       raise ValidationError, "a form with a foreign TIN can't also say an FTIN isn't legally required"
     end
   end
@@ -572,6 +577,11 @@ class Tax1099ImportService
 
   def foreign_tin?
     tin? && @data[:tin_type] == "FTIN"
+  end
+
+  # A W-8BEN's SSN; see TIN_TYPES_BY_FORM_TYPE.
+  def us_tin?
+    tin? && @data[:tin_type] == "SSN"
   end
 
   # When the payee actually completed the form in Tax1099, not when it was
@@ -831,7 +841,9 @@ class Tax1099ImportService
       "LastNm"                   => @data[:last_name],
       "Suffix"                   => suffix,
       "CitizenOfCountry"         => country,
-      "ForeignTIN"               => @data[:tin].presence,
+      "USTINType"                => us_tin? ? "SSN" : nil,
+      "USTIN"                    => us_tin? ? @data[:tin] : nil,
+      "ForeignTIN"               => foreign_tin? ? @data[:tin] : nil,
       "IsFTINNotLegallyRequired" => ftin_not_legally_required?,
       "PermanentAddress"         => w8_address,
       "MailingAddress"           => w8_address,

@@ -6,16 +6,16 @@
         <th>Recipient name</th>
         <th>Amount</th>
         <th>Payment for</th>
-        <th>Scheduled on</th>
-        <th></th>
+        <th class="text-right">Scheduled on</th>
+        <th><%# view link %></th>
       </tr>
       <% @ach_transfers.each do |ach| %>
         <tr>
           <td><%= ach.recipient_name %></td>
           <td><%= render_money ach.amount %></td>
           <td><%= ach.payment_for %></td>
-          <td><%= ach.scheduled_on %></td>
-          <td><%= link_to "View", hcb_code_path(ach.hcb_code), data: { turbo_frame: "_top" } %></td>
+          <td class="text-right"><%= ach.scheduled_on %></td>
+          <td><%= link_to "View", ledger_item_path(ach.ledger_item), data: { turbo_frame: "_top" } %></td>
         </tr>
       <% end %>
     </table>

@@ -4,9 +4,22 @@ require_relative "../../app/models/concerns/public_identifiable"
 
 class PublicActivity::Activity
   scope :for_user, ->(user) {
+    event_ids = user.events.ids
+
     where(recipient_type: "User", recipient_id: user.id)
-      .or(where(event_id: user.events.pluck(:id)))
-      .or(where(recipient_type: "Event", recipient_id: user.events.pluck(:id)))
+      .or(where(event_id: event_ids))
+      .or(where(recipient_type: "Event", recipient_id: event_ids))
+  }
+
+  # What the `public_activity/*` partials read off each activity, so rendering
+  # a feed doesn't query per row. Nested trackable associations are only
+  # preloaded for trackable types that define them; others are skipped.
+  scope :preloaded_for_feed, -> {
+    preload(
+      :recipient,
+      owner: { profile_picture_attachment: :blob },
+      trackable: [:event, :ledger_item, { commentable: :ledger_item }, { canonical_pending_transaction: { ledger_item: [:linked_object, { primary_ledger: :event }] } }]
+    )
   }
 
   scope :for_event, ->(event) {

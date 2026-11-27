@@ -29,7 +29,7 @@ module Referral
     hashid_config salt: ""
 
     validates :name, presence: true
-    validates :redirect_to, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { redirect_to.present? }
+    validate :redirect_to_is_absolute_http_url, if: -> { redirect_to.present? }
 
     belongs_to :creator, class_name: "User"
 
@@ -46,6 +46,15 @@ module Referral
                   .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
                   .map(&:user)
                   .uniq
+    end
+
+    private
+
+    def redirect_to_is_absolute_http_url
+      uri = URI.parse(redirect_to)
+      errors.add(:redirect_to, :invalid) unless uri.is_a?(URI::HTTP) && uri.host.present?
+    rescue URI::InvalidURIError
+      errors.add(:redirect_to, :invalid)
     end
 
   end

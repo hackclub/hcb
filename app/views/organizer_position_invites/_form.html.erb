@@ -5,9 +5,7 @@
 <%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug)) do |form| %>
   <%= form_errors invite, "user" %>
 
-  <h3 class="mb-2 flex items-center justify-between">
-    Email address
-  </h3>
+  <%= form.label :email, "Email address", class: "mb-2 text-xl !font-bold leading-[1.125] tracking-[-0.02em]" %>
   <div class="border border-gray-200 dark:border-neutral-700 rounded-xl overflow-hidden banner !shadow-none p-0 text-left">
     <div class="field" data-controller="team-email-check">
       <div class="flex items-center !border-gray-200 dark:!border-neutral-700 pr-2 focus-within:ring-2 ring-inset rounded-t-xl" style="border-bottom:1px solid">

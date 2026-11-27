@@ -41,9 +41,6 @@
       <strong>Sent at</strong>
       <%= format_datetime wise_transfer.created_at %>
     </div>
-    <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
-      <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", target: "_blank" %>
-    <% end %>
   </section>
   <turbo-frame id="details">
     <section class="ledger-item--info">
@@ -67,6 +64,8 @@
         <%= wise_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: wise_transfer } %>
+
       <% if wise_transfer.return_reason.present? %>
         <p>
           <strong>Return reason</strong>
@@ -88,6 +87,7 @@
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
       <%= render "ledger/items/repayments", ledger_item: %>
+      <%= render "ledger/items/tags_detail", item: ledger_item %>
     </section>
 
     <% unless ledger_item.canonical_pending_transactions.first.settled? %>
@@ -101,4 +101,12 @@
       </section>
     <% end %>
   </turbo-frame>
+
+  <% if auditor_signed_in? %>
+    <div class="card__banner card__darker border-top overflow-hidden">
+      <% admin_tool "w-fit" do %>
+        <%= button_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  <% end %>
 </article>

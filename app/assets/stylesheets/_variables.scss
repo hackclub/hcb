@@ -1,6 +1,8 @@
 $black: #1f2d3d;
 $slate: #3c4858;
 $muted: #8492a6;
+// Text color for `.muted` on light backgrounds; $muted is under 4.5:1 there.
+$muted-text: #5f6d82;
 $smoke-dark: #c0ccda;
 $smoke: #e0e6ed;
 $snow-dark: #eff2f7;
@@ -19,6 +21,11 @@ $purple: #a633d6;
 $dark: #17171d;
 $darker: #121217;
 $darkless: #252429;
+
+// Shared by modals, the popover, menus and alerts, so they read as one family
+$backdrop: rgba(0, 0, 0, 0.3);
+$backdrop-dark: rgba(0, 0, 0, 0.5); // or it barely shows on a dark page
+$sheet-radius: var(--radius-2xl) var(--radius-2xl) 0 0; // what slides up on phones
 
 $palette: (
   primary: $red,

@@ -5,7 +5,7 @@
         <tr>
           <th>Date</th>
           <th>Transfer Limit</th>
-          <th>Set By</th>
+          <th class="text-right">Set By</th>
         </tr>
       </thead>
       <tbody>
@@ -19,8 +19,8 @@
             <td class="py-[10px]">
               <%= number_to_currency(changes["amount_cents"]&.last.to_i / 100.0) %>
             </td>
-            <td>
-              <div class="flex items-center gap-2">
+            <td class="text-right">
+              <div class="flex items-center justify-end gap-2">
                 <% if changer.present? %>
                   <%= avatar_for changer, class: "align-middle author", cached: true %>
                   <span><%= changer.name || changer.email %></span>

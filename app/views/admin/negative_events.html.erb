@@ -10,7 +10,7 @@
       <th>Event</th>
       <th>Account balance</th>
       <th>Card balance</th>
-      <th>Pending withdrawals</th>
+      <th class="text-right">Pending withdrawals</th>
     </tr>
   </thead>
 
@@ -32,7 +32,7 @@
             <%= render_money event.emburse_balance %>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <% if event.fee_balance < 0 %>
             <strong><%= render_money event.fee_balance %></strong>
           <% else %>

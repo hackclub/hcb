@@ -63,22 +63,22 @@ RSpec.describe CardLocking::Deadline do
     expect(compute(trusted: true, last_settled_charge_at: last_charge, current_due_at: current_due)).to eq(last_charge + 7.days)
   end
 
-  it "case 11: shortening does not drop below now+72h: settled = now - 6.days, untrusted, current = now + 5.days → now + 72.hours" do
+  it "case 11: never shortens a future deadline: settled = now - 6.days, untrusted, current = now + 5.days → now + 5.days" do
     settled = now - 6.days
     current_due = now + 5.days
-    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(now + 72.hours)
+    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(current_due)
   end
 
-  it "case 12: EXACTLY at floor: settled = now + 72.hours - 7.days, untrusted, current = now + 10.days → now + 72.hours" do
-    settled = now + 72.hours - 7.days
-    current_due = now + 10.days
-    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(now + 72.hours)
+  it "case 12: a restarted countdown survives recompute: settled = now - 60.days, untrusted, current = now + 7.days → now + 7.days" do
+    settled = now - 60.days
+    current_due = now + 7.days
+    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(current_due)
   end
 
-  it "case 13: shorten only to target when target beyond floor: current = now + 10.days, settled = now - 1.day, untrusted → settled + 7.days" do
+  it "case 13: losing trust keeps the slid deadline: current = now + 10.days, settled = now - 1.day, untrusted → now + 10.days" do
     settled = now - 1.day
     current_due = now + 10.days
-    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(settled + 7.days)
+    expect(compute(settled_at: settled, current_due_at: current_due)).to eq(current_due)
   end
 
   it "case 14: current_due_at == now exactly → returns current_due_at unchanged" do
@@ -106,5 +106,16 @@ RSpec.describe CardLocking::Deadline do
   # receipt was on time. Flooring it forward would recast a late upload as on-time.
   it "case 19: a resolved charge's first deadline is not floored" do
     expect(compute(settled_at: now - 30.days, resolved: true)).to eq(now - 30.days + 7.days)
+  end
+
+  # The floor is a warning before a lock; a cardholder whose cards are already
+  # locked has had both. Flooring would clear their overdue deadlines, and the
+  # next sweep would unlock them.
+  it "case 20: a locked cardholder's first deadline is not floored" do
+    expect(compute(settled_at: now - 30.days, cards_locked: true)).to eq(now - 30.days + 7.days)
+  end
+
+  it "case 21: a locked cardholder's fresh charge still gets settled_at + 7.days" do
+    expect(compute(settled_at: now - 1.day, cards_locked: true)).to eq(now - 1.day + 7.days)
   end
 end

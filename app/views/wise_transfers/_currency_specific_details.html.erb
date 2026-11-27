@@ -32,7 +32,7 @@
             <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>">
               <%= form.label field[:key], field[:label], (field[:label_options] || {}).merge(for: id) %>
               <% if field[:type] == :select %>
-                <%= form.select field[:key], options_for_select(field[:options].to_a), { disabled:, prompt: "Select one..." },
+                <%= form.select field[:key], field[:options].to_a, { disabled:, prompt: "Select one..." },
                                 { id:, data: ({ herb_set: "selected_account_type=$value" } if field[:key] == "account_type") } %>
               <% else %>
                 <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, required: field[:required] != false, id:) %>

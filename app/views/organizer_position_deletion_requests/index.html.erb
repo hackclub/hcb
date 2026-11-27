@@ -11,8 +11,8 @@
         <th>Submitted by</th>
         <th>Target organizer</th>
         <th>Assignee</th>
-        <th>Status</th>
-        <th colspan="3"></th>
+        <th class="text-right">Status</th>
+        <th><%# process or view button %></th>
       </tr>
     </thead>
 
@@ -23,7 +23,7 @@
           <td><%= user_mention opdr.submitted_by %></td>
           <td><%= user_mention opdr.organizer_position.user %></td>
           <td><%= opdr.assignee.present? ? user_mention(opdr.assignee) : "None" %></td>
-          <td>
+          <td class="text-right">
             <%= status_badge opdr.status_badge_type %>
             <%= opdr.status.to_s.humanize %>
           </td>

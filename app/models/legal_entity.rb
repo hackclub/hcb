@@ -50,7 +50,6 @@ class LegalEntity < ApplicationRecord
   has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
 
   scope :managed, -> { where.not(managing_event_id: nil) }
-  scope :unmanaged, -> { where(managing_event_id: nil) }
   scope :not_archived, -> { where(archived_at: nil) }
 
   validate :managing_event_cannot_change, on: :update
