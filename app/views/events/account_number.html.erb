@@ -23,6 +23,12 @@
 <% else %>
   <%# Right after the account number is generated without JavaScript, the page shows it revealed. %>
   <%= render "events/account_number_details", revealed: @animated, animated: @animated %>
+
+  <%= render "application/callout", type: "warning", title: "Moving money between HCB organizations? Don't use these account details.", class: "mt-0 mb-3" do %>
+    To receive funds from another HCB organization, including for reimbursements, use an
+    <%= link_to "HCB transfer", new_disbursement_path(event_id: @event.slug) %>
+    instead of an ACH transfer or wire to this account number. Not in both organizations? Contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
+  <% end %>
 <% end %>
 
 <% if @event.column_account_number.present? %>
