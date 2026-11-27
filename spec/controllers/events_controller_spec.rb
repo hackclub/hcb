@@ -1257,7 +1257,7 @@ RSpec.describe EventsController do
         sheet = xlsx_entry(response.body, "xl/worksheets/sheet1.xml")
         expect(sheet).to include('outlineLevel="1"')
         # Descendants start hidden, and every row with children carries the
-        # collapsed :require_two_factor_authentication_2026_11_24, so the tree opens fully collapsed.
+        # collapsed flag, so the tree opens fully collapsed.
         expect(sheet).to include('hidden="1"')
         expect(sheet).to include('collapsed="1"')
         # Excel hides the grouping gutter entirely when this attribute is set,
@@ -2050,7 +2050,7 @@ RSpec.describe EventsController do
       end
     end
 
-    context "without the google_workspace :require_two_factor_authentication_2026_11_24" do
+    context "without the google_workspace flag" do
       before do
         Flipper.disable(:google_workspace, event)
         allow(GWaitlistTable).to receive(:all).and_return([])

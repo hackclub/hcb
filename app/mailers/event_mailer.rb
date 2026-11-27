@@ -105,7 +105,7 @@ class EventMailer < ApplicationMailer
     @already_enabled = @user.use_two_factor_authentication?
 
     mail to: @user.email_address_with_name,
-         subject: @already_enabled ? "#{@event.name} now requires two-factor authentication" : "[Action Needed] Enable two-factor authentication for #{@event.name}"
+         subject: @already_enabled ? "#{@event.name} now requires two-factor authentication" : "[Action Required] Enable two-factor authentication to keep access to #{@event.name}"
   end
 
   def subevent_created

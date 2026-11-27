@@ -16,12 +16,12 @@ class FeaturesController < ApplicationController
         if two_factor_authentication_requirement?
           @actor.create_activity(key: "event.two_factor_authentication_required", owner: current_user, event_id: @actor.id)
           @actor.notify_two_factor_authentication_required(whodunnit: current_user)
-          flash[:success] = "Two-factor authentication is now required for #{@actor.name}. We've emailed your team; members without it have #{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.inspect} to turn it on."
+          flash[:success] = "Two-factor authentication is now required for #{@actor.name}. We've emailed your team; members without it have #{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i} days to enable it."
         else
           flash[:success] = "You've opted into this beta; let us know if you have any feedback."
         end
       else
-        flash[:error] = "Error while opting into this beta. Please contact us or try again."
+        flash[:error] = two_factor_authentication_requirement? ? "Couldn't enable the two-factor authentication requirement. Please contact us or try again." : "Error while opting into this beta. Please contact us or try again."
       end
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
@@ -43,7 +43,7 @@ class FeaturesController < ApplicationController
         else
           flash[:success] = "You've opted out of this beta; please let us know if you had any feedback."
         end
-      else
+        flash[:error] = two_factor_authentication_requirement? ? "Couldn't disable the two-factor authentication requirement. Please contact us or try again." : "Error while opting out of this beta. Please contact us or try again."
         flash[:error] = "Error while opting out of this beta. Please contact us or try again."
       end
     else

@@ -12,19 +12,32 @@
       classes: ["feature-two-factor-authentication"],
       feature_flag: :require_two_factor_authentication_2026_11_24,
       name: "Require Two-Factor Authentication",
-      description: "Require every member of #{event.name} to use two-factor authentication. " \
-                   "We'll email your team when this is turned on; members who don't have it yet get " \
-                   "#{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.inspect} to set it up before they lose access to the organization.",
+      description: "Require every member of #{event.name} to enable two-factor authentication on their HCB account. " \
+                   "Turning this on emails your whole team right away. Current members without it get " \
+                   "#{pluralize(Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i, "day")} to set it up before losing access until they enable it; " \
+                   "anyone who joins after that will need it enabled first.",
       footer: if event.two_factor_authentication_deadline.present?
-                "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
-                "Members without two-factor authentication #{event.two_factor_authentication_deadline.past? ? "lost access on" : "have until"} #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y")} to " \
-                "#{link_to "enable it", settings_security_path, data: { turbo_action: "advance" }}."
+                if event.two_factor_authentication_deadline.past?
+                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
+                  "Members without two-factor authentication don't have access until they enable it on their account."
+                elsif !current_user.use_two_factor_authentication?
+                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
+                  "#{link_to "Enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} " \
+                  "before #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y at %-I:%M %p %Z")} to keep your access."
+                else
+                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
+                  "Members without two-factor authentication have until #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y at %-I:%M %p %Z")} to enable it."
+                end
               elsif !event.two_factor_authentication_required?
-                "Only a contract signee with two-factor authentication enabled on their own account can turn this on or off."
+                if OrganizerPosition.find_by(event:, user: current_user)&.is_signee? && !current_user.use_two_factor_authentication?
+                  "To enable this requirement, #{link_to "enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} on your own account first."
+                else
+                  "Only a contract signee with two-factor authentication enabled on their account can change this setting."
+                end
               end,
       disabled: !can_toggle_two_factor,
       disabled_reason: two_factor_disabled_reason,
-      disable_warning: "Members will no longer be required to use two-factor authentication. Are you sure?",
+      disable_warning: "Members will no longer need two-factor authentication to access #{event.name}, and anyone without it will regain access right away. (Members who already enabled two-factor authentication will keep it on their accounts.) Turn off this requirement?",
       event:
     } %>
 

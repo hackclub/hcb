@@ -3,5 +3,5 @@
 <% current_user ||= p[:current_user] %>
 
 <%= render layout: "/public_activity/common", locals: { activity:, current_user:, icon: "private", color: "info" } do %>
-  required two-factor authentication for <%= link_to activity.trackable.name, edit_event_path(activity.trackable, tab: :features) %>
+  started requiring two-factor authentication for <%= link_to activity.trackable.name, edit_event_path(activity.trackable, tab: :features) %>
 <% end %>

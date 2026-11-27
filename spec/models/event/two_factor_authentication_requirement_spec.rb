@@ -13,7 +13,7 @@ RSpec.describe Event::TwoFactorAuthenticationRequirement, type: :model do
   end
 
   describe ".requiring_two_factor_authentication" do
-    it "lists only the organizations with the :require_two_factor_authentication_2026_11_24 enabled" do
+    it "lists only the organizations with the flag enabled" do
       other = create(:event)
       Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
 
