@@ -8,23 +8,23 @@
 class RequireLedgersOnDisbursements < ActiveRecord::Migration[8.1]
   disable_ddl_transaction!
 
-  COLUMNS = %i[source_ledger_id destination_ledger_id].freeze
-
   def up
-    COLUMNS.each do |column|
-      name = "disbursements_#{column}_null"
+    add_check_constraint :disbursements, "source_ledger_id IS NOT NULL", name: "disbursements_source_ledger_id_null", validate: false
+    validate_check_constraint :disbursements, name: "disbursements_source_ledger_id_null"
+    change_column_null :disbursements, :source_ledger_id, false
+    remove_check_constraint :disbursements, name: "disbursements_source_ledger_id_null"
 
-      add_check_constraint(:disbursements, "#{column} IS NOT NULL", name:, validate: false)
-      validate_check_constraint(:disbursements, name:)
-      change_column_null :disbursements, column, false
-      remove_check_constraint(:disbursements, name:)
-    end
+    add_check_constraint :disbursements, "destination_ledger_id IS NOT NULL", name: "disbursements_destination_ledger_id_null", validate: false
+    validate_check_constraint :disbursements, name: "disbursements_destination_ledger_id_null"
+    change_column_null :disbursements, :destination_ledger_id, false
+    remove_check_constraint :disbursements, name: "disbursements_destination_ledger_id_null"
   end
 
+  # rubocop:disable Rails/BulkChangeTable -- each statement commits on its own (see disable_ddl_transaction!)
   def down
-    COLUMNS.each do |column|
-      change_column_null :disbursements, column, true
-    end
+    change_column_null :disbursements, :source_ledger_id, true
+    change_column_null :disbursements, :destination_ledger_id, true
   end
+  # rubocop:enable Rails/BulkChangeTable
 
 end
