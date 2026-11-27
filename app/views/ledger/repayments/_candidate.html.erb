@@ -15,8 +15,8 @@
 <% end %>
 <% confirm += " This can't be undone." %>
 
-<%# The ledger's own row, so the picker reads like the ledger it was opened from; the block adds the Choose column. %>
-<%= render layout: "ledger/item", locals: { item: candidate, show_author: false } do %>
+<%# The ledger's own row, so the picker reads like the ledger it was opened from; the block adds the Choose column. Rows here are picked, not worked on, so none takes dropped receipts. %>
+<%= render layout: "ledger/item", locals: { item: candidate, show_author: false, receipt_drop: false } do %>
   <td class="text-right">
     <%= button_to "Choose",
                   ledger_item_repayment_path(ledger_item),

@@ -48,6 +48,14 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
         expect(response.body).to include(%(aria-label="Choose #{income.ledger_item.memo}, $100.00 on #{income.ledger_item.datetime.strftime("%b %-d, %Y")}"))
       end
 
+      it "doesn't make candidates drop targets for receipts" do
+        income
+
+        get :candidates, params: { item_id: expense.ledger_item.hashid }
+
+        expect(response.body).not_to include("file-drop")
+      end
+
       it "shows an empty state when nothing matches" do
         get :candidates, params: { item_id: expense.ledger_item.hashid }
 
