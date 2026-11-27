@@ -29,7 +29,7 @@
       <th>Status</th>
       <th>TaxBandits status</th>
       <th>TIN match</th>
-      <th class="w-32">Completed</th>
+      <th class="w-32 text-right">Completed</th>
     </tr>
   </thead>
   <tbody>
@@ -43,7 +43,7 @@
         <td><%= form.aasm_state.humanize %></td>
         <td><%= form.taxbandits_status&.humanize || "—" %></td>
         <td><%= form.taxbandits_tin_matching_status&.humanize || "—" %></td>
-        <td><%= form.completed_at&.strftime("%Y-%m-%d") || "—" %></td>
+        <td class="text-right"><%= form.completed_at&.strftime("%Y-%m-%d") || "—" %></td>
       </tr>
     <% end %>
   </tbody>

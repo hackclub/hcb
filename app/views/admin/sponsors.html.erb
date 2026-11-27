@@ -26,7 +26,7 @@
       <th>ID</th>
       <th>Date</th>
       <th>Name</th>
-      <th>StripeCustomerId</th>
+      <th class="text-right">StripeCustomerId</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -36,7 +36,7 @@
         <td><%= sponsor.id %></td>
         <td><%= sponsor.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= sponsor.event.name.upcase %>: <%= sponsor.name %></td>
-        <td><%= link_to sponsor.stripe_customer_id, sponsor.stripe_dashboard_url %></td>
+        <td class="text-right"><%= link_to sponsor.stripe_customer_id, sponsor.stripe_dashboard_url %></td>
         <td>
         </td>
       </tr>

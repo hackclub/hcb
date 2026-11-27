@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_220950) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -713,6 +713,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
+    t.bigint "destination_ledger_id"
     t.bigint "destination_subledger_id"
     t.bigint "destination_transaction_category_id"
     t.datetime "errored_at", precision: nil
@@ -726,16 +727,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.date "scheduled_on"
     t.boolean "should_charge_fee", default: false
     t.bigint "source_event_id"
+    t.bigint "source_ledger_id"
     t.bigint "source_subledger_id"
     t.bigint "source_transaction_category_id"
     t.string "transfer_type"
     t.datetime "updated_at", precision: nil, null: false
+    t.index ["destination_ledger_id"], name: "index_disbursements_on_destination_ledger_id"
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
+    t.index ["source_ledger_id"], name: "index_disbursements_on_source_ledger_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
@@ -840,7 +844,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.bigint "event_id"
     t.boolean "fee_covered", default: false, null: false
     t.bigint "fee_reimbursement_id"
-    t.text "hcb_code"
     t.boolean "in_person", default: false
     t.datetime "in_transit_at"
     t.inet "ip_address"
@@ -1565,7 +1568,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.bigint "ending_balance"
     t.bigint "fee_reimbursement_id"
     t.datetime "finalized_at", precision: nil
-    t.text "hcb_code"
     t.text "hosted_invoice_url"
     t.text "invoice_pdf"
     t.bigint "item_amount"
@@ -2965,6 +2967,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.datetime "signed_out_at"
     t.string "timezone"
     t.datetime "updated_at", null: false
+    t.text "user_agent"
     t.bigint "user_id"
     t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
@@ -3017,7 +3020,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.datetime "subscribed_to_loops_at"
     t.boolean "teenager"
     t.datetime "updated_at", precision: nil, null: false
-    t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
     t.boolean "verified", default: false, null: false
     t.string "webauthn_id"
@@ -3027,6 +3029,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
   end
 
   create_table "versions", force: :cascade do |t|
+    t.bigint "api_token_id"
     t.datetime "created_at", precision: nil
     t.string "event", null: false
     t.bigint "impersonated_by_id"
@@ -3034,6 +3037,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.string "item_type", null: false
     t.jsonb "object"
     t.jsonb "object_changes"
+    t.bigint "user_session_id"
     t.string "whodunnit"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
@@ -3172,6 +3176,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
   add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
+  add_foreign_key "disbursements", "ledgers", column: "destination_ledger_id"
+  add_foreign_key "disbursements", "ledgers", column: "source_ledger_id"
   add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
   add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"

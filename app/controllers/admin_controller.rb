@@ -414,10 +414,10 @@ class AdminController < Admin::BaseController
                  Ledger::Item.all
                end
 
-    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+    relation = relation.unmapped if @unmapped
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
-    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
+    relation = relation.where.not(amount_cents: 0) if @nonzero
 
     @count = relation.count
 
@@ -1118,7 +1118,7 @@ class AdminController < Admin::BaseController
     relation = HcbCode
 
     relation = relation.where("hcb_codes.hcb_code ILIKE ?", "%#{@q}%") if @q
-    relation = relation.receipt_required.missing_receipt if @has_receipt == "no"
+    relation = relation.joins(:ledger_item).merge(Ledger::Item.missing_receipt) if @has_receipt == "no"
     relation = relation.has_receipt_or_marked_no_or_lost if @has_receipt == "yes"
     relation = relation.lost_receipt if @has_receipt == "lost"
 

@@ -21,14 +21,18 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Deploy your capital as grants")
     end
 
-    # The final CTA renders the *detailed* inquiry form (name + message), not the compact
-    # email-only one — guards `detailed: true` on the render, which has been dropped twice by
-    # copy-edit PRs touching that section.
-    it "renders the detailed inquiry form with name and message fields" do
+    # The final CTA's inquiry form has name, email and a *required* message. Funders who
+    # skipped the (formerly optional) note left the team with nothing to research before
+    # replying, so the field is required and prompts them on what to write.
+    it "renders the inquiry form with a required, prompted message field" do
       get funders_path
 
       expect(response.body).to include('name="name"')
-      expect(response.body).to include('name="message"')
+      textarea = Nokogiri::HTML(response.body).at_css('textarea[name="message"]')
+      expect(textarea).to be_present
+      expect(textarea["required"]).not_to be_nil
+      expect(response.body).to include("What are you looking to fund?")
+      expect(response.body).to include("budget, and your timeline")
     end
 
     # The nav is shared by every /for/* page, so only the current page is marked.
@@ -174,15 +178,59 @@ RSpec.describe "Funders landing page", type: :request do
     end
 
     # On a validation error we carry the typed values back via flash so the funder isn't
-    # forced to retype everything — the form repopulates from flash[:funder_form].
+    # forced to retype everything — the form repopulates from flash[:funder_form]. The error
+    # itself names the field so it renders inline under that field, not as a page banner.
     it "rejects an invalid email without sending mail, and carries the values back for prefill" do
       expect do
-        post funder_inquiry_path, params: { email: "not-an-email", name: "Ada", message: "Hi" }
+        post funder_inquiry_path, params: { email: "not-an-email", name: "Ada", message: "Interested in regranting." }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
 
       expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
-      expect(flash[:error]).to be_present
-      expect(flash[:funder_form]).to include("email" => "not-an-email", "name" => "Ada", "message" => "Hi")
+      expect(flash[:funder_form_error]).to include("field" => "email")
+      expect(flash[:funder_form]).to include("email" => "not-an-email", "name" => "Ada", "message" => "Interested in regranting.")
+    end
+
+    # The note is required server-side too (the textarea's `required` is only a client hint).
+    # Whitespace-only counts as blank. Funders who skipped the note left the team with
+    # nothing to research before replying.
+    it "rejects a missing or blank message without sending mail" do
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com", name: "Ada", message: "   " }
+      end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
+
+      expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
+      expect(flash[:funder_form_error]).to eq("field" => "message", "message" => "Please tell us a bit about what you're looking to fund.")
+      expect(flash[:funder_form]).to include("email" => "funder@example.com", "name" => "Ada")
+
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com" }
+      end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
+      expect(flash[:funder_form_error]).to include("field" => "message")
+    end
+
+    # Short notes are fine, but "hi" gives the team nothing to go on. The bar is deliberately
+    # low (MarketingController::FUNDER_MESSAGE_MIN_LENGTH) so a single sentence passes.
+    it "asks for a bit more on a too-short note, preserving what they typed" do
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com", name: "Ada", message: "hi there" }
+      end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
+
+      expect(flash[:funder_form_error]["message"]).to start_with("Tell us a bit more")
+      expect(flash[:funder_form]).to include("message" => "hi there")
+
+      follow_redirect!
+
+      textarea = Nokogiri::HTML(response.body).at_css('textarea[name="message"]')
+      expect(textarea.text.strip).to eq("hi there") # Rails emits a leading newline browsers drop
+      expect(textarea["aria-invalid"]).to eq("true")
+      expect(textarea["aria-describedby"]).to include("funder_inquiry_message_error")
+      expect(response.body).to include('id="funder_inquiry_message_error"')
+    end
+
+    it "accepts a short note that meets the minimum length" do
+      expect do
+        post funder_inquiry_path, params: { email: "funder@example.com", message: "Grants for robotics teams" }
+      end.to have_enqueued_mail(FunderInquiryMailer, :inquiry)
     end
 
     # Anti-bot via the invisible_captcha honeypot: :subtitle is hidden from humans, so any

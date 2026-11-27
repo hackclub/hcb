@@ -11,7 +11,7 @@
         <th>Event Point of Contact</th>
         <th>Memo</th>
         <th>Amount</th>
-        <th>Receipts</th>
+        <th class="text-right">Receipts</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -38,7 +38,7 @@
           <td>
             <%= render_money hcb_code.amount_cents %>
           </td>
-          <td>
+          <td class="text-right">
             <%= hcb_code.receipts.count %>
           </td>
           <td>

@@ -1,45 +1,57 @@
-<%# locals: (detailed: false) %>
 <%# Inquiry form. Posts to MarketingController#funder_inquiry, which emails the funder a
-    confirmation and CCs the ops team. Turbo disabled for a plain POST -> redirect -> GET
-    (flash + ?inquiry state survive, anchor scroll works). `detailed` adds name + message
-    fields so funders can actually "send a note"; the hero uses the compact email-only form. %>
+    confirmation and CCs the team. Turbo disabled for a plain POST -> redirect -> GET
+    (flash survives, anchor scroll works). The note is required: without it the team has
+    nothing to research before replying, so the field prompts funders on what to include. %>
 <%= form_with url: funder_inquiry_path, method: :post,
-      class: "marketing-form#{' marketing-form--detailed marketing-form--labelled' if detailed}", data: { turbo: false } do %>
+      class: "marketing-form marketing-form--detailed", data: { turbo: false } do %>
   <%# Anti-bot honeypot via the invisible_captcha gem (rejected in MarketingController). %>
   <%= invisible_captcha :subtitle %>
 
-  <%# Prefill on a validation-error redirect (values carried via flash) so the form isn't cleared. %>
+  <%# Prefill on a validation-error redirect (values carried via flash) so the form isn't cleared.
+      The error renders inline under its field, which gets a red ring. %>
   <% prefill = flash[:funder_form] || {} %>
+  <% error = flash[:funder_form_error] || {} %>
+  <% email_error = error["message"] if error["field"] == "email" %>
+  <% message_error = error["message"] if error["field"] == "message" %>
+  <% email_aria = { label: "Your email address" } %>
+  <% email_aria.merge!(invalid: true, describedby: "funder_inquiry_email_error") if email_error %>
+  <% message_aria = { describedby: "funder_inquiry_message_hint" } %>
+  <% message_aria.merge!(invalid: true, describedby: "funder_inquiry_message_hint funder_inquiry_message_error") if message_error %>
 
-  <% if detailed %>
-    <div class="marketing-form__field">
-      <label for="funder_inquiry_name" class="marketing-form__label">Name</label>
-      <input type="text" id="funder_inquiry_name" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
-             autocomplete="name" class="marketing-form__input">
-    </div>
-    <div class="marketing-form__field">
-      <label for="funder_inquiry_email" class="marketing-form__label">Email</label>
-      <input type="email" id="funder_inquiry_email" name="email" value="<%= prefill["email"] %>" required
-             placeholder="you@example.com" autocomplete="email" class="marketing-form__input">
-    </div>
-    <div class="marketing-form__field">
-      <label for="funder_inquiry_message" class="marketing-form__label">What do you want to fund? <span class="marketing-form__optional">(optional)</span></label>
-      <textarea id="funder_inquiry_message" name="message" rows="3" placeholder="What are you looking to fund? (optional)"
-                class="marketing-form__input marketing-form__textarea"><%= prefill["message"] %></textarea>
-    </div>
-    <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">
-      Talk to our team
-    </button>
-  <% else %>
-    <div class="marketing-form__row">
-      <input type="email" name="email" value="<%= prefill["email"] %>" required
-             placeholder="you@example.com" autocomplete="email" aria-label="Your email address"
-             class="marketing-form__input">
-      <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg">
-        Talk to our team
-      </button>
-    </div>
-  <% end %>
+  <input type="text" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
+         autocomplete="name" aria-label="Your name" class="marketing-form__input">
+  <div class="marketing-form__field">
+    <%= tag.input type: "email", name: "email", value: prefill["email"], required: true,
+                  placeholder: "you@example.com", autocomplete: "email",
+                  class: ["marketing-form__input", { "marketing-form__input--invalid": email_error }],
+                  aria: email_aria %>
+    <% if email_error %>
+      <p id="funder_inquiry_email_error" class="marketing-form__error" role="alert">
+        <%= inline_icon "important-fill", size: 18 %><span><%= email_error %></span>
+      </p>
+    <% end %>
+  </div>
+
+  <div class="marketing-form__field">
+    <label for="funder_inquiry_message" class="marketing-form__label">What are you looking to fund?</label>
+    <p id="funder_inquiry_message_hint" class="marketing-form__prompt">
+      A few sentences help us come prepared. Tell us who or what you'd like to support, a rough
+      budget, and your timeline.
+    </p>
+    <%= tag.textarea prefill["message"], id: "funder_inquiry_message", name: "message", rows: 4, required: true,
+                     placeholder: "e.g. We'd like to give about $50k in grants to student robotics teams over the next year, and want to understand how HCB would handle disbursement and reporting.",
+                     class: ["marketing-form__input", "marketing-form__textarea", { "marketing-form__input--invalid": message_error }],
+                     aria: message_aria %>
+    <% if message_error %>
+      <p id="funder_inquiry_message_error" class="marketing-form__error" role="alert">
+        <%= inline_icon "important-fill", size: 18 %><span><%= message_error %></span>
+      </p>
+    <% end %>
+  </div>
+
+  <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">
+    Talk to our team
+  </button>
 
   <p class="marketing-form__hint">We'll reply personally, usually within the business day.</p>
 <% end %>

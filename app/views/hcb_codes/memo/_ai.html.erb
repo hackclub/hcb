@@ -1,5 +1,6 @@
 <span id="ai_memo">
-  <%= turbo_stream_from hcb_code, "ai_memo" %>
+  <%# The suggestion arrives over the ledger item's stream, since the item owns the receipts %>
+  <%= turbo_stream_from hcb_code.ledger_item, "ai_memo" if hcb_code.ledger_item.present? %>
   <% if hcb_code.suggested_memos.any? && hcb_code.custom_memo.nil? %>
     <span class="pointer tooltipped tooltipped--w"
       aria-label="Use AI to generate a memo"

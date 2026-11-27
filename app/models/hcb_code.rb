@@ -628,39 +628,10 @@ class HcbCode < ApplicationRecord
       fee_reimbursement_group || card_charge
   end
 
-  # The `:receipt_required` scope determines the type of
-  # transaction based on its HCB Code, for reference:
-  # HCB-300: ACH Transfers (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
-  # HCB-310: Wires
-  # HCB-350: PayPal Transfers
-  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
-  # HCB-600: Stripe card charges (always required)
-  # HCB-601: Stripe force captures (always required)
-  # @sampoder
-
-  # receipt_required (the scope) diverges from receipt_required?
-  # in a couple of ways:
-  #
-  # 1) it doesn't consider event plan
-  # 2) it doesn't consider the amount of the HCB code
-  #
-  # this is because these two things are expensive to compute on an HCB code.
-
-  scope :receipt_required, -> {
-    joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
-      .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
-      .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-310%' AND canonical_pending_declined_mappings.id IS NULL)
-              ")
-  }
-
-  # we optionally take an event parameter here. this
-  # is a performance optimisation because it allows us to
-  # load the event once on the ledger and never again
+  # Whether a receipt is required is the ledger item's call
+  # (Ledger::Item#receipt_required?, cached on the item); every page, mailer and
+  # API reads it there. This copy only backs the Receiptable concern's own use
+  # on HCB codes (its upload task and #missing_receipt?).
   def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
@@ -672,10 +643,6 @@ class HcbCode < ApplicationRecord
 
     # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
     false
-  end
-
-  def receipt_optional?(event = self.event, type = self.type)
-    !receipt_required?(event, type)
   end
 
   # we have a custom implementation here for caching

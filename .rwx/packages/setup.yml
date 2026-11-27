@@ -11,10 +11,11 @@ tasks:
       sudo apt-get clean
 
   # Receipt previews are resized through MiniMagick, which shells out to ImageMagick.
-  - key: imagemagick
+  # libvips (with Pango) draws CSV previews via the csv_preview gem.
+  - key: image-libraries
     run: |
       sudo apt-get update
-      sudo apt-get install -y --no-install-recommends imagemagick
+      sudo apt-get install -y --no-install-recommends imagemagick libvips
       sudo apt-get clean
 
   - key: docker-images

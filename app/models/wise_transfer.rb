@@ -127,6 +127,7 @@ class WiseTransfer < ApplicationRecord
       after do
         canonical_pending_transaction.decline!
         payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
+        create_activity(key: "wise_transfer.rejected")
       end
       transitions from: [:pending, :approved], to: :rejected
     end
@@ -157,6 +158,7 @@ class WiseTransfer < ApplicationRecord
         else
           WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
         end
+        create_activity(key: "wise_transfer.failed", owner: nil)
 
         update(return_reason: reason)
         canonical_pending_transaction.decline!

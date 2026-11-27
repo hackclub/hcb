@@ -1,0 +1,37 @@
+<%# locals: (item:, event:) %>
+
+<%#
+  The body of an item's "+ Add tag" menu: the event's tags (each a toggle,
+  with a delete button for someone who may delete the tag) and the "Create tag"
+  link. Shared by the ledger row (ledger/items/_tag_menu), the ledger item page
+  (ledger/items/_tags_detail) and the HCB code page (hcb_codes/_tags), which
+  only differ in the wrapper and toggle button around it.
+
+  The "Create tag" link opens the create_tag modal that events/_nav renders for
+  the page's event, so a page without one (the receipt bin, which lists charges
+  across orgs) offers only the event's existing tags, with no divider under
+  them.
+%>
+<% can_create_tag = @event.present? && TagPolicy.new(current_user, @event).create? %>
+<div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
+  <% event.tags.each do |tag| %>
+    <div class="flex items-center" data-tag="<%= tag.id %>">
+      <%= button_to ledger_item_toggle_tag_path(item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+        <%= render partial: "ledger/items/tag_icon", locals: { tag: } %>
+        <%= tag.label %>
+        <%= "✓" if item.tags.include?(tag) %>
+      <% end %>
+      <% if policy(tag).destroy? %>
+        <%= button_to event_tag_path(event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message, "data-turbo-confirm-danger" => true } do %>
+          <%= inline_icon "delete", size: 18, style: "margin: 0" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+  <% if can_create_tag %>
+    <% if event.tags.any? %>
+      <div class="menu__divider tags__divider"></div>
+    <% end %>
+    <%= render partial: "ledger/items/create_tag", locals: { button: item.hashid } %>
+  <% end %>
+</div>

@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { event_ledger_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -371,48 +371,6 @@ module EventsHelper
     else
       tx.local_hcb_code.memo(event: @event)
     end
-  end
-
-  def humanize_audit_log_value(field, value)
-
-    if field == "point_of_contact_id"
-      return User.find(value).email
-    end
-
-    if field == "maximum_amount_cents"
-      return render_money(value.to_s)
-    end
-
-    if field == "event_id"
-      return Event.find(value).name
-    end
-
-    if field == "reviewer_id"
-      return User.find(value).name
-    end
-
-    return "Yes" if value == true
-    return "No" if value == false
-
-    if field.ends_with?("_at")
-      begin
-        return local_time(value)
-      rescue
-        return value
-      end
-    end
-
-    return value
-  end
-
-  def render_audit_log_field(field)
-    field.delete_suffix("_cents").humanize
-  end
-
-  def render_audit_log_value(field, value, color:)
-    return tag.span "unset", class: "muted" if value.nil? || value.try(:empty?)
-
-    return tag.span humanize_audit_log_value(field, value), class: color
   end
 
   def show_org_switcher?

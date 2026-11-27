@@ -39,6 +39,10 @@ class MarketingController < ApplicationController
 
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
+  # Minimum inquiry note length (after stripping). Low on purpose: a single sentence should
+  # pass; it only filters out notes like "hi" that give the team nothing to go on.
+  FUNDER_MESSAGE_MIN_LENGTH = 20
+
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
@@ -63,8 +67,20 @@ class MarketingController < ApplicationController
     name = params[:name].to_s.strip
     message = params[:message].to_s.strip
 
-    unless email.match?(URI::MailTo::EMAIL_REGEXP)
-      flash[:error] = "Please enter a valid email address."
+    # Errors render inline under the offending field (see _funder_inquiry_form), not as a page
+    # banner, so the funder sees exactly what to fix.
+    field, error = if !email.match?(URI::MailTo::EMAIL_REGEXP)
+                     ["email", "Please enter a valid email address."]
+                   elsif message.blank?
+                     # Without a note the team has nothing to research before replying.
+                     ["message", "Please tell us a bit about what you're looking to fund."]
+                   elsif message.length < FUNDER_MESSAGE_MIN_LENGTH
+                     # Short is fine, but "hi" isn't enough to prepare a reply.
+                     ["message", "Tell us a bit more so we can come prepared."]
+                   end
+
+    if error
+      flash[:funder_form_error] = { "field" => field, "message" => error }
       # Carry the submitted values back so the form isn't cleared on the error redirect.
       # Capped so a long message can't overflow the 4 KB session cookie.
       flash[:funder_form] = { "name" => name.first(100), "email" => email.first(254), "message" => message.byteslice(0, 1_000).scrub("") }
