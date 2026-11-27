@@ -212,6 +212,35 @@ class CardGrant < ApplicationRecord
     active? && stripe_card.nil?
   end
 
+  EXPIRING_SOON_THRESHOLD = 30.days
+
+  def expiration_passed?
+    expiration_at < Date.current
+  end
+
+  def expiring_soon?
+    !expiration_passed? && expiration_at <= EXPIRING_SOON_THRESHOLD.from_now.to_date
+  end
+
+  # Badge color reflecting how close the grant is to expiring
+  def expiration_badge_color
+    if expiration_passed?
+      "bg-error"
+    elsif expiring_soon?
+      "bg-warning"
+    else
+      "bg-muted"
+    end
+  end
+
+  # Percentage (0-100) of the grant's lifetime remaining before it expires
+  def percent_time_remaining
+    total_days = [(expiration_at - created_at.to_date).to_i, 1].max
+    remaining_days = (expiration_at - Date.current).to_i
+
+    (remaining_days * 100.0 / total_days).clamp(0, 100).round
+  end
+
   def topup!(amount_cents:, topped_up_by: sent_by)
     raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
 

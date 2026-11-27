@@ -173,4 +173,40 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.expiration_at).to be_present
     end
   end
+
+  describe "expiration helpers" do
+    def grant_expiring_on(date, created_at: 100.days.ago)
+      build(:card_grant, created_at:, expiration_at: date)
+    end
+
+    it "flags a grant that expired yesterday as passed" do
+      grant = grant_expiring_on(Date.yesterday)
+
+      expect(grant.expiration_passed?).to be(true)
+      expect(grant.expiring_soon?).to be(false)
+      expect(grant.expiration_badge_color).to eq("bg-error")
+      expect(grant.percent_time_remaining).to eq(0)
+    end
+
+    it "treats a grant expiring today as expiring soon, not passed" do
+      grant = grant_expiring_on(Date.current)
+
+      expect(grant.expiration_passed?).to be(false)
+      expect(grant.expiring_soon?).to be(true)
+      expect(grant.expiration_badge_color).to eq("bg-warning")
+    end
+
+    it "uses the muted color for grants expiring more than 30 days out" do
+      grant = grant_expiring_on(Date.current + 31.days)
+
+      expect(grant.expiring_soon?).to be(false)
+      expect(grant.expiration_badge_color).to eq("bg-muted")
+    end
+
+    it "returns the rounded percentage of lifetime remaining" do
+      grant = grant_expiring_on(Date.current + 25.days, created_at: 75.days.ago)
+
+      expect(grant.percent_time_remaining).to eq(25)
+    end
+  end
 end
