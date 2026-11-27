@@ -168,6 +168,22 @@ RSpec.describe "Modals in transaction popovers", type: :system do
     expect(page).to have_css(decline_modal, count: 1, visible: :all)
   end
 
+  # Opening these closed the popover with jquery-modal
+  it "opens a card charge's merchant details on top of its popover" do
+    merchant_id = "merchant_details_#{charge.local_hcb_code.ledger_item.hashid}"
+
+    within(popover) { find("[data-modal='#{merchant_id}']").click }
+
+    expect(page).to have_css("##{merchant_id}[open]", text: "Merchant details", style: { scale: "none" })
+    expect(open_modals).to contain_exactly("shared_popover", merchant_id)
+
+    within("##{merchant_id}") { find(".modal__close").click }
+
+    expect_closed("##{merchant_id}")
+    expect(page).to have_css(popover, text: "Card not activated")
+    expect(page).to have_current_path(stripe_card_path(card, popover: popover_url))
+  end
+
   context "as an auditor" do
     let(:user) { create(:user, :make_auditor, phone_number: "+18556254225") }
 
