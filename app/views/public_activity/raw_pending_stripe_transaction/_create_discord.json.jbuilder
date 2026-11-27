@@ -18,7 +18,7 @@ user = activity.user&.name
 json.embed do
   if item.present?
     if card_charge&.stripe_refund?
-      json.description "#{user} was refunded #{render_money(item.amount_cents.abs)} from #{item.memo}#{for_organization}"
+      json.description "#{user} was refunded #{render_money(card_charge.refunded_amount_cents)} from #{item.memo}#{for_organization}"
     elsif item.declined?
       json.description "#{possessive(user)} #{[organization, "card"].compact.join(" ")} was declined for #{render_money(activity.trackable.amount_cents.abs)} at #{item.memo}"
     elsif card_charge&.stripe_cash_withdrawal?
