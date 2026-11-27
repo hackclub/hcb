@@ -66,6 +66,10 @@ yarn-debug.log*
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/rwx/
+!.claude/skills/twilio-verify-send-otp/
+!.claude/skills/twilio-send-message/
+!.claude/skills/twilio-messaging-webhooks/
+!.claude/skills/twilio-debugging-observability/
 !.claude/skills/loops-api/
 !.claude/skills/loops-email-sending-best-practices/
 !.claude/skills/tiptap/
