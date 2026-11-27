@@ -38,9 +38,52 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
+  describe "file type" do
+    let(:receiptable) { create(:hcb_code) }
+
+    def receipt_with(io:, filename:, content_type:, user: nil, upload_method: :api)
+      described_class.new(receiptable:, upload_method:, user:).tap do |receipt|
+        receipt.file.attach(io: StringIO.new(io), filename:, content_type:)
+      end
+    end
+
+    let(:csv) { "Merchant,Amount\nHack Club,12.34\n" }
+
+    it "accepts a CSV from an auditor" do
+      receipt = receipt_with(io: csv, filename: "receipt.csv", content_type: "text/csv", user: create(:user, :make_auditor))
+      expect(receipt).to be_valid
+    end
+
+    it "rejects a CSV from a non-auditor" do
+      receipt = receipt_with(io: csv, filename: "receipt.csv", content_type: "text/csv", user: create(:user))
+      expect(receipt).not_to be_valid
+      expect(receipt.errors[:file].join).to include("cannot be a CSV")
+    end
+
+    it "rejects a CSV with no uploader" do
+      receipt = receipt_with(io: csv, filename: "receipt.csv", content_type: "text/csv")
+      expect(receipt).not_to be_valid
+    end
+
+    it "lets a duplicated CSV through whoever uploaded it" do
+      receipt = receipt_with(io: csv, filename: "receipt.csv", content_type: "text/csv", user: create(:user), upload_method: :duplicate)
+      expect(receipt).to be_valid
+    end
+
+    it "rejects a file whose contents don't match its declared type" do
+      receipt = receipt_with(io: "not really a pdf", filename: "receipt.pdf", content_type: "application/pdf", user: create(:user))
+      expect(receipt).not_to be_valid
+    end
+
+    it "accepts a real PNG" do
+      receipt = receipt_with(io: File.binread(Rails.root.join("spec/fixtures/files/receipt.png")), filename: "receipt.png", content_type: "image/png", user: create(:user))
+      expect(receipt).to be_valid
+    end
+  end
+
   describe "#preview" do
     it "renders a CSV receipt's preview once per instance" do
-      receipt = described_class.new(receiptable: create(:hcb_code), upload_method: :api)
+      receipt = described_class.new(receiptable: create(:hcb_code), upload_method: :api, user: create(:user, :make_auditor))
       receipt.file.attach(io: StringIO.new("Merchant,Amount\nHack Club,12.34\n"), filename: "receipt.csv", content_type: "text/csv")
       receipt.save!
 

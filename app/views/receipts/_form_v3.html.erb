@@ -53,11 +53,11 @@
                               include_hidden: false,
                               required: true,
                               class: "sr-only",
-                              accept: "image/*,image/heic,.pdf",
+                              accept: "image/*,image/heic,.pdf#{",.csv" if auditor_signed_in?}",
                               direct_upload: true,
                               data: {
                                 "file-drop-target" => "fileInput",
-                                "action"           => "change->file-drop#checkSize change->form#submit"
+                                "action"           => "change->file-drop#checkType change->file-drop#checkSize change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap gap-2">
             <% additional_classes = [].tap do |array|
