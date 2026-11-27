@@ -446,7 +446,8 @@ RSpec.describe EventsController do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Required since November 24, 2026.")
-        expect(response.body).to include("have until December 1, 2026 to")
+        expect(response.body).to include("Enable two-factor authentication</a> before December 1, 2026 at")
+        expect(response.body).to include("to keep your access.")
         expect(response.body).to include("Hack Club HQ requires two-factor authentication.")
       end
 

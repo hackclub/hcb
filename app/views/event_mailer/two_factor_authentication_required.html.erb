@@ -7,7 +7,11 @@
   </p>
 <% else %>
   <p>
-    <%= @whodunnit.name %> <%= @is_manager ? "(a contract signee)" : "(an HCB admin)" unless @whodunnit == User.system_user %> now requires two-factor authentication for <strong><%= @event.name %></strong>.
+    <%= @whodunnit.name %>
+    <% unless @whodunnit == User.system_user %>
+      <%= @is_manager ? "(a contract signee)" : "(an HCB admin)" %>
+    <% end %>
+    now requires two-factor authentication for <strong><%= @event.name %></strong>.
     Every member needs two-factor authentication enabled on their HCB account to keep access.
   </p>
 <% end %>

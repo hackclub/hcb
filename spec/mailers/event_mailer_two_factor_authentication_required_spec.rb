@@ -21,10 +21,10 @@ RSpec.describe EventMailer, type: :mailer do
 
       it "asks them to enable it by the deadline" do
         expect(mail.to).to eq([user.email])
-        expect(mail.subject).to eq("[Action Needed] Enable two-factor authentication for Hack Club HQ")
+        expect(mail.subject).to eq("[Action Required] Enable two-factor authentication to keep access to Hack Club HQ")
         expect(mail.body.encoded).to include("Signee McSignface")
         expect(mail.body.encoded).to include("You don't have two-factor authentication enabled yet.")
-        expect(mail.body.encoded).to include("December 1st")
+        expect(mail.body.encoded).to include("December 1, 2026")
         expect(mail.body.encoded).to include(settings_security_url)
         expect(mail.body.encoded).not_to include("nothing you need to do")
       end
@@ -37,7 +37,7 @@ RSpec.describe EventMailer, type: :mailer do
       it "tells them nothing is needed" do
         expect(mail.subject).to eq("Hack Club HQ now requires two-factor authentication")
         expect(mail.body.encoded).to include("nothing you need to do")
-        expect(mail.body.encoded).not_to include("December 1st")
+        expect(mail.body.encoded).not_to include("December 1, 2026")
       end
     end
   end
