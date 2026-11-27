@@ -550,6 +550,7 @@ class Event < ApplicationRecord
   include HasTasks
 
   include Event::HasReimbursementReviewers
+  include Event::TwoFactorAuthenticationRequirement
 
   validate :point_of_contact_is_admin
 

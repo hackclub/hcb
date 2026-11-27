@@ -29,6 +29,36 @@ RSpec.describe OrganizerPosition, type: :model do
     end
   end
 
+  describe ".role_at_least?" do
+    let(:event) { create(:event) }
+    let(:member) { create(:organizer_position, event:, role: :member).user }
+
+    def require_two_factor!(event, at:)
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+      Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+    end
+
+    it "keeps access during the two-factor grace period" do
+      require_two_factor!(event, at: 1.day.ago)
+
+      expect(described_class.role_at_least?(member, event, :member)).to eq(true)
+    end
+
+    it "shuts out members who ran out their two-factor grace period" do
+      require_two_factor!(event, at: 8.days.ago)
+
+      expect(described_class.role_at_least?(member, event, :reader)).to eq(false)
+      expect(described_class.role_at_least?(member, event, :member)).to eq(false)
+    end
+
+    it "keeps access for members who use two-factor authentication" do
+      member = create(:organizer_position, event:, role: :member, user: create(:user, :with_two_factor_authentication)).user
+      require_two_factor!(event, at: 8.days.ago)
+
+      expect(described_class.role_at_least?(member, event, :member)).to eq(true)
+    end
+  end
+
   describe "reimbursement reviewer opt-ins" do
     it "follow the manager role" do
       position = create(:organizer_position, role: :member)

@@ -3,6 +3,42 @@
 require "rails_helper"
 
 RSpec.describe EventPolicy, type: :policy do
+  describe "#toggle_two_factor_authentication_requirement?" do
+    let(:event) { create(:event) }
+
+    subject { described_class.new(user, event).toggle_two_factor_authentication_requirement? }
+
+    context "as a contract signee with two-factor authentication" do
+      let(:user) { create(:user, :with_two_factor_authentication) }
+
+      before { create(:organizer_position, event:, user:, role: :manager, is_signee: true) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "as a contract signee without two-factor authentication" do
+      let(:user) { create(:user) }
+
+      before { create(:organizer_position, event:, user:, role: :manager, is_signee: true) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "as a manager with two-factor authentication who is not a signee" do
+      let(:user) { create(:user, :with_two_factor_authentication) }
+
+      before { create(:organizer_position, event:, user:, role: :manager) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "as an admin with two-factor authentication who is not a signee" do
+      let(:user) { create(:user, :make_admin, :with_two_factor_authentication) }
+
+      it { is_expected.to eq(false) }
+    end
+  end
+
   describe "#sub_organizations?" do
     let(:event) { create(:event, is_public: true) }
 

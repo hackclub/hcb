@@ -43,6 +43,11 @@ class EventMailerPreview < ActionMailer::Preview
     EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).monthly_announcements_disabled
   end
 
+  def two_factor_authentication_required
+    event = Event.first
+    EventMailer.with(event:, user: event.users.first, whodunnit: event.users.first).two_factor_authentication_required
+  end
+
   def subevent_created
     subevent = Event.where.not(parent_id: nil).last
     EventMailer.with(event: subevent.parent, subevent:, creator: subevent.users.first).subevent_created

@@ -1,0 +1,48 @@
+<p>Hi <%= @user.first_name %>,</p>
+
+<% if @user == @whodunnit %>
+  <p>
+    You enabled required two-factor authentication for <strong><%= @event.name %></strong>.
+    We've notified your team; every member needs two-factor authentication enabled on their HCB account to keep access.
+  </p>
+<% else %>
+  <p>
+    <%= @whodunnit.name %>
+    <% unless @whodunnit == User.system_user %>
+      <%= @is_manager ? "(a contract signee)" : "(an HCB admin)" %>
+    <% end %>
+    now requires two-factor authentication for <strong><%= @event.name %></strong>.
+    Every member needs two-factor authentication enabled on their HCB account to keep access.
+  </p>
+<% end %>
+
+<% if @already_enabled %>
+  <% unless @user == @whodunnit %>
+    <p>
+      You already have two-factor authentication enabled, so there's nothing you need to do, just keep it enabled to retain access. Thanks for keeping your account secure!
+    </p>
+  <% end %>
+<% else %>
+  <p>
+    <strong>You don't have two-factor authentication enabled yet.</strong>
+    <% if @deadline.present? %>
+      Please <%= link_to "enable it in your security settings", settings_security_url %> before <strong><%= @deadline.strftime("%B %-d, %Y at %-I:%M %p %Z") %></strong>.
+      After that, you won't be able to access <%= @event.name %> on HCB until you enable it (your membership won't be removed, and access returns automatically as soon as it's enabled).
+    <% else %>
+      Please <%= link_to "enable it in your security settings", settings_security_url %> as soon as you can, or you won't be able to access <%= @event.name %> on HCB until you enable it.
+    <% end %>
+  </p>
+
+  <p>
+    To get set up, make sure you have a phone number in your <%= link_to "account settings", my_settings_url %>, then head to <%= link_to "security settings", settings_security_url %> to verify it, add a second factor (SMS, an authenticator app under "Time-based one time passwords", or a security key), and turn on "Enable two factor authentication" under "Login preferences".
+  </p>
+
+  <p>
+    Having trouble setting it up? Reply to this email or contact us at <%= mail_to "hcb@hackclub.com" %>.
+  </p>
+<% end %>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

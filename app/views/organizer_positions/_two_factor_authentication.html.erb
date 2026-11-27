@@ -1,0 +1,8 @@
+<%# locals: (user:, compact: false) %>
+<% enabled = user.use_two_factor_authentication? %>
+<span class="inline-flex items-center g1 line-height-0 <%= enabled ? "success" : "muted" %> tooltipped tooltipped--n"
+      aria-label="<%= user.first_name %> <%= enabled ? "uses" : "doesn't use" %> two-factor authentication"
+      data-two-factor-authentication="<%= enabled %>">
+  <%= inline_icon enabled ? "checkmark" : "view-close", size: 20 %>
+  <%= compact ? (enabled ? "On" : "Off") : "Two-factor #{enabled ? "on" : "off"}" %>
+</span>

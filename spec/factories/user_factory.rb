@@ -16,5 +16,15 @@ FactoryBot.define do
     trait :make_auditor do
       access_level { :auditor }
     end
+
+    # Two-factor authentication needs a verified second factor, and saving a
+    # new phone number un-verifies it, so the switches go on after creation.
+    trait :with_two_factor_authentication do
+      phone_number { "+18556254225" }
+
+      after(:create) do |user|
+        user.update!(phone_number_verified: true, use_two_factor_authentication: true)
+      end
+    end
   end
 end

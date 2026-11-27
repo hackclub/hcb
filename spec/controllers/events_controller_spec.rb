@@ -389,6 +389,81 @@ RSpec.describe EventsController do
   describe "#edit" do
     render_views
 
+    describe "the two-factor authentication requirement preview" do
+      let(:event) { create(:event, name: "Hack Club HQ") }
+
+      def require_two_factor!(event, at:)
+        Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+        Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
+      end
+
+      it "lets a contract signee with two-factor authentication turn it on" do
+        signee = create(:user, :with_two_factor_authentication)
+        create(:organizer_position, user: signee, event:, role: :manager, is_signee: true)
+        create_session(signee, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        button = page.at_css("#require-two-factor-authentication form[action='#{enable_feature_path(feature: :require_two_factor_authentication_2026_11_24, event_id: event.id)}'] button")
+        expect(button).to be_present
+        expect(button["disabled"]).to be_nil
+        expect(page.css("#require-two-factor-authentication .tooltipped")).to be_empty
+      end
+
+      it "disables the toggle for a manager who isn't a signee, and says why" do
+        manager = create(:user, :with_two_factor_authentication)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        create_session(manager, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        expect(page.at_css("#require-two-factor-authentication form button")["disabled"]).to be_present
+        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Only a contract signee can change this setting.")
+      end
+
+      it "disables the toggle for a signee without two-factor authentication, and says why" do
+        signee = create(:user)
+        create(:organizer_position, user: signee, event:, role: :manager, is_signee: true)
+        create_session(signee, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+        page = Nokogiri::HTML5(response.body)
+
+        expect(page.at_css("#require-two-factor-authentication form button")["disabled"]).to be_present
+        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Enable two-factor authentication on your own account first.")
+      end
+
+      it "shows the deadline and warns members without two-factor authentication during the grace period" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        require_two_factor!(event, at: Time.zone.parse("2026-11-24 12:00:00"))
+        travel_to Time.zone.parse("2026-11-26 12:00:00")
+        create_session(member, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Required since November 24, 2026.")
+        expect(response.body).to include("Enable two-factor authentication</a> before December 1, 2026 at")
+        expect(response.body).to include("to keep your access.")
+        expect(response.body).to include("Hack Club HQ requires two-factor authentication.")
+      end
+
+      it "shuts out members without two-factor authentication once the grace period is over" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        require_two_factor!(event, at: 8.days.ago)
+        create_session(member, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+
+        expect(response).to redirect_to(root_path)
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      end
+    end
+
     # Creating, editing and deleting tags are member-level server side, so the
     # settings tab shouldn't present them as manager-only.
     it "lets a member manage tags from the settings tab" do
@@ -1475,6 +1550,56 @@ RSpec.describe EventsController do
       create(:organizer_position, user: manager, event: parent, role: :manager)
 
       expect(indirect_access.keys).to eq([manager.initial_name, reader.initial_name])
+    end
+  end
+
+  describe "the two-factor authentication indicator on #team" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+    # Signed out visitors only see members who have a preferred name.
+    let!(:protected_member) { create(:user, :with_two_factor_authentication, preferred_name: "Protected") }
+    let!(:exposed_member) { create(:user, preferred_name: "Exposed") }
+
+    before do
+      create(:organizer_position, user: protected_member, event:, role: :member)
+      create(:organizer_position, user: exposed_member, event:, role: :member)
+    end
+
+    # { user => "true"/"false" } for every card or row that carries an indicator.
+    def indicators(view:)
+      get(:team, params: { event_id: event.slug, view: })
+
+      entries = Nokogiri::HTML5(response.body).css(view == "list" ? "tbody tr" : ".organizer-position")
+      [protected_member, exposed_member].filter_map do |user|
+        entry = entries.find { |e| e.text.include?(user.preferred_name) }
+        expect(entry).to be_present
+        indicator = entry.at_css("[data-two-factor-authentication]")
+        [user, indicator["data-two-factor-authentication"]] if indicator
+      end.to_h
+    end
+
+    %w[grid list].each do |view|
+      it "shows a reader who uses two-factor authentication in the #{view} view" do
+        reader = create(:user)
+        create(:organizer_position, user: reader, event:, role: :reader)
+        create_session(reader, verified: true)
+
+        expect(indicators(view:)).to eq(protected_member => "true", exposed_member => "false")
+      end
+
+      it "hides it from a signed out visitor in the #{view} view" do
+        expect(indicators(view:)).to eq({})
+      end
+    end
+
+    it "labels the list column only for readers" do
+      get(:team, params: { event_id: event.slug, view: "list" })
+      expect(Nokogiri::HTML5(response.body).css("thead th").map(&:text)).not_to include("Two-factor")
+
+      create_session(create(:user, :make_admin), verified: true)
+      get(:team, params: { event_id: event.slug, view: "list" })
+      expect(Nokogiri::HTML5(response.body).css("thead th").map(&:text)).to include("Two-factor")
     end
   end
 
