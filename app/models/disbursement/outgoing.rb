@@ -18,14 +18,14 @@
 #  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
-#  destination_ledger_id               :bigint
+#  destination_ledger_id               :bigint           not null
 #  destination_subledger_id            :bigint
 #  destination_transaction_category_id :bigint
 #  event_id                            :bigint
 #  fulfilled_by_id                     :bigint
 #  requested_by_id                     :bigint
 #  source_event_id                     :bigint
-#  source_ledger_id                    :bigint
+#  source_ledger_id                    :bigint           not null
 #  source_subledger_id                 :bigint
 #  source_transaction_category_id      :bigint
 #
