@@ -20,7 +20,7 @@
   <% end %>
 
   <% if @jobs.onboarded.any? %>
-    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_employee_payment" } do %>
+    <%= link_to "#", class: "btn bg-success", data: { modal: "create_employee_payment" } do %>
       <%= inline_icon "plus" %>
       Submit invoice
     <% end %>

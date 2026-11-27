@@ -1,152 +1,10 @@
-/* global BK, $, Turbo */
+/* global BK, $ */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
-
-const clearElement = id => {
-  const element = document.getElementById(id)
-  if (element) element.innerHTML = ''
-}
-
-const populateSharedPopover = trigger => {
-  const popover = document.getElementById('shared_popover')
-  if (!popover) return
-
-  const title = trigger.dataset.popoverTitle || ''
-  const src = trigger.dataset.popoverSrc || ''
-  const frameId = trigger.dataset.popoverFrameId || ''
-  const stateUrl = trigger.dataset.popoverStateUrl || ''
-  const stateTitle = trigger.dataset.popoverStateTitle || title
-  const externalLink = trigger.dataset.popoverExternalLink || ''
-  const size = trigger.dataset.popoverSize || ''
-
-  popover.dataset.stateUrl = stateUrl
-  popover.dataset.stateTitle = stateTitle
-
-  const titleEl = document.getElementById('shared_popover_title')
-  if (titleEl) titleEl.textContent = title
-
-  const extLink = document.getElementById('shared_popover_external_link')
-  if (extLink) {
-    if (externalLink) {
-      extLink.href = externalLink
-      extLink.style.display = ''
-    } else {
-      extLink.style.display = 'none'
-    }
-  }
-
-  popover.classList.toggle('modal--popover--sm', size === 'sm')
-
-  clearElement('shared_popover_flash')
-
-  const body = document.getElementById('shared_popover_body')
-  if (body) {
-    body.innerHTML = ''
-    if (src && frameId) {
-      const frame = document.createElement('turbo-frame')
-      frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
-      frame.id = frameId
-      // src is set by loadSharedPopoverFrame once the frame is in its final place
-      frame.dataset.popoverSrc = src
-      frame.setAttribute('target', '_top')
-      body.appendChild(frame)
-    }
-  }
-}
-
-// Starts the popover frame's fetch. On a fresh open this waits for modal:open:
-// jquery-modal appends the popover to <body> and then to its blocker, each move
-// disconnects the frame, and Turbo aborts the in-flight fetch on disconnect. An
-// abort that lands while the response body is streaming is an uncaught
-// AbortError (Turbo never awaits that read), which fails system specs.
-const loadSharedPopoverFrame = () => {
-  const frame = document.querySelector('#shared_popover_body turbo-frame')
-  if (frame && !frame.src) frame.src = frame.dataset.popoverSrc
-}
-
-const sharedPopoverIsOpen = () =>
-  $.modal.getCurrent()?.$elm?.[0]?.id === 'shared_popover'
-
-// Pushes the popover's URL and swaps in its title; the page's own title is kept for closing
-const recordSharedPopoverState = popover => {
-  if (!document.documentElement.dataset.returnToStateTitle) {
-    document.documentElement.dataset.returnToStateTitle = document.title
-  }
-  document.title = popover.dataset.stateTitle
-
-  const url = new URL(location.href)
-  if (url.searchParams.get('popover') !== popover.dataset.stateUrl) {
-    url.searchParams.set('popover', popover.dataset.stateUrl)
-    // Pushed through Turbo so the entry is one of its own: going back or forward to
-    // it is then a restoration visit, and turbo:load reopens the popover in the URL
-    Turbo.session.history.push(url)
-  }
-}
-
-const openSharedPopover = (trigger, modalClass) => {
-  if (sharedPopoverIsOpen()) {
-    // Opened from inside the popover (e.g. a transaction on a card popover) or by
-    // going back to it: swap the content in place. Reopening it would close it
-    // first, and the close handler empties the body we just filled.
-    window.unexpandReceipt()
-    populateSharedPopover(trigger)
-    loadSharedPopoverFrame()
-    const popover = document.getElementById('shared_popover')
-    popover.scrollTop = 0
-    recordSharedPopoverState(popover)
-    return
-  }
-
-  populateSharedPopover(trigger)
-  BK.s('modal', '#shared_popover').modal({
-    fadeDuration: 200,
-    fadeDelay: 0.75,
-    modalClass,
-  })
-}
-
-// Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
-const openPopoverFromUrl = () => {
-  const link = new URL(location.href).searchParams.get('popover')
-  if (!link) return true
-
-  const trigger = document.querySelector(
-    `[data-popover-state-url="${CSS.escape(link)}"]`
-  )
-  if (!trigger) return false
-
-  openSharedPopover(trigger)
-  return true
-}
-
-const openPopoverWhenFrameLoads = () => {
-  if (openPopoverFromUrl()) {
-    document.removeEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
-  }
-}
-
-document.addEventListener('turbo:load', () => {
-  // A popover left open across a Turbo visit never closes, so its saved title is stale
-  delete document.documentElement.dataset.returnToStateTitle
-
-  if (!openPopoverFromUrl()) {
-    document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
-  }
-})
-
-// Pages loaded with ?popover= echo it into links built from the query string
-document.addEventListener('turbo:before-visit', event => {
-  const url = new URL(event.detail.url)
-  if ($.modal.isActive() || !url.searchParams.has('popover')) return
-
-  event.preventDefault()
-  url.searchParams.delete('popover')
-  Turbo.visit(url.href)
-})
 
 document.addEventListener('turbo:before-fetch-response', async event => {
   // Turbo submits data-turbo-method links from a form appended to <body>
@@ -189,64 +47,9 @@ document.addEventListener('turbo:frame-load', event => {
   delete event.target.dataset.retried
 })
 
-const loadModals = element => {
-  $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
-    const controlOrCommandClick = e.ctrlKey || e.metaKey
-    if ($(this).attr('href') || $(e.target).attr('href')) {
-      if (controlOrCommandClick) return
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    document.dispatchEvent(new CustomEvent('hcb:close-menus'))
-    const modalClass = $(this).parents('turbo-frame').length
-      ? 'turbo-frame-modal'
-      : undefined
-    if ($(this).data('modal') === 'shared_popover') {
-      openSharedPopover(this, modalClass)
-      return this.blur()
-    }
-    BK.s('modal', '#' + $(this).data('modal')).modal({
-      fadeDuration: 200,
-      fadeDelay: 0.75,
-      modalClass,
-    })
-    BK.s('modal', '#' + $(this).data('modal'))
-      .find('iframe[data-src]')
-      .each((i, iframe) => {
-        iframe.src ||= iframe.dataset.src
-      })
-    return this.blur()
-  })
-
-  $(element).on(
-    'click',
-    '[data-behavior~=modal_trigger] [data-behavior~=modal_ignore]',
-    function (e) {
-      e.stopPropagation()
-      e.preventDefault()
-    }
-  )
-}
-
 $(document).on('click', '[data-behavior~=flash]', function () {
   $(this).fadeOut('medium')
 })
-
-loadModals(document)
-;(() => {
-  let autoModals = $('[data-modal-auto-open~=true]')
-
-  if (autoModals.length < 1) return
-
-  let element = autoModals.first()
-
-  BK.s('modal', '#' + $(element).data('modal')).modal({
-    modalClass: $(element).parents('turbo-frame').length
-      ? 'turbo-frame-modal'
-      : undefined,
-    closeExisting: false,
-  })
-})()
 
 $(document).on('keyup', 'action', function (e) {
   if (e.keyCode === 13) {
@@ -736,7 +539,7 @@ $(document).on('turbo:load', function () {
       if (document.activeElement.tagName === 'INPUT') return
       if (document.activeElement.tagName === 'TEXTAREA') return
       // if a modal is open, don't trigger the search
-      if (document.querySelector('.jquery-modal.current.blocker')) return
+      if (document.querySelector('dialog.modal[open]')) return
       e.preventDefault()
       el.focus()
       // move the cursor to the end of the input
@@ -788,42 +591,6 @@ $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
   }
 })
 
-$(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
-  const controlOrCommandClick = e.ctrlKey || e.metaKey
-  if ($(this).attr('href') || $(e.target).attr('href')) {
-    if (controlOrCommandClick) return
-    e.preventDefault()
-    e.stopPropagation()
-  }
-  $(e.target)
-    .parents('.modal--popover')
-    .addClass('modal--popover--receipt-expanded')
-  $(e.target)
-    .parents('.receipt')
-    .find('iframe[data-src]')
-    .each((i, iframe) => {
-      iframe.src ||= iframe.dataset.src
-    })
-  let selected_receipt = document.querySelectorAll(
-    `.hidden_except_${e.originalEvent.target.dataset.receiptId}`
-  )[0]
-  selected_receipt.style.display = 'flex'
-  selected_receipt.style.setProperty('--receipt-size', '100%')
-  selected_receipt.classList.add('receipt--expanded')
-})
-
-window.unexpandReceipt = () => {
-  document
-    .querySelectorAll(`.receipt--expanded`)[0]
-    ?.style?.setProperty('--receipt-size', '256px')
-  document
-    .querySelectorAll(`.receipt--expanded`)[0]
-    ?.classList?.remove('receipt--expanded')
-  document
-    .querySelector('.modal--popover.modal--popover--receipt-expanded')
-    ?.classList?.remove('modal--popover--receipt-expanded')
-}
-
 document.addEventListener('turbo:load', () => {
   if (window.self === window.top) {
     document.body.classList.remove('embedded')
@@ -852,10 +619,6 @@ document.addEventListener('turbo:before-stream-render', event => {
           element.reload()
         }
       })
-    } else if (streamElement.action == 'close_modal') {
-      $.modal.close().remove()
-    } else if (streamElement.action == 'open_modal') {
-      BK.s('modal', '#' + streamElement.target).modal({ closeExisting: false })
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -878,53 +641,6 @@ $(document).on('keydown', function (e) {
 $(document).on('wheel', 'input[type=number]', e => {
   e.preventDefault()
   e.target.blur()
-})
-
-// Opening a popover puts its URL in the address bar as a Turbo history entry, so the
-// back and forward buttons are restoration visits: the popover closes with the page
-// (turbo:before-cache, see application.js) and turbo:load reopens the one in the URL.
-
-$(document).on($.modal.BEFORE_OPEN, function (event, modal) {
-  if (modal?.elm[0]?.dataset?.stateUrl) {
-    recordSharedPopoverState(modal.elm[0])
-  }
-})
-
-$(document).on($.modal.OPEN, function (event, modal) {
-  if (modal?.elm?.[0]?.id === 'shared_popover') {
-    loadSharedPopoverFrame()
-  }
-})
-
-$(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (modal?.elm[0]?.dataset?.stateUrl) {
-    // Closing via the back button has already removed the param, and a close for
-    // Turbo's snapshot cache (see application.js) leaves the URL to Turbo
-    const url = new URL(location.href)
-    if (!modal.options?.keepHistory && url.searchParams.has('popover')) {
-      url.searchParams.delete('popover')
-      Turbo.session.history.push(url)
-    }
-
-    if (document.documentElement.dataset.returnToStateTitle) {
-      document.title = document.documentElement.dataset.returnToStateTitle
-    }
-  }
-})
-
-$(document).on($.modal.AFTER_CLOSE, function (event, modal) {
-  if (modal?.elm?.[0]?.id === 'shared_popover') {
-    delete document.documentElement.dataset.returnToStateTitle
-
-    clearElement('shared_popover_body')
-    clearElement('shared_popover_flash')
-
-    const popoverEl = modal.elm[0]
-    if (popoverEl && popoverEl.classList) {
-      popoverEl.classList.remove('modal--popover--receipt-expanded')
-      popoverEl.classList.remove('modal--popover--sm')
-    }
-  }
 })
 
 if (navigator.setAppBadge) {

@@ -3,7 +3,7 @@
 <% unless is_email %>
   <div class="block-actions flex gap-2">
     <% if block.editable? %>
-      <%= pop_icon_to "edit", edit_announcements_block_path(block), class: "tooltipped", "aria-label": "Edit this block", rel: "modal:open" %>
+      <%= pop_icon_to "edit", edit_announcements_block_path(block), class: "tooltipped", "aria-label": "Edit this block", data: { turbo_stream: true } %>
     <% end %>
   </div>
 <% end %>

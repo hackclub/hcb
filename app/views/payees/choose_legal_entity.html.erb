@@ -36,11 +36,10 @@
     <%= link_to "Add a business legal entity",
             "#",
             class: "btn h-full flex flex-col justify-center",
-            data: { behavior: "modal_trigger", modal: "create_le" } %>
+            data: { modal: "create_le" } %>
   </div>
 
-  <section id="create_le" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
-    <%= modal_header "Create a new legal entity" %>
+  <%= modal "Create a new legal entity", id: "create_le" do %>
 
     <p>Enter the name of the business you're being paid on behalf of.</p>
 
@@ -64,5 +63,5 @@
 
       <%= form.submit "Create" %>
     <% end %>
-  </section>
+  <% end %>
 <% end %>

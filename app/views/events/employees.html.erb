@@ -28,7 +28,7 @@
     <% end %>
 
     <% if policy(@event.employees.build).new? %>
-      <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+      <%= link_to "#", class: "btn bg-success", data: { modal: "invite" } do %>
         <%= inline_icon "plus" %>
         Invite a contractor
       <% end %>
@@ -39,7 +39,7 @@
 <h1 class="heading flex mb-0 border-0">
   <span class="flex-grow">Contractors</span>
   <% if policy(@event.employees.build).new? %>
-    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+    <%= link_to "#", class: "btn bg-success", data: { modal: "invite" } do %>
       <%= inline_icon "plus" %>
       Invite a contractor
     <% end %>
@@ -75,7 +75,7 @@
               <%= format_date payment.created_at %>
             </td>
             <td>
-              <%= link_to "Process", "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
+              <%= link_to "Process", "#", data: { modal: "employee_payment_#{payment.id}" } %>
               <%= render "employee/payments/modal", payment: %>
             </td>
           </tr>
@@ -118,7 +118,7 @@
 
 <% end %>
 
-<section data-behavior="modal" role="dialog" id="invite" class="modal modal--scroll bg-snow">
+<%= modal id: "invite" do %>
   <%= form_with(model: Employee, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
     <%= modal_header "Invite a 1099 contractor" %>
     <div class="card border b--info mt2 mb2 container--sm mx-auto">
@@ -133,4 +133,4 @@
       <%= form.submit "Send invitation", class: "mt2", disabled: @event&.demo_mode? %>
     </div>
   <% end %>
-</section>
+<% end %>

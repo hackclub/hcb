@@ -25,7 +25,11 @@ module Announcements
     def edit
       authorize @block, policy_class: Announcement::BlockPolicy
 
-      render @block.modal, layout: false, locals: { block: @block }
+      # Drops the copy a previous edit left in <body>, which would share its ids
+      render turbo_stream: [
+        turbo_stream.remove(helpers.dom_id(@block, :edit)),
+        turbo_stream.append_all("body", template: @block.modal, locals: { block: @block })
+      ]
     end
 
     def update

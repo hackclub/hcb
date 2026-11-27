@@ -74,7 +74,7 @@
               <% end %>
             <% end %>
             <% if defined?(enable_linking) %>
-              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? { action: "panel-swap#showSelect" } : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? { action: "panel-swap#showSelect" } : { modal: "link_receipt_#{instance}" } do %>
                 <%= inline_icon "payment-docs" %>
                 <span>Select from Receipt Bin</span>
               <% end %>
@@ -116,13 +116,12 @@
   </div>
 
   <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
-    <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
-      <%= modal_header "Select receipt" %>
+    <%= modal "Select receipt", id: "link_receipt_#{instance}", size: :huge do %>
       <% if ReceiptablePolicy.new(current_user, receiptable).link_modal? %>
         <%= turbo_frame_tag dom_id(receiptable, :link_modal), src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
           <strong>Loading...</strong>
         <% end %>
       <% end %>
-    </section>
+    <% end %>
   <% end %>
 </div>

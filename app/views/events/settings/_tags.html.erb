@@ -57,10 +57,9 @@
           <%= pop_icon_to "edit",
             "#",
             class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
-            data: { behavior: "modal_trigger", modal: "edit_tag_#{tag.id}" },
+            data: { modal: "edit_tag_#{tag.id}" },
             disabled: %>
-          <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
-            <%= modal_header("Edit tag") %>
+          <%= modal "Edit tag", id: "edit_tag_#{tag.id}", class: "max-w-md" do %>
             <%= form_with url: event_tag_path(event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
               <div class="flex flex-col gap-3 mb-2">
                 <div class="flex gap-3">
@@ -82,7 +81,7 @@
               </div>
               <%= form.submit "Update", class: "btn bg-info mt-2 float-left" %>
             <% end %>
-          </section>
+          <% end %>
         </div>
         <%= pop_icon_to "delete",
           event_tag_path(event, tag.id),

@@ -16,6 +16,7 @@ module ApplicationHelper
   include LegalEntitiesHelper
   include LoginsHelper
   include LogoHelper
+  include ModalHelper
   include OrganizerPosition::Spending::AllowancesHelper
   include PayeesHelper
   include PopoverHelper
@@ -156,22 +157,6 @@ module ApplicationHelper
     content_tag :div, class: "error-card", data: { turbo_temporary: true } do
       content_tag(:h2, "#{prefix} #{name} because of #{pluralize(model.errors.size, 'error')}.") +
         errors_list
-    end
-  end
-
-  def modal_close
-    pop_icon_to "view-close", "#close_modal", class: "modal__close muted", rel: "modal:close", tabindex: 0
-  end
-
-  def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
-  end
-
-  def modal_header(text, external_link: nil)
-    content_tag :header, class: "pb2 rounded-t-lg" do
-      modal_close +
-        (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 

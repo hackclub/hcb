@@ -1,6 +1,5 @@
-/* global $ */
-
 import { Controller } from '@hotwired/stimulus'
+import { openModal } from '../modal'
 
 const STORAGE_KEY = 'hcb:remembered-organizations'
 const DISMISSED_KEY = 'hcb:signed-out-modal-dismissed'
@@ -40,17 +39,22 @@ export default class extends Controller {
       this.hintTarget.classList.remove('hidden')
     }
 
-    if (this.hasModalTarget && !this.dismissed() && !$.modal.isActive()) {
-      this.openModal()
+    if (
+      this.hasModalTarget &&
+      !this.dismissed() &&
+      !document.querySelector('dialog.modal[open]')
+    ) {
+      this.promptSignIn()
     }
   }
 
   // However the modal is closed, don't open it again for this organization for
   // the rest of this tab's session; the sign-in nudge stays as a reminder.
-  openModal() {
-    $(this.modalTarget)
-      .one($.modal.CLOSE, () => this.dismiss())
-      .modal({ fadeDuration: 200, closeExisting: false })
+  promptSignIn() {
+    this.modalTarget.addEventListener('close', () => this.dismiss(), {
+      once: true,
+    })
+    openModal(this.modalTarget)
   }
 
   dismiss() {

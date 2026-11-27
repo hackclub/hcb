@@ -53,7 +53,7 @@
               <td><%= payment.employee.event.name %></td>
             <% end %>
             <td>
-              <%= link_to payment.title, "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
+              <%= link_to payment.title, "#", data: { modal: "employee_payment_#{payment.id}" } %>
               <%= render "employee/payments/modal", payment: %>
             </td>
             <td>

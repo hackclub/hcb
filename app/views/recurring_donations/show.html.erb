@@ -2,15 +2,13 @@
 <% no_transparency_header %>
 <% @hide_footer = true %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="change_payment_details">
-  <%= modal_header "Update payment details" %>
+<%= modal "Update payment details", id: "change_payment_details" do %>
   <%= turbo_frame_tag :update_recurring_donation_payment_method, src: edit_recurring_donation_path(@recurring_donation.url_hash), loading: "lazy" do %>
     <p class="center muted mt3 h3">One moment...</p>
   <% end %>
-</section>
+<% end %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="change_amount">
-  <%= modal_header "Update donation amount" %>
+<%= modal "Update donation amount", id: "change_amount" do %>
 
   <%= form_with model: @recurring_donation, url: recurring_donation_path(@recurring_donation.url_hash) do |form| %>
     <div class="field">
@@ -34,7 +32,7 @@
     <p class="muted center mb0">You'll be charged the new amount on <%= local_date(@recurring_donation.stripe_current_period_end, "%B %e, %Y") %>.</p>
   <% end %>
 
-</section>
+<% end %>
 
 <% admin_tool "mt1" do %>
   <%= link_to "View subscription on Stripe", @recurring_donation.stripe_dashboard_url, class: "btn bg-accent", target: "_blank" %>
@@ -56,7 +54,7 @@
         <%= inline_icon "card", size: 24, class: "muted mr1" %>
         ••••<%= @recurring_donation.last4 %>
         <% unless @recurring_donation.canceled? %>
-          <button class="btn bg-accent ml-auto h5" style="padding: 4px 16px" data-behavior="modal_trigger" data-modal="change_payment_details">Change</button>
+          <button class="btn bg-accent ml-auto h5" style="padding: 4px 16px" data-modal="change_payment_details">Change</button>
         <% end %>
       </span>
     </p>
@@ -65,7 +63,7 @@
       <span class="flex items-center">
         <%= render_money @recurring_donation.amount %> per month
         <% unless @recurring_donation.canceled? %>
-          <button class="btn bg-accent ml-auto h5" style="padding: 4px 16px" data-behavior="modal_trigger" data-modal="change_amount">Change</button>
+          <button class="btn bg-accent ml-auto h5" style="padding: 4px 16px" data-modal="change_amount">Change</button>
         <% end %>
       </span>
     </p>
