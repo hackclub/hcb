@@ -3741,120 +3741,31 @@ $mk-term-green: #62d196;
   }
 }
 
-// A datasheet layout: key facts up top, then compact tables and definition lists,
-// with a sticky section index on desktop. Scoped to .mk-ais.
-
+// Landing page built from the shared /for/* sections (hero, logo wall, stats, steps, cases,
+// dark band), plus a few page-only pieces: the ledger card, feature cards, and the fee callout.
 .mk-ais {
-  $rule: $smoke;
-  $label: $muted-text;
-
-  --mk-ais-gap: 40px;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  color: $slate;
   font-variant-numeric: tabular-nums;
-  padding: 40px 0 72px;
 
-  :where(a:not(.marketing-btn)) {
-    color: $mk-ink;
-    text-decoration: underline;
-    text-decoration-color: rgba($mk-ink, 0.3);
-    text-underline-offset: 2px;
-
-    &:hover {
-      text-decoration-color: $red;
-    }
-  }
-
-  // Numbers only: monospace with tabular figures so columns line up.
+  // Numbers only: monospace with tabular figures.
   &__num {
     font-family: $mono;
     font-size: 0.92em;
     letter-spacing: -0.01em;
-    color: $mk-ink;
   }
 
-  &__grid {
-    display: grid;
-    gap: var(--mk-ais-gap);
+  // Tighter rhythm than the other /for/* pages, so the page reads short.
+  .mk-section {
+    padding: clamp(48px, 6vw, 80px) 0;
+  }
 
-    @media (min-width: 1000px) {
-      grid-template-columns: 200px minmax(0, 1fr);
-      gap: 56px;
-    }
+  .mk-section__head {
+    max-width: none; // headings and intros run the full content width on this page
+    margin-bottom: clamp(24px, 3vw, 36px);
   }
 
   // This page runs wider than the other /for/* pages. Nav and footer widen with it so edges line up.
   .mk-container {
-    max-width: 1280px;
-
-    @media (min-width: 1600px) {
-      max-width: 1536px;
-    }
-  }
-
-  // Sections inside lay out by this column's width (with or without the index), not the viewport.
-  &__main {
-    min-width: 0;
-    container-type: inline-size;
-  }
-
-  // ---------------------------------------------------------------- index
-  &__index {
-    display: none;
-
-    @media (min-width: 1000px) {
-      display: block;
-      position: sticky;
-      top: calc(var(--mk-nav-h) + 24px);
-      align-self: start;
-      max-height: calc(100vh - var(--mk-nav-h) - 48px);
-      overflow-y: auto;
-      padding-top: 6px;
-    }
-
-    ol {
-      list-style: none;
-      margin: 0;
-      padding: 0 0 0 12px;
-      border-left: 1px solid $rule;
-      display: grid;
-      gap: 2px;
-    }
-
-    a {
-      display: block;
-      padding: 3px 0;
-      font-size: 0.8125rem;
-      color: $slate;
-      text-decoration: none;
-
-      &:hover {
-        color: $red;
-      }
-    }
-  }
-
-  &__index-sub a {
-    padding-left: 12px;
-    color: $label;
-  }
-
-  // ---------------------------------------------------------------- header
-  &__head {
-    padding-bottom: 24px;
-  }
-
-  &__title {
-    font-size: clamp(1.75rem, 3.2vw, 2.25rem);
-    text-wrap: balance;
-  }
-
-  &__lead {
-    margin-top: 10px;
-    font-size: 1.0625rem;
-    line-height: 1.55;
-    text-wrap: pretty;
+    max-width: 1200px;
   }
 
   &__cta {
@@ -3862,548 +3773,526 @@ $mk-term-green: #62d196;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px 20px;
-    margin-top: 18px;
-  }
-
-  &__link {
-    font-weight: 600;
-  }
-
-  // The big CTA sits in the header, so it gets tighter spacing than at the bottom.
-  &__mark {
-    text-decoration: underline;
-    text-decoration-color: $red;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 4px;
-  }
-
-  &__head .mk-ais-cta {
-    margin: 28px 0 0;
+    margin-top: 30px;
   }
 
   &__contact {
-    margin: 16px 0 0;
-    color: $label;
-  }
+    margin-top: 18px;
+    font-size: 0.95rem;
+    color: $muted-text;
 
-  // ---------------------------------------------------------------- sections
-  &__section {
-    padding: 32px 0;
-    border-top: 1px solid $rule;
-    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
-
-    &--facts {
-      padding-top: 0;
-      border-top: 0;
+    a {
+      color: $mk-ink;
+      font-weight: 600;
+      text-underline-offset: 2px;
     }
   }
 
-  &__h2 {
-    font-size: 1.25rem;
-    margin-bottom: 12px;
-  }
-
-  &__intro {
-    margin-bottom: 16px;
-  }
-
-  &__note,
   &__aside {
-    font-size: 0.8125rem;
-    color: $label;
-  }
+    font-size: 0.9rem;
+    color: rgba($snow, 0.7);
+    max-width: 60ch;
 
-  &__note {
-    margin-top: 10px;
-  }
-
-  &__more {
-    margin-top: 14px;
-    font-size: 0.875rem;
-
-    a {
-      font-weight: 600;
+    .mk-ais-go {
+      color: lighten($red, 22%);
     }
   }
 }
 
-// ---------------------------------------------------------------- tables
-.mk-ais-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+// ---------------------------------------------------------------- hero + logo wall
+.mk-ais-hero {
+  padding: clamp(40px, 6vw, 72px) 0 clamp(40px, 5vw, 64px);
 
-  caption {
-    text-align: left;
-    caption-side: top;
-    padding-bottom: 8px;
-    border-bottom: 2px solid $mk-ink;
+  .mk-hero__title {
+    font-size: clamp(2.3rem, 5vw, 3.6rem);
+  }
+
+  @media (min-width: 920px) {
+    .mk-hero__inner {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+
+.mk-ais-logos {
+  margin-top: clamp(40px, 5vw, 64px);
+
+  &__title {
+    margin-bottom: 32px;
+    text-align: center;
+    font-family: $font-family;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: $muted-text;
+  }
+
+  .mk-funders {
+    row-gap: 28px;
+
+    @media (min-width: 920px) {
+      li {
+        flex-basis: 16.6667%; // 6 per row: two short rows instead of three
+      }
+    }
+
+    img {
+      max-height: 24px;
+    }
+
+    img.mk-funders__logo--boost {
+      max-height: 44px;
+    }
+
+    // Phones get the first six logos, so the wall stays a strip.
+    @media (max-width: 599.98px) {
+      li:nth-child(n + 7) {
+        display: none;
+      }
+    }
+  }
+
+  .mk-stats {
+    text-align: center;
+  }
+}
+
+// ---------------------------------------------------------------- features
+// Bento cards: a fixed-height illustration on top, then the copy, so every card lines up.
+.mk-ais-features {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mk-ais-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 28px;
+  border-radius: var(--radius-2xl);
+  background: $white;
+  box-shadow: var(--shadow-border-md);
+
+  h3 {
+    margin-top: 12px;
+    padding-inline: 16px;
+    font-size: 1.3rem;
+  }
+
+  p {
+    padding-inline: 16px;
+    color: $slate;
+    line-height: 1.55;
+  }
+}
+
+.mk-ais-viz {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 168px;
+  border-radius: calc(var(--radius-2xl) - 6px);
+  background:
+    radial-gradient(60% 80% at 50% 100%, rgba($red, 0.08), transparent 70%),
+    $snow;
+  overflow: hidden;
+
+  &--coins span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-left: -12px;
+    border-radius: 999px;
+    background: $white;
+    box-shadow:
+      var(--shadow-border-sm),
+      0 8px 20px -10px rgba($black, 0.3);
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: $mk-ink;
+
+    &:first-child {
+      margin-left: 0;
+      background: $red;
+      color: $white;
+    }
+  }
+}
+
+.mk-ais-doc {
+  display: grid;
+  gap: 10px;
+  width: 200px;
+  padding: 18px;
+  border-radius: 8px;
+  background: $white;
+  box-shadow:
+    var(--shadow-border-sm),
+    0 14px 28px -16px rgba($black, 0.35);
+  transform: rotate(-2deg);
+
+  &__seal {
+    justify-self: start;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba($green, 0.14);
+    color: $green-dark;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  &__line {
+    height: 6px;
+    border-radius: 999px;
+    background: $smoke;
+
+    &--short {
+      width: 60%;
+    }
+  }
+
+  &__sig {
+    font-family: $mono;
+    font-size: 0.7rem;
+    color: $muted-text;
+  }
+}
+
+.mk-ais-cardviz {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 210px;
+  aspect-ratio: 1.586;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, $red, darken($red, 14%));
+  color: $white;
+  box-shadow: 0 14px 28px -14px rgba($red, 0.7);
+  transform: rotate(-4deg);
+
+  &__brand {
     font-family:
       'Phantom Sans',
       #{$font-family};
     font-weight: 700;
-    font-size: 1.25rem;
-    color: $mk-ink;
+    font-size: 1.1rem;
   }
 
-  // Undo the app's global table look (nowrap cells, row borders, tinted thead).
-  tr {
-    border-bottom: 0;
-    background: none;
+  &__num {
+    font-family: $mono;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
   }
 
-  th,
-  td {
-    white-space: normal;
-    padding: 7px 12px 7px 0;
-    border-bottom: 1px solid $smoke;
-    text-align: left;
-    vertical-align: top;
-  }
-
-  tr > :last-child {
-    padding-right: 0;
-  }
-
-  tbody th {
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  thead th {
+  &__name {
     font-size: 0.75rem;
-    font-weight: 600;
-    color: $muted-text;
-    border-bottom-color: $smoke-dark;
-  }
-
-  &--plain {
-    margin: 12px 0;
-
-    tbody th {
-      width: 40%;
-    }
+    opacity: 0.9;
   }
 }
 
-// The key facts table: framed, zebra-free, label | value | link.
-.mk-ais-facts {
-  tbody th {
-    width: 30%;
-  }
-
-  td:last-child {
-    width: 1%;
-    white-space: nowrap;
-    text-align: right;
-    font-size: 0.8125rem;
-
-    a {
-      color: $muted-text;
-
-      &:hover {
-        color: $red;
-      }
-    }
-  }
-
-  tbody tr:hover {
-    background: rgba($mk-ink, 0.025);
-  }
-
-  // Phone: label and value stack, link sits on the label line.
-  @media (max-width: 599.98px) {
-    display: block;
-
-    caption,
-    tbody {
-      display: block;
-    }
-
-    tbody td:last-child {
-      width: auto;
-    }
-
-    tbody tr {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      padding: 8px 0;
-      border-bottom: 1px solid $smoke;
-    }
-
-    tbody th,
-    tbody td {
-      width: auto;
-      padding: 0;
-      border: 0;
-    }
-
-    tbody td:nth-child(2) {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      margin-top: 2px;
-    }
-  }
-}
-
-// Example month and fees: two matching cards, stacked so the ledger gets the full width.
-.mk-ais-pair {
-  display: grid;
-  gap: 20px;
-  padding: 32px 0;
-  border-top: 1px solid $smoke;
-
-  // Side by side only on very wide screens, where the ledger still fits one line per row.
-  @container (min-width: 1150px) {
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.mk-ais-card {
-  border: 1px solid rgba($black, 0.12);
-  border-radius: var(--radius-lg);
+.mk-ais-mini {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  width: min(280px, 85%);
+  border-radius: 10px;
   background: $white;
-  overflow: hidden;
+  box-shadow:
+    var(--shadow-border-sm),
+    0 14px 28px -16px rgba($black, 0.35);
 
-  // The ledger's <caption> and the fees <h2> share one header style.
-  .mk-ais & &__head {
-    margin: 0;
-    line-height: 1.5; // the caption and the h2 otherwise inherit different line heights
-    padding: 12px 18px;
-    border-bottom: 1px solid rgba($black, 0.1);
-    background: $snow;
-    font-family: $font-family;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    text-align: left;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    font-size: 0.8125rem;
     color: $mk-ink;
-  }
 
-  // A caption left as a table caption spans the table; display: block would shrink it.
-  caption.mk-ais-card__head {
-    caption-side: top;
-  }
-}
+    & + li {
+      border-top: 1px solid rgba($black, 0.06);
+    }
 
-// Example ledger, styled after the HCB transaction list: type icon, date, memo, amount.
-.mk-ais-ledger {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-
-  .mk-ais & td,
-  .mk-ais & th {
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba($black, 0.06);
-    vertical-align: middle;
-    white-space: normal;
-    font-size: 0.9375rem;
-    color: $mk-ink;
-  }
-
-  .mk-ais & &__icon {
-    width: 24px;
-    padding-right: 0;
-    line-height: 0;
+    span {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: $green;
+    }
 
     svg {
-      width: 24px;
-      height: 24px;
+      margin-left: auto;
+      fill: $green-dark;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- fees
+// Leads with what we don't charge; the 7% is the one line under it.
+.mk-ais-fee {
+  text-align: center;
+
+  &__zeros {
+    list-style: none;
+    margin: 32px auto 0;
+    padding: 0;
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    li {
+      padding: 20px 12px;
+      border-radius: var(--radius-xl);
+      background: $white;
+      box-shadow: var(--shadow-border-md);
+      color: $muted-text;
+    }
+  }
+
+  &__zero {
+    display: block;
+    margin-bottom: 2px;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: $green-dark;
+  }
+
+  &__lead {
+    margin: 28px auto 0;
+    max-width: 52ch;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: $mk-ink;
+    text-wrap: balance;
+  }
+
+  &__note {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: $muted-text;
+  }
+}
+
+// ---------------------------------------------------------------- steps
+.mk-ais-step__when {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: $muted-text;
+}
+
+// At two-column widths a third card would sit alone on its row, so it spans both.
+.mk-ais .mk-uses .mk-use:last-child {
+  @media (min-width: 720px) and (max-width: 999.98px) {
+    grid-column: 1 / -1;
+  }
+}
+
+// ---------------------------------------------------------------- ledger
+// The hero's product shot, after HCB's own ledger. Each row is a <details>, so clicking
+// opens the transaction's fields like HCB does, with no JS. `name` keeps one open at a time.
+.mk-ais-hero .mk-hero__media {
+  container-type: inline-size;
+}
+
+.mk-ais-ledger {
+  border-radius: var(--radius-xl);
+  background: $white;
+  overflow: hidden;
+  box-shadow:
+    var(--shadow-border-lg),
+    0 40px 80px -28px rgba($black, 0.25);
+
+  &__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid rgba($black, 0.08);
+  }
+
+  &__title {
+    font-family: $font-family;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  &__hint {
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    color: $muted-text;
+  }
+
+  &__balance {
+    text-align: right;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: $mk-ink;
+    white-space: nowrap;
+
+    span {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      color: $muted-text;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+  }
+
+  &__row {
+    border-radius: var(--radius-lg);
+
+    // The app animates every <details>; rows should open instantly.
+    &::details-content {
+      transition: none;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: var(--radius-lg);
+      list-style: none;
+      cursor: pointer;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &:hover {
+        background: $snow;
+      }
+    }
+
+    &[open] {
+      background: $snow;
+      box-shadow: var(--shadow-border-xs);
+    }
+  }
+
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: $snow;
+    box-shadow: var(--shadow-border-xs);
+
+    svg {
       fill: $muted;
     }
   }
 
-  .mk-ais & &__date {
-    width: 1%;
-    white-space: nowrap;
-    font-size: 0.875rem;
-    color: $muted-text;
+  &__memo {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   &__name {
     display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: $mk-ink;
   }
 
   &__type {
     display: block;
-    margin-top: 1px;
-    font-size: 0.8125rem;
+    font-size: 0.775rem;
     color: $muted-text;
   }
 
-  .mk-ais & &__amount {
-    text-align: right;
-    white-space: nowrap;
+  &__amount {
+    flex: none;
+    font-size: 0.9rem;
     font-weight: 600;
+    color: $mk-ink;
+
+    &--in {
+      color: $green-dark;
+    }
   }
 
-  .mk-ais & &__row--in &__amount {
-    color: $green-dark;
-  }
+  &__details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 0;
+    padding: 4px 10px 12px 56px;
 
-  .mk-ais & tbody tr:hover td {
-    background: $snow;
-  }
-
-  .mk-ais & tfoot th,
-  .mk-ais & tfoot td {
-    border-bottom: 0;
-    border-top: 2px solid $mk-ink;
-    font-weight: 700;
-  }
-
-  .mk-ais & tfoot th {
-    text-align: left;
-  }
-
-  &__type-date {
-    display: none;
-  }
-
-  // On phones the date column folds into the type line ("Mar 24 · Reimbursement").
-  @container (max-width: 520px) {
-    .mk-ais & td,
-    .mk-ais & th {
-      padding: 10px;
+    dt {
+      font-size: 0.75rem;
+      color: $muted-text;
     }
 
-    .mk-ais & &__date {
+    dd {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: $mk-ink;
+    }
+  }
+
+  // shortcut: phones show the newest rows and the grant only, so the balance won't add up from what's visible.
+  @container (max-width: 520px) {
+    &__list > li:nth-child(n + 4):not(:last-child) {
       display: none;
     }
 
-    &__type-date {
-      display: inline;
-    }
-  }
-}
+    &__details {
+      grid-template-columns: 1fr 1fr;
+      padding-left: 10px;
 
-// ---------------------------------------------------------------- lists
-.mk-ais-list {
-  margin: 8px 0 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 4px;
-
-  li::marker {
-    color: $muted;
-  }
-}
-
-// "What your grant can pay for": labelled paragraphs, like the key facts.
-.mk-ais-spec {
-  margin: 16px 0 0;
-
-  > div {
-    display: grid;
-    gap: 4px 32px;
-    padding: 16px 0;
-    border-top: 1px solid rgba($black, 0.08);
-    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
-
-    @container (min-width: 640px) {
-      grid-template-columns: 200px minmax(0, 1fr);
-    }
-  }
-
-  dt {
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  dd {
-    margin: 0;
-    line-height: 1.6;
-    color: $slate;
-    text-wrap: pretty;
-  }
-}
-
-// Fees card: the 7% worked through on the example installment.
-.mk-ais-fee {
-  padding: 18px;
-
-  &__lead {
-    margin: 0;
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  &__math {
-    width: 100%;
-    margin-top: 14px;
-    border-collapse: collapse;
-    font-variant-numeric: tabular-nums;
-
-    .mk-ais & th,
-    .mk-ais & td {
-      padding: 9px 0;
-      border-bottom: 1px solid rgba($black, 0.06);
-      white-space: normal;
-      font-size: 0.9375rem;
-      color: $slate;
-    }
-
-    .mk-ais & th {
-      font-weight: 400;
-      text-align: left;
-    }
-
-    .mk-ais & td {
-      text-align: right;
-      white-space: nowrap;
-      color: $mk-ink;
-    }
-
-    .mk-ais & tfoot th,
-    .mk-ais & tfoot td {
-      border-bottom: 0;
-      border-top: 2px solid $mk-ink;
-      font-weight: 700;
-      color: $mk-ink;
-    }
-  }
-
-  &__note {
-    margin: 14px 0 0;
-    font-size: 0.9375rem;
-    line-height: 1.55;
-    color: $slate;
-  }
-}
-
-// How it works as a vertical timeline: red markers on a line down the left.
-.mk-ais-steps {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  counter-reset: mk-ais-step;
-
-  li {
-    position: relative;
-    counter-increment: mk-ais-step;
-    padding: 0 0 28px 52px;
-
-    // The numbered marker.
-    &::before {
-      content: counter(mk-ais-step);
-      position: absolute;
-      top: 0;
-      left: 0;
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      background: $red;
-      color: $white;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      box-shadow: 0 0 0 5px rgba($red, 0.14);
-    }
-
-    // The line to the next marker.
-    &::after {
-      content: '';
-      position: absolute;
-      top: 42px;
-      bottom: 4px;
-      left: 16px;
-      width: 2px;
-      border-radius: 2px;
-      background: linear-gradient($red, rgba($red, 0.15));
-    }
-
-    &:last-child {
-      padding-bottom: 0;
-
-      &::after {
-        display: none;
+      > div:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
       }
     }
-
-    // With room, the timing pill sits beside the title instead of above it.
-    @container (min-width: 560px) {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-areas: 'title when' 'text text';
-      align-items: center;
-      column-gap: 12px;
-    }
-  }
-
-  &__when {
-    grid-area: when;
-    justify-self: start;
-    display: inline-block;
-    margin-bottom: 8px;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: rgba($red, 0.08);
-    color: darken($red, 8%);
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-
-  h3 {
-    grid-area: title;
-    margin-bottom: 4px;
-    font-family: $font-family;
-    font-size: 1rem;
-    letter-spacing: 0;
-  }
-
-  p {
-    grid-area: text;
-    line-height: 1.55;
-  }
-
-  @container (min-width: 560px) {
-    .mk-ais-steps__when,
-    h3 {
-      margin-bottom: 0;
-    }
-
-    p {
-      margin-top: 4px;
-    }
   }
 }
 
-.mk-ais-dl {
-  margin: 0;
-
-  @container (min-width: 720px) {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 40px;
-  }
-
-  > div {
-    display: grid;
-    align-content: start;
-    gap: 2px;
-    padding: 10px 0;
-    border-top: 1px solid $smoke;
-  }
-
-  dt {
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
-  dd {
-    margin: 0;
-  }
-}
-
-// Accordion. Answers stay in the HTML for crawlers and no-JS readers.
-// One question per line: the column never gets wide enough for two without wrapping.
 .mk-ais-faq {
-  display: grid;
+  @media (min-width: 860px) {
+    columns: 2;
+    column-gap: 48px;
+  }
 
   &__item {
+    break-inside: avoid;
     border-top: 1px solid $smoke;
   }
 
@@ -4412,7 +4301,7 @@ $mk-term-green: #62d196;
     align-items: baseline;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 0;
+    padding: 16px 0;
     cursor: pointer;
     list-style: none;
 
@@ -4456,8 +4345,33 @@ $mk-term-green: #62d196;
     display: grid;
     gap: 24px 40px;
 
-    @media (min-width: 760px) {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    @media (min-width: 860px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: 64px;
+    }
+
+    .mk-lead {
+      margin: 16px 0 24px;
+    }
+  }
+
+  &__form {
+    padding: 28px;
+    border-radius: var(--radius-2xl);
+    background: $white;
+    box-shadow: var(--shadow-border-md);
+  }
+
+  &__dino {
+    display: none;
+
+    @media (min-width: 860px) {
+      display: block;
+      width: 200px;
+      height: auto;
+      margin-top: 40px;
+      transform: rotate(-6deg);
+      opacity: 0.85;
     }
   }
 
@@ -4528,170 +4442,38 @@ $mk-term-green: #62d196;
   }
 }
 
-// Big closing CTA on /for/ai-safety: a red slab with HCB's own hand-drawn dino.
-// Selectors double the .mk-ais-cta class so each direction's scoped link and text rules can't recolor the CTA.
-.mk-ais-cta {
-  container-type: inline-size; // sized by the direction's column, not the viewport
-  margin: clamp(40px, 6vw, 72px) 0;
-  font-family: $font-family;
-
-  &#{&} &__sub {
-    margin-top: 12px;
-    font-size: 1.05rem;
-    line-height: 1.5;
-  }
-
-  // Dino: a red slab with HCB's own hand-drawn dino chasing the money.
-  &--dino {
-    position: relative;
-    padding: clamp(28px, 5vw, 56px);
-    border-radius: 20px;
-    background: $red;
-    color: $white;
-    overflow: hidden;
-
-    .mk-ais-cta__inner {
-      display: grid;
-      gap: 24px;
-      align-items: center;
-
-      @container (min-width: 640px) {
-        grid-template-columns: 1fr auto;
-      }
-    }
-
-    &.mk-ais-cta .mk-ais-cta__title {
-      color: $white;
-      font-family:
-        'Phantom Sans',
-        #{$font-family};
-      font-weight: 700;
-      font-size: clamp(2.2rem, 6vw, 4rem);
-      line-height: 1;
-      letter-spacing: -0.03em;
-      text-wrap: balance;
-    }
-
-    &.mk-ais-cta .mk-ais-cta__sub {
-      color: rgba($white, 0.92);
-    }
-
-    .mk-ais-cta__dino {
-      width: clamp(160px, 22vw, 270px);
-      height: auto;
-      justify-self: end;
-      filter: invert(1); // white line art on red
-      transform: rotate(-6deg);
-
-      // Stacked under the button it just floats in empty space, so it only shows beside the copy.
-      @container (max-width: 639.98px) {
-        display: none;
-      }
-    }
-  }
-
-  &#{&} &__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px 22px;
-    margin-top: 28px;
-  }
-
-  &#{&} &__btn {
-    display: inline-block;
-    padding: 18px 32px;
-    border-radius: 999px;
-    background: $white;
-    color: $red;
-    font-family:
-      'Phantom Sans',
-      #{$font-family};
-    font-weight: 700;
-    font-size: 1.35rem;
-    text-decoration: none;
-    line-height: 1;
-    box-shadow: 0 6px 0 darken($red, 18%);
-    transition:
-      transform 0.12s ease,
-      box-shadow 0.12s ease;
-
-    &:hover {
-      transform: translateY(-2px) rotate(-1deg);
-      box-shadow: 0 8px 0 darken($red, 18%);
-    }
-
-    &:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0 darken($red, 18%);
-    }
-  }
-
-  &#{&} &__mail {
-    color: $white;
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    &#{&} &__btn {
-      transition: none;
-    }
-  }
-}
-
-// "Copy as Markdown" split button beside the /for/ai-safety title, with a menu of AI apps.
-// The button stays at the right end of the title row; the title wraps instead. Only on
-// phone-width columns does the button drop under the title.
-.mk-ais__title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px 24px;
-
-  .mk-ais__title {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .mk-ais-ask {
-    flex: none;
-    margin-top: 4px;
-  }
-
-  @container (max-width: 559.98px) {
-    flex-wrap: wrap;
-  }
-}
-
+// Quiet text actions under the hero copy: copy the page, or open it in an AI app.
 .mk-ais-ask {
   position: relative;
+  z-index: 2; // the hero's fade-up gives each sibling its own layer; keep the menu on top
   display: inline-flex;
-  border: 1px solid rgba($black, 0.18);
-  border-radius: var(--radius-lg);
-  background: $white;
+  align-items: center;
+  gap: 0;
+  margin-top: 12px;
+  margin-left: -8px;
   font-family: $font-family;
 
   .mk-ais & &__copy,
   &__more summary {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    color: $mk-ink;
-    font-size: 0.9rem;
-    font-weight: 600;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--radius-md, 6px);
+    color: $muted-text;
+    font-size: 0.875rem;
+    font-weight: 500;
     text-decoration: none;
     cursor: pointer;
 
-    &:hover {
-      background: $snow;
+    svg {
+      fill: currentColor;
     }
-  }
 
-  .mk-ais & &__copy {
-    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    &:hover {
+      color: $mk-ink;
+      background: rgba($black, 0.04);
+    }
   }
 
   &__icon--done,
@@ -4705,9 +4487,8 @@ $mk-term-green: #62d196;
   }
 
   &__more {
-    display: flex; // the caret fills the button's full height
+    display: flex;
     inline-size: auto;
-    border-left: 1px solid rgba($black, 0.18);
 
     // The app animates every <details>; a menu should just appear.
     &::details-content {
@@ -4715,8 +4496,6 @@ $mk-term-green: #62d196;
     }
 
     summary {
-      padding: 8px 10px;
-      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
       list-style: none;
 
       &::-webkit-details-marker {
@@ -4725,14 +4504,15 @@ $mk-term-green: #62d196;
     }
 
     &[open] summary {
-      background: $snow;
+      color: $mk-ink;
+      background: rgba($black, 0.04);
     }
   }
 
   &__menu {
     position: absolute;
     top: calc(100% + 6px);
-    right: 0;
+    left: 0;
     z-index: 20;
     min-width: 260px;
     margin: 0;
@@ -4773,14 +4553,6 @@ $mk-term-green: #62d196;
   &__hint {
     font-size: 0.8rem;
     color: $muted-text;
-  }
-}
-
-// Under the title (phone-width columns) the button sits at the left, so the menu opens rightward.
-@container (max-width: 559.98px) {
-  .mk-ais-ask__menu {
-    right: auto;
-    left: 0;
   }
 }
 

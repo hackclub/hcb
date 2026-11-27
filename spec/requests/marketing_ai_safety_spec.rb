@@ -18,7 +18,7 @@ RSpec.describe "AI safety landing page", type: :request do
       get ai_safety_path
 
       expect(response).to have_http_status(:ok)
-      expect(page.at_css("h1").text.squish).to eq("Fiscal sponsorship for AI safety teams")
+      expect(page.at_css("h1").text.squish).to eq("Fiscal sponsorship for AI safety. Ready within days.")
       expect(response.headers["X-Robots-Tag"]).to be_nil
       expect(page.at_css("title").text.scan(" – HCB").size).to eq(1)
     end
@@ -138,7 +138,7 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/markdown")
       expect(response.headers["X-Robots-Tag"]).to be_nil
-      expect(response.body).to include("# Fiscal sponsorship for AI safety teams", "## Key facts", "+$150,000.00")
+      expect(response.body).to include("# Fiscal sponsorship for AI safety. Ready within days.", "## A full 501(c)(3) back office, without building one.", "+$150,000.00")
       expect(response.body).to include(*helper_faqs.map { |faq| "### #{faq[:q]}" })
       expect(response.body).not_to include("<form", "Ask ChatGPT", "\u2014")
     end

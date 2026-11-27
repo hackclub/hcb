@@ -23,12 +23,12 @@
 class MarketingInquiry < ApplicationRecord
   PAGES = %w[ai_safety].freeze
 
-  # The one source for the AI safety form's "I'm..." options and their labels.
+  # The one source for the AI safety form's "I am" options and their labels.
   AUDIENCES = {
     "team"      => "A funded team or researcher",
     "funder"    => "A funder or grantmaker",
-    "program"   => "Running a fellowship, event, or program",
-    "exploring" => "Exploring"
+    "program"   => "Running a fellowship or program",
+    "exploring" => "Closing a grant or exploring"
   }.freeze
 
   REF_FORMAT = /\A[a-z0-9_-]{1,64}\z/

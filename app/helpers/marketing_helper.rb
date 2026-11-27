@@ -506,73 +506,103 @@ module MarketingHelper
     ]
   end
 
+  # Funders whose grants have reached organizations on HCB, for the logo walls on /for/funders and
+  # /for/ai-safety. They are not HCB customers, so copy must not say they "use" HCB. Ordered so the
+  # biggest names land first. Excludes funders who only gave to Hack Club HQ itself.
+  def funder_logos
+    [
+      { name: "Ford Foundation", src: "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png" },
+      { name: "Omidyar Network", src: "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png" },
+      { name: "William & Flora Hewlett Foundation", src: "https://cdn.hackclub.com/019edcbb-3dec-7ee7-a4fd-d93fb2e0b9a0/image.png", class: "mk-funders__logo--boost" },
+      { name: "Alfred P. Sloan Foundation", src: "https://cdn.hackclub.com/019edcbb-46d2-74bd-93d3-63bf843af555/image.png" },
+      { name: "SoftBank", src: "https://cdn.hackclub.com/019edcbd-7b5b-7ebf-9086-a4839acf0933/logo_svg.svg" },
+      { name: "Founders Fund", src: "https://cdn.hackclub.com/019edcbb-71d3-755b-bf22-b4e958e3b0e9/founders_fund_logo__2015_.svg" },
+      { name: "11th Hour Project, The Schmidt Family Foundation", src: "https://cdn.hackclub.com/019edcbb-40c8-7556-a50b-2148294561a0/image.png" },
+      { name: "Protocol Labs", src: "https://cdn.hackclub.com/019edcbd-7e32-7078-a5b8-bdc47102cf96/protocol-labs-logo-black.svg" },
+      { name: "Rockefeller Brothers Fund", src: "https://cdn.hackclub.com/019edcca-3c1d-7a8a-8579-a900076d05c5/rbf_2019logo_full-color_no-tagline.png" },
+      { name: "EQT Foundation", src: "https://cdn.hackclub.com/019edcbb-5648-772a-a368-be9751e81f62/image.png" },
+      { name: "Future of Life Institute", src: "https://cdn.hackclub.com/019edcbb-540c-71fa-819f-08c17ae34297/future_of_life_institute_logo.svg" },
+      { name: "Founders Pledge", src: "https://cdn.hackclub.com/019edcfa-9eea-7015-b7ab-170d560ca012/founders_pledge_green.svg" }
+    ]
+  end
+
   # Q&A for /for/ai-safety. Plain text only: the same strings feed the FAQPage JSON-LD.
   def ai_safety_faqs(stats:)
     [
       {
         id: "need-a-501c3",
         q: "Do we need a 501(c)(3) to receive an AI safety grant?",
-        a: "No. Your project becomes a program of The Hack Foundation (Hack Club), a 501(c)(3). Funders can grant to it, and donors can give tax-deductibly. You don't need to form a nonprofit."
+        a: "No. Your project operates as a sponsored program of The Hack Foundation (Hack Club), a registered 501(c)(3) public charity (EIN 81-2908499). Institutional funders can grant to us for your project, and US donors can deduct their gifts, without you incorporating a nonprofit or waiting on the IRS."
       },
       {
         id: "funder-needs-sponsor",
-        q: "Our funder needs a fiscal sponsor before it pays us. Can you help?",
-        a: "Yes. Send us your grant letter. If your project fits Hack Club's charitable mission and passes review, we sign an agreement with you. Then we send your funder our paperwork and open your account."
+        q: "Our funder needs a fiscal sponsor before wiring the grant. Can you help?",
+        a: "Yes. Send us your grant letter or draft terms. Once we confirm your project fits Hack Club's charitable mission and sign a fiscal sponsorship agreement with you, we open your project's account and send your funder our IRS determination letter, W-9, Form 990, and wire details."
       },
       {
         id: "how-fast",
         q: "How fast can we get set up?",
-        a: "Usually within days. We reply within one business day, then review your project and sign an agreement. When the money arrives depends on your funder's payment schedule."
+        a: "Within days. Melanie, Paul, or Gary replies within one business day, reviews your project, and sends the fiscal sponsorship agreement. Once signed, we send your funder our diligence documents and open your account; when funds arrive depends on your funder's payment schedule."
       },
       {
         id: "pay-outside-us",
-        q: "Can you pay researchers outside the US?",
-        a: "Yes. We pay contractors, fellows, and reimbursements by bank transfer in local currency. Every international payment is screened against US sanctions rules. US law bars payments to some countries and people. UK employees can be hired through our employer-of-record partner, with local payroll, tax, and pension."
+        q: "Can we hire or pay researchers outside the US?",
+        a: "Yes. In the UK, staff can be hired through our employer-of-record partner with local payroll, tax, and pension. Elsewhere outside the US, we pay contractors, fellows, and reimbursements by bank transfer in local currency. Every international payment is screened against US OFAC sanctions lists, and US law bars payments to some countries and people."
       },
       {
         id: "individuals",
         q: "Can an individual researcher get fiscal sponsorship?",
-        a: "Yes, if the research is a charitable project Hack Club can take on as its own program. You're paid for the work as Hack Club staff or a contractor. The grant stays in the project's account."
+        a: "Yes, when the grant funds a charitable research project Hack Club can take on as its own program. Funds stay in your project's restricted HCB account to pay research costs directly, while you are paid for your work as Hack Club staff or a contractor."
       },
       {
         id: "exposure",
         q: "Can other projects on HCB spend our project's money?",
-        a: "No. Your project's money is restricted to it and kept in its own books. All projects are programs of one nonprofit. So Hack Club reviews each project before it joins and oversees all spending."
+        a: "No. Your funds are restricted to your project, tracked in separate books, and held in FDIC-insured accounts via Column N.A. Because every sponsored project is a program of The Hack Foundation, Hack Club vets each project before onboarding, retains legal oversight of disbursements, and undergoes an independent audit every year."
       },
       {
         id: "grant-agreement",
         q: "Will you sign our funder's grant agreement?",
-        a: "Yes, after we review it. We keep restricted funds restricted and report as the agreement requires. Your funder can also get read access to the project's books."
+        a: "Yes, after we review it. The Hack Foundation signs as the 501(c)(3) grantee, keeps restricted funds restricted to your project, and reports as the agreement requires. Your funder can also receive read-only access to your project's live ledger."
       },
       {
         id: "private",
         q: "Can we keep our finances private?",
-        a: "Yes. Books are public by default. You can make them private any time."
+        a: "Yes. Project books on HCB are public by default, and you can make them private at any time while still giving read access to your team and approved funders."
       },
       {
         id: "policy-work",
-        q: "Can we do policy work?",
-        a: "Yes, within the rules for 501(c)(3) charities. Research, nonpartisan analysis, education, and briefing officials on issues are fine. Lobbying means asking lawmakers or the public to support or oppose specific legislation. It's allowed only in limited amounts, and it counts toward Hack Club's limits as a whole. Some grants forbid it. Tell us before you lobby, and we'll track it with you. Supporting or opposing candidates for office is never allowed."
+        q: "Can our team do AI governance or policy work?",
+        a: "Yes, within federal rules for 501(c)(3) charities. Governance research, nonpartisan analysis, public education, and briefing officials on issues are all fine. Lobbying, meaning asking lawmakers or the public to support or oppose specific legislation, is allowed only in limited amounts, counts toward The Hack Foundation's aggregate 501(c)(3) limits, and is barred by some grants. Tell us before you lobby so we can confirm grant terms and track it together. Supporting or opposing candidates for office is never allowed."
       },
       {
         id: "own-nonprofit",
-        q: "Can we move to our own nonprofit later?",
-        a: "Yes, and we'll help. Once your new organization has 501(c)(3) status, Hack Club can transfer your project's remaining funds to it. The transfer needs our approval and must fit your funders' terms."
+        q: "Can we spin out into our own nonprofit later?",
+        a: "Yes, and we will help with the move. Once your new organization has IRS 501(c)(3) status, The Hack Foundation can transfer your project's remaining funds to it, subject to our approval and your funders' grant terms."
       },
       {
         id: "not-funded",
         q: "We're not funded yet. Can you help?",
-        a: "Usually not yet. HCB is for projects that have funding or will soon. If a grant is close, write to us and tell us where things stand."
+        a: "Not until a grant is close. HCB is for AI safety projects with committed funding or a grant in final diligence. If a funder has asked who your fiscal sponsor will be before issuing a grant letter, write to us and tell us where things stand."
       },
       {
         id: "teenagers",
         q: "Isn't HCB for teenagers?",
-        a: "No. Hack Club built HCB in 2018 for teen-led hackathons. It now hosts #{stats[:organizations]} organizations run by adults and teens, from research groups to robotics teams. Your project gets its own account and books."
+        a: "No. Hack Club built HCB in 2018 for teen-led hackathons, and the open-source platform now supports #{stats[:organizations]} organizations run by adults and students alike, from independent research groups and fellowships to open-source projects and robotics teams. Your project gets its own account and books, backed by an annually audited 501(c)(3)."
+      },
+      {
+        id: "research-agenda",
+        q: "Does Hack Club set our research agenda?",
+        a: "No. Your team chooses the research questions, methods, and publications. As the legal fiscal sponsor, The Hack Foundation retains legal control over funds and oversees spending so money stays lawful and aligned with your stated mission and grant terms."
+      },
+      {
+        id: "contracts",
+        q: "Will you sign NDAs, data-access agreements, and vendor contracts?",
+        a: "Yes. Send us grant agreements, NDAs, data-access agreements, and contractor or vendor contracts. The Hack Foundation reviews them and signs as the legal contracting party."
       },
       {
         id: "cost",
         q: "How much does fiscal sponsorship cost?",
-        a: "7% of grants and donations, charged as they arrive. There are no setup, legal, monthly, or card fees. International transfers carry our payment provider's cost. Wires under $500 cost $25. On a $500,000 grant, $465,000 goes to your work."
+        a: "7% of incoming grants and donations, taken once as each payment arrives. Setup, legal review, monthly maintenance, and per-person cards are all $0. International transfers pass through our payment provider's cost, and outgoing wires under $500 cost $25. On a $500,000 grant, $465,000 goes directly to your work."
       }
     ]
   end
@@ -581,8 +611,8 @@ module MarketingHelper
   # page's Markdown version. Gemini has no URL parameter for a prompt, so it isn't listed.
   def ai_safety_llm_links
     markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
-    prompt = ERB::Util.url_encode("Read #{markdown_url}. It describes HCB, Hack Club's fiscal sponsorship for AI safety teams. " \
-                                  "Answer my questions using only that page. If it doesn't cover something, say so and suggest emailing aisafety@hackclub.com.")
+    prompt = ERB::Util.url_encode("Read #{markdown_url}. It covers HCB, Hack Club's 501(c)(3) fiscal sponsorship for AI safety teams and grantmakers. " \
+                                  "Answer my questions using only that page. If something isn't covered, say so and suggest emailing aisafety@hackclub.com.")
     [
       ["ChatGPT", "https://chatgpt.com/?q=#{prompt}"],
       ["Claude", "https://claude.ai/new?q=#{prompt}"],
@@ -591,18 +621,19 @@ module MarketingHelper
   end
 
   # The example ledger in the /for/ai-safety hero. Illustrative, with no person names.
+  # Each row opens to :details, the fields HCB shows when you click into a transaction.
   def ai_safety_ledger_rows
     # Oldest first. Icons and type labels match the real HCB ledger (hcb_codes/_icon).
     [
-      { date: "Mar 2", icon: "web", type: "Incoming wire", memo: "Grant · first installment", amount_cents: 150_000_00 },
-      { date: "Mar 2", icon: "bank-icon", type: "Fiscal sponsorship fee", memo: "7% of first installment", amount_cents: -10_500_00, fee: true },
-      { date: "Mar 6", icon: "card", type: "Card charge", memo: "GPU cloud compute", amount_cents: -12_736_40 },
-      { date: "Mar 9", icon: "briefcase", type: "Contractor payment · GBP", memo: "Payment to London contractor for eval design", amount_cents: -8_125_00 },
-      { date: "Mar 12", icon: "card", type: "Card charge", memo: "Model API credits", amount_cents: -3_500_00 },
-      { date: "Mar 14", icon: "email", type: "Mailed check", memo: "Workshop venue deposit", amount_cents: -2_400_00 },
-      { date: "Mar 15", icon: "person", type: "Payroll", memo: "3 staff · March", amount_cents: -48_150_00 },
-      { date: "Mar 20", icon: "card", type: "Card charge", memo: "Flights · research workshop", amount_cents: -1_864_22 },
-      { date: "Mar 24", icon: "reimbursement", type: "Reimbursement", memo: "Conference registration", amount_cents: -795_00 }
+      { date: "Mar 2", icon: "web", type: "Incoming wire", memo: "Grant · first installment", amount_cents: 150_000_00, details: [["From", "Your funder"], ["Restricted to", "This project"], ["Status", "Settled"]] },
+      { date: "Mar 2", icon: "bank-icon", type: "Fiscal sponsorship fee", memo: "7% of first installment", amount_cents: -10_500_00, fee: true, details: [["Charged on", "$150,000.00 grant"], ["When", "As funds arrived"], ["Other fees", "None on this grant"]] },
+      { date: "Mar 6", icon: "card", type: "Card charge", memo: "GPU cluster compute", amount_cents: -12_736_40, details: [["Card", "•••• 4021 · Eval compute"], ["Receipt", "Attached"], ["Status", "Settled"]] },
+      { date: "Mar 9", icon: "briefcase", type: "Contractor payment · GBP", memo: "Eval design · London", amount_cents: -8_125_00, details: [["Paid", "£6,400.00 GBP"], ["Screening", "OFAC cleared"], ["Invoice", "Attached"]] },
+      { date: "Mar 12", icon: "card", type: "Card charge", memo: "Model API credits", amount_cents: -3_500_00, details: [["Card", "•••• 4021 · Eval compute"], ["Receipt", "Attached"], ["Status", "Settled"]] },
+      { date: "Mar 14", icon: "email", type: "Mailed check", memo: "Workshop venue deposit", amount_cents: -2_400_00, details: [["Check", "#1042, mailed by HCB"], ["Invoice", "Attached"], ["Status", "Deposited"]] },
+      { date: "Mar 15", icon: "person", type: "US payroll", memo: "March payroll · 3 staff", amount_cents: -48_150_00, details: [["Staff", "3 US W-2 employees"], ["Payroll taxes", "Filed by Hack Club"], ["Benefits", "Included"]] },
+      { date: "Mar 20", icon: "card", type: "Card charge", memo: "Flights · safety workshop", amount_cents: -1_864_22, details: [["Card", "•••• 7730 · Travel"], ["Receipt", "Attached"], ["Status", "Settled"]] },
+      { date: "Mar 24", icon: "reimbursement", type: "Reimbursement", memo: "Conference registration", amount_cents: -795_00, details: [["Paid by", "Direct deposit"], ["Receipt", "Attached"], ["Status", "Paid"]] }
     ]
   end
 
