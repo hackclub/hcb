@@ -74,6 +74,8 @@ RSpec.describe FeaturesController do
       }.not_to have_enqueued_mail(EventMailer, :two_factor_authentication_required)
 
       expect(response).to redirect_to(edit_event_path(event, tab: :features))
+      expect(flash[:success]).to eq("Two-factor authentication is no longer required for #{event.name}.")
+      expect(flash[:error]).to be_nil
       expect(Flipper.enabled?(:require_two_factor_authentication_2026_11_24, event)).to eq(false)
       expect(PublicActivity::Activity.where(key: "event.two_factor_authentication_unrequired", trackable: event, owner: signee)).to exist
     end
@@ -105,6 +107,8 @@ RSpec.describe FeaturesController do
       )
 
       expect(response).to have_http_status(:found)
+      expect(flash[:success]).to eq("You've opted out of this beta; please let us know if you had any feedback.")
+      expect(flash[:error]).to be_nil
       expect(Flipper.enabled?(:sudo_mode_2015_07_21, user)).to eq(false)
     end
   end

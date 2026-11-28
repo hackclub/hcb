@@ -11,17 +11,14 @@ class FeaturesController < ApplicationController
 
   def enable_feature
     if FEATURES.key?(@feature.to_sym) || admin_signed_in?
-      if Flipper.enable_actor(@feature, @actor)
-        confetti!(emojis: FEATURES[@feature.to_sym])
-        if two_factor_authentication_requirement?
-          @actor.create_activity(key: "event.two_factor_authentication_required", owner: current_user, event_id: @actor.id)
-          @actor.notify_two_factor_authentication_required(whodunnit: current_user)
-          flash[:success] = "Two-factor authentication is now required for #{@actor.name}. We've emailed your team; members without it have #{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i} days to enable it."
-        else
-          flash[:success] = "You've opted into this beta; let us know if you have any feedback."
-        end
+      Flipper.enable_actor(@feature, @actor)
+      confetti!(emojis: FEATURES[@feature.to_sym])
+      if two_factor_authentication_requirement?
+        @actor.create_activity(key: "event.two_factor_authentication_required", owner: current_user, event_id: @actor.id)
+        @actor.notify_two_factor_authentication_required(whodunnit: current_user)
+        flash[:success] = "Two-factor authentication is now required for #{@actor.name}. We've emailed your team; members without it have #{Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i} days to enable it."
       else
-        flash[:error] = two_factor_authentication_requirement? ? "Couldn't enable the two-factor authentication requirement. Please contact us or try again." : "Error while opting into this beta. Please contact us or try again."
+        flash[:success] = "You've opted into this beta; let us know if you have any feedback."
       end
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
@@ -36,15 +33,12 @@ class FeaturesController < ApplicationController
     end
 
     if FEATURES.key?(@feature.to_sym) || admin_signed_in?
-      if Flipper.disable_actor(@feature, @actor)
-        if two_factor_authentication_requirement?
-          @actor.create_activity(key: "event.two_factor_authentication_unrequired", owner: current_user, event_id: @actor.id)
-          flash[:success] = "Two-factor authentication is no longer required for #{@actor.name}."
-        else
-          flash[:success] = "You've opted out of this beta; please let us know if you had any feedback."
-        end
-        flash[:error] = two_factor_authentication_requirement? ? "Couldn't disable the two-factor authentication requirement. Please contact us or try again." : "Error while opting out of this beta. Please contact us or try again."
-        flash[:error] = "Error while opting out of this beta. Please contact us or try again."
+      Flipper.disable_actor(@feature, @actor)
+      if two_factor_authentication_requirement?
+        @actor.create_activity(key: "event.two_factor_authentication_unrequired", owner: current_user, event_id: @actor.id)
+        flash[:success] = "Two-factor authentication is no longer required for #{@actor.name}."
+      else
+        flash[:success] = "You've opted out of this beta; please let us know if you had any feedback."
       end
     else
       flash[:error] = "Sorry, this feature flag doesn't currently exist."
