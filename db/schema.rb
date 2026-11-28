@@ -2990,6 +2990,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_150000) do
     t.text "email", null: false
     t.string "full_name"
     t.boolean "joined_as_teenager"
+    t.string "legal_first_name"
+    t.string "legal_last_name"
     t.datetime "locked_at", precision: nil
     t.boolean "monthly_donation_summary", default: true
     t.boolean "monthly_follower_summary", default: true

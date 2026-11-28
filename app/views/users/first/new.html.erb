@@ -34,9 +34,15 @@
             About you
           </h3>
           <p class="muted h5 mt-1 mb-3">Tell us a little about yourself.</p>
-          <div class="field">
-            <%= form.label :full_name, "Full name" %>
-            <%= form.text_field :full_name, placeholder: "Fiona Hackworth" %>
+          <div class="md:flex gap-2">
+            <div class="field flex-1">
+              <%= form.label :legal_first_name, "First name" %>
+              <%= form.text_field :legal_first_name, placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name" %>
+            </div>
+            <div class="field flex-1">
+              <%= form.label :legal_last_name, "Last name" %>
+              <%= form.text_field :legal_last_name, placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name" %>
+            </div>
           </div>
           <div class="field mb-0">
             <%= form.label :email, "Email address" %>

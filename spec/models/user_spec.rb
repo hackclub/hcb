@@ -96,20 +96,268 @@ RSpec.describe User, type: :model do
     end
   end
 
-  context "when full_name is removed" do
-    it "fails validation" do
-      user = create(:user, full_name: "Caleb Denio")
-      expect(user.full_name).to eq("Caleb Denio")
+  describe "name storage" do
+    it "keeps full_name in sync with first_name and last_name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+      expect(user.full_name).to eq("Fiona Hackworth")
 
-      user.update(full_name: "")
-      expect(user).to_not be_valid
+      user.update!(legal_last_name: "Hackworth-Smith")
+      expect(user.reload.full_name).to eq("Fiona Hackworth-Smith")
+    end
+
+    it "stores a first name on its own" do
+      user = create(:user, legal_first_name: "Madonna", legal_last_name: nil)
+
+      expect(user.full_name).to eq("Madonna")
+      expect(user.last_name).to be_nil
+    end
+
+    it "does not derive a last name from a multi-word first name" do
+      user = create(:user, legal_first_name: "Mary Ann", legal_last_name: nil).reload
+
+      expect(user.first_name(legal: true)).to eq("Mary Ann")
+      expect(user.last_name(legal: true)).to be_nil
+      expect(user.last_name).to be_nil
+    end
+
+    it "shows others only the first word when there is no last name" do
+      user = create(:user, legal_first_name: "Mary Jane Smith", legal_last_name: nil)
+
+      expect(user.initial_name).to eq("Mary")
+    end
+
+    it "initials the surname, not its lowercase particle" do
+      user = create(:user, legal_first_name: "Juan", legal_last_name: "de la Cruz")
+
+      expect(user.initial_name).to eq("Juan C")
+      expect(user.first_name).to eq("Juan")
+    end
+
+    it "does not refill a first name that was just cleared" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+
+      expect(user.update(legal_first_name: "")).to be(false)
+      expect(user.first_name(legal: true)).to be_nil
+    end
+
+    it "returns a nil display first name for a blank new user instead of raising" do
+      expect(User.new.first_name).to be_nil
+    end
+
+    it "splits a full_name assigned by a legacy writer" do
+      user = create(:user, full_name: "Martin Luther King Jr.")
+
+      expect(user.first_name(legal: true)).to eq("Martin Luther")
+      expect(user.last_name(legal: true)).to eq("King Jr.")
+      expect(user.full_name).to eq("Martin Luther King Jr.")
+    end
+
+    it "keeps every word of a full_name holding several people" do
+      user = create(:user, full_name: "John and Jane Doe")
+
+      expect(user.reload).to have_attributes(legal_first_name: "John and Jane", legal_last_name: "Doe", full_name: "John and Jane Doe")
+    end
+
+    it "serializes the legal name columns, not the preferred name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi Hacks")
+
+      expect(user.as_json(only: [:legal_first_name, :legal_last_name])).to eq("legal_first_name" => "Fiona", "legal_last_name" => "Hackworth")
+    end
+
+    it "canonicalizes a comma-form full_name" do
+      user = create(:user, full_name: "Doe, John")
+
+      expect(user.reload).to have_attributes(legal_first_name: "John", legal_last_name: "Doe", full_name: "John Doe")
+    end
+
+    it "re-splits when a legacy writer changes full_name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+
+      user.update!(full_name: "Jane Elder")
+
+      expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Elder", full_name: "Jane Elder")
+    end
+
+    it "prefers the split names when both are assigned at once" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+
+      user.update!(legal_first_name: "Jane", legal_last_name: "Elder", full_name: "Someone Else")
+
+      expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Elder", full_name: "Jane Elder")
+    end
+
+    it "trims and collapses whitespace" do
+      user = create(:user, legal_first_name: "  Fiona  Rose ", legal_last_name: " Hackworth ")
+
+      expect(user.first_name(legal: true)).to eq("Fiona Rose")
+      expect(user.last_name(legal: true)).to eq("Hackworth")
+      expect(user.full_name).to eq("Fiona Rose Hackworth")
+    end
+
+    it "treats a blank last name as no last name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "   ")
+
+      expect(user.last_name).to be_nil
+      expect(user.full_name).to eq("Fiona")
+    end
+
+    it "updates the personal legal entity's name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+      expect(user.personal_legal_entity.name).to eq("Fiona Hackworth")
+
+      user.update!(legal_first_name: "Jane", legal_last_name: "Elder")
+
+      expect(user.personal_legal_entity.reload.name).to eq("Jane Elder")
+    end
+
+    context "for a row that predates the split columns" do
+      let(:user) do
+        create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth").tap do |u|
+          u.update_columns(legal_first_name: nil, legal_last_name: nil, full_name: "Jane Elder")
+          u.reload
+        end
+      end
+
+      it "derives the names from full_name" do
+        expect(user.first_name).to eq("Jane")
+        expect(user.last_name).to eq("Elder")
+        expect(user.first_name(legal: true)).to eq("Jane")
+        expect(user.initial_name).to eq("Jane E")
+      end
+
+      it "still allows unrelated updates without touching the name" do
+        expect(user.update(phone_number: "+18556254225")).to be(true)
+        expect(user.reload.legal_first_name_in_database).to be_nil
+        expect(user.full_name).to eq("Jane Elder")
+      end
+
+      it "does not allow the name to be removed" do
+        user.update(legal_first_name: "", legal_last_name: "")
+
+        expect(user.reload.full_name).to eq("Jane Elder")
+        expect(user.first_name(legal: true)).to eq("Jane")
+        expect(user.last_name(legal: true)).to eq("Elder")
+      end
+
+      it "keeps the surname when only the first name is edited" do
+        user.update!(legal_first_name: "Janet")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Janet", legal_last_name: "Elder", full_name: "Janet Elder")
+      end
+
+      it "keeps the first name when only the surname is edited" do
+        user.update!(legal_last_name: "Smith")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Smith", full_name: "Jane Smith")
+      end
+
+      it "does not let a cardholder drop their surname by blanking it" do
+        create(:stripe_cardholder, user:)
+
+        user.update(legal_first_name: "Jane", legal_last_name: "")
+
+        expect(user.reload.full_name).to eq("Jane Elder")
+        expect(StripeCardholder.last_name(user)).to eq("Elder")
+      end
+
+      it "keeps a title in full_name when the parsed name is saved back unchanged" do
+        user.update_columns(full_name: "Dr. Juan de la Cruz")
+
+        user.reload.update!(legal_first_name: "Juan", legal_last_name: "de la Cruz", phone_number: "+18556254225")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Juan", legal_last_name: "de la Cruz", full_name: "Dr. Juan de la Cruz")
+      end
+
+      it "backfills the columns once the name is edited" do
+        user.update!(legal_first_name: "Jane", legal_last_name: "Elder")
+
+        expect(user.reload).to have_attributes(legal_first_name: "Jane", legal_last_name: "Elder", full_name: "Jane Elder")
+      end
+    end
+  end
+
+  describe "name validations" do
+    it "allows a user without a name" do
+      expect(build(:user, legal_first_name: nil, legal_last_name: nil)).to be_valid
+    end
+
+    it "requires a first name when there is a last name" do
+      user = build(:user, legal_first_name: nil, legal_last_name: "Hackworth")
+
+      expect(user).not_to be_valid
+      expect(user.errors[:legal_first_name]).to include("can't be blank")
+    end
+
+    it "does not allow a name to be removed once set" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+
+      expect(user.update(legal_first_name: "", legal_last_name: "")).to be(false)
+      expect(user.errors[:legal_first_name]).to include("can't be blank")
+      expect(user.reload.full_name).to eq("Fiona Hackworth")
+    end
+
+    it "does not allow a name to be removed through full_name either" do
+      user = create(:user, full_name: "Caleb Denio")
+
+      expect(user.update(full_name: "")).to be(false)
+      expect(user.errors[:legal_first_name]).to include("can't be blank")
+    end
+
+    it "allows the last name to be removed" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+
+      expect(user.update(legal_last_name: "")).to be(true)
+      expect(user.reload.full_name).to eq("Fiona")
+    end
+
+    it "does not allow a cardholder to remove their last name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth")
+      create(:stripe_cardholder, user:)
+
+      expect(user.update(legal_last_name: "")).to be(false)
+      expect(user.errors[:legal_last_name]).to include("is required for HCB cards")
+      expect(user.reload.full_name).to eq("Fiona Hackworth")
+    end
+
+    it "lets a cardholder with no last name on file update other details" do
+      user = create(:user, legal_first_name: "Madonna", legal_last_name: nil)
+      create(:stripe_cardholder, user:)
+
+      expect(user.reload.update(legal_first_name: "Madonna Louise")).to be(true)
+    end
+
+    it "accepts accented letters and name punctuation" do
+      user = build(:user, legal_first_name: "María-José", legal_last_name: "O'Brien, Jr.")
+
+      expect(user).to be_valid
+    end
+
+    {
+      "brackets"    => ["Zach", "Latta [Dev]"],
+      "parentheses" => ["Max (test)", "Wofford"],
+      "emoji"       => ["Melody ✨", nil],
+      "digits"      => ["5512700050241863", nil],
+    }.each do |label, (first, last)|
+      it "rejects #{label}" do
+        user = build(:user, legal_first_name: first, legal_last_name: last)
+
+        expect(user).not_to be_valid
+        expect(user.errors[:legal_first_name] + user.errors[:legal_last_name]).to include(User::NAME_CHARACTERS_MESSAGE)
+      end
+    end
+
+    it "reports invalid characters from a legacy full_name on the split fields" do
+      user = build(:user, full_name: "Zach Latta [Dev]")
+
+      expect(user).not_to be_valid
+      expect(user.errors[:legal_last_name]).to include(User::NAME_CHARACTERS_MESSAGE)
     end
   end
 
   describe "#initials" do
     context "when missing name" do
       it "returns initials from email" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+        user = create(:user, email: "user1@example.com", legal_first_name: nil, legal_last_name: nil)
 
         expect(user.initials).to eql("U")
       end
@@ -117,6 +365,24 @@ RSpec.describe User, type: :model do
   end
 
   describe "#safe_name" do
+    it "returns the preferred name when it fits" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi")
+
+      expect(user.safe_name).to eql("FiFi")
+    end
+
+    it "falls back to the legal name when the preferred name is too long" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "Fiona the Magnificent Hacker")
+
+      expect(user.safe_name).to eql("Fiona Hackworth")
+    end
+
+    it "never exceeds 24 chars, even for a long single name" do
+      user = create(:user, legal_first_name: "Thisisareallyreallylongsinglename", legal_last_name: nil)
+
+      expect(user.safe_name).to eql("Thisisareallyreallylongs")
+    end
+
     context "when initial name is really long" do
       it "returns safe_name max of 24 chars" do
         user = create(:user, full_name: "Thisisareallyreallylongfirstnamethatembursewillnotlike Last")
@@ -127,87 +393,97 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "#first_name" do
-    context "when name is downcased" do
-      it "returns" do
-        user = create(:user, full_name: "ann marie")
+  describe "#first_name and #last_name" do
+    it "return the stored names, with only the first word for display" do
+      user = create(:user, legal_first_name: "Donald Ervin", legal_last_name: "Knuth")
 
-        expect(user.first_name).to eql("ann")
+      expect(user.first_name).to eql("Donald")
+      expect(user.last_name).to eql("Knuth")
+      expect(user.first_name(legal: true)).to eql("Donald Ervin")
+      expect(user.last_name(legal: true)).to eql("Knuth")
+    end
+
+    it "return nil for a user without a name, except the display first name" do
+      user = create(:user, email: "fiona.h@example.com", legal_first_name: nil, legal_last_name: nil)
+
+      expect(user.first_name).to eq("fiona.h")
+      expect(user.last_name).to be_nil
+      expect(user.first_name(legal: true)).to be_nil
+      expect(user.last_name(legal: true)).to be_nil
+    end
+
+    context "with a preferred name" do
+      let(:user) { create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi Hacks") }
+
+      it "favor the preferred name" do
+        expect(user.first_name).to eql("FiFi")
+        expect(user.last_name).to eql("Hacks")
       end
-    end
 
-    context "when multiple first names" do
-      it "returns actual first name" do
-        user = create(:user, full_name: "Prof. Donald Ervin Knuth")
-
-        expect(user.first_name).to eql("Donald")
+      it "return the legal name when asked" do
+        expect(user.first_name(legal: true)).to eql("Fiona")
+        expect(user.last_name(legal: true)).to eql("Hackworth")
       end
-    end
 
-    context "when name entered with comma" do
-      it "returns actual first name" do
-        user = create(:user, full_name: "Turing, Alan M.")
+      it "treat a single-word preferred name as a first name" do
+        user.update!(preferred_name: "FiFi")
 
-        expect(user.first_name).to eql("Alan")
-      end
-    end
-  end
-
-  describe "#last_name" do
-    it "returns actual last name" do
-      user = create(:user, full_name: "Ken Griffey Jr.")
-
-      expect(user.last_name).to eql("Griffey")
-    end
-
-    context "when name is downcased" do
-      it "returns" do
-        user = create(:user, full_name: "ann marie")
-
-        expect(user.last_name).to eql("marie")
-      end
-    end
-
-    context "when entered with comma" do
-      it "returns actual last name" do
-        user = create(:user, full_name: "Carreño Quiñones, María-Jose")
-
-        expect(user.last_name).to eql("Quiñones")
+        expect(user.first_name).to eql("FiFi")
+        expect(user.last_name).to be_nil
+        expect(user.last_name(legal: true)).to eql("Hackworth")
       end
     end
   end
 
   describe "#initial_name" do
-    it "returns" do
-      user = create(:user, full_name: "First Last")
+    it "returns the first name and last initial" do
+      user = create(:user, legal_first_name: "First", legal_last_name: "Last")
 
       expect(user.initial_name).to eql("First L")
     end
 
-    context "when first name is missing" do
-      it "is invalid" do
-        user = build(:user, full_name: "Last")
+    it "uses only the first word of a multi-word first name" do
+      user = create(:user, legal_first_name: "Martin Luther", legal_last_name: "King Jr.")
 
-        expect(user).not_to be_valid
-        expect(user.errors[:full_name]).not_to be_empty
-      end
+      expect(user.initial_name).to eql("Martin K")
     end
 
-    context "when last name is missing" do
-      it "is invalid" do
-        user = build(:user, full_name: "First")
+    it "uses the preferred name" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi Hacks")
 
-        expect(user).not_to be_valid
-        expect(user.errors[:full_name]).not_to be_empty
-      end
+      expect(user.initial_name).to eql("FiFi H")
     end
 
-    context "when full_name is nil" do
-      it "returns" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+    it "returns a single-word preferred name as is" do
+      user = create(:user, legal_first_name: "Fiona", legal_last_name: "Hackworth", preferred_name: "FiFi")
+
+      expect(user.initial_name).to eql("FiFi")
+    end
+
+    it "returns a lone first name as is" do
+      user = create(:user, legal_first_name: "Madonna", legal_last_name: nil)
+
+      expect(user.initial_name).to eql("Madonna")
+    end
+
+    context "when the user has no name" do
+      it "returns the email handle" do
+        user = create(:user, email: "user1@example.com", legal_first_name: nil, legal_last_name: nil)
 
         expect(user.initial_name).to eql("user1")
       end
+    end
+  end
+
+  describe "onboarding" do
+    it "ends once a first name is saved" do
+      user = create(:user, legal_first_name: nil, legal_last_name: nil)
+      expect(user).to be_onboarding
+
+      user.update!(legal_first_name: "Fiona")
+
+      expect(user).not_to be_onboarding
+      expect(user).to be_was_onboarding
     end
   end
 
@@ -336,46 +612,6 @@ RSpec.describe User, type: :model do
       user = create(:user, locked_at: Time.now)
       user.unlock!
       expect(user).not_to be_locked
-    end
-  end
-
-  describe "#private" do
-    describe "#namae" do
-      context "when brackets in name" do
-        it "can't parse the name" do
-          user = build(:user, full_name: "Zach Latta [Dev]")
-
-          expect(user).not_to be_valid
-          expect(user.errors[:full_name]).not_to be_empty
-        end
-      end
-
-      context "when parentheses" do
-        it "can't parse the name" do
-          user = build(:user, full_name: "Max (test) Wofford")
-
-          expect(user).not_to be_valid
-          expect(user.errors[:full_name]).not_to be_empty
-        end
-      end
-
-      context "when emojis in name" do
-        it "can't parse the name" do
-          user = build(:user, full_name: "Melody ✨")
-
-          expect(user).not_to be_valid
-          expect(user.errors[:full_name]).not_to be_empty
-        end
-      end
-
-      context "when a number" do
-        it "can't parse the name" do
-          user = build(:user, full_name: "5512700050241863")
-
-          expect(user).not_to be_valid
-          expect(user.errors[:full_name]).not_to be_empty
-        end
-      end
     end
   end
 
