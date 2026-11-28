@@ -27,7 +27,18 @@
     top: 0;
     right: 0;
     margin: 1rem;
-    background-color: $smoke !important;
+  }
+
+  // The toggle sits on top of the banner image / logo, so it needs an opaque
+  // background instead of .pop's translucent one.
+  & > .event_settings__banner--edit > .menu__toggle,
+  & .event_settings__logo--edit > .menu__toggle {
+    background-color: $smoke;
+
+    &:hover,
+    &:focus {
+      background-color: darken($smoke, 6%);
+    }
   }
 
   & > .event_settings__banner--logo {
@@ -45,7 +56,6 @@
       position: absolute;
       top: -12px;
       right: -12px;
-      background-color: $smoke !important;
     }
   }
 }
@@ -53,9 +63,14 @@
 html[data-dark='true'] {
   .event_settings__banner {
     background-color: lighten($darkless, 5%);
-    & > .event_settings__banner--edit,
-    & .event_settings__logo--edit {
-      background-color: lighten($darkless, 5%) !important;
+    & > .event_settings__banner--edit > .menu__toggle,
+    & .event_settings__logo--edit > .menu__toggle {
+      background-color: lighten($darkless, 10%);
+
+      &:hover,
+      &:focus {
+        background-color: lighten($darkless, 15%);
+      }
     }
   }
 }
