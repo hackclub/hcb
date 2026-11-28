@@ -43,22 +43,17 @@ class OrganizerPosition
       end
 
       def total_spent_cents
-        transactions.sum(&:amount_cents) * -1
+        -transactions.sum(:amount_cents)
       end
 
       def transactions
-        card_ids = organizer_position.stripe_cards.on_main_ledger.pluck(:stripe_id)
-        canonical_pending_transactions_hcb_codes = CanonicalPendingTransaction
-                                                   .not_declined
-                                                   .joins(:raw_pending_stripe_transaction)
-                                                   .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, ended_at&.to_i || Time.now.to_i)
-                                                   .pluck(:hcb_code)
-        canonical_transactions_hcb_codes = CanonicalTransaction
-                                           .stripe_transaction
-                                           .where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)", card_ids, created_at.to_i, ended_at&.to_i || Time.now.to_i)
-                                           .pluck(:hcb_code)
-        all_hcb_codes = canonical_pending_transactions_hcb_codes + canonical_transactions_hcb_codes
-        HcbCode.where(hcb_code: all_hcb_codes)
+        card_ids = organizer_position.stripe_cards.on_main_ledger.select(:id)
+        charges = CardCharge.where(stripe_card_id: card_ids)
+
+        Ledger::Item.where(linked_object_type: CardCharge.polymorphic_name, linked_object_id: charges.select(:id))
+                    .where.not(status: [:declined, :released], ct_count: 0)
+                    # Use the authorization date so settlement cannot move a charge between controls.
+                    .where("COALESCE(pending_at, datetime) BETWEEN ? AND ?", created_at.change(usec: 0), ended_at || Time.current)
       end
 
       def deactivate

@@ -43,8 +43,8 @@ module StripeAuthorizationService
           end
 
           spending_control = cpt.stripe_card.active_spending_control
-          if spending_control.present?
-            SpendingControlService.check_low_balance(spending_control, cpt.local_hcb_code)
+          if spending_control && cpt.unsettled?
+            SpendingControlService.check_low_balance(spending_control, ledger_item_id: cpt.ledger_item_id, balance_change_cents: cpt.amount_cents)
           end
 
           if cpt&.stripe_card&.card_grant&.one_time_use

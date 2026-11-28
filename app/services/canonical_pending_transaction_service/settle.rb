@@ -8,6 +8,10 @@ module CanonicalPendingTransactionService
     end
 
     def run!
+      stripe_capture = @canonical_transaction.amount_cents.negative? && @canonical_pending_transaction.raw_pending_stripe_transaction.present?
+      # Only the first capture of an outstanding authorization replaces its hold.
+      held_cents = stripe_capture && @canonical_pending_transaction.unsettled? ? @canonical_pending_transaction.amount_cents : 0
+
       ActiveRecord::Base.transaction do
         CanonicalPendingSettledMapping.create!(
           canonical_transaction: @canonical_transaction,
@@ -22,16 +26,21 @@ module CanonicalPendingTransactionService
         sync_transaction_category!
       end
 
-      if @canonical_transaction.amount_cents < 0 && @canonical_pending_transaction.raw_pending_stripe_transaction && (@canonical_pending_transaction.amount_cents != @canonical_transaction.amount_cents)
+      return unless stripe_capture
+
+      if @canonical_pending_transaction.amount_cents != @canonical_transaction.amount_cents
         CanonicalPendingTransactionMailer.with(
           canonical_pending_transaction_id: @canonical_pending_transaction.id,
           canonical_transaction_id: @canonical_transaction.id,
         ).notify_settled.deliver_later
+      end
 
-        spending_control = @canonical_transaction.stripe_card.active_spending_control
-        if spending_control.present?
-          SpendingControlService.check_low_balance(spending_control, @canonical_transaction.local_hcb_code)
-        end
+      if spending_control = @canonical_transaction.stripe_card.active_spending_control
+        SpendingControlService.check_low_balance(
+          spending_control,
+          ledger_item_id: @canonical_pending_transaction.ledger_item_id,
+          balance_change_cents: @canonical_transaction.amount_cents - held_cents
+        )
       end
     end
 
