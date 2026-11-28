@@ -216,6 +216,34 @@ class Rack::Attack
     end
   end
 
+  # Inquiry forms on the /for/* marketing pages each send email to an address the
+  # visitor typed, so cap them per IP and per recipient. Normalise the path the way
+  # the CSP throttle does, or `.html` and trailing slashes skip the rule.
+  MARKETING_INQUIRY_PATH = /\A\/for\/[a-z0-9-]+\/inquiry\z/
+  marketing_inquiry = lambda do |req|
+    req.post? && MARKETING_INQUIRY_PATH.match?(req.path.sub(/\A\/+/, "/").chomp("/").sub(/\.[^.\/]*\z/, ""))
+  end
+
+  def self.normalized_inquiry_email(raw)
+    local, domain = raw.to_s.strip.downcase.gsub(/\s+/, "").split("@", 2)
+    return nil if local.blank? || domain.blank?
+
+    local = local.split("+", 2).first
+    local = local.delete(".") if %w[gmail.com googlemail.com].include?(domain)
+    "#{local}@#{domain}"
+  end
+
+  throttle("marketing/inquiry/ip", limit: 5, period: 10.minutes) do |req|
+    req.ip if marketing_inquiry.call(req)
+  end
+
+  throttle("marketing/inquiry/email", limit: 5, period: 1.day) do |req|
+    if marketing_inquiry.call(req)
+      inquiry = req.params["ai_safety_inquiry"]
+      normalized_inquiry_email((inquiry["email"] if inquiry.is_a?(Hash)) || req.params["email"])
+    end
+  end
+
   ### Custom Throttle Response ###
 
   # By default, Rack::Attack returns an HTTP 429 for throttled responses,

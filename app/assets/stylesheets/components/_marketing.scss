@@ -3697,3 +3697,885 @@ $mk-term-green: #62d196;
     }
   }
 }
+
+// ---------------------------------------------------------------- AI safety landing page (/for/ai-safety)
+.mk-ais [id] {
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when jumped to
+}
+
+.marketing-form {
+  &--labelled {
+    gap: 18px;
+
+    .marketing-form__field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .marketing-form__label {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: $mk-ink;
+    }
+  }
+
+  &__optional {
+    font-weight: 400;
+    color: $muted-text;
+  }
+
+  &__fieldset {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+
+    > .marketing-form__label {
+      margin-bottom: 6px; // <legend> sits outside the fieldset's grid, so gap doesn't reach it
+    }
+  }
+
+  &__options {
+    display: grid;
+    gap: 8px;
+
+    @media (min-width: 560px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    font-weight: 500;
+    color: $mk-ink;
+    cursor: pointer;
+
+    input {
+      flex: none;
+      margin: 0;
+      accent-color: $red;
+    }
+
+    &:has(input:checked) {
+      box-shadow: inset 0 0 0 1.5px $red;
+    }
+
+    &:has(input:focus-visible) {
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
+  }
+}
+
+// Landing page built from the shared /for/* sections (hero, logo wall, stats, steps, cases,
+// dark band), plus a few page-only pieces: the centered hero shot, feature cards, and fee callout.
+.mk-ais {
+  font-variant-numeric: tabular-nums;
+
+  // Numbers only: monospace with tabular figures.
+  &__num {
+    font-family: $mono;
+    font-size: 0.92em;
+    letter-spacing: -0.01em;
+  }
+
+  // Tighter rhythm than the other /for/* pages, so the page reads short.
+  .mk-section {
+    padding: clamp(48px, 6vw, 80px) 0;
+  }
+
+  .mk-section__head {
+    max-width: none; // headings and intros run the full content width on this page
+    margin-bottom: clamp(24px, 3vw, 36px);
+  }
+
+  // This page runs wider than the other /for/* pages. Nav and footer widen with it so edges line up.
+  .mk-container {
+    max-width: 1200px;
+  }
+
+  &__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin-top: 30px;
+  }
+
+  &__contact {
+    margin-top: 18px;
+    font-size: 0.95rem;
+    color: $muted-text;
+
+    a {
+      color: $mk-ink;
+      font-weight: 600;
+      text-underline-offset: 2px;
+    }
+  }
+
+  &__aside {
+    font-size: 0.9rem;
+    color: rgba($snow, 0.7);
+    max-width: 60ch;
+  }
+
+  .mk-ais__aside .mk-ais-go {
+    color: lighten($red, 22%);
+  }
+
+  // Buttons keep their rounded corners on focus; `.marketing a:focus-visible` would square them, and <button> isn't covered by it.
+  .marketing-btn:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+  }
+}
+
+// ---------------------------------------------------------------- hero + logo wall
+.mk-ais-hero {
+  padding: clamp(52px, 7vw, 88px) 0 clamp(40px, 5vw, 64px);
+
+  > .mk-container {
+    position: relative;
+  }
+
+  .mk-hero__glow {
+    background: radial-gradient(
+      60% 55% at 50% -10%,
+      rgba($red, 0.07),
+      transparent 70%
+    );
+  }
+
+  .mk-ais__head {
+    max-width: 740px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .mk-hero__title {
+    font-size: clamp(2.5rem, 5.2vw, 3.85rem);
+    text-wrap: balance;
+  }
+
+  .mk-hero__subtitle {
+    max-width: 52ch;
+    margin-inline: auto;
+    text-wrap: balance;
+  }
+
+  .mk-ais__cta {
+    justify-content: center;
+  }
+
+  .mk-ais__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 18px;
+    margin-top: 18px;
+  }
+
+  .mk-ais__contact {
+    margin-top: 0;
+  }
+
+  .mk-ais-ask {
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .mk-ais-ask__menu {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(260px, calc(100vw - 32px));
+    min-width: 0;
+    text-align: left;
+  }
+}
+
+.mk-ais-shot {
+  max-width: 1080px;
+  margin: clamp(40px, 5vw, 56px) auto 0;
+}
+
+.mk-ais-logos {
+  margin-top: clamp(40px, 5vw, 64px);
+
+  &__title {
+    margin-bottom: 32px;
+    text-align: center;
+    font-family: $font-family;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: $muted-text;
+  }
+
+  .mk-funders {
+    row-gap: 28px;
+
+    @media (min-width: 920px) {
+      li {
+        flex-basis: 16.6667%; // 6 per row: two short rows instead of three
+      }
+    }
+
+    img {
+      max-height: 24px;
+    }
+
+    img.mk-funders__logo--boost {
+      max-height: 44px;
+    }
+
+    // Phones get the first six logos, so the wall stays a strip.
+    @media (max-width: 599.98px) {
+      li:nth-child(n + 7) {
+        display: none;
+      }
+    }
+  }
+
+  .mk-stats {
+    text-align: center;
+
+    &__item dd {
+      color: $muted-text;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- features
+// Bento cards: a fixed-height illustration on top, then the copy, so every card lines up.
+.mk-ais-features {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mk-ais-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 28px;
+  border-radius: var(--radius-2xl);
+  background: $white;
+  box-shadow: var(--shadow-border-md);
+
+  h3 {
+    margin-top: 12px;
+    padding-inline: 16px;
+    font-size: 1.3rem;
+  }
+
+  p {
+    padding-inline: 16px;
+    color: $slate;
+    line-height: 1.55;
+  }
+}
+
+.mk-ais-viz {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 168px;
+  border-radius: calc(var(--radius-2xl) - 6px);
+  background:
+    radial-gradient(60% 80% at 50% 100%, rgba($red, 0.08), transparent 70%),
+    $snow;
+  overflow: hidden;
+
+  &--coins span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(38px, 11vw, 56px);
+    height: clamp(38px, 11vw, 56px);
+    margin-left: clamp(-10px, -2vw, -6px);
+    border-radius: 999px;
+    background: $white;
+    box-shadow:
+      var(--shadow-border-sm),
+      0 8px 20px -10px rgba($black, 0.3);
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-size: clamp(1.1rem, 3.2vw, 1.45rem);
+    font-weight: 700;
+    color: $mk-ink;
+
+    &:first-child {
+      margin-left: 0;
+      background: $red;
+      color: $white;
+    }
+  }
+
+  &--card {
+    padding-bottom: 10px;
+  }
+}
+
+.mk-ais-doc {
+  display: grid;
+  gap: 10px;
+  width: 200px;
+  padding: 18px;
+  border-radius: 8px;
+  background: $white;
+  box-shadow:
+    var(--shadow-border-sm),
+    0 14px 28px -16px rgba($black, 0.35);
+  transform: rotate(-2deg);
+
+  &__seal {
+    justify-self: start;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba($green, 0.14);
+    color: $green-dark;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  &__line {
+    height: 6px;
+    border-radius: 999px;
+    background: $smoke;
+
+    &--short {
+      width: 60%;
+    }
+  }
+
+  &__sig {
+    font-family: $mono;
+    font-size: 0.7rem;
+    color: $muted-text;
+  }
+}
+
+.mk-ais-cardviz {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 210px;
+  aspect-ratio: 1.586;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, $red, darken($red, 14%));
+  color: $white;
+  box-shadow: 0 12px 22px -12px rgba($red, 0.6);
+  transform: rotate(-2deg);
+
+  &__brand {
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  &__num {
+    font-family: $mono;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+  }
+
+  &__name {
+    font-size: 0.72rem;
+    white-space: nowrap;
+    opacity: 0.9;
+  }
+}
+
+.mk-ais-mini {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  width: min(280px, 85%);
+  border-radius: 10px;
+  background: $white;
+  box-shadow:
+    var(--shadow-border-sm),
+    0 14px 28px -16px rgba($black, 0.35);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    font-size: 0.8125rem;
+    color: $mk-ink;
+
+    & + li {
+      border-top: 1px solid rgba($black, 0.06);
+    }
+
+    span {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: $green;
+    }
+
+    svg {
+      margin-left: auto;
+      fill: $green-dark;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- fees
+// Leads with what we don't charge; the 7% is the one line under it.
+.mk-ais-fee {
+  text-align: center;
+
+  &__zeros {
+    list-style: none;
+    margin: 32px auto 0;
+    padding: 0;
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    li {
+      padding: 20px 12px;
+      border-radius: var(--radius-xl);
+      background: $white;
+      box-shadow: var(--shadow-border-md);
+      color: $muted-text;
+    }
+  }
+
+  &__zero {
+    display: block;
+    margin-bottom: 2px;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: $green-dark;
+  }
+
+  &__lead {
+    margin: 28px auto 0;
+    max-width: 52ch;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: $mk-ink;
+    text-wrap: balance;
+  }
+
+  &__note {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: $muted-text;
+  }
+}
+
+// ---------------------------------------------------------------- steps
+.mk-ais-step__when {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: $muted-text;
+}
+
+// At two-column widths a third card would sit alone on its row, so it spans both.
+.mk-ais .mk-uses .mk-use:last-child {
+  @media (min-width: 720px) and (max-width: 999.98px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.mk-ais-faq {
+  display: grid;
+  gap: 0 48px;
+  align-items: start;
+
+  @media (min-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &__item {
+    border-top: 1px solid $smoke;
+  }
+
+  &__col:last-child .mk-ais-faq__item:last-child {
+    border-bottom: 1px solid $smoke;
+  }
+
+  @media (min-width: 860px) {
+    &__col .mk-ais-faq__item:last-child {
+      border-bottom: 1px solid $smoke;
+    }
+  }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::after {
+      content: '+';
+      flex: none;
+      font-size: 1.125rem;
+      line-height: 1;
+      color: $muted-text;
+    }
+
+    &:hover .mk-faq__q {
+      color: $red;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $red;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  &__item[open] summary::after {
+    content: '\2212';
+  }
+
+  .mk-faq__q {
+    margin: 0;
+    font-family: $font-family;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+    scroll-margin-top: calc(var(--mk-nav-h) + 16px);
+  }
+
+  .mk-faq__a {
+    margin: 0 0 14px;
+    max-width: 68ch;
+  }
+}
+
+// ---------------------------------------------------------------- talk to us
+.mk-ais-talk {
+  &__grid {
+    display: grid;
+    gap: 24px 40px;
+
+    @media (min-width: 860px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: 64px;
+    }
+
+    .mk-lead {
+      margin: 16px 0 24px;
+
+      a {
+        color: $mk-ink;
+        font-weight: 600;
+        text-underline-offset: 2px;
+      }
+    }
+  }
+
+  &__form {
+    padding: 28px;
+    border-radius: var(--radius-2xl);
+    background: $white;
+    box-shadow: var(--shadow-border-md);
+  }
+
+  &__status,
+  &__error {
+    padding: 2px 0 2px 14px;
+    border-left: 3px solid $green-dark;
+    color: $mk-ink;
+  }
+
+  &__status {
+    margin-top: 16px;
+  }
+
+  &__error {
+    margin-bottom: 16px;
+    border-left-color: $red;
+  }
+
+  .marketing-form--labelled {
+    gap: 14px;
+  }
+
+  .marketing-form .marketing-form__input {
+    height: 42px;
+    padding-inline: 14px;
+    font-size: 0.9375rem;
+    border-radius: var(--radius-md, 6px);
+
+    &:focus,
+    &:focus-within {
+      border-color: transparent;
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
+  }
+
+  .marketing-form .marketing-form__textarea {
+    height: auto;
+    padding: 10px 14px;
+  }
+
+  @media (min-width: 860px) and (max-width: 1039.98px) {
+    .marketing-form__options {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .marketing-form__option {
+    min-height: 40px;
+    border-radius: var(--radius-md, 6px);
+    font-size: 0.875rem;
+  }
+
+  .marketing-form__submit {
+    height: 44px;
+  }
+
+  .marketing-form__hint {
+    margin-top: 4px;
+    font-size: 0.8125rem;
+    color: $muted-text;
+  }
+}
+
+.mk-ais-team {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: $mk-ink;
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: $snow-dark;
+  }
+}
+
+// Quiet text actions under the hero copy: copy the page, or open it in an AI app.
+.mk-ais-ask {
+  position: relative;
+  z-index: 2; // the hero's fade-up gives each sibling its own layer; keep the menu on top
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 12px;
+  margin-left: -8px;
+  font-family: $font-family;
+
+  .mk-ais & &__copy,
+  &__more summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 8px;
+    border-radius: var(--radius-md, 6px);
+    color: $muted-text;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+
+    svg {
+      fill: currentColor;
+    }
+
+    &:hover {
+      color: $mk-ink;
+      background: rgba($black, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $red;
+      outline-offset: 2px;
+    }
+  }
+
+  &__more summary {
+    position: relative;
+    padding-inline: 8px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 9px;
+      bottom: 9px;
+      width: 1px;
+      background: $smoke;
+    }
+  }
+
+  &__icon--done,
+  &__copy.is-copied &__icon--copy {
+    display: none;
+  }
+
+  &__copy.is-copied &__icon--done {
+    display: inline;
+    color: $green-dark;
+  }
+
+  &__more {
+    display: flex;
+    inline-size: auto;
+
+    // The app animates every <details>; a menu should just appear.
+    &::details-content {
+      transition: none;
+    }
+
+    summary {
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    &[open] summary {
+      color: $mk-ink;
+      background: rgba($black, 0.04);
+    }
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    min-width: 260px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba($black, 0.12);
+    border-radius: var(--radius-lg);
+    background: $white;
+    box-shadow: 0 12px 32px -12px rgba($black, 0.25);
+
+    .mk-ais & a {
+      display: grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md, 6px);
+      color: $mk-ink;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        background: $snow;
+      }
+    }
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    svg {
+      color: $muted-text;
+    }
+  }
+
+  &__hint {
+    font-size: 0.8rem;
+    color: $muted-text;
+  }
+}
+
+.marketing:has(.mk-ais) {
+  .marketing-nav__inner,
+  .marketing-footer__inner,
+  .marketing-footer__legal {
+    max-width: 1200px;
+  }
+}
+
+// Secondary links on /for/ai-safety: HCB red, bold, with an arrow that nudges on hover.
+.mk-ais .mk-ais-go {
+  color: $red;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &::after {
+    content: '\2192' / '';
+    display: inline-block;
+    margin-left: 4px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &::after {
+      transform: translateX(3px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
+}

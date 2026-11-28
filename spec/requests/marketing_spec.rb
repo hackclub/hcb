@@ -35,6 +35,21 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("budget, and your timeline")
     end
 
+    # The nav is shared by every /for/* page, so only the current page is marked.
+    it "marks only For funders as the current page in the nav" do
+      get funders_path
+
+      current = Nokogiri::HTML(response.body).css("a[aria-current=page]")
+      expect(current.map { |a| a.text.squish }).to eq(["For funders"])
+    end
+
+    # A long message plus a bad email used to overflow the 4 KB session cookie and 500.
+    it "redirects, not 500s, on a long message with a bad email" do
+      post funder_inquiry_path, params: { email: "bad", message: "x" * 3_000 }
+
+      expect(response).to have_http_status(:found)
+    end
+
     # Signed-out funders are funnelled to "Talk to our team" (which scrolls to the inquiry
     # form), NOT to signup — we want a conversation first, not a self-serve account.
     it "shows the signed-out nav (Log in / Talk to our team), not a dashboard link" do

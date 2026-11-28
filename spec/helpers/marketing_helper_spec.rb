@@ -62,4 +62,24 @@ RSpec.describe MarketingHelper, type: :helper do
       end
     end
   end
+
+  describe "#ai_safety_faqs" do
+    # The answers feed the JSON-LD as well as the page, so they stay plain text, and each one
+    # opens with a direct answer that answer engines can quote.
+    it "returns 15 plain-text FAQs in order, each opening with a direct answer" do
+      faqs = helper.ai_safety_faqs(stats: { organizations: "8,200+" })
+
+      expect(faqs.map { |f| f[:id] }).to eq(%w[
+                                              need-a-501c3 funder-needs-sponsor how-fast pay-outside-us individuals exposure grant-agreement
+                                              private policy-work own-nonprofit not-funded teenagers research-agenda contracts cost
+                                            ])
+      faqs.each do |faq|
+        text = faq[:q] + faq[:a]
+        expect(text).not_to match(/[<>]/), "#{faq[:id]} has HTML"
+        expect(text).not_to include("\u2014", "!")
+        expect(faq[:a]).to match(/\A(Yes|No|Not|Usually|Within|\d)/), "#{faq[:id]} doesn't open with a direct answer"
+      end
+      expect(faqs.find { |f| f[:id] == "teenagers" }[:a]).to include("8,200+")
+    end
+  end
 end

@@ -1,0 +1,47 @@
+<%# locals: () %>
+<%# Inquiry form for /for/ai-safety. Posts to MarketingController#ai_safety_inquiry. Turbo is off
+    for a plain POST, redirect, GET, so the flash and the #talk-to-us anchor survive. %>
+<%= form_with url: ai_safety_inquiry_path, scope: :ai_safety_inquiry, method: :post, data: { turbo: false },
+      class: "marketing-form marketing-form--detailed marketing-form--labelled plausible-event-name=AIS+Inquiry+Submit" do |f| %>
+  <%# Anti-bot honeypot via the invisible_captcha gem (rejected in MarketingController). %>
+  <%= invisible_captcha :subtitle %>
+
+  <%# Values carried back on an error redirect. Flash keys are Strings after the cookie round trip. %>
+  <% prefill = flash[:ai_safety_form] || {} %>
+  <% audience = prefill["audience"].presence || @audience %>
+
+  <div class="marketing-form__field">
+    <%= f.label :name, "Name", class: "marketing-form__label" %>
+    <%= f.text_field :name, value: prefill["name"], required: true, maxlength: 100, autocomplete: "name", class: "marketing-form__input" %>
+  </div>
+
+  <div class="marketing-form__field">
+    <%= f.label :email, "Email", class: "marketing-form__label" %>
+    <%= f.email_field :email, value: prefill["email"], required: true, maxlength: 254, autocomplete: "email", class: "marketing-form__input" %>
+  </div>
+
+  <fieldset class="marketing-form__fieldset">
+    <legend class="marketing-form__label">I am</legend>
+    <div class="marketing-form__options">
+      <% MarketingInquiry::AUDIENCES.each do |key, label| %>
+        <label class="marketing-form__option">
+          <%= radio_button_tag "ai_safety_inquiry[audience]", key, key == audience %>
+          <%= label %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <div class="marketing-form__field">
+    <label for="ai_safety_inquiry_message" class="marketing-form__label">Message <span class="marketing-form__optional">(optional)</span></label>
+    <%= f.text_area :message, value: prefill["message"].presence || @message, rows: 4, maxlength: 1000,
+          placeholder: "Funder, grant size, timeline, and team location.",
+          class: "marketing-form__input marketing-form__textarea" %>
+  </div>
+
+  <%= f.hidden_field :ref, value: prefill["ref"].presence || @ref %>
+
+  <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">Send message</button>
+
+  <p class="marketing-form__hint">Have a grant letter? Reply to our confirmation email with it attached.</p>
+<% end %>

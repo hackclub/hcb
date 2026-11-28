@@ -496,4 +496,127 @@ module MarketingHelper
       { name: "Gary Tou", avatar: "https://cdn.hackclub.com/019e7570-7d87-707e-bb85-4d39a3fc5114/image.png" }
     ]
   end
+
+  # Links in the shared marketing nav, as [label, path]. The nav marks the current page.
+  def marketing_nav_links
+    [
+      ["Fiscal sponsorship", "https://hackclub.com/fiscal-sponsorship"],
+      ["AI safety", ai_safety_path],
+      ["For funders", funders_path]
+    ]
+  end
+
+  # Funders whose grants have reached organizations on HCB, for the logo walls on /for/funders and
+  # /for/ai-safety. They are not HCB customers, so copy must not say they "use" HCB. Ordered so the
+  # biggest names land first. Excludes funders who only gave to Hack Club HQ itself.
+  def funder_logos
+    [
+      { name: "Ford Foundation", src: "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png" },
+      { name: "Omidyar Network", src: "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png" },
+      { name: "William & Flora Hewlett Foundation", src: "https://cdn.hackclub.com/019edcbb-3dec-7ee7-a4fd-d93fb2e0b9a0/image.png", class: "mk-funders__logo--boost" },
+      { name: "Alfred P. Sloan Foundation", src: "https://cdn.hackclub.com/019edcbb-46d2-74bd-93d3-63bf843af555/image.png" },
+      { name: "SoftBank", src: "https://cdn.hackclub.com/019edcbd-7b5b-7ebf-9086-a4839acf0933/logo_svg.svg" },
+      { name: "Founders Fund", src: "https://cdn.hackclub.com/019edcbb-71d3-755b-bf22-b4e958e3b0e9/founders_fund_logo__2015_.svg" },
+      { name: "11th Hour Project, The Schmidt Family Foundation", src: "https://cdn.hackclub.com/019edcbb-40c8-7556-a50b-2148294561a0/image.png" },
+      { name: "Protocol Labs", src: "https://cdn.hackclub.com/019edcbd-7e32-7078-a5b8-bdc47102cf96/protocol-labs-logo-black.svg" },
+      { name: "Rockefeller Brothers Fund", src: "https://cdn.hackclub.com/019edcca-3c1d-7a8a-8579-a900076d05c5/rbf_2019logo_full-color_no-tagline.png" },
+      { name: "EQT Foundation", src: "https://cdn.hackclub.com/019edcbb-5648-772a-a368-be9751e81f62/image.png" },
+      { name: "Future of Life Institute", src: "https://cdn.hackclub.com/019edcbb-540c-71fa-819f-08c17ae34297/future_of_life_institute_logo.svg" },
+      { name: "Founders Pledge", src: "https://cdn.hackclub.com/019edcfa-9eea-7015-b7ab-170d560ca012/founders_pledge_green.svg" }
+    ]
+  end
+
+  # Q&A for /for/ai-safety. Plain text only: the same strings feed the FAQPage JSON-LD.
+  def ai_safety_faqs(stats:)
+    [
+      {
+        id: "need-a-501c3",
+        q: "Do we need a 501(c)(3) to receive an AI safety grant?",
+        a: "No. Your project runs under The Hack Foundation (EIN 81-2908499), a registered 501(c)(3) public charity. Funders can grant to us directly and US donors can deduct gifts without you incorporating."
+      },
+      {
+        id: "funder-needs-sponsor",
+        q: "Our funder requires a fiscal sponsor. Can you help?",
+        a: "Yes. Share your grant letter or draft terms. Once your project passes review and we sign an agreement, we open your account and send your funder our IRS letter, W-9, and Form 990."
+      },
+      {
+        id: "how-fast",
+        q: "How fast can we get set up?",
+        a: "Within days. We reply within one business day, review your project, and send the sponsorship agreement. When funds arrive depends on your funder's schedule."
+      },
+      {
+        id: "pay-outside-us",
+        q: "Can we hire or pay researchers outside the US?",
+        a: "Yes. UK staff can be hired through our employer-of-record partner with local payroll, tax, and pension. Contractors and fellows elsewhere are paid in local currency, screened against US OFAC sanctions lists."
+      },
+      {
+        id: "individuals",
+        q: "Can an individual researcher get fiscal sponsorship?",
+        a: "Yes, if the work qualifies as a charitable project Hack Club can adopt. Funds stay in your project's restricted account while you are paid as Hack Club staff or a contractor."
+      },
+      {
+        id: "exposure",
+        q: "Can other projects on HCB spend our project's money?",
+        a: "No. Funds are restricted to your project on separate books, held in FDIC-insured accounts via Column N.A., and audited independently every year. Hack Club vets every project and oversees all spending."
+      },
+      {
+        id: "grant-agreement",
+        q: "Will you sign our funder's grant agreement?",
+        a: "Yes, after review. The Hack Foundation signs as the 501(c)(3) grantee, enforces restrictions, and handles reporting. Your funder can also get read-only access to your live books."
+      },
+      {
+        id: "private",
+        q: "Can we keep our finances private?",
+        a: "Yes. Books are public by default, and you can switch them to private at any time while keeping read access for your team and approved funders."
+      },
+      {
+        id: "policy-work",
+        q: "Can our team do AI governance or policy work?",
+        a: "Yes, within 501(c)(3) rules. Governance research, nonpartisan analysis, education, and briefing officials are permitted. Lobbying on specific legislation is strictly capped under Hack Club's aggregate limits and barred by some grants, so check with us first. Supporting or opposing candidates is never allowed."
+      },
+      {
+        id: "own-nonprofit",
+        q: "Can we spin out into our own nonprofit later?",
+        a: "Yes, and we will help. Once your new organization has 501(c)(3) status, The Hack Foundation can transfer your remaining balance, subject to our approval and funder terms."
+      },
+      {
+        id: "not-funded",
+        q: "We're not funded yet. Can you help?",
+        a: "Not until a grant is close. We sponsor projects with committed funding or a grant in final diligence. If a funder is asking for your fiscal sponsor, write to us."
+      },
+      {
+        id: "teenagers",
+        q: "Isn't HCB for teenagers?",
+        a: "No. Hack Club built HCB in 2018 for teen hackathons, and the open-source platform now supports #{stats[:organizations]} adult- and student-led organizations, from research labs to open-source projects. Your project gets its own account backed by an audited 501(c)(3)."
+      },
+      {
+        id: "research-agenda",
+        q: "Does Hack Club set our research agenda?",
+        a: "No. Your team chooses the questions, methods, and publications. As legal sponsor, The Hack Foundation retains legal oversight of spending so funds follow your mission and grant terms."
+      },
+      {
+        id: "contracts",
+        q: "Will you sign NDAs and vendor contracts?",
+        a: "Yes. Send us grant agreements, NDAs, data-access agreements, and contractor or vendor contracts. The Hack Foundation reviews and signs as the legal party."
+      },
+      {
+        id: "cost",
+        q: "How much does fiscal sponsorship cost?",
+        a: "7% of incoming grants and donations, taken as each arrives. Setup, legal, monthly, and card fees are $0. International transfers are at provider cost, and wires under $500 cost $25. On a $500,000 grant, $465,000 goes to your work."
+      }
+    ]
+  end
+
+  # "Ask an AI" links on /for/ai-safety. Each app opens with a prompt pointing at the
+  # page's Markdown version. Gemini has no URL parameter for a prompt, so it isn't listed.
+  def ai_safety_llm_links
+    markdown_url = ai_safety_url(format: :md, host: Rails.application.routes.default_url_options[:host], protocol: "https")
+    prompt = ERB::Util.url_encode("Read #{markdown_url}. It covers HCB, Hack Club's 501(c)(3) fiscal sponsorship for AI safety teams and grantmakers. " \
+                                  "Answer my questions using only that page. If something isn't covered, say so and suggest emailing aisafety@hackclub.com.")
+    [
+      ["ChatGPT", "https://chatgpt.com/?q=#{prompt}"],
+      ["Claude", "https://claude.ai/new?q=#{prompt}"],
+      ["Perplexity", "https://www.perplexity.ai/search?q=#{prompt}"]
+    ]
+  end
 end

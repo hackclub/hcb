@@ -692,6 +692,8 @@ Rails.application.routes.draw do
   get "for/funders", to: "marketing#funders", as: :funders
   get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
   post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
+  get "for/ai-safety", to: "marketing#ai_safety", as: :ai_safety
+  post "for/ai-safety/inquiry", to: "marketing#ai_safety_inquiry", as: :ai_safety_inquiry
 
   resources :emburse_card_requests, path: "emburse_card_requests", only: [:index, :show] do
     collection do
@@ -1001,6 +1003,13 @@ Rails.application.routes.draw do
     end
   end
   resources :affiliations, only: [:create, :update, :destroy], module: :event
+
+  # Short link to the AI safety page. Must sit above the organization-slug catch-all below.
+  # Keeps only known params so a crafted query string can't raise.
+  get "ai-safety", to: redirect(status: 301) { |_params, req|
+    query = req.query_parameters.select { |k, _| k.in?(%w[ref audience]) || k.start_with?("utm_") }.to_query
+    query.empty? ? "/for/ai-safety" : "/for/ai-safety?#{query}"
+  }
 
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
