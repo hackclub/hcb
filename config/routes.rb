@@ -587,6 +587,10 @@ Rails.application.routes.draw do
   end
 
   resources :exports, only: [] do
+    member do
+      get "download"
+    end
+
     collection do
       get "collect_email", to: "exports#collect_email", as: "collect_email"
       get ":event", to: "exports#transactions", as: "transactions"

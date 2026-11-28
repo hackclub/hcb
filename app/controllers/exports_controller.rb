@@ -1,10 +1,20 @@
 # frozen_string_literal: true
 
 class ExportsController < ApplicationController
+  include ActiveStorage::SetCurrent
   include SetEvent
   before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
+
+  def download
+    @export = Export.find_signed(params[:id], purpose: :download) || not_found
+    authorize @export, policy_class: ExportPolicy
+    not_found unless @export.file.attached?
+
+    response.headers["Cache-Control"] = "no-store"
+    redirect_to @export.file.url(disposition: "attachment"), allow_other_host: true
+  end
 
   def transactions
     authorize @event, :show?
