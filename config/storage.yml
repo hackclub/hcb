@@ -6,9 +6,11 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+<% if Rails.env.production? %>
 amazon:
   service: S3
   access_key_id: <%= Credentials.fetch(:S3, :ACCESS_KEY_ID) %>
   secret_access_key: <%= Credentials.fetch(:S3, :SECRET_ACCESS_KEY) %>
   region: <%= Credentials.fetch(:S3, :REGION) %>
   bucket: <%= Credentials.fetch(:S3, :BUCKET) %>
+<% end %>
