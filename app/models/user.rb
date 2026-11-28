@@ -707,11 +707,11 @@ class User < ApplicationRecord
 
   # Organizations this user can send an HCB transfer from.
   def disbursement_source_events
-    manageable_events.not_hidden.not_demo_mode
+    manageable_events.not_hidden
   end
 
   def reimbursement_event_options
-    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+    events.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
   def show_first_dashboard?

@@ -86,8 +86,8 @@ class Ledger
       # primary ledger (or its card grant) instead of the HCB code.
       #
       # primary_ledger: [:event, { card_grant: :event }] feeds both
-      # Ledger::ItemPolicy#toggle_tag? (checked per row by _tag_menu) and the
-      # tag partials' demo_mode guard. The admin cardholder page runs
+      # Ledger::ItemPolicy#toggle_tag? (checked per row by _tag_menu). The
+      # admin cardholder page runs
       # all_ledgers with no @event, over items spanning every org the cardholder
       # holds a card for, so there the event really is per item.
       #

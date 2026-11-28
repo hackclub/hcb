@@ -6,12 +6,12 @@
 
   The container renders even when empty so tag toggles can stream chips into it.
 
-  The demo_mode guard resolves the owning event through the primary ledger (or
-  its card grant), both of which Ledger::Query preloads. The admin cardholder
-  page has no @event, so the event is per item there.
+  The owning event resolves through the primary ledger (or its card grant),
+  both of which Ledger::Query preloads. The admin cardholder page has no
+  @event, so the event is per item there.
 %>
 <% event = @event || item.primary_ledger&.event || item.primary_ledger&.card_grant&.event %>
-<% if event.present? && !event.demo_mode? %>
+<% if event.present? %>
   <% tags = @event ? item.tags.select { |tag| tag.event_id == @event.id } : item.tags %>
   <div class="flex flex-wrap order-last w-full tags ledger_item_<%= item.hashid %>_tags" style="gap: 0.25rem">
     <%= render partial: "ledger/items/tag", collection: tags, as: :tag, locals: { item: } %>

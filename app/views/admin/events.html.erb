@@ -74,10 +74,10 @@
   </thead>
   <tbody>
     <% @events.each do |event| %>
-      <tr class="<%= "admin-bg-pending" if event.pending? || event.unapproved? || event.demo_mode? %> <%= "admin-bg-orange" if event.omit_stats? %>">
+      <tr class="<%= "admin-bg-pending" if event.pending? || event.unapproved? %> <%= "admin-bg-orange" if event.omit_stats? %>">
         <td><%= event.id %></td>
         <% if event.activated_at? %>
-          <td title="Demo org created on <%= event.created_at.strftime("%Y-%m-%d") %> (<%= distance_of_time_in_words(event.created_at, event.activated_at) %> earlier)">
+          <td title="Organization created on <%= event.created_at.strftime("%Y-%m-%d") %> (<%= distance_of_time_in_words(event.created_at, event.activated_at) %> earlier)">
             <div style="display: flex; align-items: center; gap: 5px">
               <%= event.activated_at.strftime("%Y-%m-%d") %> <%= inline_icon "info", size: 24, style: "color: #338eda" %>
             </div>

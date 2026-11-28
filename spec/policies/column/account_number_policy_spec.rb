@@ -15,25 +15,13 @@ RSpec.describe Column::AccountNumberPolicy, type: :policy do
       it "is allowed" do
         is_expected.to eq(true)
       end
-
-      context "when the organization is in Playground Mode" do
-        let(:event) { create(:event, :demo_mode) }
-
-        it "is denied" do
-          is_expected.to eq(false)
-        end
-      end
     end
 
     context "as an auditor" do
       let(:user) { create(:user, :make_auditor) }
 
-      context "when the organization is in Playground Mode" do
-        let(:event) { create(:event, :demo_mode) }
-
-        it "is denied" do
-          is_expected.to eq(false)
-        end
+      it "is allowed" do
+        is_expected.to eq(true)
       end
     end
   end

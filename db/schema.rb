@@ -1164,7 +1164,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_27_150000) do
     t.integer "country"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
-    t.boolean "demo_mode", default: false, null: false
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"

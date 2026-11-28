@@ -10,7 +10,6 @@
 #  address                                      :text
 #  country                                      :integer
 #  deleted_at                                   :datetime
-#  demo_mode                                    :boolean          default(FALSE), not null
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -106,7 +105,7 @@ class Event < ApplicationRecord
   scope :pending, -> { where(aasm_state: :pending) }
   scope :transparent, -> { where(is_public: true) }
   scope :not_transparent, -> { where(is_public: false) }
-  scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
+  scope :indexable, -> { where(is_public: true, is_indexable: true) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :hidden, -> { where.not(hidden_at: nil) }
@@ -329,13 +328,10 @@ class Event < ApplicationRecord
     where("(last_fee_processed_at is null or last_fee_processed_at <= ?) and id in (?)", MIN_WAITING_TIME_BETWEEN_FEES.ago, self.event_ids_with_pending_fees.to_a.map { |a| a["event_id"] })
   end
 
-  scope :demo_mode, -> { where(demo_mode: true) }
-  scope :not_demo_mode, -> { where(demo_mode: false) }
-  scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
   # Organizations anyone can send an HCB transfer to, listed in the public
   # directory or not. Keep in sync with `#accepts_public_transfers?`.
-  scope :accepting_public_transfers, -> { transparent.not_hidden.not_demo_mode.where(financially_frozen: false) }
+  scope :accepting_public_transfers, -> { transparent.not_hidden.where(financially_frozen: false) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -361,11 +357,6 @@ class Event < ApplicationRecord
       qualifier: :organized_by_hack_clubbers?,
       emoji: "🦕",
       description: "Organized by Hack Clubbers"
-    },
-    demo_mode: {
-      qualifier: :demo_mode?,
-      emoji: "🧪",
-      description: "Demo Account"
     }
   }.freeze
 
@@ -555,11 +546,7 @@ class Event < ApplicationRecord
 
   validate :point_of_contact_is_admin
 
-  include ::UserService::CanOpenDemoMode
-  attr_accessor :demo_mode_limit_email
-
-  validate :demo_mode_limit, if: proc{ |e| e.demo_mode_limit_email }
-  validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
+  validate :contract_signed, unless: -> { financially_frozen? }
 
   validates :name, presence: true
   before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
@@ -581,10 +568,6 @@ class Event < ApplicationRecord
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   after_create :apply_plan_default_values
-
-  before_update if: -> { demo_mode_changed?(to: false) } do
-    self.activated_at = Time.now
-  end
 
   before_validation do
     build_plan(type: fallback_plan_class) if plan.nil?
@@ -658,7 +641,7 @@ class Event < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{name} - #{id}#{" (DEMO)" if demo_mode?}"
+    "#{name} - #{id}"
 
     # Causing n+1 queries on admin pages with an event dropdown
 
@@ -829,7 +812,7 @@ class Event < ApplicationRecord
 
   # Keep in sync with the `accepting_public_transfers` scope.
   def accepts_public_transfers?
-    is_public? && !hidden? && !demo_mode? && !financially_frozen?
+    is_public? && !hidden? && !financially_frozen?
   end
 
   def ready_for_fee?
@@ -1017,16 +1000,6 @@ class Event < ApplicationRecord
     end
   end
 
-  def set_airtable_status(status)
-    app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
-
-    return unless app.present?
-
-    app["Status"] = status unless app["Status"] == "Onboarded"
-
-    app.save
-  end
-
   def active_teenagers
     users.active_teenager.count
   end
@@ -1116,16 +1089,10 @@ class Event < ApplicationRecord
     end
   end
 
-  def demo_mode_limit
-    return if can_open_demo_mode? demo_mode_limit_email
-
-    errors.add(:demo_mode, "limit reached for user")
-  end
-
   def contract_signed
     return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
-    errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
+    errors.add(:base, "Missing a contract signee, organizations must have a contract signee.")
   end
 
   def sum_fronted_amount(pts)
