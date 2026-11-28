@@ -10,8 +10,6 @@ class AiSafetyInquiryMailer < ApplicationMailer
   # The default footer prints a phone number and student-focused copy.
   def confirmation
     @first_name = @name.split.first if @name.present? && @name.split.first.length <= 40 && !@name.match?(MarketingInquiry::LINKISH)
-    @message = nil if @message&.match?(MarketingInquiry::LINKISH)
-    @message = @message&.first(1_000)
 
     mail(to: @email, reply_to: TEAM_EMAIL, subject: "Thanks for reaching out to HCB") do |format|
       format.html { render layout: "mailer/no_footer" }

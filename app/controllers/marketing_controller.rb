@@ -154,24 +154,43 @@ class MarketingController < ApplicationController
     Rails.logger.info("[ai_safety_inquiry] id=#{record&.id || "none"} audience=#{audience} ref=#{ref}")
 
     flash[:ai_safety_inquiry] = "received"
+    flash[:ai_safety_inquiry_audience] = audience
     redirect_to ai_safety_path(anchor: "talk-to-us")
   end
 
   private
 
   # The page's own HTML as Markdown, so the two never drift. Drops navigation, the
-  # calls to action, and the form, which mean nothing outside the page.
+  # calls to action, funder logos, and the form, which mean nothing outside the page.
   def ai_safety_markdown
     page = Nokogiri::HTML5.fragment(render_to_string(:ai_safety, layout: false, formats: [:html]))
-    page.css("script, style, nav, form, img, figure, .mk-ais-viz, .mk-ais-ask, .mk-ais__contact, .mk-ais__head .mk-ais__cta, .mk-ais-step__when, .mk-step__num, .mk-ais-logos").each(&:remove)
+    page.css("script, style, nav, form, img, figure, .mk-ais-viz, .mk-ais-ask, .mk-ais__contact, .mk-ais__head .mk-ais__cta, .mk-step__num, .mk-funders, .mk-ais-logos__title").each(&:remove)
     url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https")
+
+    # Turn the stats strip into a compact bullet list.
+    page.css("dl.mk-stats").each do |stats|
+      stats.name = "ul"
+      stats.css(".mk-stats__item").each do |item|
+        dt = item.at_css("dt")&.text&.squish
+        dd = item.at_css("dd")&.text&.squish
+        item.replace("<li><strong>#{ERB::Util.html_escape(dt)}</strong> #{ERB::Util.html_escape(dd)}</li>")
+      end
+    end
+
+    # Inline each step's timing label right after its heading so steps stay one bullet each.
+    page.css("ol.mk-steps > li").each do |step|
+      when_node = step.at_css(".mk-ais-step__when")
+      heading = step.at_css("h3")
+      next unless when_node && heading
+
+      heading.add_next_sibling(" (#{when_node.text.squish})")
+      when_node.remove
+    end
 
     # ReverseMarkdown glues these together, so give them plain structure first.
     # ReverseMarkdown prefixes <details> with "#".
     page.css("summary").each { |node| node.name = "span" }
     page.css("details").each { |node| node.name = "div" }
-    page.css("dt").each { |term| term.name = "h3" }
-    page.css("dd").each { |definition| definition.name = "p" }
     page.css("li > h3").each { |step| step.name = "strong" }
     page.css("li > p").each do |text|
       text.name = "span"

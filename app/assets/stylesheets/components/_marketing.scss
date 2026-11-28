@@ -3734,6 +3734,10 @@ $mk-term-green: #62d196;
     border: 0;
     padding: 0;
     margin: 0;
+
+    > .marketing-form__label {
+      margin-bottom: 6px; // <legend> sits outside the fieldset's grid, so gap doesn't reach it
+    }
   }
 
   &__options {
@@ -3827,16 +3831,35 @@ $mk-term-green: #62d196;
     font-size: 0.9rem;
     color: rgba($snow, 0.7);
     max-width: 60ch;
+  }
 
-    .mk-ais-go {
-      color: lighten($red, 22%);
-    }
+  .mk-ais__aside .mk-ais-go {
+    color: lighten($red, 22%);
+  }
+
+  // Buttons keep their rounded corners on focus; `.marketing a:focus-visible` would square them, and <button> isn't covered by it.
+  .marketing-btn:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
   }
 }
 
 // ---------------------------------------------------------------- hero + logo wall
 .mk-ais-hero {
   padding: clamp(52px, 7vw, 88px) 0 clamp(40px, 5vw, 64px);
+
+  > .mk-container {
+    position: relative;
+  }
+
+  .mk-hero__glow {
+    background: radial-gradient(
+      60% 55% at 50% -10%,
+      rgba($red, 0.07),
+      transparent 70%
+    );
+  }
 
   .mk-ais__head {
     max-width: 740px;
@@ -3878,8 +3901,11 @@ $mk-term-green: #62d196;
   }
 
   .mk-ais-ask__menu {
-    left: auto;
-    right: 0;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(260px, calc(100vw - 32px));
+    min-width: 0;
     text-align: left;
   }
 }
@@ -3929,6 +3955,10 @@ $mk-term-green: #62d196;
 
   .mk-stats {
     text-align: center;
+
+    &__item dd {
+      color: $muted-text;
+    }
   }
 }
 
@@ -3981,9 +4011,9 @@ $mk-term-green: #62d196;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
-    margin-left: -12px;
+    width: clamp(38px, 11vw, 56px);
+    height: clamp(38px, 11vw, 56px);
+    margin-left: clamp(-10px, -2vw, -6px);
     border-radius: 999px;
     background: $white;
     box-shadow:
@@ -3992,7 +4022,7 @@ $mk-term-green: #62d196;
     font-family:
       'Phantom Sans',
       #{$font-family};
-    font-size: 1.6rem;
+    font-size: clamp(1.1rem, 3.2vw, 1.45rem);
     font-weight: 700;
     color: $mk-ink;
 
@@ -4001,6 +4031,10 @@ $mk-term-green: #62d196;
       background: $red;
       color: $white;
     }
+  }
+
+  &--card {
+    padding-bottom: 10px;
   }
 }
 
@@ -4053,8 +4087,8 @@ $mk-term-green: #62d196;
   border-radius: 12px;
   background: linear-gradient(135deg, $red, darken($red, 14%));
   color: $white;
-  box-shadow: 0 14px 28px -14px rgba($red, 0.7);
-  transform: rotate(-4deg);
+  box-shadow: 0 12px 22px -12px rgba($red, 0.6);
+  transform: rotate(-2deg);
 
   &__brand {
     font-family:
@@ -4071,7 +4105,8 @@ $mk-term-green: #62d196;
   }
 
   &__name {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
     opacity: 0.9;
   }
 }
@@ -4184,14 +4219,26 @@ $mk-term-green: #62d196;
 }
 
 .mk-ais-faq {
+  display: grid;
+  gap: 0 48px;
+  align-items: start;
+
   @media (min-width: 860px) {
-    columns: 2;
-    column-gap: 48px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   &__item {
-    break-inside: avoid;
     border-top: 1px solid $smoke;
+  }
+
+  &__col:last-child .mk-ais-faq__item:last-child {
+    border-bottom: 1px solid $smoke;
+  }
+
+  @media (min-width: 860px) {
+    &__col .mk-ais-faq__item:last-child {
+      border-bottom: 1px solid $smoke;
+    }
   }
 
   summary {
@@ -4218,6 +4265,12 @@ $mk-term-green: #62d196;
     &:hover .mk-faq__q {
       color: $red;
     }
+
+    &:focus-visible {
+      outline: 2px solid $red;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
   }
 
   &__item[open] summary::after {
@@ -4225,6 +4278,7 @@ $mk-term-green: #62d196;
   }
 
   .mk-faq__q {
+    margin: 0;
     font-family: $font-family;
     font-size: 0.9375rem;
     letter-spacing: 0;
@@ -4250,6 +4304,12 @@ $mk-term-green: #62d196;
 
     .mk-lead {
       margin: 16px 0 24px;
+
+      a {
+        color: $mk-ink;
+        font-weight: 600;
+        text-underline-offset: 2px;
+      }
     }
   }
 
@@ -4260,24 +4320,15 @@ $mk-term-green: #62d196;
     box-shadow: var(--shadow-border-md);
   }
 
-  &__dino {
-    display: none;
-
-    @media (min-width: 860px) {
-      display: block;
-      width: 200px;
-      height: auto;
-      margin-top: 40px;
-      transform: rotate(-6deg);
-      opacity: 0.85;
-    }
-  }
-
   &__status,
   &__error {
     padding: 2px 0 2px 14px;
     border-left: 3px solid $green-dark;
     color: $mk-ink;
+  }
+
+  &__status {
+    margin-top: 16px;
   }
 
   &__error {
@@ -4291,13 +4342,28 @@ $mk-term-green: #62d196;
 
   .marketing-form .marketing-form__input {
     height: 42px;
+    padding-inline: 14px;
     font-size: 0.9375rem;
     border-radius: var(--radius-md, 6px);
+
+    &:focus,
+    &:focus-within {
+      border-color: transparent;
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
   }
 
   .marketing-form .marketing-form__textarea {
     height: auto;
     padding: 10px 14px;
+  }
+
+  @media (min-width: 860px) and (max-width: 1039.98px) {
+    .marketing-form__options {
+      grid-template-columns: 1fr;
+    }
   }
 
   .marketing-form__option {
@@ -4313,6 +4379,7 @@ $mk-term-green: #62d196;
   .marketing-form__hint {
     margin-top: 4px;
     font-size: 0.8125rem;
+    color: $muted-text;
   }
 }
 
@@ -4356,6 +4423,7 @@ $mk-term-green: #62d196;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    min-height: 36px;
     padding: 6px 8px;
     border-radius: var(--radius-md, 6px);
     color: $muted-text;
@@ -4371,6 +4439,26 @@ $mk-term-green: #62d196;
     &:hover {
       color: $mk-ink;
       background: rgba($black, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $red;
+      outline-offset: 2px;
+    }
+  }
+
+  &__more summary {
+    position: relative;
+    padding-inline: 8px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 9px;
+      bottom: 9px;
+      width: 1px;
+      background: $smoke;
     }
   }
 
@@ -4456,12 +4544,9 @@ $mk-term-green: #62d196;
 
 .marketing:has(.mk-ais) {
   .marketing-nav__inner,
-  .marketing-footer__inner {
-    max-width: 1280px;
-
-    @media (min-width: 1600px) {
-      max-width: 1536px;
-    }
+  .marketing-footer__inner,
+  .marketing-footer__legal {
+    max-width: 1200px;
   }
 }
 

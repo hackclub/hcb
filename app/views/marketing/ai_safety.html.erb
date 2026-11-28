@@ -64,7 +64,6 @@
   <section class="mk-hero mk-ais-hero">
     <div class="mk-hero__bg" aria-hidden="true">
       <div class="mk-hero__glow"></div>
-      <div class="mk-hero__ledger"></div>
     </div>
     <div class="mk-container">
       <header class="mk-ais__head">
@@ -76,7 +75,7 @@
         </div>
         <div class="mk-ais__meta">
           <p class="mk-ais__contact">Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>. Replies within one business day.</p>
-          <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
+          <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close turbo:before-cache@document->ai-ask#reset turbo:before-cache@document->ai-ask#close">
             <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
               <%= inline_icon "copy", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
               <%= inline_icon "copy-check", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--done" %>
@@ -87,14 +86,14 @@
               <ul class="mk-ais-ask__menu">
                 <% ai_safety_llm_links.each do |name, url| %>
                   <li>
-                    <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>">
+                    <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>" data-action="ai-ask#close">
                       <span class="mk-ais-ask__item">Ask <%= name %> <%= inline_icon "external", size: 14 %></span>
                       <span class="mk-ais-ask__hint">Prefills a prompt with this page</span>
                     </a>
                   </li>
                 <% end %>
                 <li>
-                  <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown">
+                  <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown" data-action="ai-ask#close">
                     <span class="mk-ais-ask__item">View as Markdown <%= inline_icon "markdown", size: 14 %></span>
                     <span class="mk-ais-ask__hint">Plain Markdown for any LLM</span>
                   </a>
@@ -117,7 +116,7 @@
     <div class="mk-container mk-ais-logos">
       <h2 class="mk-ais-logos__title">Grants from these funders have reached teams on HCB</h2>
       <ul class="mk-funders">
-        <% funder_logos.each do |logo| %>
+        <% funder_logos.sort_by.with_index { |logo, i| [["Future of Life Institute", "Founders Pledge"].include?(logo[:name]) ? 0 : 1, i] }.each do |logo| %>
           <li><%= image_tag logo[:src], alt: logo[:name], class: logo[:class], loading: "lazy", decoding: "async" %></li>
         <% end %>
       </ul>
@@ -229,7 +228,7 @@
         <article class="mk-use"><h3>Whole programs</h3><p>Run fellowships, prizes, or regranting under one sponsor. The Argosy Foundation funds <span class="mk-ais__num">500+</span> teams a year on HCB.</p></article>
       </div>
       <div class="mk-ais__cta">
-        <a href="<%= ai_safety_path(audience: "funder", request: "diligence", anchor: "talk-to-us") %>" class="marketing-btn marketing-btn--primary plausible-event-name=AIS+Diligence+CTA">Request the due-diligence packet</a>
+        <a href="<%= ai_safety_path({ audience: "funder", request: "diligence", ref: @ref, anchor: "talk-to-us" }.compact) %>" class="marketing-btn marketing-btn--primary plausible-event-name=AIS+Diligence+CTA">Request the due-diligence packet</a>
         <span class="mk-ais__aside">IRS letter, W-9, 990s, audited financials, and sample agreement. Giving as a donor? <a href="<%= funders_path %>" class="mk-ais-go">See HCB for funders</a></span>
       </div>
     </div>
@@ -242,11 +241,15 @@
         <h2 id="questions-title" class="mk-section__title">Questions teams and funders ask.</h2>
       </div>
       <div class="mk-ais-faq">
-        <% ai_safety_faqs(stats: @stats).each do |faq| %>
-          <details class="mk-ais-faq__item">
-            <summary><h3 class="mk-faq__q" id="<%= faq[:id] %>"><%= faq[:q] %></h3></summary>
-            <p class="mk-faq__a"><%= faq[:a] %></p>
-          </details>
+        <% ai_safety_faqs(stats: @stats).each_slice(8) do |column| %>
+          <div class="mk-ais-faq__col">
+            <% column.each do |faq| %>
+              <details class="mk-ais-faq__item">
+                <summary><h3 class="mk-faq__q" id="<%= faq[:id] %>"><%= faq[:q] %></h3></summary>
+                <p class="mk-faq__a"><%= faq[:a] %></p>
+              </details>
+            <% end %>
+          </div>
         <% end %>
       </div>
     </div>
@@ -257,7 +260,7 @@
     <div class="mk-container">
       <% if flash[:ai_safety_inquiry] == "received" %>
         <h2 id="talk-to-us-title" class="mk-section__title">Message received.</h2>
-        <p class="mk-ais-talk__status" role="status"><strong>Got it.</strong> Melanie, Paul, or Gary will reply within one business day. Reply to our confirmation email to attach a grant letter.</p>
+        <p class="mk-ais-talk__status" role="status"><strong>Got it.</strong> Melanie, Paul, or Gary will reply within one business day.<% unless flash[:ai_safety_inquiry_audience] == "funder" %> Reply to our confirmation email to attach a grant letter.<% end %></p>
       <% else %>
         <div class="mk-ais-talk__grid">
           <div>
@@ -271,7 +274,6 @@
                 </li>
               <% end %>
             </ul>
-            <img src="/dino_leaping_for_money.svg" alt="" class="mk-ais-talk__dino" width="270" height="215" loading="lazy" decoding="async">
           </div>
           <div class="mk-ais-talk__form">
             <% if flash[:error].present? %>

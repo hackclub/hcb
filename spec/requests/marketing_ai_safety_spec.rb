@@ -99,11 +99,11 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(current.map { |a| a.text.squish }).to eq(["AI safety"])
     end
 
-    it "links to the grantmakers section, the due-diligence preset, and the funders page" do
-      get ai_safety_path
+    it "links to the grantmakers section, the due-diligence preset (preserving ref), and the funders page" do
+      get ai_safety_path(ref: "newsletter_1")
 
       hrefs = page.css("a").map { |a| a["href"] }
-      expect(hrefs).to include("#grantmakers", "/for/ai-safety?audience=funder&request=diligence#talk-to-us", "/for/funders")
+      expect(hrefs).to include("#grantmakers", "/for/ai-safety?audience=funder&ref=newsletter_1&request=diligence#talk-to-us", "/for/funders")
       expect(page.at_css("#grantmakers")).to be_present
     end
 
@@ -138,9 +138,9 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/markdown")
       expect(response.headers["X-Robots-Tag"]).to be_nil
-      expect(response.body).to include("# Fiscal sponsorship for AI safety teams.", "## A 501(c)(3) back office, without building one.", "$465,000")
+      expect(response.body).to include("# Fiscal sponsorship for AI safety teams.", "## A 501(c)(3) back office, without building one.", "moved on HCB", "(Within days)", "$465,000")
       expect(response.body).to include(*helper_faqs.map { |faq| "### #{faq[:q]}" })
-      expect(response.body).not_to include("<form", "Ask ChatGPT", "\u2014")
+      expect(response.body).not_to include("<form", "Ask ChatGPT", "Ford Foundation", "\u2014")
     end
   end
 

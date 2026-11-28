@@ -6,7 +6,7 @@ RSpec.describe AiSafetyInquiryMailer do
   let(:inquiry) { { name: "Ada Park", email: "ada@example.org", audience: "team", message: "Three researchers.", ref: "newsletter" } }
 
   describe "#confirmation" do
-    it "goes to the submitter with replies to the team inbox" do
+    it "goes to the submitter with replies to the team inbox and does not echo untrusted message text" do
       mail = described_class.with(**inquiry).confirmation
 
       expect(mail.to).to eq(["ada@example.org"])
@@ -14,7 +14,8 @@ RSpec.describe AiSafetyInquiryMailer do
       expect(mail.cc).to be_blank
       expect(mail.bcc).to be_blank
       expect(mail.subject).to eq("Thanks for reaching out to HCB")
-      expect(mail.body.encoded).to include("Hi Ada,", "Three researchers.")
+      expect(mail.body.encoded).to include("Hi Ada,")
+      expect(mail.body.encoded).not_to include("Three researchers.")
     end
 
     # Uses the no-footer layout: the default footer has a phone number and student-focused copy.
@@ -27,20 +28,12 @@ RSpec.describe AiSafetyInquiryMailer do
     end
 
     # The form mails an address the visitor typed, so it must not carry a spammer's link.
-    it "leaves out a link-ish name and message" do
+    it "leaves out a link-ish name and never echoes message URLs" do
       body = described_class.with(**inquiry, name: "Bob evil.com", message: "see bit.ly/x").confirmation.body.encoded
 
       expect(body).to include("Hi,")
       expect(body).not_to include("Bob")
       expect(body).not_to include("bit.ly")
-      expect(body).not_to include("Here's what you sent us")
-    end
-
-    it "renders HTML in the message as text" do
-      body = described_class.with(**inquiry, message: "<b>bold</b>").confirmation.body.encoded
-
-      expect(body).to include("&lt;b&gt;bold&lt;/b&gt;")
-      expect(body).not_to include("<b>bold</b>")
     end
   end
 
