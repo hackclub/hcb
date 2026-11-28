@@ -200,6 +200,13 @@ class Wire < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
+  def small_wire_fee_event
+    fee_event = reimbursement_payout_holding.present? ? reimbursement_payout_holding.report.event : event
+    return nil if fee_event.nil? || fee_event.id == EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING
+
+    fee_event
+  end
+
   def send_wire!
     return unless may_mark_approved?
 
