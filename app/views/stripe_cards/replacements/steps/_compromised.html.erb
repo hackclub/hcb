@@ -1,0 +1,8 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<h3 class="mt-0 mb-2">Was your card compromised?</h3>
+<p class="mt-0">
+  If you didn't make this purchase, someone may have your card details.
+  We recommend replacing your card ending in <%= stripe_card.last4 %>, which cancels it and gives you a new card number.
+  Once it's replaced, we'll take you to the dispute form.
+</p>

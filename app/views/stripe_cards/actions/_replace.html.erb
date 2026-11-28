@@ -1,0 +1,15 @@
+<%# locals: (stripe_card:, flow:, label:, icon:) %>
+
+<% flow = StripeCard::ReplacementFlow.new(stripe_card:, flow:) %>
+<% if flow.available? && policy(stripe_card).public_send(flow.policy_query) %>
+  <%= link_to new_stripe_card_replacement_path(stripe_card, **flow.params),
+              class: "btn btn--list-item",
+              data: { behavior: "modal_trigger", modal: flow.dom_id(:modal) } do %>
+    <%= inline_icon icon %>
+    <div>
+      <p><strong><%= label %></strong></p>
+    </div>
+  <% end %>
+
+  <%= render "stripe_cards/actions/replacement_modal", flow: %>
+<% end %>

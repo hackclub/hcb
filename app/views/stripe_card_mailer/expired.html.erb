@@ -1,0 +1,11 @@
+<p>Hey!</p>
+<p>
+  Your HCB card ending in <%= @card.last4 %> for <%= @event.name %> expired on <%= @card.expires_on.to_fs(:long) %>, so we've canceled it.
+</p>
+<p>
+  You can order a replacement from <%= link_to "your card's page", stripe_card_url(@card) %> until <%= @replace_by.to_fs(:long) %>.
+  It keeps the same card number with a new expiry date and CVC, and we'll try to update your card details at businesses that have it saved.
+  Double-check your subscriptions afterwards, since not every business gets the update.
+</p>
+<p>Let us know if you have any questions.</p>
+<p>—HCB team</p>

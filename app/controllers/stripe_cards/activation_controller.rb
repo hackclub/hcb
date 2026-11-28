@@ -10,7 +10,9 @@ module StripeCards
 
     # Submit a last4 for activation
     def create
-      @card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
+      cards = StripeCard.where(stripe_cardholder: current_user.stripe_cardholder, last4: params[:last4])
+      # replacement cards share the same last4 with the replaced card, this handles that
+      @card = cards.where.not(stripe_status: "canceled").order(created_at: :desc).first || cards.first
 
       if @card.nil?
         flash[:error] = "Card not found"

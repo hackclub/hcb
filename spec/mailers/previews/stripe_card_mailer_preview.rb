@@ -12,4 +12,12 @@ class StripeCardMailerPreview < ActionMailer::Preview
     StripeCardMailer.with(card_id: @card_id).virtual_card_ordered
   end
 
+  def expiring_soon
+    StripeCardMailer.with(card_id: StripeCard.last.id).expiring_soon
+  end
+
+  def expired
+    StripeCardMailer.with(card_id: StripeCard.last.id).expired
+  end
+
 end
