@@ -74,12 +74,16 @@ class WiresController < ApplicationController
       return redirect_to wire_process_admin_path(@wire), flash: { error: "Choose whether to charge #{@wire.event.name} the #{helpers.render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} fee for this wire." }
     end
 
-    @wire.send_wire!
+    @wire.with_lock do
+      raise ArgumentError, "This wire has already been processed." unless @wire.may_mark_approved?
 
-    if fee_chargeable && params[:fee_decision] == "charge"
-      Wire::ChargeFeeJob.perform_later(@wire, requested_by: current_user)
-    elsif fee_chargeable
-      @wire.local_hcb_code.comments.create!(content: "Made an exception: didn't charge the #{helpers.render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} fee for this wire under #{helpers.render_money Wire::MINIMUM_AMOUNT_CENTS}.", user: current_user, admin_only: true)
+      if fee_chargeable && params[:fee_decision] == "charge"
+        charge_small_wire_fee!
+      elsif fee_chargeable
+        @wire.local_hcb_code.comments.create!(content: "Made an exception: didn't charge the #{helpers.render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} fee for this wire under #{helpers.render_money Wire::MINIMUM_AMOUNT_CENTS}.", user: current_user, admin_only: true)
+      end
+
+      @wire.send_wire!
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
@@ -101,6 +105,20 @@ class WiresController < ApplicationController
   end
 
   private
+
+  def charge_small_wire_fee!
+    disbursement = DisbursementService::Create.new(
+      name: "Low-value wire transfer fee",
+      destination_event_id: EventMappingEngine::EventIds::HACK_CLUB_BANK,
+      source_event_id: @wire.event.id,
+      amount: Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0,
+      requested_by_id: current_user.id,
+      fronted: @wire.event.plan.front_disbursements_enabled?,
+      transfer_type: "transfer"
+    ).run
+
+    disbursement.comments.create!(content: "This #{helpers.render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} fee covers the cost of sending a wire under #{helpers.render_money Wire::MINIMUM_AMOUNT_CENTS}: #{ledger_item_url(@wire.ledger_item)}", user: current_user)
+  end
 
   def wire_params
     permitted = params.require(:wire).permit(
