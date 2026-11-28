@@ -14,7 +14,7 @@
   <% elsif ledger_item.no_or_lost_receipt? %>
     <p class="card__banner bg-warning white bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
       <%= inline_icon "view-close", size: 24, class: "mr2" %>
-      Marked no/lost receipt
+      <%= no_or_lost_receipt_label(ledger_item) %>
     </p>
   <% elsif ledger_item.receipt_required? %>
     <p class="card__banner bg-pending slate bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">

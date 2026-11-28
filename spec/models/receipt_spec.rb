@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Receipt, type: :model do
+  before { allow(CloudflareBrowserRun).to receive(:pdf).and_return("%PDF-1.4") }
+
   def build_receipt(receiptable:, **attributes)
     described_class.new(receiptable:, upload_method: :api, **attributes).tap do |receipt|
       receipt.file.attach(
@@ -11,6 +13,85 @@ RSpec.describe Receipt, type: :model do
         content_type: "image/png"
       )
     end
+  end
+
+  it "rejects an ordinary PDF upload claiming to be a lost receipt statement" do
+    charge = create(:canonical_pending_transaction).local_hcb_code
+    charge.no_or_lost_receipt!
+    file = Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4"), "application/pdf", original_filename: "receipt.pdf")
+
+    expect {
+      ReceiptService::Create.new(receiptable: charge, uploader: create(:user), attachments: [file], upload_method: "lost_receipt_statement").run!
+    }.to raise_error(ActiveRecord::RecordInvalid, /Lost receipt statement/)
+
+    expect(charge.receipts).to be_empty
+    expect(charge.reload).to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).to be_no_or_lost_receipt
+
+    file.rewind
+    receipt = described_class.create!(receiptable: charge, user: create(:user), file:, upload_method: :api)
+    expect(receipt.update(upload_method: :lost_receipt_statement)).to eq(false)
+    expect(receipt.reload).to be_api
+  end
+
+  it "keeps the lost receipt marker while the statement is on file" do
+    transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
+    create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
+    charge = transaction.local_hcb_code
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true,
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    expect(statement.submit(receiptable: charge)).to eq(true)
+    statement.attach_pdf!
+    receipt = build_receipt(receiptable: charge.ledger_item, user: create(:user))
+    receipt.save!
+    expect(charge.reload).to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).to be_no_or_lost_receipt
+
+    statement.receipt.destroy!
+    expect(charge.reload).not_to be_missing_receipt
+    expect(charge).not_to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).not_to be_no_or_lost_receipt
+    expect(charge.receipts.count).to eq(1)
+
+    receipt.update!(receiptable: nil)
+    expect(charge.reload).to be_missing_receipt
+    expect(charge.ledger_item.reload).to be_missing_receipt
+  end
+
+  it "marks the transaction missing a receipt again when its statement is moved to the receipt bin" do
+    transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
+    create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
+    charge = transaction.local_hcb_code
+    user = create(:user, full_name: "Alex Example")
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true, submitter: user,
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    expect(statement.submit(receiptable: charge)).to eq(true)
+    statement.attach_pdf!
+    expect(charge.ledger_item.reload.receipt_count).to eq(1)
+
+    statement.receipt.update!(receiptable: nil)
+
+    expect(charge.ledger_item.reload).to have_attributes(receipt_count: 0, marked_no_or_lost_receipt_at: nil)
+    expect(charge.ledger_item).to be_missing_receipt
+    expect(charge.reload).to be_missing_receipt
+  end
+
+  it "does not let a lost receipt statement resolve a different transaction" do
+    charge, other = Array.new(2) { create(:canonical_pending_transaction, amount_cents: -100).local_hcb_code }
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true, submitter: create(:user, full_name: "Alex Example"),
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    statement.submit(receiptable: charge)
+    statement.attach_pdf!
+    receipt = statement.receipt
+
+    expect(receipt.update(receiptable: other.ledger_item)).to eq(false)
+    # Not by way of the receipt bin either.
+    receipt.reload.update!(receiptable: nil)
+    expect(receipt.update(receiptable: other.ledger_item)).to eq(false)
+    expect(other.ledger_item.reload).not_to be_no_or_lost_receipt
   end
 
   describe "file size" do

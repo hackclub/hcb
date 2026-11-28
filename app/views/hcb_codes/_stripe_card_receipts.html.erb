@@ -10,7 +10,7 @@
   <% elsif @hcb_code.no_or_lost_receipt? %>
     <p class="card__banner bg-warning white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
       <%= inline_icon "view-close", size: 24, class: "mr2" %>
-      Marked no/lost receipt
+      <%= no_or_lost_receipt_label(@hcb_code) %>
     </p>
   <% elsif @hcb_code.pt&.declined? %>
     <p class="card__banner bg-warning white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
