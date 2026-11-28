@@ -1,4 +1,4 @@
-<p>Hi <%= @user.first_name %>,</p>
+<p>Hi <%= @user.first_name.presence || @user.name %>,</p>
 
 <% if @user == @whodunnit %>
   <p>
@@ -7,10 +7,7 @@
   </p>
 <% else %>
   <p>
-    <%= @whodunnit.name %>
-    <% unless @whodunnit == User.system_user %>
-      <%= @is_manager ? "(a contract signee)" : "(an HCB admin)" %>
-    <% end %>
+    <%= @whodunnit.name %> (<%= @whodunnit_is_signee ? "a contract signee" : "an HCB admin" %>)
     now requires two-factor authentication for <strong><%= @event.name %></strong>.
     Every member needs two-factor authentication enabled on their HCB account to keep access.
   </p>
@@ -26,7 +23,7 @@
   <p>
     <strong>You don't have two-factor authentication enabled yet.</strong>
     <% if @deadline.present? %>
-      Please <%= link_to "enable it in your security settings", settings_security_url %> before <strong><%= @deadline.strftime("%B %-d, %Y at %-I:%M %p %Z") %></strong>.
+      Please <%= link_to "enable it in your security settings", settings_security_url %> before <strong><%= @deadline.in_time_zone(@timezone).strftime("%B %-d, %Y at %-l:%M %p %Z") %></strong>.
       After that, you won't be able to access <%= @event.name %> on HCB until you enable it (your membership won't be removed, and access returns automatically as soon as it's enabled).
     <% else %>
       Please <%= link_to "enable it in your security settings", settings_security_url %> as soon as you can, or you won't be able to access <%= @event.name %> on HCB until you enable it.
@@ -34,7 +31,8 @@
   </p>
 
   <p>
-    To get set up, make sure you have a phone number in your <%= link_to "account settings", my_settings_url %>, then head to <%= link_to "security settings", settings_security_url %> to verify it, add a second factor (SMS, an authenticator app under "Time-based one time passwords", or a security key), and turn on "Enable two factor authentication" under "Login preferences".
+    To set it up, open your <%= link_to "security settings", settings_security_url %> and add any one second factor: a verified phone number (for SMS codes), an authenticator app under "Time-based one time passwords", or a security key.
+    Then switch on "Enable two factor authentication" under "Login preferences" and click "Update preferences".
   </p>
 
   <p>

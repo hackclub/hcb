@@ -45,7 +45,7 @@ class EventMailerPreview < ActionMailer::Preview
 
   def two_factor_authentication_required
     event = Event.first
-    EventMailer.with(event:, user: event.users.first, whodunnit: event.users.first).two_factor_authentication_required
+    EventMailer.with(event:, user: event.users.first, whodunnit: event.users.first, deadline: 7.days.from_now).two_factor_authentication_required
   end
 
   def subevent_created

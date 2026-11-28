@@ -15,8 +15,8 @@ RSpec.describe FeaturesController do
       member = create(:organizer_position, event:, role: :member).user
       create_session(signee, verified: true)
 
-      signee_mail = have_enqueued_mail(EventMailer, :two_factor_authentication_required).with(params: { event:, user: signee, whodunnit: signee }, args: [])
-      member_mail = have_enqueued_mail(EventMailer, :two_factor_authentication_required).with(params: { event:, user: member, whodunnit: signee }, args: [])
+      signee_mail = have_enqueued_mail(EventMailer, :two_factor_authentication_required).with(params: { event:, user: signee, whodunnit: signee, deadline: nil }, args: [])
+      member_mail = have_enqueued_mail(EventMailer, :two_factor_authentication_required).with(params: { event:, user: member, whodunnit: signee, deadline: nil }, args: [])
 
       expect {
         PublicActivity.with_tracking { post(:enable_feature, params: { feature: :require_two_factor_authentication_2026_11_24, event_id: event.id }) }

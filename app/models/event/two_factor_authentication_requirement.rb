@@ -91,8 +91,9 @@ class Event
     end
 
     def notify_two_factor_authentication_required(whodunnit:)
+      deadline = two_factor_authentication_deadline
       users_required_to_use_two_factor_authentication.find_each do |user|
-        EventMailer.with(event: self, user:, whodunnit:).two_factor_authentication_required.deliver_later
+        EventMailer.with(event: self, user:, whodunnit:, deadline:).two_factor_authentication_required.deliver_later
       end
     end
 

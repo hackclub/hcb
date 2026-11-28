@@ -3,7 +3,7 @@
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
   before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created, :two_factor_authentication_required]
-  before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled, :two_factor_authentication_required]
+  before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -98,10 +98,15 @@ class EventMailer < ApplicationMailer
 
   # Sent to each member when the organization starts requiring two-factor
   # authentication. Members who already use it just get a heads up; the rest
-  # are told the deadline to enable it.
+  # are told the deadline to enable it. The deadline and who turned it on are
+  # params so the email says what was true when it was sent, even if the
+  # requirement is turned off again before the job runs.
   def two_factor_authentication_required
     @user = params[:user]
-    @deadline = @event.two_factor_authentication_deadline
+    @whodunnit = params[:whodunnit]
+    @whodunnit_is_signee = @event.signees.include?(@whodunnit)
+    @deadline = params[:deadline]
+    @timezone = @user.assumed_timezone
     @already_enabled = @user.use_two_factor_authentication?
 
     mail to: @user.email_address_with_name,
