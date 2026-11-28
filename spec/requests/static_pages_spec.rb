@@ -19,6 +19,24 @@ RSpec.describe "Static pages", type: :request do
       # The banner still names it, so the member knows why it's missing.
       expect(response.body).to include("You don't have access to Locked Out Org")
     end
+
+    it "shows one banner for every organization requiring two-factor authentication" do
+      user = create(:user)
+      parent = create(:event, name: "Parent Org")
+      create(:organizer_position, user:, event: create(:event, name: "Child Org", parent:))
+      create(:organizer_position, user:, event: create(:event, name: "Other Org"))
+      create(:organizer_position, user:, event: create(:event, name: "Later Org"))
+      require_two_factor_authentication!(parent, at: 8.days.ago)
+      require_two_factor_authentication!(Event.find_by(name: "Other Org"), at: 9.days.ago)
+      require_two_factor_authentication!(Event.find_by(name: "Later Org"), at: 1.day.ago)
+      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(create(:user_session, user:, expiration_at: 1.hour.from_now))
+
+      get "/"
+
+      expect(response.body.scan("transparency-banner").size).to eq(1)
+      expect(response.body).to include("You don't have access to Parent Org and Other Org until you")
+      expect(response.body).to include("Later Org requires it too, from <time")
+    end
   end
 
   describe "GET /branding" do

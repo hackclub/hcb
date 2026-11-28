@@ -420,6 +420,14 @@ $(document).keydown(function (e) {
     },
     { passive: true }
   )
+  // Keyboard users reach a tooltip by focusing the `.tooltipped` element
+  // itself (a link, or a focusable wrapper around a disabled button).
+  document.addEventListener('focusin', ({ target }) => {
+    if (target.matches?.('.tooltipped')) showTooltip(target)
+  })
+  document.addEventListener('focusout', ({ target }) => {
+    if (target.matches?.('.tooltipped')) removeTooltips()
+  })
   document.addEventListener('click', ({ target }) => {
     // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
     if (!target.closest?.('.tooltipped--tappable, #tooltip-container'))

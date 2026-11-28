@@ -9,24 +9,25 @@
       </p>
     </div>
   <% end %>
-  <% if current_user && !current_user.use_two_factor_authentication? %>
-    <% current_user.events.requiring_two_factor_authentication.each do |event| %>
-      <% deadline = event.two_factor_authentication_deadline %>
-      <div class="w-100 px4 <%= deadline&.past? ? "!bg-red text-white" : "bg-white" %> transparency-banner px-4">
-        <p class="h5 medium center py-2 my-0 <%= "text-white" if deadline&.past? %>">
-          <% if deadline&.past? %>
-            ⚠️ You don't have access to <%= event.name %> until you
-            <%= link_to "enable two-factor authentication", settings_security_path, class: "text-inherit" %>.
-          <% elsif deadline.present? %>
-            <%= event.name %> requires two-factor authentication.
-            <%= link_to "Enable two-factor authentication", settings_security_path %> before <%= format_datetime deadline %> to keep your access.
-          <% else %>
-            <%= event.name %> requires two-factor authentication.
-            <%= link_to "Enable two-factor authentication", settings_security_path %> to keep your access.
+  <%# One banner for every organization (or parent organization) requiring
+      two-factor authentication of the user, so they don't stack. %>
+  <% if current_user && !current_user.use_two_factor_authentication? && current_user.events_requiring_two_factor_authentication.any? %>
+    <% overdue, pending = current_user.events_requiring_two_factor_authentication.partition { |event| event.two_factor_authentication_deadline&.past? } %>
+    <% next_deadline = pending.filter_map(&:two_factor_authentication_deadline).min %>
+    <div class="w-100 px4 <%= overdue.any? ? "!bg-red text-white" : "bg-white" %> transparency-banner px-4">
+      <p class="h5 medium center py-2 my-0 <%= "text-white" if overdue.any? %>">
+        <% if overdue.any? %>
+          ⚠️ You don't have access to <%= overdue.map(&:name).to_sentence %> until you
+          <%= link_to "enable two-factor authentication", settings_security_path, class: "text-inherit" %>.
+          <% if pending.any? %>
+            <%= pending.map(&:name).to_sentence %> <%= pending.one? ? "requires" : "require" %> it too<% if next_deadline %>, from <%= format_datetime next_deadline %><% end %>.
           <% end %>
-        </p>
-      </div>
-    <% end %>
+        <% else %>
+          <%= pending.map(&:name).to_sentence %> <%= pending.one? ? "requires" : "require" %> two-factor authentication.
+          <%= link_to "Enable two-factor authentication", settings_security_path %> <% if next_deadline %>before <%= format_datetime next_deadline %> <% end %>to keep your access.
+        <% end %>
+      </p>
+    </div>
   <% end %>
   <%= render "application/impersonation_banner", klass: "px-4" %>
   <% if current_user&.pretend_is_not_admin? %>

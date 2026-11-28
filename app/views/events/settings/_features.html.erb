@@ -7,6 +7,23 @@
      elsif !current_user.use_two_factor_authentication?
        "Enable two-factor authentication on your own account first."
      end %>
+<% who_can_change = "Only a contract signee with two-factor authentication enabled on their account (or HCB staff) can" %>
+<% two_factor_footer =
+     if event.two_factor_authentication_deadline.present?
+       status =
+         if event.two_factor_authentication_deadline.past?
+           "Members without two-factor authentication don't have access until they enable it on their account."
+         elsif !current_user.use_two_factor_authentication?
+           "#{link_to "Enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} before #{format_datetime event.two_factor_authentication_deadline} to keep your access."
+         else
+           "Members without two-factor authentication have until #{format_datetime event.two_factor_authentication_deadline} to enable it."
+         end
+       "Required since #{format_date event.two_factor_authentication_required_at}. #{status} #{who_can_change} turn this off."
+     elsif OrganizerPosition.find_by(event:, user: current_user)&.is_signee? && !current_user.use_two_factor_authentication?
+       "To enable this requirement, #{link_to "enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} on your own account first."
+     else
+       "#{who_can_change} change this setting."
+     end %>
 <%= render partial: "features/preview", locals: {
       id: "require-two-factor-authentication",
       classes: ["feature-two-factor-authentication"],
@@ -16,25 +33,7 @@
                    "Turning this on emails your whole team right away. Current members without it get " \
                    "#{pluralize(Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i, "day")} to set it up before losing access until they enable it; " \
                    "anyone who joins after that will need it enabled first.",
-      footer: if event.two_factor_authentication_deadline.present?
-                if event.two_factor_authentication_deadline.past?
-                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
-                  "Members without two-factor authentication don't have access until they enable it on their account."
-                elsif !current_user.use_two_factor_authentication?
-                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
-                  "#{link_to "Enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} " \
-                  "before #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y at %-I:%M %p %Z")} to keep your access."
-                else
-                  "Required since #{event.two_factor_authentication_required_at.strftime("%B %-d, %Y")}. " \
-                  "Members without two-factor authentication have until #{event.two_factor_authentication_deadline.strftime("%B %-d, %Y at %-I:%M %p %Z")} to enable it."
-                end
-              elsif !event.two_factor_authentication_required?
-                if OrganizerPosition.find_by(event:, user: current_user)&.is_signee? && !current_user.use_two_factor_authentication?
-                  "To enable this requirement, #{link_to "enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} on your own account first."
-                else
-                  "Only a contract signee with two-factor authentication enabled on their account (or HCB staff) can change this setting."
-                end
-              end,
+      footer: two_factor_footer,
       disabled: !can_toggle_two_factor,
       disabled_reason: two_factor_disabled_reason,
       enable_warning: "This emails every member of #{event.name} right away. Members without two-factor authentication get #{pluralize(Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i, "day")} to enable it before they lose access. Require two-factor authentication?",

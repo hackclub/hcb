@@ -453,8 +453,11 @@ RSpec.describe EventsController do
         get(:edit, params: { id: event.slug, tab: "features" })
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Required since November 24, 2026.")
-        expect(response.body).to include("Enable two-factor authentication</a> before December 1, 2026 at")
+        expect(response.body).to include("Required since <time")
+        expect(response.body).to include('datetime="2026-11-24T12:00:00Z"')
+        expect(response.body).to include("Enable two-factor authentication</a> before <time")
+        expect(response.body).to include('datetime="2026-12-01T12:00:00Z"')
+        expect(response.body).to include("can turn this off.")
         expect(response.body).to include("to keep your access.")
         expect(response.body).to include("Hack Club HQ requires two-factor authentication.")
       end

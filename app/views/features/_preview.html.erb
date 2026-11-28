@@ -1,7 +1,8 @@
 <%# leaving current_user just so we don't get a NilClassPolicy error ever %>
 <% disabled = local_assigns.fetch(:disabled, !policy(local_assigns[:event] || local_assigns[:user] || current_user).update?) %>
 <%# `disabled_reason` is shown as a tooltip on the disabled toggle. %>
-<% toggle_wrapper = disabled && local_assigns[:disabled_reason].present? ? { class: "tooltipped tooltipped--w inline-block", "aria-label": local_assigns[:disabled_reason] } : {} %>
+<%# The wrapper is focusable and tappable so keyboard and touch users reach the reason too. %>
+<% toggle_wrapper = disabled && local_assigns[:disabled_reason].present? ? { class: "tooltipped tooltipped--w tooltipped--tappable inline-block", "aria-label": local_assigns[:disabled_reason], tabindex: 0 } : {} %>
 
 <% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
   <div class="card pb0 mb3" id="<%= local_assigns[:id] %>">
@@ -48,7 +49,7 @@
     <% if local_assigns[:footer].present? %>
       <section class="card__banner card__darker secondary border-top mt-4">
         <p class="m-0">
-          <%= sanitize(local_assigns[:footer], attributes: %w(href data-turbo-action data-turbo-method)) %>
+          <%= sanitize(local_assigns[:footer], attributes: %w(href data-turbo-action data-turbo-method datetime data-local data-format)) %>
         </p>
       </section>
     <% end %>
