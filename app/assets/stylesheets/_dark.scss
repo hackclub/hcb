@@ -135,7 +135,9 @@ html[data-dark='true'] {
     .input,
     select,
     textarea {
-      background: $dark;
+      // background-color, not background: the shorthand would wipe out the
+      // chevron background-image that marks a <select> as a dropdown.
+      background-color: $dark;
       border-color: $dark;
     }
   }
@@ -194,7 +196,9 @@ html[data-dark='true'] {
     .input,
     select,
     textarea {
-      background: $dark;
+      // background-color, not background: the shorthand would wipe out the
+      // chevron background-image that marks a <select> as a dropdown.
+      background-color: $dark;
       border-color: $dark;
       &:focus-within {
         border-color: map-get($palette, info);

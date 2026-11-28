@@ -6,8 +6,29 @@
 
 @media (min-width: 72em) {
   .table-container {
-    max-width: calc(100vw - 20rem);
+    // Layouts that already scroll horizontally (admin) opt out by setting
+    // `--table-max-width: none` on an ancestor.
+    max-width: var(--table-max-width, calc(100vw - 20rem));
   }
+}
+
+// A table that sizes to its content rather than filling its container.
+.table--autosize {
+  width: auto;
+  min-width: 0;
+}
+
+// A sticky footer strip inside a `.table-container`, for pagination and counts.
+.table-footer {
+  background-color: rgba(200, 200, 200, 0.2);
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  left: 10px;
+  min-height: 50px;
 }
 
 .transaction--fancy {
