@@ -57,6 +57,23 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.declined_reason).to eq("user_cards_locked")
   end
 
+  it "declines when the cardholder is locked out of the organization for not enabling two-factor authentication" do
+    create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+    create(:organizer_position, user: stripe_card.user, event:)
+    require_two_factor_authentication!(event, at: 8.days.ago)
+
+    expect(service.run).to be(false)
+    expect(service.declined_reason).to eq("two_factor_authentication_required")
+  end
+
+  it "approves during the two-factor authentication grace period" do
+    create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+    create(:organizer_position, user: stripe_card.user, event:)
+    require_two_factor_authentication!(event, at: 2.days.ago)
+
+    expect(service.run).to be(true)
+  end
+
   context "forbidden merchants" do
     let(:stripe_authorization) do
       build(

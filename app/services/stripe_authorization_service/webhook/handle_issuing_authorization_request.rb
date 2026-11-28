@@ -90,6 +90,9 @@ module StripeAuthorizationService
         end
 
         return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && event.plan.card_lockable?
+        # A member locked out of the organization for not enabling two-factor
+        # authentication can't spend its money either.
+        return decline_with_reason!("two_factor_authentication_required") if event.two_factor_authentication_overdue_for?(card.user)
 
         true
       end

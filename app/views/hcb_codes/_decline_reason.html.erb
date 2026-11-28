@@ -18,7 +18,8 @@
             merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
             merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
             cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
-            user_cards_locked: "by HCB because you have overdue receipts"
+            user_cards_locked: "by HCB because you have overdue receipts",
+            two_factor_authentication_required: "by HCB because #{card&.event&.name} requires two-factor authentication"
           }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
     <% else %>
       <span>
@@ -43,6 +44,7 @@
             merchant_not_allowed: "Merchant not allowed",
             cash_withdrawals_not_allowed: "Cash withdrawals disabled",
             user_cards_locked: "Card locked due to overdue receipts",
+            two_factor_authentication_required: "Two-factor authentication required",
           }[hcb_decline_reason] || "Insufficient funds" %>
     <% else %>
       <%= {
@@ -78,6 +80,8 @@
       If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
       Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
+    <% elsif hcb_decline_reason == :two_factor_authentication_required %>
+      <%= link_to "Enable two-factor authentication", settings_security_path %> on your account and your card will work again right away.
     <% elsif hcb_decline_reason == :user_cards_locked %>
       Upload your overdue receipts and your card will work again in seconds. Manage them on the <%= link_to "receipts page", my_inbox_url %>.
     <% elsif stripe_decline_reason == :authorization_controls %>

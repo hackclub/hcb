@@ -10,7 +10,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def freeze?
-    admin_or_manager? || member_and_cardholder? || grantee?
+    admin_or_manager? || member_and_cardholder? || locked_out_cardholder? || grantee?
   end
 
   def defrost?
@@ -22,7 +22,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def cancel?
-    admin_or_manager? || member_and_cardholder?
+    admin_or_manager? || member_and_cardholder? || locked_out_cardholder?
   end
 
   def activate?
@@ -47,6 +47,7 @@ class StripeCardPolicy < ApplicationPolicy
 
   def ephemeral_keys?
     return false if record.card_grant&.pre_authorization&.unauthorized?
+    return false if record.event&.two_factor_authentication_overdue_for?(user)
 
     cardholder?
   end
@@ -67,6 +68,13 @@ class StripeCardPolicy < ApplicationPolicy
 
   def cardholder?
     record.user == user
+  end
+
+  # Losing access to the organization for not enabling two-factor
+  # authentication shouldn't stop a cardholder from freezing or cancelling
+  # their own lost card.
+  def locked_out_cardholder?
+    cardholder? && record.event.present? && record.event.two_factor_authentication_overdue_for?(user) && record.event.organizer_positions.exists?(user:)
   end
 
   def admin_or_manager?

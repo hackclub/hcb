@@ -39,6 +39,8 @@ class CanonicalPendingTransaction
                              "because cash withdrawals are not enabled on it"
                            when "user_cards_locked"
                              "because your cards are locked"
+                           when "two_factor_authentication_required"
+                             "because your organization requires two-factor authentication"
                            else
                              "at #{@merchant} due to insufficient funds"
                            end
@@ -49,6 +51,8 @@ class CanonicalPendingTransaction
       message = "Your card was declined just now #{humanized_reason}."
       if @reason == "webhook_declined" && @webhook_declined_reason == "user_cards_locked"
         message += " Upload your receipts to unlock in seconds."
+      elsif @reason == "webhook_declined" && @webhook_declined_reason == "two_factor_authentication_required"
+        message += " Enable it in your HCB security settings and your card will work again."
       end
 
       TwilioMessageService::Send.new(@user, message, ledger_item: @cpt.ledger_item).run!
