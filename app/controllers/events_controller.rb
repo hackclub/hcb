@@ -124,7 +124,10 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).preloaded_for_feed.first(7)
+    activities = PublicActivity::Activity.for_event(@event)
+    # Visitors to a transparent organization don't need its security settings history.
+    activities = activities.where.not(key: %w[event.two_factor_authentication_required event.two_factor_authentication_unrequired]) unless organizer_signed_in?
+    @activities = activities.order(created_at: :desc).preloaded_for_feed.first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end

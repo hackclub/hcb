@@ -1579,6 +1579,32 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "the two-factor requirement in #recent_activity" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    before do
+      signee = create(:organizer_position, event:, role: :manager, is_signee: true).user
+      PublicActivity.with_tracking { event.create_activity(key: "event.two_factor_authentication_required", owner: signee, event_id: event.id) }
+    end
+
+    it "is hidden from visitors to a transparent organization" do
+      get(:recent_activity, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("started requiring two-factor authentication")
+    end
+
+    it "is shown to organizers" do
+      create_session(create(:organizer_position, event:).user, verified: true)
+
+      get(:recent_activity, params: { event_id: event.slug })
+
+      expect(response.body).to include("started requiring two-factor authentication")
+    end
+  end
+
   describe "the two-factor authentication indicator on #team" do
     render_views
 

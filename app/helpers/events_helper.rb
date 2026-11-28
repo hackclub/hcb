@@ -454,4 +454,41 @@ module EventsHelper
     end
   end
 
+
+  # The feature previews card for the organization-wide two-factor
+  # authentication requirement (see Event::TwoFactorAuthenticationRequirement).
+
+  # Why the current user can't toggle the requirement, or nil if they can.
+  def two_factor_authentication_requirement_disabled_reason(event)
+    return nil if policy(event).toggle_two_factor_authentication_requirement?
+
+    if !OrganizerPosition.exists?(event:, user: current_user, is_signee: true)
+      "Only a contract signee or HCB staff can change this setting."
+    else
+      "Enable two-factor authentication on your own account first."
+    end
+  end
+
+  def two_factor_authentication_requirement_footer(event)
+    who_can_change = "Only a contract signee with two-factor authentication enabled on their account (or HCB staff) can"
+    deadline = event.two_factor_authentication_deadline
+    enable_link = ->(text) { link_to(text, settings_security_path, data: { turbo_action: "advance" }) }
+
+    if deadline.present?
+      status =
+        if deadline.past?
+          "Members without two-factor authentication don't have access until they enable it on their account."
+        elsif !current_user.use_two_factor_authentication?
+          "#{enable_link.call("Enable two-factor authentication")} before #{format_datetime deadline} to keep your access."
+        else
+          "Members without two-factor authentication have until #{format_datetime deadline} to enable it."
+        end
+      "Required since #{format_date event.two_factor_authentication_required_at}. #{status} #{who_can_change} turn this off."
+    elsif two_factor_authentication_requirement_disabled_reason(event) == "Enable two-factor authentication on your own account first."
+      "To enable this requirement, #{enable_link.call("enable two-factor authentication")} on your own account first."
+    else
+      "#{who_can_change} change this setting."
+    end
+  end
+
 end
