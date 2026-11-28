@@ -5,6 +5,8 @@
 # Table name: card_grant_settings
 #
 #  id                                :bigint           not null, primary key
+#  allow_reimbursement_report        :boolean          default(FALSE), not null
+#  allow_stripe_card                 :boolean          default(TRUE), not null
 #  banned_categories                 :string
 #  banned_merchants                  :string
 #  block_suspected_fraud             :boolean          default(TRUE), not null
