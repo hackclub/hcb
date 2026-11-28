@@ -1603,12 +1603,29 @@ RSpec.describe EventsController do
     end
 
     %w[grid list].each do |view|
-      it "shows a reader who uses two-factor authentication in the #{view} view" do
-        reader = create(:user)
-        create(:organizer_position, user: reader, event:, role: :reader)
-        create_session(reader, verified: true)
+      it "shows a manager each member's status in the #{view} view" do
+        manager = create(:user)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        create_session(manager, verified: true)
 
-        expect(indicators(view:)).to eq(protected_member => "true", exposed_member => "false")
+        expect(indicators(view:)).to eq(protected_member => "on", exposed_member => "off")
+      end
+
+      it "marks members who are locked out in the #{view} view" do
+        manager = create(:user, :with_two_factor_authentication)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        require_two_factor_authentication!(event, at: 8.days.ago)
+        create_session(manager, verified: true)
+
+        expect(indicators(view:)).to eq(protected_member => "on", exposed_member => "locked_out")
+      end
+
+      it "hides it from a member in the #{view} view, so the roster isn't a list of accounts without it" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+
+        expect(indicators(view:)).to eq({})
       end
 
       it "hides it from a signed out visitor in the #{view} view" do
@@ -1616,7 +1633,7 @@ RSpec.describe EventsController do
       end
     end
 
-    it "labels the list column only for readers" do
+    it "labels the list column only for managers and staff" do
       get(:team, params: { event_id: event.slug, view: "list" })
       expect(Nokogiri::HTML5(response.body).css("thead th").map(&:text)).not_to include("Two-factor")
 

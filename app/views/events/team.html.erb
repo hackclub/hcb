@@ -84,7 +84,7 @@
           <th>Date invited</th>
           <th>Name</th>
           <th>Role</th>
-          <% if organizer_signed_in? %>
+          <% if organizer_signed_in?(as: :manager) || auditor_signed_in? %>
             <th>Two-factor</th>
           <% end %>
           <th class="text-right">Contact</th>

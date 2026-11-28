@@ -1,8 +1,15 @@
-<%# locals: (user:, compact: false) %>
-<% enabled = user.use_two_factor_authentication? %>
-<span class="inline-flex items-center g1 line-height-0 <%= enabled ? "success" : "muted" %> tooltipped tooltipped--n"
-      aria-label="<%= user.first_name %> <%= enabled ? "uses" : "doesn't use" %> two-factor authentication"
-      data-two-factor-authentication="<%= enabled %>">
-  <%= inline_icon enabled ? "checkmark" : "view-close", size: 20 %>
-  <%= compact ? (enabled ? "On" : "Off") : "Two-factor #{enabled ? "on" : "off"}" %>
+<%# locals: (user:, event:, compact: false) %>
+<% state =
+     if user.use_two_factor_authentication?
+       { key: "on", label: "On", icon: "checkmark", color: "success", tooltip: "uses two-factor authentication" }
+     elsif event.two_factor_authentication_overdue_for?(user)
+       { key: "locked_out", label: "Locked out", icon: "private", color: "error", tooltip: "is locked out until they enable two-factor authentication" }
+     else
+       { key: "off", label: "Off", icon: "view-close", color: "muted", tooltip: "doesn't use two-factor authentication" }
+     end %>
+<span class="inline-flex items-center g1 line-height-0 <%= state[:color] %> tooltipped tooltipped--n"
+      aria-label="<%= user.first_name.presence || user.name %> <%= state[:tooltip] %>"
+      data-two-factor-authentication="<%= state[:key] %>">
+  <%= inline_icon state[:icon], size: 20 %>
+  <%= compact ? state[:label] : "Two-factor #{state[:label].downcase}" %>
 </span>
