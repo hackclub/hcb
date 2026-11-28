@@ -22,4 +22,24 @@ class CardChargeMailer < ApplicationMailer
     mail to: @user.email_address_with_name, subject: "Your charge at #{@merchant_name} was reversed"
   end
 
+  # A settled charge whose amount changed afterwards, such as a partial refund
+  # or a merchant capturing more later.
+  def amount_updated
+    @ledger_item = params[:ledger_item]
+    @card_charge = @ledger_item.linked_object
+    @user = @ledger_item.author
+
+    return unless @user.email_charge_notifications_enabled?
+
+    previous_amount_cents = params[:previous_amount_cents]
+    amount_cents = params[:amount_cents]
+    return if (amount_cents - previous_amount_cents).abs < MINIMUM_AMOUNT_CENTS
+
+    @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
+    @previous_amount = ApplicationController.helpers.render_money(previous_amount_cents.abs)
+    @amount = ApplicationController.helpers.render_money(amount_cents.abs)
+
+    mail to: @user.email_address_with_name, subject: "Your charge at #{@merchant_name} was updated from #{@previous_amount} to #{@amount}"
+  end
+
 end

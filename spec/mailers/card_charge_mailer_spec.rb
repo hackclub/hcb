@@ -140,4 +140,47 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect(mail.body.encoded.scan("didn't match your").size).to eq(1)
     end
   end
+
+  describe "#amount_updated" do
+    it "emails the cardholder with the merchant, both amounts, and a link to the transaction" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, merchant_name: "goBILDA", amount_cents: -50_00)
+
+      mail = described_class.with(ledger_item:, previous_amount_cents: -50_00, amount_cents: -30_00).amount_updated
+
+      expect(mail.to).to eq([user.email])
+      expect(mail.subject).to eq("Your charge at goBILDA was updated from $50.00 to $30.00")
+      expect(mail.body.encoded).to include("$50.00")
+      expect(mail.body.encoded).to include("$30.00")
+      expect(mail.body.encoded).to include(ledger_item_url(ledger_item))
+      expect(mail.body.encoded).not_to include("What went wrong")
+    end
+
+    it "does not send when the cardholder disabled charge notifications" do
+      user = create(:user, charge_notifications: :nothing)
+      ledger_item = build_ledger_item(user:)
+
+      mail = described_class.with(ledger_item:, previous_amount_cents: -50_00, amount_cents: -30_00).amount_updated
+
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
+    end
+
+    it "does not send when the amount changed by less than $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:)
+
+      mail = described_class.with(ledger_item:, previous_amount_cents: -50_00, amount_cents: -49_01).amount_updated
+
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
+    end
+
+    it "sends when the amount changed by exactly $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:)
+
+      mail = described_class.with(ledger_item:, previous_amount_cents: -50_00, amount_cents: -51_00).amount_updated
+
+      expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
+    end
+  end
 end
