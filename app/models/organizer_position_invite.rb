@@ -96,7 +96,12 @@ class OrganizerPositionInvite < ApplicationRecord
 
   after_create_commit do
     unless pending_signature?
-      user == sender ? accept : deliver
+      if user == sender
+        accept
+      else
+        deliver
+        schedule_reminders
+      end
     end
   end
 
@@ -110,6 +115,12 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def deliver
     OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
+  end
+
+  def schedule_reminders
+    OrganizerPositionInvite::ReminderJob.set(wait: 3.days).perform_later(self)
+    OrganizerPositionInvite::ReminderJob.set(wait: 7.days).perform_later(self)
+    OrganizerPositionInvite::ReminderJob.set(wait: 14.days).perform_later(self)
   end
 
   def accept(show_onboarding: true, application_contract: nil)

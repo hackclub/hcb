@@ -13,6 +13,10 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
     end
   end
 
+  def reminder
+    mail to: @invite.user.email_address_with_name, subject: "[Action Needed] Accept your invitation to join #{@invite.event.name} on HCB"
+  end
+
   def accepted
     @emails = @invite.event.organizer_contact_emails { |users| users.excluding(@invite.user) }
 

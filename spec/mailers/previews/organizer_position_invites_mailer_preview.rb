@@ -6,6 +6,11 @@ class OrganizerPositionInvitesMailerPreview < ActionMailer::Preview
     OrganizerPositionInvitesMailer.with(invite: @invite).notify
   end
 
+  def reminder
+    @invite = OrganizerPositionInvite.pending.last
+    OrganizerPositionInvitesMailer.with(invite: @invite).reminder
+  end
+
   def accepted
     @invite = OrganizerPositionInvite.last
     OrganizerPositionInvitesMailer.with(invite: @invite).accepted
