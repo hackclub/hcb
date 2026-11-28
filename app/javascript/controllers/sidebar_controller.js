@@ -2,9 +2,17 @@ import { Controller } from '@hotwired/stimulus'
 import { addLayer, removeLayer } from '../layers'
 
 export default class extends Controller {
-  static targets = ['sidebar', 'overlay', 'toggle']
+  static targets = [
+    'sidebar',
+    'overlay',
+    'toggle',
+    'scrollContainer',
+    'dropdown',
+  ]
+  static values = { key: String }
 
   connect() {
+    this.restoreState()
     this.handleResize = this.handleResize.bind(this)
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
@@ -18,8 +26,36 @@ export default class extends Controller {
   }
 
   disconnect() {
+    cancelAnimationFrame(this.restoreScrollFrame)
     window.removeEventListener('resize', this.handleResize)
     removeLayer(this)
+  }
+
+  saveState() {
+    sessionStorage.setItem(
+      `sidebar:${this.keyValue}`,
+      JSON.stringify({
+        scrollTop: this.scrollContainerTarget.scrollTop,
+        dropdowns: this.dropdownTargets
+          .filter(dropdown => dropdown.open)
+          .map(dropdown => dropdown.dataset.sidebarDropdownKey),
+      })
+    )
+  }
+
+  restoreState() {
+    const state = JSON.parse(sessionStorage.getItem(`sidebar:${this.keyValue}`))
+    if (!state) return
+
+    // Keep the server's active section open, including on direct settings links.
+    this.dropdownTargets.forEach(dropdown => {
+      dropdown.open ||= state.dropdowns.includes(
+        dropdown.dataset.sidebarDropdownKey
+      )
+    })
+    this.restoreScrollFrame = requestAnimationFrame(() => {
+      this.scrollContainerTarget.scrollTop = state.scrollTop
+    })
   }
 
   handleResize() {

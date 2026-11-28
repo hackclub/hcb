@@ -34,7 +34,9 @@
 
         <%= render "application/native_changelog" if @latest_changelog_post %>
 
-        <div data-controller="sidebar">
+        <div data-controller="sidebar"
+             data-sidebar-key-value="<%= @event ? "event-#{@event.id}" : "account" %>"
+             data-action="turbo:before-cache@document->sidebar#saveState pagehide@window->sidebar#saveState pageshow@window->sidebar#restoreState">
           <button
             class="fixed top-4 pop left-4 z-10 lg:hidden backdrop-blur-xl"
             data-action="click->sidebar#open"
@@ -50,7 +52,7 @@
             data-action="click->sidebar#close">
           </div>
           <aside class="sidebar select-none" id="sidebar" data-sidebar-target="sidebar">
-            <div class="sidebar--scroll-container">
+            <div class="sidebar--scroll-container" data-sidebar-target="scrollContainer">
               <%= yield(:header) %>
               <div class="hidden lg:block">
                 <%= render "application/flash", klass: "mt-2" unless @hide_flash %>
