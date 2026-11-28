@@ -6,6 +6,32 @@ RSpec.describe OrganizerPositionInvitesController do
   include SessionSupport
   render_views
 
+  describe "#accept" do
+    it "sends an invitee without two-factor authentication to enable it when the organization requires it" do
+      event = create(:event, name: "Hack Club HQ")
+      require_two_factor_authentication!(event, at: 8.days.ago)
+      invite = create(:organizer_position_invite, event:)
+      create_session(invite.user, verified: true)
+
+      post(:accept, params: { organizer_position_invite_id: invite.to_param })
+
+      expect(invite.reload).to be_accepted
+      expect(response).to redirect_to(settings_security_path)
+      expect(flash[:info]).to eq("You've joined Hack Club HQ. It requires two-factor authentication, so enable it to get access.")
+    end
+
+    it "sends an invitee with two-factor authentication to the organization" do
+      event = create(:event)
+      require_two_factor_authentication!(event, at: 8.days.ago)
+      invite = create(:organizer_position_invite, event:, user: create(:user, :with_two_factor_authentication))
+      create_session(invite.user, verified: true)
+
+      post(:accept, params: { organizer_position_invite_id: invite.to_param })
+
+      expect(response).to redirect_to(event)
+    end
+  end
+
   describe "#create" do
     before do
       # This is required since sending contracts defaults to the system user email for HCB's party

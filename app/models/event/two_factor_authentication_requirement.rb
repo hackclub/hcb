@@ -57,6 +57,12 @@ class Event
       @two_factor_authentication_required_at = Flipper::Adapters::ActiveRecord::Gate.find_by(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: flipper_id)&.created_at
     end
 
+    # Whether this organization, or one above it, requires two-factor
+    # authentication of its members.
+    def requires_two_factor_authentication_of_members?
+      Event.ids_requiring_two_factor_authentication.intersect?(ancestor_ids)
+    end
+
     def two_factor_authentication_deadline
       two_factor_authentication_required_at&.+(GRACE_PERIOD)
     end

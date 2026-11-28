@@ -482,8 +482,8 @@ RSpec.describe EventsController do
 
         get(:edit, params: { id: event.slug, tab: "features" })
 
-        expect(response).to redirect_to(root_path)
-        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        expect(response).to redirect_to(settings_security_path)
+        expect(flash[:error]).to eq("Hack Club HQ requires two-factor authentication. Enable it to get your access back.")
       end
     end
 

@@ -12,6 +12,12 @@
   <% end %>
 <% end %>
 
+<% if @invite.event.requires_two_factor_authentication_of_members? && !current_user.use_two_factor_authentication? %>
+  <%= render "application/callout", type: "info", title: "#{@invite.event.name} requires two-factor authentication." do %>
+    <%= link_to "Enable it in your security settings", settings_security_path %> to access the organization after you accept.
+  <% end %>
+<% end %>
+
 <main class="center max-w-3xl card mt4 md-p3 mx-auto">
   <h1 class="mt0 border-0 mb-0"><%= @invite.event.name %></h1>
 

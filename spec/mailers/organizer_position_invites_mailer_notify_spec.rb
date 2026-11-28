@@ -8,6 +8,29 @@ require "rails_helper"
 # verified flow has nothing left to accept, unverified flow needs to land on
 # the OPI accept page.
 RSpec.describe OrganizerPositionInvitesMailer, type: :mailer do
+  describe "#notify for an organization requiring two-factor authentication" do
+    let(:event) { create(:event, name: "Hack Club HQ") }
+
+    before { require_two_factor_authentication!(event) }
+
+    it "tells an invitee without two-factor authentication they'll need it" do
+      invite = create(:organizer_position_invite, event:)
+
+      body = described_class.with(invite:).notify.body.encoded
+
+      expect(body).to include("Hack Club HQ requires two-factor authentication of its members")
+      expect(body).to include(settings_security_url)
+    end
+
+    it "says nothing to an invitee who already uses it" do
+      invite = create(:organizer_position_invite, event:, user: create(:user, :with_two_factor_authentication))
+
+      body = described_class.with(invite:).notify.body.encoded
+
+      expect(body).not_to include("requires two-factor authentication")
+    end
+  end
+
   describe "#notify for a request-approval invite" do
     let(:event) { create(:event) }
     let(:requester) { create(:user, verified: true, email: "requester-#{SecureRandom.hex(2)}@example.invalid") }

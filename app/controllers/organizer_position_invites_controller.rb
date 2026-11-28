@@ -72,7 +72,12 @@ class OrganizerPositionInvitesController < ApplicationController
     authorize @invite
 
     if @invite.accept
-      redirect_to @invite.event
+      if @invite.event.two_factor_authentication_overdue_for?(current_user)
+        flash[:info] = "You've joined #{@invite.event.name}. It requires two-factor authentication, so enable it to get access."
+        redirect_to settings_security_path
+      else
+        redirect_to @invite.event
+      end
     else
       flash[:error] = @invite.pending_signature? ? "Before accepting the invite, the associated contract needs to be signed by all parties." : "Failed to accept"
       redirect_to @invite

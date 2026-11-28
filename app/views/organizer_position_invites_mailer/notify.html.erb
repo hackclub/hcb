@@ -18,6 +18,11 @@
     <% end %>
     You've been invited by <strong><%= @invite.sender.name %></strong> to <%= @invite.manager? ? "manage" : "be a member of" %> <strong><%= @invite.event.name %></strong>, which is running on HCB. HCB is an online dashboard used to store finances, raise money, receive grants, manage team emails, and so much more.
   </p>
+  <% if @invite.event.requires_two_factor_authentication_of_members? && !@invite.user.use_two_factor_authentication? %>
+    <p>
+      <%= @invite.event.name %> requires two-factor authentication of its members, so you'll need to <%= link_to "enable it in your security settings", settings_security_url %> to access the organization once you've accepted.
+    </p>
+  <% end %>
 
   <p>
     <%= link_to "Accept the invite", @invite %> to see what's up!

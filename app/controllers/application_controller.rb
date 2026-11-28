@@ -139,6 +139,13 @@ class ApplicationController < ActionController::Base
   end
 
   def user_not_authorized
+    # A member shut out of an organization for not enabling two-factor
+    # authentication is sent to fix that rather than to a dead end.
+    if current_user && @event.is_a?(Event) && @event.two_factor_authentication_overdue_for?(current_user)
+      flash[:error] = "#{@event.name} requires two-factor authentication. Enable it to get your access back."
+      return redirect_to settings_security_path
+    end
+
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
       redirect_back_or_to root_path
