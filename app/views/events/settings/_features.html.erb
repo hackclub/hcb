@@ -3,7 +3,7 @@
 <% can_toggle_two_factor = policy(event).toggle_two_factor_authentication_requirement? %>
 <% two_factor_disabled_reason =
      if !OrganizerPosition.find_by(event:, user: current_user)&.is_signee?
-       "Only a contract signee can change this setting."
+       "Only a contract signee or HCB staff can change this setting."
      elsif !current_user.use_two_factor_authentication?
        "Enable two-factor authentication on your own account first."
      end %>
@@ -32,7 +32,7 @@
                 if OrganizerPosition.find_by(event:, user: current_user)&.is_signee? && !current_user.use_two_factor_authentication?
                   "To enable this requirement, #{link_to "enable two-factor authentication", settings_security_path, data: { turbo_action: "advance" }} on your own account first."
                 else
-                  "Only a contract signee with two-factor authentication enabled on their account can change this setting."
+                  "Only a contract signee with two-factor authentication enabled on their account (or HCB staff) can change this setting."
                 end
               end,
       disabled: !can_toggle_two_factor,

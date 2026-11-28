@@ -90,6 +90,17 @@ RSpec.describe FeaturesController do
       expect(Flipper.enabled?(:require_two_factor_authentication_2026_11_24, event)).to eq(true)
     end
 
+    it "lets an HCB admin turn it off" do
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      post(:disable_feature, params: { feature: :require_two_factor_authentication_2026_11_24, event_id: event.id })
+
+      expect(response).to redirect_to(edit_event_path(event, tab: :features))
+      expect(Flipper.enabled?(:require_two_factor_authentication_2026_11_24, event)).to eq(false)
+    end
+
     it "lets a contract signee with two-factor authentication turn it off" do
       Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
       signee = create(:user, :with_two_factor_authentication)

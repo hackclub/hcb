@@ -32,10 +32,10 @@ RSpec.describe EventPolicy, type: :policy do
       it { is_expected.to eq(false) }
     end
 
-    context "as an admin with two-factor authentication who is not a signee" do
-      let(:user) { create(:user, :make_admin, :with_two_factor_authentication) }
+    context "as an admin who is not a signee" do
+      let(:user) { create(:user, :make_admin) }
 
-      it { is_expected.to eq(false) }
+      it { is_expected.to eq(true) }
     end
   end
 

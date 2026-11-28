@@ -428,7 +428,7 @@ RSpec.describe EventsController do
         page = Nokogiri::HTML5(response.body)
 
         expect(page.at_css("#require-two-factor-authentication form button")["disabled"]).to be_present
-        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Only a contract signee can change this setting.")
+        expect(page.at_css("#require-two-factor-authentication .tooltipped")["aria-label"]).to eq("Only a contract signee or HCB staff can change this setting.")
       end
 
       it "disables the toggle for a signee without two-factor authentication, and says why" do

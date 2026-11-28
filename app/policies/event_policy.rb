@@ -80,8 +80,10 @@ class EventPolicy < ApplicationPolicy
   alias disable_feature? update?
 
   # Only a contract signee who uses two-factor authentication themselves can
-  # require it of the organization (or lift the requirement).
+  # require it of the organization (or lift the requirement). HCB admins can
+  # too, so there's a way out when the only signee is gone.
   def toggle_two_factor_authentication_requirement?
+    return true if user&.admin?
     return false unless signee?
 
     user.use_two_factor_authentication?
