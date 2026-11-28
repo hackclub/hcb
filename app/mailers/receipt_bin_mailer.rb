@@ -15,10 +15,6 @@ class ReceiptBinMailer < ApplicationMailer
     mail subject: @inbound_mail&.mail&.subject || "Unknown Receipt Bin inbox"
   end
 
-  def bounce_missing_attachment
-    mail subject: @inbound_mail&.mail&.subject || "Missing attachment(s)"
-  end
-
   def bounce_success
     @receipts_count = params[:receipts_count]
     @paired_ledger_items = params[:paired_ledger_items]
