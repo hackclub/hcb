@@ -80,6 +80,32 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe ".amount_cents_sql" do
+    it "matches #amount_cents across states, approvals, and maximums" do
+      event = create(:event)
+
+      reports = [
+        [{ aasm_state: "draft" }, [[1_000, "pending"], [500, "approved"]]],
+        [{ aasm_state: "draft" }, []],
+        [{ aasm_state: "reimbursement_requested" }, [[1_000, "pending"], [500, "approved"]]],
+        [{ aasm_state: "reimbursed", maximum_amount_cents: 300 }, [[500, "approved"]]],
+        [{ aasm_state: "reimbursement_approved", maximum_amount_cents: 300, currency: "EUR" }, [[500, "approved"]]],
+      ].map do |attrs, expenses|
+        create(:reimbursement_report, event:, **attrs).tap do |report|
+          expenses.each do |cents, state|
+            create(:reimbursement_expense, report:, value: cents / 100.0).update_column(:aasm_state, state)
+          end
+        end
+      end
+
+      sql_amounts = described_class.where(id: reports).pluck(:id, Arel.sql(described_class.amount_cents_sql)).to_h
+
+      reports.each do |report|
+        expect(sql_amounts[report.id]).to eq(report.reload.amount_cents), "report in #{report.aasm_state}"
+      end
+    end
+  end
+
   describe "payout method association" do
     let(:user) { create(:user) }
 
