@@ -81,7 +81,7 @@ class OrganizerPosition < ApplicationRecord
     return true if user&.admin?
     # Members who ran out their grace period to enable two-factor
     # authentication keep their position but lose access until they enable it.
-    return false if user.present? && event.two_factor_authentication_overdue_for?(user)
+    return false if user && event.two_factor_authentication_overdue_for?(user)
 
     if role.to_s == "reader"
       return event.ancestor_organizer_positions.reader_access.where(user:).exists?

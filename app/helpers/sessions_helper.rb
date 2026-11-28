@@ -135,6 +135,10 @@ module SessionsHelper
       next true if auditor_signed_in? && inner_as == :reader
       next true if admin_signed_in? && inner_as == :member
       next false unless signed_in? && inner_event.present?
+      # Mirrors OrganizerPosition.role_at_least?: a member who ran out their
+      # grace period to enable two-factor authentication isn't an organizer
+      # here until they do.
+      next false if inner_event.two_factor_authentication_overdue_for?(current_user)
 
       required_role_num = OrganizerPosition.roles[inner_as]
       raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?

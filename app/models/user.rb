@@ -190,6 +190,7 @@ class User < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+  include User::TwoFactorAuthenticationRequirement
 
   before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 

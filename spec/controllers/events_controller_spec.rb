@@ -392,11 +392,6 @@ RSpec.describe EventsController do
     describe "the two-factor authentication requirement preview" do
       let(:event) { create(:event, name: "Hack Club HQ") }
 
-      def require_two_factor!(event, at:)
-        Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
-        Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
-      end
-
       it "escapes the organization name in the card" do
         event.update!(name: "Hack Club <img src=x onerror=alert(1)>")
         member = create(:user)
@@ -451,7 +446,7 @@ RSpec.describe EventsController do
       it "shows the deadline and warns members without two-factor authentication during the grace period" do
         member = create(:user)
         create(:organizer_position, user: member, event:, role: :member)
-        require_two_factor!(event, at: Time.zone.parse("2026-11-24 12:00:00"))
+        require_two_factor_authentication!(event, at: Time.zone.parse("2026-11-24 12:00:00"))
         travel_to Time.zone.parse("2026-11-26 12:00:00")
         create_session(member, verified: true)
 
@@ -464,10 +459,25 @@ RSpec.describe EventsController do
         expect(response.body).to include("Hack Club HQ requires two-factor authentication.")
       end
 
+      it "treats a locked-out member of a transparent organization as a visitor" do
+        event.update!(is_public: true)
+        member = create(:user)
+        teammate = create(:organizer_position, user: create(:user, email: "teammate@example.com"), event:, role: :member)
+        create(:organizer_position, user: member, event:, role: :member)
+        require_two_factor_authentication!(event, at: 8.days.ago)
+        create_session(member, verified: true)
+
+        get(:team, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include(teammate.user.email)
+        expect(response.body).to include("user@example.com")
+      end
+
       it "shuts out members without two-factor authentication once the grace period is over" do
         member = create(:user)
         create(:organizer_position, user: member, event:, role: :member)
-        require_two_factor!(event, at: 8.days.ago)
+        require_two_factor_authentication!(event, at: 8.days.ago)
         create_session(member, verified: true)
 
         get(:edit, params: { id: event.slug, tab: "features" })

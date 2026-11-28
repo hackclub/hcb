@@ -21,7 +21,9 @@ class StaticPagesController < ApplicationController
 
     # Load once and split in Ruby; the view previously re-queried (and
     # re-preloaded) the relation for each of any?/size/not_hidden/hidden.
-    @events = @service.events.to_a
+    # Members shut out of an organization for not enabling two-factor
+    # authentication shouldn't see its roster or activity from here either.
+    @events = @service.events.where.not(id: current_user.events_locked_out_for_two_factor_authentication.select(:id)).to_a
     @visible_events, @hidden_events = @events.partition { |event| event.hidden_at.nil? }
 
     featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]

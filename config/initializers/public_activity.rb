@@ -4,7 +4,7 @@ require_relative "../../app/models/concerns/public_identifiable"
 
 class PublicActivity::Activity
   scope :for_user, ->(user) {
-    event_ids = user.events.ids
+    event_ids = user.events.where.not(id: user.events_locked_out_for_two_factor_authentication.select(:id)).ids
 
     where(recipient_type: "User", recipient_id: user.id)
       .or(where(event_id: event_ids))

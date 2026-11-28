@@ -37,7 +37,10 @@ class OrganizerPositionPolicy < ApplicationPolicy
   end
 
   def admin_or_contract_signee?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.is_signee
+    return true if user&.admin?
+    return false if user.nil? || record.event.two_factor_authentication_overdue_for?(user)
+
+    OrganizerPosition.find_by(user:, event: record.event)&.is_signee
   end
 
 end

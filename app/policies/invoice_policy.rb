@@ -9,7 +9,7 @@ class InvoicePolicy < ApplicationPolicy
     return false unless Event.find(event_ids.first).plan.invoices_enabled?
     return false if same_event && Event.find(event_ids.first).unapproved?
     return true if Event.find(event_ids.first).is_public?
-    return true if same_event && user&.events&.pluck(:id)&.include?(event_ids.first)
+    return true if same_event && OrganizerPosition.role_at_least?(user, Event.find(event_ids.first), :reader)
   end
 
   def new?

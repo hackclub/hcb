@@ -46,8 +46,10 @@ module SetEvent
         @available_events = []
         @unavailable_events = []
 
+        locked_out_event_ids = current_user.events_locked_out_for_two_factor_authentication.ids
+
         current_user.events.not_hidden.each do |e|
-          if instance_exec(e, &@nav_item[:available_proc])
+          if locked_out_event_ids.exclude?(e.id) && instance_exec(e, &@nav_item[:available_proc])
             @available_events << e
           else
             @unavailable_events << e

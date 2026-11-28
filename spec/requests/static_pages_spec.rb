@@ -3,6 +3,24 @@
 require "rails_helper"
 
 RSpec.describe "Static pages", type: :request do
+  describe "GET /" do
+    it "hides organizations the user is locked out of for not enabling two-factor authentication" do
+      user = create(:user)
+      locked_out = create(:organizer_position, user:, event: create(:event, name: "Locked Out Org")).event
+      create(:organizer_position, user:, event: create(:event, name: "Open Org"))
+      require_two_factor_authentication!(locked_out, at: 8.days.ago)
+      allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(create(:user_session, user:, expiration_at: 1.hour.from_now))
+
+      get "/"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("href=\"/#{Event.find_by(name: "Open Org").slug}\"")
+      expect(response.body).not_to include("href=\"/#{locked_out.slug}\"")
+      # The banner still names it, so the member knows why it's missing.
+      expect(response.body).to include("You don't have access to Locked Out Org")
+    end
+  end
+
   describe "GET /branding" do
     it "emits an absolute Open Graph image URL for social previews" do
       get branding_path

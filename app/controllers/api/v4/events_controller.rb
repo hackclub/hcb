@@ -7,7 +7,9 @@ module Api
       skip_after_action :verify_authorized, only: [:index]
 
       def index
-        @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+        @events = current_user.events.not_hidden
+                              .where.not(id: current_user.events_locked_out_for_two_factor_authentication.select(:id))
+                              .includes(:users).order("organizer_positions.created_at DESC")
       end
 
       require_oauth2_scope "organizations:read", :index

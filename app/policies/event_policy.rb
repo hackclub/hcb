@@ -345,6 +345,8 @@ class EventPolicy < ApplicationPolicy
   end
 
   def signee?
+    return false if user.nil? || record.two_factor_authentication_overdue_for?(user)
+
     OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 

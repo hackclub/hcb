@@ -10,6 +10,11 @@
 # Only the per-organization actor gate counts. A boolean, group or percentage
 # gate on the flag would turn it on for every organization at once with no
 # emails and no deadline, so those are ignored.
+#
+# A requirement reaches down the tree: it covers the organization's own
+# members and everyone with a position in a sub-organization beneath it. It
+# does not reach up, so managers of a parent organization aren't locked out
+# of it by a sub-organization's requirement.
 class Event
   module TwoFactorAuthenticationRequirement
     extend ActiveSupport::Concern
@@ -17,9 +22,25 @@ class Event
     GRACE_PERIOD = 7.days
 
     included do
-      scope :requiring_two_factor_authentication, -> {
-        where(id: Flipper[:require_two_factor_authentication_2026_11_24].actors_value.filter_map { |value| value.delete_prefix("Event;") if value.start_with?("Event;") })
-      }
+      scope :requiring_two_factor_authentication, -> { where(id: ids_requiring_two_factor_authentication) }
+    end
+
+    class_methods do
+      def ids_requiring_two_factor_authentication
+        Flipper[:require_two_factor_authentication_2026_11_24].actors_value.filter_map { |value| value.delete_prefix("Event;").to_i if value.start_with?("Event;") }
+      end
+
+      # A subquery of `leaves` plus every organization above them; the
+      # upward counterpart of .self_and_descendant_ids.
+      def self_and_ancestor_ids(leaves)
+        unscoped
+          .with_recursive(tree: [
+                            unscoped.where(id: leaves).select(:id, :parent_id),
+                            unscoped.joins("INNER JOIN tree ON events.id = tree.parent_id").select(:id, :parent_id)
+                          ])
+          .from("tree")
+          .select(:id)
+      end
     end
 
     def two_factor_authentication_required?
@@ -41,17 +62,30 @@ class Event
     end
 
     # Whether the user is out of time to enable two-factor authentication for
-    # this organization. Members in this state are shut out of the organization
-    # (see `OrganizerPosition.role_at_least?`) until they enable it.
+    # this organization, because it or an organization above it requires it
+    # of them and the grace period has passed. Users in this state are shut
+    # out of the organization (see `OrganizerPosition.role_at_least?` and
+    # `SessionsHelper#organizer_signed_in?`) until they enable it.
     def two_factor_authentication_overdue_for?(user)
       return false if user.use_two_factor_authentication?
+      return false if Event.ids_requiring_two_factor_authentication.empty?
 
-      deadline = two_factor_authentication_deadline
-      deadline.present? && deadline.past?
+      @two_factor_authentication_overdue_for ||= {}
+      return @two_factor_authentication_overdue_for[user.id] if @two_factor_authentication_overdue_for.key?(user.id)
+
+      @two_factor_authentication_overdue_for[user.id] = user.events_requiring_two_factor_authentication.any? do |requiring_event|
+        ancestor_ids.include?(requiring_event.id) && requiring_event.two_factor_authentication_deadline&.past?
+      end
+    end
+
+    # Everyone this organization's requirement applies to: members here and
+    # in every sub-organization beneath it.
+    def users_required_to_use_two_factor_authentication
+      User.where(id: OrganizerPosition.where(event_id: Event.self_and_descendant_ids(id)).select(:user_id))
     end
 
     def notify_two_factor_authentication_required(whodunnit:)
-      users.find_each do |user|
+      users_required_to_use_two_factor_authentication.find_each do |user|
         EventMailer.with(event: self, user:, whodunnit:).two_factor_authentication_required.deliver_later
       end
     end

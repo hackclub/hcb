@@ -16,11 +16,11 @@ class CanonicalPendingTransactionPolicy < ApplicationPolicy
   private
 
   def admin_or_teammember
-    user&.admin? || record&.event&.users&.include?(user)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def auditor_or_teammember
-    user&.auditor? || record&.event&.users&.include?(user)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
 end

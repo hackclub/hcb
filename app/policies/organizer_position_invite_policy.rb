@@ -2,7 +2,7 @@
 
 class OrganizerPositionInvitePolicy < ApplicationPolicy
   def index?
-    user&.auditor? || record.event&.users&.include?(user)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def new?
