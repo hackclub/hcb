@@ -10,7 +10,7 @@ class DonationsController < ApplicationController
 
   skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
   skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
-  before_action :set_donation, only: [:show, :update]
+  before_action :set_donation, only: [:show, :update, :receipt]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
   before_action :check_background_param
@@ -47,6 +47,18 @@ class DonationsController < ApplicationController
     authorize @donation
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
     redirect_to hcb_code_path(@hcb_code.hashid)
+  end
+
+  def receipt
+    authorize @donation
+
+    respond_to do |format|
+      format.pdf do
+        send_data CloudflareBrowserRun.pdf(render_to_string(formats: :pdf, layout: false)),
+                  filename: "Donation receipt #{@donation.public_id}.pdf",
+                  type: "application/pdf", disposition: "attachment"
+      end
+    end
   end
 
   def start_donation
