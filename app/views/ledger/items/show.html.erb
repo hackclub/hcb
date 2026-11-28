@@ -107,7 +107,7 @@
       <% end %>
     <% end %>
 
-    <%= render "receipts/list_v2", receipts: @item.receipts, popover: (@frame && @item.hcb_code.present? ? "HcbCode:#{@item.hcb_code.hashid}" : nil), transaction_show_receipt_button: true, transaction_show_author_img: true %>
+    <%= render "receipts/list_v2", receipts: @item.receipts, list_id: (dom_id(@item, :popover_receipts_list) if @frame), popover: (@frame && @item.hcb_code.present? ? "HcbCode:#{@item.hcb_code.hashid}" : nil), transaction_show_receipt_button: true, transaction_show_author_img: true %>
     <%= begin receipt_upload_form_config = {
           receiptable: @item,
           enable_linking: true,
