@@ -99,7 +99,7 @@
           <% end %>
         </td>
         <td class="text-right">
-          <%= user.card_charges_missing_receipt.count %>
+          <%= @missing_receipt_counts.fetch(user.id, 0) %>
         </td>
         <td>
           <%= link_to "Impersonate", impersonate_user_path(user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>

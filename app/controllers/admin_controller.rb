@@ -237,8 +237,11 @@ class AdminController < Admin::BaseController
     respond_to do |format|
       format.html do
         @users = @users.page(@page).per(@per)
+        @missing_receipt_counts = Ledger::Item.card_charges.missing_receipt
+                                              .where(stripe_cardholders: { user_id: @users.map(&:id) })
+                                              .group("stripe_cardholders.user_id").count
       end
-      format.csv { render csv: @users.includes(:stripe_cards, :emburse_cards) }
+      format.csv { render csv: @users }
     end
   end
 
