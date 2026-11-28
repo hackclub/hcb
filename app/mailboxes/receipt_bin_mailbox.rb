@@ -12,7 +12,7 @@ class ReceiptBinMailbox < ApplicationMailbox
 
   def process
     return bounce_missing_attachments unless @attachments
-    return bounce_missing_user unless @user
+    return (@sent_to_shared_address ? bounce_unknown_sender : bounce_missing_user) unless @user
 
     # All good, now let's create the receipts
 
@@ -41,7 +41,9 @@ class ReceiptBinMailbox < ApplicationMailbox
   RECEIPTS_ADDRESSES = ["receipts@hackclub.com", "receipts@hcb.gg"].freeze
 
   def set_user
-    if mail.recipients.any? { |addr| RECEIPTS_ADDRESSES.include?(addr) }
+    @sent_to_shared_address = mail.recipients.any? { |addr| RECEIPTS_ADDRESSES.include?(addr.downcase) }
+
+    if @sent_to_shared_address
       @user = User.find_by(email: mail.from[0])
     else
       @user =
@@ -56,6 +58,10 @@ class ReceiptBinMailbox < ApplicationMailbox
 
   def bounce_missing_user
     bounce_with ReceiptBinMailer.with(mail: inbound_email).bounce_missing_user
+  end
+
+  def bounce_unknown_sender
+    bounce_with ReceiptBinMailer.with(mail: inbound_email).bounce_unknown_sender
   end
 
   def bounce_error

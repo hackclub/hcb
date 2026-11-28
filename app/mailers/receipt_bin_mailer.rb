@@ -15,6 +15,10 @@ class ReceiptBinMailer < ApplicationMailer
     mail subject: @inbound_mail&.mail&.subject || "Unknown Receipt Bin inbox"
   end
 
+  def bounce_unknown_sender
+    mail subject: @inbound_mail&.mail&.subject || "Email address not linked to HCB"
+  end
+
   def bounce_missing_attachment
     mail subject: @inbound_mail&.mail&.subject || "Missing attachment(s)"
   end
