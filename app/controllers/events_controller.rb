@@ -3,6 +3,7 @@
 class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
+  LEDGER_LOCATION_PARAMS = (SetLedgerFilters::FILTER_PARAMS + %i[q per]).freeze
 
   SETTINGS_TABS = %w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].freeze
 
@@ -1408,12 +1409,25 @@ class EventsController < ApplicationController
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
-                         .page(params[:page]).per(@per)
+    return locate_ledger_item if params[:locate].present? && auditor_signed_in?
+
+    @items = @items.page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
 
   private
+
+  def locate_ledger_item
+    destination = params.permit(*LEDGER_LOCATION_PARAMS).to_h.symbolize_keys.compact_blank
+    item = @items.find_by_hashid(params[:locate])
+    position = Ledger::Query.position_of(item, relation: @items)
+    unless position
+      return redirect_to event_ledger_path(@event, **destination), flash: { error: "That transaction isn't visible in this ledger. It may have been moved, removed, or excluded by filters." }
+    end
+
+    redirect_to event_ledger_path(@event, **destination, page: (position - 1) / @per + 1, anchor: helpers.dom_id(item))
+  end
 
   # The admin tab is only for auditors, and the donations, reimbursements and
   # card grants tabs only exist once the organization is approved and its plan

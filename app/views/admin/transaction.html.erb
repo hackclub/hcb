@@ -36,6 +36,12 @@
       <th>HCB Code</th>
       <td><%= link_to @canonical_transaction.hcb_code, hcb_code_path(@canonical_transaction.local_hcb_code) %></td>
     </tr>
+    <% if @canonical_transaction.ledger_item&.primary_ledger&.event.present? %>
+      <tr>
+        <th>Ledger</th>
+        <td><%= render "ledger/items/locate", item: @canonical_transaction.ledger_item %></td>
+      </tr>
+    <% end %>
     <tr>
       <th>MappedBy</th>
       <td><%= @canonical_transaction.canonical_event_mapping.try(:user).try(:email) %></td>

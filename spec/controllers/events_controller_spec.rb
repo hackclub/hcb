@@ -321,6 +321,25 @@ RSpec.describe EventsController do
         expect(response.body).not_to include("Declined with no amount")
       end
 
+      it "redirects locate to the correct page and transaction fragment" do
+        older = create(:ledger_item, custom_memo: "Older funding")
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: older, on_primary_ledger: true)
+        older.update_columns(status: "settled", amount_cents: 1000, ct_count: 1, datetime: 2.days.ago)
+
+        newer = create(:ledger_item, custom_memo: "Newer funding")
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: newer, on_primary_ledger: true)
+        newer.update_columns(status: "settled", amount_cents: 1000, ct_count: 1, datetime: 1.day.ago)
+
+        get(:ledger, params: { event_id: event.slug, locate: older.hashid, per: 1 })
+
+        expect(response).to redirect_to(event_ledger_path(event, page: 2, per: 1, anchor: "ledger_item_#{older.id}"))
+        expect(response.location).to end_with("#ledger_item_#{older.id}")
+
+        get(:ledger, params: { event_id: event.slug, page: 2, per: 1 })
+
+        expect(Nokogiri::HTML5(response.body).at_css("tr#ledger_item_#{older.id}").text).to include("Older funding")
+      end
+
       context "receipt drag and drop" do
         let!(:hcb_code) { create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code }
 
