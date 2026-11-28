@@ -40,7 +40,7 @@ RSpec.describe Disbursement::Outgoing, type: :model do
     context "when source subledger is set" do
       let(:source_event) { create(:event) }
       let(:source_subledger) { create(:subledger, event: source_event) }
-      let(:disbursement_with_subledger) { create(:disbursement, source_event:, source_subledger:) }
+      let(:disbursement_with_subledger) { build(:disbursement, source_event:, source_subledger:) }
       let(:outgoing_with_subledger) { disbursement_with_subledger.outgoing_disbursement }
 
       it "returns the source subledger" do

@@ -414,10 +414,10 @@ class AdminController < Admin::BaseController
                  Ledger::Item.all
                end
 
-    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+    relation = relation.unmapped if @unmapped
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
-    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
+    relation = relation.where.not(amount_cents: 0) if @nonzero
 
     @count = relation.count
 

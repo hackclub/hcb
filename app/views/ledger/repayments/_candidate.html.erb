@@ -15,21 +15,8 @@
 <% end %>
 <% confirm += " This can't be undone." %>
 
-<tr class="transaction transaction--<%= candidate.sign %>">
-  <td class="transaction__icon">
-    <div class="tooltipped tooltipped--e" aria-label="<%= candidate.humanized_type %>">
-      <%= render "ledger/items/icon", ledger_item: candidate %>
-    </div>
-  </td>
-  <td><%= date %></td>
-  <td class="transaction__memo transaction__memo--fluid min-w-[12rem]">
-    <div>
-      <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= candidate.memo %>">
-        <%= render "ledger/items/memo/memo_text", item: candidate %>
-      </div>
-    </div>
-  </td>
-  <td class="nowrap text-right"><%= candidate.amount.format %></td>
+<%# The ledger's own row, so the picker reads like the ledger it was opened from; the block adds the Choose column. Rows here are picked, not worked on, so none takes dropped receipts. %>
+<%= render layout: "ledger/item", locals: { item: candidate, show_author: false, receipt_drop: false } do %>
   <td class="text-right">
     <%= button_to "Choose",
                   ledger_item_repayment_path(ledger_item),
@@ -38,4 +25,4 @@
                   aria: { label: "Choose #{candidate.memo}, #{candidate.amount.abs.format} on #{date}" },
                   form: { data: { turbo_frame: "_top", turbo_confirm: confirm, turbo_confirm_danger: true } } %>
   </td>
-</tr>
+<% end %>

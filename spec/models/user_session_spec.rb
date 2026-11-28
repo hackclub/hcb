@@ -131,8 +131,11 @@ RSpec.describe User::Session, type: :model do
         expect(user_rendered).to eq("")
 
         activity = PublicActivity::Activity.sole
-        admin_rendered = rendered_text(activity.render(ApplicationController.renderer, current_user: admin))
-        expect(admin_rendered).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
+        admin_html = activity.render(ApplicationController.renderer, current_user: admin)
+        expect(rendered_text(admin_html)).to eq("You impersonated Hack Clubber on HCB less than a minute ago")
+
+        link = Nokogiri::HTML5.fragment(admin_html).at_css("a[href='#{Rails.application.routes.url_helpers.admin_user_path(user)}']")
+        expect(link.text).to eq("Hack Clubber")
       end
     end
 
@@ -247,6 +250,25 @@ RSpec.describe User::Session, type: :model do
       session.reload
       expected_max = preference_seconds.seconds.from_now + 1.minute # generous slack
       expect(session.expiration_at).to be <= expected_max
+    end
+  end
+
+  describe "#clear_ip_metadata!" do
+    it "clears the IP, location, and user agent" do
+      session = create(:user_session, ip: "127.0.0.1", latitude: 1, longitude: 2, user_agent: "fake firefox")
+
+      session.clear_ip_metadata!
+
+      expect(session.reload).to have_attributes(ip: nil, latitude: nil, longitude: nil, user_agent: nil)
+    end
+
+    it "leaves no copy of the user agent in the session's versions", versioning: true do
+      session = create(:user_session, user_agent: "fake firefox")
+
+      session.clear_ip_metadata!
+
+      versions = PaperTrail::Version.where(item_type: "User::Session", item_id: session.id)
+      expect(versions.map(&:object).compact.join).not_to include("fake firefox")
     end
   end
 end

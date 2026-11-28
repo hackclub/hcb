@@ -133,6 +133,41 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_security" do
+    render_views
+
+    it "renders each two-factor method with its current state" do
+      user = create(:user)
+      create_session(user, verified: true)
+      User::Totp.create!(user:, aasm_state: "verified")
+      WebauthnCredential.create!(user:, name: "YubiKey 5C", authenticator_type: :cross_platform, public_key: "pk", sign_count: 0, webauthn_id: "abc")
+      user.generate_backup_codes!
+      user.activate_backup_codes!
+
+      get(:edit_security, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Two-factor authentication")
+      expect(response.body).to include(user_disable_totp_path(user))
+      expect(response.body).to include("YubiKey 5C")
+      expect(response.body).to include(user_disable_backup_codes_path(user))
+      expect(response.body).to include("Sign me out after")
+    end
+
+    it "renders the empty states before anything is set up" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:edit_security, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(user_generate_totp_path(user))
+      expect(response.body).to include("Sign in with your fingerprint, face, or a hardware security key.")
+      expect(response.body).to include(user_generate_backup_codes_path(user))
+      expect(response.body).not_to include(user_disable_backup_codes_path(user))
+    end
+  end
+
   describe "#admin_details_emails" do
     render_views
 
@@ -171,6 +206,35 @@ RSpec.describe UsersController do
       create_session(user, verified: true)
 
       get(:admin_details_emails, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
+  describe "#audit_log", versioning: true do
+    render_views
+
+    it "lists the user's PaperTrail changes with who made them, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user, full_name: "Old Name")
+      PaperTrail.request(whodunnit: auditor.id) { user.update!(full_name: "New Name", birthday: Date.new(2008, 1, 1)) }
+      create_session(auditor, verified: true)
+
+      get(:audit_log, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Full name", "Old Name", "New Name")
+      # Encrypted columns are tracked but their ciphertext is never shown.
+      expect(response.body).to include("Birthday", "changed (encrypted)")
+      expect(response.body).not_to include("birthday_ciphertext", user.birthday_ciphertext)
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:audit_log, params: { id: other.id })
 
       expect(response).not_to have_http_status(:ok)
     end
@@ -250,7 +314,6 @@ RSpec.describe UsersController do
     it "requires sudo mode in order to change 2fa settings" do
       user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
-      user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
@@ -290,7 +353,6 @@ RSpec.describe UsersController do
     it "does not require sudo mode unless the feature flag is enabled" do
       user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
-      user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
       create_session(user, verified: true)

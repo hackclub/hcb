@@ -143,7 +143,6 @@ Rails.application.routes.draw do
       # SMS Auth
       post "start_sms_auth_verification", to: "users#start_sms_auth_verification"
       post "complete_sms_auth_verification", to: "users#complete_sms_auth_verification"
-      post "toggle_sms_auth", to: "users#toggle_sms_auth"
 
       # Logout
       delete "logout", to: "users#logout"
@@ -167,6 +166,7 @@ Rails.application.routes.draw do
       get "notifications", to: "users#edit_notifications"
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
+      get "audit_log", to: "users#audit_log"
       get "admin_details", to: "users#admin_details"
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
@@ -566,10 +566,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "dispute"
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
-
-      scope module: "hcb_code" do
-        get "subscriptions/transactions", to: "subscriptions#transactions"
-      end
     end
 
     collection do
@@ -1105,7 +1101,9 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :tags, only: [:create, :update, :destroy]
+    resources :tags, only: [:create, :update, :destroy] do
+      post :set_index, on: :member
+    end
     resources :event_tags, only: [:create, :destroy]
     resources :organizer_position_invites,
               only: [:new, :create],

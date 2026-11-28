@@ -347,6 +347,18 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe ".unmapped" do
+    it "returns items without a primary mapping" do
+      unmapped = create(:ledger_item)
+      mapped = create(:ledger_item, :with_primary_ledger)
+      secondary_only = create(:ledger_item)
+      create(:ledger_mapping, ledger: create(:ledger), ledger_item: secondary_only)
+
+      expect(described_class.unmapped).to contain_exactly(unmapped, secondary_only)
+      expect(described_class.unmapped).not_to include(mapped)
+    end
+  end
+
   describe "#refresh!" do
     it "sets amount_cents to 0 when there are no transactions" do
       item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)
@@ -421,6 +433,46 @@ RSpec.describe Ledger::Item, type: :model do
       item.reload
 
       expect(item.amount_cents).to eq(-500)
+      expect(item.receipt_required).to eq(true)
+    end
+
+    it "does not require a receipt for a Gusto payroll debit" do
+      primary_ledger = create(:event).ledger
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
+      create(:canonical_transaction, amount_cents: -500, memo: "GUSTO NET  PAY", transaction_source_type: "RawColumnTransaction", ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.receipt_required).to eq(false)
+    end
+
+    it "still requires a receipt when GUSTO only appears later in the memo" do
+      primary_ledger = create(:event).ledger
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
+      create(:canonical_transaction, amount_cents: -500, memo: "PAYMENT TO GUSTO", transaction_source_type: "RawColumnTransaction", ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
       expect(item.receipt_required).to eq(true)
     end
 

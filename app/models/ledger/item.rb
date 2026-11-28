@@ -145,6 +145,7 @@ class Ledger
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    scope :unmapped, -> { where.missing(:primary_mapping) }
 
     def status_text
       status.humanize
@@ -500,7 +501,20 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"]) && !gusto_debit?
+    end
+
+    # Gusto pulls payroll straight from an organization's account number, so
+    # there is no receipt to upload. The memo of a Column ACH transaction is
+    # "#{company_name} #{company_entry_description}" (see
+    # RawColumnTransaction#memo), so a memo whose first word is GUSTO is one
+    # whose ACH company name is GUSTO.
+    def gusto_debit?
+      return false unless linked_object_type.nil?
+
+      canonical_transactions.any? do |ct|
+        ct.transaction_source_type == "RawColumnTransaction" && ct.memo.to_s.split(" ", 2).first&.casecmp?("GUSTO")
+      end
     end
 
     def calculate_status

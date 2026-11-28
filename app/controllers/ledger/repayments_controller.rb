@@ -12,7 +12,12 @@ class Ledger
     def candidates
       authorize @item, :mark_repayment?
 
-      @candidates = Repayment.match_candidates(@item, current_user).order(datetime: :desc).page(params[:page]).per(CANDIDATES_PER_PAGE)
+      # The rows are ledger/_item, which reads these per item (see Ledger::Query#execute);
+      # the author column is off, so the author isn't needed.
+      @candidates = Repayment.match_candidates(@item, current_user)
+                             .order(datetime: :desc)
+                             .preload(:linked_object, :tags, :hcb_code, primary_ledger: [:event, { card_grant: :event }])
+                             .page(params[:page]).per(CANDIDATES_PER_PAGE)
 
       render layout: false
     end

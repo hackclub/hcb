@@ -70,7 +70,7 @@
     <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
     <% end %>
-    <% if auditor_signed_in? %>
+    <% admin_tool("flex-shrink-0", "span") do %>
       <%= link_to "Active teenagers", "?filter=active_teenagers#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teenagers", role: "tab" %>
     <% end %>
   </div>
@@ -84,7 +84,7 @@
           <th>Date invited</th>
           <th>Name</th>
           <th>Role</th>
-          <th>Contact</th>
+          <th class="text-right">Contact</th>
           <th><%# spending controls and remove buttons %></th>
         </tr>
       </thead>

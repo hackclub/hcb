@@ -50,12 +50,22 @@ const populateSharedPopover = trigger => {
       const frame = document.createElement('turbo-frame')
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
-      frame.src = src
+      // src is set by loadSharedPopoverFrame once the frame is in its final place
       frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
   }
+}
+
+// Starts the popover frame's fetch. On a fresh open this waits for modal:open:
+// jquery-modal appends the popover to <body> and then to its blocker, each move
+// disconnects the frame, and Turbo aborts the in-flight fetch on disconnect. An
+// abort that lands while the response body is streaming is an uncaught
+// AbortError (Turbo never awaits that read), which fails system specs.
+const loadSharedPopoverFrame = () => {
+  const frame = document.querySelector('#shared_popover_body turbo-frame')
+  if (frame && !frame.src) frame.src = frame.dataset.popoverSrc
 }
 
 const sharedPopoverIsOpen = () =>
@@ -84,6 +94,7 @@ const openSharedPopover = (trigger, modalClass) => {
     // first, and the close handler empties the body we just filled.
     window.unexpandReceipt()
     populateSharedPopover(trigger)
+    loadSharedPopoverFrame()
     const popover = document.getElementById('shared_popover')
     popover.scrollTop = 0
     recordSharedPopoverState(popover)
@@ -302,20 +313,26 @@ $(document).keydown(function (e) {
   }
 })
 
-window.attachTooltipListener = () => {
-  const tooltip = document.getElementById('tooltip-container')
+// Tooltips for anything `.tooltipped`, delegated from the document so they're
+// attached once and work for whatever renders later (frames, streams, menus).
+// Binding to each element on every frame load stacked another copy of every
+// handler each time, so each hover and click got slower the longer a page was
+// open.
+{
   let mutationObserver = null
+  const tooltip = () => document.getElementById('tooltip-container')
 
   const removeTooltips = () => {
-    tooltip.className = ''
+    const container = tooltip()
+    if (!container || !container.className) return
+    container.className = ''
     // Stop observing when tooltip is closed
-    if (mutationObserver) {
-      mutationObserver.disconnect()
-      mutationObserver = null
-    }
+    mutationObserver?.disconnect()
+    mutationObserver = null
   }
 
   const updateTooltipPosition = trigger => {
+    const container = tooltip()
     const triggerRect = trigger.getBoundingClientRect()
     const placement =
       [...trigger.classList]
@@ -325,50 +342,51 @@ window.attachTooltipListener = () => {
     const centerX =
       triggerRect.left +
       window.scrollX +
-      (triggerRect.width - tooltip.offsetWidth) / 2
+      (triggerRect.width - container.offsetWidth) / 2
     const centerY =
       triggerRect.top +
       window.scrollY +
-      (triggerRect.height - tooltip.offsetHeight) / 2
+      (triggerRect.height - container.offsetHeight) / 2
 
     const positions = {
       s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
       n: () => [
         centerX,
-        triggerRect.top + window.scrollY - tooltip.offsetHeight - offset,
+        triggerRect.top + window.scrollY - container.offsetHeight - offset,
       ],
       e: () => [triggerRect.right + window.scrollX + offset, centerY],
       w: () => [
-        triggerRect.left + window.scrollX - tooltip.offsetWidth - offset,
+        triggerRect.left + window.scrollX - container.offsetWidth - offset,
         centerY,
       ],
     }
 
     const [left, top] = (positions[placement] || positions.n)()
-    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` })
+    Object.assign(container.style, { left: `${left}px`, top: `${top}px` })
   }
 
   const showTooltip = trigger => {
-    if (!trigger.classList.contains('tooltipped')) return
+    const container = tooltip()
+    if (!container) return
     const label = trigger.getAttribute('aria-label')?.trim()
     if (!label) return
 
-    tooltip.className = 'active'
-    tooltip.textContent = label
+    container.className = 'active'
+    container.textContent = label
 
     // Sync size classes
     ;['tooltipped--lg', 'tooltipped--xl'].forEach(cls => {
-      if (trigger.classList.contains(cls)) tooltip.classList.add(cls)
+      if (trigger.classList.contains(cls)) container.classList.add(cls)
     })
 
     updateTooltipPosition(trigger)
 
     // Observe trigger for aria-label changes
-    if (mutationObserver) mutationObserver.disconnect()
+    mutationObserver?.disconnect()
     mutationObserver = new MutationObserver(() => {
-      const updatedLabel = trigger.getAttribute('aria-label').trim()
+      const updatedLabel = trigger.getAttribute('aria-label')?.trim()
       if (updatedLabel) {
-        tooltip.textContent = updatedLabel
+        container.textContent = updatedLabel
         updateTooltipPosition(trigger)
       }
     })
@@ -378,41 +396,68 @@ window.attachTooltipListener = () => {
     })
   }
 
-  $('.tooltipped').on({
-    mouseenter(event) {
-      if (window.innerWidth < 768) return
-      const trigger = event.currentTarget
-      showTooltip(trigger)
-    },
-    touchstart(event) {
-      const trigger = event.currentTarget
-      if (!trigger.classList.contains('tooltipped--tappable')) return
-      showTooltip(trigger)
-    },
-    mouseleave: removeTooltips,
-  })
+  // The innermost `.tooltipped` the pointer moved into or out of, as
+  // mouseenter and mouseleave would have fired on it
+  const crossed = ({ target, relatedTarget }) => {
+    const trigger = target.closest?.('.tooltipped')
+    return trigger && !trigger.contains(relatedTarget) ? trigger : null
+  }
 
-  $(document).on('click', function (event) {
-    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
-    if (
-      !$(event.target).closest('.tooltipped--tappable').length &&
-      !$(event.target).closest('#tooltip-container').length
-    ) {
-      removeTooltips()
-    }
+  document.addEventListener('mouseover', event => {
+    if (window.innerWidth < 768) return
+    const trigger = crossed(event)
+    if (trigger) showTooltip(trigger)
   })
-  // on unload turbo
-  $(document).on('turbo:before-visit', removeTooltips)
-  $(document).on('beforeunload', removeTooltips)
-  $(document).on('turbo:frame-load', removeTooltips)
+  document.addEventListener('mouseout', event => {
+    if (crossed(event)) removeTooltips()
+  })
+  document.addEventListener(
+    'touchstart',
+    ({ target }) => {
+      const trigger = target.closest?.('.tooltipped')
+      if (trigger?.classList.contains('tooltipped--tappable'))
+        showTooltip(trigger)
+    },
+    { passive: true }
+  )
+  document.addEventListener('click', ({ target }) => {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
+    if (!target.closest?.('.tooltipped--tappable, #tooltip-container'))
+      removeTooltips()
+  })
+  document.addEventListener('turbo:before-visit', removeTooltips)
+  window.addEventListener('beforeunload', removeTooltips)
+  document.addEventListener('turbo:frame-load', removeTooltips)
+
+  // Delegated, so there's nothing to attach; kept for callers that still ask
+  window.attachTooltipListener = () => {}
 }
 
-$(document).on('turbo:frame-load', window.attachTooltipListener)
-$(document).on('turbo:after-stream-render', window.attachTooltipListener)
+// If you add the money behavior to an input, it'll add commas, only allow two
+// numbers for cents, and only permit numbers to be entered. Delegated, so it
+// covers inputs in menus, frames and popovers without watching the whole page
+// for changes. While it captures, so everything else sees the formatted value.
+document.addEventListener(
+  'input',
+  ({ target }) => {
+    if (!target.matches?.('input[data-behavior~="money"]')) return
+
+    let value = target.value
+      .replace(/,/g, '') // remove all commas
+      .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // add commas for thousands
+
+    if (value.includes('.')) {
+      let parts = value.split('.')
+      value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '')
+    }
+
+    if (target.value !== value) target.value = value
+  },
+  true
+)
 
 $(document).on('turbo:load', function () {
-  window.attachTooltipListener()
-
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
@@ -470,35 +515,6 @@ $(document).on('turbo:load', function () {
 
     $(this).val(newVal)
   })
-
-  // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
-  // and only permit numbers to be entered
-
-  function attachMoneyInputListener() {
-    $('input[data-behavior~="money"]')
-      .off('input')
-      .on('input', function () {
-        let value = $(this)
-          .val()
-          .replace(/,/g, '') // remove all commas
-          .replace(/[^0-9.]+/g, '') // remove non-numeric/non-dot characters
-          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') // add commas for thousands
-
-        if (value.includes('.')) {
-          let parts = value.split('.')
-          value = parts[0] + '.' + (parts[1] ? parts[1].substring(0, 2) : '')
-        }
-
-        $(this).val(value)
-      })
-  }
-
-  attachMoneyInputListener()
-
-  // Used to attach the money input listener to inputs inside of menus / popups.
-
-  const observer = new MutationObserver(() => attachMoneyInputListener())
-  observer.observe(document.body, { childList: true, subtree: true })
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
@@ -871,6 +887,12 @@ $(document).on('wheel', 'input[type=number]', e => {
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
     recordSharedPopoverState(modal.elm[0])
+  }
+})
+
+$(document).on($.modal.OPEN, function (event, modal) {
+  if (modal?.elm?.[0]?.id === 'shared_popover') {
+    loadSharedPopoverFrame()
   }
 })
 

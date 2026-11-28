@@ -37,6 +37,25 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
         expect(response.body).to include(%(value="#{expense.ledger_item.hashid}"))
       end
 
+      it "renders each candidate as a ledger row with a Choose button" do
+        income
+
+        get :candidates, params: { item_id: expense.ledger_item.hashid }
+
+        # The memo links to the candidate's popover like a ledger row, and the row ends in the Choose button.
+        expect(response.body).to include(ledger_item_path(income.ledger_item))
+        expect(response.body).to include(%(id="#{ActionView::RecordIdentifier.dom_id(income.ledger_item, :badges)}"))
+        expect(response.body).to include(%(aria-label="Choose #{income.ledger_item.memo}, $100.00 on #{income.ledger_item.datetime.strftime("%b %-d, %Y")}"))
+      end
+
+      it "doesn't make candidates drop targets for receipts" do
+        income
+
+        get :candidates, params: { item_id: expense.ledger_item.hashid }
+
+        expect(response.body).not_to include("file-drop")
+      end
+
       it "shows an empty state when nothing matches" do
         get :candidates, params: { item_id: expense.ledger_item.hashid }
 

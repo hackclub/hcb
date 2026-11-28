@@ -1,0 +1,3 @@
+<%= turbo_frame_tag :audit_log do %>
+  <%= render "application/audit_log", versions: @user.versions %>
+<% end %>

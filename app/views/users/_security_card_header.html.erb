@@ -1,0 +1,11 @@
+<%# locals: (title:, icon:, count: nil) %>
+<div class="card__banner card__banner--top border-bottom flex items-center justify-between flex-wrap gap-x-4 gap-y-2">
+  <h3 class="flex items-center gap-x-2 my0 h4">
+    <%= inline_icon icon, size: 24, class: "flex-shrink-0" %>
+    <span><%= title %></span>
+    <%= badge_for count, class: "bg-muted" unless count.nil? %>
+  </h3>
+  <div class="flex flex-row flex-wrap items-center gap-x-2 gap-y-2">
+    <%= yield %>
+  </div>
+</div>

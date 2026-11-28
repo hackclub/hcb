@@ -20,7 +20,7 @@
           <%= pop_icon_to "more",
               "#",
               class: "align-middle", "aria-label": "More Options",
-              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
             <% if @position.draft? %>
@@ -233,7 +233,7 @@
           <% @payments.each do |payment| %>
             <tr class="<%= "clickable" if organizer_signed_in? %>">
               <td>
-                <span class="badge bg-<%= payment.state_color %>"><%= payment.state_text %></span>
+                <span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span>
               </td>
               <td><%= format_date payment.created_at %></td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">

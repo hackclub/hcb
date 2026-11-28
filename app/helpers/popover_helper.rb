@@ -33,11 +33,12 @@ module PopoverHelper
   end
 
   def ledger_item_popover_data(item, title: nil, state_title: nil)
-    # Only serve the ledger item popover to users who can actually view the ledger
-    # item show page. Everyone else gets the HCB code popover instead — otherwise
-    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
-    # the popover would render empty.
-    if auditor_signed_in? && policy(item).show?
+    # Serve the ledger item popover to anyone the ledger item show page itself
+    # is served to, so a row's popover and its link open the same rendering.
+    # Everyone else gets the HCB code popover instead — otherwise the injected
+    # frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and the
+    # popover would render empty.
+    if policy(item).show?
       popover_data(
         title: title || item.pretty_title,
         src: item.popover_path,

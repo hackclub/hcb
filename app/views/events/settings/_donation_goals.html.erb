@@ -10,8 +10,13 @@
   <% end %>
   <div>
     <div class="field field--checkbox mb0">
-      <span style="font-weight: 700">Enable donation goals</span>
-      <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+      <div class="flex-1">
+        <span style="font-weight: 700">Enable donation goals</span>
+        <p class="text-muted mt-0.5 mb-0 text-sm">
+          Show a progress bar on your donation page that tracks donations toward a target amount.
+        </p>
+      </div>
+      <div class="field--checkbox--switch" style="flex-shrink:0">
         <%= form.label :donation_goal_enabled do %>
           <%= form.check_box :donation_goal_enabled,
             data: {

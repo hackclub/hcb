@@ -70,3 +70,70 @@ RSpec.describe TagsController do
     end
   end
 end
+
+RSpec.describe TagsController, "#set_index" do
+  include SessionSupport
+
+  let(:user) { create(:user) }
+  let(:event) { create(:event) }
+  let!(:tags) { %w[Food Travel Supplies].map { |label| create(:tag, event:, label:) } }
+
+  def set_index(tag, index, event: self.event)
+    post(:set_index, params: { event_id: event.slug, id: tag.id, index: }, as: :json)
+  end
+
+  context "as a member" do
+    before do
+      create(:organizer_position, user:, event:, role: :member)
+      create_session(user, verified: true)
+    end
+
+    it "moves the tag and renumbers the event's tags" do
+      set_index(tags[2], 0)
+
+      expect(response).to have_http_status(:no_content)
+      expect(event.tags.reload.map(&:label)).to eq(%w[Supplies Food Travel])
+      expect(event.tags.map(&:sort_index)).to eq([0, 1, 2])
+    end
+
+    it "sorts a tag created after a reorder last" do
+      set_index(tags[1], 2)
+      newer = create(:tag, event:, label: "Newer")
+
+      expect(newer.sort_index).to be_nil
+      expect(event.tags.reload.map(&:label)).to eq(%w[Food Supplies Travel Newer])
+    end
+
+    it "rejects an index outside the event's tags" do
+      set_index(tags[0], 3)
+      expect(response).to have_http_status(:bad_request)
+
+      set_index(tags[0], -1)
+      expect(response).to have_http_status(:bad_request)
+
+      expect(event.tags.reload.map(&:label)).to eq(%w[Food Travel Supplies])
+    end
+
+    it "does not find another organization's tag" do
+      other_event = create(:event)
+      other_tag = create(:tag, event: other_event, label: "Elsewhere")
+
+      expect { set_index(other_tag, 0) }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
+  context "as a reader" do
+    before do
+      create(:organizer_position, user:, event:, role: :reader)
+      create_session(user, verified: true)
+    end
+
+    it "is not allowed" do
+      set_index(tags[2], 0)
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to include("not authorized")
+      expect(event.tags.reload.map(&:label)).to eq(%w[Food Travel Supplies])
+    end
+  end
+end

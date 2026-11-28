@@ -29,7 +29,7 @@
       <th>Status</th>
       <th>Service</th>
       <th>Parties</th>
-      <th class="w-24">Links</th>
+      <th class="w-24 text-right">Links</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
@@ -66,7 +66,7 @@
             <br>
           <% end %>
         </td>
-        <td>
+        <td class="text-right">
           <%= link_to "DocuSeal", contract.docuseal_submission_url if contract.sent_with_docuseal? %>
           <%= link_to "Document", contract.document if contract.document.present? %>
         </td>
