@@ -63,27 +63,4 @@ $(document).on('turbo:load', function () {
       )
     }
   )
-
-  let currentPayeeVal = '%person%'
-  let currentAmountVal = '%amount%'
-
-  $('[data-behavior~="send_check_modal_trigger"]').click(function () {
-    const payee = $('[data-behavior~="check_payee_name_field"]').val()
-    const amount = $('[data-behavior~="check_amount_field"]').val()
-
-    $('[data-behavior~="modal_confirm_words"]').html(function () {
-      return $('[data-behavior~="modal_confirm_words"]')
-        .html()
-        .replace(currentAmountVal, '$' + amount)
-        .replace(currentPayeeVal, payee)
-    })
-
-    currentAmountVal = '$' + amount
-    currentPayeeVal = payee
-  })
-
-  $('[data-behavior~="submit_check"]').click(event => {
-    event.preventDefault()
-    $('form').submit()
-  })
 })
