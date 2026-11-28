@@ -37,6 +37,7 @@
               end,
       disabled: !can_toggle_two_factor,
       disabled_reason: two_factor_disabled_reason,
+      enable_warning: "This emails every member of #{event.name} right away. Members without two-factor authentication get #{pluralize(Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i, "day")} to enable it before they lose access. Require two-factor authentication?",
       disable_warning: "Members will no longer need two-factor authentication to access #{event.name}, and anyone without it will regain access right away. (Members who already enabled two-factor authentication will keep it on their accounts.) Turn off this requirement?",
       event:
     } %>

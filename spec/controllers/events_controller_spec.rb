@@ -420,6 +420,7 @@ RSpec.describe EventsController do
         button = page.at_css("#require-two-factor-authentication form[action='#{enable_feature_path(feature: :require_two_factor_authentication_2026_11_24, event_id: event.id)}'] button")
         expect(button).to be_present
         expect(button["disabled"]).to be_nil
+        expect(button["data-turbo-confirm"]).to end_with("Require two-factor authentication?")
         expect(page.css("#require-two-factor-authentication .tooltipped")).to be_empty
       end
 

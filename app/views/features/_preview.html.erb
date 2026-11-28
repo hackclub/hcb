@@ -35,7 +35,7 @@
                   event_id: local_assigns[:event]&.id,
                   user_id: local_assigns[:user]&.id
                 ),
-                data: { turbo_frame: "_top" },
+                data: { turbo_confirm: local_assigns[:enable_warning], turbo_frame: "_top" },
                 class: "btn bg-info",
                 disabled:
               ) %>

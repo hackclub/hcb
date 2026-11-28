@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
 # An organization can require every member to use two-factor authentication.
-# The requirement is a Flipper flag enabled per organization from the feature
-# previews page; the time the flag was enabled (the gate's `created_at`) is
-# the start of a grace period, after which members without two-factor
-# authentication lose access to the organization until they turn it on.
+# The requirement is the `require_two_factor_authentication_2026_11_24`
+# Flipper flag enabled for the organization (an actor gate) from the feature
+# previews page; the time that gate was created is the start of a grace
+# period, after which members without two-factor authentication lose access
+# to the organization until they turn it on.
+#
+# Only the per-organization actor gate counts. A boolean, group or percentage
+# gate on the flag would turn it on for every organization at once with no
+# emails and no deadline, so those are ignored.
 class Event
   module TwoFactorAuthenticationRequirement
     extend ActiveSupport::Concern
@@ -18,19 +23,17 @@ class Event
     end
 
     def two_factor_authentication_required?
-      Flipper.enabled?(:require_two_factor_authentication_2026_11_24, self)
+      Flipper[:require_two_factor_authentication_2026_11_24].actors_value.include?(flipper_id)
     end
 
-    # When the requirement was turned on, read off the Flipper gate. `nil`
-    # when the flag is off, or when it was enabled somewhere without a
+    # When the requirement was turned on, read off the organization's actor
+    # gate row. `nil` when the flag is off, or when it was enabled without a
     # persisted gate (e.g. the in-memory adapter in specs).
     def two_factor_authentication_required_at
       return nil unless two_factor_authentication_required?
+      return @two_factor_authentication_required_at if defined?(@two_factor_authentication_required_at)
 
-      @two_factor_authentication_required_at ||= begin
-        gates = Flipper::Adapters::ActiveRecord::Gate.where(feature_key: "require_two_factor_authentication_2026_11_24")
-        gates.find_by(key: "actors", value: flipper_id)&.created_at || gates.find_by(key: "boolean")&.created_at
-      end
+      @two_factor_authentication_required_at = Flipper::Adapters::ActiveRecord::Gate.find_by(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: flipper_id)&.created_at
     end
 
     def two_factor_authentication_deadline

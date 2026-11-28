@@ -27,6 +27,33 @@ RSpec.describe FeaturesController do
       expect(PublicActivity::Activity.where(key: "event.two_factor_authentication_required", trackable: event, owner: signee)).to exist
     end
 
+    it "does nothing when the requirement is already on" do
+      signee = create(:user, :with_two_factor_authentication)
+      create(:organizer_position, event:, user: signee, role: :manager, is_signee: true)
+      create(:organizer_position, event:, role: :member)
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+      create_session(signee, verified: true)
+
+      expect {
+        PublicActivity.with_tracking { post(:enable_feature, params: { feature: :require_two_factor_authentication_2026_11_24, event_id: event.id }) }
+      }.not_to have_enqueued_mail(EventMailer, :two_factor_authentication_required)
+
+      expect(response).to redirect_to(edit_event_path(event, tab: :features))
+      expect(flash[:info]).to eq("Two-factor authentication is already required for #{event.name}.")
+      expect(PublicActivity::Activity.where(key: "event.two_factor_authentication_required", trackable: event)).not_to exist
+    end
+
+    it "can't be attached to a user" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      post(:enable_feature, params: { feature: :require_two_factor_authentication_2026_11_24 })
+
+      expect(response).to redirect_to(settings_previews_path)
+      expect(flash[:error]).to eq("Sorry, this feature flag doesn't currently exist.")
+      expect(Flipper.enabled?(:require_two_factor_authentication_2026_11_24, user)).to eq(false)
+    end
+
     it "refuses a signee who doesn't use two-factor authentication themselves" do
       signee = create(:user)
       create(:organizer_position, event:, user: signee, role: :manager, is_signee: true)

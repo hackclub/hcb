@@ -36,12 +36,21 @@ RSpec.describe Event::TwoFactorAuthenticationRequirement, type: :model do
       expect(event.two_factor_authentication_deadline).to eq(enabled_at + 7.days)
     end
 
-    it "falls back to the boolean gate when the :require_two_factor_authentication_2026_11_24 is on for everyone" do
+    it "ignores a boolean gate, which would turn the requirement on everywhere at once" do
       enabled_at = Time.zone.parse("2026-11-24 12:00:00")
       Flipper.enable(:require_two_factor_authentication_2026_11_24)
       Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "boolean", value: "true", created_at: enabled_at, updated_at: enabled_at)
 
-      expect(event.two_factor_authentication_deadline).to eq(enabled_at + 7.days)
+      expect(event.two_factor_authentication_required?).to eq(false)
+      expect(event.two_factor_authentication_deadline).to be_nil
+      expect(Event.requiring_two_factor_authentication).to be_empty
+    end
+
+    it "is nil when the flag is on without a persisted gate row" do
+      Flipper.enable_actor(:require_two_factor_authentication_2026_11_24, event)
+
+      expect(event.two_factor_authentication_required?).to eq(true)
+      expect(event.two_factor_authentication_deadline).to be_nil
     end
   end
 
