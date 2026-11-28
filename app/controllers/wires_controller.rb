@@ -69,20 +69,26 @@ class WiresController < ApplicationController
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     ensure_legal_entity_payable!(@wire, classification: params[:classification])
 
+    if params[:charge_fee] == "1"
+      fee_event = @wire.small_wire_fee_event
+      raise ArgumentError, "Couldn't find an organization to charge this wire's fee to, so the wire wasn't sent." if fee_event.nil?
+    end
+
     @wire.send_wire!
 
-    if params[:charge_fee] == "1"
+    if fee_event
       disbursement = DisbursementService::Create.new(
         name: "Low-value wire transfer fee",
         destination_event_id: EventMappingEngine::EventIds::HACK_CLUB_BANK,
-        source_event_id: @wire.event.id,
+        source_event_id: fee_event.id,
         amount: Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0,
         requested_by_id: current_user.id,
-        fronted: @wire.event.plan.front_disbursements_enabled?,
+        fronted: fee_event.plan.front_disbursements_enabled?,
         transfer_type: "transfer"
       ).run
 
-      disbursement.comments.create!(content: "This #{helpers.number_to_currency(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0)} fee covers the cost of sending a wire under $500: #{ledger_item_url(@wire.ledger_item)}", user: current_user)
+      wire_link = @wire.reimbursement_payout_holding.present? ? reimbursement_report_url(@wire.reimbursement_payout_holding.report) : ledger_item_url(@wire.ledger_item)
+      disbursement.comments.create!(content: "This #{helpers.number_to_currency(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0)} fee covers the cost of sending a wire under $500: #{wire_link}", user: current_user)
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }

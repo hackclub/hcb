@@ -158,10 +158,14 @@
         </div>
 
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>
-          <div class="field mb-2">
-            <%= form.check_box :charge_fee %>
-            <%= form.label :charge_fee, "Charge #{@wire.event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} to cover transfer fee?", class: "bold ml-2" %>
-          </div>
+          <% if (fee_event = @wire.small_wire_fee_event) %>
+            <div class="field mb-2">
+              <%= form.check_box :charge_fee %>
+              <%= form.label :charge_fee, "Charge #{fee_event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} to cover transfer fee?", class: "bold ml-2" %>
+            </div>
+          <% else %>
+            <p class="mb-2">This wire has no organization to charge a transfer fee to.</p>
+          <% end %>
           <% if @wire.payment.present? %>
             <%= render partial: "payments/classification_input", locals: { form:, classification: @wire.payment.classification } %>
           <% end %>
