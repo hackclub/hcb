@@ -47,7 +47,8 @@
     <%= filter %>
   <% end %>
 
-  <% if items.present? %>
+  <% pending_fee_transaction = render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
+  <% if items.load.any? || pending_fee_transaction.present? %>
     <div class="table-container">
       <table>
         <thead>
@@ -61,7 +62,7 @@
           </tr>
         </thead>
         <tbody>
-          <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
+          <%= pending_fee_transaction %>
           <%= render partial: "ledger/item", locals: { show_author:, receipt_upload_button:, show_event_name: }, collection: items, as: :item %>
         </tbody>
       </table>
