@@ -28,10 +28,10 @@ RSpec.describe EventService::Create do
       )
     end
 
-    it "creates financially frozen organizations outside demo mode" do
+    it "creates financially frozen organizations" do
       event = build_service(invited_by: creator).run
 
-      expect(event.reload).to have_attributes(demo_mode: false, financially_frozen: true)
+      expect(event.reload).to be_financially_frozen
     end
 
     context "when created by a member of the parent" do

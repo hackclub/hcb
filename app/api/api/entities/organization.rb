@@ -20,7 +20,6 @@ module Api
           category
         end
         expose :is_public, as: :transparent, documentation: { type: "boolean" }
-        expose :demo_mode, documentation: { type: "boolean" }
         expose :financially_frozen, documentation: { type: "boolean" }
         expose :logo do |organization|
           url_for_attached organization.logo

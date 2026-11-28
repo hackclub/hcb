@@ -31,10 +31,4 @@ class IncreaseAccountNumber < ApplicationRecord
            primary_key: :increase_account_number_id,
            inverse_of: :increase_account_number
 
-  validate do
-    if event.demo_mode?
-      errors.add(:base, "Can't create an account number for a Playground Mode org")
-    end
-  end
-
 end

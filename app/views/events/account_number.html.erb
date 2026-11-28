@@ -1,7 +1,7 @@
 <% title "Account number for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :account_number %>
-<%= render "events/account_number_modal" unless @event.demo_mode? %>
+<%= render "events/account_number_modal" %>
 
 <h1 class="heading items-center">
   <div class="flex flex-col justify-center">
@@ -10,20 +10,14 @@
     </span>
     <h4 class="mt1 mb1 muted medium center">Connect your HCB account to GoFundMe, Shopify, Venmo, and more.</h4>
   </div>
-  <% unless @event.demo_mode? %>
-    <a href="#" data-behavior="modal_trigger" data-modal="account_number" class="btn">
-      <%= inline_icon "bank-account" %>
-      Account details
-    </a>
-  <% end %>
+  <a href="#" data-behavior="modal_trigger" data-modal="account_number" class="btn">
+    <%= inline_icon "bank-account" %>
+    Account details
+  </a>
 </h1>
 
-<% if @event.demo_mode? %>
-  <%= blankslate "Unavailable in Playground Mode" %>
-<% else %>
-  <%# Right after the account number is generated without JavaScript, the page shows it revealed. %>
-  <%= render "events/account_number_details", revealed: @animated, animated: @animated %>
-<% end %>
+<%# Right after the account number is generated without JavaScript, the page shows it revealed. %>
+<%= render "events/account_number_details", revealed: @animated, animated: @animated %>
 
 <% if @event.column_account_number.present? %>
   <% if @show_transfer_callout %>
@@ -37,6 +31,6 @@
   <% end %>
 
   <%= render "ledgers/ledger", ledger: @ledger, items: @ledger_items, show_author: false %>
-<% elsif !@event.demo_mode? %>
+<% else %>
   <%= blankslate "No transactions yet" %>
 <% end %>

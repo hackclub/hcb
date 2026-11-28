@@ -13,7 +13,7 @@
       </tr>
       </thead>
       <tbody>
-      <% linkable = organizer_signed_in? && !@event.demo_mode %>
+      <% linkable = organizer_signed_in? %>
       <% stripe_cards.each do |c| %>
         <tr class="<%= "clickable" if linkable %>">
           <%# Cardholder %>
