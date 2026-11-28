@@ -397,6 +397,18 @@ RSpec.describe EventsController do
         Flipper::Adapters::ActiveRecord::Gate.create!(feature_key: "require_two_factor_authentication_2026_11_24", key: "actors", value: event.flipper_id, created_at: at, updated_at: at)
       end
 
+      it "escapes the organization name in the card" do
+        event.update!(name: "Hack Club <img src=x onerror=alert(1)>")
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+
+        get(:edit, params: { id: event.slug, tab: "features" })
+
+        expect(response.body).to include("Require every member of Hack Club &lt;img src=x onerror=alert(1)&gt; to enable")
+        expect(response.body).not_to include("<img src=x onerror=alert(1)>")
+      end
+
       it "lets a contract signee with two-factor authentication turn it on" do
         signee = create(:user, :with_two_factor_authentication)
         create(:organizer_position, user: signee, event:, role: :manager, is_signee: true)

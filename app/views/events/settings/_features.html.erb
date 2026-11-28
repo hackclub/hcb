@@ -12,7 +12,7 @@
       classes: ["feature-two-factor-authentication"],
       feature_flag: :require_two_factor_authentication_2026_11_24,
       name: "Require Two-Factor Authentication",
-      description: "Require every member of #{event.name} to enable two-factor authentication on their HCB account. " \
+      description: "Require every member of #{ERB::Util.html_escape(event.name)} to enable two-factor authentication on their HCB account. " \
                    "Turning this on emails your whole team right away. Current members without it get " \
                    "#{pluralize(Event::TwoFactorAuthenticationRequirement::GRACE_PERIOD.in_days.to_i, "day")} to set it up before losing access until they enable it; " \
                    "anyone who joins after that will need it enabled first.",
