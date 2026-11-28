@@ -10,7 +10,7 @@
   <section class="mb4">
     <h2 class="mt0 mb1">Two-factor authentication</h2>
     <p class="h5 muted mt0 mb3">
-      Add a second step after your email login code. Set up at least one method below, then turn it on.
+      Add a second step after your email login code.
     </p>
 
     <%= turbo_frame_tag :sms_auth_card do %>
@@ -92,7 +92,7 @@
 
     <%= turbo_frame_tag :totp_auth_card do %>
       <div class="card border mb3" id="totp">
-        <%= render layout: "users/security_card_header", locals: { title: "Time-based one time passwords", icon: "clock" } do %>
+        <%= render layout: "users/security_card_header", locals: { title: "Authenticator app", icon: "clock" } do %>
           <% if @user.totp.present? %>
             <%= link_to user_disable_totp_path(@user), class: "btn px2 h4 bg-error", data: { turbo_method: :post }, disabled: do %>
               <%= inline_icon "minus", size: home_action_size %>
@@ -108,7 +108,7 @@
           <% if @user.totp.present? %>
             <%= disabled ? "#{@user.name} set up" : "You set up" %> an authenticator app on <span class="font-bold"><%= @user.totp.created_at.strftime("%B %e, %Y") %></span>.
           <% else %>
-            Use an authenticator app like 1Password, Google Authenticator or Authy to generate login codes.
+            Use an authenticator app like 1Password, Google Authenticator, or Authy to generate login codes.
           <% end %>
         </p>
       </div>
@@ -118,7 +118,7 @@
       <%= render layout: "users/security_card_header", locals: { title: "Security keys", icon: "fingerprint", count: @user.webauthn_credentials.count } do %>
         <button class="btn px2 h4 <%= "disabled" if disabled %>" data-behavior="modal_trigger" data-modal="webauthn_register">
           <%= inline_icon "plus", size: home_action_size %>
-          Set up
+          <%= @user.webauthn_credentials.any? ? "Add key" : "Set up" %>
         </button>
       <% end %>
       <% if @user.webauthn_credentials.any? %>
@@ -127,7 +127,7 @@
         </div>
       <% else %>
         <p class="m0">
-          Sign in with your fingerprint, face or a hardware security key.
+          Sign in with your fingerprint, face, or a hardware security key.
         </p>
       <% end %>
     </div>
@@ -149,7 +149,7 @@
       <%= turbo_frame_tag :backup_codes_card do %>
         <p class="m0">
           <% if @user.backup_codes_enabled? %>
-            <%= disabled ? "#{@user.name} last generated" : "You last generated" %> a set of 10 backup codes on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:active, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>, and <span class="font-bold"><%= @user.backup_codes.active.size %></span> are still valid. Regenerating invalidates the current set.
+            <%= disabled ? "#{@user.name} last generated" : "You last generated" %> a set of 10 backup codes on <span class="font-bold"><%= @user.backup_codes.where(aasm_state: [:active, :used]).maximum(:created_at).strftime("%B %e, %Y") %></span>, with <span class="font-bold"><%= @user.backup_codes.active.size %></span> remaining. Regenerating invalidates the current set.
           <% else %>
             One-time codes that get you in if you lose access to your other methods. We recommend generating a set and keeping it somewhere safe.
           <% end %>
@@ -179,7 +179,7 @@
         <div class="flex items-end justify-between flex-wrap gap-x-4 gap-y-2">
           <div class="field m0">
             <%= form.label :session_validity_preference, "Sign me out after" %>
-            <p class="h5 muted mt0 mb1">Sessions end automatically after this long.</p>
+            <p class="h5 muted mt0 mb1">Sessions expire automatically after this period.</p>
             <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
           </div>
           <%= form.submit "Save", class: "my0", disabled: %>

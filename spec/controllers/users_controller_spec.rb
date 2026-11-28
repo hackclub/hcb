@@ -162,7 +162,7 @@ RSpec.describe UsersController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(user_generate_totp_path(user))
-      expect(response.body).to include("Sign in with your fingerprint, face or a hardware security key.")
+      expect(response.body).to include("Sign in with your fingerprint, face, or a hardware security key.")
       expect(response.body).to include(user_generate_backup_codes_path(user))
       expect(response.body).not_to include(user_disable_backup_codes_path(user))
     end
