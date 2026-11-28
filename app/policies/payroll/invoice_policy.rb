@@ -10,6 +10,11 @@ module Payroll
       contractor? || on_behalf?
     end
 
+    # Anyone who can see the contractor's page can see its invoices.
+    def show?
+      Payroll::PositionPolicy.new(user, record.payroll_position).show?
+    end
+
     def on_behalf?
       record.payroll_position.onboarded? && reviewer?
     end
