@@ -34,6 +34,13 @@ RSpec.describe Reimbursement::FailedPayoutReminderJob, versioning: true do
       .not_to have_enqueued_mail(ReimbursementMailer, :failed_payout_reminder)
   end
 
+  it "skips payouts that failed because Column was unavailable" do
+    payout_holding.update!(failure_reason: :column_unavailable, retry_at: 1.day.from_now)
+
+    expect { described_class.perform_now(payout_holding, 3, payout_holding.current_failure_id) }
+      .not_to have_enqueued_mail(ReimbursementMailer, :failed_payout_reminder)
+  end
+
   it "skips reminders from an earlier failure" do
     first_failure_id = payout_holding.current_failure_id
     payout_holding.mark_settled!
