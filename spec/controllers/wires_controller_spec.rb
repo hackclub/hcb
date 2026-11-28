@@ -120,20 +120,26 @@ RSpec.describe WiresController do
   end
 
   describe "send_wire" do
-    it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
-      admin = create(:user, :make_admin)
-      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
-      event = create(:event, :with_positive_balance)
+    let(:admin) { create(:user, :make_admin) }
+    let(:event) { create(:event, :with_positive_balance) }
+
+    def create_wire(amount_cents:)
       stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
         .to_return_json(status: 200, body: { country_code: "DE" })
-      wire = create(:wire, :pending, event:)
+      create(:wire, :pending, event:, amount_cents:, user: admin)
+    end
 
+    before do
+      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
       allow_any_instance_of(GovernanceService::Admin::Transfer::Approval).to receive(:ensure_may_approve!)
+      create_session(admin, verified: true)
+    end
+
+    it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
+      wire = create_wire(amount_cents: 100_00)
       allow_any_instance_of(Wire).to receive(:send_wire!)
 
-      create_session(admin, verified: true)
-
-      post(:send_wire, params: { id: wire.id, charge_fee: "1" })
+      post(:send_wire, params: { id: wire.id, fee_decision: "charge" })
 
       expect(response).to redirect_to(wire_process_admin_path(wire))
       expect(flash[:success]).to eq("Thanks for approving that wire.")

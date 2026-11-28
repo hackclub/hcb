@@ -168,7 +168,7 @@
               <% elsif report.event.nil? %>
                <span class="bold warning">Warning</span>: please <%= link_to "select an event", "#", data: { behavior: "modal_trigger", modal: "edit" } %> to request reimbursement from.
               <% elsif report.below_minimum_amount? %>
-               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == 500_00 %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>.
+               <span class="bold warning">Warning</span>: your report is below <%= "#{render_money report.event.minimum_wire_amount_cents}," if report.event.minimum_wire_amount_cents == Wire::MINIMUM_AMOUNT_CENTS %> the minimum amount for a wire transfer. <%= link_to "Learn more", "https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer", data: { behavior: "modal_trigger", modal: "wire_requirements" } %>.
               <% end %>
             <% end %>
           </div>
@@ -297,7 +297,7 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
-            <% if payout_method.is_a?(LegalEntity::PayoutMethod::Wire) && report.amount_to_reimburse_cents < 500_00 && !report.event.wire_fee_waived? %>
+            <% if payout_method.is_a?(LegalEntity::PayoutMethod::Wire) && report.amount_to_reimburse_cents < Wire::MINIMUM_AMOUNT_CENTS && !report.event.wire_fee_waived? %>
               <% button_hint = capture do %>
                 <%= button_hint %>
                 <% admin_tool("p-2 mt-2") do %>
