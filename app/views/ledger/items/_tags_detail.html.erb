@@ -16,7 +16,7 @@
   ledger/items/_tag_menu_content) and, without tags to toggle, no menu at all.
 %>
 <% can_toggle = event.present? && policy(item).toggle_tag? && (event.tags.any? || @event.present?) %>
-<% if event.present? && !event.demo_mode? && (item.tags.any? || can_toggle) %>
+<% if event.present? && (item.tags.any? || can_toggle) %>
   <% row = capture do %>
     <div>
       <strong>Tags</strong>

@@ -96,7 +96,7 @@
           <%= render "hcb_codes/event_name", event: %>
         <% end %>
 
-        <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
+        <% if defined?(show_tags) && show_tags %>
           <div class="flex flex-wrap tags ledger_item_<%= ledger_item&.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "ledger/items/tag", collection: tagged_with, locals: { item: ledger_item } %>
           </div>

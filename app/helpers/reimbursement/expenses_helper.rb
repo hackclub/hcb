@@ -16,7 +16,7 @@ module Reimbursement
     end
 
     def move_expense_event_options
-      @move_expense_event_options ||= current_user.events.not_hidden.filter_demo_mode(false).pluck(:name, :id)
+      @move_expense_event_options ||= current_user.events.not_hidden.pluck(:name, :id)
     end
     # rubocop:enable Rails/HelperInstanceVariable
 
