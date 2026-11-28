@@ -82,30 +82,4 @@ RSpec.describe MarketingHelper, type: :helper do
       expect(faqs.find { |f| f[:id] == "teenagers" }[:a]).to include("8,200+")
     end
   end
-
-  describe "#ai_safety_ledger_rows" do
-    it "has one grant, its 7% fee, and spending, with every icon present" do
-      rows = helper.ai_safety_ledger_rows
-
-      expect(rows.count { |r| r[:amount_cents].positive? }).to eq(1)
-
-      # The example has to show the real fee on the grant, and the fee shouldn't read as the main cost.
-      grant, fee = rows.first(2)
-      expect(fee[:amount_cents]).to eq(-grant[:amount_cents] * 7 / 100)
-      expect(rows.min_by { |r| r[:amount_cents] }).not_to eq(fee)
-
-      # inline_icon raises on a missing icon, so check them all exist.
-      rows.each { |r| expect(Rails.root.join("app/assets/images/icons/#{r[:icon]}.svg")).to exist }
-
-      # Every row opens to something when clicked.
-      expect(rows).to all(include(details: be_present))
-    end
-  end
-
-  describe "#ai_safety_ledger_amount" do
-    it "signs amounts with a plus or a true minus" do
-      expect(helper.ai_safety_ledger_amount(850_000_00)).to eq("+$850,000.00")
-      expect(helper.ai_safety_ledger_amount(-48_150_00)).to eq("\u2212$48,150.00")
-    end
-  end
 end

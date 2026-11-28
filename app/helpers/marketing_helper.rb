@@ -619,22 +619,4 @@ module MarketingHelper
       ["Perplexity", "https://www.perplexity.ai/search?q=#{prompt}"]
     ]
   end
-
-  # The example ledger in the /for/ai-safety hero. Illustrative, with no person names.
-  # Each row opens to :details, the fields HCB shows when you click into a transaction.
-  def ai_safety_ledger_rows
-    # Oldest first. Icons and type labels match the real HCB ledger (hcb_codes/_icon).
-    [
-      { date: "Mar 2", icon: "web", type: "Incoming wire", memo: "Grant · first installment", amount_cents: 150_000_00, details: [["From", "Your funder"], ["Restricted to", "This project"], ["Status", "Settled"]] },
-      { date: "Mar 2", icon: "bank-icon", type: "Fiscal sponsorship fee", memo: "7% of first installment", amount_cents: -10_500_00, fee: true, details: [["Charged on", "$150,000.00 grant"], ["When", "As funds arrived"], ["Other fees", "None on this grant"]] },
-      { date: "Mar 6", icon: "card", type: "Card charge", memo: "GPU cluster compute", amount_cents: -12_736_40, details: [["Card", "•••• 4021 · Eval compute"], ["Receipt", "Attached"], ["Status", "Settled"]] },
-      { date: "Mar 9", icon: "briefcase", type: "Contractor payment · GBP", memo: "Eval design · London", amount_cents: -8_125_00, details: [["Paid", "£6,400.00 GBP"], ["Screening", "OFAC cleared"], ["Invoice", "Attached"]] },
-      { date: "Mar 15", icon: "person", type: "US payroll", memo: "March payroll · 3 staff", amount_cents: -48_150_00, details: [["Staff", "3 US W-2 employees"], ["Payroll taxes", "Filed by Hack Club"], ["Benefits", "Included"]] }
-    ]
-  end
-
-  # "+$850,000.00" and "−$48,150.00" (U+2212 minus). render_money alone gives a hyphen and no plus.
-  def ai_safety_ledger_amount(cents)
-    "#{cents.negative? ? "−" : "+"}#{render_money(cents.abs)}"
-  end
 end

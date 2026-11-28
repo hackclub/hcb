@@ -163,12 +163,12 @@ class MarketingController < ApplicationController
   # calls to action, and the form, which mean nothing outside the page.
   def ai_safety_markdown
     page = Nokogiri::HTML5.fragment(render_to_string(:ai_safety, layout: false, formats: [:html]))
-    page.css("script, style, nav, form, img, .mk-ais-viz, .mk-ais-ask, .mk-ais__contact, .mk-ais__head .mk-ais__cta, .mk-ais-step__when, .mk-step__num, .mk-ais-logos, .mk-ais-ledger__hint, .mk-ais-ledger__icon, .mk-ais-ledger__details").each(&:remove)
+    page.css("script, style, nav, form, img, figure, .mk-ais-viz, .mk-ais-ask, .mk-ais__contact, .mk-ais__head .mk-ais__cta, .mk-ais-step__when, .mk-step__num, .mk-ais-logos").each(&:remove)
     url = ai_safety_url(host: Rails.application.routes.default_url_options[:host], protocol: "https")
 
     # ReverseMarkdown glues these together, so give them plain structure first.
-    # ReverseMarkdown prefixes <details> with "#". Ledger rows are one line each; FAQ items are blocks.
-    page.css(".mk-ais-ledger__row, summary").each { |node| node.name = "span" }
+    # ReverseMarkdown prefixes <details> with "#".
+    page.css("summary").each { |node| node.name = "span" }
     page.css("details").each { |node| node.name = "div" }
     page.css("dt").each { |term| term.name = "h3" }
     page.css("dd").each { |definition| definition.name = "p" }

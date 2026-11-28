@@ -56,11 +56,11 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(graph.find { |node| node["@type"] == "WebPage" }["@id"]).to eq(canonical_url)
     end
 
-    it "puts the team email in the hero, shows the example ledger, and never mentions PayPal" do
+    it "puts the team email in the hero, shows the HCB product screenshot, and never mentions PayPal" do
       get ai_safety_path
 
       expect(page.at_css(".mk-ais__head a[href='mailto:aisafety@hackclub.com']")).to be_present
-      expect(page.text).to include("+$150,000.00", "−$48,150.00")
+      expect(page.at_css(".mk-ais-shot img.mk-window__shot")).to be_present
       expect(response.body).not_to include("PayPal")
     end
 
@@ -138,7 +138,7 @@ RSpec.describe "AI safety landing page", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("text/markdown")
       expect(response.headers["X-Robots-Tag"]).to be_nil
-      expect(response.body).to include("# Fiscal sponsorship for AI safety teams.", "## A 501(c)(3) back office, without building one.", "+$150,000.00")
+      expect(response.body).to include("# Fiscal sponsorship for AI safety teams.", "## A 501(c)(3) back office, without building one.", "$465,000")
       expect(response.body).to include(*helper_faqs.map { |faq| "### #{faq[:q]}" })
       expect(response.body).not_to include("<form", "Ask ChatGPT", "\u2014")
     end

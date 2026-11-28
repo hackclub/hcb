@@ -3777,7 +3777,7 @@ $mk-term-green: #62d196;
 }
 
 // Landing page built from the shared /for/* sections (hero, logo wall, stats, steps, cases,
-// dark band), plus a few page-only pieces: the ledger card, feature cards, and the fee callout.
+// dark band), plus a few page-only pieces: the centered hero shot, feature cards, and fee callout.
 .mk-ais {
   font-variant-numeric: tabular-nums;
 
@@ -3836,17 +3836,57 @@ $mk-term-green: #62d196;
 
 // ---------------------------------------------------------------- hero + logo wall
 .mk-ais-hero {
-  padding: clamp(40px, 6vw, 72px) 0 clamp(40px, 5vw, 64px);
+  padding: clamp(52px, 7vw, 88px) 0 clamp(40px, 5vw, 64px);
+
+  .mk-ais__head {
+    max-width: 740px;
+    margin-inline: auto;
+    text-align: center;
+  }
 
   .mk-hero__title {
-    font-size: clamp(2.3rem, 5vw, 3.6rem);
+    font-size: clamp(2.5rem, 5.2vw, 3.85rem);
+    text-wrap: balance;
   }
 
-  @media (min-width: 920px) {
-    .mk-hero__inner {
-      grid-template-columns: 1fr 1fr;
-    }
+  .mk-hero__subtitle {
+    max-width: 52ch;
+    margin-inline: auto;
+    text-wrap: balance;
   }
+
+  .mk-ais__cta {
+    justify-content: center;
+  }
+
+  .mk-ais__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 18px;
+    margin-top: 18px;
+  }
+
+  .mk-ais__contact {
+    margin-top: 0;
+  }
+
+  .mk-ais-ask {
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .mk-ais-ask__menu {
+    left: auto;
+    right: 0;
+    text-align: left;
+  }
+}
+
+.mk-ais-shot {
+  max-width: 1080px;
+  margin: clamp(40px, 5vw, 56px) auto 0;
 }
 
 .mk-ais-logos {
@@ -4140,178 +4180,6 @@ $mk-term-green: #62d196;
 .mk-ais .mk-uses .mk-use:last-child {
   @media (min-width: 720px) and (max-width: 999.98px) {
     grid-column: 1 / -1;
-  }
-}
-
-// ---------------------------------------------------------------- ledger
-// The hero's product shot, after HCB's own ledger. Each row is a <details>, so clicking
-// opens the transaction's fields like HCB does, with no JS. `name` keeps one open at a time.
-.mk-ais-hero .mk-hero__media {
-  container-type: inline-size;
-}
-
-.mk-ais-ledger {
-  border-radius: var(--radius-xl);
-  background: $white;
-  overflow: hidden;
-  box-shadow:
-    var(--shadow-border-lg),
-    0 40px 80px -28px rgba($black, 0.25);
-
-  &__head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px 20px 16px;
-    border-bottom: 1px solid rgba($black, 0.08);
-  }
-
-  &__title {
-    font-family: $font-family;
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0;
-  }
-
-  &__hint {
-    margin-top: 2px;
-    font-size: 0.8125rem;
-    color: $muted-text;
-  }
-
-  &__balance {
-    text-align: right;
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: $mk-ink;
-    white-space: nowrap;
-
-    span {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 500;
-      letter-spacing: 0;
-      color: $muted-text;
-    }
-  }
-
-  &__list {
-    list-style: none;
-    margin: 0;
-    padding: 6px;
-  }
-
-  &__row {
-    border-radius: var(--radius-lg);
-
-    // The app animates every <details>; rows should open instantly.
-    &::details-content {
-      transition: none;
-    }
-
-    summary {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 10px;
-      border-radius: var(--radius-lg);
-      list-style: none;
-      cursor: pointer;
-
-      &::-webkit-details-marker {
-        display: none;
-      }
-
-      &:hover {
-        background: $snow;
-      }
-    }
-
-    &[open] {
-      background: $snow;
-      box-shadow: var(--shadow-border-xs);
-    }
-  }
-
-  &__icon {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    background: $snow;
-    box-shadow: var(--shadow-border-xs);
-
-    svg {
-      fill: $muted;
-    }
-  }
-
-  &__memo {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  &__name {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: $mk-ink;
-  }
-
-  &__type {
-    display: block;
-    font-size: 0.775rem;
-    color: $muted-text;
-  }
-
-  &__amount {
-    flex: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: $mk-ink;
-
-    &--in {
-      color: $green-dark;
-    }
-  }
-
-  &__details {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 0;
-    padding: 4px 10px 12px 56px;
-
-    dt {
-      font-size: 0.75rem;
-      color: $muted-text;
-    }
-
-    dd {
-      margin: 0;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: $mk-ink;
-    }
-  }
-
-  @container (max-width: 520px) {
-    &__details {
-      grid-template-columns: 1fr 1fr;
-      padding-left: 10px;
-
-      > div:last-child:nth-child(odd) {
-        grid-column: 1 / -1;
-      }
-    }
   }
 }
 

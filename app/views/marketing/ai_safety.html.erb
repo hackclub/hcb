@@ -24,6 +24,7 @@
 
   <link rel="preconnect" href="https://assets.hackclub.com" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2" crossorigin>
+  <link rel="preconnect" href="https://cdn.hackclub.com">
 
   <%# Static helper data only, never params or flash. The FAQPage matches the visible Q&A below. %>
   <script type="application/ld+json"> <%# erb_lint:disable AllowedScriptType %>
@@ -65,77 +66,50 @@
       <div class="mk-hero__glow"></div>
       <div class="mk-hero__ledger"></div>
     </div>
-    <div class="mk-container mk-hero__inner">
-      <header class="mk-hero__copy mk-ais__head">
+    <div class="mk-container">
+      <header class="mk-ais__head">
         <h1 class="mk-hero__title">Fiscal sponsorship for AI safety teams.</h1>
         <p class="mk-hero__subtitle">Run your grant under Hack Club's <span class="whitespace-nowrap">501(c)(3)</span> within days. Payroll, cards, and live books included.</p>
-        <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
-          <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
-            <%= inline_icon "copy", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
-            <%= inline_icon "copy-check", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--done" %>
-            <span data-ai-ask-target="label" aria-live="polite">Copy as Markdown</span>
-          </a>
-          <details class="mk-ais-ask__more" data-ai-ask-target="menu">
-            <summary aria-label="Ask an AI about this page"><%= inline_icon "down-caret", size: 16 %></summary>
-            <ul class="mk-ais-ask__menu">
-              <% ai_safety_llm_links.each do |name, url| %>
-                <li>
-                  <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>">
-                    <span class="mk-ais-ask__item">Ask <%= name %> <%= inline_icon "external", size: 14 %></span>
-                    <span class="mk-ais-ask__hint">Prefills a prompt with this page</span>
-                  </a>
-                </li>
-              <% end %>
-              <li>
-                <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown">
-                  <span class="mk-ais-ask__item">View as Markdown <%= inline_icon "markdown", size: 14 %></span>
-                  <span class="mk-ais-ask__hint">Plain Markdown for any LLM</span>
-                </a>
-              </li>
-            </ul>
-          </details>
-        </div>
         <div class="mk-ais__cta">
           <a href="#talk-to-us" class="marketing-btn marketing-btn--primary marketing-btn--lg plausible-event-name=AIS+Hero+CTA">Talk to our team</a>
           <a href="#grantmakers" class="marketing-btn marketing-btn--ghost marketing-btn--lg plausible-event-name=AIS+Grantmakers+CTA">For grantmakers</a>
         </div>
-        <p class="mk-ais__contact">Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>. Replies within one business day.</p>
+        <div class="mk-ais__meta">
+          <p class="mk-ais__contact">Or email <a href="mailto:aisafety@hackclub.com">aisafety@hackclub.com</a>. Replies within one business day.</p>
+          <div class="mk-ais-ask" data-controller="ai-ask" data-action="click@window->ai-ask#closeOutside keydown.esc@window->ai-ask#close">
+            <a href="<%= ai_safety_path(format: :md) %>" class="mk-ais-ask__copy plausible-event-name=AIS+Copy+Markdown" data-ai-ask-target="copy" data-action="ai-ask#copy">
+              <%= inline_icon "copy", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--copy" %>
+              <%= inline_icon "copy-check", size: 16, class: "mk-ais-ask__icon mk-ais-ask__icon--done" %>
+              <span data-ai-ask-target="label" aria-live="polite">Copy as Markdown</span>
+            </a>
+            <details class="mk-ais-ask__more" data-ai-ask-target="menu">
+              <summary aria-label="Ask an AI about this page"><%= inline_icon "down-caret", size: 16 %></summary>
+              <ul class="mk-ais-ask__menu">
+                <% ai_safety_llm_links.each do |name, url| %>
+                  <li>
+                    <a href="<%= url %>" target="_blank" rel="noopener" class="plausible-event-name=AIS+Ask+<%= name %>">
+                      <span class="mk-ais-ask__item">Ask <%= name %> <%= inline_icon "external", size: 14 %></span>
+                      <span class="mk-ais-ask__hint">Prefills a prompt with this page</span>
+                    </a>
+                  </li>
+                <% end %>
+                <li>
+                  <a href="<%= ai_safety_path(format: :md) %>" target="_blank" class="plausible-event-name=AIS+View+Markdown">
+                    <span class="mk-ais-ask__item">View as Markdown <%= inline_icon "markdown", size: 14 %></span>
+                    <span class="mk-ais-ask__hint">Plain Markdown for any LLM</span>
+                  </a>
+                </li>
+              </ul>
+            </details>
+          </div>
+        </div>
       </header>
 
-      <%# The example ledger doubles as the product shot. Rows open like a transaction in HCB. %>
-      <div class="mk-hero__media">
-        <% rows = ai_safety_ledger_rows %>
-        <section id="example-month" class="mk-ais-ledger" aria-labelledby="example-month-title">
-          <div class="mk-ais-ledger__head">
-            <div>
-              <h2 id="example-month-title" class="mk-ais-ledger__title">Example first month</h2>
-              <p class="mk-ais-ledger__hint">Click a row for details</p>
-            </div>
-            <p class="mk-ais-ledger__balance"><span>Balance</span> <%= render_money(rows.sum { |row| row[:amount_cents] }) %></p>
-          </div>
-          <ul class="mk-ais-ledger__list">
-            <% rows.reverse_each do |row| %>
-              <li>
-                <details class="mk-ais-ledger__row" name="ais-ledger">
-                  <summary>
-                    <span class="mk-ais-ledger__icon" aria-hidden="true"><%= inline_icon row[:icon], size: 20 %></span>
-                    <span class="mk-ais-ledger__memo">
-                      <span class="mk-ais-ledger__name"><%= row[:memo] %></span><span class="mk-vh">, </span>
-                      <span class="mk-ais-ledger__type"><%= row[:date] %> · <%= row[:type] %></span>
-                    </span>
-                    <span class="<%= class_names("mk-ais-ledger__amount", "mk-ais-ledger__amount--in": row[:amount_cents].positive?) %>"><%= ai_safety_ledger_amount(row[:amount_cents]) %></span>
-                  </summary>
-                  <dl class="mk-ais-ledger__details">
-                    <% row[:details].each do |label, value| %>
-                      <div><dt><%= label %></dt><dd><%= value %></dd></div>
-                    <% end %>
-                  </dl>
-                </details>
-              </li>
-            <% end %>
-          </ul>
-        </section>
-      </div>
+      <figure class="mk-window mk-ais-shot">
+        <%= image_tag "https://cdn.hackclub.com/019e85ef-c890-772a-bf24-8252b544a015/image.png",
+              class: "mk-window__shot", width: 2624, height: 1640, fetchpriority: "high",
+              decoding: "async", alt: "A real-time HCB transaction ledger with balances, receipts, and running totals" %>
+      </figure>
     </div>
 
     <%# ============================ LOGO WALL ============================ %>
