@@ -28,7 +28,7 @@ class Event
       end
 
       def description
-        "Used for living expense reimbursement. Has access to all standard features (except perks); and receipts are not required."
+        "Used for living expense reimbursement. Has access to all standard features (except perks)."
       end
 
       def features
