@@ -47,6 +47,8 @@
   </div>
 </h1>
 
+<%= render "users/payout_form/attention_callout", payout_method: @payout_method, legal_entity_id: @legal_entity.id %>
+
 <div class="statset mb-4">
   <div class="stat">
     <span class="stat__label">Total</span>

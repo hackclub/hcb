@@ -100,6 +100,33 @@ RSpec.describe Payroll::Position, type: :model do
       end
     end
 
+    describe "the payout method step" do
+      let!(:payout_method) do
+        position.legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+      end
+
+      def payout_method_step
+        position.onboarding_checklist.find { |step| step[:key] == :payout_method }
+      end
+
+      it "is complete with a payout method that's ready" do
+        expect(payout_method_step[:complete]).to be(true)
+      end
+
+      it "isn't complete while the default payout method is missing a date of birth" do
+        payout_method.details.update!(recipient_birthday: nil)
+
+        expect(payout_method_step[:complete]).to be(false)
+        expect(position.onboarding_complete?).to be(false)
+      end
+
+      it "isn't complete without a payout method" do
+        payout_method.archive!
+
+        expect(payout_method_step[:complete]).to be(false)
+      end
+    end
+
     describe "#onboarding_reminder_days" do
       it "nudges frequently at first, then every two weeks" do
         position = build(:payroll_position, start_date: Date.current, end_date: Date.current + 60.days)

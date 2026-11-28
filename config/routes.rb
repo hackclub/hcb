@@ -78,6 +78,7 @@ Rails.application.routes.draw do
       member do
         patch :set_default
         patch :archive
+        patch :complete_details
       end
     end
     get "settings/previews", to: "users#edit_featurepreviews"

@@ -123,6 +123,49 @@ RSpec.describe Reimbursement::ReportsController do
       expect(response).to have_http_status(:ok)
       expect(header_badges(response.body)).to eq(["Review Requested"])
     end
+
+    context "when the submitter's payout method is missing a date of birth" do
+      let(:creator) { create(:user, full_name: "Fiona Hackworth") }
+      let(:event) { create(:event) }
+      let(:report) do
+        payout_method = creator.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+        payout_method.details.update!(recipient_birthday: nil)
+        create(:reimbursement_report, user: creator, event:, aasm_state: :reimbursement_requested, legal_entity_payout_method: payout_method, currency: "GBP").tap do |report|
+          report.expenses.create!(value: 12.34, memo: "Stickers")
+        end
+      end
+
+      it "asks the submitter to complete it, even while the method is locked" do
+        create_session(creator, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("complete your payout information")
+        expect(response.body).to include("payout_method_details[recipient_birthday]")
+      end
+
+      it "tells admins what the submitter needs to add instead of offering approval" do
+        create_session(create(:user, :make_admin), verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("add the recipient&#39;s date of birth to their payout method")
+        expect(response.body).not_to include("Approve &amp; send Wise reimbursement")
+      end
+
+      it "tells organizers they're waiting on the submitter" do
+        manager = create(:user)
+        create(:organizer_position, user: manager, event:, role: :manager)
+        create_session(manager, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Waiting on Fiona")
+      end
+    end
   end
 
   describe "#edit" do
@@ -541,7 +584,8 @@ RSpec.describe Reimbursement::ReportsController do
         default: false,
         details: LegalEntity::PayoutMethod::WiseTransfer.new(
           address_line1: "1 Main St", address_city: "London", address_state: "England",
-          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP",
+          recipient_birthday: "01/15/1990"
         )
       )
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
@@ -691,6 +735,49 @@ RSpec.describe Reimbursement::ReportsController do
       expect(expense.reload.approved?).to be(true)
       expect(report.reload.aasm_state).to eq("submitted")
       expect(flash[:error]).to be_present
+    end
+  end
+
+  describe "paying out a report whose payout method is missing a date of birth" do
+    let(:creator) { create(:user, full_name: "Fiona Hackworth") }
+    let(:report) do
+      payout_method = creator.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details))
+      payout_method.details.update!(recipient_birthday: nil)
+      create(:reimbursement_report, user: creator, event: create(:event), aasm_state: :reimbursement_requested, legal_entity_payout_method: payout_method, currency: "GBP").tap do |report|
+        report.expenses.create!(value: 12.34, memo: "Stickers")
+      end
+    end
+    let(:message) { "Fiona Hackworth needs to add the recipient's date of birth to their payout method before this report can be paid." }
+
+    before do
+      allow_any_instance_of(GovernanceService::Admin::Transfer::Approval).to receive(:ensure_may_approve!)
+      create_session(create(:user, :make_admin), verified: true)
+    end
+
+    it "won't convert it to a Wise transfer" do
+      expect {
+        post(:convert_to_wise_transfer, params: { report_id: report.id })
+      }.not_to change(WiseTransfer, :count)
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
+    end
+
+    it "won't approve it" do
+      post(:admin_approve, params: { report_id: report.id, wise_total_without_fees: "15", wise_total_including_fees: "16" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
+      expect(report.reload).to be_reimbursement_requested
+    end
+
+    it "won't send the Wise transfer" do
+      expect(Reimbursement::PayoutHoldingService::ProcessSingle).not_to receive(:new)
+
+      post(:admin_send_wise_transfer, params: { report_id: report.id })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:error]).to eq(message)
     end
   end
 

@@ -33,5 +33,6 @@ FactoryBot.define do
     address_postal_code { "SW1A 1AA" }
     recipient_country   { 1 }
     currency            { "GBP" }
+    recipient_birthday  { "01/15/1990" }
   end
 end

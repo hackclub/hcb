@@ -18,6 +18,10 @@ class LegalEntity
       owns_legal_entity? || user.admin?
     end
 
+    def complete_details?
+      owns_legal_entity? || user.admin?
+    end
+
     private
 
     def owns_legal_entity?

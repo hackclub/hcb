@@ -28,6 +28,12 @@ class LegalEntity
 
       validates_presence_of :address_line1, :address_city, :address_state, :address_postal_code, :recipient_country, :currency
 
+      # Not enforced on update so older records predating a field stay saveable; they're flagged incomplete instead.
+      REQUIRED_RECIPIENT_FIELDS = %w[recipient_birthday].freeze
+
+      validate :required_recipient_fields_present, on: [:create, :complete_details]
+      validate :recipient_birthday_is_valid_date, on: [:create, :complete_details], if: -> { recipient_birthday.present? }
+
       def self.permitted_attributes
         [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
          :recipient_country, :currency] +
@@ -98,8 +104,31 @@ class LegalEntity
         end
       end
 
+      def missing_required_fields
+        REQUIRED_RECIPIENT_FIELDS.select { |key| public_send(key).blank? }
+      end
+
+      def required_field_definitions(keys)
+        self.class.information_required_for(currency).select { |field| field[:key].in?(keys) }
+      end
+
       def fee_reason
         "Wise transfers incur a fee"
+      end
+
+      private
+
+      def required_recipient_fields_present
+        missing_required_fields.each { |key| errors.add(key, :blank) }
+      end
+
+      def recipient_birthday_is_valid_date
+        # KRW and ZAR collected this with a native date field before it was universal, so older records hold ISO dates.
+        format = recipient_birthday.include?("-") ? "%Y-%m-%d" : "%m/%d/%Y"
+        date = Date.strptime(recipient_birthday, format)
+        errors.add(:recipient_birthday, "can't be in the future") if date > Date.current
+      rescue Date::Error
+        errors.add(:recipient_birthday, "must be a valid date in MM/DD/YYYY format")
       end
 
     end

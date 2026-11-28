@@ -34,8 +34,10 @@
               <% if field[:type] == :select %>
                 <%= form.select field[:key], field[:options].to_a, { disabled:, prompt: "Select one..." },
                                 { id:, data: ({ herb_set: "selected_account_type=$value" } if field[:key] == "account_type") } %>
+              <% elsif field[:type] == :segmented_date %>
+                <%= render "wise_transfers/segmented_date_field", form:, field:, input_options: { disabled:, required: field[:required] != false, id: } %>
               <% else %>
-                <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, required: field[:required] != false, id:) %>
+                <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], pattern: field[:pattern], disabled:, required: field[:required] != false, id:) %>
               <% end %>
               <% if field[:description].present? || field[:refer_to].present? %>
                 <div class=" muted mt1 ">
