@@ -41,6 +41,27 @@ class TagsController < ApplicationController
     redirect_back fallback_location: @event
   end
 
+  # Drag-and-drop on the tags settings page: move one tag to `index` and
+  # renumber the event's tags around it (see tag_sort_controller.js).
+  def set_index
+    tag = @event.tags.find(params[:id])
+
+    authorize tag, :update?
+
+    index = Integer(params.require(:index), exception: false)
+    tags = @event.tags.to_a
+    return head :bad_request if index.nil? || !index.between?(0, tags.size - 1)
+
+    tags.delete(tag)
+    tags.insert(index, tag)
+
+    Tag.transaction do
+      tags.each_with_index { |t, i| t.update!(sort_index: i) }
+    end
+
+    head :no_content
+  end
+
   def destroy
     tag = Tag.find(params[:id])
 

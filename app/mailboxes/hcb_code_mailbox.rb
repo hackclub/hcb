@@ -67,7 +67,9 @@ class HcbCodeMailbox < ApplicationMailbox
       return unless command["argument"]
 
       event = @hcb_code.event
-      tag = event.tags.search_label(command["argument"]).first
+      # unscope(:order): the association sorts by hand-set position, which
+      # would otherwise outrank the search match.
+      tag = event.tags.unscope(:order).search_label(command["argument"]).first
       return unless tag
 
       # Tags live on the ledger item; skip silently if this code has none.
