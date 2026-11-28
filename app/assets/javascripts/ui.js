@@ -22,12 +22,17 @@ const populateSharedPopover = trigger => {
   const stateTitle = trigger.dataset.popoverStateTitle || title
   const externalLink = trigger.dataset.popoverExternalLink || ''
   const size = trigger.dataset.popoverSize || ''
+  const subtitle = trigger.dataset.popoverSubtitle || ''
 
   popover.dataset.stateUrl = stateUrl
   popover.dataset.stateTitle = stateTitle
 
   const titleEl = document.getElementById('shared_popover_title')
   if (titleEl) titleEl.textContent = title
+
+  // Empty subtitles collapse via `:empty` in CSS, so no branching needed here.
+  const subtitleEl = document.getElementById('shared_popover_subtitle')
+  if (subtitleEl) subtitleEl.textContent = subtitle
 
   const extLink = document.getElementById('shared_popover_external_link')
   if (extLink) {
@@ -40,6 +45,7 @@ const populateSharedPopover = trigger => {
   }
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
+  popover.classList.toggle('modal--popover--lg', size === 'lg')
 
   clearElement('shared_popover_flash')
 
@@ -923,6 +929,7 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
     if (popoverEl && popoverEl.classList) {
       popoverEl.classList.remove('modal--popover--receipt-expanded')
       popoverEl.classList.remove('modal--popover--sm')
+      popoverEl.classList.remove('modal--popover--lg')
     }
   }
 })
