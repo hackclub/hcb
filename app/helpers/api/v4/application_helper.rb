@@ -105,6 +105,26 @@ module Api
         yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end
 
+      # Transactions that paid this one back, by transfer or by money in on the
+      # same ledger. Filters in memory so the preloaded repayments are used.
+      def repaid_by_ledger_items(ledger_item)
+        ledger_item.repayments
+                   .reject { |r| r.disbursement&.rejected? || r.disbursement&.errored? } # as `Repayment.not_failed`
+                   .filter_map do |r|
+                     # A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one.
+                     r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item
+                   end
+      end
+
+      # Transactions this one paid back. A transfer marked as a repayment after
+      # the fact shows what it repays on both of its sides.
+      def repaid_ledger_items(ledger_item)
+        disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"])
+        repaying_item = disbursement ? disbursement.incoming_disbursement.ledger_item : ledger_item
+
+        Array(disbursement&.repaid_ledger_items) + Array(repaying_item&.repaying_repayment&.repaid_ledger_items)
+      end
+
     end
   end
 end

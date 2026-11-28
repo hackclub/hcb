@@ -165,4 +165,62 @@ RSpec.describe Api::V4::TransactionsController do
       end
     end
   end
+
+  describe "repayments" do
+    let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+    let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00, memo: "Venmo from Sam") }
+
+    def mark_repayment
+      RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+    end
+
+    it "shows what repaid an expense" do
+      mark_repayment
+
+      get :show, params: { id: expense.local_hcb_code.public_id }, as: :json
+
+      expect(response.parsed_body["repayment"]).to eq(
+        "repaid_by" => [{ "id" => income.local_hcb_code.public_id, "transfer" => false }],
+        "repays"    => []
+      )
+    end
+
+    it "shows what income repays" do
+      mark_repayment
+
+      get :show, params: { id: income.local_hcb_code.public_id }, as: :json
+
+      expect(response.parsed_body["repayment"]["repays"]).to eq([{ "id" => expense.local_hcb_code.public_id, "transfer" => false }])
+    end
+
+    it "is left out for transactions that aren't part of a repayment" do
+      get :show, params: { id: expense.local_hcb_code.public_id }, as: :json
+
+      expect(response.parsed_body).not_to have_key("repayment")
+    end
+
+    it "hides the other side when it's in an organization the user can't see" do
+      elsewhere = create(:canonical_transaction, event: create(:event, is_public: false), amount_cents: 100_00)
+      # Money in on another ledger can't be marked, so skip the checks to stand in for a link the user can't see.
+      repayment = Repayment.new(repaying_ledger_item: elsewhere.ledger_item.reload)
+      repayment.allocations.build(repaid_ledger_item: expense.ledger_item.reload, amount_cents: 100_00)
+      repayment.save!(validate: false)
+
+      get :show, params: { id: expense.local_hcb_code.public_id }, as: :json
+
+      expect(response.parsed_body["repayment"]["repaid_by"]).to eq([{ "id" => nil, "transfer" => false }])
+    end
+
+    [false, true].each do |ledger_engine|
+      it "is included in the transaction list (ledger engine #{ledger_engine ? "on" : "off"})" do
+        mark_repayment
+
+        body = with_engine(ledger_engine) { get :index, params: { id: event.public_id }, as: :json }
+
+        by_id = body["data"].index_by { |tx| tx["id"] }
+        expect(by_id[expense.local_hcb_code.public_id]["repayment"]["repaid_by"].sole["id"]).to eq(income.local_hcb_code.public_id)
+        expect(by_id[income.local_hcb_code.public_id]["repayment"]["repays"].sole["id"]).to eq(expense.local_hcb_code.public_id)
+      end
+    end
+  end
 end

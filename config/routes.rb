@@ -744,6 +744,8 @@ Rails.application.routes.draw do
           get :available_icons
         end
 
+        resources :transaction_categories, only: [:index]
+
         resources :users, only: [:show] do
           collection do
             get "/by_email/:email", to: "users#by_email", as: "by_email", constraints: { email: /[^\/]+/ }
@@ -758,6 +760,9 @@ Rails.application.routes.draw do
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
+            resource :repayment, only: [:create] do
+              get :candidates
+            end
 
             member do
               get "memo_suggestions"
