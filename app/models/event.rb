@@ -500,7 +500,7 @@ class Event < ApplicationRecord
 
   # Organizers order their tags by hand on the settings page (sort_index);
   # tags that have never been dragged sort last, in creation order.
-  has_many :tags, -> { includes(:hcb_codes).order(:sort_index, :id) }
+  has_many :tags, -> { order(:sort_index, :id) }
   has_and_belongs_to_many :event_tags
 
   has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
