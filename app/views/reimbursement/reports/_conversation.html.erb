@@ -6,12 +6,16 @@
 <article>
   <ul class="list-reset comments mb5">
     <% versions = @report.versions.includes([:item]).select { |version| version.changeset.any? { |field, changes| changes.any?(&:present?) } } %>
+    <% expense_versions = @report.expense_versions %>
+    <% expenses = @report.expenses.with_deleted.index_by(&:id) %>
     <% comments = policy_scope(@report.comments) %>
-    <% (versions + comments).sort_by(&:created_at).each do |item| %>
+    <% (versions + expense_versions + comments).sort_by(&:created_at).each do |item| %>
       <% if item.instance_of?(Comment) %>
         <div class="conversation_item">
           <%= render "comments/item", comment: item %>
         </div>
+      <% elsif item.item_type == Reimbursement::Expense.name %>
+        <%= render "reimbursement/reports/expense_version", version: item, expense: expenses[item.item_id] %>
       <% else %>
         <% reimbursed_change_text = capture do %>
           <%= error_boundary fallback_text: "initiated a transfer" do %>
